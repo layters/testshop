@@ -45,10 +45,10 @@ project "neroshop"
        "external/monero-cpp/external/monero-project/external/",
        --"external/monero-cpp/external/monero-project/",
    }
-   libdirs { "src/", --[["external/dokun-ui/src/", --option2]] }
+   libdirs { "src/", "external/dokun-ui/src/", }
    links {
-       --[["dokun-ui",]] -- option2
-       "external/dokun-ui/src/dokun-ui",
+       -- dokun-ui
+       "dokun-ui",
        -- monero
        "external/monero-cpp/external/monero-project/build/release/lib/wallet_merged",
        "external/monero-cpp/external/monero-project/build/release/lib/wallet",

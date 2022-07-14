@@ -25,18 +25,20 @@ Coming soon
 ## Building neroshop
 
 ### Dependencies
-|      Library                                                       | Minimum Ver.    | Package                | License                            |         Purpose                                                        | Optional |
-|--------------------------------------------------------------------|-----------------|------------------------|------------------------------------|------------------------------------------------------------------------|----------|
-| [monero-cpp](https://github.com/monero-ecosystem/monero-cpp)       | latest          |                        | MIT                                | monero wallet and payment system                                       | No       |
-| [libbcrypt](https://github.com/rg3/libbcrypt)                      | ?               |                        | public domain (CC0-1.0)            | password hashing                                                       | No       |
-| [sqlite3](https://sqlite.org/)                                     | ?               |                        | public domain                      | database management                                                    | No       |
-| [QR Code generator](https://github.com/nayuki/QR-Code-generator)   | ?               |                        | MIT                                | qr code generation                                                     | No       |
-| [json](https://github.com/nlohmann/json/)                          | ?               |                        | MIT                                | json parsing                                                           | No       |
-| [curl](https://github.com/curl/curl)                               | ?               | `libcurl4-openssl-dev` | curl                               | currency conversion                                                    | No       |
-| [openssl](https://github.com/openssl/openssl)                      | 1.1.1           | `libssl-dev`           | OpenSSL-SSLeay or Apache-2.0       | for curl, sha256 sum and message encryption                            | No       |
-| [postgresql](https://www.postgresql.org/)                          | ?               | `libpq-dev`            | PostgreSQL                         | server-based database management                                       | Yes      |
-| [dokun-ui](external/dokun-ui)                                      | n/a             |                        | MIT                                | graphical user interface                                               | No       |
-
+|      Library                                                       | Minimum Ver.    | License                            |         Purpose                                                        |
+|--------------------------------------------------------------------|-----------------|------------------------------------|------------------------------------------------------------------------|
+| [monero-cpp](https://github.com/monero-ecosystem/monero-cpp)       | latest          | MIT                                | monero wallet and payment system                                       |
+| [libbcrypt](https://github.com/rg3/libbcrypt)                      | ?               | public domain (CC0-1.0)            | password hashing                                                       |
+| [sqlite3](https://sqlite.org/)                                     | ?               | public domain                      | database management                                                    |
+| [QR Code generator](https://github.com/nayuki/QR-Code-generator)   | ?               | MIT                                | qr code generation                                                     |
+| [json](https://github.com/nlohmann/json/)                          | ?               | MIT                                | json parsing                                                           |
+| [curl](https://github.com/curl/curl)                               | ?               | curl                               | currency conversion                                                    |
+| [openssl](https://github.com/openssl/openssl)                      | 1.1.1           | OpenSSL-SSLeay or Apache-2.0       | for curl, sha256 sum and message encryption                            |
+| [postgresql](https://www.postgresql.org/)                          | ?               | PostgreSQL                         | server-based database management                                       |
+| [dokun-ui](external/dokun-ui)                                      | n/a             | MIT                                | graphical user interface                                               |
+| [lmdb](https://github.com/LMDB/lmdb)                               | ?               | OpenLDAP Public                    | database management                                                    |
+| [libuv](https://github.com/libuv/libuv)                            | ?               | MIT                                | networking, file system                                                |
+| [raft](https://github.com/willemt/raft)                            | ?               | BSD                                | consensus protocol                                                     |
 
 ### Compiling neroshop from source
 0. Clone neroshop
@@ -83,6 +85,9 @@ git clone --recurse-submodules https://github.com/monero-ecosystem/monero-cpp.gi
 git clone --recurse-submodules https://github.com/rg3/libbcrypt.git
 git clone --recurse-submodules https://github.com/nayuki/QR-Code-generator.git
 git clone --recurse-submodules https://github.com/nlohmann/json.git
+#git clone --recurse-submodules https://github.com/curl/curl.git
+git clone --recurse-submodules https://github.com/willemt/raft.git
+git clone --recurse-submodules https://github.com/libuv/libuv.git
 cd ../
 ```
 
@@ -103,7 +108,8 @@ cmake -G"Unix Makefiles"
 make
 cd ../../
 # Build neroshop
-cmake -G"Unix Makefiles"
+mkdir build && cd build
+cmake ..
 make
 ```
 
@@ -111,6 +117,7 @@ make
 ## Contact
 > larteyoh@pm.me
 
+[//]: # (./clean.sh)
 [//]: # (rm -rf external/dokun-ui/CMakeFiles; rm -rf external/dokun-ui/CMakeCache.txt; rm -rf external/dokun-ui/cmake_install.cmake; rm -rf external/dokun-ui/Makefile)
 [//]: # (git checkout -b test)
 [//]: # (git add CMakeLists.txt external/ include/ premake5.lua readme.md res/neroshop-logo.png res/wallets src/ test/)

@@ -17,7 +17,7 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
     set(CMAKE_C_COMPILER   /usr/bin/gcc)
     set(CMAKE_CXX_COMPILER /usr/bin/g++)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -I'/usr/include/postgresql/'")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -no-pie")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -no-pie") # detach
     include_directories(/usr/include/          )
     link_directories(/usr/lib/x86_64-linux-gnu/) # Debian/Ubuntu
     link_directories(/usr/lib/                 ) # Arch
@@ -274,15 +274,7 @@ ${Boost_LIBRARIES} ${Protobuf_LIBRARY} ${LibUSB_LIBRARIES} ${OPENSSL_LIBRARIES} 
 ######################################
 # monero-cpp (wrapper) v0.5.1 => v0.5.5 => v0.5.10 => v0.6.4 => v0.7.0
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/external/monero-cpp/src/)
-set(monero_cpp_src
-    external/monero-cpp/src/utils/gen_utils.cpp
-    external/monero-cpp/src/utils/monero_utils.cpp
-    external/monero-cpp/src/daemon/monero_daemon_model.cpp
-    external/monero-cpp/src/daemon/monero_daemon.cpp
-    external/monero-cpp/src/wallet/monero_wallet_model.cpp
-    external/monero-cpp/src/wallet/monero_wallet_keys.cpp
-    external/monero-cpp/src/wallet/monero_wallet_full.cpp
-)
+set(monero_cpp_src external/monero-cpp/src/utils/gen_utils.cpp external/monero-cpp/src/utils/monero_utils.cpp external/monero-cpp/src/daemon/monero_daemon_model.cpp external/monero-cpp/src/daemon/monero_daemon.cpp external/monero-cpp/src/wallet/monero_wallet_model.cpp external/monero-cpp/src/wallet/monero_wallet_keys.cpp external/monero-cpp/src/wallet/monero_wallet_full.cpp)
 
 ######################################
 # libbcrypt
@@ -291,6 +283,16 @@ set(bcrypt_src external/libbcrypt/crypt_blowfish/crypt_blowfish.c external/libbc
 
 ######################################
 # sqlite3
+#[[find_package(SQLite3)
+if(SQLite3_FOUND)
+    message(STATUS "Using SQLite3: ${SQLite3_LIBRARY} (v${SQLite3_VERSION})")
+    include_directories(${SQLite3_INCLUDE_DIRS})
+    set(sqlite_src ${SQLite3_LIBRARY}) # or ${SQLite3_LIBRARIES}
+endif()
+if(NOT SQLite3_FOUND)
+    include_directories(${CMAKE_CURRENT_SOURCE_DIR}/external/sqlite)
+    set(sqlite_src ${CMAKE_CURRENT_SOURCE_DIR}/external/sqlite/sqlite3.c) # amalgamation - runs a bit faster
+endif()]]
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/external/sqlite)
 set(sqlite_src ${CMAKE_CURRENT_SOURCE_DIR}/external/sqlite/sqlite3.c)
 
@@ -306,7 +308,8 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR}/external/json/single_include)
 ######################################
 # curl
 find_package(CURL) # if curl is found on the system, use the system default shared library, otherwise use the curl that we've built from source
-if(CURL_FOUND) #message("-- Using CURL: ${CURL_LIBRARIES} (v${CURL_VERSION_STRING})")
+if(CURL_FOUND) 
+    message(STATUS "Using CURL: ${CURL_LIBRARIES} (v${CURL_VERSION_STRING})")
     include_directories(${CURL_INCLUDE_DIRS})
     set(curl_src ${CURL_LIBRARIES})
 endif()
@@ -316,6 +319,7 @@ if(NOT CURL_FOUND)
     add_definitions(-DCURL_STATICLIB)
     set(CMAKE_CXX_LINK_EXECUTABLE "${CMAKE_CXX_LINK_EXECUTABLE} -lldap -llber -lnghttp2 -lpsl -lidn2 -lbrotlidec -lzstd -lrtmp") # I guess if we build curl statically we need all libs to also be static, which is unrealistic since most libs on linux-gnu are shared libs # https://stackoverflow.com/questions/68368557/linking-nghttp2-static-library#comment120830125_68368557
 endif()
+
 ######################################
 # postgresql
 include_directories(${PostgreSQL_INCLUDE_DIRS} ${PostgreSQL_INCLUDE_DIRS}/server)
@@ -326,15 +330,15 @@ set(PostgreSQL_TYPE_INCLUDE_DIR "/usr/include/postgresql/")
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/external/monero-cpp/external/monero-project/external/db_drivers/liblmdb) # or ${CMAKE_CURRENT_SOURCE_DIR}/external/lmdb/libraries/liblmdb/
 
 ######################################
-# dqlite (uses a consensus mechanism - raft) https://raft.github.io/  |  https://raft.github.io/raft.pdf
-# docs - https://github.com/canonical/dqlite/blob/master/include/dqlite.h
-#        https://github.com/canonical/raft/blob/master/include/raft.h
-# examples - https://github.com/canonical/raft/blob/master/example/server.c  (run: ./example/cluster to see server in action)
+# libuv (supports Android :D)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/external/libuv/include ${CMAKE_CURRENT_SOURCE_DIR}/external/libuv/src)
 set(libuv_srcs libuv.a) # /usr/lib/x86_64-linux-gnu/libuv.a  # /usr/lib/x86_64-linux-gnu/libuv.so
-set(c_raft_srcs ${CMAKE_CURRENT_SOURCE_DIR}/external/raft/.libs/libraft.a)
-set(dqlite_srcs ${CMAKE_CURRENT_SOURCE_DIR}/external/dqlite/.libs/libdqlite.a ${libuv_srcs} #[[${sqlite_src}]] ${c_raft_srcs})
 
 ######################################
+# willemt/raft (BSD and has zero dependencies :D)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/external/raft/include)
+set(raft_src src/raft_log.c src/raft_node.c src/raft_server.c src/raft_server_properties.c)
+
 ######################################
 # dokun-ui_dependencies
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/external/dokun-ui/external/lua/lua-5.4.1/src) # lua
@@ -386,8 +390,7 @@ link_directories(${CMAKE_CURRENT_SOURCE_DIR}/src)
 set(neroshop_src src/buyer.cpp #[[src/carrier.cpp]] src/cart.cpp src/catalog.cpp src/client.cpp src/converter.cpp src/database.cpp src/encryptor.cpp src/icon.cpp src/item.cpp src/main.cpp src/message.cpp src/order.cpp src/qr.cpp src/seller.cpp src/server.cpp src/user.cpp src/validator.cpp src/wallet.cpp)
 add_definitions(-DNEROSHOP_DEBUG) # for more detailed debugging, use -DNEROSHOP_DEBUG0
 add_executable(${neroshop_executable} ${neroshop_src} ${monero_cpp_src} ${bcrypt_src} ${sqlite_src} ${qr_code_generator_src})
-target_link_libraries(${neroshop_executable} ${curl_src} ${monero_src} ${dokun_ui_src})
-
+target_link_libraries(${neroshop_executable} #[[${sqlite_src}]] ${curl_src} ${monero_src} ${dokun_ui_src})
 ######################################
 # linking
 if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
