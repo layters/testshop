@@ -277,12 +277,12 @@ ${Boost_LIBRARIES} ${Protobuf_LIBRARY} ${LibUSB_LIBRARIES} ${OPENSSL_LIBRARIES} 
 ######################################
 # monero-cpp (wrapper) v0.5.1 => v0.5.5 => v0.5.10 => v0.6.4 => v0.7.0
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/external/monero-cpp/src/)
-set(monero_cpp_src external/monero-cpp/src/utils/gen_utils.cpp external/monero-cpp/src/utils/monero_utils.cpp external/monero-cpp/src/daemon/monero_daemon_model.cpp external/monero-cpp/src/daemon/monero_daemon.cpp external/monero-cpp/src/wallet/monero_wallet_model.cpp external/monero-cpp/src/wallet/monero_wallet_keys.cpp external/monero-cpp/src/wallet/monero_wallet_full.cpp)
+set(monero_cpp_src ${CMAKE_CURRENT_SOURCE_DIR}/build/libmonero-cpp.a)#set(monero_cpp_src external/monero-cpp/src/utils/gen_utils.cpp external/monero-cpp/src/utils/monero_utils.cpp external/monero-cpp/src/daemon/monero_daemon_model.cpp external/monero-cpp/src/daemon/monero_daemon.cpp external/monero-cpp/src/wallet/monero_wallet_model.cpp external/monero-cpp/src/wallet/monero_wallet_keys.cpp external/monero-cpp/src/wallet/monero_wallet_full.cpp)
 
 ######################################
 # libbcrypt (deprecated)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/external/libbcrypt)
-set(bcrypt_src external/libbcrypt/crypt_blowfish/crypt_blowfish.c external/libbcrypt/crypt_blowfish/crypt_gensalt.c external/libbcrypt/crypt_blowfish/wrapper.c external/libbcrypt/bcrypt.c)
+set(bcrypt_src ${CMAKE_CURRENT_SOURCE_DIR}/build/libbcrypt.a)#set(bcrypt_src external/libbcrypt/crypt_blowfish/crypt_blowfish.c external/libbcrypt/crypt_blowfish/crypt_gensalt.c external/libbcrypt/crypt_blowfish/wrapper.c external/libbcrypt/bcrypt.c)
 
 ######################################
 # sqlite3
@@ -297,12 +297,12 @@ if(NOT SQLite3_FOUND)
     set(sqlite_src ${CMAKE_CURRENT_SOURCE_DIR}/external/sqlite/sqlite3.c) # amalgamation - runs a bit faster
 endif()]]
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/external/sqlite)
-set(sqlite_src ${CMAKE_CURRENT_SOURCE_DIR}/external/sqlite/sqlite3.c)
+set(sqlite_src ${CMAKE_CURRENT_SOURCE_DIR}/build/libsqlite3.a)#set(sqlite_src ${CMAKE_CURRENT_SOURCE_DIR}/external/sqlite/sqlite3.c)
 
 ######################################
 # QR-Code-generator
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/external/QR-Code-generator/cpp)
-set(qr_code_generator_src ${CMAKE_CURRENT_SOURCE_DIR}/external/QR-Code-generator/cpp/qrcodegen.cpp) # or ${CMAKE_CURRENT_SOURCE_DIR}/external/QR-Code-generator/c/qrcodegen.c
+set(qr_code_generator_src ${CMAKE_CURRENT_SOURCE_DIR}/build/libqrcodegen.a)#set(qr_code_generator_src ${CMAKE_CURRENT_SOURCE_DIR}/external/QR-Code-generator/cpp/qrcodegen.cpp) # or ${CMAKE_CURRENT_SOURCE_DIR}/external/QR-Code-generator/c/qrcodegen.c
 
 ######################################
 # json
@@ -347,7 +347,7 @@ endif()
 ######################################
 # willemt/raft (BSD and has zero dependencies :D)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/external/raft/include)
-set(raft_src ${CMAKE_CURRENT_SOURCE_DIR}/external/raft/src/raft_log.c ${CMAKE_CURRENT_SOURCE_DIR}/external/raft/src/raft_node.c ${CMAKE_CURRENT_SOURCE_DIR}/external/raft/src/raft_server.c ${CMAKE_CURRENT_SOURCE_DIR}/external/raft/src/raft_server_properties.c)
+set(raft_src ${CMAKE_CURRENT_SOURCE_DIR}/build/libraft.a)#set(raft_src ${CMAKE_CURRENT_SOURCE_DIR}/external/raft/src/raft_log.c ${CMAKE_CURRENT_SOURCE_DIR}/external/raft/src/raft_node.c ${CMAKE_CURRENT_SOURCE_DIR}/external/raft/src/raft_server.c ${CMAKE_CURRENT_SOURCE_DIR}/external/raft/src/raft_server_properties.c)
 
 ######################################
 # dokun-ui_dependencies
@@ -399,8 +399,8 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
 link_directories(${CMAKE_CURRENT_SOURCE_DIR}/src ${CMAKE_CURRENT_SOURCE_DIR}/build)
 set(neroshop_src src/buyer.cpp #[[src/carrier.cpp]] src/cart.cpp src/catalog.cpp src/client.cpp src/converter.cpp src/database.cpp src/encryptor.cpp src/icon.cpp src/item.cpp src/main.cpp src/message.cpp src/order.cpp src/qr.cpp src/seller.cpp src/server.cpp src/user.cpp src/validator.cpp src/wallet.cpp)
 add_definitions(-DNEROSHOP_DEBUG) # for more detailed debugging, use -DNEROSHOP_DEBUG0
-add_executable(${neroshop_executable} ${neroshop_src} ${monero_cpp_src} ${bcrypt_src} ${sqlite_src} ${qr_code_generator_src} ${raft_src})
-target_link_libraries(${neroshop_executable} #[[${sqlite_src}]] ${curl_src} ${monero_src} ${dokun_ui_src} ${libuv_src})
+add_executable(${neroshop_executable} ${neroshop_src})#add_executable(${neroshop_executable} ${neroshop_src} ${monero_cpp_src} ${bcrypt_src} ${sqlite_src} ${qr_code_generator_src} ${raft_src})
+target_link_libraries(${neroshop_executable} ${monero_cpp_src} ${bcrypt_src} ${sqlite_src} ${qr_code_generator_src} ${raft_src} ${curl_src} ${monero_src} ${dokun_ui_src} ${libuv_src})#target_link_libraries(${neroshop_executable} #[[${sqlite_src}]] ${curl_src} ${monero_src} ${dokun_ui_src} ${libuv_src})
 ######################################
 # linking
 if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")

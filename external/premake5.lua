@@ -69,7 +69,6 @@ project "<library-name>"
     }
     --defines {}
 ]]  
-   ---------------------------------
    location "../build" -- specifies location of binaries
    filter { "configurations:Debug" }
       defines { "DEBUG" }

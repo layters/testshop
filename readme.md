@@ -38,7 +38,7 @@ Coming soon
 | [dokun-ui](external/dokun-ui)                                      | n/a             | MIT                                | graphical user interface                                               |
 | [lmdb](https://github.com/LMDB/lmdb)                               | ?               | OpenLDAP Public                    | database management                                                    |
 | [libuv](https://github.com/libuv/libuv)                            | ?               | MIT                                | networking, file system                                                |
-| [raft](https://github.com/willemt/raft)                            | ?               | BSD                                | consensus protocol                                                     |
+| [raft](https://github.com/willemt/raft)                            | ?               | BSD                                | consensus mechanism                                                    |
 
 ### Compiling neroshop from source
 0. Clone neroshop
@@ -54,7 +54,7 @@ sudo -s -- << EOF
 # prerequisites
 sudo apt install build-essential cmake git
 # neroshop, dokun-ui
-sudo apt install libx11-dev libgl1-mesa-dev libglu1-mesa-dev libcurl4-openssl-dev libssl-dev libpq-dev postgresql
+sudo apt install libx11-dev libgl1-mesa-dev libglu1-mesa-dev libcurl4-openssl-dev libssl-dev libpq-dev postgresql libuv1-dev
 # monero-cpp (monero)
 sudo apt update && sudo apt install pkg-config libssl-dev libzmq3-dev libunbound-dev libsodium-dev libunwind8-dev liblzma-dev libreadline6-dev libldns-dev libexpat1-dev libpgm-dev qttools5-dev-tools libhidapi-dev libusb-1.0-0-dev libprotobuf-dev protobuf-compiler libudev-dev libboost-chrono-dev libboost-date-time-dev libboost-filesystem-dev libboost-locale-dev libboost-program-options-dev libboost-regex-dev libboost-serialization-dev libboost-system-dev libboost-thread-dev python3 ccache doxygen graphviz
 EOF
@@ -115,14 +115,19 @@ cd ../../
 To build with [CMake](https://cmake.org/):
 
 ```bash
+# Build external libraries
+cd external/
+cmake -G"Unix Makefiles"
+make
+cd ../build
+
 # Build neroshop
-mkdir build && cd build
 cmake ..
 make
 ```
 
 
-To build with [premake5](https://premake.github.io/):
+To build with [Premake](https://premake.github.io/):
 
 ```bash
 # Build external libraries
