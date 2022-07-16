@@ -1,5 +1,8 @@
 cmake_minimum_required(VERSION 3.1.0 FATAL_ERROR)
 
+# Set cmake modules directory
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
+
 project(neroshop) # tested on Ubuntu 20.04 LTS (focal) with gcc (Ubuntu 9.3.0-17ubuntu1~20.04) 9.3.0, manjaro-xfce-21.2.6 (Qonos) with gcc (GCC) 11.2.0
 
 set(VERSION_MAJOR "0")
@@ -277,7 +280,7 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR}/external/monero-cpp/src/)
 set(monero_cpp_src external/monero-cpp/src/utils/gen_utils.cpp external/monero-cpp/src/utils/monero_utils.cpp external/monero-cpp/src/daemon/monero_daemon_model.cpp external/monero-cpp/src/daemon/monero_daemon.cpp external/monero-cpp/src/wallet/monero_wallet_model.cpp external/monero-cpp/src/wallet/monero_wallet_keys.cpp external/monero-cpp/src/wallet/monero_wallet_full.cpp)
 
 ######################################
-# libbcrypt
+# libbcrypt (deprecated)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/external/libbcrypt)
 set(bcrypt_src external/libbcrypt/crypt_blowfish/crypt_blowfish.c external/libbcrypt/crypt_blowfish/crypt_gensalt.c external/libbcrypt/crypt_blowfish/wrapper.c external/libbcrypt/bcrypt.c)
 
@@ -321,7 +324,7 @@ if(NOT CURL_FOUND)
 endif()
 
 ######################################
-# postgresql
+# postgresql (deprecated)
 include_directories(${PostgreSQL_INCLUDE_DIRS} ${PostgreSQL_INCLUDE_DIRS}/server)
 set(PostgreSQL_TYPE_INCLUDE_DIR "/usr/include/postgresql/")
 
@@ -331,13 +334,20 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR}/external/monero-cpp/external/mon
 
 ######################################
 # libuv (supports Android :D)
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/external/libuv/include ${CMAKE_CURRENT_SOURCE_DIR}/external/libuv/src)
-set(libuv_srcs libuv.a) # /usr/lib/x86_64-linux-gnu/libuv.a  # /usr/lib/x86_64-linux-gnu/libuv.so
-
+find_package(LIBUV)
+if(LIBUV_FOUND)
+    message(STATUS "Using LIBUV: ${LIBUV_LIBRARIES}")
+    include_directories(${LIBUV_INCLUDE_DIRS})
+    set(libuv_src ${LIBUV_LIBRARIES})
+endif()
+if(NOT LIBUV_FOUND)
+    include_directories(${CMAKE_CURRENT_SOURCE_DIR}/external/libuv/include ${CMAKE_CURRENT_SOURCE_DIR}/external/libuv/src)
+    set(libuv_src ${CMAKE_CURRENT_SOURCE_DIR}/external/libuv/.libs/libuv.a) # In case user chooses to build libuv themselves instead of installing it on the system
+endif()
 ######################################
 # willemt/raft (BSD and has zero dependencies :D)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/external/raft/include)
-set(raft_src src/raft_log.c src/raft_node.c src/raft_server.c src/raft_server_properties.c)
+set(raft_src ${CMAKE_CURRENT_SOURCE_DIR}/external/raft/src/raft_log.c ${CMAKE_CURRENT_SOURCE_DIR}/external/raft/src/raft_node.c ${CMAKE_CURRENT_SOURCE_DIR}/external/raft/src/raft_server.c ${CMAKE_CURRENT_SOURCE_DIR}/external/raft/src/raft_server_properties.c)
 
 ######################################
 # dokun-ui_dependencies
@@ -386,11 +396,11 @@ target_link_libraries(${daemon_executable} ${dokun_ui_src})#set(CMAKE_CXX_LINK_E
 set(neroshop_executable "neroshop")
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/external)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
-link_directories(${CMAKE_CURRENT_SOURCE_DIR}/src)
+link_directories(${CMAKE_CURRENT_SOURCE_DIR}/src ${CMAKE_CURRENT_SOURCE_DIR}/build)
 set(neroshop_src src/buyer.cpp #[[src/carrier.cpp]] src/cart.cpp src/catalog.cpp src/client.cpp src/converter.cpp src/database.cpp src/encryptor.cpp src/icon.cpp src/item.cpp src/main.cpp src/message.cpp src/order.cpp src/qr.cpp src/seller.cpp src/server.cpp src/user.cpp src/validator.cpp src/wallet.cpp)
 add_definitions(-DNEROSHOP_DEBUG) # for more detailed debugging, use -DNEROSHOP_DEBUG0
-add_executable(${neroshop_executable} ${neroshop_src} ${monero_cpp_src} ${bcrypt_src} ${sqlite_src} ${qr_code_generator_src})
-target_link_libraries(${neroshop_executable} #[[${sqlite_src}]] ${curl_src} ${monero_src} ${dokun_ui_src})
+add_executable(${neroshop_executable} ${neroshop_src} ${monero_cpp_src} ${bcrypt_src} ${sqlite_src} ${qr_code_generator_src} ${raft_src})
+target_link_libraries(${neroshop_executable} #[[${sqlite_src}]] ${curl_src} ${monero_src} ${dokun_ui_src} ${libuv_src})
 ######################################
 # linking
 if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")

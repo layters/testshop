@@ -7,6 +7,11 @@
 #ifdef __gnu_linux__
 #include "linux_header.hpp"
 #endif
+// libuv
+#include <uv.h>
+// raft
+#include <raft.h>
+// neroshop
 #include "debug.hpp"
 
 #include <iostream>

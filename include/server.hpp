@@ -13,6 +13,10 @@
 #include <thread>
 #include <mutex>
 #include <vector>
+// libuv
+#include <uv.h>
+// raft
+#include <raft.h>
 // neroshop
 #include "debug.hpp"
 

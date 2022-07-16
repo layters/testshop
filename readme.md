@@ -42,14 +42,14 @@ Coming soon
 
 ### Compiling neroshop from source
 0. Clone neroshop
-```sh
+```bash
 git clone https://github.com/larteyoh/testshop.git && cd testshop
 ```
 
 1. Install dependencies
 
 Debian/Ubuntu
-```sh
+```bash
 sudo -s -- << EOF
 # prerequisites
 sudo apt install build-essential cmake git
@@ -60,7 +60,7 @@ sudo apt update && sudo apt install pkg-config libssl-dev libzmq3-dev libunbound
 EOF
 ```
 Arch
-```sh
+```bash
 # prerequisites
 sudo pacman -Sy --needed base-devel cmake git
 # neroshop, dokun-ui
@@ -69,7 +69,7 @@ sudo pacman -Sy --needed libx11 lib32-mesa lib32-glu curl openssl postgresql
 sudo pacman -Syu --needed boost openssl zeromq libpgm unbound libsodium libunwind xz readline ldns expat gtest python3 ccache doxygen graphviz qt5-tools hidapi libusb protobuf systemd
 ```
 Fedora
-```sh
+```bash
 # prerequisites
 sudo dnf install gcc gcc-c++ make cmake git
 # neroshop, dokun-ui
@@ -79,15 +79,15 @@ sudo dnf install boost-static libstdc++-static pkgconf boost-devel openssl-devel
 ```
 
 2. Clone submodules and nested submodules
-```sh
+```bash
 cd external
 git clone --recurse-submodules https://github.com/monero-ecosystem/monero-cpp.git
 git clone --recurse-submodules https://github.com/rg3/libbcrypt.git
 git clone --recurse-submodules https://github.com/nayuki/QR-Code-generator.git
 git clone --recurse-submodules https://github.com/nlohmann/json.git
 #git clone --recurse-submodules https://github.com/curl/curl.git
+#git clone --recurse-submodules https://github.com/libuv/libuv.git
 git clone --recurse-submodules https://github.com/willemt/raft.git
-git clone --recurse-submodules https://github.com/libuv/libuv.git
 cd ../
 ```
 
@@ -95,22 +95,48 @@ cd ../
 `option(BUILD_GUI_DEPS "Build GUI dependencies." ON)`
 
 4. Build monero-project twice to create libwallet_merged.a and other .a libraries
-```sh
+```bash
 cd external/monero-cpp/external/monero-project && make release-static && make release-static
 cd ../../../../
 ```
 
-5. Build neroshop (along with dokun-ui)
-```sh
+5. Build dokun-ui
+```bash
 # Build dokun-ui
 cd external/dokun-ui
 cmake -G"Unix Makefiles"
 make
 cd ../../
+```
+
+6. Build neroshop
+
+---
+To build with [CMake](https://cmake.org/):
+
+```bash
 # Build neroshop
 mkdir build && cd build
 cmake ..
 make
+```
+
+
+To build with [premake5](https://premake.github.io/):
+
+```bash
+# Build external libraries
+cd external/
+premake5 --cc=gcc --os=linux gmake
+cd ../build && make
+
+# Build neroshop
+cd ..
+premake5 --cc=gcc --os=linux gmake
+cd build && make
+
+# Run neroshop
+./bin/Debug/neroshop
 ```
 
 
@@ -120,6 +146,6 @@ make
 [//]: # (./clean.sh)
 [//]: # (rm -rf external/dokun-ui/CMakeFiles; rm -rf external/dokun-ui/CMakeCache.txt; rm -rf external/dokun-ui/cmake_install.cmake; rm -rf external/dokun-ui/Makefile)
 [//]: # (git checkout -b test)
-[//]: # (git add CMakeLists.txt external/ include/ premake5.lua readme.md res/neroshop-logo.png res/wallets src/ test/)
+[//]: # (git add .gitignore .gitmodules cmake/ CMakeLists.txt external/ include/ premake5.lua readme.md res/neroshop-logo.png res/wallets src/ test/)
 [//]: # (git commit -m"Testing")
 [//]: # (git push -u origin test)

@@ -1,0 +1,4 @@
+build/
+external/curl/
+external/libuv/
+todo.txt
