@@ -4,7 +4,6 @@
 
 #if defined(NEROSHOP_USE_LIBBCRYPT)
 #include "bcrypt.h"
-//#include "crypt_blowfish/ow-crypt.h"
 #endif
 #include <openssl/evp.h>
 #include <openssl/err.h>

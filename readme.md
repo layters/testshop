@@ -7,22 +7,22 @@ A P2P marketplace for [Monero](https://getmonero.org/) users
 
 
 ## Table of contents
-- [The history behind neroshop](#about)
-- [Features](#features) <!-- - [Documentation](#documentation)-->
+<!-- - [The history behind neroshop](#about)-->
+<!-- - [Features](#features)--> <!-- - [Documentation](#documentation)-->
 - [Building neroshop](#building-neroshop)
   - [Dependencies](#dependencies)
   - [Compiling neroshop from source](#compiling-neroshop-from-source) <!-- - [Contributing](#contributing) --> <!-- - [Bug Bounty Program]-->
 - [Contact information](#contact)
 
 
-## About
+<!--## About
 This is currently a work in progress. There is nothing to see here :shrug:
 
 
 ## Features
 Coming soon
 
-
+-->
 ## Building neroshop
 
 ### Dependencies
