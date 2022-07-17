@@ -10,16 +10,6 @@ project "neroshop"
     files { 
         -- neroshop
         "src/buyer.cpp", --[["src/carrier.cpp",]] "src/cart.cpp", "src/catalog.cpp", "src/client.cpp", "src/converter.cpp", "src/database.cpp", "src/encryptor.cpp", "src/icon.cpp", "src/item.cpp", "src/main.cpp", "src/message.cpp", "src/order.cpp", "src/qr.cpp", "src/seller.cpp", "src/server.cpp", "src/user.cpp", "src/validator.cpp", "src/wallet.cpp",
-        -- monero-cpp
-        ----"external/monero-cpp/src/utils/gen_utils.cpp", "external/monero-cpp/src/utils/monero_utils.cpp", "external/monero-cpp/src/daemon/monero_daemon_model.cpp", "external/monero-cpp/src/daemon/monero_daemon.cpp", "external/monero-cpp/src/wallet/monero_wallet_model.cpp", "external/monero-cpp/src/wallet/monero_wallet_keys.cpp", "external/monero-cpp/src/wallet/monero_wallet_full.cpp",
-        -- bcrypt
-        ----"external/libbcrypt/crypt_blowfish/crypt_blowfish.c", "external/libbcrypt/crypt_blowfish/crypt_gensalt.c", "external/libbcrypt/crypt_blowfish/wrapper.c", "external/libbcrypt/bcrypt.c",
-        -- sqlite3 (amalgamation)
-        ----"external/sqlite/sqlite3.c",
-        -- QR-Code-generator
-        ----"external/QR-Code-generator/cpp/qrcodegen.cpp",
-        -- raft
-        ----"external/raft/src/raft_log.c", "external/raft/src/raft_node.c", "external/raft/src/raft_server.c", "external/raft/src/raft_server_properties.c",
     }
     includedirs { 
         "include/", 
@@ -83,7 +73,6 @@ project "neroshop"
         "external/monero-cpp/external/monero-project/build/release/src/multisig/multisig",
         "external/monero-cpp/external/monero-project/build/release/src/version",
         "external/monero-cpp/external/monero-project/build/release/external/randomx/randomx",
-        --"external/monero-cpp/external/monero-project/build/release/",
         -- protobuf
         "protobuf",
         -- libusb
@@ -101,7 +90,7 @@ project "neroshop"
         -- libuv
         "uv",
     }
-    defines { "HAVE_HIDAPI" --[["NEROSHOP_USE_POSTGRESQL"]] }
+    defines { "HAVE_HIDAPI" --[["NEROSHOP_USE_LIBBCRYPT",]] --[["NEROSHOP_USE_POSTGRESQL",]] }
     if os.host() == "linux" then -- same as os.get(), except os.get() is deprecated in premake5
         links { "pthread", "dl", "X11", }
     end

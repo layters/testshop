@@ -25,10 +25,12 @@ Coming soon
 ## Building neroshop
 
 ### Dependencies
+:heavy_check_mark: = Currently in use; :o: = Optional; :x: = Not currently in use or removed; :grey_question: = Not yet in use, but up for consideration
+
 |      Library                                                       | Minimum Ver.    |         Purpose                                                        | Status (In Use)                     |
 |--------------------------------------------------------------------|-----------------|------------------------------------------------------------------------|-------------------------------------|
 | [monero-cpp](https://github.com/monero-ecosystem/monero-cpp)       | latest          | monero wallet and payment system                                       | :heavy_check_mark:                  |
-| [libbcrypt](https://github.com/rg3/libbcrypt)                      | ?               | password hashing                                                       | :grey_question:                     |
+| [libbcrypt](https://github.com/rg3/libbcrypt)                      | ?               | password hashing                                                       | :o:                                 |
 | [sqlite3](https://sqlite.org/)                                     | ?               | database management                                                    | :heavy_check_mark:                  |
 | [QR Code generator](https://github.com/nayuki/QR-Code-generator)   | ?               | qr code generation                                                     | :heavy_check_mark:                  |
 | [json](https://github.com/nlohmann/json/)                          | ?               | json parsing                                                           | :heavy_check_mark:                  |
@@ -39,6 +41,7 @@ Coming soon
 | [lmdb](https://github.com/LMDB/lmdb)                               | ?               | database management                                                    | :grey_question:                     |
 | [libuv](https://github.com/libuv/libuv)                            | ?               | networking, file system                                                | :heavy_check_mark:                  |
 | [raft](https://github.com/willemt/raft)                            | ?               | consensus mechanism                                                    | :heavy_check_mark:                  |
+| [stduuid](https://github.com/mariusbancila/stduuid)                | ?               | order number (uuid) generation                                         | :grey_question:                     |
 
 ### Compiling neroshop from source
 0. Clone neroshop
@@ -82,7 +85,7 @@ sudo dnf install boost-static libstdc++-static pkgconf boost-devel openssl-devel
 ```bash
 cd external
 git clone --recurse-submodules https://github.com/monero-ecosystem/monero-cpp.git
-git clone --recurse-submodules https://github.com/rg3/libbcrypt.git
+#git clone --recurse-submodules https://github.com/rg3/libbcrypt.git
 #git clone --recurse-submodules https://github.com/sqlite/sqlite.git
 git clone --recurse-submodules https://github.com/nayuki/QR-Code-generator.git
 git clone --recurse-submodules https://github.com/nlohmann/json.git
@@ -94,6 +97,8 @@ cd ../
 
 3. Modify external/monero-cpp/external/monero-project/CMakeLists.txt:
 `option(BUILD_GUI_DEPS "Build GUI dependencies." ON)`
+For Fedora users, you may need to add this line under the "find_package(Boost .." in case of an "undefined reference to icu_*" error:
+`set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -licuio -licui18n -licuuc -licudata")`
 
 4. Build monero-project twice to create libwallet_merged.a and other .a libraries
 ```bash

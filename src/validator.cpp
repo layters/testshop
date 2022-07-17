@@ -6,6 +6,7 @@
 ////////////////////
 bool neroshop::Validator::register_user(const std::string& username, const std::string& password, const std::string& confirm_pw, std::string opt_email) // user would have to confirm their pw twice to make sure they match :O - I totally forgot!
 {
+#if defined(NEROSHOP_USE_LIBBCRYPT)
     // validate username (will appear only in lower-case letters within the app)
     if(!validate_username(username)) return false;
     // validate password
@@ -36,10 +37,11 @@ bool neroshop::Validator::register_user(const std::string& username, const std::
     NEROSHOP_TAG_OUT std::cout << ss.str() << "\033[1;32;49m" << " account registered" << "\033[0m" << std::endl;
 #endif    
     neroshop::print((!username.empty()) ? std::string("Welcome to neroshop, " + username) : "Welcome to neroshop", 4);
+#endif // NEROSHOP_USE_LIBBCRYPT
     return true;
 } //ELI5: https://auth0.com/blog/adding-salt-to-hashing-a-better-way-to-store-passwords/  why bcrypt: https://security.stackexchange.com/questions/4781/do-any-security-experts-recommend-bcrypt-for-password-storage/6415#6415
 ////////////////////
-void neroshop::Validator::save_user(const std::string& username, const char pw_hash[BCRYPT_HASHSIZE], std::string email_hash) 
+void neroshop::Validator::save_user(const std::string& username, const char * pw_hash/*const char pw_hash[BCRYPT_HASHSIZE]*/, std::string email_hash) 
 {
     ////////////////////////////////
     // sqlite - save a copy of user's account details locally (on user's device)
@@ -232,7 +234,7 @@ bool neroshop::Validator::login_with_email(const std::string& email, const std::
     return false;	
 }
 ////////////////////
-void neroshop::Validator::change_pw(const std::string& old_pw, const std::string& new_pw/*, const std::string& confirm_new_pw*/) 
+void neroshop::Validator::change_pw(const std::string& old_pw, const std::string& new_pw, const std::string& confirm_new_pw) 
 {}
 ////////////////////
 ////////////////////
@@ -422,9 +424,10 @@ bool neroshop::Validator::validate_email(const std::string& email) {
     return false;    
 }
 ////////////////////
+#if defined(NEROSHOP_USE_LIBBCRYPT)
 bool neroshop::Validator::validate_bcrypt_hash(const std::string& password, const std::string& hash)
-{   // verify password
-    int result = bcrypt_checkpw(password.c_str(), hash.c_str());
+{   
+    int result = bcrypt_checkpw(password.c_str(), hash.c_str()); // verify password
 #ifdef NEROSHOP_DEBUG
 	NEROSHOP_TAG_OUT std::cout << ((result != 0) ? "\033[0;91mThe password does NOT match" : "\033[0;32mThe password matches") << "\033[0m" << std::endl;
 #endif
@@ -432,8 +435,8 @@ bool neroshop::Validator::validate_bcrypt_hash(const std::string& password, cons
 }
 ////////////////////
 bool neroshop::Validator::generate_bcrypt_salt(unsigned int workfactor, char salt[BCRYPT_HASHSIZE])
-{   // generate a salt (random)
-    int result = bcrypt_gensalt(workfactor, salt); // workfactor must be between 4 and 31 - default is 12
+{   
+    int result = bcrypt_gensalt(workfactor, salt); // generate a salt (random) // workfactor must be between 4 and 31 - default is 12
 #ifdef NEROSHOP_DEBUG0
     std::cout << ((result != 0) ? NEROSHOP_TAG "bcrypt salt failed to generate" : NEROSHOP_TAG "generated bcrypt salt: " + std::string(salt)) << std::endl; // 0=success
     // two users with the same password results in the same exact hash, which is why a unique salt must be generated
@@ -442,13 +445,14 @@ bool neroshop::Validator::generate_bcrypt_salt(unsigned int workfactor, char sal
 }
 ////////////////////
 bool neroshop::Validator::generate_bcrypt_hash(const std::string& password, const char salt[BCRYPT_HASHSIZE], char hash[BCRYPT_HASHSIZE])
-{   // generate hash (from password and salt combination)
-    int result = bcrypt_hashpw(password.c_str(), salt, hash);
+{   
+    int result = bcrypt_hashpw(password.c_str(), salt, hash); // generate hash (from password and salt combination)
 #ifdef NEROSHOP_DEBUG0
     std::cout << ((result != 0) ? NEROSHOP_TAG "bcrypt hash failed to generate" : NEROSHOP_TAG "generated bcrypt hash: " + std::string(hash)) << std::endl;
 #endif
     return (result == 0);
 }
+#endif // NEROSHOP_USE_LIBBCRYPT
 ////////////////////
 bool neroshop::Validator::validate_sha256_hash(const std::string& email, const std::string& hash) { // raw/unsalted hash
     std::string temp_hash;

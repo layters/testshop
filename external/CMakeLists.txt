@@ -16,9 +16,12 @@ include_directories(monero-cpp/src/)
 set(monero_cpp_srcs monero-cpp/src/utils/gen_utils.cpp monero-cpp/src/utils/monero_utils.cpp monero-cpp/src/daemon/monero_daemon_model.cpp monero-cpp/src/daemon/monero_daemon.cpp monero-cpp/src/wallet/monero_wallet_model.cpp monero-cpp/src/wallet/monero_wallet_keys.cpp monero-cpp/src/wallet/monero_wallet_full.cpp)
 add_library(monero-cpp STATIC ${monero_cpp_srcs})
 
+if(DEFINED NEROSHOP_USE_LIBBCRYPT) # -DNEROSHOP_USE_LIBBCRYPT=1
 include_directories(libbcrypt/)
 set(libbcrypt_srcs libbcrypt/crypt_blowfish/crypt_blowfish.c libbcrypt/crypt_blowfish/crypt_gensalt.c libbcrypt/crypt_blowfish/wrapper.c libbcrypt/bcrypt.c)
+message(STATUS "Building libbcrypt: ${libbcrypt_srcs}")
 add_library(bcrypt STATIC ${libbcrypt_srcs})
+endif()
 
 include_directories(QR-Code-generator/cpp/)
 set(QR_Code_generator_srcs QR-Code-generator/cpp/qrcodegen.cpp) # or QR-Code-generator/c/qrcodegen.c

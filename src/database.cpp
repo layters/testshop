@@ -631,6 +631,7 @@ void neroshop::DB::SQLite3::close() {
 	}
 	sqlite3_close(handle);
 	handle = nullptr;
+    opened = false;
 }
 ////////////////////
 void neroshop::DB::SQLite3::execute(const std::string& command) 
