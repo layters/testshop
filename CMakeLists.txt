@@ -420,7 +420,7 @@ endif()
 find_package(PostgreSQL)
 if(PostgreSQL_FOUND)
     if(DEFINED NEROSHOP_USE_POSTGRESQL) # -DNEROSHOP_USE_POSTGRESQL=1
-        message("-- Using PostgreSQL: ${PostgreSQL_LIBRARIES} (v${PostgreSQL_VERSION_STRING})")
+        message(STATUS "Using PostgreSQL: ${PostgreSQL_LIBRARIES} (v${PostgreSQL_VERSION_STRING})")
         target_compile_definitions(${neroshop_executable} PUBLIC -DNEROSHOP_USE_POSTGRESQL)
     endif() # end of NEROSHOP_USE_POSTGRESQL definition
     target_link_libraries(${neroshop_executable} ${PostgreSQL_LIBRARIES})

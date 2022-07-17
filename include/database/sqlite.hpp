@@ -32,6 +32,7 @@ public:
 	// getters
 	static std::string get_sqlite_version();
     sqlite3 * get_handle() const;
+    static SQLite3 * get_singleton();
 	void * get_blob(const std::string& command);
 	void * get_blob_params(const std::string& command, const std::vector<std::string>& args);    
 	std::string get_text(const std::string& command);// const;
@@ -44,6 +45,7 @@ public:
     bool table_exists(const std::string& table_name);
 private:
 	sqlite3 * handle;
+	static std::unique_ptr<SQLite3> singleton;
 	static int callback(void *not_used, int argc, char **argv, char **az_col_name);
 };
 }

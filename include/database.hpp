@@ -1,10 +1,10 @@
 #ifndef DATABASE_HPP_NEROSHOP // recommended to add unique identifier like _NEROSHOP to avoid naming collision with other libraries
 #define DATABASE_HPP_NEROSHOP
 
-//#include "" // non-relational or NoSQL
+//#include "database/lmdb.hpp"
 #if defined(NEROSHOP_USE_POSTGRESQL) 
-#include "database/postgresql.hpp" // relational (server-based)
+#include "database/postgresql.hpp"
 #endif
-#include "database/sqlite.hpp" // relational (file-based)
+#include "database/sqlite.hpp"
 
 #endif
