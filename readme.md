@@ -5,6 +5,7 @@
 ## Overview
 A P2P marketplace for [Monero](https://getmonero.org/) users
 
+
 ## Table of contents
 - [The history behind neroshop](#about)
 - [Features](#features) <!-- - [Documentation](#documentation)-->
@@ -13,9 +14,9 @@ A P2P marketplace for [Monero](https://getmonero.org/) users
   - [Compiling neroshop from source](#compiling-neroshop-from-source) <!-- - [Contributing](#contributing) --> <!-- - [Bug Bounty Program]-->
 - [Contact information](#contact)
 
+
 ## About
 This is currently a work in progress. There is nothing to see here :shrug:
-
 
 
 ## Features
@@ -49,6 +50,7 @@ Coming soon
 git clone https://github.com/larteyoh/testshop.git && cd testshop
 ```
 
+
 1. Install dependencies
 
 Debian/Ubuntu
@@ -81,6 +83,7 @@ sudo dnf install libX11-devel mesa-libGL-devel mesa-libGLU-devel libcurl-devel o
 sudo dnf install boost-static libstdc++-static pkgconf boost-devel openssl-devel zeromq-devel openpgm-devel unbound-devel libsodium-devel libunwind-devel xz-devel readline-devel ldns-devel expat-devel gtest-devel ccache doxygen graphviz qt5-linguist hidapi-devel libusbx-devel protobuf-devel protobuf-compiler systemd-devel
 ```
 
+
 2. Clone submodules and nested submodules
 ```bash
 cd external
@@ -95,17 +98,20 @@ git clone --recurse-submodules https://github.com/willemt/raft.git
 cd ../
 ```
 
+
 3. Modify external/monero-cpp/external/monero-project/CMakeLists.txt:
 `option(BUILD_GUI_DEPS "Build GUI dependencies." ON)`
 
 For Fedora users, you may need to add this line under the "find_package(Boost .." in case of an "undefined reference to icu_*" error:
 `set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -licuio -licui18n -licuuc -licudata")`
 
+
 4. Build monero-project twice to create libwallet_merged.a and other .a libraries
 ```bash
 cd external/monero-cpp/external/monero-project && make release-static && make release-static
 cd ../../../../
 ```
+
 
 5. Build dokun-ui
 ```bash
@@ -115,6 +121,7 @@ cmake -G"Unix Makefiles"
 make
 cd ../../
 ```
+
 
 6. Build neroshop
 
