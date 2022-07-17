@@ -45,7 +45,7 @@ Coming soon
 | [stduuid](https://github.com/mariusbancila/stduuid)                | ?               | order number generation                                                | :grey_question:                     |
 
 ### Compiling neroshop from source
-0. Clone neroshop
+**0. Clone neroshop**
 ```bash
 git clone https://github.com/larteyoh/testshop.git && cd testshop
 ```
