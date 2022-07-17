@@ -401,13 +401,14 @@ set(neroshop_src src/buyer.cpp #[[src/carrier.cpp]] src/cart.cpp src/catalog.cpp
 add_definitions(-DNEROSHOP_DEBUG) # for more detailed debugging, use -DNEROSHOP_DEBUG0
 add_executable(${neroshop_executable} ${neroshop_src})#add_executable(${neroshop_executable} ${neroshop_src} ${monero_cpp_src} ${bcrypt_src} ${sqlite_src} ${qr_code_generator_src} ${raft_src})
 target_link_libraries(${neroshop_executable} ${monero_cpp_src} ${sqlite_src} ${qr_code_generator_src} ${raft_src} ${curl_src} ${monero_src} ${dokun_ui_src} ${libuv_src})#target_link_libraries(${neroshop_executable} #[[${sqlite_src}]] ${curl_src} ${monero_src} ${dokun_ui_src} ${libuv_src})
+
+######################################
 if(DEFINED NEROSHOP_USE_LIBBCRYPT) # -DNEROSHOP_USE_LIBBCRYPT=1
     message(STATUS "Using libbcrypt: ${bcrypt_src}")
     target_compile_definitions(${neroshop_executable} PUBLIC -DNEROSHOP_USE_LIBBCRYPT)
     target_link_libraries(${neroshop_executable} ${bcrypt_src})
 endif()
-######################################
-# linking
+
 if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
     target_link_libraries(${neroshop_executable} ${posix_src})
     target_link_libraries(${daemon_executable} ${posix_src})
@@ -422,12 +423,15 @@ if(OPENGL_FOUND)
 	target_link_libraries(${neroshop_executable} ${OPENGL_LIBRARIES})
 	target_link_libraries(${daemon_executable} ${OPENGL_LIBRARIES})
 endif()
+
 find_package(PostgreSQL)
 if(PostgreSQL_FOUND)
     if(DEFINED NEROSHOP_USE_POSTGRESQL) # -DNEROSHOP_USE_POSTGRESQL=1
         message(STATUS "Using PostgreSQL: ${PostgreSQL_LIBRARIES} (v${PostgreSQL_VERSION_STRING})")
         target_compile_definitions(${neroshop_executable} PUBLIC -DNEROSHOP_USE_POSTGRESQL)
-    endif() # end of NEROSHOP_USE_POSTGRESQL definition
-    target_link_libraries(${neroshop_executable} ${PostgreSQL_LIBRARIES})
-    target_link_libraries(${daemon_executable} ${PostgreSQL_LIBRARIES})
+        target_link_libraries(${neroshop_executable} ${PostgreSQL_LIBRARIES})
+        target_link_libraries(${daemon_executable} ${PostgreSQL_LIBRARIES})
+    endif()
 endif()
+
+######################################

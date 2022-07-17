@@ -38,6 +38,10 @@ bool neroshop::Validator::register_user(const std::string& username, const std::
 #endif    
     neroshop::print((!username.empty()) ? std::string("Welcome to neroshop, " + username) : "Welcome to neroshop", 4);
 #endif // NEROSHOP_USE_LIBBCRYPT
+#if !defined(NEROSHOP_USE_LIBBCRYPT)
+    neroshop::print("NEROSHOP_USE_LIBBCRYPT not defined", 1);
+    return false;
+#endif
     return true;
 } //ELI5: https://auth0.com/blog/adding-salt-to-hashing-a-better-way-to-store-passwords/  why bcrypt: https://security.stackexchange.com/questions/4781/do-any-security-experts-recommend-bcrypt-for-password-storage/6415#6415
 ////////////////////
@@ -161,9 +165,15 @@ bool neroshop::Validator::login(const std::string& username, const std::string& 
     if(!generate_sha256_hash(password, pw_prehash)) {
         return false;
     }
+    #if defined(NEROSHOP_USE_LIBBCRYPT)
     if(!validate_bcrypt_hash(pw_prehash, pw_hash)) { //if(!validate_bcrypt_hash(password, pw_hash)) {
         return false;
     }
+    #endif
+    #if !defined(NEROSHOP_USE_LIBBCRYPT)
+    neroshop::print("NEROSHOP_USE_LIBBCRYPT not defined", 1);
+    return false;
+    #endif
 #ifdef NEROSHOP_DEBUG
 	auto now = std::chrono::system_clock::now();
     auto in_time_t = std::chrono::system_clock::to_time_t(now);
@@ -216,9 +226,15 @@ bool neroshop::Validator::login_with_email(const std::string& email, const std::
     if(!generate_sha256_hash(password, pw_prehash)) {
         return false;
     }
+    #if defined(NEROSHOP_USE_LIBBCRYPT)
     if(!validate_bcrypt_hash(pw_prehash, pw_hash)) { //if(!validate_bcrypt_hash(password, pw_hash)) {
         return false;
     }	
+    #endif
+    #if !defined(NEROSHOP_USE_LIBBCRYPT)
+    neroshop::print("NEROSHOP_USE_LIBBCRYPT not defined", 1);
+    return false;
+    #endif
     // save the raw email within the application (for later use)
 #ifdef NEROSHOP_DEBUG
 	auto now = std::chrono::system_clock::now();

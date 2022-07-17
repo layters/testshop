@@ -149,12 +149,12 @@ To build with [Premake](https://premake.github.io/):
 ```bash
 # Build external libraries
 cd external/
-premake5 --cc=gcc --os=linux gmake
+premake5 gmake
 cd ../build && make
 
 # Build neroshop
 cd ..
-premake5 --cc=gcc --os=linux gmake
+premake5 gmake
 cd build && make
 
 # Run neroshop
