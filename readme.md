@@ -51,7 +51,7 @@ git clone https://github.com/larteyoh/testshop.git && cd testshop
 ```
 
 
-1. Install dependencies
+**1. Install dependencies**
 
 Debian/Ubuntu
 ```bash
@@ -84,7 +84,7 @@ sudo dnf install boost-static libstdc++-static pkgconf boost-devel openssl-devel
 ```
 
 
-2. Clone submodules and nested submodules
+**2. Clone submodules and nested submodules**
 ```bash
 cd external
 git clone --recurse-submodules https://github.com/monero-ecosystem/monero-cpp.git
@@ -99,21 +99,21 @@ cd ../
 ```
 
 
-3. Modify external/monero-cpp/external/monero-project/CMakeLists.txt:
+**3. Modify external/monero-cpp/external/monero-project/CMakeLists.txt:**
 `option(BUILD_GUI_DEPS "Build GUI dependencies." ON)`
 
 For Fedora users, you may need to add this line under the "find_package(Boost .." in case of an "undefined reference to icu_*" error:
 `set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -licuio -licui18n -licuuc -licudata")`
 
 
-4. Build monero-project twice to create libwallet_merged.a and other .a libraries
+**4. Build monero-project twice to create libwallet_merged.a and other .a libraries**
 ```bash
 cd external/monero-cpp/external/monero-project && make release-static && make release-static
 cd ../../../../
 ```
 
 
-5. Build dokun-ui
+**5. Build dokun-ui**
 ```bash
 # Build dokun-ui
 cd external/dokun-ui
@@ -123,7 +123,7 @@ cd ../../
 ```
 
 
-6. Build neroshop
+**6. Build neroshop**
 
 To build with [CMake](https://cmake.org/):
 
