@@ -596,7 +596,7 @@ bool neroshop::DB::Postgres::column_exists(const std::string& table_name, const 
 // sqlite3
 /////////////////////////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////////////////////////
-neroshop::DB::SQLite3::SQLite3() : handle(nullptr) {}
+neroshop::DB::SQLite3::SQLite3() : handle(nullptr), opened(false) {}
 ////////////////////
 neroshop::DB::SQLite3::SQLite3(const std::string& filename) : SQLite3()
 {
@@ -609,7 +609,7 @@ neroshop::DB::SQLite3::~SQLite3() {
     close();
 }
 ////////////////////
-std::unique_ptr<neroshop::DB::SQLite3> neroshop::DB::SQLite3::singleton (std::make_unique<neroshop::DB::SQLite3>("data.sqlite"));
+std::unique_ptr<neroshop::DB::SQLite3> neroshop::DB::SQLite3::singleton (std::make_unique<neroshop::DB::SQLite3>("data.sqlite"));//(nullptr);
 ////////////////////
 // SQLite database should only need to be opened once per application session and closed once when the application is terminated
 bool neroshop::DB::SQLite3::open(const std::string& filename)
@@ -621,6 +621,7 @@ bool neroshop::DB::SQLite3::open(const std::string& filename)
 	if(get_text("PRAGMA journal_mode;") != "wal") {
 	    execute("PRAGMA journal_mode = WAL;"); // To prevent database from being locked. See https://www.sqlite.org/wal.html
 	}
+	opened = true;
 	return true;
 }
 ////////////////////
@@ -833,6 +834,9 @@ float neroshop::DB::SQLite3::get_real_params(const std::string& command, const s
 ////////////////////
 ////////////////////
 ////////////////////
+bool neroshop::DB::SQLite3::is_open() const {
+    return (opened == true);
+}
 ////////////////////
 bool neroshop::DB::SQLite3::table_exists(const std::string& table_name) {
     std::string command = "SELECT count(*) FROM sqlite_master WHERE type = 'table' AND name = $1;";

@@ -9,18 +9,18 @@
 //#include <fstream> // std::ofstream, std::ifstream
 #include <chrono> // std::chrono
 #include <iomanip> //std::put_time, std::setfill, std::setw
-// neroshop
-#include "database.hpp"
-// dokun
-#include <string.hpp>
 ////extern "C" {
 // libbcrypt
 #include "bcrypt.h"
 //#include "crypt_blowfish/ow-crypt.h"
-// openssl - monero uses openssl so we just have to link this code to monero
+// openssl
 #include <openssl/evp.h>
 #include <openssl/err.h>
 ////}
+// dokun
+#include <string.hpp>
+// neroshop
+#include "database.hpp"
 
 namespace neroshop {
 class Validator {
@@ -43,21 +43,3 @@ private:
 };
 }
 #endif
-/*
-testing speeds:
-$ openssl speed sha256 sha512
-
-usernames:
-// 2-30 characters in length
-// cannot contain any spaces
-// cannot contain any symbols except: -, _, and .
-// can only begin with a letter
-// can only end with a letter or number
-
-passwords:
-// at least one upper case English letter, (?=.*?[A-Z])
-// at least one lower case English letter, (?=.*?[a-z])
-// at least one digit, (?=.*?[0-9])
-// at least one special character, (?=.*?[#?!@$%^&*-])
-// minimum eight in length .{8,} (with the anchors) 
-*/

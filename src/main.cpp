@@ -1,5 +1,3 @@
-#include <iostream>
-#include <string>
 // neroshop
 #include "../include/neroshop.hpp"
 using namespace neroshop;

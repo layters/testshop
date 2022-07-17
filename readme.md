@@ -1,9 +1,9 @@
 # neroshop 
 
-A P2P marketplace for [Monero](https://getmonero.org/) users
-
 [![alt text](res/neroshop-logo.png)](https://github.com/larteyoh/testshop "neroshop logo")
 
+## Overview
+A P2P marketplace for [Monero](https://getmonero.org/) users
 
 ## Table of contents
 - [The history behind neroshop](#about)
@@ -25,20 +25,20 @@ Coming soon
 ## Building neroshop
 
 ### Dependencies
-|      Library                                                       | Minimum Ver.    | Status (In Use)                     |         Purpose                                                        |
-|--------------------------------------------------------------------|-----------------|-------------------------------------|------------------------------------------------------------------------|
-| [monero-cpp](https://github.com/monero-ecosystem/monero-cpp)       | latest          | :heavy_check_mark:                  | monero wallet and payment system                                       |
-| [libbcrypt](https://github.com/rg3/libbcrypt)                      | ?               | :x:                                 | password hashing                                                       |
-| [sqlite3](https://sqlite.org/)                                     | ?               | :heavy_check_mark:                  | database management                                                    |
-| [QR Code generator](https://github.com/nayuki/QR-Code-generator)   | ?               | :heavy_check_mark:                  | qr code generation                                                     |
-| [json](https://github.com/nlohmann/json/)                          | ?               | :heavy_check_mark:                  | json parsing                                                           |
-| [curl](https://github.com/curl/curl)                               | ?               | :heavy_check_mark:                  | currency conversion                                                    |
-| [openssl](https://github.com/openssl/openssl)                      | 1.1.1           | :heavy_check_mark:                  | for curl, sha256 sum and message encryption                            |
-| [postgresql](https://www.postgresql.org/)                          | ?               | :x:                                 | server-based database management                                       |
-| [dokun-ui](external/dokun-ui)                                      | n/a             | :heavy_check_mark:                  | graphical user interface                                               |
-| [lmdb](https://github.com/LMDB/lmdb)                               | ?               | :grey_question:                     | database management                                                    |
-| [libuv](https://github.com/libuv/libuv)                            | ?               | :heavy_check_mark:                  | networking, file system                                                |
-| [raft](https://github.com/willemt/raft)                            | ?               | :heavy_check_mark:                  | consensus mechanism                                                    |
+|      Library                                                       | Minimum Ver.    |         Purpose                                                        | Status (In Use)                     |
+|--------------------------------------------------------------------|-----------------|------------------------------------------------------------------------|-------------------------------------|
+| [monero-cpp](https://github.com/monero-ecosystem/monero-cpp)       | latest          | monero wallet and payment system                                       | :heavy_check_mark:                  |
+| [libbcrypt](https://github.com/rg3/libbcrypt)                      | ?               | password hashing                                                       | :grey_question:                     |
+| [sqlite3](https://sqlite.org/)                                     | ?               | database management                                                    | :heavy_check_mark:                  |
+| [QR Code generator](https://github.com/nayuki/QR-Code-generator)   | ?               | qr code generation                                                     | :heavy_check_mark:                  |
+| [json](https://github.com/nlohmann/json/)                          | ?               | json parsing                                                           | :heavy_check_mark:                  |
+| [curl](https://github.com/curl/curl)                               | ?               | currency conversion                                                    | :heavy_check_mark:                  |
+| [openssl](https://github.com/openssl/openssl)                      | 1.1.1           | for curl, sha256 sum and message encryption                            | :heavy_check_mark:                  |
+| [postgresql](https://www.postgresql.org/)                          | ?               | server-based database management                                       | :x:                                 |
+| [dokun-ui](external/dokun-ui)                                      | n/a             | graphical user interface                                               | :heavy_check_mark:                  |
+| [lmdb](https://github.com/LMDB/lmdb)                               | ?               | database management                                                    | :grey_question:                     |
+| [libuv](https://github.com/libuv/libuv)                            | ?               | networking, file system                                                | :heavy_check_mark:                  |
+| [raft](https://github.com/willemt/raft)                            | ?               | consensus mechanism                                                    | :heavy_check_mark:                  |
 
 ### Compiling neroshop from source
 0. Clone neroshop

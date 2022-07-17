@@ -1,15 +1,15 @@
-// filename: .hpp
+// filename: seller.hpp
 //#pragma once // use #ifndef _HPP, #define _HPP, and #endif instead
 
 #ifndef SELLER_HPP_NEROSHOP
 #define SELLER_HPP_NEROSHOP
 
+#include "wallet.hpp"
+#include "user.hpp"
+#include "item.hpp"
+#include "converter.hpp"
 #include <cmath> // floor
 #include <random>
-#include "wallet.hpp" // seller will use wallet to generate a unique subaddress for each tx
-#include "user.hpp"
-#include "item.hpp"//#include "inventory.hpp" // item.hpp included here//#include "registry.hpp"//deprecated
-#include "converter.hpp"
 
 namespace neroshop {
 class Seller : public User { 
@@ -71,29 +71,3 @@ private:
 };
 }
 #endif
-// images, price, search_terms
-// coupons should have a uuid hmm ...
-// create promotions such as: percent_off, free_shipping, giveaway, buy_one_get_one_free, coupon codes(time_limit, expire_date) => https://tinuiti.com/blog/amazon/amazon-promotions-for-sellers/
-// coupon_min_percent = 2%, coupon_max_percent = 90% (amazon is 5%-80%)
-/*
-combining different promotions/coupons:
-
-Lightning Deal Discount: 20%
-
-Coupon Discount: 5%
-
-Total Discount: ($100 * 0.2) + ($100 * 0.05) = $25
-
-*/
-/*
-	Seller * seller = new Seller();
-	std::cout << "good_ratings: " << seller->get_good_ratings() << std::endl;
-	std::cout << "bad_ratings: " << seller->get_bad_ratings() << std::endl;
-	std::cout << "total_ratings: " << seller->get_total_ratings() << std::endl;
-	std::cout << std::endl;
-	std::cout << "reputation: " << seller->get_reputation() << "%" << std::endl;
-	//std::cout << "good_percentage: " << seller->get_good_percentage() << "%" << std::endl;
-	//std::cout << "bad_percentage: " << seller->get_bad_percentage() << "%" << std::endl;
-	// total number of sellers
-	std::cout << "\nnumber of sellers: " << Registry::get_seller_registry()->get_size() << std::endl;	
-*/ // list a product - name, code(upc, ean, isbn, etc.), description/bullet points,

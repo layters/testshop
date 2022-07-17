@@ -131,26 +131,3 @@ private:
 };
 }
 #endif // WALLET_HPP
-/*
-// both the seller and buyer should be able to see what address was assigned to what customer:
-    "receiving address: 8BGXGi3GeS7Q8Qmo3X2ii9fNpgUdrPTESGmeCPXSZPPyf5XLHcBMMSFM4p68XNQKhpK3Jg7m9e1Q1Kdpo9WZqCFLFG5DUAh" // seller->get_address(seller->get_address_count()) // last item in std::vector
-    "customer: layter" // buyer->get_name();
-    "total: 2 XMR ($470)"
-    "status: awaiting payment" // 0-no transaction (red) found 1-awaiting pending (yellow) 2-payment received (green)
-    
-// only the seller can see the buyer's private information:
-    "name: Resident"
-    "address: 12 Robot Street"
-    "city: Boston"
-    "state: Massachusetts"
-    "zipcode: 02115"
-
-// then the seller must send the tracking information to the buyer:
-    "tracking number: 1787657564586790"
-    "service: UPS"
-    
-    // NOTE: a new subaddress is generated for each customer and is only used once then never again!
-    // NOTE: the sending address is not necessary to store as long as the seller receives his payment
-    // NOTE: only the Seller class will make use of the Wallet class. Buyers must use an external wallet to make transactions
-    // Buyers can rate a Seller based on the Seller's ability to fullfill their part of the transaction
-*/

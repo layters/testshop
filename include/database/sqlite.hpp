@@ -42,10 +42,12 @@ public:
 	float get_real(const std::string& command);
 	float get_real_params(const std::string& command, const std::vector<std::string>& args);
     // boolean
+    bool is_open() const;
     bool table_exists(const std::string& table_name);
 private:
 	sqlite3 * handle;
 	static std::unique_ptr<SQLite3> singleton;
+	bool opened;
 	static int callback(void *not_used, int argc, char **argv, char **az_col_name);
 };
 }

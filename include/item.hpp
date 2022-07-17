@@ -7,11 +7,11 @@
 #include <iostream>
 #include <vector>
 #include <tuple>        // std::tuple, std::get, std::tie, std::ignore
+// dokun-ui
+#include <image.hpp>
+#include <file.hpp> // for checking export file directory
 // neroshop
 #include "database.hpp"
-// dokun-ui
-#include "image.hpp"
-#include <file.hpp> // for checking export file directory
 
 namespace neroshop {
 class Item { // or Product or whatever you want to call it
@@ -161,57 +161,3 @@ private:
 };
 }
 #endif
-/*
-If you are selling, for example, yoga pants in different sizes and colors, this is how you might want to manage the SKUs for them:
-
-Yoga Pants, color: Pink, Size: 36, Material: Spandex – SKU: YP-P-36-S
-
-SKU: an internal code that each business creates for itself ( https://www.erpag.com/news/what-is-sku )
-UPC: the original format for product barcodes (Universal/Unique Product Code (UPC))(GTIN-12)
-     - primary barcodes used in U.S and Canada
-     - contains four sections: country code, company prefix, product number, and final digit
-EAN: - commonly used in other countries (European Artical Numbers)(GTIN-13)
-IAN: - with different country codes and varying lengths (International Article Numbers)
-JAN: - used specifically for products for the Japanese marketplace. (Japanese Article Number)
-ISBN - (International Standard Book Number), or ISBN, is a product identifier used specifically for books
-GTIN-14 - GTIN-14
-
-** GS1 is the only legitimate supplier of UPC codes for Amazon and beyond. This means you should purchase your UPC codes directly through GS1. It’s the standard resource that Amazon and other companies use to check the validity of a product’s UPC. **
-
-SOURCE: https://www.sellerschoice.digital/blog/upc-codes
-
-    Brand name
-    Product category
-    Variants (size, color, length, weight, style)
-    Month/ Year: it’s optional, depending on the product type you sell
-
-neroshop + games + blue + 200 + boston = NS-GAME-BLU-200-BOS
-https://avada.io/resources/generate-sku-number.html
-
-SKU generators: https://www.zoho.com/in/inventory/sku-generator/
-                https://www.tradegecko.com/free-tools/sku-generator
-
-Item props:
-name
-id (need to retrieve from a database of some sort)
-description
-category
-price (sales price)
-shipping_price
-total_price (price + shipping)
-quantity (stock) - void set_quantity(unsigned int), bool on_stock()
-images // store images in vector 
-reviews
-user_customizable_option: color, size, model
-set_color_options({red, green, blue})
-set_color_customizable(true)
-set_size_options();
-add_size_option();
-bool is_saved(); // in wishlist
-bool in_cart();
-
-size:
-The LENGTH will have to be the longest dimension. [75 inches]
-The WIDTH or the sides will be the next longest dimensions. [31 inches]
-The HEIGHT or Thickness will be Smallest dimensions.[ 17 inches]
-*/
