@@ -1,6 +1,6 @@
-// filename: neroshop.hpp
 #ifndef NEROSHOP_HPP
 #define NEROSHOP_HPP
+
 #define APP_NAME      "neroshop"
 #define APP_AUTHOR    "larteyoh"
 #define APP_LICENSE   "MIT License" 
@@ -26,8 +26,9 @@
 #include "order.hpp"
 #include "message.hpp"
 #include "catalog.hpp"
-//#include "server.hpp" // for neroshop daemon to use
+#include "server.hpp"
 #include "client.hpp"
 #include "encryptor.hpp"
 //#include "carrier.hpp" // not currently in use
+
 #endif

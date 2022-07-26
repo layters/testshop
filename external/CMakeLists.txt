@@ -41,6 +41,3 @@ set(_srcs )
 add_library( STATIC ${_srcs})
 #set_target_properties( PROPERTIES PREFIX "")
 ]]
-
-# cmake -G"Unix Makefiles"
-# make

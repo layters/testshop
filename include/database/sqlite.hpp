@@ -1,8 +1,13 @@
-// filename: db_sqlite.hpp
-#ifndef DATABASE_SQLITE_HPP_NEROSHOP // recommended to add unique identifier like _NEROSHOP to avoid naming collision with other libraries
+#ifndef DATABASE_SQLITE_HPP_NEROSHOP
 #define DATABASE_SQLITE_HPP_NEROSHOP
+
 #define SQLITE3_TAG "\033[1;36m[sqlite3]:\033[0m "
 #define SQLITE3_TAG_ERR "\033[1;36m[sqlite3]:\033[0;91m "
+
+//#define NEROSHOP_DATABASE_PATH ""
+#define NEROSHOP_DATABASE_FILE "data.sqlite3"
+
+#include <sqlite3.h>
 #include <iostream>
 #include <cstdarg>
 #include <fstream>
@@ -11,12 +16,8 @@
 #include <memory> // std::unique_ptr
 #include <vector> // std::vector
 #include <stdexcept> // std::runtime_error
-// neroshop
+
 #include "debug.hpp"
-// sqlite3
-extern "C" { 
-#include <sqlite3.h>
-}
 
 namespace neroshop {
 namespace DB {
@@ -29,6 +30,8 @@ public:
 	void close();
 	void execute(const std::string& command);
 	void execute_params(const std::string& command, const std::vector<std::string>& args);
+	// setters
+	//void set_singleton(const SQLite3& singleton); // transfer ownership of singleton to the SQLite3 unique_ptr
 	// getters
 	static std::string get_sqlite_version();
     sqlite3 * get_handle() const;
@@ -39,11 +42,12 @@ public:
 	std::string get_text_params(const std::string& command, const std::vector<std::string>& args);// const;
 	int get_integer(const std::string& command);
 	int get_integer_params(const std::string& command, const std::vector<std::string>& args);
-	float get_real(const std::string& command);
-	float get_real_params(const std::string& command, const std::vector<std::string>& args);
+	double get_real(const std::string& command); // NOTE: both floats and doubles are of the 'real' datatype
+	double get_real_params(const std::string& command, const std::vector<std::string>& args);
     // boolean
     bool is_open() const;
     bool table_exists(const std::string& table_name);
+    //bool rowid_exists(const std::string& table_name, int rowid);
 private:
 	sqlite3 * handle;
 	static std::unique_ptr<SQLite3> singleton;

@@ -1,14 +1,13 @@
-// filename: converter.hpp
-#ifndef CONVERTER_HPP_NEROSHOP // recommended to add unique identifier like _NEROSHOP to avoid naming collision with other libraries
+#ifndef CONVERTER_HPP_NEROSHOP
 #define CONVERTER_HPP_NEROSHOP
 
 #include <curl/curl.h>
 #include <nlohmann/json.hpp>
-#include <string.hpp> // dokun-ui
+#include <string.hpp>
+#include <vector>
+#include <algorithm>
 
 #include "debug.hpp"
-#include <vector>
-#include <algorithm> 
 
 namespace neroshop {
 class Converter {

@@ -5,7 +5,7 @@ neroshop::Item::Item() : id(0)//, quantity(0), price(0.00), weight(1.0), size(st
 {}
 ////////////////////
 neroshop::Item::Item(unsigned int id) {//: Item() { // for registered items that already have an id
-    set_id(id);
+    this->id = id;//set_id(id);
 }
 ////////////////////
 neroshop::Item::Item(const std::string& name, const std::string& desc, double price, double weight, double length, double width, double height, const std::string& condition, const std::string& product_code) : Item() // quantity is set by cart
@@ -27,100 +27,33 @@ neroshop::Item::~Item() {
 }
 ////////////////////
 void neroshop::Item::register_item(const std::string& name, const std::string& description, double price, double weight, double length, double width, double height, const std::string& condition, const std::string& product_code) {
-    ////////////////////////////////
-    // sqlite
-    ////////////////////////////////
-    /*DB::SQLite3 db("neroshop.db");
-    //db.execute("PRAGMA journal_mode = WAL;"); // this may reduce the incidence of SQLITE_BUSY errors (such as database being locked) // https://www.sqlite.org/pragma.html#pragma_journal_mode
-    ///////////
+    DB::SQLite3 * database = DB::SQLite3::get_singleton();
     // if item is already registered, then exit function
-    if(db.table_exists("item")) {
-        int registered_item = db.get_column_integer("item", "id", "product_code = " + DB::SQLite3::to_sql_string(product_code));
-        if(registered_item != 0) {
-            neroshop::print("An item with the same product code has already been registered (id will be set regardless)", 2);
-            set_id(registered_item);
-            db.close(); // DON'T forget to close db right before you return!!
-            return; // exit function
-        }
+    if(!database->table_exists("products")) {
+        neroshop::print("register_item: table \"products\" is missing", 1);
+        return;
     }
-    // table item
-    if(!db.table_exists("item")) {
-	    db.table("item"); // item_id is primary key which will be auto generated
-	    db.column("item", "ADD", "name", "TEXT");
-	    db.column("item", "ADD", "description", "TEXT"); //db.column("item", "ADD", "quantity", "INTEGER"); // item quantity is managed by cart
-	    db.column("item", "ADD", "price", "REAL");
-        db.column("item", "ADD", "weight", "REAL");
-	    db.column("item", "ADD", "size", "TEXT");//"REAL");//db.column("item", "ADD", "discount", "REAL"); // seller determines the discount//db.column("item", "ADD", "condition", "TEXT"); // seller is able to change the item's condition
-	    db.column("item", "ADD", "product_code", "TEXT");
-	    db.column("item", "ADD", "category_id", "INTEGER");
-	    db.index("idx_product_codes", "item", "product_code"); // item product codes must be unique
-	}
-	std::string item_size = std::to_string(length) + "x" + std::to_string(width) + "x" + std::to_string(height);//std::to_string(std::get<0>(item.size)) +"x"+ std::to_string(std::get<1>(item.size)) +"x"+ std::to_string(std::get<2>(item.size));
-	db.insert("item", "name, description, price, weight, size, product_code", 
-	    DB::SQLite3::to_sql_string(name) + ", " + DB::SQLite3::to_sql_string(description) + ", " + std::to_string(price) + ", " + std::to_string(weight) + ", " + DB::SQLite3::to_sql_string(item_size) + ", " + DB::SQLite3::to_sql_string(product_code) //+ ", " + // + ", " + // + ", " + 
-	);
-	// save the item id
-	unsigned int item_id = db.get_column_integer("item ORDER BY id DESC LIMIT 1", "*");
-	set_id(item_id);
-    NEROSHOP_TAG_OUT std::cout << "\033[1;36m" << name << " (id: " << get_id() << ") has been registered" << "\033[0m" << std::endl;
-    db.close();*/  
-    ////////////////////////////////
-    // postgresql
-    ////////////////////////////////
-#if defined(NEROSHOP_USE_POSTGRESQL)    
-    // if an item in registry is branded then a seller cannot sell under that listing unless they sell the same brand
-    // to-do: table "brand" and add a "brand_id" column to table item
-    // in order for multiple sellers to share the same product detail page, each seller must be selling the exact same product from the exact same manufacturer with the exact same UPC (or whatever product ID code the product uses)
-    //DB::Postgres::get_singleton()->connect("host=127.0.0.1 port=5432 user=postgres password=postgres dbname=neroshoptest");
-
-    // if item is already registered, then exit function
-    if(DB::Postgres::get_singleton()->table_exists("item")) {
-        int registered_item = DB::Postgres::get_singleton()->get_integer_params("SELECT id FROM item WHERE product_code = $1", { product_code });
-        if(registered_item > 0) {
-            neroshop::print("An item with the same product code has already been registered (id will be set regardless)", 2);
-            set_id(registered_item);
-            //DB::Postgres::get_singleton()->finish(); // DON'T forget to close db right before you return!!
-            return; // exit function
-        }
+    // Check if item already exists
+    bool product_exists = database->get_integer_params("SELECT EXISTS(SELECT id FROM products WHERE code = $1)", { product_code });
+    if(product_exists) {
+        neroshop::print("An item with the same product code has already been registered (id will be set regardless)", 2);
+        this->id = database->get_integer_params("SELECT id FROM products WHERE code = $1", { product_code });
+        return;
     }
-    // create table: categories and subcategories
-    create_categories_and_subcategories_table();
-    //create_table();
-    // table item
-    if(!DB::Postgres::get_singleton()->table_exists("item")) {
-	    DB::Postgres::get_singleton()->create_table("item"); // item_id is primary key which will be auto generated
-	    DB::Postgres::get_singleton()->add_column("item", "name", "text");
-	    DB::Postgres::get_singleton()->add_column("item", "description", "text"); //db.column("item", "ADD", "quantity", "INTEGER"); // item quantity is managed by cart
-	    DB::Postgres::get_singleton()->add_column("item", "price", "numeric(20, 12)"); // numeric is just another word for decimal
-        DB::Postgres::get_singleton()->add_column("item", "weight", "real");
-	    DB::Postgres::get_singleton()->add_column("item", "size", "text");//"REAL");//db.column("item", "ADD", "discount", "REAL"); // seller determines the discount//db.column("item", "ADD", "condition", "TEXT"); // seller is able to change the item's condition
-	    DB::Postgres::get_singleton()->add_column("item", "product_code", "text");
-	    //DB::Postgres::get_singleton()->add_column("item", "category_id", "integer REFERENCES categories(id)");
-	    //DB::Postgres::get_singleton()->add_column("item", "subcategory_id", "integer REFERENCES categories(id)"); // maybe use an array since item could apply to multiple subcategories
-	    // all product codes MUST be unique! I think :O ...
-	    DB::Postgres::get_singleton()->create_index("idx_item_product_codes", "item", "product_code"); // item product codes must be unique
-	}
-	std::string item_size = std::to_string(length) + "x" + std::to_string(width) + "x" + std::to_string(height);//std::to_string(std::get<0>(item.size)) +"x"+ std::to_string(std::get<1>(item.size)) +"x"+ std::to_string(std::get<2>(item.size));
-    // add item to records
-	DB::Postgres::get_singleton()->execute_params("INSERT INTO item (name, description, price, weight, size, product_code) "
-	    "VALUES ($1, $2, $3, $4, $5, $6)"/*, $7)"*/, { name, description, std::to_string(price), std::to_string(weight), item_size, product_code });
-	// save the item id (for later use)
-	unsigned int item_id = DB::Postgres::get_singleton()->get_last_id("item");
-	set_id(item_id);
-    NEROSHOP_TAG_OUT std::cout << "\033[1;36m" << name << " (id: " << get_id() << ") has been registered" << "\033[0m" << std::endl;    
-    
-    //DB::Postgres::get_singleton()->finish();
-    ////////////////////////////////          
-#endif    
+	//std::string size = std::to_string(length) + "x" + std::to_string(width) + "x" + std::to_string(height);//std::to_string(std::get<0>(item.size)) +"x"+ std::to_string(std::get<1>(item.size)) +"x"+ std::to_string(std::get<2>(item.size)); // size or dimensions
+    // Add item to database records
+	int product_id = database->get_integer_params("INSERT INTO products (name, description, price, weight, code) "//"INSERT INTO products (name, description, price, weight, size, code) "
+	    "VALUES ($1, $2, $3, $4, $5) "
+	    "RETURNING id", { name, description, std::to_string(price), std::to_string(weight), /*size,*/ product_code }); // RETURNING requires version 3.35.0 (2021-03-12) 
+	// Save the item id (for later use)
+	this->id = product_id;
+#ifdef NEROSHOP_DEBUG
+    neroshop::print(std::string("\033[1;36m") + name + " (id: " + std::to_string(get_id()) + ") has been registered" + "\033[0m");
+#endif
 }
 ////////////////////
 void neroshop::Item::deregister_item() {
     ////delete_all_upload_images();//delete_upload_image();
-}
-////////////////////
-void neroshop::Item::create_table(void) {
-    create_categories_and_subcategories_table();
-    create_item_table();
 }
 ////////////////////
 void neroshop::Item::create_categories_and_subcategories_table(void) {
@@ -905,10 +838,6 @@ int neroshop::Item::get_image_count() const {
 }
 ////////////////////
 ////////////////////
-////////////////////
-void neroshop::Item::set_id(unsigned int id) {
-    this->id = id;
-}
 ////////////////////
 void neroshop::Item::set_quantity(unsigned int quantity, unsigned int cart_id) {
     // guest cart

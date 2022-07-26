@@ -1,5 +1,4 @@
-// filename: wallet.hpp - part of "neroshop" project
-//#pragma once // use #define _HPP instead
+//#pragma once
 #ifndef WALLET_HPP_NEROSHOP
 #define WALLET_HPP_NEROSHOP
 
@@ -11,21 +10,19 @@
 #define EXPLORER_XMRCHAIN_MAINNET_TX  EXPLORER_XMRCHAIN_TX
 #define EXPLORER_XMRCHAIN_STAGENET_TX "https://stagenet.xmrchain.net/tx/"
 #define EXPLORER_XMRCHAIN_TESTNET_TX  "https://testnet.xmrchain.net/tx/"
-// monero-cpp
-#include "daemon/monero_daemon.h"
-#include "daemon/monero_daemon_model.h"
-#include "utils/gen_utils.h"
-#include "utils/monero_utils.h"
-#include "wallet/monero_wallet.h"
-#include "wallet/monero_wallet_full.h"
-#include "wallet/monero_wallet_keys.h"
-#include "wallet/monero_wallet_model.h"
-// dokun-ui
-#include "file.hpp"
-#include "process.hpp" // to open daemon process //#include "script.hpp"
-#include "message.hpp"
-#include "progressbar.hpp"
-// stl
+
+#include <daemon/monero_daemon.h>
+#include <daemon/monero_daemon_model.h>
+#include <utils/gen_utils.h>
+#include <utils/monero_utils.h>
+#include <wallet/monero_wallet.h>
+#include <wallet/monero_wallet_full.h>
+#include <wallet/monero_wallet_keys.h>
+#include <wallet/monero_wallet_model.h>
+#include <file.hpp>
+#include <process.hpp> // to open daemon process //#include "script.hpp"
+#include <message.hpp>
+#include <progressbar.hpp>
 #include <iostream>
 #include <string>
 #include <vector>

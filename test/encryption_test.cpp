@@ -22,7 +22,7 @@ int main() {
     "nmKLKHbmn/34CMbbPBwZssailxM+hJOa+KfTRO9nP03m8z0mvRRnxu0oZFx632L9\n"
     "QX8eTHrYwYs6svbWOWE5wmfPKBAkhr94C8ricZXf8B/PAEQrF+aWrjgsLt0xtMtm\n"
     "QQIDAQAB\n"
-    "-----END PUBLIC KEY-----";
+    "-----END PUBLIC KEY-----\n";
     // the private key
     std::string private_key =
     "-----BEGIN PRIVATE KEY-----\n"
@@ -52,7 +52,7 @@ int main() {
 	"xhzvnwW44cRdHNF25KMD+xkmw/4nrmifDrt+ZT5Zfa2PPBGRNDLP79mpxBnpaNLs\n"
 	"LMl2fZN7vg2xY/WurhSmQjl1OmW+wFbYU2Kfmsej1tmtaO4A9xpE5jsu+L5fmrt+\n"
 	"y/gd8YWuIVtUTY/HEOWneR/i\n"
-	"-----END PRIVATE KEY-----";
+	"-----END PRIVATE KEY-----\n";
     // cipher text
     std::string cipher_text = Encryptor::public_encrypt(public_key, "Turtles are cool");
     std::cout << "message (encrypted): " << cipher_text << std::endl;
@@ -70,9 +70,17 @@ int main() {
     Encryptor::private_decrypt_fp(private_key, plain_text, rfile);
     std::cout << "message (decrypted): " << plain_text << std::endl;
 */
-    // Get SHA256 hash of pubkey content
+    // todo: encrypt private keys with some sort of password
+    
+    // Get private_key contents from file
+    std::ifstream key_file (std::string(NEROSHOP_CONFIG_PATH + "/secret.key").c_str(), std::ios::binary);
+    std::stringstream private_key;
+    private_key << key_file.rdbuf(); // dump file contents
+    key_file.close();
+    std::cout << "secret.key contents: " << private_key.str() << std::endl;    
+    // Get SHA256sum of private_key contents
     std::string sha256sum;
-    Validator::generate_sha256_hash(public_key, sha256sum); // 451 bytes
-    std::cout << "sha256sum of pubkey content: " << sha256sum << std::endl;
+    Validator::generate_sha256_hash(private_key.str(), sha256sum); // 1.7 kilobytes
+    std::cout << "sha256sum of secret.key content: " << sha256sum << std::endl;
     return 0;
 }

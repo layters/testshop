@@ -1,10 +1,9 @@
-// filename: .hpp
-//#pragma once // use #ifndef _HPP, #define _HPP, and #endif instead
-
+//#pragma once
 #ifndef BUYER_HPP_NEROSHOP
 #define BUYER_HPP_NEROSHOP
 
 #include <iostream>
+
 #include "user.hpp" // includes "order.hpp"
 
 namespace neroshop {

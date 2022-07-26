@@ -402,11 +402,11 @@ void neroshop::User::remove_from_cart(const neroshop::Item& item, int quantity) 
 }
 ////////////////////
 void neroshop::User::clear_cart() {
-    if(is_registered()) cart->empty(this->id);
+    ////if(is_registered()) cart->empty(this->id);
 }
 ////////////////////
 void neroshop::User::load_cart() {
-    cart->load_cart(this->id);
+    ////cart->load_cart(this->id);
 }
 ////////////////////
 ////////////////////

@@ -1,8 +1,9 @@
-#ifndef CARRIER_HPP_NEROSHOP // recommended to add unique identifier like _NEROSHOP to avoid naming collision with other libraries
+#ifndef CARRIER_HPP_NEROSHOP
 #define CARRIER_HPP_NEROSHOP
 
 #include <iostream>
-#include "db.hpp"
+
+#include "database.hpp"
 
 namespace neroshop {
 class Carrier {

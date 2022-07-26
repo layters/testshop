@@ -2,9 +2,10 @@
 #define CLIENT_HPP_NEROSHOP
 
 #include <uv.h>
+//#include <raft.h>
+#include <memory> // std::unique_ptr
 
 #include "debug.hpp"
-#include <memory> // std::unique_ptr
 
 namespace neroshop {
 class Client {
@@ -23,6 +24,9 @@ public:
     static Client * get_main_client();
     bool is_connected() const;
 private:
+    uv_tcp_t handle;//uv_tcp_t client;
+    //uv_udp_t handle; //(for receiving)
+    //uv_udp_send_t request; //(for sending)
     static std::unique_ptr<Client> singleton;
 };
 }

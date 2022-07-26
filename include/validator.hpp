@@ -1,5 +1,4 @@
-// filename: validator.hpp
-#ifndef VALIDATOR_HPP_NEROSHOP // recommended to add unique identifier like _NEROSHOP to avoid naming collision with other libraries
+#ifndef VALIDATOR_HPP_NEROSHOP
 #define VALIDATOR_HPP_NEROSHOP
 
 #if defined(NEROSHOP_USE_LIBBCRYPT)
@@ -7,11 +6,8 @@
 #endif
 #include <openssl/evp.h>
 #include <openssl/err.h>
-// dokun
 #include <string.hpp>
-// neroshop
-#include "database.hpp"
-// libstdc++
+#include <system.hpp> // System::get_user()
 #include <iostream>
 #include <string>
 #include <regex> // std::regex
@@ -20,6 +16,9 @@
 #include <chrono> // std::chrono
 #include <iomanip> //std::put_time, std::setfill, std::setw
 
+#include "database.hpp"
+#include "encryptor.hpp"
+#include "config.hpp"
 
 namespace neroshop {
 class Validator {
@@ -29,6 +28,11 @@ public:
     static bool login_with_email(const std::string& email, const std::string& password);
     static void save_user(const std::string& username, const char * pw_hash/*const char pw_hash[BCRYPT_HASHSIZE]*/, std::string email_hash = "");
     static void change_pw(const std::string& old_pw, const std::string& new_pw, const std::string& confirm_new_pw);
+    // functions for P2P
+    static bool register_peer();
+    static bool login_peer();//(const std::string& username, const std::string&);
+    //static void save_peer();
+    //static void change_key();
     // boolean
     static bool validate_username(const std::string& username);
     static bool validate_password(const std::string& password);

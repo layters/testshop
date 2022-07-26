@@ -1,9 +1,19 @@
 #ifndef CONFIG_HPP_NEROSHOP//DATABASE_LUA_HPP_NEROSHOP // recommended to add unique identifier like _NEROSHOP to avoid naming collision with other libraries
 #define CONFIG_HPP_NEROSHOP//DATABASE_LUA_HPP_NEROSHOP
+
 #define LUA_TAG "\033[1;34m[lua]:\033[0m "
+// configuration dir(s)
+#ifdef _WIN32
+#define NEROSHOP_PATH "" // haven't used windows in ages lol
+#endif
+
+#ifdef __gnu_linux__
+#define NEROSHOP_CONFIG_PATH "/home/" + System::get_user() + "/.config/neroshop"
+#endif
+
+#include <script.hpp>
 
 #include "debug.hpp"
-#include <script.hpp>
 
 //////////////////////////////
 //extern lua_State * lua_state;// (luaL_newstate());//static lua_State * lua_state;// (luaL_newstate());//(nullptr);//should I use extern ?//because its in a namespace, there may not be a need to use extern // extern is for declaration in .h and then defined in a .cpp file

@@ -1,16 +1,13 @@
-// filename: item.hpp
-//#pragma once // use #ifndef _HPP, #define _HPP, and #endif instead for portability
-
+//#pragma once
 #ifndef ITEM_HPP_NEROSHOP
 #define ITEM_HPP_NEROSHOP
 
-#include <iostream>
-#include <vector>
-#include <tuple>        // std::tuple, std::get, std::tie, std::ignore
-// dokun-ui
 #include <image.hpp>
 #include <file.hpp> // for checking export file directory
-// neroshop
+#include <iostream>
+#include <vector>
+#include <tuple> // std::tuple, std::get, std::tie, std::ignore
+
 #include "database.hpp"
 
 namespace neroshop {

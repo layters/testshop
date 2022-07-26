@@ -1,8 +1,8 @@
-// filename: user.hpp
-#ifndef USER_HPP_NEROSHOP // recommended to add unique identifier like _NEROSHOP to avoid naming collision with other libraries
+#ifndef USER_HPP_NEROSHOP
 #define USER_HPP_NEROSHOP
 
 #include <iostream>
+
 #include "validator.hpp" // db.hpp included here
 #include "order.hpp"
 #include "client.hpp"

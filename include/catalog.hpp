@@ -1,24 +1,20 @@
-// filename: catalog.hpp
-//#pragma once // use #ifndef _HPP, #define _HPP, and #endif instead for portability
-
-#ifndef CATALOG_HPP_NEROSHOP // recommended to add unique identifier like _NEROSHOP to avoid naming collision with other libraries
+//#pragma once
+#ifndef CATALOG_HPP_NEROSHOP
 #define CATALOG_HPP_NEROSHOP
-// neroshop
+
+#include <grid.hpp>
+#include <spinner.hpp>
+#include <button.hpp>
+#include <toggle.hpp>
+#include <iostream>
+#include <memory> // std::unique_ptr, std::shared_ptr, std::make_shared
+
 #include "debug.hpp"
 #include "database.hpp"
 #include "icon.hpp"
 #include "item.hpp" // item price, details, and upload images
 #include "converter.hpp" // currency conversion
 #include "user.hpp" // for users' favorites/wishlist and verified purchases // cart is included here
-// dokun-ui
-#include <grid.hpp>
-#include <spinner.hpp>
-#include <button.hpp>
-#include <toggle.hpp>
-//#include <.hpp>
-// STL
-#include <iostream>
-#include <memory> // std::unique_ptr, std::shared_ptr, std::make_shared
 
 namespace neroshop {
 class Catalog {

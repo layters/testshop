@@ -1,22 +1,19 @@
 #ifndef ICON_HPP_NEROSHOP
 #define ICON_HPP_NEROSHOP
 
+#include <image.hpp>
 #include <memory> // std::shared_ptr, std::unique_ptr
-// dokun-ui
-#include "image.hpp"
 
-// icons8.com/icon/set/ecommerce/material--white
 //typedef std::tuple<unsigned int, unsigned int, unsigned int> dimensions; // width height channel
 namespace neroshop {
 class Icon {
 public:
     Icon();
     ~Icon();
-    static bool load_all(); // loads all images
+    static bool load_all();
 private:
-    static bool load_monero(); // getmonero.org
-    static bool load_wownero(); // https://suchwowstuff.xyz/product/wownero-media-kit/
-    // icons8    
+    static bool load_monero(); // source: getmonero.org/press-kit/index.html
+    static bool load_wownero(); // source: https://suchwowstuff.xyz/product/wownero-media-kit/
     static bool load_cart(); // cart
     static bool load_search(); // search
     static bool load_user(); // user
@@ -39,7 +36,7 @@ private:
     static bool load_link(); // "external_link", "link"
     static bool load_shop();
     //static bool load_();
-    // not from icons8 yet
+    // non-icons8 icons
     static bool load_settings(); // cog//settings
     static bool load_speaker(); // volume_up, volume_down
     static bool load_bookmark();    
@@ -47,15 +44,7 @@ private:
     static bool load_numbers();       
     static bool load_login();
 public:    
-    static std::map<std::string, std::shared_ptr<Image>> get; // a map is basically a std::vector of std::pairs // same as: static std::vector<std::pair<std::string, std::shared_ptr<Image>>> get;
+    static std::map<std::string, std::shared_ptr<Image>> get;
 }; 
 }
 #endif
-// name, data, width, height, channel, depth
-//    Image * image_ = new Image(const_cast<char *>(), 64, 64, 1, 4);
-//    Icon::get.insert(std::make_pair("", image_));
-
-
-// Icon::get["cog"]->get_data();
-// Icon::get_icon()[]
-// std::cout <<  << icon_list["cog"] << std::endl;

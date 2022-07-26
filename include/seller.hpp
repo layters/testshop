@@ -1,15 +1,14 @@
-// filename: seller.hpp
-//#pragma once // use #ifndef _HPP, #define _HPP, and #endif instead
-
+//#pragma once
 #ifndef SELLER_HPP_NEROSHOP
 #define SELLER_HPP_NEROSHOP
+
+#include <cmath> // floor
+#include <random>
 
 #include "wallet.hpp"
 #include "user.hpp"
 #include "item.hpp"
 #include "converter.hpp"
-#include <cmath> // floor
-#include <random>
 
 namespace neroshop {
 class Seller : public User { 

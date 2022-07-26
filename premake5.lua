@@ -76,13 +76,13 @@ project("neroshop")
         optimize("On")   
       
 --------------------------------------
--- neromon (this needs some work)
+-- neromon
 project("neromon")
-   kind("ConsoleApp")
-   language("C++")
-   files({ "src/daemon.cpp", "src/server.cpp", --[["src/database.cpp",]] })
-   includedirs({ "include/", })
-
+    kind("ConsoleApp")
+    language("C++")
+    files({ "src/daemon.cpp", "src/server.cpp", --[["src/database.cpp",]] })
+    includedirs({ "include/", })
+    links { "uv" }   
 --------------------------------------   
 -- premake5 --cc=gcc --os=linux gmake
 -- cd build && make

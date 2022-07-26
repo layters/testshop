@@ -1,15 +1,13 @@
-#ifndef MESSAGE_NEROSHOP_
-#define MESSAGE_NEROSHOP_
+#ifndef MESSAGE_HPP_NEROSHOP
+#define MESSAGE_HPP_NEROSHOP
 
-// neroshop
-#include "debug.hpp"
-// dokun-ui
-#include "box.hpp"
-#include "button.hpp"
-#include "edit.hpp"
-#include "timer.hpp"
-// stl
+#include <box.hpp>
+#include <button.hpp>
+#include <edit.hpp>
+#include <timer.hpp>
 #include <memory> // std::shared_ptr, std::make_shared
+
+#include "debug.hpp"
 
 namespace neroshop {
 class Message {

@@ -70,11 +70,11 @@ neroshop::User * neroshop::Buyer::on_login(const std::string& username) { // if 
     // load wishlists
     dynamic_cast<Buyer *>(user)->load_favorites();
     // load cart (into memory)
-    if(user->is_registered()) {
-        user->get_cart()->load_cart(user->get_id());//Cart::get_singleton()->load_cart(user->get_id());
+    ////if(user->is_registered()) {
+        ////user->get_cart()->load_cart(user->get_id());//Cart::get_singleton()->load_cart(user->get_id());
         //std::cout << "subtotal_price: " << Cart::get_singleton()->get_subtotal_price(user->get_id()) << std::endl;
         //std::cout << "total_weight: " << Cart::get_singleton()->get_total_weight(user->get_id()) << std::endl;
-    }
+    ////}
     ////////////////////////////////
 #ifdef NEROSHOP_DEBUG
         std::cout << "\033[1;34m(account_type: " << String::lower(user->get_account_type_string()) << ", id: " << user->get_id() << ")\033[0m" << std::endl;

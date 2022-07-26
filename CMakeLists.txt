@@ -11,46 +11,22 @@ set(VERSION_PATCH "0")
 set(PROJECT_VERSION ${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_PATCH})
 ######################################
 if(WIN32)
-    set(WINDOWS TRUE)
 endif()
+
 if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
-    set(LINUX TRUE)
-    option(NEROSHOP_CLANG "use clang" OFF) # clang
-    option(NEROSHOP_GCC   "use gcc"   ON ) # gcc   - shipped with Ubuntu by default    
-    set(CMAKE_C_COMPILER   /usr/bin/gcc)
-    set(CMAKE_CXX_COMPILER /usr/bin/g++)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -I'/usr/include/postgresql/'")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -no-pie") # detach
-    include_directories(/usr/include/          )
-    link_directories(/usr/lib/x86_64-linux-gnu/) # Debian/Ubuntu
-    link_directories(/usr/lib/                 ) # Arch
-    #link_directories(/usr/lib64/               ) # Fedora
-endif()
-if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-    set(MACOSX TRUE)
-endif()
-if(${CMAKE_SYSTEM_NAME} MATCHES "Android")
-    set(ANDROID TRUE)
-endif()
-######################################
-if(LINUX) # if user chooses to compile with clang
-if(NEROSHOP_CLANG) # cmake -DNEROSHOP_CLANG=ON -G"Unix Makefiles"
-if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang") # check if clang is set as the current compiler
-    set(NEROSHOP_GCC OFF )  
-    set(NEROSHOP_CLANG ON) # use clang (if not using gcc)
-    set(CMAKE_C_COMPILER   /usr/bin/clang  )
-    set(CMAKE_CXX_COMPILER /usr/bin/clang++)
-    set(CMAKE_CXX_FLAGS    "-w"            ) #-w=ignores all warnings
-    #set(CMAKE_CXX_FLAGS    "-fno-PIE"      ) #-fPIE, -fno-PIE, -fPIC, -fno-PIC, -nopie, -no-pie
-    message("using clang")
-    include_directories(/usr/include/          )
-    link_directories(/usr/lib/x86_64-linux-gnu/)    
+# Set compiler-specific flags
+if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -w") #-w=ignores all warnings
+    message(STATUS "Building with clang")
 else()
-    message(WARNING "clang is not set as the default compiler!")
-    message("using gcc/g++")
+    message(STATUS "Building with gcc/g++")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -no-pie") # detach
 endif()
 endif()
+
+if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 endif()
+
 ######################################
 # use a specific C++ version
 set(CMAKE_CXX_STANDARD 14)
@@ -280,12 +256,12 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR}/external/monero-cpp/src/)
 set(monero_cpp_src ${CMAKE_CURRENT_SOURCE_DIR}/build/libmonero-cpp.a)#set(monero_cpp_src external/monero-cpp/src/utils/gen_utils.cpp external/monero-cpp/src/utils/monero_utils.cpp external/monero-cpp/src/daemon/monero_daemon_model.cpp external/monero-cpp/src/daemon/monero_daemon.cpp external/monero-cpp/src/wallet/monero_wallet_model.cpp external/monero-cpp/src/wallet/monero_wallet_keys.cpp external/monero-cpp/src/wallet/monero_wallet_full.cpp)
 
 ######################################
-# libbcrypt (deprecated)
+# libbcrypt (optional)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/external/libbcrypt)
 set(bcrypt_src ${CMAKE_CURRENT_SOURCE_DIR}/build/libbcrypt.a)#set(bcrypt_src external/libbcrypt/crypt_blowfish/crypt_blowfish.c external/libbcrypt/crypt_blowfish/crypt_gensalt.c external/libbcrypt/crypt_blowfish/wrapper.c external/libbcrypt/bcrypt.c)
 
 ######################################
-# sqlite3
+# sqlite3 (will be built-in/bundled with neroshop)
 #[[find_package(SQLite3)
 if(SQLite3_FOUND)
     message(STATUS "Using SQLite3: ${SQLite3_LIBRARY} (v${SQLite3_VERSION})")
@@ -322,15 +298,6 @@ if(NOT CURL_FOUND)
     add_definitions(-DCURL_STATICLIB)
     set(CMAKE_CXX_LINK_EXECUTABLE "${CMAKE_CXX_LINK_EXECUTABLE} -lldap -llber -lnghttp2 -lpsl -lidn2 -lbrotlidec -lzstd -lrtmp") # for Arch (Manjaro) # https://stackoverflow.com/questions/68368557/linking-nghttp2-static-library#comment120830125_68368557
 endif()
-
-######################################
-# postgresql (deprecated)
-include_directories(${PostgreSQL_INCLUDE_DIRS} ${PostgreSQL_INCLUDE_DIRS}/server)
-set(PostgreSQL_TYPE_INCLUDE_DIR "/usr/include/postgresql/")
-
-######################################
-# lmdb
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/external/monero-cpp/external/monero-project/external/db_drivers/liblmdb) # or ${CMAKE_CURRENT_SOURCE_DIR}/external/lmdb/libraries/liblmdb/
 
 ######################################
 # libuv (supports Android :D)
@@ -376,7 +343,7 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR}/external/dokun-ui/external/glm)
 if(WIN32)
 set(winsocket_src ws2_32.lib            ) # -lglfw3 -lgdi32 -lopengl32 -limm32
 endif()
-if(LINUX)
+if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
 set(OpenGL_GL_PREFERENCE "LEGACY"                   ) # LEGACY(libGL.so) OR GLVND(libOpenGL.so and libGLX.so)
 set(posix_src  libpthread.so libdl.so libm.so       )
 endif() # -framework OpenGL -framework Cocoa -framework IOKit -framework CoreVideo
@@ -389,7 +356,7 @@ set(dokun_ui_src ${CMAKE_CURRENT_SOURCE_DIR}/external/dokun-ui/src/libdokun-ui.a
 # neroshop-daemon
 set(daemon_executable "neromon")
 add_executable(${daemon_executable} src/daemon.cpp src/server.cpp)#target_link_libraries(daemon ${curl_src} ${OPENSSL_LIBRARIES}) # curl requires both openssl(used in monero) and zlib(used in dokun-ui)
-target_link_libraries(${daemon_executable} ${dokun_ui_src})#set(CMAKE_CXX_LINK_EXECUTABLE "${CMAKE_CXX_LINK_EXECUTABLE} -ldl") # fixes undefined reference to symbol 'dlsym@@GLIBC_2.2.5' error
+target_link_libraries(${daemon_executable} ${dokun_ui_src} ${libuv_src})#set(CMAKE_CXX_LINK_EXECUTABLE "${CMAKE_CXX_LINK_EXECUTABLE} -ldl") # fixes undefined reference to symbol 'dlsym@@GLIBC_2.2.5' error
 
 ######################################
 # neroshop
@@ -399,8 +366,8 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
 link_directories(${CMAKE_CURRENT_SOURCE_DIR}/src ${CMAKE_CURRENT_SOURCE_DIR}/build)
 set(neroshop_src src/buyer.cpp #[[src/carrier.cpp]] src/cart.cpp src/catalog.cpp src/client.cpp src/converter.cpp src/database.cpp src/encryptor.cpp src/icon.cpp src/item.cpp src/main.cpp src/message.cpp src/order.cpp src/qr.cpp src/seller.cpp src/server.cpp src/user.cpp src/validator.cpp src/wallet.cpp)
 add_definitions(-DNEROSHOP_DEBUG) # for more detailed debugging, use -DNEROSHOP_DEBUG0
-add_executable(${neroshop_executable} ${neroshop_src})#add_executable(${neroshop_executable} ${neroshop_src} ${monero_cpp_src} ${bcrypt_src} ${sqlite_src} ${qr_code_generator_src} ${raft_src})
-target_link_libraries(${neroshop_executable} ${monero_cpp_src} ${sqlite_src} ${qr_code_generator_src} ${raft_src} ${curl_src} ${monero_src} ${dokun_ui_src} ${libuv_src})#target_link_libraries(${neroshop_executable} #[[${sqlite_src}]] ${curl_src} ${monero_src} ${dokun_ui_src} ${libuv_src})
+add_executable(${neroshop_executable} ${neroshop_src})
+target_link_libraries(${neroshop_executable} ${monero_cpp_src} ${sqlite_src} ${qr_code_generator_src} ${dokun_ui_src} ${raft_src} ${libuv_src} ${curl_src} ${monero_src})
 
 ######################################
 if(DEFINED NEROSHOP_USE_LIBBCRYPT) # -DNEROSHOP_USE_LIBBCRYPT=1
@@ -422,16 +389,6 @@ find_package(OpenGL REQUIRED)
 if(OPENGL_FOUND)
 	target_link_libraries(${neroshop_executable} ${OPENGL_LIBRARIES})
 	target_link_libraries(${daemon_executable} ${OPENGL_LIBRARIES})
-endif()
-
-find_package(PostgreSQL)
-if(PostgreSQL_FOUND)
-    if(DEFINED NEROSHOP_USE_POSTGRESQL) # -DNEROSHOP_USE_POSTGRESQL=1
-        message(STATUS "Using PostgreSQL: ${PostgreSQL_LIBRARIES} (v${PostgreSQL_VERSION_STRING})")
-        target_compile_definitions(${neroshop_executable} PUBLIC -DNEROSHOP_USE_POSTGRESQL)
-        target_link_libraries(${neroshop_executable} ${PostgreSQL_LIBRARIES})
-        target_link_libraries(${daemon_executable} ${PostgreSQL_LIBRARIES})
-    endif()
 endif()
 
 ######################################

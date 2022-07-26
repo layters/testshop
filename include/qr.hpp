@@ -1,18 +1,16 @@
-// filename: qr.hpp
-#ifndef QR_HPP_NEROSHOP // recommended to add unique identifier like _NEROSHOP to avoid naming collision with other libraries
+#ifndef QR_HPP_NEROSHOP
 #define QR_HPP_NEROSHOP
 
-#include <iostream>
-#include <fstream>
-#include <string>
-#include <vector>
-// nayuki qr-code-generator
 #include <qrcodegen.hpp>
 using std::uint8_t;
 using qrcodegen::QrCode;
 using qrcodegen::QrSegment;
-
 #include <png.h>
+#include <iostream>
+#include <fstream>
+#include <string>
+#include <vector>
+
 #include "debug.hpp"
 
 /*

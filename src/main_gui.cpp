@@ -3,8 +3,7 @@
 #include "../include/neroshop.hpp" //#include "../include/wallet.hpp" // aparrently this file is causing the "error: unknown type name"
 using namespace neroshop; // namespace comes after including the header files
 // dokun-ui
-#include <build.hpp>
-#include DOKUN_HEADER
+#include <dokun_ui.hpp>
 using namespace dokun;
 // ----------------------
 // stagenet faucets: https://melo.tools/faucet/stagenet/

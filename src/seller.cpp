@@ -26,81 +26,22 @@ neroshop::Seller::~Seller() {
 ////////////////////
 void neroshop::Seller::list_item(unsigned int item_id, unsigned int stock_qty, double sales_price, std::string currency, double discount, unsigned int discounted_items, unsigned int discount_times, std::string discount_expiry, std::string condition)
 {
-#if defined(NEROSHOP_USE_POSTGRESQL)
     // seller must be logged in
-    if(!is_logged()) {neroshop::print("You must be logged in to list an item", 2); return;}
+    ////if(!is_logged()) {neroshop::print("You must be logged in to list an item", 2); return;}
     // user must be an actual seller, not a buyer
-    if(!is_seller()) {neroshop::print("Must be a seller to list an item (id: " + std::to_string(item_id) + ")", 2); return;}
+    ////if(!is_seller()) {neroshop::print("Must be a seller to list an item (id: " + std::to_string(item_id) + ")", 2); return;}
     // a seller can create an item and then register it to the database
     // but if the item is not registered then it cannot be listed
-    if(item_id < 1) {NEROSHOP_TAG_OUT std::cout << "\033[0;91m" << "This item is not registered (invalid Item id)" << "\033[0m" << std::endl; return;}
+    if(item_id < 1) { neroshop::print("This item is not registered (invalid Item id)"); return;}
     // make sure currency is supported
     if(!neroshop::Converter::is_supported_currency(currency)) {neroshop::print(currency + " is not a supported currency", 2); return;}
     ////////////////////////////////
-    // sqlite
-    ////////////////////////////////    
-    /*// store item in database
-    DB::Sqlite3 db("neroshop.db");
-	//db.execute("PRAGMA journal_mode = WAL;"); // this may reduce the incidence of SQLITE_BUSY errors (such as database being locked) // https://www.sqlite.org/pragma.html#pragma_journal_mode
-    // check if item is already in db
-	// create Inventory table if it does not yet exist
-	if(!db.table_exists("inventory")) { // if(!db.table_exists(""))
-	    db.table("inventory"); // inventory_id will be auto generated (primary key)
-	    db.column("inventory", "ADD", "item_id", "INTEGER");
-	    db.column("inventory", "ADD", "seller_id", "INTEGER"); // store_id or seller_id or vendor_id
-	    db.column("inventory", "ADD", "stock_qty", "INTEGER"); //db.column("inventory", "ADD", "stock_available", "TEXT"); // or in_stock
-	    db.column("inventory", "ADD", "seller_price", "REAL"); //db.index("idx_item_ids", "inventory", "item_id"); actually, don't make item_id unique as multiple sellers could be selling the same item //db.execute("CREATE UNIQUE INDEX idx_seller_ids ON Inventory (seller_id);"); // sellers can have multiple items so seller_id should not be unique
-	    db.column("inventory", "ADD", "currency", "TEXT"); // seller's currency of choice, which will be converted to xmr
-	    db.column("inventory", "ADD", "seller_discount", "REAL"); // seller_discount per discounted_items
-	    db.column("inventory", "ADD", "discount_qty", "INTEGER");
-	    db.column("inventory", "ADD", "condition", "TEXT"); // seller_condition for each item
-	}
+    DB::SQLite3 */*std::unique_ptr<DB::SQLite3>*/ database = DB::SQLite3::get_singleton();//std::make_unique<DB::SQLite3>(NEROSHOP_DATABASE_FILE);
     // to prevent duplicating item_id that is being sold by the same seller_id (a seller cannot list the same item twice, except change the stock amount)
-    int item_id = db.get_column_integer("inventory", "item_id", 
-        "item_id = " + std::to_string(item_id) + " AND seller_id = " + std::to_string(get_id()));
-	if(item_id == item_id) { neroshop::print("\033[1;33mYou have already listed this item (id: " + std::to_string(item_id) + ")\033[0m");return;}
-	// say you have 50 of an item, for every 2 of the same item, you get $0.50 off
-	//double total_discount_calc = (50 / 2) * 0.50;
-	double total_discount = (stock_qty_or_num_items_to_apply_discount / discounted_items) * discount; // stock_qty would be replace with item_qty in this case
-	// if discounted_items is 2 but you have 3 of the item, it will return $0.75, but we need to avoid that and make it $0.50
-	// if qty is not a multiple of "discounted_items"
-	// if there is a remainder then reduce the total discount
-	//if((stock_qty % discounted_items) == 1) total_discount = total_discount - discount;
-#ifdef NEROSHOP_DEBUG0
-	std::cout << "\033[1;37m" << "for every " << discounted_items << " " << item.get_name() << "s, you get " << neroshop::Converter::get_currency_symbol(currency) << discount << " off (since you have x" << stock_qty << ", total discount is: " << neroshop::Converter::get_currency_symbol(currency) << total_discount << ")\033[0m" << std::endl;//" of an item"
-#endif	
-	// insert item in inventory
-	db.insert("inventory", "item_id, seller_id, stock_qty, seller_price, currency, seller_discount, discount_qty, condition", 
-	    std::to_string(item_id) + ", " + std::to_string(get_id()) + ", " + std::to_string(stock_qty) + ", " + std::to_string(sales_price) + ", " + DB::Sqlite3::to_sql_string(String::lower(currency)) + ", " + std::to_string(discount) + ", " + std::to_string(discounted_items) + ", " + DB::Sqlite3::to_sql_string(condition));
-	NEROSHOP_TAG_OUT std::cout << "\033[1;37m" << item.get_name() << " (id: " << item_id << ", stock_qty: " << stock_qty << ") has been listed by seller \033[1;34m" << get_name() << " (id: " << get_id() << ")" << "\033[0m" << std::endl; // price per unit (of an item)
-	db.close();*/
-    ////////////////////////////////
-    // postgresql
-    ////////////////////////////////
-    // apparently money is bad for currency, float as well so we gotta use numeric (or decimal)
-    // https://www.postgresql.org/docs/current/datatype-numeric.html
-    // numeric(3,2) will be able to store max 9.99 3-2 = 1
-    //DB::Postgres::get_singleton()->connect("host=127.0.0.1 port=5432 user=postgres password=postgres dbname=neroshoptest");    
-    // create table: inventory
-    if(!DB::Postgres::get_singleton()->table_exists("inventory")) { // if(!db.table_exists(""))
-	    DB::Postgres::get_singleton()->create_table("inventory"); // inventory_id will be auto generated (primary key)
-	    DB::Postgres::get_singleton()->add_column("inventory", "item_id", "integer REFERENCES item(id) ON DELETE CASCADE"); // if an item is deleted, it no longer exists so CASCADE will remove said item from the inventory as well // CASCADE isn't working when I drop table item? :O
-	    DB::Postgres::get_singleton()->add_column("inventory", "seller_id", "integer REFERENCES users(id) ON DELETE CASCADE"); // store_id or seller_id or vendor_id // if seller is deleted, so will the seller's listing (there's no inventory without the seller)
-	    DB::Postgres::get_singleton()->add_column("inventory", "stock_qty", "integer"); //db.column("inventory", "ADD", "stock_available", "TEXT"); // or in_stock
-	    DB::Postgres::get_singleton()->add_column("inventory", "seller_price", "numeric(20, 12)");//"decimal(12,2)"); // price_per_item_unit //db.index("idx_item_ids", "inventory", "item_id"); actually, don't make item_id unique as multiple sellers could be selling the same item //db.execute("CREATE UNIQUE INDEX idx_seller_ids ON Inventory (seller_id);"); // sellers can have multiple items so seller_id should not be unique
-	    DB::Postgres::get_singleton()->add_column("inventory", "currency", "text"); // seller's currency of choice, which will be converted to xmr
-	    DB::Postgres::get_singleton()->add_column("inventory", "seller_discount", "numeric(20, 12)");//"real"); // 20 - 12 = 8 total digits (on left side / whole number side) // 12 decimals // seller_discount per discounted_items // or discount_per_x_items // money should not be used when dealing with multiple currencies, instead use numeric as suggested by postgresql.org // force 2 units precision for fiat currencies: 
-	    DB::Postgres::get_singleton()->add_column("inventory", "discount_qty", "integer"); // number of items that the discount will apply to // or discounted_items // for every x item, you get a discount (seller_discount)
-	    DB::Postgres::get_singleton()->add_column("inventory", "discount_times", "integer"); // number of times the discount can be used (in a single order)
-	    DB::Postgres::get_singleton()->add_column("inventory", "discount_expiry", "timestamptz DEFAULT NULL"); // will be in UTC format // date the discount expires
-	    DB::Postgres::get_singleton()->add_column("inventory", "condition", "text"); // seller_condition for each item
-	}        
-    // to prevent duplicating item_id that is being sold by the same seller_id (a seller cannot list the same item twice, except change the stock amount)
-    int listed_item = DB::Postgres::get_singleton()->get_integer_params("SELECT item_id FROM inventory WHERE item_id = $1 AND seller_id = $2", { std::to_string(item_id), std::to_string(get_id()) });
+    int listed_item = database->get_integer_params("SELECT item_id FROM inventory WHERE item_id = $1 AND seller_id = $2", { std::to_string(item_id), std::to_string(get_id()) });
 	if(listed_item == item_id) { 
 	    neroshop::print("\033[1;33mYou have already listed this item (id: " + std::to_string(item_id) + ")\033[0m"); 
-	    ////DB::Postgres::get_singleton()->execute("ROLLBACK;");
-	    
+	    ////database->execute("ROLLBACK;");
 	    return;
 	}	    
     // begin transaction - this is not necessary since it is just a single operation
@@ -113,22 +54,18 @@ void neroshop::Seller::list_item(unsigned int item_id, unsigned int stock_qty, d
 	// SELECT TO_TIMESTAMP('2021-12-10', 'YYYY-MM-DD HH24:MI:SS');
 	// SELECT TO_CHAR(now(), 'YYYY-MM-DD HH24:MI:SS') ;
 	// insert item in inventory
-	DB::Postgres::get_singleton()->execute_params("INSERT INTO inventory (item_id, seller_id, stock_qty, seller_price, currency, seller_discount, discount_qty, discount_times, discount_expiry, condition) "
-	    "VALUES ($1, $2, $3, $4, $5, $6, $7, $8, TO_TIMESTAMP($9,'YYYY-MM-DD HH24:MI:SS'), $10)", { std::to_string(item_id), std::to_string(get_id()), std::to_string(stock_qty), std::to_string(sales_price)/* price per unit (of an item)*/,
-	    String::lower(currency), std::to_string(discount), std::to_string(discounted_items), std::to_string(discount_times), discount_expiry, condition });
-	// end transaction
-	////DB::Postgres::get_singleton()->execute("COMMIT;");
-	//
-	std::string item_name = DB::Postgres::get_singleton()->get_text_params("SELECT name FROM item WHERE id = $1", { std::to_string(item_id) });
+	database->execute_params("INSERT INTO inventory (item_id, seller_id, stock_qty, sales_price, currency, condition) "
+	    "VALUES ($1, $2, $3, $4, $5, $6)", { std::to_string(item_id), std::to_string(get_id()), std::to_string(stock_qty), std::to_string(sales_price), String::lower(currency), condition });// end transaction////database->execute("COMMIT;");
+#ifdef DOKUN_DEBUG
+	std::string item_name = database->get_text_params("SELECT name FROM products WHERE id = $1", { std::to_string(item_id) });
 	NEROSHOP_TAG_OUT std::cout << "\033[1;37m" << item_name << " (id: " << item_id << ", stock_qty: " << stock_qty << ") has been listed by seller \033[1;34m" << get_name() << " (id: " << get_id() << ")" << "\033[0m" << std::endl;
-    ////////////////////////////////	
-#endif    
+#endif
 }
 ////////////////////
 void neroshop::Seller::list_item(const neroshop::Item& item, unsigned int stock_qty, double sales_price, std::string currency, double discount, unsigned int discounted_items, unsigned int discount_times, std::string discount_expiry, std::string condition) { // ex. 5% off 10 balls
     list_item(item.get_id(), stock_qty, sales_price, currency, discount, discounted_items, discount_times, discount_expiry, condition);
 }
-// static_cast<Seller *>(user)->list_item(ball, 50, 8.50, "usd", 0.50, 2, "new"); // $0.50 cents off every 2 balls
+// static_cast<Seller *>(user)->list_item(ball, 50, 8.50, "usd", 0.00, 0, 0, "", "new"); // $0.50 cents off every 2 balls
 ////////////////////
 void neroshop::Seller::delist_item(unsigned int item_id) {
 #if defined(NEROSHOP_USE_POSTGRESQL)
@@ -703,9 +640,9 @@ neroshop::User * neroshop::Seller::on_login(const std::string& username) { // as
     // load customer_orders
     static_cast<Seller *>(user)->load_customer_orders();
     // load cart (into memory)
-    if(user->is_registered()) {
-        user->get_cart()->load_cart(user->get_id());
-    }        
+    ////if(user->is_registered()) {
+        ////user->get_cart()->load_cart(user->get_id());
+    ////}        
 #ifdef NEROSHOP_DEBUG
     std::cout << "\033[1;34m(account_type: " << String::lower(user->get_account_type_string()) << ", id: " << user->get_id() << ", reputation: " << static_cast<Seller *>(user)->get_reputation() << ")\033[0m" << std::endl; // get_reputation() also opens the database hence the warning
 #endif    

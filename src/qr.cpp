@@ -3,7 +3,7 @@
 neroshop::QR::QR() {}
 ////////////////////
 neroshop::QR::QR(std::string filename, int image_size, std::string text,
-            bool overwrite, qrcodegen::QrCode::Ecc ecc) {
+            bool overwrite, qrcodegen::QrCode::Ecc ecc) : QR() {
     this->filename = filename;
     this->size = image_size;
     this->text = text;
@@ -40,7 +40,7 @@ bool neroshop::QR::write_to_png(const QrCode& qr, const int& multiplicator) cons
 	// Open file for writing (binary mode)
 	fp = fopen(filename.c_str(), "wb");
 	if (fp == NULL) {
-		neroshop::print("Could not open file" + filename + "for writing", 1);
+		neroshop::print("Could not open file " + filename + " for writing", 1);
 		return false;
 	}
 

@@ -1,11 +1,10 @@
-// filename: .hpp
-//#pragma once // use #ifndef _HPP, #define _HPP, and #endif instead for portability
-
-#ifndef ORDER_HPP_NEROSHOP // recommended to add unique identifier like _NEROSHOP to avoid naming collision with other libraries
+//#pragma once
+#ifndef ORDER_HPP_NEROSHOP
 #define ORDER_HPP_NEROSHOP
 
 #include <iostream>
 #include <map>
+
 //#include "wallet.hpp"
 #include "cart.hpp"      // includes db.hpp
 #include "converter.hpp" // currency converter
