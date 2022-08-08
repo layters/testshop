@@ -5,8 +5,7 @@
 #include "../include/server.hpp"
 using namespace neroshop;
 // dokun-ui
-#include <build.hpp>
-#include DOKUN_HEADER
+#include <dokun_ui.hpp>
 using namespace dokun;
 
 namespace neroshop {

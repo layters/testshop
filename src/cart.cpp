@@ -54,12 +54,15 @@ unsigned int neroshop::Cart::get_id() const {
 ////////////////////
 ////////////////////
 bool neroshop::Cart::is_empty() const {
+    return true;
 }
 ////////////////////
 bool neroshop::Cart::is_full() const {
+    return false;
 }
 ////////////////////
 bool neroshop::Cart::in_cart(unsigned int item_id) const {
+    return false;
 }
 ////////////////////
 bool neroshop::Cart::in_cart(const neroshop::Item& item) const {

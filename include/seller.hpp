@@ -4,6 +4,8 @@
 
 #include <cmath> // floor
 #include <random>
+#include <memory> // std::unique_ptr
+#include <vector>
 
 #include "wallet.hpp"
 #include "user.hpp"

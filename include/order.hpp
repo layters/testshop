@@ -1,6 +1,12 @@
-//#pragma once
+#pragma once
+
 #ifndef ORDER_HPP_NEROSHOP
 #define ORDER_HPP_NEROSHOP
+
+#if defined(__cplusplus) && (__cplusplus >= 201703L)
+#include <uuid.h>
+//#include <catch.hpp>
+#endif
 
 #include <iostream>
 #include <map>
@@ -46,39 +52,10 @@ public:
 private:
 	void create_guest_order(const neroshop::Cart& cart, const std::string& shipping_address, std::string contact_info = ""); // order: order_id, [order_date], product, SKU, quantity, price (subtotal), discount (optional), shipping_cost/estimated_delivery, carrier[dhl, usps, etc.], payment method:monero[xmr], total
 	void create_registered_user_order(const neroshop::Cart& cart, const std::string& shipping_address, std::string contact_info = "");
-	static bool in_db(unsigned int order_number); // check if an order is in the order database  // order #144
+	static bool in_db(unsigned int order_number); // check if an order is in the order database
 	unsigned int id;
-	order_status status; // order_status
-	// invoice: seller_username:layter, seller_receiver_subaddress:Axxxxxx, tx_status:processing(yellow),complete(green[paid]), confirmations:#, product_name:"Playstation 5" total_price:#xmr(#usd), currency:xmr, exchange_rate:1xmr=???usd, created_timestamp:YYYY-MM-DD HH:MM:SS, tx_speed:low,med,high shipping_to:10 rocket st boston ma 02115, tracking_number:####, carrier:usps, delivery_status:shipping_now|out_for_delivery|delivered|
-	// options:cancel_order|change_shipping_address,
+	order_status status;
 	void set_status(order_status status);
 };
 }
 #endif
-// https://support.bigcommerce.com/s/article/Orders?language=en_US
-// https://docs.woocommerce.com/document/managing-orders/
-/*
-order_status:
-    pending   // order created, but on hold/awaiting payment (unpaid) (yellow)
-    preparing // order received and now preparing item for shipment (green)
-    shipped   // order shipped (can now be tracked and invoice can be printed)
-    ready     // order ready for pick up (blue)
-    done      // order delivered or picked_up (blue)
-    // in any event, an order can be cancelled or can failed ...
-    // user must specify reaason why order was cancelled
-    cancelled // order cancelled by buyer (can cancel order only before it ships) (gray)
-    failed    // order failed due to payment not sent after 24 hours (red)
-    returned  // order returned (returned does not necessarily mean refunded) (gray)
-
-	// just making sure enum contents are the same value
-	std::cout << "(order_status::ready == order_status::ready_for_pickup) : " << (order_status::ready == order_status::ready_for_pickup) << std::endl;
-	std::cout << "(order_status::done == order_status::delivered) : " << (order_status::done == order_status::delivered) << std::endl;
-
-Categories:
-Carriers: usps, fedex, ups, dhl (make a class Tracker for the carrier)
-          https://instantparcels.com/find-carrier-by-tracking-number
-          https://developers.facebook.com/docs/commerce-platform/order-management/carrier-codes
-Payment methods: cryptocurrency (monero)
-// NOTE: for every order, generate a new subaddress from seller's wallet
-// order_cancellations: https://sellercentral.amazon.com/gp/help/external/G201722390?language=en_US
-*/

@@ -1,29 +1,25 @@
-#ifndef CONFIG_HPP_NEROSHOP//DATABASE_LUA_HPP_NEROSHOP // recommended to add unique identifier like _NEROSHOP to avoid naming collision with other libraries
-#define CONFIG_HPP_NEROSHOP//DATABASE_LUA_HPP_NEROSHOP
+#pragma once
+
+#ifndef CONFIG_HPP_NEROSHOP
+#define CONFIG_HPP_NEROSHOP
 
 #define LUA_TAG "\033[1;34m[lua]:\033[0m "
 // configuration dir(s)
 #ifdef _WIN32
-#define NEROSHOP_PATH "" // haven't used windows in ages lol
+#define NEROSHOP_CONFIG_PATH "" // haven't used windows in ages lol
 #endif
 
 #ifdef __gnu_linux__
-#define NEROSHOP_CONFIG_PATH "/home/" + System::get_user() + "/.config/neroshop"
+#define NEROSHOP_CONFIG_PATH "/home/" + neroshop::device::get_user() + "/.config/neroshop"
 #endif
+#define NEROSHOP_CONFIG_FILE "config.lua"
 
 #include <script.hpp>
 
 #include "debug.hpp"
 
-//////////////////////////////
-//extern lua_State * lua_state;// (luaL_newstate());//static lua_State * lua_state;// (luaL_newstate());//(nullptr);//should I use extern ?//because its in a namespace, there may not be a need to use extern // extern is for declaration in .h and then defined in a .cpp file
-//////////////////////////////
 namespace neroshop {
-//namespace DB {
-//class Lua {
-//public:
-    //////////////////////////////
-    extern lua_State * lua_state;// (luaL_newstate());//static lua_State * lua_state;// (luaL_newstate());//(nullptr);//should I use extern ?//because its in a namespace, there may not be a need to use extern // extern is for declaration in .h and then defined in a .cpp file
+    extern lua_State * lua_state;// (luaL_newstate());//(nullptr);// extern is for declaration in .h and then defined in a .cpp file
     //////////////////////////////
 	static bool load_config() {
         std::string user = System::get_user();
@@ -100,8 +96,6 @@ namespace neroshop {
 	static lua_State * get_lua_state() {
 	    return lua_state;
 	}
-//};
-//}
 }
 
 #endif

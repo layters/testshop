@@ -7,7 +7,7 @@ workspace("NeroshopWorkspace")
 project("neroshop")
     kind("ConsoleApp")--("WindowedApp")
     language("C++")
-    files({ "src/buyer.cpp", --[["src/carrier.cpp",]] "src/cart.cpp", "src/catalog.cpp", "src/client.cpp", "src/converter.cpp", "src/database.cpp", "src/encryptor.cpp", "src/icon.cpp", "src/item.cpp", "src/main.cpp", "src/message.cpp", "src/order.cpp", "src/qr.cpp", "src/seller.cpp", "src/server.cpp", "src/user.cpp", "src/validator.cpp", "src/wallet.cpp", })
+    files({ "src/buyer.cpp", --[["src/carrier.cpp",]] "src/cart.cpp", "src/catalog.cpp", "src/client.cpp", "src/converter.cpp", "src/database.cpp", "src/encryptor.cpp", "src/icon.cpp", "src/item.cpp", "src/main.cpp", "src/message.cpp", "src/order.cpp", "src/process.cpp", "src/qr.cpp", "src/seller.cpp", "src/server.cpp", "src/user.cpp", "src/validator.cpp", "src/wallet.cpp", })
     includedirs ({ 
         "include/", "external/monero-cpp/src/", --[["external/libbcrypt/",]] "external/sqlite/", "external/QR-Code-generator/cpp/", "external/json/single_include/", --[["external/curl/include/", "external/curl/lib/",]] --[["/usr/include/postgresql/", "/usr/include/postgresql/server/",]] "external/raft/include/", --[["external/libuv/include/", "external/libuv/src/",]] "external/monero-cpp/external/monero-project/external/db_drivers/liblmdb/",
         -- dokun-ui
@@ -30,7 +30,7 @@ project("neroshop")
     libdirs({ "src/", "build/bin/Debug/", "build/bin/Release/", "external/dokun-ui/src/", })
     links({ "monero-cpp", --[["bcrypt",]] "sqlite3", "qrcodegen", "curl", --[["crypto", "ssl",]] --[["pq",]] "raft", "uv",
         -- dokun-ui
-        "dokun-ui",
+        "dokun-ui", "glfw",
         -- monero
         "external/monero-cpp/external/monero-project/build/release/lib/wallet_merged",
         "external/monero-cpp/external/monero-project/build/release/lib/wallet",

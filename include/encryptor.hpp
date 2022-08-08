@@ -4,6 +4,7 @@
 #include <openssl/rsa.h>
 #include <openssl/pem.h> //  includes "openssl/evp.h" which includes "openssl/bio.h"
 #include <openssl/err.h>
+
 #include <iostream>
 #include <fstream>
 #include <sstream>
@@ -19,12 +20,9 @@ public:
     static bool generate_key_pair();
     static bool generate_key_pair_ex(); // requires openssl 3.0 // the _ex suffix is for extended versions of existing functions//static bool generate_public_key_from_private_key();
     static EVP_PKEY * generate_key_pair_return();
-    static bool save_public_key(const EVP_PKEY * pkey);
-    static bool save_public_key(const EVP_PKEY * pkey, const std::string& filename);
-    static bool save_private_key(const EVP_PKEY * pkey);
-    static bool save_private_key(const EVP_PKEY * pkey, const std::string& filename);
-    static bool save_key_pair(const EVP_PKEY * pkey);
-    static bool save_key_pair(const EVP_PKEY * pkey, const std::string& filename);
+    static bool save_public_key(const EVP_PKEY * pkey, std::string filename = "public.pem");
+    static bool save_private_key(const EVP_PKEY * pkey, std::string filename = "private.pem");
+    static bool save_key_pair(const EVP_PKEY * pkey, std::string public_key_file = "public.pem", std::string private_key_file = "private.pem");
     // encryption and decrypting functions - messages
     static std::string public_encrypt(const std::string& public_key, const std::string& plain_text); // encrypts plain text with a receiver's public key then returns a cipher text otherwise it returns an empty string on failure
     static std::string private_decrypt(const std::string& private_key, const std::string& cipher_text); // decrypts cipher text using the receiver's private key then returns a plain text otherwise it returns an empty string on failure

@@ -255,36 +255,6 @@ void neroshop::Validator::change_pw(const std::string& old_pw, const std::string
 ////////////////////
 ////////////////////
 ////////////////////
-bool neroshop::Validator::register_peer() {
-    DB::SQLite3 * database = DB::SQLite3::get_singleton();
-    // Generate public/private key pairs
-    EVP_PKEY * pkey = Encryptor::generate_key_pair_return();
-    if(!pkey) { neroshop::print("generate_key_pair_return failed", 1); return false; }    
-    // Save public_key on the database (by default user names will be a SHA256 hash of the public key)
-    std::string public_key = Encryptor::get_public_key(pkey);//std::cout << "generated public_key: \n" << public_key << std::endl;//Encryptor::save_public_key(pkey, NEROSHOP_CONFIG_PATH + "/public.pem");
-    database->execute_params("INSERT INTO users(verify_key) VALUES($1);", { public_key });//database->execute_params("INSERT INTO users(name, verify_key) VALUES($1, $2);", { user_id, public_key });//database->execute_params("INSERT INTO users(name, verify_key, encrypt_key) VALUES($1, $2, $3);", { user_id, public_key });    
-    // Save private_key locally on the user's device
-    Encryptor::save_private_key(pkey, NEROSHOP_CONFIG_PATH + "/secret.key");//"/keys/private.key"); // alternative names: secret.key, verify.key or private.key
-    // Display notification message
-    std::string sha256sum;
-    generate_sha256_hash(public_key, sha256sum);
-    std::string user_id = sha256sum;
-    neroshop::print((!user_id.empty()) ? std::string("Welcome to neroshop, user " + user_id) : "Welcome to neroshop", 4);
-    // free up the pkey
-    EVP_PKEY_free(pkey);
-    ////EVP_PKEY_CTX_free(ctx);
-    return true;
-}
-////////////////////
-bool neroshop::Validator::login_peer() {
-    // user will supply their id or name or public key (verify_key)
-    // message will be signed using user's public_key (verify_key)
-    // verify that public_key matches private_key (verify_key)
-    return true;
-}
-////////////////////
-////////////////////
-////////////////////
 bool neroshop::Validator::validate_username(const std::string& username) 
 {
     // username (will appear only in lower-case letters within the app)

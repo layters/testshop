@@ -3,21 +3,8 @@
 ////////////////////
 // constructors and destructors
 ////////////////////
-neroshop::Wallet::Wallet() : process(nullptr), sync_bar(nullptr), monero_wallet_obj(nullptr), network_type(monero_network_type::STAGENET)
+neroshop::Wallet::Wallet() : process(nullptr), monero_wallet_obj(nullptr), network_type(monero_network_type::STAGENET)
 {}
-////////////////////
-neroshop::Wallet::Wallet(const std::string& file) { // must include .keys extension
-    // if wallet.keys file is found, open it
-    if(monero::monero_wallet_full::wallet_exists(file)) { // if file exists
-        open(file.substr(0, file.find(".")));
-        return; // exit function
-    }
-    // if wallet.keys is not found then create it
-    if(!monero::monero_wallet_full::wallet_exists(file)) { // in case the file does not exist
-        create(file.substr(0, file.find("."))); // create the wallet file
-        return; // exit function
-    }
-}
 ////////////////////
 neroshop::Wallet::~Wallet() 
 {
@@ -35,10 +22,6 @@ neroshop::Wallet::~Wallet()
         process.reset(); // this will call the process destructor which should auto kill the process
         if(!process.get()) std::cout << "wallet process deleted\n";
     }
-    // destroy sync_bar
-    if(sync_bar.get()) {
-        sync_bar.reset(); // will also delete the label along with the label's font//if(!sync_bar.get()) std::cout << "wallet sync progress_bar deleted\n";
-    }
 #ifdef NEROSHOP_DEBUG    
     std::cout << "wallet deleted\n";
 #endif    
@@ -46,29 +29,60 @@ neroshop::Wallet::~Wallet()
 ////////////////////
 ////////////////////
 ////////////////////
-// normal
-////////////////////
-void neroshop::Wallet::connect() { // connect a hardware wallet
-}
-////////////////////
-void neroshop::Wallet::create(std::string password/*, const std::string& confirm_pw*/) {
-    std::string path = "wallet"; // will create a wallet.keys file in the current path
+// Reminder: path is the path and name of the wallet without the .keys extension
+void neroshop::Wallet::create_random(const std::string& password, const std::string& confirm_pwd, const std::string& path) {
+    if(confirm_pwd != password) {
+        neroshop::print("Wallet passwords do not match", 1);
+        return;
+    }
     monero_wallet_obj = std::unique_ptr<monero_wallet_full>(monero_wallet_full::create_wallet_random (path, password, network_type/*, const monero_rpc_connection &daemon_connection=monero_rpc_connection(), const std::string &language="English", std::unique_ptr< epee::net_utils::http::http_client_factory > http_client_factory=nullptr*/));
     if(monero_wallet_obj.get()) std::cout << "\033[1;35;49m" << "created wallet \"" << path << ".keys\"" << "\033[0m" << std::endl;
 }
 ////////////////////
-void neroshop::Wallet::create_from_mnemonic(const std::string& mnemonic, std::string password/*, const std::string &confirm_pw*/) {
-    // retrieve keys from text edit
-    std::string path = "wallet"; // will create a wallet.keys file in the current path
-    monero_wallet_obj = std::unique_ptr<monero_wallet_full>(monero_wallet_full::create_wallet_from_mnemonic (path, password, network_type, mnemonic/*, const monero_rpc_connection &daemon_connection=monero_rpc_connection(), uint64_t restore_height=0, const std::string &seed_offset="", std::unique_ptr< epee::net_utils::http::http_client_factory > http_client_factory=nullptr*/));
+void neroshop::Wallet::create_from_mnemonic(const std::string& mnemonic, const std::string& password, const std::string& confirm_pwd, const std::string& path) {
+    if(confirm_pwd != password) {
+        neroshop::print("Wallet passwords do not match", 1);
+        return;
+    }    
+    monero_wallet_obj = std::unique_ptr<monero_wallet_full>(monero_wallet_full::create_wallet_from_mnemonic (path, password, network_type, mnemonic));
     if(monero_wallet_obj.get()) std::cout << "\033[1;35;49m" << "created wallet \"" << path << ".keys\" (from mnemonic)" << "\033[0m" << std::endl;
 }
 ////////////////////
-void neroshop::Wallet::create_from_keys(const std::string& address, const std::string& view_key, const std::string& spend_key, std::string password/*, const std::string &confirm_pw*/) {
-    // retrieve keys from text edit
-    std::string path = "wallet"; // will create a wallet.keys file in the current path
-    monero_wallet_obj = std::unique_ptr<monero_wallet_full>(monero_wallet_full::create_wallet_from_keys (path, password, network_type, address, view_key, spend_key/*, const monero_rpc_connection &daemon_connection=monero_rpc_connection(), uint64_t restore_height=0, const std::string &language="English", std::unique_ptr< epee::net_utils::http::http_client_factory > http_client_factory=nullptr*/));
+// To restore a view-only wallet, leave the spend key blank
+void neroshop::Wallet::create_from_keys(const std::string& address, const std::string& view_key, const std::string& spend_key, const std::string& password, const std::string &confirm_pwd, const std::string& path) {
+    if(confirm_pwd != password) {
+        neroshop::print("Wallet passwords do not match", 1);
+        return;
+    }    
+    monero_wallet_obj = std::unique_ptr<monero_wallet_full>(monero_wallet_full::create_wallet_from_keys(path, password, network_type, address, view_key, spend_key));
     if(monero_wallet_obj.get()) std::cout << "\033[1;35;49m" << "created wallet \"" << path << ".keys\" (from keys)" << "\033[0m" << std::endl;
+}
+////////////////////
+void neroshop::Wallet::restore_from_mnemonic(const std::string& mnemonic) 
+{
+    monero_wallet_obj = std::unique_ptr<monero_wallet_full>(monero_wallet_full::create_wallet_from_mnemonic("", "", network_type, mnemonic)); // set path to "" for an in-memory wallet
+    if(monero_wallet_obj.get()) std::cout << "\033[1;35;49m" << "restored in-memory wallet (from mnemonic)" << "\033[0m" << std::endl;    
+}
+////////////////////
+void neroshop::Wallet::restore_from_keys(const std::string& primary_address, const std::string& view_key, const std::string& spend_key)
+{
+    // Check validity of primary address
+    if(!monero_utils::is_valid_address(primary_address, network_type)) {
+        neroshop::print("Invalid Monero address", 1);
+    }
+    monero_wallet_obj = std::unique_ptr<monero_wallet_full>(monero_wallet_full::create_wallet_from_keys ("", "", network_type, primary_address, view_key, spend_key)); // set path to "" for an in-memory wallet
+    if(monero_wallet_obj.get()) std::cout << "\033[1;35;49m" << "restored in-memory wallet (from keys)" << "\033[0m" << std::endl;
+}
+////////////////////
+void neroshop::Wallet::open(const std::string& path, const std::string& password) { 
+    monero_wallet_obj = std::unique_ptr<monero_wallet_full>(monero::monero_wallet_full::open_wallet(path, password, network_type)); // will apply ".keys" ext to the wallet file
+    if(monero_wallet_obj.get()) std::cout << "\033[1;35;49m" << "opened wallet \"" << path << ".keys\"" << "\033[0m" << std::endl;
+}
+////////////////////
+void neroshop::Wallet::close(bool save) 
+{
+    if(!monero_wallet_obj.get()) throw std::runtime_error("monero_wallet_full is not opened");
+    monero_wallet_obj->close(save);
 }
 ////////////////////
 std::string neroshop::Wallet::upload(bool open, std::string password) { // opens the wallet file
@@ -84,26 +98,10 @@ std::string neroshop::Wallet::upload(bool open, std::string password) { // opens
     std::string filename(file); // "wallet.keys" file
     filename = filename.substr(0, filename.find(".")); // remove ".keys" extension
     if(!monero::monero_wallet_full::wallet_exists(filename + ".keys")) { neroshop::print("wallet not found", 1); return ""; } // check if wallet file is valid (or exists)
-    if(open == true) neroshop::Wallet::open(filename, password);// will re-apply ".keys" ext to the wallet file
+    if(open == true) neroshop::Wallet::open(filename, password);// will apply ".keys" ext to the wallet file
     return std::string(filename + ".keys");
 }
 ////////////////////
-void neroshop::Wallet::open(const std::string& path, std::string password) { // opens the wallet file's name without the ".key" extension
-    monero_wallet_obj = std::unique_ptr<monero_wallet_full>(monero::monero_wallet_full::open_wallet(path, password, network_type)); // will re-apply ".keys" ext to the wallet file
-    if(monero_wallet_obj.get()) std::cout << "\033[1;35;49m" << "opened wallet \"" << path << ".keys\"" << "\033[0m" << std::endl;
-}
-////////////////////
-void neroshop::Wallet::restore(const std::string& mnemonic, std::string password) 
-{}
-////////////////////
-void neroshop::Wallet::restore(const std::string& address, const std::string& view_key, const std::string& spend_key, std::string password)
-{}
-////////////////////
-void neroshop::Wallet::close(bool save) 
-{
-    if(!monero_wallet_obj.get()) throw std::runtime_error("monero_wallet_full is not opened");
-    monero_wallet_obj->close(save);
-}
 ////////////////////
 void neroshop::Wallet::transfer(const std::string& address, double amount) {
     if(!monero_wallet_obj.get()) throw std::runtime_error("monero_wallet_full is not opened");
@@ -231,7 +229,7 @@ void neroshop::Wallet::on_sync_progress(uint64_t height, uint64_t start_height, 
         if((percent_done * 100) == 100) std::cout << "\033[0;35;49m" << date << " \033[1;32;49m" << "SYNCHRONIZATION DONE" << std::endl;
         std::cout << "\033[0;35;49m" << date << std::endl;
         std::cout << "\033[0;35;49m" << date << " \033[1;33;49m" << "**********************************************************************" << "\033[0m" << std::endl;*/
-        ///////////////////////////////////
+        #ifdef NEROSHOP_USE_DOKUN_UI
         if(!sync_bar.get()) {
             sync_bar = std::unique_ptr<Progressbar>(new Progressbar());//sync_bar->set_range(0.0, 100.0); // 0-100%//sync_bar->set_outline(true);
             sync_bar->set_size(300, 30);
@@ -278,6 +276,7 @@ void neroshop::Wallet::on_sync_progress(uint64_t height, uint64_t start_height, 
         sync_bar->draw();        
         ////////////////
         window->update();
+        #endif
 }
 ////////////////////
 void neroshop::Wallet::on_output_received(const monero_output_wallet& output) {
@@ -439,7 +438,7 @@ void neroshop::Wallet::wallet_info() {
     double unlocked_balance = (double)unlocked_balance_raw * piconero;
     std::cout << std::fixed << std::setprecision(12) << "unlocked_balance: " << unlocked_balance << std::fixed << std::setprecision(2) << std::endl; // uint64_t
     // view and spend keys ----------------------------------------------------
-    std::cout << "view_key: " << get_viewkey("supersecretpassword123").first << std::endl;
+    std::cout << "view_key: " << get_view_keys().first << std::endl;
     std::cout << "spend_key: " << "(secret)" << std::endl; // since this is intended to be a view-only wallet
     // subaddress -------------------------------------------------------------
     // generate new subaddresses on the default account 0
@@ -554,22 +553,42 @@ std::string neroshop::Wallet::get_last_subaddress() const
 ////////////////////
 ////////////////////
 // proof (proving the transaction was submitted) - https://web.getmonero.org/resources/user-guides/prove-payment.html
-std::string neroshop::Wallet::get_tx_note(const std::string& txid) const {return "";} // "get_tx_note <txid>" - useful for retrieving address information
+//std::string neroshop::Wallet::get_tx_note(const std::string& txid) const {return "";} // "get_tx_note <txid>" - useful for retrieving address information
 ////////////////////
-std::pair<std::string, std::string> neroshop::Wallet::get_viewkey(const std::string& password) const {
+std::string neroshop::Wallet::get_private_view_key() const {
+    if(!monero_wallet_obj.get()) throw std::runtime_error("monero_wallet_full is not opened");
+    return monero_wallet_obj->get_private_view_key();
+}
+////////////////////
+std::string neroshop::Wallet::get_public_view_key() const {
+    if(!monero_wallet_obj.get()) throw std::runtime_error("monero_wallet_full is not opened");
+    return monero_wallet_obj->get_public_view_key();
+}
+////////////////////
+std::pair<std::string, std::string> neroshop::Wallet::get_view_keys() const {
     if(!monero_wallet_obj.get()) throw std::runtime_error("monero_wallet_full is not opened");
     return std::make_pair(monero_wallet_obj->get_private_view_key(), monero_wallet_obj->get_public_view_key());
-} // secret, public // "viewkey"
+}
 ////////////////////
-std::pair<std::string, std::string> neroshop::Wallet::get_spendkey(const std::string& password) const {
+std::string neroshop::Wallet::get_private_spend_key() const {
+    if(!monero_wallet_obj.get()) throw std::runtime_error("monero_wallet_full is not opened");
+    return monero_wallet_obj->get_private_spend_key();
+}
+////////////////////
+std::string neroshop::Wallet::get_public_spend_key() const {
+    if(!monero_wallet_obj.get()) throw std::runtime_error("monero_wallet_full is not opened");
+    return monero_wallet_obj->get_public_spend_key();
+}
+////////////////////
+std::pair<std::string, std::string> neroshop::Wallet::get_spend_keys() const {
     if(!monero_wallet_obj.get()) throw std::runtime_error("monero_wallet_full is not opened");
     return std::make_pair(monero_wallet_obj->get_private_spend_key(), monero_wallet_obj->get_public_spend_key());
-} // secret, public // "spendkey"
+}
 ////////////////////
-std::string  neroshop::Wallet::get_mnemonic(const std::string& password) const {
+std::string neroshop::Wallet::get_mnemonic() const {
     if(!monero_wallet_obj.get()) throw std::runtime_error("monero_wallet_full is not opened");
     return monero_wallet_obj->get_mnemonic();
-} // "seed"
+}
 //-Image *  neroshop::Wallet::get_qr_code() const {} // returns address qrcode // "show_qr_code"
 //-Image *  neroshop::Wallet::get_qr_code(unsigned int address_index) const {} // returns the qrcode of the address at "index"
 ////////////////////

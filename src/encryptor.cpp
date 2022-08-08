@@ -61,7 +61,7 @@ bool neroshop::Encryptor::generate_key_pair_ex() {
 }
 ////////////////////
 EVP_PKEY * neroshop::Encryptor::generate_key_pair_return() {
-    // generate public/private key pairs
+    // Generate public/private key pairs
     EVP_PKEY_CTX * ctx = EVP_PKEY_CTX_new_id(EVP_PKEY_RSA, nullptr);
     EVP_PKEY * pkey = nullptr;
     if(!ctx) { neroshop::print("EVP_PKEY_CTX_new_id failed", 1); return nullptr; }
@@ -80,14 +80,14 @@ EVP_PKEY * neroshop::Encryptor::generate_key_pair_return() {
         neroshop::print(std::string("EVP_PKEY_keygen ") + std::string(ERR_error_string(ERR_get_error(), nullptr)), 1);
         return nullptr;
     }
-    // we need the pkey alive so that we can return it. Do not free it
-    // free the context instead
+    // We need the pkey alive so that we can return it. Do not free it
+    // Free the context instead
     EVP_PKEY_CTX_free(ctx);
     return pkey;    
 }
 ////////////////////
-bool neroshop::Encryptor::save_public_key(const EVP_PKEY * pkey) {
-    BIO	* bio_public = BIO_new_file("public.pem", "w+"); // or .pub
+bool neroshop::Encryptor::save_public_key(const EVP_PKEY * pkey, std::string filename) {
+    BIO	* bio_public = BIO_new_file(filename.c_str(), "w+"); // or .pub
     if(PEM_write_bio_PUBKEY(bio_public, const_cast<EVP_PKEY *>(pkey)) != 1) {
     //if(PEM_write_bio_RSAPublicKey(bp_public, const_cast<RSA *>(rsa)) != 1) { // deprecated in OpenSSL 3.0
         neroshop::print("PEM_write_bio_RSAPublicKey failed", 1);
@@ -96,25 +96,12 @@ bool neroshop::Encryptor::save_public_key(const EVP_PKEY * pkey) {
     }
     // free the bio now that we are done writing to it
     BIO_free_all(bio_public);
-    neroshop::print("public.pem created", 3);
+    neroshop::print(filename + " created", 3);
     return true;
 }
 ////////////////////
-bool neroshop::Encryptor::save_public_key(const EVP_PKEY * pkey, const std::string& filename) {
-    BIO	* bio_public = BIO_new_file(filename.c_str(), "w+"); // or .pub
-    if(PEM_write_bio_PUBKEY(bio_public, const_cast<EVP_PKEY *>(pkey)) != 1) {
-        neroshop::print("PEM_write_bio_RSAPublicKey failed", 1);
-        BIO_free_all(bio_public);
-        return false;
-    }
-    // free the bio now that we are done writing to it
-    BIO_free_all(bio_public);
-    neroshop::print(filename + " created", 3);
-    return true;    
-}
-////////////////////
-bool neroshop::Encryptor::save_private_key(const EVP_PKEY * pkey) {
-    BIO	* bio_private = BIO_new_file("private.pem", "w+"); // or .key
+bool neroshop::Encryptor::save_private_key(const EVP_PKEY * pkey, std::string filename) {
+    BIO	* bio_private = BIO_new_file(filename.c_str(), "w+"); // or .key
     if(PEM_write_bio_PKCS8PrivateKey(bio_private, const_cast<EVP_PKEY *>(pkey), nullptr, nullptr, 0, nullptr, nullptr) != 1) { // same as PEM_write_bio_PrivateKey - both use PKCS#8 format which supports all algorithms including RSA // to-do: add encryption e.g: EVP_aes_256_cbc() (in arg 3) using a passphrase/password (in arg 4) and passphrase_len (in arg 5)
     //if(PEM_write_bio_RSAPrivateKey(bp_private, const_cast<RSA *>(rsa), nullptr, nullptr, 0, nullptr, nullptr) != 1) { // deprecated in OpenSSL 3.0
         neroshop::print("PEM_write_bio_PKCS8PrivateKey failed", 1);
@@ -123,32 +110,13 @@ bool neroshop::Encryptor::save_private_key(const EVP_PKEY * pkey) {
     }
     // free the bio now that we are done writing to it
     BIO_free_all(bio_private);
-    neroshop::print("private.pem created", 3);
-    return true;
-}
-////////////////////
-bool neroshop::Encryptor::save_private_key(const EVP_PKEY * pkey, const std::string& filename) {
-    BIO	* bio_private = BIO_new_file(filename.c_str(), "w+"); // or .key
-    if(PEM_write_bio_PKCS8PrivateKey(bio_private, const_cast<EVP_PKEY *>(pkey), nullptr, nullptr, 0, nullptr, nullptr) != 1) { // same as PEM_write_bio_PrivateKey - both use PKCS#8 format which supports all algorithms including RSA // to-do: add encryption e.g: EVP_aes_256_cbc() (in arg 3) using a passphrase/password (in arg 4) and passphrase_len (in arg 5)
-        neroshop::print("PEM_write_bio_PKCS8PrivateKey failed", 1);
-        BIO_free_all(bio_private);
-        return false;
-    }
-    // free the bio now that we are done writing to it
-    BIO_free_all(bio_private);
     neroshop::print(filename + " created", 3);
     return true;
 }
 ////////////////////
-bool neroshop::Encryptor::save_key_pair(const EVP_PKEY * pkey) {
-    if(!save_public_key(pkey)) return false;
-    if(!save_private_key(pkey)) return false;
-    return true;
-}
-////////////////////
-bool neroshop::Encryptor::save_key_pair(const EVP_PKEY * pkey, const std::string& filename) {
-    if(!save_public_key(pkey, filename)) return false;
-    if(!save_private_key(pkey, filename)) return false;
+bool neroshop::Encryptor::save_key_pair(const EVP_PKEY * pkey, std::string public_key_file, std::string private_key_file) {
+    if(!save_public_key(pkey, public_key_file)) return false;
+    if(!save_private_key(pkey, private_key_file)) return false;
     return true;
 }
 ////////////////////

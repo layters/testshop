@@ -2,8 +2,8 @@
 #include "../include/neroshop.hpp"
 using namespace neroshop;
 // dokun-ui
-#include <dokun_ui.hpp>
-using namespace dokun;
+/*#include <dokun_ui.hpp>
+using namespace dokun;*/
 
 lua_State * neroshop::lua_state = luaL_newstate(); // lua_state should be initialized by default
 

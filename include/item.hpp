@@ -1,9 +1,10 @@
-//#pragma once
+#pragma once
+
 #ifndef ITEM_HPP_NEROSHOP
 #define ITEM_HPP_NEROSHOP
 
 #include <image.hpp>
-#include <file.hpp> // for checking export file directory
+#include <filesystem>
 #include <iostream>
 #include <vector>
 #include <tuple> // std::tuple, std::get, std::tie, std::ignore

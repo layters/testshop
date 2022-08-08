@@ -93,6 +93,7 @@ git clone --recurse-submodules https://github.com/nlohmann/json.git
 #git clone --recurse-submodules https://github.com/curl/curl.git
 #git clone --recurse-submodules https://github.com/libuv/libuv.git
 git clone --recurse-submodules https://github.com/willemt/raft.git
+#git clone --recurse-submodules https://github.com/mariusbancila/stduuid.git
 cd ../
 ```
 

@@ -7,7 +7,7 @@
 #include "user.hpp" // includes "order.hpp"
 
 namespace neroshop {
-class Buyer : public User { // customers will not be required to register, unless they would like to save their order history
+class Buyer : public User { 
 public:
     Buyer();
     Buyer(const std::string& name);
@@ -20,6 +20,4 @@ private:
 }; // save buyer's cart data, buyer can download order invoice
 }
 #endif
-// https://calculator.academy/average-rating-calculator-star-rating/#f1p1|f2p0
-// https://www.ebay.com/help/buying/resolving-issues-sellers/seller-ratings?id=4023&mkevt=1&mkcid=1&mkrid=711-53200-19255-0&campid=5336728181&customid=&toolid=10001
 

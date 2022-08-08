@@ -30,5 +30,7 @@
 #include "client.hpp"
 #include "encryptor.hpp"
 //#include "carrier.hpp" // not currently in use
+#include "util.hpp"
+#include "process.hpp"
 
 #endif

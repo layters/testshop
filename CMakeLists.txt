@@ -1,14 +1,18 @@
 cmake_minimum_required(VERSION 3.1.0 FATAL_ERROR)
-
-# Set cmake modules directory
-list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake" "${CMAKE_CURRENT_SOURCE_DIR}/external/monero-cpp/external/monero-project/cmake")
-
 project(neroshop) # tested on Ubuntu 20.04 LTS (focal) with gcc (Ubuntu 9.3.0-17ubuntu1~20.04) 9.3.0, manjaro-xfce-21.2.6 (Qonos) with gcc (GCC) 11.2.0
+
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 set(VERSION_MAJOR "0")
 set(VERSION_MINOR "1")
 set(VERSION_PATCH "0")
 set(PROJECT_VERSION ${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_PATCH})
+
+option(NEROSHOP_BUILD_TESTS "Build neroshop tests" OFF)
+option(NEROSHOP_BUILD_GUI "Build neroshop GUI" OFF) # CLI is built by default so it won't need an option
+
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake" "${CMAKE_CURRENT_SOURCE_DIR}/external/monero-cpp/external/monero-project/cmake" "${CMAKE_CURRENT_SOURCE_DIR}/external/dokun-ui/cmake")
 ######################################
 if(WIN32)
 endif()
@@ -27,11 +31,6 @@ endif()
 if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 endif()
 
-######################################
-# use a specific C++ version
-set(CMAKE_CXX_STANDARD 14)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
-######################################
 ######################################
 set(MONERO_PROJECT "${CMAKE_SOURCE_DIR}/external/monero-cpp/external/monero-project")
 set(MONERO_PROJECT_SRC "${MONERO_PROJECT}/src")
@@ -69,14 +68,14 @@ endif()
 message(STATUS EXTRA_LIBRARIES: ${EXTRA_LIBRARIES})
 
 ######################################
-# Protobuf (recent)
+# Protobuf
 include(FindProtobuf)
 find_package(Protobuf)
 message(STATUS "Protobuf lib: ${Protobuf_LIBRARY}, inc: ${Protobuf_INCLUDE_DIR}, protoc: ${Protobuf_PROTOC_EXECUTABLE}")
 include_directories(${Protobuf_INCLUDE_DIR})
 
 ######################################
-# LibUSB (recent)
+# LibUSB
 find_library(usb_LIBRARY NAMES usb-1.0 libusb usb)
 set(LibUSB_LIBRARIES ${usb_LIBRARY})
 
@@ -311,10 +310,15 @@ if(NOT LIBUV_FOUND)
     include_directories(${CMAKE_CURRENT_SOURCE_DIR}/external/libuv/include ${CMAKE_CURRENT_SOURCE_DIR}/external/libuv/src)
     set(libuv_src ${CMAKE_CURRENT_SOURCE_DIR}/external/libuv/.libs/libuv.a) # In case user chooses to build libuv themselves instead of installing it on the system
 endif()
+
 ######################################
 # willemt/raft (BSD and has zero dependencies :D)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/external/raft/include)
 set(raft_src ${CMAKE_CURRENT_SOURCE_DIR}/build/libraft.a)#set(raft_src ${CMAKE_CURRENT_SOURCE_DIR}/external/raft/src/raft_log.c ${CMAKE_CURRENT_SOURCE_DIR}/external/raft/src/raft_node.c ${CMAKE_CURRENT_SOURCE_DIR}/external/raft/src/raft_server.c ${CMAKE_CURRENT_SOURCE_DIR}/external/raft/src/raft_server_properties.c)
+
+######################################
+# stduuid (header-only MIT library for generating uuids)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/external/stduuid ${CMAKE_CURRENT_SOURCE_DIR}/external/stduuid/catch ${CMAKE_CURRENT_SOURCE_DIR}/external/stduuid/include)
 
 ######################################
 # dokun-ui_dependencies
@@ -340,17 +344,17 @@ include_directories(#[[${CMAKE_CURRENT_SOURCE_DIR}/external/flac]] # config.h
    ${CMAKE_CURRENT_SOURCE_DIR}/external/dokun-ui/external/flac/include
    ${CMAKE_CURRENT_SOURCE_DIR}/external/dokun-ui/external/flac/src/libFLAC/include) # for "private/cpu.h"
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/external/dokun-ui/external/glm)
-if(WIN32)
-set(winsocket_src ws2_32.lib            ) # -lglfw3 -lgdi32 -lopengl32 -limm32
-endif()
-if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
-set(OpenGL_GL_PREFERENCE "LEGACY"                   ) # LEGACY(libGL.so) OR GLVND(libOpenGL.so and libGLX.so)
-set(posix_src  libpthread.so libdl.so libm.so       )
-endif() # -framework OpenGL -framework Cocoa -framework IOKit -framework CoreVideo
 ######################################
 # dokun-ui
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/external/dokun-ui/include)
 set(dokun_ui_src ${CMAKE_CURRENT_SOURCE_DIR}/external/dokun-ui/src/libdokun-ui.a) # definitions added: DOKUN_OPENGL, DOKUN_BUILD_LIBRARY#add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/external/dokun-ui)
+
+######################################
+# neroshop tests
+if(NEROSHOP_BUILD_TESTS)
+    message(STATUS "NEROSHOP_BUILD_TESTS option set to ON")
+    add_subdirectory(test)
+endif()
 
 ######################################
 # neroshop-daemon
@@ -364,31 +368,54 @@ set(neroshop_executable "neroshop")
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/external)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
 link_directories(${CMAKE_CURRENT_SOURCE_DIR}/src ${CMAKE_CURRENT_SOURCE_DIR}/build)
-set(neroshop_src src/buyer.cpp #[[src/carrier.cpp]] src/cart.cpp src/catalog.cpp src/client.cpp src/converter.cpp src/database.cpp src/encryptor.cpp src/icon.cpp src/item.cpp src/main.cpp src/message.cpp src/order.cpp src/qr.cpp src/seller.cpp src/server.cpp src/user.cpp src/validator.cpp src/wallet.cpp)
-add_definitions(-DNEROSHOP_DEBUG) # for more detailed debugging, use -DNEROSHOP_DEBUG0
+set(neroshop_src src/buyer.cpp #[[src/carrier.cpp]] src/cart.cpp src/catalog.cpp src/client.cpp src/converter.cpp src/database.cpp src/encryptor.cpp src/icon.cpp src/item.cpp src/main.cpp src/message.cpp src/order.cpp src/process.cpp src/qr.cpp src/seller.cpp src/server.cpp src/user.cpp src/validator.cpp src/wallet.cpp)
+add_definitions(-DNEROSHOP_DEBUG) # for more detailed debugging, use -DNEROSHOP_DEBUG0 # set_target_properties(${neroshop_executable} PROPERTIES COMPILE_DEFINITIONS "NEROSHOP_DEBUG")
 add_executable(${neroshop_executable} ${neroshop_src})
 target_link_libraries(${neroshop_executable} ${monero_cpp_src} ${sqlite_src} ${qr_code_generator_src} ${dokun_ui_src} ${raft_src} ${libuv_src} ${curl_src} ${monero_src})
+# todo: create separate targets - neroshop-gui and neroshop-cli
 
 ######################################
+# note: currently the CLI depends on dokun-ui for Window, File, Script (config.h), libpng (qr.cpp), lua (script.cpp), etc. (catalog.cpp also uses GUI features)
 if(DEFINED NEROSHOP_USE_LIBBCRYPT) # -DNEROSHOP_USE_LIBBCRYPT=1
     message(STATUS "Using libbcrypt: ${bcrypt_src}")
     target_compile_definitions(${neroshop_executable} PUBLIC -DNEROSHOP_USE_LIBBCRYPT)
     target_link_libraries(${neroshop_executable} ${bcrypt_src})
 endif()
 
+if(WIN32)
+    set(winsock2_src ws2_32.lib) # -lglfw3 -lgdi32 -lopengl32 -limm32
+    target_link_libraries(${neroshop_executable} ${winsock2_src})
+    target_link_libraries(${daemon_executable} ${winsock2_src})
+endif()
+
 if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
+    set(posix_src libpthread.so libdl.so libm.so)
     target_link_libraries(${neroshop_executable} ${posix_src})
     target_link_libraries(${daemon_executable} ${posix_src})
     find_package(X11 REQUIRED)
     if(X11_FOUND)
+    #if(NEROSHOP_BUILD_GUI)
 	    target_link_libraries(${neroshop_executable} ${X11_LIBRARIES})
-	    target_link_libraries(${daemon_executable} ${X11_LIBRARIES})
+	    #target_link_libraries(${daemon_executable} ${X11_LIBRARIES}) # todo: remove this. Daemon won't be using GUI features
+	#endif()
     endif()
 endif()
+
+set(OpenGL_GL_PREFERENCE "LEGACY") # LEGACY (libGL.so) or GLVND (libOpenGL.so and libGLX.so)
 find_package(OpenGL REQUIRED)
 if(OPENGL_FOUND)
+#if(NEROSHOP_BUILD_GUI)
+    target_compile_definitions(${neroshop_executable} PRIVATE DOKUN_USE_OPENGL)
 	target_link_libraries(${neroshop_executable} ${OPENGL_LIBRARIES})
-	target_link_libraries(${daemon_executable} ${OPENGL_LIBRARIES})
+#endif()
+endif()
+
+find_package(GLFW3)
+if(GLFW3_FOUND)
+#if(NEROSHOP_BUILD_GUI)
+	target_compile_definitions(${neroshop_executable} PRIVATE DOKUN_USE_GLFW) # already defined in libdokun-ui.a
+    target_link_libraries(${neroshop_executable} ${GLFW3_LIBRARY})
+#endif()
 endif()
 
 ######################################

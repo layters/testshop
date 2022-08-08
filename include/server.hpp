@@ -5,6 +5,10 @@
 #include <raft.h>
 #include <unordered_map> // std::unordered_map
 #include <functional> // std::function
+//#if defined(__cplusplus) && (__cplusplus >= 201703L)
+#include <any> // std::any (C++17)
+//#endif
+#include <stdexcept> // std::runtime_error
 
 #include "database.hpp"
 #include "debug.hpp"
@@ -37,6 +41,7 @@ public:
     //! \tparam F The type of the functor.
     // bind function should work with lambdas too
     template <typename F> void bind(std::string const &name, F functor) {
+        if(!functor) throw std::runtime_error("bind invalid function");
         function_list[name] = functor;
     }
 
@@ -54,7 +59,12 @@ private:
     // callbacks
     void on_new_connection(uv_stream_t *server, int status);
     // functors
-    std::unordered_map<std::string, std::function<void()>/*adaptor_type*/> function_list;
+    //#if defined(__cplusplus) && (__cplusplus < 201703L)
+    //std::unordered_map<std::string, std::function<void()>/*adaptor_type*/> function_list;
+    //#endif
+    //#if defined(__cplusplus) && (__cplusplus >= 201703L)
+    std::unordered_map<std::string, std::any> function_list;
+    //#endif
     // references:
     // https://github.com/rpclib/rpclib/blob/master/include/rpc/dispatcher.h
     // https://github.com/rpclib/rpclib/blob/master/include/rpc/server.h

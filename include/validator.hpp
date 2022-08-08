@@ -17,22 +17,17 @@
 #include <iomanip> //std::put_time, std::setfill, std::setw
 
 #include "database.hpp"
-#include "encryptor.hpp"
+//  sha256 hash of wallet primary keys will be used to authenticate user 
 #include "config.hpp"
 
 namespace neroshop {
-class Validator {
+class Validator {// Authenticator {
 public:
     static bool register_user(const std::string& username, const std::string& password, const std::string& confirm_pw, std::string opt_email = "");
     static bool login(const std::string& username, const std::string& password);
     static bool login_with_email(const std::string& email, const std::string& password);
     static void save_user(const std::string& username, const char * pw_hash/*const char pw_hash[BCRYPT_HASHSIZE]*/, std::string email_hash = "");
     static void change_pw(const std::string& old_pw, const std::string& new_pw, const std::string& confirm_new_pw);
-    // functions for P2P
-    static bool register_peer();
-    static bool login_peer();//(const std::string& username, const std::string&);
-    //static void save_peer();
-    //static void change_key();
     // boolean
     static bool validate_username(const std::string& username);
     static bool validate_password(const std::string& password);
