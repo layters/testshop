@@ -16,3 +16,6 @@
 [submodule "external/stduuid"]
 	path = external/stduuid
 	url = https://github.com/mariusbancila/stduuid.git
+[submodule "external/dokun-ui"]
+	path = external/dokun-ui
+	url = https://github.com/sidtheprince/dokun-ui
