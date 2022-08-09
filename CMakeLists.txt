@@ -347,7 +347,7 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR}/external/dokun-ui/external/glm)
 ######################################
 # dokun-ui
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/external/dokun-ui/include)
-set(dokun_ui_src ${CMAKE_CURRENT_SOURCE_DIR}/external/dokun-ui/src/libdokun-ui.a) # definitions added: DOKUN_OPENGL, DOKUN_BUILD_LIBRARY#add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/external/dokun-ui)
+set(dokun_ui_src ${CMAKE_CURRENT_SOURCE_DIR}/external/dokun-ui/build/libdokun-ui.a) # definitions added: DOKUN_OPENGL, DOKUN_BUILD_LIBRARY#add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/external/dokun-ui)
 
 ######################################
 # neroshop tests

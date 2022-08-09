@@ -116,9 +116,10 @@ cd ../../../../
 ```bash
 # Build dokun-ui
 cd external/dokun-ui
-cmake -G"Unix Makefiles"
-make
-cd ../../
+mkdir build && cd build
+cmake ..
+make libdokun-ui -j4
+cd ../../../
 ```
 
 
