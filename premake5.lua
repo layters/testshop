@@ -59,7 +59,7 @@ project("neroshop")
         -- monero-depends
         "protobuf", "usb-1.0", "boost_chrono", "boost_date_time", "boost_filesystem", "boost_program_options", "boost_regex", "boost_serialization", "boost_wserialization", "boost_system", "boost_thread", --[["udev",]] "hidapi-libusb", "sodium", "crypto", "ssl",
     })
-    defines({ --[["NEROSHOP_USE_LIBBCRYPT",]] --[["NEROSHOP_USE_POSTGRESQL",]] })
+    defines({ --[["NEROSHOP_USE_LIBBCRYPT",]] --[["NEROSHOP_USE_POSTGRESQL",]] --[["UUID_SYSTEM_GENERATOR",]] })
     if os.host() == "linux" then -- same as os.get(), except os.get() is deprecated in premake5
         links({ "pthread", "dl", "X11", })
     end--if os.host() == "windows" then links {} end--if os.host() == "macosx" then links {} end--if os.host() == "android" then links {} end
@@ -68,6 +68,8 @@ project("neroshop")
  		links({ "OpenGL32" })
 	filter ({ "system:not windows" })
 		links({ "GL" })
+	--[[filter({ "system:linux" })
+	    links({ "uuid" })]]-- -- link to libuuid if UUID_SYSTEM_GENERATOR is defined
 		
     filter({ "configurations:Debug" })
         defines({ "DEBUG", "NEROSHOP_DEBUG" })

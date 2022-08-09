@@ -11,6 +11,8 @@ set(PROJECT_VERSION ${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_PATCH})
 
 option(NEROSHOP_BUILD_TESTS "Build neroshop tests" OFF)
 option(NEROSHOP_BUILD_GUI "Build neroshop GUI" OFF) # CLI is built by default so it won't need an option
+option(UUID_SYSTEM_GENERATOR "Enable operating system uuid generator" OFF)
+option(UUID_TIME_GENERATOR "Enable experimental time-based uuid generator" OFF)
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake" "${CMAKE_CURRENT_SOURCE_DIR}/external/monero-cpp/external/monero-project/cmake" "${CMAKE_CURRENT_SOURCE_DIR}/external/dokun-ui/cmake")
 ######################################
@@ -300,11 +302,11 @@ endif()
 
 ######################################
 # libuv (supports Android :D)
-find_package(LIBUV)
+find_package(LibUV)
 if(LIBUV_FOUND)
-    message(STATUS "Using LIBUV: ${LIBUV_LIBRARIES}")
-    include_directories(${LIBUV_INCLUDE_DIRS})
-    set(libuv_src ${LIBUV_LIBRARIES})
+    message(STATUS "Using LibUV: ${LibUV_LIBRARIES} (v${LibUV_VERSION})")
+    include_directories(${LibUV_INCLUDE_DIRS})
+    set(libuv_src ${LibUV_LIBRARIES})
 endif()
 if(NOT LIBUV_FOUND)
     include_directories(${CMAKE_CURRENT_SOURCE_DIR}/external/libuv/include ${CMAKE_CURRENT_SOURCE_DIR}/external/libuv/src)
@@ -351,7 +353,8 @@ set(dokun_ui_src ${CMAKE_CURRENT_SOURCE_DIR}/external/dokun-ui/build/libdokun-ui
 
 ######################################
 # neroshop tests
-if(NEROSHOP_BUILD_TESTS)
+if(NEROSHOP_BUILD_TESTS) # -DNEROSHOP_BUILD_TESTS=1
+    enable_testing()
     message(STATUS "NEROSHOP_BUILD_TESTS option set to ON")
     add_subdirectory(test)
 endif()
@@ -369,16 +372,18 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR}/external)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
 link_directories(${CMAKE_CURRENT_SOURCE_DIR}/src ${CMAKE_CURRENT_SOURCE_DIR}/build)
 set(neroshop_src src/buyer.cpp #[[src/carrier.cpp]] src/cart.cpp src/catalog.cpp src/client.cpp src/converter.cpp src/database.cpp src/encryptor.cpp src/icon.cpp src/item.cpp src/main.cpp src/message.cpp src/order.cpp src/process.cpp src/qr.cpp src/seller.cpp src/server.cpp src/user.cpp src/validator.cpp src/wallet.cpp)
-add_definitions(-DNEROSHOP_DEBUG) # for more detailed debugging, use -DNEROSHOP_DEBUG0 # set_target_properties(${neroshop_executable} PROPERTIES COMPILE_DEFINITIONS "NEROSHOP_DEBUG")
 add_executable(${neroshop_executable} ${neroshop_src})
+target_compile_definitions(${neroshop_executable} PRIVATE NEROSHOP_DEBUG) # for more detailed debugging, use -DNEROSHOP_DEBUG0 # set_target_properties(${neroshop_executable} PROPERTIES COMPILE_DEFINITIONS "NEROSHOP_DEBUG")
 target_link_libraries(${neroshop_executable} ${monero_cpp_src} ${sqlite_src} ${qr_code_generator_src} ${dokun_ui_src} ${raft_src} ${libuv_src} ${curl_src} ${monero_src})
 # todo: create separate targets - neroshop-gui and neroshop-cli
-
+if (UUID_TIME_GENERATOR) # -DUUID_TIME_GENERATOR=1
+    target_compile_definitions(${neroshop_executable} PRIVATE UUID_TIME_GENERATOR)
+endif()
 ######################################
 # note: currently the CLI depends on dokun-ui for Window, File, Script (config.h), libpng (qr.cpp), lua (script.cpp), etc. (catalog.cpp also uses GUI features)
 if(DEFINED NEROSHOP_USE_LIBBCRYPT) # -DNEROSHOP_USE_LIBBCRYPT=1
     message(STATUS "Using libbcrypt: ${bcrypt_src}")
-    target_compile_definitions(${neroshop_executable} PUBLIC -DNEROSHOP_USE_LIBBCRYPT)
+    target_compile_definitions(${neroshop_executable} PRIVATE NEROSHOP_USE_LIBBCRYPT)
     target_link_libraries(${neroshop_executable} ${bcrypt_src})
 endif()
 
@@ -389,6 +394,16 @@ if(WIN32)
 endif()
 
 if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
+    find_package(LibUUID) # optional
+    if(UUID_SYSTEM_GENERATOR) # -DUUID_SYSTEM_GENERATOR=1
+        message(STATUS "UUID_SYSTEM_GENERATOR option set to ON")
+        if (LIBUUID_FOUND)
+            message(STATUS "Using LibUUID: ${LibUUID_LIBRARY}")
+            target_compile_definitions(${neroshop_executable} PRIVATE UUID_SYSTEM_GENERATOR) # uuids::uuid_system_generator
+            target_link_libraries(${neroshop_executable} ${LibUUID_LIBRARY})
+        endif()
+    endif()
+
     set(posix_src libpthread.so libdl.so libm.so)
     target_link_libraries(${neroshop_executable} ${posix_src})
     target_link_libraries(${daemon_executable} ${posix_src})
@@ -396,8 +411,18 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
     if(X11_FOUND)
     #if(NEROSHOP_BUILD_GUI)
 	    target_link_libraries(${neroshop_executable} ${X11_LIBRARIES})
-	    #target_link_libraries(${daemon_executable} ${X11_LIBRARIES}) # todo: remove this. Daemon won't be using GUI features
+	    #target_link_libraries(${daemon_executable} ${X11_LIBRARIES}) # todo: remove this. Daemon won't be using GUI features (I think)
 	#endif()
+    endif()
+endif()
+
+if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+    find_library(CFLIB CoreFoundation) # optional
+    if(UUID_SYSTEM_GENERATOR) # -DUUID_SYSTEM_GENERATOR=1
+        message(STATUS "UUID_SYSTEM_GENERATOR option set to ON")
+        message(STATUS "Using CFLIB: ${CFLIB}")
+        target_compile_definitions(${neroshop_executable} PRIVATE UUID_SYSTEM_GENERATOR) # uuids::uuid_system_generator
+        target_link_libraries(${neroshop_executable} ${CFLIB})
     endif()
 endif()
 
@@ -410,7 +435,7 @@ if(OPENGL_FOUND)
 #endif()
 endif()
 
-find_package(GLFW3)
+find_package(GLFW3)# REQUIRED)
 if(GLFW3_FOUND)
 #if(NEROSHOP_BUILD_GUI)
 	target_compile_definitions(${neroshop_executable} PRIVATE DOKUN_USE_GLFW) # already defined in libdokun-ui.a

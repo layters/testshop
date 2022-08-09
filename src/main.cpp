@@ -8,7 +8,7 @@ using namespace neroshop;
 //using namespace dokun;
 /*#define CATCH_CONFIG_MAIN
 #include <catch.hpp>*/
-//using namespace uuids;
+////using namespace uuids;
 
 lua_State * neroshop::lua_state = luaL_newstate(); // lua_state should be initialized by default
 
@@ -595,10 +595,33 @@ int main() {
     //QR::export_png("qr_export.png", 400, "Turtles are cool!", true, QrCode::Ecc::LOW);
     //-------------------------
     // UUID test
-    /*uuids::uuid const id = uuids::uuid_system_generator{}();
+    // Creating a new UUID (using system generator)
+    #ifdef UUID_SYSTEM_GENERATOR
+    std::cout << "using UUID_SYSTEM_GENERATOR\n";
+    uuids::uuid const id = uuids::uuid_system_generator{}();
     assert(!id.is_nil());
     assert(id.version() == uuids::uuid_version::random_number_based);
-    assert(id.variant() == uuids::uuid_variant::rfc);*/
+    assert(id.variant() == uuids::uuid_variant::rfc);
+    
+    std::cout << uuids::to_string(id) << std::endl;
+    #else
+    // Creating a new UUID with a default random generator
+    //std::cout << "using default random generator\n";
+    std::random_device rd;
+    auto seed_data = std::array<int, std::mt19937::state_size> {};
+    std::generate(std::begin(seed_data), std::end(seed_data), std::ref(rd));
+    std::seed_seq seq(std::begin(seed_data), std::end(seed_data));
+    std::mt19937 generator(seq);
+    uuids::uuid_random_generator gen{generator};
+
+    uuids::uuid const id = gen();
+    assert(!id.is_nil());
+    assert(id.as_bytes().size() == 16);
+    assert(id.version() == uuids::uuid_version::random_number_based);
+    assert(id.variant() == uuids::uuid_variant::rfc);
+    
+    std::cout << uuids::to_string(id) << std::endl;
+    #endif
     //-------------------------
     // Close database when app is terminated
     database->close();

@@ -298,11 +298,11 @@ endif()
 
 ######################################
 # libuv (supports Android :D)
-find_package(LIBUV)
+find_package(LibUV)
 if(LIBUV_FOUND)
-    message(STATUS "Using LIBUV: ${LIBUV_LIBRARIES}")
-    include_directories(${LIBUV_INCLUDE_DIRS})
-    set(libuv_src ${LIBUV_LIBRARIES})
+    message(STATUS "Using LibUV: ${LibUV_LIBRARIES} (v${LibUV_VERSION})")
+    include_directories(${LibUV_INCLUDE_DIRS})
+    set(libuv_src ${LibUV_LIBRARIES})
 endif()
 if(NOT LIBUV_FOUND)
     include_directories(${neroshop_root}/external/libuv/include ${neroshop_root}/external/libuv/src)
@@ -345,7 +345,7 @@ include_directories(${neroshop_root}/external/dokun-ui/external/glm)
 ######################################
 # dokun-ui
 include_directories(${neroshop_root}/external/dokun-ui/include)
-link_directories(${neroshop_root}/external/dokun-ui/src)
+link_directories(${neroshop_root}/external/dokun-ui/build ${neroshop_root}/external/dokun-ui/src)
 set(dokun_ui_src libdokun-ui.a) # definitions added: DOKUN_OPENGL, DOKUN_BUILD_LIBRARY#add_subdirectory(${neroshop_root}/external/dokun-ui)
 
 ######################################
@@ -361,7 +361,9 @@ target_link_libraries(${test_utility} ${monero_cpp_src} ${sqlite_src} ${qr_code_
 set(test_auth "auth_test")
 add_executable(${test_auth} auth_test.cpp ${neroshop_srcs})
 target_link_libraries(${test_auth} ${monero_cpp_src} ${sqlite_src} ${qr_code_generator_src} ${dokun_ui_src} ${raft_src} ${libuv_src} ${curl_src} ${monero_src})
-
+# uuid_test
+set(test_uuid "uuid_test")
+add_executable(${test_uuid} uuid_test.cpp)
 
 #[[
 set(test_ "")
