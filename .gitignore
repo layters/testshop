@@ -1,0 +1,8 @@
+build/
+external/curl/
+external/libuv/
+external/CMakeFiles/
+external/CMakeCache.txt
+external/cmake_install.cmake
+external/Makefile
+external/dokun-ui/build/

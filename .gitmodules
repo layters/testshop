@@ -1,0 +1,24 @@
+[submodule "external/monero-cpp"]
+	path = external/monero-cpp
+	url = https://github.com/monero-ecosystem/monero-cpp.git
+[submodule "external/libbcrypt"]
+	path = external/libbcrypt
+	url = https://github.com/rg3/libbcrypt.git
+[submodule "external/QR-Code-generator"]
+	path = external/QR-Code-generator
+	url = https://github.com/nayuki/QR-Code-generator.git
+[submodule "external/json"]
+	path = external/json
+	url = https://github.com/nlohmann/json.git
+[submodule "external/raft"]
+	path = external/raft
+	url = https://github.com/willemt/raft.git
+[submodule "external/stduuid"]
+	path = external/stduuid
+	url = https://github.com/mariusbancila/stduuid.git
+[submodule "external/linenoise"]
+	path = external/linenoise
+	url = https://github.com/antirez/linenoise
+[submodule "external/dokun-ui"]
+	path = external/dokun-ui
+	url = https://github.com/sidtheprince/dokun-ui
