@@ -1,4 +1,4 @@
-#include "../include/encryptor.hpp"
+#include "encryptor.hpp"
 
 ////////////////////
 bool neroshop::Encryptor::generate_key_pair() {

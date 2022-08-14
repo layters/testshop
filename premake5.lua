@@ -8,9 +8,10 @@ project("neroshop")
     kind("ConsoleApp")--("WindowedApp")
     language("C++")
     cppdialect("C++17")
+    -- todo: remove src/icon from CLI
     files({ "src/buyer.cpp", --[["src/carrier.cpp",]] "src/cart.cpp", "src/catalog.cpp", "src/client.cpp", "src/converter.cpp", "src/database.cpp", "src/encryptor.cpp", "src/icon.cpp", "src/item.cpp", "src/main.cpp", "src/message.cpp", "src/order.cpp", "src/process.cpp", "src/qr.cpp", "src/seller.cpp", "src/server.cpp", "src/user.cpp", "src/validator.cpp", "src/wallet.cpp", })
     includedirs ({ 
-        "include/", "external/monero-cpp/src/", --[["external/libbcrypt/",]] "external/sqlite/", "external/QR-Code-generator/cpp/", "external/json/single_include/", --[["external/curl/include/", "external/curl/lib/",]] --[["/usr/include/postgresql/", "/usr/include/postgresql/server/",]] "external/raft/include/", --[["external/libuv/include/", "external/libuv/src/",]] "external/monero-cpp/external/monero-project/external/db_drivers/liblmdb/", "external/stduuid", "external/stduuid/catch", "external/stduuid/include",
+        "include/", "external/monero-cpp/src/", --[["external/libbcrypt/",]] "external/sqlite/", "external/QR-Code-generator/cpp/", "external/json/single_include/", --[["external/curl/include/", "external/curl/lib/",]] --[["/usr/include/postgresql/", "/usr/include/postgresql/server/",]] "external/raft/include/", --[["external/libuv/include/", "external/libuv/src/",]] "external/monero-cpp/external/monero-project/external/db_drivers/liblmdb/", "external/stduuid", "external/stduuid/catch", "external/stduuid/include", "external/linenoise",
         -- dokun-ui
         "external/dokun-ui/include/",
         "external/dokun-ui/external/lua/lua-5.4.1/src/",
@@ -29,9 +30,11 @@ project("neroshop")
         "external/monero-cpp/external/monero-project/external/",
     })
     libdirs({ "src/", "build/bin/Debug/", "build/bin/Release/", "external/dokun-ui/build/", "external/dokun-ui/src/", })
-    links({ "monero-cpp", --[["bcrypt",]] "sqlite3", "qrcodegen", "curl", --[["crypto", "ssl",]] --[["pq",]] "raft", "uv",
+    links({ "monero-cpp", --[["bcrypt",]] "sqlite3", "qrcodegen", "curl", --[["crypto", "ssl",]] --[["pq",]] "raft", "uv", "linenoise",
         -- dokun-ui
         "dokun-ui", "glfw", --[["vulkan",]]
+        -- if building without dokun-ui
+        --"lua", "png", "z",
         -- monero
         "external/monero-cpp/external/monero-project/build/release/lib/wallet_merged",
         "external/monero-cpp/external/monero-project/build/release/lib/wallet",

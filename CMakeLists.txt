@@ -10,7 +10,8 @@ set(VERSION_PATCH "0")
 set(PROJECT_VERSION ${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_PATCH})
 
 option(NEROSHOP_BUILD_TESTS "Build neroshop tests" OFF)
-option(NEROSHOP_BUILD_GUI "Build neroshop GUI" OFF) # CLI is built by default so it won't need an option
+option(NEROSHOP_BUILD_CLI "Build neroshop CLI" ON) # CLI is for testing only. There's no reason for it besides that. This is an ecommerce app so a GUI is ALWAYS necessary!
+option(NEROSHOP_BUILD_GUI "Build neroshop GUI" OFF)
 option(UUID_SYSTEM_GENERATOR "Enable operating system uuid generator" OFF)
 option(UUID_TIME_GENERATOR "Enable experimental time-based uuid generator" OFF)
 
@@ -252,7 +253,7 @@ set_target_properties(randomx PROPERTIES IMPORTED_LOCATION
 set(monero_src wallet_merged wallet_crypto #[[wallet_api]] wallet lmdb epee unbound easylogging cryptonote_core cryptonote_basic cryptonote_format_utils_basic mnemonics ringct ringct_basic common cncrypto blockchain_db blocks checkpoints device device_trezor multisig version randomx 
 ${Boost_LIBRARIES} ${Protobuf_LIBRARY} ${LibUSB_LIBRARIES} ${OPENSSL_LIBRARIES} ${SODIUM_LIBRARY} ${HIDAPI_LIBRARY} ${EXTRA_LIBRARIES})
 ######################################
-# monero-cpp (wrapper) v0.5.1 => v0.5.5 => v0.5.10 => v0.6.4 => v0.7.0
+# monero-cpp (wrapper)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/external/monero-cpp/src/)
 set(monero_cpp_src ${CMAKE_CURRENT_SOURCE_DIR}/build/libmonero-cpp.a)#set(monero_cpp_src external/monero-cpp/src/utils/gen_utils.cpp external/monero-cpp/src/utils/monero_utils.cpp external/monero-cpp/src/daemon/monero_daemon_model.cpp external/monero-cpp/src/daemon/monero_daemon.cpp external/monero-cpp/src/wallet/monero_wallet_model.cpp external/monero-cpp/src/wallet/monero_wallet_keys.cpp external/monero-cpp/src/wallet/monero_wallet_full.cpp)
 
@@ -323,6 +324,22 @@ set(raft_src ${CMAKE_CURRENT_SOURCE_DIR}/build/libraft.a)#set(raft_src ${CMAKE_C
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/external/stduuid ${CMAKE_CURRENT_SOURCE_DIR}/external/stduuid/catch ${CMAKE_CURRENT_SOURCE_DIR}/external/stduuid/include)
 
 ######################################
+# linenoise (BSD replacement for GNU readline)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/external/linenoise)
+set(linenoise_src ${CMAKE_CURRENT_SOURCE_DIR}/build/liblinenoise.a)
+
+######################################
+# lua
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/external/lua/src) # v5.4.4
+set(lua_src ${CMAKE_CURRENT_SOURCE_DIR}/build/liblua.a)
+
+######################################
+# png (needs zlib)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/external/png) # v1.6.37
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/external/zlib) #v1.2.12
+set(png_src ${CMAKE_CURRENT_SOURCE_DIR}/build/libpng.a ${CMAKE_CURRENT_SOURCE_DIR}/build/libz.a)
+
+######################################
 # dokun-ui_dependencies
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/external/dokun-ui/external/lua/lua-5.4.1/src) # lua
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/external/dokun-ui/external/glew/include)
@@ -352,6 +369,10 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR}/external/dokun-ui/include)
 set(dokun_ui_src ${CMAKE_CURRENT_SOURCE_DIR}/external/dokun-ui/build/libdokun-ui.a) # definitions added: DOKUN_OPENGL, DOKUN_BUILD_LIBRARY#add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/external/dokun-ui)
 
 ######################################
+# global directories
+include_directories(#[[${CMAKE_CURRENT_SOURCE_DIR}/src/]] ${CMAKE_CURRENT_SOURCE_DIR}/external)
+link_directories(${CMAKE_CURRENT_SOURCE_DIR}/build)
+######################################
 # neroshop tests
 if(NEROSHOP_BUILD_TESTS) # -DNEROSHOP_BUILD_TESTS=1
     enable_testing()
@@ -363,28 +384,43 @@ endif()
 # neroshop-daemon
 set(daemon_executable "neromon")
 add_executable(${daemon_executable} src/daemon.cpp src/server.cpp)#target_link_libraries(daemon ${curl_src} ${OPENSSL_LIBRARIES}) # curl requires both openssl(used in monero) and zlib(used in dokun-ui)
-target_link_libraries(${daemon_executable} ${dokun_ui_src} ${libuv_src})#set(CMAKE_CXX_LINK_EXECUTABLE "${CMAKE_CXX_LINK_EXECUTABLE} -ldl") # fixes undefined reference to symbol 'dlsym@@GLIBC_2.2.5' error
+target_link_libraries(${daemon_executable} ${libuv_src})#set(CMAKE_CXX_LINK_EXECUTABLE "${CMAKE_CXX_LINK_EXECUTABLE} -ldl") # fixes undefined reference to symbol 'dlsym@@GLIBC_2.2.5' error
 
 ######################################
 # neroshop
 set(neroshop_executable "neroshop")
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/external)
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
-link_directories(${CMAKE_CURRENT_SOURCE_DIR}/src ${CMAKE_CURRENT_SOURCE_DIR}/build)
-set(neroshop_src src/buyer.cpp #[[src/carrier.cpp]] src/cart.cpp src/catalog.cpp src/client.cpp src/converter.cpp src/database.cpp src/encryptor.cpp src/icon.cpp src/item.cpp src/main.cpp src/message.cpp src/order.cpp src/process.cpp src/qr.cpp src/seller.cpp src/server.cpp src/user.cpp src/validator.cpp src/wallet.cpp)
+set(neroshop_src src/buyer.cpp #[[src/carrier.cpp]] src/cart.cpp src/catalog.cpp src/client.cpp src/converter.cpp src/database.cpp src/encryptor.cpp #[[src/icon.cpp]] src/item.cpp #[[src/main.cpp]] #[[src/message.cpp]] src/order.cpp src/process.cpp src/qr.cpp src/script.cpp src/seller.cpp src/server.cpp src/user.cpp src/validator.cpp src/wallet.cpp)
+if(NEROSHOP_BUILD_CLI)
+    list(APPEND neroshop_src src/console/main.cpp)
+endif()
+if(NEROSHOP_BUILD_GUI)
+    list(APPEND neroshop_src src/gui/icon.cpp src/gui/main.cpp src/gui/message.cpp)
+endif()
 add_executable(${neroshop_executable} ${neroshop_src})
 target_compile_definitions(${neroshop_executable} PRIVATE NEROSHOP_DEBUG) # for more detailed debugging, use -DNEROSHOP_DEBUG0 # set_target_properties(${neroshop_executable} PROPERTIES COMPILE_DEFINITIONS "NEROSHOP_DEBUG")
-target_link_libraries(${neroshop_executable} ${monero_cpp_src} ${sqlite_src} ${qr_code_generator_src} ${dokun_ui_src} ${raft_src} ${libuv_src} ${curl_src} ${monero_src})
+target_link_libraries(${neroshop_executable} ${monero_cpp_src} ${sqlite_src} ${qr_code_generator_src} ${raft_src} ${libuv_src} ${curl_src} ${monero_src})
 # todo: create separate targets - neroshop-gui and neroshop-cli
-if (UUID_TIME_GENERATOR) # -DUUID_TIME_GENERATOR=1
-    target_compile_definitions(${neroshop_executable} PRIVATE UUID_TIME_GENERATOR)
+if(NEROSHOP_BUILD_CLI)
+    target_compile_definitions(${neroshop_executable} PRIVATE NEROSHOP_BUILD_CLI)
+    target_link_libraries(${neroshop_executable} ${linenoise_src} ${lua_src} ${png_src}) # no dokun-ui in CLI so we have to link to lua (for config scripts) and png (for qr code export) themselves
 endif()
+if(NEROSHOP_BUILD_GUI)
+    target_compile_definitions(${neroshop_executable} PRIVATE NEROSHOP_BUILD_GUI)
+    # link GUI library here eg: QT, dokun-ui, etc.
+    #target_link_libraries(${neroshop_executable} ${dokun_ui_src}) # If using dokun-ui for the user interface, you will not need to link to png nor lua
+    #target_link_libraries(${neroshop_executable} )
+endif()
+
 ######################################
 # note: currently the CLI depends on dokun-ui for Window, File, Script (config.h), libpng (qr.cpp), lua (script.cpp), etc. (catalog.cpp also uses GUI features)
 if(DEFINED NEROSHOP_USE_LIBBCRYPT) # -DNEROSHOP_USE_LIBBCRYPT=1
     message(STATUS "Using libbcrypt: ${bcrypt_src}")
     target_compile_definitions(${neroshop_executable} PRIVATE NEROSHOP_USE_LIBBCRYPT)
     target_link_libraries(${neroshop_executable} ${bcrypt_src})
+endif()
+
+if (UUID_TIME_GENERATOR) # -DUUID_TIME_GENERATOR=1
+    target_compile_definitions(${neroshop_executable} PRIVATE UUID_TIME_GENERATOR)
 endif()
 
 if(WIN32)
@@ -409,10 +445,9 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
     target_link_libraries(${daemon_executable} ${posix_src})
     find_package(X11 REQUIRED)
     if(X11_FOUND)
-    #if(NEROSHOP_BUILD_GUI)
+    if(NEROSHOP_BUILD_GUI)
 	    target_link_libraries(${neroshop_executable} ${X11_LIBRARIES})
-	    #target_link_libraries(${daemon_executable} ${X11_LIBRARIES}) # todo: remove this. Daemon won't be using GUI features (I think)
-	#endif()
+	endif()
     endif()
 endif()
 
@@ -429,18 +464,18 @@ endif()
 set(OpenGL_GL_PREFERENCE "LEGACY") # LEGACY (libGL.so) or GLVND (libOpenGL.so and libGLX.so)
 find_package(OpenGL REQUIRED)
 if(OPENGL_FOUND)
-#if(NEROSHOP_BUILD_GUI)
+if(NEROSHOP_BUILD_GUI)
     target_compile_definitions(${neroshop_executable} PRIVATE DOKUN_USE_OPENGL)
 	target_link_libraries(${neroshop_executable} ${OPENGL_LIBRARIES})
-#endif()
+endif()
 endif()
 
 find_package(GLFW3)# REQUIRED)
 if(GLFW3_FOUND)
-#if(NEROSHOP_BUILD_GUI)
+if(NEROSHOP_BUILD_GUI)
 	target_compile_definitions(${neroshop_executable} PRIVATE DOKUN_USE_GLFW) # already defined in libdokun-ui.a
     target_link_libraries(${neroshop_executable} ${GLFW3_LIBRARY})
-#endif()
+endif()
 endif()
 
 ######################################

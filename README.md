@@ -41,6 +41,7 @@ Coming soon
 | [libuv](https://github.com/libuv/libuv)                            | ?                  | networking, child process and file system                              | :heavy_check_mark:                  |
 | [raft](https://github.com/willemt/raft)                            | ?                  | consensus mechanism                                                    | :heavy_check_mark:                  |
 | [stduuid](https://github.com/mariusbancila/stduuid)                | ?                  | order number generation                                                | :heavy_check_mark:                  |
+| [linenoise](https://github.com/antirez/linenoise)                  | ?                  | command line interface                                                 | :o:                                 |
 
 ### Compiling neroshop from source
 **0. Clone neroshop**
@@ -94,6 +95,7 @@ git clone --recurse-submodules https://github.com/nlohmann/json.git
 #git clone --recurse-submodules https://github.com/libuv/libuv.git
 git clone --recurse-submodules https://github.com/willemt/raft.git
 git clone --recurse-submodules https://github.com/mariusbancila/stduuid.git
+git clone https://github.com/antirez/linenoise.git
 cd ../
 ```
 
@@ -144,7 +146,7 @@ make
 ```
 
 
-To build with [Premake](https://premake.github.io/):
+To build with [Premake](https://premake.github.io/) (experimental):
 
 ```bash
 # Build external libraries
@@ -171,9 +173,8 @@ To build for [Android](https://www.android.com/) (requires [Android NDK](https:/
 > larteyoh@pm.me
 
 [//]: # (./clean.sh)
-[//]: # (rm -rf external/dokun-ui/CMakeFiles; rm -rf external/dokun-ui/CMakeCache.txt; rm -rf external/dokun-ui/cmake_install.cmake; rm -rf external/dokun-ui/Makefile)
 [//]: # (git checkout -b test)
-[//]: # (git add .gitignore .gitmodules cmake/ CMakeLists.txt external/ include/ premake5.lua README.md res/neroshop-logo.png res/wallets src/ test/)
-[//]: # (git commit -m"Testing")
+[//]: # (git add .gitignore .gitmodules cmake/ CMakeLists.txt external/ premake5.lua README.md res/neroshop-logo.png res/wallets src/ test/)
+[//]: # (git commit -m"...")
 [//]: # (git push -u origin test)
 [//]: # (https://git.slipfox.xyz/larteyoh/testshop/settings => Mirror Settings => Synchronize Now)

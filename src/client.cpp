@@ -1,4 +1,4 @@
-#include "../include/client.hpp"
+#include "client.hpp"
 
 neroshop::Client::Client() {//: socket(0) {
     create();

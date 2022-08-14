@@ -1,4 +1,4 @@
-#include "../include/item.hpp"
+#include "item.hpp"
 
 ////////////////////
 neroshop::Item::Item() : id(0)//, quantity(0), price(0.00), weight(1.0), size(std::make_tuple<double, double, double>(0.0, 0.0, 0.0)), discount(0.0), category("unspecified")/* or none */, condition("new") {}// name and desc and empty strings by default
@@ -745,7 +745,7 @@ void neroshop::Item::upload(const std::string& filename) {
 }    
 ////////////////////
 // the first image of an item will be used as the thumbnail
-Image * neroshop::Item::get_upload_image(int index) const {
+/*Image * neroshop::Item::get_upload_image(int index) const {
 #if defined(NEROSHOP_USE_POSTGRESQL)
     // begin transaction
     db::Postgres::get_singleton()->execute("BEGIN;");
@@ -794,7 +794,7 @@ Image * neroshop::Item::get_upload_image(int index) const {
     ///////////////////////////
 #endif    
     return nullptr;
-}
+}*/
 ////////////////////
 void neroshop::Item::delete_upload_image(int index) {
 #if defined(NEROSHOP_USE_POSTGRESQL)

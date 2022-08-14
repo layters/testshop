@@ -1,4 +1,4 @@
-#include "../include/user.hpp"
+#include "user.hpp"
 
 ////////////////////
 neroshop::User::User() : id(0), logged(false), account_type(user_account_type::guest), cart(nullptr), order_list({}), favorites_list({}) {

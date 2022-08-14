@@ -1,4 +1,4 @@
-#include "../include/seller.hpp"
+#include "seller.hpp"
 
 neroshop::Seller::Seller() : wallet(nullptr)
 {}

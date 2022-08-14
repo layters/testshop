@@ -1,4 +1,4 @@
-#include "../include/cart.hpp"
+#include "cart.hpp"
 
 ////////////////////
 neroshop::Cart::Cart() : id(0), max_items(10), max_quantity(100) {} // cart can only hold up to 10 unique items // cart items can only add up to 100 qty

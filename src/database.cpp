@@ -1,4 +1,4 @@
-#include "../include/database.hpp"
+#include "database.hpp"
 
 
 neroshop::db::Sqlite3::Sqlite3() : handle(nullptr), opened(false) {}

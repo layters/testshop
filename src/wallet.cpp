@@ -1,4 +1,4 @@
-#include "../include/wallet.hpp"
+#include "wallet.hpp"
 ////////////////////
 ////////////////////
 // constructors and destructors
@@ -229,8 +229,9 @@ void neroshop::Wallet::on_sync_progress(uint64_t height, uint64_t start_height, 
         if((percent_done * 100) == 100) std::cout << "\033[0;35;49m" << date << " \033[1;32;49m" << "SYNCHRONIZATION DONE" << std::endl;
         std::cout << "\033[0;35;49m" << date << std::endl;
         std::cout << "\033[0;35;49m" << date << " \033[1;33;49m" << "**********************************************************************" << "\033[0m" << std::endl;*/
+        // todo: REMOVE THE CODE BELOW
         #ifdef NEROSHOP_USE_DOKUN_UI
-        if(!sync_bar.get()) {
+        /*if(!sync_bar.get()) {
             sync_bar = std::unique_ptr<Progressbar>(new Progressbar());//sync_bar->set_range(0.0, 100.0); // 0-100%//sync_bar->set_outline(true);
             sync_bar->set_size(300, 30);
             dokun::Label * sync_label = new dokun::Label();//std::unique_ptr<dokun::Label>(new dokun::Label());
@@ -275,7 +276,7 @@ void neroshop::Wallet::on_sync_progress(uint64_t height, uint64_t start_height, 
         sync_bar->set_position((window->get_client_width() / 2) - (sync_bar->get_width() / 2), (window->get_client_height() / 2) - (sync_bar->get_height() / 2));// center progressbar
         sync_bar->draw();        
         ////////////////
-        window->update();
+        window->update();*/
         #endif
 }
 ////////////////////
@@ -307,7 +308,7 @@ void neroshop::Wallet::on_output_received(const monero_output_wallet& output) {
             std::cout << "\033[1;32;49m" << "You have received " << std::fixed << std::setprecision(12) << balance << std::fixed << std::setprecision(2) << " xmr " << "(txid: " << tx_hash << ", account_idx: " << account_index << ", subaddress_idx: " << subaddress_index << ")" << "\033[0m" << std::endl;
             // set message box text then show message box
             // box text0 (label)
-            neroshop::Message::get_second()->set_text(String::to_string_with_precision(balance, 12) + " xmr was deposited into your account ", 0, 107, 61);//56, 117, 11);//if(get_monero_wallet() != nullptr) //neroshop::Message::get_second()->set_text(std::string("You have received " + String::to_string_with_precision(balance, 12) + " xmr"), 56, 117, 11);//34, 139, 34);//neroshop::Message message(std::string("output received: " + std::to_string(balance) + " xmr"), 34, 139, 34);//(address: " + String::get_first_n_characters(subaddress, 4) + ".." + String::get_last_n_characters(subaddress, 4) + ")"
+            /*neroshop::Message::get_second()->set_text(String::to_string_with_precision(balance, 12) + " xmr was deposited into your account ", 0, 107, 61);//56, 117, 11);//if(get_monero_wallet() != nullptr) //neroshop::Message::get_second()->set_text(std::string("You have received " + String::to_string_with_precision(balance, 12) + " xmr"), 56, 117, 11);//34, 139, 34);//neroshop::Message message(std::string("output received: " + std::to_string(balance) + " xmr"), 34, 139, 34);//(address: " + String::get_first_n_characters(subaddress, 4) + ".." + String::get_last_n_characters(subaddress, 4) + ")"
             neroshop::Message::get_second()->get_label(0)->set_alignment("none");
             neroshop::Message::get_second()->get_label(0)->set_relative_position((neroshop::Message::get_second()->get_width() / 2) - (neroshop::Message::get_second()->get_label(0)->get_width() / 2), ((neroshop::Message::get_second()->get_height() - neroshop::Message::get_second()->get_label(0)->get_height()) / 2) - 20);
             std::cout << neroshop::Message::get_second()->get_label(0)->get_string() << " (width: " << (neroshop::Message::get_second()->get_label(0)->get_string().length() * 10) << ")" << std::endl;
@@ -323,7 +324,7 @@ void neroshop::Wallet::on_output_received(const monero_output_wallet& output) {
             // show message box, labels and buttons
             neroshop::Message::get_second()->get_label(1)->show();
             neroshop::Message::get_second()->get_button(0)->show();
-            neroshop::Message::get_second()->show();
+            neroshop::Message::get_second()->show();*/
         }
 }
 ////////////////////
@@ -356,10 +357,10 @@ void neroshop::Wallet::on_balances_changed(uint64_t new_balance, uint64_t new_un
 void neroshop::Wallet::daemon_open(const std::string& ip, const std::string& port, bool confirm_external_bind, bool restricted_rpc, bool remote, std::string data_dir, std::string network_type, unsigned int restore_height) 
 {
     // search for monero daemon (that is packaged with neroshop executable)
-    std::string daemon_dir = File::get_current_dir() + "/external/monero-cpp/external/monero-project/build/release/bin/monerod";
+    std::string daemon_dir = static_cast<std::string>(std::filesystem::current_path()) + "/external/monero-cpp/external/monero-project/build/release/bin/monerod";
     // connect to a remote node
     // either neroshop's daemon does not exist or remote is set to true
-    if(!File::exists(daemon_dir) || remote == true) { std::cout << "\033[1;90;49m" << "connecting to remote node - " << (ip + ":" + port) << "\033[0m" << std::endl; return;} // exit function
+    if(!std::filesystem::is_regular_file(daemon_dir) || remote == true) { std::cout << "\033[1;90;49m" << "connecting to remote node - " << (ip + ":" + port) << "\033[0m" << std::endl; return;} // exit function
     // check if there is another monerod process running in the background
     int monerod = Process::get_process_by_name("monerod");//(argv[1]);//cout << "pid: " << monerod << endl;
     if(monerod != -1) { std::cout << "\033[1;90;49m" << "monerod is running (ID:" << monerod << ")\033[0m" << std::endl; return;} // daemon that was previously running in the background // exit function
@@ -371,7 +372,7 @@ void neroshop::Wallet::daemon_open(const std::string& ip, const std::string& por
     std::string args = (" --data-dir=" + data_dir) + (" --rpc-bind-ip=" + ip) + (" --rpc-bind-port=" + port);
     if(ip == "0.0.0.0" && confirm_external_bind == true) { args = args + " --confirm-external-bind"; }
     if(confirm_external_bind == true && restricted_rpc == true) { args = args + " --restricted-rpc"; }
-    if(String::lower(network_type) != "mainnet") args = args + (" --" + network_type);
+    if(neroshop::string::lower(network_type) != "mainnet") args = args + (" --" + network_type);
     args = args + (" --detach"); // https://monero.stackexchange.com/questions/12005/what-is-the-difference-between-monerod-detach-and-monerod-non-interactive
     // start the daemon (monerod) as a new process on launch  //std::cout << "\033[1;95;49m" << "$ " << daemon_dir + args << "\033[0m" << std::endl;
 	process = std::unique_ptr<Process>(new Process(daemon_dir, args)); // note: process was being created on the stack, not the heap so it died in the function scope/if statement

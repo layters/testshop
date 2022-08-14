@@ -1,4 +1,4 @@
-#include "../include/buyer.hpp"
+#include "buyer.hpp"
 
 ////////////////////
 neroshop::Buyer::Buyer() {} // not used
