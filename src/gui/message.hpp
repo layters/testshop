@@ -1,13 +1,17 @@
 #ifndef MESSAGE_HPP_NEROSHOP
 #define MESSAGE_HPP_NEROSHOP
 
+#if defined(NEROSHOP_USE_DOKUN_UI)
 #include <box.hpp>
 #include <button.hpp>
 #include <edit.hpp>
 #include <timer.hpp>
+#endif
+
 #include <memory> // std::shared_ptr, std::make_shared
 
-#include "debug.hpp"
+#include "../util.hpp"
+#include "../debug.hpp"
 
 namespace neroshop {
 class Message {
@@ -37,16 +41,22 @@ public:
     void set_width(int width);
     void set_height(int height);
     void set_size(int width, int height);
-    void set_bottom_level_gui_list(const std::vector<GUI *>& bottom_level_gui_list);    
+    #if defined(NEROSHOP_USE_DOKUN_UI)
+    void set_bottom_level_gui_list(const std::vector<GUI *>& bottom_level_gui_list); // GUI is a dokun-ui class
+    #endif
     // getters
     std::string get_text(int label_index = 0) const;
     std::string get_title_text() const;
     int get_x() const;
     int get_y() const;
-    Vector2 get_position() const;
+    #if defined(NEROSHOP_USE_DOKUN_UI)
+    Vector2 get_position() const; // Vector2 is a dokun-ui class
+    #endif
     int get_width() const;
     int get_height() const;
+    #if defined(NEROSHOP_USE_DOKUN_UI)
     Vector2 get_size() const;
+    #endif
     // objects
     static Message * get_first(); // returns the first and original message box
     static Message * get_second();
@@ -54,6 +64,7 @@ public:
     static Message * get_singleton();
     static Message * get_doubleton();
     //static Message * get_tripleton();
+    #if defined(NEROSHOP_USE_DOKUN_UI)
     Box * get_box() const;
     Button * get_button(int index) const;
     Edit * get_edit(int index) const;
@@ -61,17 +72,20 @@ public:
     int get_button_count() const;
     int get_edit_count() const;
     int get_label_count() const;
+    #endif
     // boolean
     bool is_visible();
 private: // https://codereview.stackexchange.com/questions/160053/c-erasing-an-object-from-vector-of-pointers/160058#160058
     static Message * first; // static objects have a static lifetime so I guess there's no need for shared_ptr here whatsoever   source: https://stackoverflow.com/questions/41751514/are-shared-ptr-on-static-objects-good#comment70695503_41751514
     static Message * second;
     //static Message * third;
+    #if defined(NEROSHOP_USE_DOKUN_UI)
     std::unique_ptr<Box> box;
     std::vector<std::shared_ptr<dokun::Label>> label_list; // since I can't do multi-lined labels :/
     std::vector<std::shared_ptr<Button>> button_list;//std::vector<Button*> button_list;   
     std::vector<std::shared_ptr<Edit>> edit_list;//std::vector<Edit*> edit_list;
     std::vector<GUI *> bottom_level_gui_list;
+    #endif
     void on_draw();
     void destroy_children(); // No longer a need for this now that I'm using shared pointers
     void draw_children();

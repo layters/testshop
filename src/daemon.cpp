@@ -19,7 +19,7 @@
 
 using namespace neroshop;
 
-Server * server = new Server();
+Server * server;
 
 void close_server() {
     server->shutdown();
@@ -136,6 +136,42 @@ void do_heartbeat()
 // For security purposes, we don't allow any arguments to be passed into the daemon
 int main(void)
 {
+
+  // Fork the current process. The parent process continues with a process ID
+  // greater than 0.  A process ID lower than 0 indicates a failure in either
+  // process.
+  pid_t pid = fork();
+  if (pid > 0) exit(EXIT_SUCCESS); else if (pid < 0) exit(EXIT_FAILURE);
+
+  // TODO: I think we should log to ~/.config/neroshop/
+
+  // The parent process has now terminated, and the forked child process will
+  // continue (the pid of the child process was 0).  Since the child process is
+  // a daemon, the umask needs to be set so files and logs can be written.
+  umask(0);
+
+  // Open system logs for the child process
+  openlog("neromon", LOG_NOWAIT | LOG_PID, LOG_USER);
+  syslog(LOG_NOTICE, "Successfully started neromon");
+
+  // Generate a session ID for the child process and ensure it is valid.
+  if(setsid() < 0) {
+    // Log failure and exit
+    syslog(LOG_ERR, "Could not generate session ID for child process");
+    // If a new session ID could not be generated, we must terminate the child
+    // process or it will be orphaned.
+    exit(EXIT_FAILURE);
+  }
+
+  // Change the current working directory to a directory guaranteed to exist
+  if (chdir("/") < 0) {
+    // Log failure and exit
+    syslog(LOG_ERR, "Could not change working directory to /");
+    // If our guaranteed directory does not exist, terminate the child process
+    // to ensure the daemon has not been hijacked.
+    exit(EXIT_FAILURE);
+  }
+//---
     // A daemon cannot use the terminal, so close standard file descriptors for security reasons
     close(STDIN_FILENO);
     close(STDOUT_FILENO);
@@ -144,14 +180,27 @@ int main(void)
     const int SLEEP_INTERVAL = 1;
     //////////////////////////////////////////////////
     // Start server
-    /*std::atexit(close_server);
-    int server_port = 1234;//(std::stoi(port));//port 38081 fails
+    std::atexit(close_server);
+    
+    server = new Server();
+    
+    int server_port = 1234;//(std::stoi(port));
 	if(server->bind(server_port)) {
-	    std::cout << std::endl << NEROMON_TAG "\033[1;97mbound to port " + std::to_string(server_port) << "\033[0m" << std::endl;
+	    // Daemon cannot write to stdin, so we must use the Server::write function
+	    //std::cout << std::endl << NEROMON_TAG "\033[1;97mbound to port " + std::to_string(server_port) << "\033[0m" << std::endl;
+	    server->write(NEROMON_TAG "\033[1;97mbound to port " + std::to_string(server_port) + "\033[0m");
 	}
-	server->listen(); // listens for any incoming connection*/
+	server->listen(); // listens for any incoming connection
+	
+  // Enter daemon loop
+  while(true) {
+    // Execute daemon heartbeat
+    do_heartbeat();
+    // Sleep for a period of time
+    sleep(SLEEP_INTERVAL);
+  }	
 	/////////////////////////////////////////////////////////////////
-	/*uv_loop_t */loop = uv_default_loop();
+	//loop = uv_default_loop();
 	/////////////////////////////////////////////////////////////////
 	/*uv_pipe_t server_pipe;
 	uv_pipe_init(loop, &server_pipe, 1); // 1 = ipc
@@ -170,7 +219,7 @@ int main(void)
     //uv_read_start((uv_stream_t*)&server_pipe, alloc_buffer, on_new_connection);	
 	/////////////////////////////////////////////////////////////////
     // Start server (libuv)
-	uv_tcp_t server;
+	/*uv_tcp_t server;
 	int result = uv_tcp_init(loop, &server);
 	if(result != 0) {
 	    neroshop::print("uv_tcp_init error: " + std::string(uv_strerror(result)), 1);
@@ -181,8 +230,9 @@ int main(void)
     std::string ipv6_default = "::/0"; // ::/0 is the IPv6 equivalent of 0.0.0.0/0 (IPv4)
     std::string ipv4_localhost = "127.0.0.1";
     std::string ipv6_localhost = "::1"; // ::1/128 is the IPv6 equivalent of 127.0.0.1/8 (IPv4)
-	int port = DEFAULT_PORT/*1234*/;
-	result = uv_ip4_addr(ipv4_default.c_str(), port, &bind_addr);
+
+	int port = DEFAULT_PORT;//1234;
+	result = uv_ip4_addr(ipv4_localhost.c_str(), port, &bind_addr);
 	if(result != 0) {
 	    neroshop::print("uv_ip4_addr error: " + std::string(uv_strerror(result)), 1);
 	}
@@ -196,6 +246,15 @@ int main(void)
 	if((result = uv_listen((uv_stream_t*)&server, DEFAULT_BACKLOG, on_new_connection)) != 0) {
 		neroshop::print("uv_listen error: " + std::string(uv_strerror(result)), 1);
 		return 1;
-	}
-	return uv_run(loop, UV_RUN_DEFAULT);
+	}*/
+	// Simplified (wrapped) version
+	/*Server * server = new Server(); // uv_tcp_init called here
+	server->bind(DEFAULT_PORT);//(1234);
+	server->listen();*/
+	
+	
+	
+	//return uv_run(loop, UV_RUN_DEFAULT);
+	
+	return 0;
 }

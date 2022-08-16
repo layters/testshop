@@ -9,6 +9,10 @@
 #include <any> // std::any (C++17)
 //#endif
 #include <stdexcept> // std::runtime_error
+#include <cstring> // memset
+#if defined(__gnu_linux__)
+#include <unistd.h> // ::close
+#endif
 
 #include "database.hpp"
 #include "debug.hpp"
@@ -27,6 +31,8 @@ public:
 	std::string read();
 	void close(); // closes socket
 	void shutdown(); // shuts down entire connection, ending receiving and sending
+	
+	//void get_local_ip();
 	// todo: figure out how to bind strings (requests) to functions (responses) with different argument types and counts
     
     //! \brief Binds a functor to a name so it becomes callable via RPC.
@@ -54,13 +60,23 @@ public:
     //!
     //! \param name The name of the functor.
     void unbind(std::string const &name) {
-        function_list[name] = nullptr;
+        function_list[name] = nullptr; // todo: remove element from unordered_map c++ the proper way
     }    
-private:
+//private:
+    #if defined(NEROSHOP_USE_LIBUV)
     uv_tcp_t * handle_tcp;
     uv_udp_t * handle_udp;
-    // callbacks
-    void on_new_connection(uv_stream_t *server, int status);
+    // callbacks (libuv)
+    static void on_new_connection(uv_stream_t *server, int status);
+    static void alloc_buffer(uv_handle_t *handle, size_t suggested_size, uv_buf_t *buf);
+    static void echo_read(uv_stream_t *client, ssize_t nread, const uv_buf_t *buf);
+    static void echo_write(uv_write_t *req, int status);
+    #endif
+    #if defined(__gnu_linux__)
+    int socket;
+    char buffer[256];
+    int client_socket;
+    #endif    
     // functors
     //#if defined(__cplusplus) && (__cplusplus < 201703L)
     //std::unordered_map<std::string, std::function<void()>/*adaptor_type*/> function_list;
@@ -68,6 +84,9 @@ private:
     //#if defined(__cplusplus) && (__cplusplus >= 201703L)
     std::unordered_map<std::string, std::any> function_list;
     //#endif
+    // ??
+    /*template< class R, class... Args >
+    std::unordered_map<std::string, std::function<R(Args...)>> functions;*/
     // references:
     // https://github.com/rpclib/rpclib/blob/master/include/rpc/dispatcher.h
     // https://github.com/rpclib/rpclib/blob/master/include/rpc/server.h

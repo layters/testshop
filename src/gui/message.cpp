@@ -1,6 +1,11 @@
-#include "../include/message.hpp"
+#include "message.hpp"
 
-neroshop::Message::Message() : box(nullptr), button_list({}), edit_list({}), label_list({}) {//, button0(nullptr), button1(nullptr), button2(nullptr), edit0(nullptr), edit1(nullptr) {
+neroshop::Message::Message()
+#if defined(NEROSHOP_USE_DOKUN_UI)
+ : box(nullptr), button_list({}), edit_list({}), label_list({}) {//, button0(nullptr), button1(nullptr), button2(nullptr), edit0(nullptr), edit1(nullptr) {
+#else
+{
+#endif
     initialize();
     if(!first) first = this;
     if((first != this) && !second) second = this;//if((first != this) && (second != this) && !third) third = this;
@@ -11,7 +16,12 @@ neroshop::Message::Message(const std::string& text, int label_index) : neroshop:
 }
 ////////////////////
 neroshop::Message::Message(const std::string& text, int red, int green, int blue, int label_index) : neroshop::Message() {
-    set_text(text, red, green, blue, label_list[label_index]->get_color().w);
+    set_text(text, red, green, blue, 
+    #if defined(NEROSHOP_USE_DOKUN_UI)
+        label_list[label_index]->get_color().w);
+    #else
+        label_index);
+    #endif
 }
 ////////////////////
 neroshop::Message::Message(const std::string& text, int red, int green, int blue, double alpha, int label_index) : neroshop::Message() {
@@ -23,6 +33,7 @@ neroshop::Message::Message(const std::string& text, std::string color, int label
 }
 ////////////////////
 neroshop::Message::~Message() {
+    #if defined(NEROSHOP_USE_DOKUN_UI)
     // delete button(s), edit(s), and label(s)
     destroy_children();
     // no need to delete box now that it is a shared_ptr
@@ -35,6 +46,7 @@ neroshop::Message::~Message() {
     box.reset();
 	// clear the bottom-level gui list
     bottom_level_gui_list.clear();
+    #endif
 }
 ////////////////////
 neroshop::Message * neroshop::Message::first(nullptr);
@@ -46,6 +58,7 @@ neroshop::Message * neroshop::Message::second(nullptr);
 ////////////////////
 void neroshop::Message::initialize() 
 {
+    #if defined(NEROSHOP_USE_DOKUN_UI)
     if(box) return; // box must be uninitialized before it can be initialized
 #ifdef NEROSHOP_DEBUG0    
     std::cout << "message_box initialized\n";
@@ -72,40 +85,50 @@ void neroshop::Message::initialize()
     std::shared_ptr<dokun::Label> box_label_ptr (box_label);//converts raw_ptr to shared_ptr
     label_list.push_back(box_label_ptr);//std::cout << "(label_list[0] == box->label): " << (String(label_list[0].get()) == String(box_label)) << "" << std::endl;
     box->hide(); // by default msg_box is hidden
+    #endif
 }
 ////////////////////
 void neroshop::Message::show()
 {
+    #if defined(NEROSHOP_USE_DOKUN_UI)
     if(!box) throw std::runtime_error("message box is not initialized");
     // if message is already being showned, create a second instance of message or ?
     box->show();
     // children have their own visibility so they can be hidden even when box is visible
+    #endif
 }
 ////////////////////
 void neroshop::Message::hide()
 {
+    #if defined(NEROSHOP_USE_DOKUN_UI)
     if(!box) throw std::runtime_error("message box is not initialized");
     box->hide();
     // children have their own visibility but are hidden when box is not visible, since they can only appear on top of box
+    #endif
 }
 ////////////////////
 void neroshop::Message::draw()
 {
+    #if defined(NEROSHOP_USE_DOKUN_UI)
     if(!box) throw std::runtime_error("message box is not initialized");
     on_draw();
     box->draw();
     // draw children too
     draw_children();
+    #endif
 }
 ////////////////////
 void neroshop::Message::center(unsigned int window_width, unsigned int window_height) 
 {
+    #if defined(NEROSHOP_USE_DOKUN_UI)
     if(!box) throw std::runtime_error("message box is not initialized");
     box->set_position((window_width / 2) - (box->get_width() / 2), (window_height / 2) - (box->get_height() / 2));    
+    #endif
 }
 ////////////////////
 void neroshop::Message::restore() 
 {
+    #if defined(NEROSHOP_USE_DOKUN_UI)
     if(!box) throw std::runtime_error("message box is not initialized");
     // restore defaults
     for(auto labels : label_list) {
@@ -121,10 +144,12 @@ void neroshop::Message::restore()
     }
     // hide all buttons, edits, labels, etc. (only works now cuz I didn't set_parent to box)
     hide_children();
-    //std::cout << "message_box restored\n";       
+    //std::cout << "message_box restored\n";
+    #endif
 }
 ////////////////////
 void neroshop::Message::add_label(int relative_x, int relative_y) {
+    #if defined(NEROSHOP_USE_DOKUN_UI)
     if(!box) throw std::runtime_error("message box is not initialized");
     // set the limit of labels box can hold to 3
     if(label_list.size() > 2) {
@@ -146,9 +171,11 @@ void neroshop::Message::add_label(int relative_x, int relative_y) {
     //////////////////////////////
     //////////////////////////////
     label_list.push_back(label);
+    #endif
 }
 ////////////////////
 void neroshop::Message::add_button(const std::string& text, int relative_x, int relative_y, int width, int height) {
+    #if defined(NEROSHOP_USE_DOKUN_UI)
     if(!box) throw std::runtime_error("message box is not initialized");
     std::shared_ptr<Button> button = std::make_shared<Button>();//Button * button = new Button();
 	//std::cout << "button.get() = "<< button.get() << std::endl;
@@ -165,9 +192,11 @@ void neroshop::Message::add_button(const std::string& text, int relative_x, int 
     button->set_relative_position(relative_x, relative_y);
     //////////////////////////////
     button_list.push_back(button);
+    #endif
 }
 ////////////////////
 void neroshop::Message::add_edit(int relative_x, int relative_y, int width, int height) {
+    #if defined(NEROSHOP_USE_DOKUN_UI)
     if(!box) throw std::runtime_error("message box is not initialized");
     std::shared_ptr<Edit> edit = std::make_shared<Edit>();//Edit * edit = new Edit();
 	//std::cout << "edit.get() = "<< edit.get() << std::endl;
@@ -190,9 +219,11 @@ void neroshop::Message::add_edit(int relative_x, int relative_y, int width, int 
     //if(edit->get_height() > box->get_height()) edit->set_height(box->get_height() - 10);
     //////////////////////////////
     edit_list.push_back(edit);
+    #endif
 }
 ////////////////////
 void neroshop::Message::destroy_children() {
+    #if defined(NEROSHOP_USE_DOKUN_UI)
     if(!box) throw std::runtime_error("message box is not initialized");
     if(button_list.empty() && edit_list.empty() && label_list.empty()) return;
     // SHARED_PTRS ARE AUTOMATICALLY DELETED SO THEY CANNOT BE MANUALLY DELETED
@@ -223,9 +254,11 @@ void neroshop::Message::destroy_children() {
     //button_list[i].reset(); // deletes managed object
     //edit_list[i].reset();
     //if(i != 0) label_list[i].reset();
+    #endif
 }
 ////////////////////
 void neroshop::Message::draw_children() {
+    #if defined(NEROSHOP_USE_DOKUN_UI)
     if(!box) throw std::runtime_error("message box is not initialized");
     if(button_list.empty() && edit_list.empty() && label_list.empty()) return;
     for(auto buttons : button_list) {
@@ -282,9 +315,11 @@ void neroshop::Message::draw_children() {
         // draw labels
         labels->draw();
     }
+    #endif
 }
 ////////////////////
 void neroshop::Message::hide_children() {
+    #if defined(NEROSHOP_USE_DOKUN_UI)
     if(!box) throw std::runtime_error("message box is not initialized");
     if(button_list.empty() && edit_list.empty() && label_list.empty()) return;
     for(auto buttons : button_list) {
@@ -298,9 +333,11 @@ void neroshop::Message::hide_children() {
     for(auto labels : label_list) {
         labels->set_visible(false);
     }
+    #endif
 }
 ////////////////////
 void neroshop::Message::show_children() {
+    #if defined(NEROSHOP_USE_DOKUN_UI)
     if(!box) throw std::runtime_error("message box is not initialized");
     if(button_list.empty() && edit_list.empty() && label_list.empty()) return;
     for(auto buttons : button_list) {
@@ -314,9 +351,11 @@ void neroshop::Message::show_children() {
     for(auto labels : label_list) {
         labels->set_visible(true);
     }
+    #endif
 }
 ////////////////////
 void neroshop::Message::adjust_box() {
+    #if defined(NEROSHOP_USE_DOKUN_UI)
     // adjust box width based on label width
     std::vector<int> label_widths = {};
     for(auto labels : label_list) label_widths.push_back(labels->get_string().length() * 10);//(labels->get_width());//std::cout << "label: \"" << labels->get_string() << "\" (width: " << (labels->get_string().length() * 10)/*labels->get_width()*/ << ")" << std::endl;
@@ -330,19 +369,23 @@ void neroshop::Message::adjust_box() {
         box->set_width(box_width + (text_width - box_width) + 100); // add 100 to the width //same as: box->set_width(biggest_width_label + 100);//(label_list[biggest_width_label]->get_width() + 100);//(box->get_label()->get_width() + 100);//* 1.5);       
         //return; // exit function
     } 
+    #endif
 }
 ////////////////////
 ////////////////////
 void neroshop::Message::set_text(const std::string& text, int label_index) 
 {
+    #if defined(NEROSHOP_USE_DOKUN_UI)
     if(!box) throw std::runtime_error("message box is not initialized");
     if(label_index > (label_list.size()-1)) throw std::runtime_error(std::string("\033[0;91m") + "neroshop::Message::set_text(): attempting to access invalid index" + std::string("\033[0m"));
     label_list[label_index]->set_string(text);//box->get_label()->set_string(text);
     // adjust box size based on label width and maybe other box contents
     adjust_box();
+    #endif
 }
 ////////////////////
 void neroshop::Message::set_text(const std::string& text, int red, int green, int blue, int label_index) {
+    #if defined(NEROSHOP_USE_DOKUN_UI)
     if(!box) throw std::runtime_error("message box is not initialized");
     if(label_index > (label_list.size()-1)) throw std::runtime_error(std::string("\033[0;91m") + "neroshop::Message::set_text(): attempting to access invalid index" + std::string("\033[0m"));
     label_list[label_index]->set_string(text);//box->get_label()->set_string(text);
@@ -350,10 +393,12 @@ void neroshop::Message::set_text(const std::string& text, int red, int green, in
     label_list[label_index]->set_color(red, green, blue, label_list[label_index]->get_color().w);//box->get_label()->set_color(red, green, blue, box->get_label()->get_color().w);
     // adjust box size based on label width and maybe other box contents
     adjust_box();
+    #endif
 }
 ////////////////////
 void neroshop::Message::set_text(const std::string& text, int red, int green, int blue, double alpha, int label_index) 
 {
+    #if defined(NEROSHOP_USE_DOKUN_UI)
     if(!box) throw std::runtime_error("message box is not initialized");
     if(label_index > (label_list.size()-1)) throw std::runtime_error(std::string("\033[0;91m") + "neroshop::Message::set_text(): attempting to access invalid index" + std::string("\033[0m"));
     label_list[label_index]->set_string(text);//box->get_label()->set_string(text);
@@ -361,110 +406,147 @@ void neroshop::Message::set_text(const std::string& text, int red, int green, in
     label_list[label_index]->set_color(red, green, blue, alpha);//box->get_label()->set_color(red, green, blue, alpha);
     // adjust box size based on label width and maybe other box contents
     adjust_box();
+    #endif
 }
 ////////////////////
 void neroshop::Message::set_text(const std::string& text, std::string color, int label_index) 
 {
+    #if defined(NEROSHOP_USE_DOKUN_UI)
     if(!box) throw std::runtime_error("message box is not initialized");
     if(label_index > (label_list.size()-1)) throw std::runtime_error(std::string("\033[0;91m") + "neroshop::Message::set_text(): attempting to access invalid index" + std::string("\033[0m"));
     label_list[label_index]->set_string(text);//box->get_label()->set_string(text);
     // set text color
-    if(String::lower(color) == "white") /*box->get_label()*/label_list[label_index]->set_color(255, 255, 255, 1.0);
-    if(String::lower(color) == "black") /*box->get_label()*/label_list[label_index]->set_color(0, 0, 0, 1.0);
-    if(String::lower(color) == "red") /*box->get_label()*/label_list[label_index]->set_color(255, 0, 0, 1.0);
-    if(String::lower(color) == "yellow") /*box->get_label()*/label_list[label_index]->set_color(255, 255, 0, 1.0);
-    if(String::lower(color) == "lime") /*box->get_label()*/label_list[label_index]->set_color(0, 255, 0, 1.0);
-    if(String::lower(color) == "cyan" || String::lower(color) == "aqua") /*box->get_label()*/label_list[label_index]->set_color(0, 255, 255, 1.0);
-    if(String::lower(color) == "blue") /*box->get_label()*/label_list[label_index]->set_color(0, 0, 255, 1.0);  
-    if(String::lower(color) == "magenta" || String::lower(color) == "fuchsia") /*box->get_label()*/label_list[label_index]->set_color(255, 0, 255, 1.0);
-    if(String::lower(color) == "silver") /*box->get_label()*/label_list[label_index]->set_color(192, 192, 192, 1.0);
-    if(String::lower(color) == "gray" || String::lower(color) == "grey") /*box->get_label()*/label_list[label_index]->set_color(128, 128, 128, 1.0);
-    if(String::lower(color) == "maroon") /*box->get_label()*/label_list[label_index]->set_color(128, 0, 0, 1.0);
-    if(String::lower(color) == "olive") /*box->get_label()*/label_list[label_index]->set_color(128, 128, 0, 1.0);
-    if(String::lower(color) == "green") /*box->get_label()*/label_list[label_index]->set_color(0, 128, 0, 1.0);
-    if(String::lower(color) == "purple" || String::lower(color) == "violet") /*box->get_label()*/label_list[label_index]->set_color(128, 0, 128, 1.0);
-    if(String::lower(color) == "teal") /*box->get_label()*/label_list[label_index]->set_color(0, 128, 128, 1.0);
-    if(String::lower(color) == "navy") /*box->get_label()*/label_list[label_index]->set_color(0, 0, 128, 1.0);
-    if(String::lower(color) == "gold") /*box->get_label()*/label_list[label_index]->set_color(255, 215, 0, 1.0);
-    if(String::lower(color) == "royal blue") /*box->get_label()*/label_list[label_index]->set_color(65, 105, 225, 1.0);
-    //if(String::lower(color) == "") /*box->get_label()*/label_list[label_index]->set_color(255, 255, 255, 1.0);        
+    if(neroshop::string::lower(color) == "white") /*box->get_label()*/label_list[label_index]->set_color(255, 255, 255, 1.0);
+    if(neroshop::string::lower(color) == "black") /*box->get_label()*/label_list[label_index]->set_color(0, 0, 0, 1.0);
+    if(neroshop::string::lower(color) == "red") /*box->get_label()*/label_list[label_index]->set_color(255, 0, 0, 1.0);
+    if(neroshop::string::lower(color) == "yellow") /*box->get_label()*/label_list[label_index]->set_color(255, 255, 0, 1.0);
+    if(neroshop::string::lower(color) == "lime") /*box->get_label()*/label_list[label_index]->set_color(0, 255, 0, 1.0);
+    if(neroshop::string::lower(color) == "cyan" || neroshop::string::lower(color) == "aqua") /*box->get_label()*/label_list[label_index]->set_color(0, 255, 255, 1.0);
+    if(neroshop::string::lower(color) == "blue") /*box->get_label()*/label_list[label_index]->set_color(0, 0, 255, 1.0);  
+    if(neroshop::string::lower(color) == "magenta" || neroshop::string::lower(color) == "fuchsia") /*box->get_label()*/label_list[label_index]->set_color(255, 0, 255, 1.0);
+    if(neroshop::string::lower(color) == "silver") /*box->get_label()*/label_list[label_index]->set_color(192, 192, 192, 1.0);
+    if(neroshop::string::lower(color) == "gray" || neroshop::string::lower(color) == "grey") /*box->get_label()*/label_list[label_index]->set_color(128, 128, 128, 1.0);
+    if(neroshop::string::lower(color) == "maroon") /*box->get_label()*/label_list[label_index]->set_color(128, 0, 0, 1.0);
+    if(neroshop::string::lower(color) == "olive") /*box->get_label()*/label_list[label_index]->set_color(128, 128, 0, 1.0);
+    if(neroshop::string::lower(color) == "green") /*box->get_label()*/label_list[label_index]->set_color(0, 128, 0, 1.0);
+    if(neroshop::string::lower(color) == "purple" || neroshop::string::lower(color) == "violet") /*box->get_label()*/label_list[label_index]->set_color(128, 0, 128, 1.0);
+    if(neroshop::string::lower(color) == "teal") /*box->get_label()*/label_list[label_index]->set_color(0, 128, 128, 1.0);
+    if(neroshop::string::lower(color) == "navy") /*box->get_label()*/label_list[label_index]->set_color(0, 0, 128, 1.0);
+    if(neroshop::string::lower(color) == "gold") /*box->get_label()*/label_list[label_index]->set_color(255, 215, 0, 1.0);
+    if(neroshop::string::lower(color) == "royal blue") /*box->get_label()*/label_list[label_index]->set_color(65, 105, 225, 1.0);
+    //if(neroshop::string::lower(color) == "") /*box->get_label()*/label_list[label_index]->set_color(255, 255, 255, 1.0);        
     // adjust box size based on label width and maybe other box contents
     adjust_box();
+    #endif
 }
 ////////////////////
 void neroshop::Message::set_title(const std::string& title) 
 {
+    #if defined(NEROSHOP_USE_DOKUN_UI)
     if(!box) throw std::runtime_error("message box is not initialized");
     box->get_title_bar_label()->set_string(title);
+    #endif
 }
 ////////////////////
 void neroshop::Message::set_position(int x, int y) {
+    #if defined(NEROSHOP_USE_DOKUN_UI)
     if(!box) throw std::runtime_error("message box is not initialized");
     box->set_position(x, y);
+    #endif
 }
 ////////////////////
+#if defined(NEROSHOP_USE_DOKUN_UI)
 void neroshop::Message::set_bottom_level_gui_list(const std::vector<GUI *>& bottom_level_gui_list) {
     this->bottom_level_gui_list = bottom_level_gui_list;
 }
+#endif
 ////////////////////
 ////////////////////
 void neroshop::Message::set_width(int width) {
+    #if defined(NEROSHOP_USE_DOKUN_UI)
     if(!box) throw std::runtime_error("message box is not initialized");
     box->set_width(width);
+    #endif
 }
 ////////////////////
 void neroshop::Message::set_height(int height) {
+    #if defined(NEROSHOP_USE_DOKUN_UI)
     if(!box) throw std::runtime_error("message box is not initialized");
     box->set_height(height);
+    #endif
 }
 ////////////////////
 void neroshop::Message::set_size(int width, int height) {
+    #if defined(NEROSHOP_USE_DOKUN_UI)
     if(!box) throw std::runtime_error("message box is not initialized");
     box->set_size(width, height);
+    #endif
 }
 ////////////////////
 ////////////////////
 std::string neroshop::Message::get_text(int label_index) const {
+    #if defined(NEROSHOP_USE_DOKUN_UI)
     if(!box) throw std::runtime_error("message box is not initialized");
     return label_list[label_index]->get_string();
+    #endif
+    return "";
 }
 ////////////////////
 std::string neroshop::Message::get_title_text() const {
+    #if defined(NEROSHOP_USE_DOKUN_UI)
     if(!box) throw std::runtime_error("message box is not initialized");
     return box->get_title_bar_label()->get_string();
+    #endif
+    return "";
 }
 ////////////////////
 ////////////////////
 int neroshop::Message::get_x() const {
+    #if defined(NEROSHOP_USE_DOKUN_UI)
     if(!box) throw std::runtime_error("message box is not initialized");
     return box->get_x();
+    #endif
+    return 0;
 }
 ////////////////////
 int neroshop::Message::get_y() const {
+    #if defined(NEROSHOP_USE_DOKUN_UI)
     if(!box) throw std::runtime_error("message box is not initialized");
     return box->get_y();
+    #endif
+    return 0;
 }
 ////////////////////
+#if defined(NEROSHOP_USE_DOKUN_UI)
 Vector2 neroshop::Message::get_position() const {
     if(!box) throw std::runtime_error("message box is not initialized");
     return box->get_position();
 }
+#endif
 ////////////////////
 ////////////////////
 int neroshop::Message::get_width() const {
+    #if defined(NEROSHOP_USE_DOKUN_UI)
     if(!box) throw std::runtime_error("message box is not initialized");
     return box->get_width();
+    #endif
+    return 0;
 }
 ////////////////////
 int neroshop::Message::get_height() const {
+    #if defined(NEROSHOP_USE_DOKUN_UI)
     if(!box) throw std::runtime_error("message box is not initialized");
     return box->get_height();
+    #endif
+    return 0;
 }
 ////////////////////
+#if defined(NEROSHOP_USE_DOKUN_UI)
 Vector2 neroshop::Message::get_size() const {
     if(!box) throw std::runtime_error("message box is not initialized");
     return box->get_size();
 }
+#endif
 ////////////////////
 // If a object is allocated inside a function, then it means you do not own it
 // which is why the buttons were not showing up
@@ -485,6 +567,7 @@ neroshop::Message * neroshop::Message::get_doubleton() {
 }
 ////////////////////
 ////////////////////
+#if defined(NEROSHOP_USE_DOKUN_UI)
 Box * neroshop::Message::get_box() const {
     return box.get();
 }
@@ -520,17 +603,22 @@ int neroshop::Message::get_edit_count() const {
 int neroshop::Message::get_label_count() const {
     return label_list.size();
 }
+#endif
 ////////////////////
 ////////////////////
 ////////////////////
 ////////////////////
 bool neroshop::Message::is_visible() 
 {
+    #if defined(NEROSHOP_USE_DOKUN_UI)
     if(!box) throw std::runtime_error("message box is not initialized");
     return box->is_visible();
+    #endif
+    return false;
 }
 ////////////////////
 void neroshop::Message::on_draw() { // call this function BEFORE calling draw()
+    #if defined(NEROSHOP_USE_DOKUN_UI)
     // deactivates all gui at the bottom-level of the top-level gui element (this) so that bottom-level gui elements may not receive any input from the user while the top-level gui element (this) is visible       
     for(auto bottom_guis : bottom_level_gui_list) {
         if(box->is_visible()) bottom_guis->set_active(false); else bottom_guis->set_active(true); // or use: if(box->is_collided(*bottom_guis)) but is_visible works much better since title_bar would also be applied
@@ -541,5 +629,6 @@ void neroshop::Message::on_draw() { // call this function BEFORE calling draw()
 	//}		    
 	if(dokun::Keyboard::is_pressed(DOKUN_KEY_ESCAPE)) Message::hide();
 	if(!Message::is_visible()) Message::restore(); // restore defaults if hidden
+	#endif
 }
 ////////////////////

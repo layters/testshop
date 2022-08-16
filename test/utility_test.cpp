@@ -1,12 +1,11 @@
 #include <iostream>
 #include <string>
 // neroshop
-#include "../include/neroshop.hpp"
+#include "../src/neroshop.hpp"
 using namespace neroshop;
 // dokun-ui
 /*#include <dokun_ui.hpp>
 using namespace dokun;*/
-#include "../include/util.hpp"
 
 lua_State * neroshop::lua_state = luaL_newstate(); // lua_state should be initialized by default
 

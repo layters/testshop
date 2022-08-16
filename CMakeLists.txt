@@ -10,12 +10,43 @@ set(VERSION_PATCH "0")
 set(PROJECT_VERSION ${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_PATCH})
 
 option(NEROSHOP_BUILD_TESTS "Build neroshop tests" OFF)
-option(NEROSHOP_BUILD_CLI "Build neroshop CLI" ON) # CLI is for testing only. There's no reason for it besides that. This is an ecommerce app so a GUI is ALWAYS necessary!
-option(NEROSHOP_BUILD_GUI "Build neroshop GUI" OFF)
+option(NEROSHOP_BUILD_CLI "Build neroshop CLI" OFF)#ON) # CLI is for testing only. There's no reason for it besides that. This is an ecommerce app so a GUI is ALWAYS necessary!
+option(NEROSHOP_BUILD_GUI "Build neroshop GUI" ON)#OFF)
+include(CMakeDependentOption)
+cmake_dependent_option(NEROSHOP_USE_DOKUN_UI "Build neroshop with dokun-ui" ON "NEROSHOP_BUILD_GUI;NOT NEROSHOP_USE_QT" OFF) # defaults to ON if BUILD_GUI is defined and USE_QT is not defined
+cmake_dependent_option(NEROSHOP_USE_QT "Build neroshop with Qt" ON "NEROSHOP_BUILD_GUI;NOT NEROSHOP_USE_DOKUN_UI" OFF)
 option(UUID_SYSTEM_GENERATOR "Enable operating system uuid generator" OFF)
 option(UUID_TIME_GENERATOR "Enable experimental time-based uuid generator" OFF)
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake" "${CMAKE_CURRENT_SOURCE_DIR}/external/monero-cpp/external/monero-project/cmake" "${CMAKE_CURRENT_SOURCE_DIR}/external/dokun-ui/cmake")
+######################################
+if(NEROSHOP_BUILD_GUI AND NEROSHOP_USE_QT)
+set(CMAKE_AUTOMOC ON)
+set(CMAKE_AUTORCC ON)
+set(CMAKE_AUTOUIC ON)
+endif()
+
+######################################
+if(NOT WIN32)
+  string(ASCII 27 Esc)
+  set(ColourReset "${Esc}[m")
+  set(ColourBold  "${Esc}[1m")
+  set(Red         "${Esc}[31m")
+  set(Green       "${Esc}[32m")
+  set(Yellow      "${Esc}[33m")
+  set(Blue        "${Esc}[34m")
+  set(Magenta     "${Esc}[35m")
+  set(Cyan        "${Esc}[36m")
+  set(White       "${Esc}[37m")
+  set(BoldRed     "${Esc}[1;31m")
+  set(BoldGreen   "${Esc}[1;32m")
+  set(BoldYellow  "${Esc}[1;33m")
+  set(BoldBlue    "${Esc}[1;34m")
+  set(BoldMagenta "${Esc}[1;35m")
+  set(BoldCyan    "${Esc}[1;36m")
+  set(BoldWhite   "${Esc}[1;37m")
+endif()
+
 ######################################
 if(WIN32)
 endif()
@@ -46,6 +77,7 @@ include_directories("${MONERO_PROJECT}/external/rapidjson/include")
 include_directories("${MONERO_PROJECT_SRC}/")
 include_directories("${MONERO_PROJECT_SRC}/wallet")
 include_directories("${MONERO_PROJECT_SRC}/wallet/api")
+include_directories("${MONERO_PROJECT_SRC}/hardforks")
 include_directories("${MONERO_PROJECT_SRC}/crypto/crypto_ops_builder/include/")
 
 set(EXTERNAL_LIBS_DIR ${CMAKE_SOURCE_DIR}/monero-cpp/external-libs)
@@ -117,9 +149,7 @@ include_directories(external/monero-cpp/external/libsodium/include)
 include_directories(external/monero-cpp/external/libsodium/include/sodium)
 find_library(SODIUM_LIBRARY sodium REQUIRED)
 message(STATUS "Using libsodium library at ${SODIUM_LIBRARY}")
-#[[include_directories(monero-cpp/external/libsodium/include/sodium) # export.h
-set(SODIUM_LIBRARIES monero-cpp/external/libsodium/src/crypto_verify/verify.c)]]
-#set(sodium_src /usr/lib/x86_64-linux-gnu/libsodium.so)
+
 ######################################
 # HIDAPI - https://github.com/libusb/hidapi/releases / sudo apt-get install libhidapi-dev / sudo apt-get install libusb-1.0-0-dev, sudo apt-get install libudev-dev (libudev.h)
 if(APPLE)
@@ -154,21 +184,23 @@ if(NOT HIDAPI_FOUND)
     endif()
 endif()
 ######################################
-# Monero (monero-0.17.2.3 contents pasted in "monero-cpp/external/monero-project")
-set(MONERO_PROJECT_BUILD "${MONERO_PROJECT}/build/release")
+# Monero
+set(MONERO_PROJECT_BUILD "${MONERO_PROJECT}/build/release" CACHE STRING "Monero project build directory")
 message(STATUS "Using monero-project build" : ${MONERO_PROJECT_BUILD})
 
-add_library(wallet_merged STATIC IMPORTED)
-set_target_properties(wallet_merged PROPERTIES IMPORTED_LOCATION
-    ${MONERO_PROJECT_BUILD}/lib/libwallet_merged.a)
+#list(APPEND CMAKE_MODULE_PATH "${MONERO_PROJECT}/cmake")
     
 add_library(wallet STATIC IMPORTED)
 set_target_properties(wallet PROPERTIES IMPORTED_LOCATION
     ${MONERO_PROJECT_BUILD}/lib/libwallet.a)
     
-add_library(wallet_crypto STATIC IMPORTED)
-set_target_properties(wallet_crypto PROPERTIES IMPORTED_LOCATION
-    ${MONERO_PROJECT_BUILD}/src/crypto/wallet/libwallet-crypto.a)
+# libwallet-crypto.a provides x86_64 asm for some wallet functions
+if (EXISTS ${MONERO_PROJECT_BUILD}/src/crypto/wallet/libwallet-crypto.a)
+  add_library(wallet_crypto_lib STATIC IMPORTED)
+  set_target_properties(wallet_crypto_lib PROPERTIES IMPORTED_LOCATION
+      ${MONERO_PROJECT_BUILD}/src/crypto/wallet/libwallet-crypto.a)
+  set(wallet_crypto wallet_crypto_lib)
+endif()
     
 add_library(lmdb STATIC IMPORTED)
 set_target_properties(lmdb PROPERTIES IMPORTED_LOCATION
@@ -178,9 +210,27 @@ add_library(epee STATIC IMPORTED)
 set_target_properties(epee PROPERTIES IMPORTED_LOCATION
     ${MONERO_PROJECT_BUILD}/contrib/epee/src/libepee.a)
     
-add_library(unbound STATIC IMPORTED)
-set_target_properties(unbound PROPERTIES IMPORTED_LOCATION
-    ${MONERO_PROJECT_BUILD}/external/unbound/libunbound.a)
+# Unbound
+find_package(Unbound)
+include_directories(${UNBOUND_INCLUDE_DIR})
+if ("${UNBOUND_LIBRARIES}" MATCHES "libunbound")
+  message(STATUS "Using libunbound: ${UNBOUND_LIBRARIES}")
+  add_library(unbound SHARED IMPORTED)
+  set_target_properties(unbound PROPERTIES IMPORTED_LOCATION
+      ${UNBOUND_LIBRARIES})
+endif()
+
+add_library(rpc_base STATIC IMPORTED)
+set_target_properties(rpc_base PROPERTIES IMPORTED_LOCATION
+    ${MONERO_PROJECT_BUILD}/src/rpc/librpc_base.a)
+
+add_library(net STATIC IMPORTED)
+set_target_properties(net PROPERTIES IMPORTED_LOCATION
+    ${MONERO_PROJECT_BUILD}/src/net/libnet.a)
+    
+add_library(hardforks STATIC IMPORTED)
+set_target_properties(hardforks PROPERTIES IMPORTED_LOCATION
+    ${MONERO_PROJECT_BUILD}/src/hardforks/libhardforks.a)    
     
 add_library(easylogging STATIC IMPORTED)
 set_target_properties(easylogging PROPERTIES IMPORTED_LOCATION
@@ -189,11 +239,15 @@ set_target_properties(easylogging PROPERTIES IMPORTED_LOCATION
 add_library(cryptonote_core STATIC IMPORTED)
 set_target_properties(cryptonote_core PROPERTIES IMPORTED_LOCATION
     ${MONERO_PROJECT_BUILD}/src/cryptonote_core/libcryptonote_core.a)
+    
+    add_library(cryptonote_protocol STATIC IMPORTED)
+set_target_properties(cryptonote_protocol PROPERTIES IMPORTED_LOCATION
+    ${MONERO_PROJECT_BUILD}/src/cryptonote_protocol/libcryptonote_protocol.a)
 
 add_library(cryptonote_basic STATIC IMPORTED)
 set_target_properties(cryptonote_basic PROPERTIES IMPORTED_LOCATION
     ${MONERO_PROJECT_BUILD}/src/cryptonote_basic/libcryptonote_basic.a)
-# new addition [2021-10-02]
+
 add_library(cryptonote_format_utils_basic STATIC IMPORTED)
 set_target_properties(cryptonote_format_utils_basic PROPERTIES IMPORTED_LOCATION
     ${MONERO_PROJECT_BUILD}/src/cryptonote_basic/libcryptonote_format_utils_basic.a)
@@ -249,9 +303,10 @@ set_target_properties(version PROPERTIES IMPORTED_LOCATION
 add_library(randomx STATIC IMPORTED)
 set_target_properties(randomx PROPERTIES IMPORTED_LOCATION
     ${MONERO_PROJECT_BUILD}/external/randomx/librandomx.a)   
+    
 ######################################
-set(monero_src wallet_merged wallet_crypto #[[wallet_api]] wallet lmdb epee unbound easylogging cryptonote_core cryptonote_basic cryptonote_format_utils_basic mnemonics ringct ringct_basic common cncrypto blockchain_db blocks checkpoints device device_trezor multisig version randomx 
-${Boost_LIBRARIES} ${Protobuf_LIBRARY} ${LibUSB_LIBRARIES} ${OPENSSL_LIBRARIES} ${SODIUM_LIBRARY} ${HIDAPI_LIBRARY} ${EXTRA_LIBRARIES})
+set(monero_src wallet rpc_base net lmdb unbound easylogging cryptonote_core cryptonote_protocol cryptonote_basic cryptonote_format_utils_basic mnemonics ringct ringct_basic common cncrypto blockchain_db blocks checkpoints device device_trezor multisig version randomx epee hardforks cncrypto ${wallet_crypto} 
+${UNBOUND_LIBRARIES} ${Boost_LIBRARIES} ${Protobuf_LIBRARY} ${LibUSB_LIBRARIES} ${OPENSSL_LIBRARIES} ${SODIUM_LIBRARY} ${HIDAPI_LIBRARY} ${EXTRA_LIBRARIES})
 ######################################
 # monero-cpp (wrapper)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/external/monero-cpp/src/)
@@ -376,7 +431,7 @@ link_directories(${CMAKE_CURRENT_SOURCE_DIR}/build)
 # neroshop tests
 if(NEROSHOP_BUILD_TESTS) # -DNEROSHOP_BUILD_TESTS=1
     enable_testing()
-    message(STATUS "NEROSHOP_BUILD_TESTS option set to ON")
+    message(STATUS "${BoldMagenta}NEROSHOP_BUILD_TESTS option set to ON${ColourReset}")
     add_subdirectory(test)
 endif()
 
@@ -387,45 +442,69 @@ add_executable(${daemon_executable} src/daemon.cpp src/server.cpp)#target_link_l
 target_link_libraries(${daemon_executable} ${libuv_src})#set(CMAKE_CXX_LINK_EXECUTABLE "${CMAKE_CXX_LINK_EXECUTABLE} -ldl") # fixes undefined reference to symbol 'dlsym@@GLIBC_2.2.5' error
 
 ######################################
-# neroshop
-set(neroshop_executable "neroshop")
+# neroshop core source files
 set(neroshop_src src/buyer.cpp #[[src/carrier.cpp]] src/cart.cpp src/catalog.cpp src/client.cpp src/converter.cpp src/database.cpp src/encryptor.cpp #[[src/icon.cpp]] src/item.cpp #[[src/main.cpp]] #[[src/message.cpp]] src/order.cpp src/process.cpp src/qr.cpp src/script.cpp src/seller.cpp src/server.cpp src/user.cpp src/validator.cpp src/wallet.cpp)
+
+######################################
+# neroshop-console
 if(NEROSHOP_BUILD_CLI)
-    list(APPEND neroshop_src src/console/main.cpp)
-endif()
-if(NEROSHOP_BUILD_GUI)
-    list(APPEND neroshop_src src/gui/icon.cpp src/gui/main.cpp src/gui/message.cpp)
-endif()
-add_executable(${neroshop_executable} ${neroshop_src})
-target_compile_definitions(${neroshop_executable} PRIVATE NEROSHOP_DEBUG) # for more detailed debugging, use -DNEROSHOP_DEBUG0 # set_target_properties(${neroshop_executable} PROPERTIES COMPILE_DEFINITIONS "NEROSHOP_DEBUG")
-target_link_libraries(${neroshop_executable} ${monero_cpp_src} ${sqlite_src} ${qr_code_generator_src} ${raft_src} ${libuv_src} ${curl_src} ${monero_src})
-# todo: create separate targets - neroshop-gui and neroshop-cli
-if(NEROSHOP_BUILD_CLI)
-    target_compile_definitions(${neroshop_executable} PRIVATE NEROSHOP_BUILD_CLI)
-    target_link_libraries(${neroshop_executable} ${linenoise_src} ${lua_src} ${png_src}) # no dokun-ui in CLI so we have to link to lua (for config scripts) and png (for qr code export) themselves
-endif()
-if(NEROSHOP_BUILD_GUI)
-    target_compile_definitions(${neroshop_executable} PRIVATE NEROSHOP_BUILD_GUI)
-    # link GUI library here eg: QT, dokun-ui, etc.
-    #target_link_libraries(${neroshop_executable} ${dokun_ui_src}) # If using dokun-ui for the user interface, you will not need to link to png nor lua
-    #target_link_libraries(${neroshop_executable} )
+    set(neroshop_console "neroshop-console")
+    add_executable(${neroshop_console} ${neroshop_src} src/console/main.cpp)
+    target_compile_definitions(${neroshop_console} PRIVATE NEROSHOP_DEBUG) # for more detailed debugging, use -DNEROSHOP_DEBUG0
+    target_link_libraries(${neroshop_console} ${monero_cpp_src} ${sqlite_src} ${qr_code_generator_src} ${raft_src} ${libuv_src} ${curl_src} ${monero_src})
+    message(STATUS "${BoldMagenta}NEROSHOP_BUILD_CLI option set to ON${ColourReset}")
+    target_compile_definitions(${neroshop_console} PRIVATE NEROSHOP_BUILD_CLI)
+    target_link_libraries(${neroshop_console} ${linenoise_src} ${lua_src} ${png_src})
 endif()
 
 ######################################
-# note: currently the CLI depends on dokun-ui for Window, File, Script (config.h), libpng (qr.cpp), lua (script.cpp), etc. (catalog.cpp also uses GUI features)
+# neroshop
+if(NEROSHOP_BUILD_GUI)
+    set(neroshop_executable "neroshop")
+    add_executable(${neroshop_executable} ${neroshop_src} src/gui/icon.cpp src/gui/main.cpp src/gui/main_window.cpp src/gui/message.cpp)
+    target_compile_definitions(${neroshop_executable} PRIVATE NEROSHOP_DEBUG) # for more detailed debugging, use -DNEROSHOP_DEBUG0 # set_target_properties(${neroshop_executable} PROPERTIES COMPILE_DEFINITIONS "NEROSHOP_DEBUG")
+    target_link_libraries(${neroshop_executable} ${monero_cpp_src} ${sqlite_src} ${qr_code_generator_src} ${raft_src} ${libuv_src} ${curl_src} ${monero_src})
+    message(STATUS "${BoldMagenta}NEROSHOP_BUILD_GUI option set to ON${ColourReset}")
+    target_compile_definitions(${neroshop_executable} PRIVATE NEROSHOP_BUILD_GUI)
+    if(NEROSHOP_USE_DOKUN_UI)    
+        message(STATUS "${BoldYellow}Using dokun-ui: ${dokun_ui_src}${ColourReset}")
+        target_link_libraries(${neroshop_executable} ${dokun_ui_src}) # If using dokun-ui for the user interface, you will not need to link to png nor lua which are already built into dokun-ui
+    endif()
+    if(NEROSHOP_USE_QT)
+         target_link_libraries(${neroshop_executable} ${lua_src} ${png_src})
+    endif()
+endif()
+
+######################################
 if(DEFINED NEROSHOP_USE_LIBBCRYPT) # -DNEROSHOP_USE_LIBBCRYPT=1
     message(STATUS "Using libbcrypt: ${bcrypt_src}")
-    target_compile_definitions(${neroshop_executable} PRIVATE NEROSHOP_USE_LIBBCRYPT)
-    target_link_libraries(${neroshop_executable} ${bcrypt_src})
+    if(NEROSHOP_BUILD_GUI)
+        target_compile_definitions(${neroshop_executable} PRIVATE NEROSHOP_USE_LIBBCRYPT)
+        target_link_libraries(${neroshop_executable} ${bcrypt_src})
+    endif()
+    if(NEROSHOP_BUILD_CLI)
+        target_compile_definitions(${neroshop_console} PRIVATE NEROSHOP_USE_LIBBCRYPT)
+        target_link_libraries(${neroshop_console} ${bcrypt_src})
+    endif()    
 endif()
 
 if (UUID_TIME_GENERATOR) # -DUUID_TIME_GENERATOR=1
-    target_compile_definitions(${neroshop_executable} PRIVATE UUID_TIME_GENERATOR)
+    if(NEROSHOP_BUILD_GUI)
+        target_compile_definitions(${neroshop_executable} PRIVATE UUID_TIME_GENERATOR)
+    endif()
+    if(NEROSHOP_BUILD_CLI)
+        target_compile_definitions(${neroshop_console} PRIVATE UUID_TIME_GENERATOR)
+    endif()    
 endif()
 
 if(WIN32)
     set(winsock2_src ws2_32.lib) # -lglfw3 -lgdi32 -lopengl32 -limm32
-    target_link_libraries(${neroshop_executable} ${winsock2_src})
+    if(NEROSHOP_BUILD_GUI)
+        target_link_libraries(${neroshop_executable} ${winsock2_src})
+    endif()
+    if(NEROSHOP_BUILD_CLI)
+        target_link_libraries(${neroshop_console} ${winsock2_src})
+    endif()    
     target_link_libraries(${daemon_executable} ${winsock2_src})
 endif()
 
@@ -435,19 +514,31 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
         message(STATUS "UUID_SYSTEM_GENERATOR option set to ON")
         if (LIBUUID_FOUND)
             message(STATUS "Using LibUUID: ${LibUUID_LIBRARY}")
-            target_compile_definitions(${neroshop_executable} PRIVATE UUID_SYSTEM_GENERATOR) # uuids::uuid_system_generator
-            target_link_libraries(${neroshop_executable} ${LibUUID_LIBRARY})
+            if(NEROSHOP_BUILD_GUI)
+                target_compile_definitions(${neroshop_executable} PRIVATE UUID_SYSTEM_GENERATOR) # uuids::uuid_system_generator
+                target_link_libraries(${neroshop_executable} ${LibUUID_LIBRARY})
+            endif()
+            if(NEROSHOP_BUILD_CLI)
+                target_compile_definitions(${neroshop_console} PRIVATE UUID_SYSTEM_GENERATOR) # uuids::uuid_system_generator
+                target_link_libraries(${neroshop_console} ${LibUUID_LIBRARY})        
+            endif()    
         endif()
     endif()
 
     set(posix_src libpthread.so libdl.so libm.so)
-    target_link_libraries(${neroshop_executable} ${posix_src})
+    if(NEROSHOP_BUILD_GUI)
+        target_link_libraries(${neroshop_executable} ${posix_src})
+    endif()
+    if(NEROSHOP_BUILD_CLI)
+        target_link_libraries(${neroshop_console} ${posix_src})
+    endif()
     target_link_libraries(${daemon_executable} ${posix_src})
+
     find_package(X11 REQUIRED)
     if(X11_FOUND)
-    if(NEROSHOP_BUILD_GUI)
-	    target_link_libraries(${neroshop_executable} ${X11_LIBRARIES})
-	endif()
+        if(NEROSHOP_BUILD_GUI AND NEROSHOP_USE_DOKUN_UI)
+	        target_link_libraries(${neroshop_executable} ${X11_LIBRARIES})
+	    endif()
     endif()
 endif()
 
@@ -456,26 +547,41 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     if(UUID_SYSTEM_GENERATOR) # -DUUID_SYSTEM_GENERATOR=1
         message(STATUS "UUID_SYSTEM_GENERATOR option set to ON")
         message(STATUS "Using CFLIB: ${CFLIB}")
-        target_compile_definitions(${neroshop_executable} PRIVATE UUID_SYSTEM_GENERATOR) # uuids::uuid_system_generator
-        target_link_libraries(${neroshop_executable} ${CFLIB})
+        if(NEROSHOP_BUILD_GUI)
+            target_compile_definitions(${neroshop_executable} PRIVATE UUID_SYSTEM_GENERATOR) # uuids::uuid_system_generator
+            target_link_libraries(${neroshop_executable} ${CFLIB})
+        endif()        
+        if(NEROSHOP_BUILD_CLI)
+            target_compile_definitions(${neroshop_console} PRIVATE UUID_SYSTEM_GENERATOR) # uuids::uuid_system_generator
+            target_link_libraries(${neroshop_console} ${CFLIB})
+        endif()
     endif()
 endif()
 
 set(OpenGL_GL_PREFERENCE "LEGACY") # LEGACY (libGL.so) or GLVND (libOpenGL.so and libGLX.so)
-find_package(OpenGL REQUIRED)
+find_package(OpenGL)# REQUIRED)
 if(OPENGL_FOUND)
-if(NEROSHOP_BUILD_GUI)
-    target_compile_definitions(${neroshop_executable} PRIVATE DOKUN_USE_OPENGL)
-	target_link_libraries(${neroshop_executable} ${OPENGL_LIBRARIES})
-endif()
+    if(NEROSHOP_BUILD_GUI AND NEROSHOP_USE_DOKUN_UI)
+        target_compile_definitions(${neroshop_executable} PRIVATE DOKUN_USE_OPENGL)
+	    target_link_libraries(${neroshop_executable} ${OPENGL_LIBRARIES})
+    endif()
 endif()
 
 find_package(GLFW3)# REQUIRED)
 if(GLFW3_FOUND)
-if(NEROSHOP_BUILD_GUI)
-	target_compile_definitions(${neroshop_executable} PRIVATE DOKUN_USE_GLFW) # already defined in libdokun-ui.a
-    target_link_libraries(${neroshop_executable} ${GLFW3_LIBRARY})
+    if(NEROSHOP_BUILD_GUI AND NEROSHOP_USE_DOKUN_UI)
+	    target_compile_definitions(${neroshop_executable} PRIVATE DOKUN_USE_GLFW)
+        target_link_libraries(${neroshop_executable} ${GLFW3_LIBRARY})
+    endif()
 endif()
+
+find_package(Qt5 COMPONENTS Widgets)# REQUIRED)
+if(Qt5_FOUND)
+    if(NEROSHOP_BUILD_GUI AND NEROSHOP_USE_QT)
+        message(STATUS "Using Qt5 Qt5::Widgets")
+        target_compile_definitions(${neroshop_executable} PRIVATE NEROSHOP_USE_QT)
+        target_link_libraries(${neroshop_executable} Qt5::Widgets)
+    endif()
 endif()
 
 ######################################

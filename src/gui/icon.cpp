@@ -1,4 +1,4 @@
-#include "../include/icon.hpp"
+#include "icon.hpp"
 
 neroshop::Icon::Icon() {}
 ////////////////////
@@ -6,7 +6,9 @@ neroshop::Icon::~Icon() {}
 ////////////////////
 //Icon * neroshop::Icon::icon_ptr (new Icon());
 ////////////////////
-std::map<std::string, std::shared_ptr<Image>> neroshop::Icon::get({});
+#if defined(NEROSHOP_USE_DOKUN_UI)
+std::unordered_map<std::string, std::shared_ptr<Image>> neroshop::Icon::get({});
+#endif
 ////////////////////
 ////////////////////
 bool neroshop::Icon::load_all() { // loads all images
@@ -1099,6 +1101,7 @@ const char * monero_symbol = {
   "\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000",
 };    
     ////////////
+    #if defined(NEROSHOP_USE_DOKUN_UI)
     // monero-white
     std::shared_ptr<Image> image_monero_symbol_white = std::make_shared<Image>(const_cast<char *>(monero_symbol_white), 64, 64, 1, 4);
     neroshop::Icon::get.insert(std::make_pair("monero_symbol_white", image_monero_symbol_white));
@@ -1106,6 +1109,7 @@ const char * monero_symbol = {
     std::shared_ptr<Image> image_monero_symbol = std::make_shared<Image>(const_cast<char *>(monero_symbol), 64, 64, 1, 4);
     neroshop::Icon::get.insert(std::make_pair("monero_symbol", image_monero_symbol));
     //std::cout << "icon_count: " << neroshop::Icon::get.size() << std::endl;
+    #endif
     return true;
 }
 ////////////////////
@@ -1888,8 +1892,10 @@ bool neroshop::Icon::load_wownero()
   "\377\377\000\377\377\377\000\377\377\377\000\377\377\377\000\377\377\377\000\377\377"
   "\377\000\377\377\377\000\377\377\377\000",
 };
+    #if defined(NEROSHOP_USE_DOKUN_UI)
     std::shared_ptr<Image> image_wownero_logo = std::make_shared<Image>(const_cast<char *>(wownero_logo), 64, 64, 1, 4);
     neroshop::Icon::get.insert(std::make_pair("wownero_logo", image_wownero_logo));
+    #endif
     return true;
 }
 ////////////////////
@@ -2591,8 +2597,10 @@ bool neroshop::Icon::load_settings() // cog
   "\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000"
   "\000\000\000\000\000\000",
 };
+    #if defined(NEROSHOP_USE_DOKUN_UI)
     std::shared_ptr<Image> image_settings = std::make_shared<Image>(const_cast<char *>(settings), 64, 64, 1, 4);
     neroshop::Icon::get.insert(std::make_pair("settings", image_settings));
+    #endif
     return true;
 }
 ////////////////////
@@ -3226,8 +3234,10 @@ const char * cart = { // from icons8
   "\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000"
   "\000\000\000\000\000\000\000\000\000\000\000",
 };
+    #if defined(NEROSHOP_USE_DOKUN_UI)
     std::shared_ptr<Image> image_cart = std::make_shared<Image>(const_cast<char *>(cart), 64, 64, 1, 4);
     neroshop::Icon::get.insert(std::make_pair("cart", image_cart));
+    #endif
     return true;
 }
 ////////////////////
@@ -3790,9 +3800,10 @@ bool neroshop::Icon::load_search() {
   "\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000"
   "\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000",
 };
-
+    #if defined(NEROSHOP_USE_DOKUN_UI)
     std::shared_ptr<Image> image_search = std::make_shared<Image>(const_cast<char *>(search), 64, 64, 1, 4);
     neroshop::Icon::get.insert(std::make_pair("search", image_search));
+    #endif
     return true;
 }
 ////////////////////
@@ -4387,8 +4398,10 @@ const char * user = { // from icons8
   "\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000"
   "\000\000\000\000\000\000\000\000\000\000\000\000",
 };
+    #if defined(NEROSHOP_USE_DOKUN_UI)
     std::shared_ptr<Image> image_user = std::make_shared<Image>(const_cast<char *>(user), 64, 64, 1, 4);
     neroshop::Icon::get.insert(std::make_pair("user", image_user));
+    #endif
     return true;
 }
 ////////////////////
@@ -5065,11 +5078,13 @@ const char * heart = { // from icons8
   "\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000"
   "\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000",
 };
+    #if defined(NEROSHOP_USE_DOKUN_UI)
     std::shared_ptr<Image> image_heart = std::make_shared<Image>(const_cast<char *>(heart), 64, 64, 1, 4);
     neroshop::Icon::get.insert(std::make_pair("heart", image_heart));
       ////////////
 //    std::shared_ptr<Image> image_ = std::make_shared<Image>(const_cast<char *>(), 64, 64, 1, 4);
 //    neroshop::Icon::get.insert(std::make_pair("", image_));
+    #endif
     return true;
 }
 ////////////////////
@@ -5678,8 +5693,10 @@ const char * star = { // from icons8
   "\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000"
   "\000\000\000\000\000\000\000",
 };
+    #if defined(NEROSHOP_USE_DOKUN_UI)
     std::shared_ptr<Image> image_star = std::make_shared<Image>(const_cast<char *>(star), 64, 64, 1, 4);
     neroshop::Icon::get.insert(std::make_pair("star", image_star));
+    #endif
       ////////////
 const char * star_half = { // from icons8
   //64, 64, 4,
@@ -6205,8 +6222,10 @@ const char * star_half = { // from icons8
   "\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000"
   "\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000",
 };
+    #if defined(NEROSHOP_USE_DOKUN_UI)
     std::shared_ptr<Image> image_star_half = std::make_shared<Image>(const_cast<char *>(star_half), 64, 64, 1, 4);
     neroshop::Icon::get.insert(std::make_pair("star_half", image_star_half));
+    #endif
     return true;
 }
 ////////////////////
@@ -6780,10 +6799,10 @@ const char * circle = { // from icons8
   "\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000"
   "\000\000\000\000\000\000\000\000",
 };
-
+    #if defined(NEROSHOP_USE_DOKUN_UI)
     std::shared_ptr<Image> image_circle = std::make_shared<Image>(const_cast<char *>(circle), 64, 64, 1, 4);
     neroshop::Icon::get.insert(std::make_pair("circle", image_circle));
-
+    #endif
     const char * circle_filled = { // from icons8
   //64, 64, 4,
   "\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000"
@@ -7499,8 +7518,10 @@ const char * circle = { // from icons8
 };
 
     ////////////
+    #if defined(NEROSHOP_USE_DOKUN_UI)
     std::shared_ptr<Image> image_circle_filled = std::make_shared<Image>(const_cast<char *>(circle_filled), 64, 64, 1, 4);
     neroshop::Icon::get.insert(std::make_pair("circle_filled", image_circle_filled));
+    #endif
     return true;
 }
 ////////////////////
@@ -8186,8 +8207,10 @@ bool neroshop::Icon::load_bookmark()
   "\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000"
   "\000\000",
 };
+    #if defined(NEROSHOP_USE_DOKUN_UI)
     std::shared_ptr<Image> image_bookmark = std::make_shared<Image>(const_cast<char *>(bookmark), 64, 64, 1, 4);
     neroshop::Icon::get.insert(std::make_pair("bookmark", image_bookmark)); // pixels are messed up
+    #endif
     ///////////
 const char * bookmark_book = {
   //64, 64, 4,
@@ -8942,8 +8965,10 @@ const char * bookmark_book = {
   "\377\377\337\377\377\377\273\377\377\377P\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000"
   "\000\000\000\000\000\000\000\000",
 };
+    #if defined(NEROSHOP_USE_DOKUN_UI)
     std::shared_ptr<Image> image_bookmark_book = std::make_shared<Image>(const_cast<char *>(bookmark_book), 64, 64, 1, 4);
     neroshop::Icon::get.insert(std::make_pair("bookmark_book", image_bookmark_book)); // pixels are messed up
+    #endif
     return true;
 }
 ////////////////////
@@ -9585,8 +9610,10 @@ bool neroshop::Icon::load_trash()
   "\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000"
   "\000\000\000\000\000\000\000\000",
 };
+    #if defined(NEROSHOP_USE_DOKUN_UI)
     std::shared_ptr<Image> image_trash = std::make_shared<Image>(const_cast<char *>(trash), 64, 64, 1, 4);
     neroshop::Icon::get.insert(std::make_pair("trash", image_trash));
+    #endif
     return true;
 }
 ////////////////////
@@ -10215,9 +10242,10 @@ const char * purchase_order = { // from icons8
   "\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000"
   "\000\000\000\000\000\000",
 };
-
+    #if defined(NEROSHOP_USE_DOKUN_UI)
     std::shared_ptr<Image> image_order = std::make_shared<Image>(const_cast<char *>(purchase_order), 64, 64, 1, 4);
     neroshop::Icon::get.insert(std::make_pair("order", image_order));
+    #endif
     return true;
 }
 ////////////////////
@@ -10820,8 +10848,10 @@ const char * upload = { // from icons8
   "\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000"
   "\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000",
 };
+    #if defined(NEROSHOP_USE_DOKUN_UI)
     std::shared_ptr<Image> image_upload = std::make_shared<Image>(const_cast<char *>(upload), 64, 64, 1, 4);
     neroshop::Icon::get.insert(std::make_pair("upload", image_upload));
+    #endif
     return true;
 }
 ////////////////////
@@ -11522,8 +11552,10 @@ const char * user_login = {
   "\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000"
   "\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000",
 };
+    #if defined(NEROSHOP_USE_DOKUN_UI)
     std::shared_ptr<Image> image_user_login = std::make_shared<Image>(const_cast<char *>(user_login), 64, 64, 1, 4);
     neroshop::Icon::get.insert(std::make_pair("user_login", image_user_login));
+    #endif
     ///////////////
 const char * padlock = {
   //64, 64, 4,
@@ -12201,8 +12233,10 @@ const char * padlock = {
   "\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000"
   "\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000",
 };    
+    #if defined(NEROSHOP_USE_DOKUN_UI)
     std::shared_ptr<Image> image_padlock = std::make_shared<Image>(const_cast<char *>(padlock), 64, 64, 1, 4);
     neroshop::Icon::get.insert(std::make_pair("padlock", image_padlock));
+    #endif
     return true;
 }
 ////////////////////
@@ -12828,8 +12862,10 @@ const char * console = { // from icons8
   "\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000"
   "\000\000\000\000\000\000",
 };
+    #if defined(NEROSHOP_USE_DOKUN_UI)
     std::shared_ptr<Image> image_console = std::make_shared<Image>(const_cast<char *>(console), 64, 64, 1, 4);
     neroshop::Icon::get.insert(std::make_pair("console", image_console));
+    #endif
     return true;
 }
 ////////////////////
@@ -13529,9 +13565,10 @@ const char * wallet = { // from icons8
   "\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000"
   "\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000",
 };
-
+    #if defined(NEROSHOP_USE_DOKUN_UI)
     std::shared_ptr<Image> image_wallet = std::make_shared<Image>(const_cast<char *>(wallet), 64, 64, 1, 4);
     neroshop::Icon::get.insert(std::make_pair("wallet", image_wallet));
+    #endif
     return true;
 }
 ////////////////////
@@ -14198,8 +14235,10 @@ bool neroshop::Icon::load_door()
   "\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000"
   "\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000",
 };
+    #if defined(NEROSHOP_USE_DOKUN_UI)
     std::shared_ptr<Image> image_open_door = std::make_shared<Image>(const_cast<char *>(open_door), 64, 64, 1, 4);
     neroshop::Icon::get.insert(std::make_pair("open_door", image_open_door));
+    #endif
     return true;
 }
 ////////////////////
@@ -14915,8 +14954,10 @@ bool neroshop::Icon::load_info()
   "\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000"
   "\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000",
 };
+    #if defined(NEROSHOP_USE_DOKUN_UI)
     std::shared_ptr<Image> image_info = std::make_shared<Image>(const_cast<char *>(info), 64, 64, 1, 4);
     neroshop::Icon::get.insert(std::make_pair("info", image_info));
+    #endif
     ///////////////////////////////////////////////////////////////
     const char * info_colored = { // from icons8
   //64, 64, 4,
@@ -15534,8 +15575,10 @@ bool neroshop::Icon::load_info()
   "\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000"
   "\000",
 };
+    #if defined(NEROSHOP_USE_DOKUN_UI)
     std::shared_ptr<Image> image_info_colored = std::make_shared<Image>(const_cast<char *>(info_colored), 64, 64, 1, 4);
     neroshop::Icon::get.insert(std::make_pair("info_colored", image_info_colored));
+    #endif
     return true;
 }
 ////////////////////
@@ -16158,8 +16201,10 @@ bool neroshop::Icon::load_bell()
   "\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000"
   "\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000",
 };
+    #if defined(NEROSHOP_USE_DOKUN_UI)
     std::shared_ptr<Image> image_bell = std::make_shared<Image>(const_cast<char *>(bell), 64, 64, 1, 4);
     neroshop::Icon::get.insert(std::make_pair("bell", image_bell));
+    #endif
     return true;
 }
 ////////////////////
@@ -16862,8 +16907,10 @@ bool neroshop::Icon::load_config()
   "\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000"
   "\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000",
 };
+    #if defined(NEROSHOP_USE_DOKUN_UI)
     std::shared_ptr<Image> image_file_config = std::make_shared<Image>(const_cast<char *>(file_config), 64, 64, 1, 4);
     neroshop::Icon::get.insert(std::make_pair("config", image_file_config));
+    #endif
     return true;
 }
 ////////////////////
@@ -17531,8 +17578,10 @@ bool neroshop::Icon::load_paid()
   "\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000"
   "\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000",
 };
+    #if defined(NEROSHOP_USE_DOKUN_UI)
     std::shared_ptr<Image> image_paid = std::make_shared<Image>(const_cast<char *>(paid), 64, 64, 1, 4);
     neroshop::Icon::get.insert(std::make_pair("paid", image_paid));
+    #endif
     return true;
 }
 ////////////////////
@@ -18229,8 +18278,10 @@ bool neroshop::Icon::load_image()
   "\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000"
   "\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000",
 };
+    #if defined(NEROSHOP_USE_DOKUN_UI)
     std::shared_ptr<Image> image_image = std::make_shared<Image>(const_cast<char *>(image), 64, 64, 1, 4);
     neroshop::Icon::get.insert(std::make_pair("image", image_image));
+    #endif
     /////////////////////////////////////////////////
     const char * image_gallery = {
   //64, 64, 4,
@@ -18873,8 +18924,10 @@ bool neroshop::Icon::load_image()
   "\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000"
   "\000\000\000\000\000\000\000\000\000\000",
 };
+    #if defined(NEROSHOP_USE_DOKUN_UI)
     std::shared_ptr<Image> image_image_gallery = std::make_shared<Image>(const_cast<char *>(image_gallery), 64, 64, 1, 4);
     neroshop::Icon::get.insert(std::make_pair("image_gallery", image_image_gallery));
+    #endif
     return true;
 }
 ////////////////////
@@ -19520,8 +19573,10 @@ bool neroshop::Icon::load_eye()
   "\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000"
   "\000\000",
 };
+    #if defined(NEROSHOP_USE_DOKUN_UI)
     std::shared_ptr<Image> image_eye = std::make_shared<Image>(const_cast<char *>(eye), 64, 64, 1, 4);
     neroshop::Icon::get.insert(std::make_pair("eye", image_eye));
+    #endif
     /////////////////////////
     const char * hide = {
   //64, 64, 4,
@@ -20152,8 +20207,10 @@ bool neroshop::Icon::load_eye()
   "\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000"
   "\000\000\000\000\000\000",
 };
+    #if defined(NEROSHOP_USE_DOKUN_UI)
     std::shared_ptr<Image> image_hide = std::make_shared<Image>(const_cast<char *>(hide), 64, 64, 1, 4);
     neroshop::Icon::get.insert(std::make_pair("hide", image_hide));
+    #endif
     return true;
 }
 ////////////////////
@@ -20850,8 +20907,10 @@ bool neroshop::Icon::load_mail()
   "\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000"
   "\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000",
 };
+    #if defined(NEROSHOP_USE_DOKUN_UI)
     std::shared_ptr<Image> image_mail = std::make_shared<Image>(const_cast<char *>(mail), 64, 64, 1, 4);
     neroshop::Icon::get.insert(std::make_pair("mail", image_mail));
+    #endif
     /////////////////////////////////////
     const char * send = {
   //64, 64, 4,
@@ -21444,8 +21503,10 @@ bool neroshop::Icon::load_mail()
   "\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000"
   "\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000",
 };
+    #if defined(NEROSHOP_USE_DOKUN_UI)
     std::shared_ptr<Image> image_send = std::make_shared<Image>(const_cast<char *>(send), 64, 64, 1, 4);
     neroshop::Icon::get.insert(std::make_pair("send", image_send));    
+    #endif
     return true;
 }
 ////////////////////
@@ -22037,8 +22098,10 @@ bool neroshop::Icon::load_link()
   "\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000"
   "\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000",
 };
+    #if defined(NEROSHOP_USE_DOKUN_UI)
     std::shared_ptr<Image> image_external_link = std::make_shared<Image>(const_cast<char *>(external_link), 64, 64, 1, 4);
     neroshop::Icon::get.insert(std::make_pair("external_link", image_external_link));
+    #endif
     ///////////////////////////////////////////////////////
     const char * link = {
   //64, 64, 4,
@@ -22589,8 +22652,10 @@ bool neroshop::Icon::load_link()
   "\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000"
   "\000\000\000\000\000\000\000\000\000",
 };
+    #if defined(NEROSHOP_USE_DOKUN_UI)
     std::shared_ptr<Image> image_link = std::make_shared<Image>(const_cast<char *>(link), 64, 64, 1, 4);
     neroshop::Icon::get.insert(std::make_pair("link", image_link));
+    #endif
     return true;
 }
 ////////////////////
@@ -23249,8 +23314,10 @@ bool neroshop::Icon::load_shop()
   "\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000"
   "\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000",
 };
+    #if defined(NEROSHOP_USE_DOKUN_UI)
     std::shared_ptr<Image> image_shop = std::make_shared<Image>(const_cast<char *>(shop), 64, 64, 1, 4);
     neroshop::Icon::get.insert(std::make_pair("shop", image_shop));
+    #endif
     return true;
 }
 ////////////////////

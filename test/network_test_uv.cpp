@@ -1,5 +1,5 @@
 // neroshop
-#include "../include/neroshop.hpp"
+#include "../src/neroshop.hpp"
 using namespace neroshop;
 // dokun-ui
 /*#include <dokun_ui.hpp>
@@ -54,7 +54,7 @@ void echo_read(uv_stream_t *server, ssize_t nread, const uv_buf_t* buf) {
     }
 
     // 結果を buf から取得して表示
-    std::cout << "client_read_message_from_server: " << buf->base << std::endl << std::flush;
+    std::cout << "Server: " << buf->base << "\n";
 }
 
 // suggeseted_size で渡された領域を確保
@@ -86,7 +86,7 @@ void on_connect(uv_connect_t *req, int status) {
   }
 
   // 送信メッセージを登録
-  std::string message = "\033[1;34mClient:\033[0m Hello server";
+  std::string message = "\033[1;34mClient:\033[0m Hello server\n";
 
   /** これだとセグフォ
    * uv_buf_t buf[1];
@@ -187,15 +187,15 @@ int main() {
         return 1;
     }
     fprintf(stderr, "Launched process with ID %d\n", child_process.pid); // uv_process_t.pid is the same as uv_process_get_pid(const uv_process_t *handle)
-    //if(detached) {
-    uv_unref((uv_handle_t*) &child_process); // to kill the parent's event loop if child process is still running even after the parent exists
-    //}
+    if(options.flags == UV_PROCESS_DETACHED) {//if(detached) {
+        uv_unref((uv_handle_t*) &child_process); // to kill the parent's event loop if child process is still running even after the parent exists
+    }
     // Read after spawning
-    uv_read_start((uv_stream_t *) &pipe_stdin/*options.stdio[0].data.stream*/, on_alloc, echo_read);
+    uv_read_start((uv_stream_t *) options.stdio[0].data.stream, on_alloc, echo_read);
     //uv_read_start(/*options.stdio[1].data.stream*/, onalloc_buffer, on_write_end);//echo_write);
     ////return uv_run(loop, UV_RUN_DEFAULT);
     ///////////////////////////////////////////////////////////
-    // wait for daemon to launch and for server to listen
+    // wait for daemon to launch and for server to listen (not sure if this is even necessary)
     ////::sleep(2);
     ///////////////////////////////////////////////////////////
     // Network (client)

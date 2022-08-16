@@ -1,8 +1,10 @@
 // neroshop
-#include "../include/neroshop.hpp"
+#include "../src/neroshop.hpp"
 using namespace neroshop;
 
-itn main() {
+lua_State * neroshop::lua_state = luaL_newstate(); // lua_state should be initialized by default
+
+int main() {
     // QR Test
     /*QrCode::Ecc ecc = QrCode::Ecc::LOW;
     std::string text = "888tNkZrPN6JsEgekjMnABU4TBzc2Dt29EPAvkRxbANsAnjyPbb3iQ1YBRk1UXcdRsiKc9dhwMVgN5S9cQUiyoogDavup3H";
@@ -16,7 +18,7 @@ itn main() {
     // Do the conversion
     qr.to_png();*/
     
-    QR::export_png("qr_export.png", 400, "Turtles are cool!", true, QrCode::Ecc::LOW);
+    QR::export_png("qr_code.png", 400, "Turtles are cool!", true, QrCode::Ecc::LOW);
 
     return 0;
 }

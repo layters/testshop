@@ -1,5 +1,5 @@
 // neroshop
-#include "../include/neroshop.hpp"
+#include "../src/neroshop.hpp"
 using namespace neroshop;
 
 lua_State * neroshop::lua_state = luaL_newstate();

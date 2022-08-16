@@ -2,32 +2,30 @@ cmake_minimum_required(VERSION 3.1.0 FATAL_ERROR)
 project(test)
 
 set(neroshop_root ..)
-set(neroshop_srcs ${neroshop_root}/src/buyer.cpp #[[${neroshop_root}/src/carrier.cpp]] ${neroshop_root}/src/cart.cpp ${neroshop_root}/src/catalog.cpp ${neroshop_root}/src/client.cpp ${neroshop_root}/src/converter.cpp ${neroshop_root}/src/database.cpp ${neroshop_root}/src/encryptor.cpp ${neroshop_root}/src/icon.cpp ${neroshop_root}/src/item.cpp ${neroshop_root}/src/message.cpp ${neroshop_root}/src/order.cpp  ${neroshop_root}/src/process.cpp ${neroshop_root}/src/qr.cpp ${neroshop_root}/src/seller.cpp ${neroshop_root}/src/server.cpp ${neroshop_root}/src/user.cpp ${neroshop_root}/src/validator.cpp ${neroshop_root}/src/wallet.cpp)
+set(neroshop_srcs ${neroshop_root}/src/buyer.cpp #[[${neroshop_root}/src/carrier.cpp]] ${neroshop_root}/src/cart.cpp ${neroshop_root}/src/catalog.cpp ${neroshop_root}/src/client.cpp ${neroshop_root}/src/converter.cpp ${neroshop_root}/src/database.cpp ${neroshop_root}/src/encryptor.cpp #[[${neroshop_root}/src/icon.cpp]] ${neroshop_root}/src/item.cpp #[[${neroshop_root}/src/message.cpp]] ${neroshop_root}/src/order.cpp  ${neroshop_root}/src/process.cpp ${neroshop_root}/src/qr.cpp ${neroshop_root}/src/script.cpp ${neroshop_root}/src/seller.cpp ${neroshop_root}/src/server.cpp ${neroshop_root}/src/user.cpp ${neroshop_root}/src/validator.cpp ${neroshop_root}/src/wallet.cpp)
 #set(neroshop_headers ) # not needed
-set(neroshop_include_dir ${neroshop_root}/include)# ${neroshop_root}/external
+set(neroshop_include_dir ${neroshop_root}/include ${neroshop_root}/src)
 include_directories(${neroshop_include_dir})
-link_directories(${neroshop_root}/src ${neroshop_root}/build)
+link_directories(${neroshop_root}/build)
 
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ..) # will output to build/ instead of build/test/
 ######################################
-#[[
 if(WIN32)
 endif()
 
 if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
 # Set compiler-specific flags
 if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -w") #-w=ignores all warnings
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -w -fPIE -fPIC") #-w=ignores all warnings # Qt requires -fPIC
     message(STATUS "Building with clang")
 else()
     message(STATUS "Building with gcc/g++")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -no-pie") # detach
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -no-pie -fPIC") # detach # Qt requires -fPIC
 endif()
 endif()
 
 if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 endif()
-]]
 ######################################
 set(MONERO_PROJECT "${neroshop_root}/external/monero-cpp/external/monero-project")
 set(MONERO_PROJECT_SRC "${MONERO_PROJECT}/src")
@@ -319,6 +317,22 @@ set(raft_src libraft.a)#set(raft_src ${neroshop_root}/external/raft/src/raft_log
 include_directories(${neroshop_root}/external/stduuid ${neroshop_root}/external/stduuid/catch ${neroshop_root}/external/stduuid/include)
 
 ######################################
+# linenoise (BSD replacement for GNU readline)
+include_directories(${neroshop_root}/external/linenoise)
+set(linenoise_src liblinenoise.a)
+
+######################################
+# lua
+include_directories(${neroshop_root}/external/lua/src) # v5.4.4
+set(lua_src liblua.a)
+
+######################################
+# png (needs zlib)
+include_directories(${neroshop_root}/external/png) # v1.6.37
+include_directories(${neroshop_root}/external/zlib) #v1.2.12
+set(png_src libpng.a libz.a)
+
+######################################
 # dokun-ui_dependencies
 include_directories(${neroshop_root}/external/dokun-ui/external/lua/lua-5.4.1/src) # lua
 include_directories(${neroshop_root}/external/dokun-ui/external/glew/include)
@@ -349,30 +363,53 @@ link_directories(${neroshop_root}/external/dokun-ui/build ${neroshop_root}/exter
 set(dokun_ui_src libdokun-ui.a) # definitions added: DOKUN_OPENGL, DOKUN_BUILD_LIBRARY#add_subdirectory(${neroshop_root}/external/dokun-ui)
 
 ######################################
+# network_test
+set(test_network "network_test")
+add_executable(${test_network} network_test.cpp ${neroshop_srcs})
+target_link_libraries(${test_network} ${monero_cpp_src} ${sqlite_src} ${qr_code_generator_src} ${dokun_ui_src} ${raft_src} ${libuv_src} ${curl_src} ${monero_src} ${lua_src} ${png_src})
 # network_uv test
-set(test_network_uv "network_uv_test")
+#[[set(test_network_uv "network_uv_test")
 add_executable(${test_network_uv} network_test_uv.cpp ${neroshop_srcs})
-target_link_libraries(${test_network_uv} ${monero_cpp_src} ${sqlite_src} ${qr_code_generator_src} ${dokun_ui_src} ${raft_src} ${libuv_src} ${curl_src} ${monero_src})
+target_link_libraries(${test_network_uv} ${monero_cpp_src} ${sqlite_src} ${qr_code_generator_src} ${dokun_ui_src} ${raft_src} ${libuv_src} ${curl_src} ${monero_src} ${lua_src} ${png_src})]]
 # utility test
 set(test_utility "utility_test")
 add_executable(${test_utility} utility_test.cpp ${neroshop_srcs})
-target_link_libraries(${test_utility} ${monero_cpp_src} ${sqlite_src} ${qr_code_generator_src} ${dokun_ui_src} ${raft_src} ${libuv_src} ${curl_src} ${monero_src})
+target_link_libraries(${test_utility} ${monero_cpp_src} ${sqlite_src} ${qr_code_generator_src} ${dokun_ui_src} ${raft_src} ${libuv_src} ${curl_src} ${monero_src} ${lua_src} ${png_src})
 # auth_test
 set(test_auth "auth_test")
 add_executable(${test_auth} auth_test.cpp ${neroshop_srcs})
-target_link_libraries(${test_auth} ${monero_cpp_src} ${sqlite_src} ${qr_code_generator_src} ${dokun_ui_src} ${raft_src} ${libuv_src} ${curl_src} ${monero_src})
+target_link_libraries(${test_auth} ${monero_cpp_src} ${sqlite_src} ${qr_code_generator_src} ${dokun_ui_src} ${raft_src} ${libuv_src} ${curl_src} ${monero_src} ${lua_src} ${png_src})
 # uuid_test
 set(test_uuid "uuid_test")
 add_executable(${test_uuid} uuid_test.cpp)
+# qr_code_test
+set(test_qr_code "qr_test")
+add_executable(${test_qr_code} qr_test.cpp ${neroshop_srcs})
+target_link_libraries(${test_qr_code} ${monero_cpp_src} ${sqlite_src} ${qr_code_generator_src} ${dokun_ui_src} ${raft_src} ${libuv_src} ${curl_src} ${monero_src} ${lua_src} ${png_src})
+# msg_encryption_test
+set(test_crypt "encryption_test")
+add_executable(${test_crypt} encryption_test.cpp ${neroshop_srcs})
+target_link_libraries(${test_crypt} ${monero_cpp_src} ${sqlite_src} ${qr_code_generator_src} ${dokun_ui_src} ${raft_src} ${libuv_src} ${curl_src} ${monero_src} ${lua_src} ${png_src})
+# Qt gui_test
+set(CMAKE_AUTOMOC ON)
+set(CMAKE_AUTORCC ON)
+set(CMAKE_AUTOUIC ON)
+
+set(test_gui_qt "gui_qt_test")
+add_executable(${test_gui_qt} main_window.ui main_window.cpp gui_qt_test.cpp ${neroshop_srcs})
+#[[target_]] 
+include_directories(#[[${test_gui_qt} ]] /usr/include/x86_64-linux-gnu/qt5/ /usr/include/x86_64-linux-gnu/qt5/QtWidgets/)
+#target_compile_definitions(${test_gui_qt} PRIVATE )
+target_link_libraries(${test_gui_qt} ${monero_cpp_src} ${sqlite_src} ${qr_code_generator_src} ${dokun_ui_src} ${raft_src} ${libuv_src} ${curl_src} ${monero_src} ${lua_src} ${png_src})
 
 #[[
 set(test_ "")
 add_executable(${test_} .cpp ${neroshop_srcs})
-target_link_libraries(${test_} ${monero_cpp_src} ${sqlite_src} ${qr_code_generator_src} ${dokun_ui_src} ${raft_src} ${libuv_src} ${curl_src} ${monero_src})
+target_link_libraries(${test_} ${monero_cpp_src} ${sqlite_src} ${qr_code_generator_src} ${dokun_ui_src} ${raft_src} ${libuv_src} ${curl_src} ${monero_src} ${lua_src} ${png_src})
 ]]
 
 ######################################
-# todo: Remove CLI dependency on dokun-ui (only tests that use GUI features should link to X11, OpenGL and GLFW)
+# Reminder: only tests that use GUI features should link to X11, OpenGL and GLFW
 if(DEFINED NEROSHOP_USE_LIBBCRYPT) # -DNEROSHOP_USE_LIBBCRYPT=1
     message(STATUS "Using libbcrypt: ${bcrypt_src}")
     #[[target_compile_definitions(${test_} PUBLIC -DNEROSHOP_USE_LIBBCRYPT)
@@ -381,21 +418,23 @@ endif()
 
 if(WIN32)
     set(winsock2_src ws2_32.lib) # -lglfw3 -lgdi32 -lopengl32 -limm32
-    target_link_libraries(${test_network_uv} ${winsock2_src})
+    target_link_libraries(${test_network} ${winsock2_src})
+    #target_link_libraries(${test_network_uv} ${winsock2_src})
     #target_link_libraries(${test_} ${winsock2_src})
 endif()
 
 if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
     set(posix_src libpthread.so libdl.so libm.so)
-    target_link_libraries(${test_network_uv} ${posix_src})
+    target_link_libraries(${test_network} ${posix_src})
+    #target_link_libraries(${test_network_uv} ${posix_src})
     target_link_libraries(${test_utility} ${posix_src})
     target_link_libraries(${test_auth} ${posix_src})
+    target_link_libraries(${test_qr_code} ${posix_src})
+    target_link_libraries(${test_crypt} ${posix_src})
+    target_link_libraries(${test_gui_qt} ${posix_src})
     #target_link_libraries(${test_} ${posix_src})
     find_package(X11 REQUIRED)
     if(X11_FOUND)
-	    target_link_libraries(${test_network_uv} ${X11_LIBRARIES})
-	    target_link_libraries(${test_utility} ${X11_LIBRARIES})
-	    target_link_libraries(${test_auth} ${X11_LIBRARIES})
 	    #target_link_libraries(${test_} ${X11_LIBRARIES})
     endif()
 endif()
@@ -403,9 +442,6 @@ endif()
 set(OpenGL_GL_PREFERENCE "LEGACY") # LEGACY (libGL.so) or GLVND (libOpenGL.so and libGLX.so)
 find_package(OpenGL REQUIRED)
 if(OPENGL_FOUND)
-    target_link_libraries(${test_network_uv} ${OPENGL_LIBRARIES})
-    target_link_libraries(${test_utility} ${OPENGL_LIBRARIES})
-    target_link_libraries(${test_auth} ${OPENGL_LIBRARIES})
     #[[target_compile_definitions(${test_} PRIVATE DOKUN_USE_OPENGL)
 	target_link_libraries(${test_} ${OPENGL_LIBRARIES})]]
 endif()
@@ -413,9 +449,14 @@ endif()
 find_package(GLFW3 REQUIRED)
 if(GLFW3_FOUND)
     message(STATUS "Using GLFW3: ${GLFW3_LIBRARY}")
-    target_link_libraries(${test_network_uv} ${GLFW3_LIBRARY})
-    target_link_libraries(${test_utility} ${GLFW3_LIBRARY})
-    target_link_libraries(${test_auth} ${GLFW3_LIBRARY})
-	#[[target_compile_definitions(${test_} PRIVATE DOKUN_USE_GLFW) # already defined in libdokun-ui.a
+	#[[target_compile_definitions(${test_} PRIVATE DOKUN_USE_GLFW) # already defined in libdokun-ui.a so I dunno if we hafta define it again
     #target_link_libraries(${test_} ${GLFW3_LIBRARY})]]
 endif()
+
+# Qt
+find_package(Qt5 COMPONENTS Widgets REQUIRED)
+if(Qt5_FOUND)
+    message(STATUS "Using Qt5 Qt5::Widgets")
+    target_link_libraries(${test_gui_qt} Qt5::Widgets)
+endif()
+# refer to https://doc.qt.io/qt-5/cmake-get-started.html

@@ -100,16 +100,33 @@ cd ../
 ```
 
 
-**3. Modify external/monero-cpp/external/monero-project/CMakeLists.txt:**
-`option(BUILD_GUI_DEPS "Build GUI dependencies." ON)`
+**3. Install expat (dependency of unbound) and unbound:**
+```bash
+wget https://github.com/libexpat/libexpat/releases/download/R_2_4_8/expat-2.4.8.tar.bz2
+tar -xf expat-2.4.8.tar.bz2
+rm expat-2.4.8.tar.bz2
+cd expat-2.4.8
+./configure --enable-static --disable-shared
+make
+make install
+```
+
+```bash
+wget https://www.nlnetlabs.nl/downloads/unbound/unbound-1.16.1.tar.gz
+tar -xzf unbound-1.16.1.tar.gz
+rm unbound-1.16.1.tar.gz
+cd unbound-1.16.1
+./configure --disable-shared --enable-static --without-pyunbound --with-libevent=no --without-pythonmodule --disable-flto --with-pthreads --with-libunbound-only --with-pic
+make
+```
 
 For Fedora users, you may need to add this line under the "find_package(Boost .." in case of an "undefined reference to icu_*" error:
 `set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -licuio -licui18n -licuuc -licudata")`
 
 
-**4. Build monero-project twice to create libwallet_merged.a and other .a libraries**
+**4. Build monero-project to create .a libraries**
 ```bash
-cd external/monero-cpp/external/monero-project && make release-static && make release-static
+cd external/monero-cpp/external/monero-project && make release-static
 cd ../../../../
 ```
 
@@ -146,7 +163,7 @@ make
 ```
 
 
-To build with [Premake](https://premake.github.io/) (experimental):
+To build with [Premake](https://premake.github.io/) (experimental - broken for now):
 
 ```bash
 # Build external libraries

@@ -1,16 +1,13 @@
 
 #include <iostream>
 // neroshop
-#include "../include/client.hpp"
-#include "../include/server.hpp"
+#include "../src/neroshop.hpp"
 using namespace neroshop;
 // dokun-ui
-#include <dokun_ui.hpp>
-using namespace dokun;
+/*#include <dokun_ui.hpp>
+using namespace dokun;*/
 
-namespace neroshop {
-lua_State * lua_state = luaL_newstate(); // lua_state should be initialized by default
-}
+lua_State * neroshop::lua_state = luaL_newstate(); // lua_state should be initialized by default
 
 Process * server_process;
 //////////////////////////////////////

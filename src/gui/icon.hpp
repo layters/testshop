@@ -1,8 +1,12 @@
 #ifndef ICON_HPP_NEROSHOP
 #define ICON_HPP_NEROSHOP
 
+#if defined(NEROSHOP_USE_DOKUN_UI)
 #include <image.hpp>
+#endif
+
 #include <memory> // std::shared_ptr, std::unique_ptr
+#include <unordered_map> // std::unordered_map
 
 //typedef std::tuple<unsigned int, unsigned int, unsigned int> dimensions; // width height channel
 namespace neroshop {
@@ -43,8 +47,17 @@ private:
     static bool load_flag();  // flag, flag_outline (report)
     static bool load_numbers();       
     static bool load_login();
+    
+    #if defined(NEROSHOP_USE_DOKUN_UI)
+    std::shared_ptr<Image> get(const std::string& name) const {
+        return collection[name];
+    }
+    #endif
+    // Usage: Icon::get("trash");
 public:    
-    static std::map<std::string, std::shared_ptr<Image>> get;
+    #if defined(NEROSHOP_USE_DOKUN_UI)
+    static std::unordered_map<std::string, std::shared_ptr<Image>> collection;
+    #endif
 }; 
 }
 #endif

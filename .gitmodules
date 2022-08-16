@@ -18,7 +18,7 @@
 	url = https://github.com/mariusbancila/stduuid.git
 [submodule "external/linenoise"]
 	path = external/linenoise
-	url = https://github.com/antirez/linenoise
+	url = https://github.com/antirez/linenoise.git
 [submodule "external/dokun-ui"]
 	path = external/dokun-ui
-	url = https://github.com/sidtheprince/dokun-ui
+	url = https://github.com/sidtheprince/dokun-ui.git
