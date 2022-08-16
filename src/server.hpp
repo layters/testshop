@@ -9,10 +9,13 @@
 #include <any> // std::any (C++17)
 //#endif
 #include <stdexcept> // std::runtime_error
+<<<<<<< HEAD
 #include <cstring> // memset
 #if defined(__gnu_linux__)
 #include <unistd.h> // ::close
 #endif
+=======
+>>>>>>> 1434f41c5ec4b3bffbf32ea3adf4c3cee88459fa
 
 #include "database.hpp"
 #include "debug.hpp"
@@ -31,8 +34,11 @@ public:
 	std::string read();
 	void close(); // closes socket
 	void shutdown(); // shuts down entire connection, ending receiving and sending
+<<<<<<< HEAD
 	
 	//void get_local_ip();
+=======
+>>>>>>> 1434f41c5ec4b3bffbf32ea3adf4c3cee88459fa
 	// todo: figure out how to bind strings (requests) to functions (responses) with different argument types and counts
     
     //! \brief Binds a functor to a name so it becomes callable via RPC.
@@ -60,6 +66,7 @@ public:
     //!
     //! \param name The name of the functor.
     void unbind(std::string const &name) {
+<<<<<<< HEAD
         function_list[name] = nullptr; // todo: remove element from unordered_map c++ the proper way
     }    
 //private:
@@ -77,6 +84,15 @@ public:
     char buffer[256];
     int client_socket;
     #endif    
+=======
+        function_list[name] = nullptr;
+    }    
+private:
+    uv_tcp_t * handle_tcp;
+    uv_udp_t * handle_udp;
+    // callbacks
+    void on_new_connection(uv_stream_t *server, int status);
+>>>>>>> 1434f41c5ec4b3bffbf32ea3adf4c3cee88459fa
     // functors
     //#if defined(__cplusplus) && (__cplusplus < 201703L)
     //std::unordered_map<std::string, std::function<void()>/*adaptor_type*/> function_list;
@@ -84,9 +100,12 @@ public:
     //#if defined(__cplusplus) && (__cplusplus >= 201703L)
     std::unordered_map<std::string, std::any> function_list;
     //#endif
+<<<<<<< HEAD
     // ??
     /*template< class R, class... Args >
     std::unordered_map<std::string, std::function<R(Args...)>> functions;*/
+=======
+>>>>>>> 1434f41c5ec4b3bffbf32ea3adf4c3cee88459fa
     // references:
     // https://github.com/rpclib/rpclib/blob/master/include/rpc/dispatcher.h
     // https://github.com/rpclib/rpclib/blob/master/include/rpc/server.h

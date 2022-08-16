@@ -25,13 +25,21 @@ bool neroshop::QR::to_png() const {
 
     int multiplicator = size / qr_code.getSize();
 
+<<<<<<< HEAD
     auto result = write_png(qr_code, multiplicator);
+=======
+    auto result = write_to_png(qr_code, multiplicator);
+>>>>>>> 1434f41c5ec4b3bffbf32ea3adf4c3cee88459fa
     
     return result;
 }
 ////////////////////
 
+<<<<<<< HEAD
 bool neroshop::QR::write_png(const QrCode& qr, const int& multiplicator) const {
+=======
+bool neroshop::QR::write_to_png(const QrCode& qr, const int& multiplicator) const {
+>>>>>>> 1434f41c5ec4b3bffbf32ea3adf4c3cee88459fa
 	FILE *fp = NULL;
 	png_structp png_ptr = NULL;
 	png_infop info_ptr = NULL;
@@ -211,8 +219,11 @@ bool neroshop::QR::export_png(const std::string& filename, int size, const std::
 	return true;
 }
 ////////////////////
+<<<<<<< HEAD
 //unsigned char * neroshop::QR::get_data() const {}
 ////////////////////
+=======
+>>>>>>> 1434f41c5ec4b3bffbf32ea3adf4c3cee88459fa
 std::string neroshop::QR::get_text() const {
     return text;
 }
