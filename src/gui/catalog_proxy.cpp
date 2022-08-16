@@ -1,4 +1,4 @@
-#include "../include/catalog.hpp"
+#include "catalog_proxy.hpp"
 
 ////////////////////
 neroshop::Catalog::Catalog() : view(nullptr), current(nullptr), tooltip(nullptr), sort_box(nullptr), cart(nullptr) {

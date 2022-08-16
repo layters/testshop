@@ -1,7 +1,7 @@
 #include <iostream>
 #include <string>
 // neroshop
-#include "../include/neroshop.hpp"
+#include "neroshop.hpp"
 using namespace neroshop;
 // dokun-ui
 //#include <dokun_ui.hpp>

@@ -1,7 +1,7 @@
 #include <iostream>
 #include <string>
 // neroshop
-#include "../include/neroshop.hpp"
+#include "../src/neroshop.hpp"
 using namespace neroshop;
 // dokun-ui
 /*#include <dokun_ui.hpp>
@@ -69,9 +69,9 @@ int main() {
     Encryptor::private_decrypt_fp(private_key, plain_text, rfile);
     std::cout << "message (decrypted): " << plain_text << std::endl;
 */
-    // todo: encrypt private keys with some sort of password
+    // todo: encrypt private keys with a password
     
-    // Get private_key contents from file
+    /*// Get private_key contents from file
     std::ifstream key_file (std::string(NEROSHOP_CONFIG_PATH + "/secret.key").c_str(), std::ios::binary);
     std::stringstream private_key;
     private_key << key_file.rdbuf(); // dump file contents
@@ -80,6 +80,6 @@ int main() {
     // Get SHA256sum of private_key contents
     std::string sha256sum;
     Validator::generate_sha256_hash(private_key.str(), sha256sum); // 1.7 kilobytes
-    std::cout << "sha256sum of secret.key content: " << sha256sum << std::endl;
+    std::cout << "sha256sum of secret.key content: " << sha256sum << std::endl;*/
     return 0;
 }

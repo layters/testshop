@@ -36,7 +36,7 @@ public:
     // static
     static bool export_png(const std::string& filename, int size, const std::string& text, bool overwrite, QrCode::Ecc ecc);
 private:
-    bool write_to_png(const QrCode& qr_data, const int& multiplicator) const;
+    bool write_png(const QrCode& qr_data, const int& multiplicator) const;
     std::string filename;
     int size;
     std::string text;
