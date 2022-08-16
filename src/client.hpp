@@ -4,7 +4,6 @@
 #include <uv.h>
 //#include <raft.h>
 #include <memory> // std::unique_ptr
-<<<<<<< HEAD
 #include <cstring> // memset
 #if defined(__gnu_linux__)
 #include <unistd.h> // ::close
@@ -12,10 +11,8 @@
 
 #include "debug.hpp"
 #include "server.hpp" // not sure if server should even be included in client ┐(´•_•`)┌
-=======
 
 #include "debug.hpp"
->>>>>>> 1434f41c5ec4b3bffbf32ea3adf4c3cee88459fa
 
 namespace neroshop {
 class Client {
@@ -33,7 +30,6 @@ public:
     bool reconnect(unsigned int port, std::string address = "0.0.0.0"); // closes socket then connects again
     static Client * get_main_client();
     bool is_connected() const;
-<<<<<<< HEAD
 
     //! \brief Requests from the server, a call to a functor binded to a name.
     //!
@@ -65,12 +61,6 @@ private:
 	int socket;
 	char buffer[256];    
 	#endif
-=======
-private:
-    uv_tcp_t handle;//uv_tcp_t client;
-    //uv_udp_t handle; //(for receiving)
-    //uv_udp_send_t request; //(for sending)
->>>>>>> 1434f41c5ec4b3bffbf32ea3adf4c3cee88459fa
     static std::unique_ptr<Client> singleton;
 };
 }

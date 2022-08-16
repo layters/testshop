@@ -11,7 +11,6 @@ neroshop::Client::~Client() {
 std::unique_ptr<neroshop::Client> neroshop::Client::singleton (nullptr);
 ////////////////////
 void neroshop::Client::create() {
-<<<<<<< HEAD
     #if defined(__gnu_linux__)
     if(socket) return; // socket must be null before a new one can be created (if socket is not null then it means it was never closed)
 	socket = ::socket(AF_INET, SOCK_STREAM, 0);
@@ -52,6 +51,7 @@ void neroshop::Client::write(const std::string& text) {
 	}    
     #endif
 }
+////////////////////
 std::string neroshop::Client::read()
 {
     #if defined(__gnu_linux__)
@@ -62,25 +62,9 @@ std::string neroshop::Client::read()
 	}
 	return static_cast<std::string>(buffer);    
     #endif
-=======
-}
-////////////////////
-bool neroshop::Client::connect(unsigned int port, std::string address)
-{
-    return false;
-}
-////////////////////
-void neroshop::Client::write(const std::string& text)
-{
-}
-std::string neroshop::Client::read()
-{
->>>>>>> 1434f41c5ec4b3bffbf32ea3adf4c3cee88459fa
-    return "";
 }
 ////////////////////	
 void neroshop::Client::close() {
-<<<<<<< HEAD
     #if defined(__gnu_linux__)
     if(socket == 0) return;
 	::close(socket);
@@ -92,11 +76,6 @@ void neroshop::Client::shutdown() {
     #if defined(__gnu_linux__)
     ::shutdown(socket, SHUT_RDWR); // SHUT_RD, SHUT_WR, SHUT_RDWR
     #endif
-=======
-}
-////////////////////
-void neroshop::Client::shutdown() {
->>>>>>> 1434f41c5ec4b3bffbf32ea3adf4c3cee88459fa
 }
 ////////////////////
 ////////////////////

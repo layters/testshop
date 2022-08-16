@@ -1,7 +1,6 @@
 #include "server.hpp"
 
 neroshop::Server::Server()
-<<<<<<< HEAD
 #if defined(NEROSHOP_USE_LIBUV)
  : handle_tcp(nullptr), handle_udp (nullptr)
 #endif
@@ -27,9 +26,6 @@ neroshop::Server::Server()
     }
 	#endif    
 }
-=======
-{}
->>>>>>> 1434f41c5ec4b3bffbf32ea3adf4c3cee88459fa
 ////////////////////
 neroshop::Server::~Server() {
 	close();
@@ -37,7 +33,6 @@ neroshop::Server::~Server() {
 ////////////////////
 bool neroshop::Server::bind(unsigned int port)
 {
-<<<<<<< HEAD
     #if defined(NEROSHOP_USE_LIBUV)
 	struct sockaddr_in bind_addr;
     std::string ipv4_default = "0.0.0.0"; // Client addr
@@ -68,14 +63,11 @@ bool neroshop::Server::bind(unsigned int port)
 		return false;
 	}    
     #endif
-=======
->>>>>>> 1434f41c5ec4b3bffbf32ea3adf4c3cee88459fa
 	return true;
 }
 ////////////////////	
 bool neroshop::Server::listen()
 {
-<<<<<<< HEAD
     #if defined(NEROSHOP_USE_LIBUV)
     int result = 0;
 	if((result = uv_listen((uv_stream_t*)handle_tcp, 128/*DEFAULT_BACKLOG*/, on_new_connection)) != 0) {
@@ -109,13 +101,6 @@ bool neroshop::Server::accept() {
 	//std::cout << NEROSHOP_TAG "\033[0;37mReceived connection from " << inet_ntoa(client_addr.sin_addr) << ":\033[0;36m" << ntohs(client_addr.sin_port) << "\033[0m" << std::endl;//std::cout << "client_socket: " << client_socket << std::endl; // always prints out 5    
     write("\033[0;37mReceived connection from " + std::string(inet_ntoa(client_addr.sin_addr)) + ":\033[0;36m" + std::to_string(ntohs(client_addr.sin_port)) + "\033[0m\n");
     #endif
-=======
-	return true;
-}
-////////////////////
-bool neroshop::Server::accept()
-{
->>>>>>> 1434f41c5ec4b3bffbf32ea3adf4c3cee88459fa
 	return true;
 }
 ////////////////////
@@ -125,20 +110,16 @@ bool neroshop::Server::accept_all()
 }
 ////////////////////
 void neroshop::Server::write(const std::string& message) {
-<<<<<<< HEAD
     #if defined(__gnu_linux__)
 	ssize_t write_result = ::write(client_socket, message.c_str(), message.length()/*buffer, strlen(buffer)*/);
     if(write_result < 0) { // -1 = error
         std::cout << "Server unable to write to client" << std::endl;
     }    
     #endif
-=======
->>>>>>> 1434f41c5ec4b3bffbf32ea3adf4c3cee88459fa
 }
 ////////////////////
 std::string neroshop::Server::read() // receive data
 {
-<<<<<<< HEAD
     #if defined(__gnu_linux__)
     memset(buffer, 0, 256); // clear buffer (fills buffer with 0's) before reading into buffer
     ssize_t read_result = ::read(client_socket, buffer, 255);//::read(client_socket, (void *)buffer_new.c_str(), buffer_new.length()); // https://stackoverflow.com/questions/10105591/is-it-possible-to-use-an-stdstring-for-read  // #include <unistd.h>
@@ -158,13 +139,10 @@ std::string neroshop::Server::read() // receive data
     }
     return static_cast<std::string>(buffer);    
     #endif
-=======
->>>>>>> 1434f41c5ec4b3bffbf32ea3adf4c3cee88459fa
 	return "";
 }
 ////////////////////
 void neroshop::Server::close() {
-<<<<<<< HEAD
     #if defined(__gnu_linux__)
     ::close(socket);
     #endif
@@ -174,16 +152,10 @@ void neroshop::Server::shutdown() {
     #if defined(__gnu_linux__)
     ::shutdown(socket, SHUT_RDWR); // SHUT_RD, SHUT_WR, SHUT_RDWR
     #endif
-=======
-}
-////////////////////
-void neroshop::Server::shutdown() {
->>>>>>> 1434f41c5ec4b3bffbf32ea3adf4c3cee88459fa
 }
 ////////////////////
 ////////////////////
 ////////////////////
-<<<<<<< HEAD
 #if defined(NEROSHOP_USE_LIBUV)
 void neroshop::Server::on_new_connection(uv_stream_t *server, int status) {
     if (status < 0) {
@@ -240,8 +212,6 @@ void neroshop::Server::echo_write(uv_write_t *req, int status) {
 }
 #endif
 ////////////////////
-=======
->>>>>>> 1434f41c5ec4b3bffbf32ea3adf4c3cee88459fa
 //template<typename F> void neroshop::Server::bind(const std::string& name, F func) {//F response) {
 	// if client requests a string e.g "LOGIN" then server will respond with login()
 	//response();
@@ -249,7 +219,6 @@ void neroshop::Server::echo_write(uv_write_t *req, int status) {
 	//std::map<std::string, F> rr_pair = { { request, response }, };
 //}
 ////////////////////
-<<<<<<< HEAD
 /*#if !defined(_WIN32)
 //#include <sys/types.h> // ?
 #include <ifaddrs.h> // freeifaddrs
@@ -341,5 +310,3 @@ void neroshop::Server::echo_write(uv_write_t *req, int status) {
            freeifaddrs(ifaddr);    */
 //}
 ////////////////////
-=======
->>>>>>> 1434f41c5ec4b3bffbf32ea3adf4c3cee88459fa
