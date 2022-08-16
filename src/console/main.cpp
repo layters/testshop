@@ -7,10 +7,7 @@ using namespace neroshop;
 #include <linenoise.h>
 
 lua_State * neroshop::lua_state = luaL_newstate(); // lua_state should be initialized by default
-<<<<<<< HEAD
 
-=======
->>>>>>> 1434f41c5ec4b3bffbf32ea3adf4c3cee88459fa
 int main() {
     
     if(!neroshop::create_config()) { 
