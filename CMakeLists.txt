@@ -444,7 +444,7 @@ target_link_libraries(${daemon_executable} ${libuv_src})#set(CMAKE_CXX_LINK_EXEC
 
 ######################################
 # neroshop core source files
-set(neroshop_src src/buyer.cpp #[[src/carrier.cpp]] src/cart.cpp src/catalog.cpp src/client.cpp src/converter.cpp src/database.cpp src/encryptor.cpp #[[src/icon.cpp]] src/item.cpp #[[src/main.cpp]] #[[src/message.cpp]] src/order.cpp src/process.cpp src/qr.cpp src/script.cpp src/seller.cpp src/server.cpp src/user.cpp src/validator.cpp src/wallet.cpp)
+set(neroshop_src src/buyer.cpp #[[src/carrier.cpp]] src/cart.cpp src/catalog.cpp src/client.cpp src/converter.cpp src/database.cpp src/encryptor.cpp #[[src/icon.cpp]] src/item.cpp #[[src/main.cpp]] src/order.cpp src/process.cpp src/qr.cpp src/script.cpp src/seller.cpp src/server.cpp src/user.cpp src/validator.cpp src/wallet.cpp)
 
 ######################################
 # neroshop-console
@@ -462,7 +462,7 @@ endif()
 # neroshop
 if(NEROSHOP_BUILD_GUI)
     set(neroshop_executable "neroshop")
-    add_executable(${neroshop_executable} ${neroshop_src} src/gui/icon.cpp src/gui/main.cpp src/gui/main_window.cpp src/gui/message.cpp)
+    add_executable(${neroshop_executable} ${neroshop_src} src/gui/icon.cpp src/gui/main.cpp src/gui/main_window.cpp src/gui/message_box.cpp)
     target_compile_definitions(${neroshop_executable} PRIVATE NEROSHOP_DEBUG) # for more detailed debugging, use -DNEROSHOP_DEBUG0 # set_target_properties(${neroshop_executable} PROPERTIES COMPILE_DEFINITIONS "NEROSHOP_DEBUG")
     target_link_libraries(${neroshop_executable} ${monero_cpp_src} ${sqlite_src} ${qr_code_generator_src} ${raft_src} ${libuv_src} ${curl_src} ${monero_src})
     message(STATUS "${BoldMagenta}NEROSHOP_BUILD_GUI option set to ON${ColourReset}")

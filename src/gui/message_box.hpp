@@ -1,5 +1,5 @@
-#ifndef MESSAGE_HPP_NEROSHOP
-#define MESSAGE_HPP_NEROSHOP
+#ifndef MESSAGE_BOX_HPP_NEROSHOP
+#define MESSAGE_BOX_HPP_NEROSHOP
 
 #if defined(NEROSHOP_USE_DOKUN_UI)
 #include <box.hpp>
@@ -14,14 +14,14 @@
 #include "../debug.hpp"
 
 namespace neroshop {
-class Message {
+class MessageBox {
 public:
-    Message();
-    Message(const std::string& text, int label_index = 0);
-    Message(const std::string& text, int red, int green, int blue, int label_index = 0);
-    Message(const std::string& text, int red, int green, int blue, double alpha = 1.0, int label_index = 0);
-    Message(const std::string& text, std::string color, int label_index = 0);
-    ~Message();
+    MessageBox();
+    MessageBox(const std::string& text, int label_index = 0);
+    MessageBox(const std::string& text, int red, int green, int blue, int label_index = 0);
+    MessageBox(const std::string& text, int red, int green, int blue, double alpha = 1.0, int label_index = 0);
+    MessageBox(const std::string& text, std::string color, int label_index = 0);
+    ~MessageBox();
     void initialize();
     void show();
     void hide();
@@ -58,12 +58,12 @@ public:
     Vector2 get_size() const;
     #endif
     // objects
-    static Message * get_first(); // returns the first and original message box
-    static Message * get_second();
-    //static Message * get_third();
-    static Message * get_singleton();
-    static Message * get_doubleton();
-    //static Message * get_tripleton();
+    static MessageBox * get_first(); // returns the first and original message box
+    static MessageBox * get_second();
+    //static MessageBox * get_third();
+    static MessageBox * get_singleton();
+    static MessageBox * get_doubleton();
+    //static MessageBox * get_tripleton();
     #if defined(NEROSHOP_USE_DOKUN_UI)
     Box * get_box() const;
     Button * get_button(int index) const;
@@ -76,9 +76,9 @@ public:
     // boolean
     bool is_visible();
 private: // https://codereview.stackexchange.com/questions/160053/c-erasing-an-object-from-vector-of-pointers/160058#160058
-    static Message * first; // static objects have a static lifetime so I guess there's no need for shared_ptr here whatsoever   source: https://stackoverflow.com/questions/41751514/are-shared-ptr-on-static-objects-good#comment70695503_41751514
-    static Message * second;
-    //static Message * third;
+    static MessageBox * first; // static objects have a static lifetime so I guess there's no need for shared_ptr here whatsoever   source: https://stackoverflow.com/questions/41751514/are-shared-ptr-on-static-objects-good#comment70695503_41751514
+    static MessageBox * second;
+    //static MessageBox * third;
     #if defined(NEROSHOP_USE_DOKUN_UI)
     std::unique_ptr<Box> box;
     std::vector<std::shared_ptr<dokun::Label>> label_list; // since I can't do multi-lined labels :/

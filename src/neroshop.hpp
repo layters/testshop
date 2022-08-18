@@ -15,9 +15,6 @@
 #include "config.hpp"
 #include "database.hpp"
 #include "qr.hpp"
-#if defined(NEROSHOP_BUILD_GUI)
-#include "gui/icon.hpp"
-#endif
 #include "validator.hpp"
 #include "converter.hpp"
 #include "user.hpp"
@@ -26,9 +23,6 @@
 #include "item.hpp"
 #include "cart.hpp"
 #include "order.hpp"
-#if defined(NEROSHOP_BUILD_GUI)
-#include "gui/message.hpp"
-#endif
 #include "catalog.hpp"
 #include "server.hpp"
 #include "client.hpp"
@@ -36,5 +30,11 @@
 //#include "carrier.hpp" // not currently in use
 #include "util.hpp"
 #include "process.hpp"
+
+#if defined(NEROSHOP_BUILD_GUI)
+//#include "main_window.hpp" // already included in gui/main.cpp so there's no need to include this (I think?)
+#include "gui/icon.hpp"
+#include "gui/message_box.hpp"
+#endif
 
 #endif
