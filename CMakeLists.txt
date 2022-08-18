@@ -10,8 +10,8 @@ set(VERSION_PATCH "0")
 set(PROJECT_VERSION ${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_PATCH})
 
 option(NEROSHOP_BUILD_TESTS "Build neroshop tests" OFF)
-option(NEROSHOP_BUILD_CLI "Build neroshop CLI" OFF)#ON) # CLI is for testing only. There's no reason for it besides that. This is an ecommerce app so a GUI is ALWAYS necessary!
-option(NEROSHOP_BUILD_GUI "Build neroshop GUI" ON)#OFF)
+option(NEROSHOP_BUILD_CLI "Build neroshop CLI" OFF) # CLI is for testing only. There's no reason for it besides that. This is an ecommerce app so a GUI is ALWAYS necessary!
+option(NEROSHOP_BUILD_GUI "Build neroshop GUI" ON)
 include(CMakeDependentOption)
 cmake_dependent_option(NEROSHOP_USE_DOKUN_UI "Build neroshop with dokun-ui" ON "NEROSHOP_BUILD_GUI;NOT NEROSHOP_USE_QT" OFF) # defaults to ON if BUILD_GUI is defined and USE_QT is not defined
 cmake_dependent_option(NEROSHOP_USE_QT "Build neroshop with Qt" ON "NEROSHOP_BUILD_GUI;NOT NEROSHOP_USE_DOKUN_UI" OFF)
@@ -424,9 +424,10 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR}/external/dokun-ui/include)
 set(dokun_ui_src ${CMAKE_CURRENT_SOURCE_DIR}/external/dokun-ui/build/libdokun-ui.a) # definitions added: DOKUN_OPENGL, DOKUN_BUILD_LIBRARY#add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/external/dokun-ui)
 
 ######################################
-# global directories
+# neroshop include and link directories
 include_directories(#[[${CMAKE_CURRENT_SOURCE_DIR}/src/]] ${CMAKE_CURRENT_SOURCE_DIR}/external)
 link_directories(${CMAKE_CURRENT_SOURCE_DIR}/build)
+
 ######################################
 # neroshop tests
 if(NEROSHOP_BUILD_TESTS) # -DNEROSHOP_BUILD_TESTS=1
@@ -467,11 +468,11 @@ if(NEROSHOP_BUILD_GUI)
     message(STATUS "${BoldMagenta}NEROSHOP_BUILD_GUI option set to ON${ColourReset}")
     target_compile_definitions(${neroshop_executable} PRIVATE NEROSHOP_BUILD_GUI)
     if(NEROSHOP_USE_DOKUN_UI)    
-        message(STATUS "${BoldYellow}Using dokun-ui: ${dokun_ui_src}${ColourReset}")
+        message(STATUS "Using dokun-ui: ${dokun_ui_src}")
         target_link_libraries(${neroshop_executable} ${dokun_ui_src}) # If using dokun-ui for the user interface, you will not need to link to png nor lua which are already built into dokun-ui
     endif()
     if(NEROSHOP_USE_QT)
-         target_link_libraries(${neroshop_executable} ${lua_src} ${png_src})
+        target_link_libraries(${neroshop_executable} ${lua_src} ${png_src})
     endif()
 endif()
 

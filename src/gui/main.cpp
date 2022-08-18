@@ -4,11 +4,14 @@
 
 #if defined(NEROSHOP_USE_QT)
 #include <QApplication>
-#include "main_window.hpp"
 #elif defined(NEROSHOP_USE_DOKUN_UI)
 #include <dokun_ui.hpp>
 //using namespace dokun;
+#else
+// do nothing else
 #endif
+// neroshop (gui)
+#include "main_window.hpp"
 // neroshop (core)
 #include "../neroshop.hpp"
 using namespace neroshop;
