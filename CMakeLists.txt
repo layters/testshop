@@ -10,41 +10,44 @@ set(VERSION_PATCH "0")
 set(PROJECT_VERSION ${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_PATCH})
 
 option(NEROSHOP_BUILD_TESTS "Build neroshop tests" OFF)
-option(NEROSHOP_BUILD_CLI "Build neroshop CLI" OFF) # CLI is for testing only. There's no reason for it besides that. This is an ecommerce app so a GUI is ALWAYS necessary!
+option(NEROSHOP_BUILD_CLI "Build neroshop CLI" OFF) # CLI is for testing only. This is an GUI-based ecommerce app so BUILD_CLI will be off by default
 option(NEROSHOP_BUILD_GUI "Build neroshop GUI" ON)
 include(CMakeDependentOption)
-cmake_dependent_option(NEROSHOP_USE_DOKUN_UI "Build neroshop with dokun-ui" ON "NEROSHOP_BUILD_GUI;NOT NEROSHOP_USE_QT" OFF) # defaults to ON if BUILD_GUI is defined and USE_QT is not defined
 cmake_dependent_option(NEROSHOP_USE_QT "Build neroshop with Qt" ON "NEROSHOP_BUILD_GUI;NOT NEROSHOP_USE_DOKUN_UI" OFF)
+cmake_dependent_option(NEROSHOP_USE_DOKUN_UI "Build neroshop with dokun-ui" ON "NEROSHOP_BUILD_GUI;NOT NEROSHOP_USE_QT" OFF) # defaults to ON if BUILD_GUI is defined and USE_QT is not defined
 option(UUID_SYSTEM_GENERATOR "Enable operating system uuid generator" OFF)
 option(UUID_TIME_GENERATOR "Enable experimental time-based uuid generator" OFF)
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake" "${CMAKE_CURRENT_SOURCE_DIR}/external/monero-cpp/external/monero-project/cmake" "${CMAKE_CURRENT_SOURCE_DIR}/external/dokun-ui/cmake")
 ######################################
 if(NEROSHOP_BUILD_GUI AND NEROSHOP_USE_QT)
-set(CMAKE_AUTOMOC ON)
-set(CMAKE_AUTORCC ON)
-set(CMAKE_AUTOUIC ON)
+    set(CMAKE_AUTOMOC ON)
+    #set(CMAKE_AUTORCC ON)
+    #set(CMAKE_AUTOUIC ON)
+    if(CMAKE_VERSION VERSION_LESS "3.7.0")
+        set(CMAKE_INCLUDE_CURRENT_DIR ON)
+    endif()
 endif()
 
 ######################################
 if(NOT WIN32)
-  string(ASCII 27 Esc)
-  set(ColourReset "${Esc}[m")
-  set(ColourBold  "${Esc}[1m")
-  set(Red         "${Esc}[31m")
-  set(Green       "${Esc}[32m")
-  set(Yellow      "${Esc}[33m")
-  set(Blue        "${Esc}[34m")
-  set(Magenta     "${Esc}[35m")
-  set(Cyan        "${Esc}[36m")
-  set(White       "${Esc}[37m")
-  set(BoldRed     "${Esc}[1;31m")
-  set(BoldGreen   "${Esc}[1;32m")
-  set(BoldYellow  "${Esc}[1;33m")
-  set(BoldBlue    "${Esc}[1;34m")
-  set(BoldMagenta "${Esc}[1;35m")
-  set(BoldCyan    "${Esc}[1;36m")
-  set(BoldWhite   "${Esc}[1;37m")
+    string(ASCII 27 Esc)
+    set(ColourReset "${Esc}[m")
+    set(ColourBold  "${Esc}[1m")
+    set(Red         "${Esc}[31m")
+    set(Green       "${Esc}[32m")
+    set(Yellow      "${Esc}[33m")
+    set(Blue        "${Esc}[34m")
+    set(Magenta     "${Esc}[35m")
+    set(Cyan        "${Esc}[36m")
+    set(White       "${Esc}[37m")
+    set(BoldRed     "${Esc}[1;31m")
+    set(BoldGreen   "${Esc}[1;32m")
+    set(BoldYellow  "${Esc}[1;33m")
+    set(BoldBlue    "${Esc}[1;34m")
+    set(BoldMagenta "${Esc}[1;35m")
+    set(BoldCyan    "${Esc}[1;36m")
+    set(BoldWhite   "${Esc}[1;37m")
 endif()
 
 ######################################
@@ -54,11 +57,11 @@ endif()
 if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
 # Set compiler-specific flags
 if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -w") #-w=ignores all warnings
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC -w -fsanitize=address") #-w=ignores all warnings
     message(STATUS "Building with clang")
 else()
     message(STATUS "Building with gcc/g++")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -no-pie") # detach
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC -no-pie -fsanitize=address") # -no-pie=detach from terminal
 endif()
 endif()
 
@@ -82,7 +85,7 @@ include_directories("${MONERO_PROJECT_SRC}/crypto/crypto_ops_builder/include/")
 
 set(EXTERNAL_LIBS_DIR ${CMAKE_SOURCE_DIR}/monero-cpp/external-libs)
 message(STATUS EXTERNAL_LIBS_DIR : ${EXTERNAL_LIBS_DIR})
-######################################
+####################
 # Extra libraries
 if (APPLE)
   if (DEPENDS)
@@ -115,15 +118,16 @@ find_library(usb_LIBRARY NAMES usb-1.0 libusb usb)
 set(LibUSB_LIBRARIES ${usb_LIBRARY})
 
 ######################################
-# Boost - sudo apt install libboost-dev, sudo apt-get install libboost-all-dev
+# Boost
 set(Boost_NO_BOOST_CMAKE 1)
 set(Boost_USE_MULTITHREADED ON)
 find_package(Boost 1.58 QUIET REQUIRED COMPONENTS chrono date_time filesystem program_options regex serialization wserialization system thread)
 message(STATUS "Using Boost include dir at ${Boost_INCLUDE_DIR}")
 include_directories(${Boost_INCLUDE_DIR})
-add_definitions(-DBOOST_BIND_GLOBAL_PLACEHOLDERS) # to ignore warnings
+#add_definitions(-DBOOST_BIND_GLOBAL_PLACEHOLDERS) # to ignore warnings # remove this
+
 ######################################
-# OpenSSL - sudo apt-get install libssl-dev
+# OpenSSL
 if (APPLE AND NOT IOS)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=x86-64 -fvisibility=default -std=c++11")
   if (NOT OPENSSL_ROOT_DIR)
@@ -143,15 +147,16 @@ if(STATIC AND NOT IOS)
     set(OPENSSL_LIBRARIES "${OPENSSL_LIBRARIES};${CMAKE_DL_LIBS};${CMAKE_THREAD_LIBS_INIT}")
   endif()
 endif()
+
 ######################################
 # libsodium
 include_directories(external/monero-cpp/external/libsodium/include)
-include_directories(external/monero-cpp/external/libsodium/include/sodium)
+include_directories(external/monero-cpp/external/libsodium/include/sodium) # "export.h"
 find_library(SODIUM_LIBRARY sodium REQUIRED)
-message(STATUS "Using libsodium library at ${SODIUM_LIBRARY}")
+message(STATUS "Using libsodium: ${SODIUM_LIBRARY}")
 
 ######################################
-# HIDAPI - https://github.com/libusb/hidapi/releases / sudo apt-get install libhidapi-dev / sudo apt-get install libusb-1.0-0-dev, sudo apt-get install libudev-dev (libudev.h)
+# HIDAPI
 if(APPLE)
   include_directories(SYSTEM /usr/include/malloc)
   if(POLICY CMP0042)
@@ -380,53 +385,57 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR}/external/stduuid ${CMAKE_CURRENT
 
 ######################################
 # linenoise (BSD replacement for GNU readline)
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/external/linenoise)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/external/linenoise/)
 set(linenoise_src ${CMAKE_CURRENT_SOURCE_DIR}/build/liblinenoise.a)
 
 ######################################
 # lua
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/external/lua/src) # v5.4.4
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/external/lua/src/) # v5.4.4
 set(lua_src ${CMAKE_CURRENT_SOURCE_DIR}/build/liblua.a)
 
 ######################################
 # png (needs zlib)
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/external/png) # v1.6.37
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/external/zlib) #v1.2.12
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/external/png/) # v1.6.37
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/external/zlib/) #v1.2.12
 set(png_src ${CMAKE_CURRENT_SOURCE_DIR}/build/libpng.a ${CMAKE_CURRENT_SOURCE_DIR}/build/libz.a)
 
 ######################################
-# dokun-ui_dependencies
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/external/dokun-ui/external/lua/lua-5.4.1/src) # lua
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/external/dokun-ui/external/glew/include)
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/external/dokun-ui/external/png ${CMAKE_CURRENT_SOURCE_DIR}/external/dokun-ui/external/zlib)
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/external/dokun-ui/external/freetype/include                   # public headers - ft2build.h
-   ${CMAKE_CURRENT_SOURCE_DIR}/external/dokun-ui/external/freetype/include/freetype           # public headers
-   ${CMAKE_CURRENT_SOURCE_DIR}/external/dokun-ui/external/freetype/include/freetype/config    # public config headers
-   ${CMAKE_CURRENT_SOURCE_DIR}/external/dokun-ui/external/freetype/include/freetype/internal) # private headers - added 2019-07-29
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/external/dokun-ui/external/ogg/include)
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/external/dokun-ui/external/vorbis/include
-   ${CMAKE_CURRENT_SOURCE_DIR}/external/dokun-ui/external/vorbis/lib)
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/external/dokun-ui/external/theora/include)
-#include_directories(${CMAKE_CURRENT_SOURCE_DIR}/external/dokun-ui/external/utf8/source)
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/external/dokun-ui/external/openal/include
-   ${CMAKE_CURRENT_SOURCE_DIR}/external/dokun-ui/external/openal-soft/include)
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/external/dokun-ui/external/jpeg
-   ${CMAKE_CURRENT_SOURCE_DIR}/external/dokun-ui/external/jpeg/jpeg-6b)
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/external/dokun-ui/external/tiff/libtiff)
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/external/dokun-ui/external/gif/lib)
-include_directories(#[[${CMAKE_CURRENT_SOURCE_DIR}/external/flac]] # config.h
-   ${CMAKE_CURRENT_SOURCE_DIR}/external/dokun-ui/external/flac/include
-   ${CMAKE_CURRENT_SOURCE_DIR}/external/dokun-ui/external/flac/src/libFLAC/include) # for "private/cpu.h"
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/external/dokun-ui/external/glm)
-######################################
 # dokun-ui
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/external/dokun-ui/include)
-set(dokun_ui_src ${CMAKE_CURRENT_SOURCE_DIR}/external/dokun-ui/build/libdokun-ui.a) # definitions added: DOKUN_OPENGL, DOKUN_BUILD_LIBRARY#add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/external/dokun-ui)
+if(NEROSHOP_USE_DOKUN_UI) # dokun-ui headers conflict with Qt headers
+    set(dokun_ui_external_include_dirs ${CMAKE_CURRENT_SOURCE_DIR}/external/dokun-ui/external/lua/lua-5.4.1/src   # lua
+        ${CMAKE_CURRENT_SOURCE_DIR}/external/dokun-ui/external/glew/include 
+        ${CMAKE_CURRENT_SOURCE_DIR}/external/dokun-ui/external/png ${CMAKE_CURRENT_SOURCE_DIR}/external/dokun-ui/external/zlib 
+        ${CMAKE_CURRENT_SOURCE_DIR}/external/dokun-ui/external/freetype/include                    # public headers - ft2build.h
+        ${CMAKE_CURRENT_SOURCE_DIR}/external/dokun-ui/external/freetype/include/freetype           # public headers
+        ${CMAKE_CURRENT_SOURCE_DIR}/external/dokun-ui/external/freetype/include/freetype/config    # public config headers
+        ${CMAKE_CURRENT_SOURCE_DIR}/external/dokun-ui/external/freetype/include/freetype/internal  # private headers - added 2019-07-29
+        ${CMAKE_CURRENT_SOURCE_DIR}/external/dokun-ui/external/ogg/include
+        ${CMAKE_CURRENT_SOURCE_DIR}/external/dokun-ui/external/vorbis/include
+        ${CMAKE_CURRENT_SOURCE_DIR}/external/dokun-ui/external/vorbis/lib
+        ${CMAKE_CURRENT_SOURCE_DIR}/external/dokun-ui/external/theora/include
+        #${CMAKE_CURRENT_SOURCE_DIR}/external/dokun-ui/external/utf8/source
+        ${CMAKE_CURRENT_SOURCE_DIR}/external/dokun-ui/external/openal/include
+        ${CMAKE_CURRENT_SOURCE_DIR}/external/dokun-ui/external/openal-soft/include
+        ${CMAKE_CURRENT_SOURCE_DIR}/external/dokun-ui/external/jpeg
+        ${CMAKE_CURRENT_SOURCE_DIR}/external/dokun-ui/external/jpeg/jpeg-6b
+        ${CMAKE_CURRENT_SOURCE_DIR}/external/dokun-ui/external/tiff/libtiff
+        ${CMAKE_CURRENT_SOURCE_DIR}/external/dokun-ui/external/gif/lib
+        #[[${CMAKE_CURRENT_SOURCE_DIR}/external/flac]] # config.h
+        ${CMAKE_CURRENT_SOURCE_DIR}/external/dokun-ui/external/flac/include
+        ${CMAKE_CURRENT_SOURCE_DIR}/external/dokun-ui/external/flac/src/libFLAC/include # for "private/cpu.h"
+        ${CMAKE_CURRENT_SOURCE_DIR}/external/dokun-ui/external/glm
+)
+    set(dokun_ui_include_dir ${CMAKE_CURRENT_SOURCE_DIR}/external/dokun-ui/include/)
+    set(dokun_ui_src ${CMAKE_CURRENT_SOURCE_DIR}/external/dokun-ui/build/libdokun-ui.a) # definitions added: DOKUN_OPENGL, DOKUN_BUILD_LIBRARY#add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/external/dokun-ui)
+endif()
 
 ######################################
-# neroshop include and link directories
-include_directories(#[[${CMAKE_CURRENT_SOURCE_DIR}/src/]] ${CMAKE_CURRENT_SOURCE_DIR}/external)
-link_directories(${CMAKE_CURRENT_SOURCE_DIR}/build)
+# neroshop link directories
+link_directories(${CMAKE_CURRENT_SOURCE_DIR}/build) # target_link_directories only available in CMake version 3.13 :(
+
+######################################
+# neroshop core source files
+set(neroshop_src src/buyer.cpp #[[src/carrier.cpp]] src/cart.cpp src/catalog.cpp src/client.cpp src/converter.cpp src/database.cpp src/encryptor.cpp #[[src/icon.cpp]] src/item.cpp #[[src/main.cpp]] src/order.cpp src/process.cpp src/qr.cpp src/script.cpp src/seller.cpp src/server.cpp src/user.cpp src/validator.cpp src/wallet.cpp)
 
 ######################################
 # neroshop tests
@@ -440,18 +449,16 @@ endif()
 # neroshop-daemon
 set(daemon_executable "neromon")
 add_executable(${daemon_executable} src/daemon.cpp src/server.cpp)#target_link_libraries(daemon ${curl_src} ${OPENSSL_LIBRARIES}) # curl requires both openssl(used in monero) and zlib(used in dokun-ui)
+target_include_directories(${daemon_executable} PRIVATE #[[${CMAKE_CURRENT_SOURCE_DIR}/src/]])
 target_link_libraries(${daemon_executable} ${libuv_src})#set(CMAKE_CXX_LINK_EXECUTABLE "${CMAKE_CXX_LINK_EXECUTABLE} -ldl") # fixes undefined reference to symbol 'dlsym@@GLIBC_2.2.5' error
-
-######################################
-# neroshop core source files
-set(neroshop_src src/buyer.cpp #[[src/carrier.cpp]] src/cart.cpp src/catalog.cpp src/client.cpp src/converter.cpp src/database.cpp src/encryptor.cpp #[[src/icon.cpp]] src/item.cpp #[[src/main.cpp]] src/order.cpp src/process.cpp src/qr.cpp src/script.cpp src/seller.cpp src/server.cpp src/user.cpp src/validator.cpp src/wallet.cpp)
 
 ######################################
 # neroshop-console
 if(NEROSHOP_BUILD_CLI)
     set(neroshop_console "neroshop-console")
-    add_executable(${neroshop_console} ${neroshop_src} src/console/main.cpp)
+    add_executable(${neroshop_console} src/console/main.cpp ${neroshop_src})
     target_compile_definitions(${neroshop_console} PRIVATE NEROSHOP_DEBUG) # for more detailed debugging, use -DNEROSHOP_DEBUG0
+    target_include_directories(${neroshop_console} PRIVATE #[[${CMAKE_CURRENT_SOURCE_DIR}/src/]])
     target_link_libraries(${neroshop_console} ${monero_cpp_src} ${sqlite_src} ${qr_code_generator_src} ${raft_src} ${libuv_src} ${curl_src} ${monero_src})
     message(STATUS "${BoldMagenta}NEROSHOP_BUILD_CLI option set to ON${ColourReset}")
     target_compile_definitions(${neroshop_console} PRIVATE NEROSHOP_BUILD_CLI)
@@ -462,16 +469,19 @@ endif()
 # neroshop
 if(NEROSHOP_BUILD_GUI)
     set(neroshop_executable "neroshop")
-    add_executable(${neroshop_executable} ${neroshop_src} src/gui/icon.cpp src/gui/main.cpp src/gui/main_window.cpp src/gui/message_box.cpp)
+    add_executable(${neroshop_executable})
+    target_sources(${neroshop_executable} PRIVATE ${neroshop_src} src/gui/icon.cpp src/gui/main.cpp src/gui/main_window.cpp src/gui/message_box.cpp src/gui/wallet_proxy.cpp)
     target_compile_definitions(${neroshop_executable} PRIVATE NEROSHOP_DEBUG) # for more detailed debugging, use -DNEROSHOP_DEBUG0 # set_target_properties(${neroshop_executable} PROPERTIES COMPILE_DEFINITIONS "NEROSHOP_DEBUG")
+    target_include_directories(${neroshop_executable} PRIVATE #[[${CMAKE_CURRENT_SOURCE_DIR}/src/]])
     target_link_libraries(${neroshop_executable} ${monero_cpp_src} ${sqlite_src} ${qr_code_generator_src} ${raft_src} ${libuv_src} ${curl_src} ${monero_src})
     message(STATUS "${BoldMagenta}NEROSHOP_BUILD_GUI option set to ON${ColourReset}")
     target_compile_definitions(${neroshop_executable} PRIVATE NEROSHOP_BUILD_GUI)
     if(NEROSHOP_USE_DOKUN_UI)    
         message(STATUS "Using dokun-ui: ${dokun_ui_src}")
+        target_include_directories(${neroshop_executable} PRIVATE ${dokun_ui_external_include_dirs} ${dokun_ui_include_dir})
+        target_compile_definitions(${neroshop_executable} PRIVATE NEROSHOP_USE_DOKUN_UI)
         target_link_libraries(${neroshop_executable} ${dokun_ui_src}) # If using dokun-ui for the user interface, you will not need to link to png nor lua which are already built into dokun-ui
-    endif()
-    if(NEROSHOP_USE_QT)
+    else()
         target_link_libraries(${neroshop_executable} ${lua_src} ${png_src})
     endif()
 endif()
@@ -510,6 +520,8 @@ if(WIN32)
 endif()
 
 if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
+    #option(NEROSHOP_USE_QT_WIDGETS "Use Qt::Widgets" ON)#set(NEROSHOP_USE_QT_QML_QUICK ON)# QML/Quick is forced and cannot be turned off
+
     find_package(LibUUID) # optional
     if(UUID_SYSTEM_GENERATOR) # -DUUID_SYSTEM_GENERATOR=1
         message(STATUS "UUID_SYSTEM_GENERATOR option set to ON")
@@ -559,6 +571,14 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     endif()
 endif()
 
+find_package(GLFW3)# REQUIRED)
+if(GLFW3_FOUND)
+    if(NEROSHOP_BUILD_GUI AND NEROSHOP_USE_DOKUN_UI)
+	    target_compile_definitions(${neroshop_executable} PRIVATE DOKUN_USE_GLFW)
+        target_link_libraries(${neroshop_executable} ${GLFW3_LIBRARY})
+    endif()
+endif()
+
 set(OpenGL_GL_PREFERENCE "LEGACY") # LEGACY (libGL.so) or GLVND (libOpenGL.so and libGLX.so)
 find_package(OpenGL)# REQUIRED)
 if(OPENGL_FOUND)
@@ -568,20 +588,23 @@ if(OPENGL_FOUND)
     endif()
 endif()
 
-find_package(GLFW3)# REQUIRED)
-if(GLFW3_FOUND)
-    if(NEROSHOP_BUILD_GUI AND NEROSHOP_USE_DOKUN_UI)
-	    target_compile_definitions(${neroshop_executable} PRIVATE DOKUN_USE_GLFW)
-        target_link_libraries(${neroshop_executable} ${GLFW3_LIBRARY})
-    endif()
-endif()
-
-find_package(Qt5 COMPONENTS Widgets)# REQUIRED)
+find_package(Qt5 COMPONENTS Qml Quick Gui #[[QuickControls2]])# REQUIRED) # v5.12.8
 if(Qt5_FOUND)
     if(NEROSHOP_BUILD_GUI AND NEROSHOP_USE_QT)
-        message(STATUS "Using Qt5 Qt5::Widgets")
+        # add the qml.qrc file
+        ####qt5_add_resources(qml_QRC qml.qrc)
+        # Linux requires Qt::Widgets due to the lack of a native platform file dialog implementation
+        if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
+            message(STATUS "Using Qt5::Widgets")
+            target_compile_definitions(${neroshop_executable} PRIVATE NEROSHOP_USE_QT_WIDGETS)
+            find_package(Qt5 COMPONENTS Widgets)
+            target_link_libraries(${neroshop_executable} Qt5::Widgets)
+        endif()
+    
+        message(STATUS "Using Qt5::Qml Qt5::Quick Qt5::Gui")
         target_compile_definitions(${neroshop_executable} PRIVATE NEROSHOP_USE_QT)
-        target_link_libraries(${neroshop_executable} Qt5::Widgets)
+        #target_include_directories(${neroshop_executable} PRIVATE /usr/include/x86_64-linux-gnu/qt5/)
+        target_link_libraries(${neroshop_executable} Qt5::Qml Qt5::Quick Qt5::Gui #[[Qt5::QuickControls2]])
     endif()
 endif()
 

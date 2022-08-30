@@ -5,13 +5,30 @@
 
 #define LUA_TAG "\033[1;34m[lua]:\033[0m "
 // configuration dir(s)
-#ifdef _WIN32
-#define NEROSHOP_CONFIG_PATH "" // haven't used windows in ages lol
+// windows
+#if defined(_WIN32)
+#define NEROSHOP_CONFIG_PATH "C:/ProgramData/neroshop"//"C:/Users/<USER>/AppData/Local/<APPNAME>", "C:/ProgramData/<APPNAME>" (AppConfigLocation)
+#endif
+// linux
+#if defined(__linux__) && !defined(__ANDROID__)
+#define NEROSHOP_CONFIG_PATH "/home/" + neroshop::device::get_user() + "/.config/neroshop"//"~/.config/<APPNAME>", "/etc/xdg/<APPNAME>" (AppConfigLocation)
+#endif
+// macos
+#if defined(__APPLE__) && defined(__MACH__)
+#define NEROSHOP_CONFIG_PATH "~/Library/Preferences/neroshop"//"~/Library/Preferences/<APPNAME>" (AppConfigLocation)
+#endif
+// android
+#if defined(__ANDROID__)
+//"<APPROOT>/files/settings" (AppConfigLocation)
+#endif
+// iOS
+#if defined(__APPLE__)
+#include <TargetConditionals.h>
+#if TARGET_OS_IPHONE
+//"<APPROOT>/Library/Preferences/<APPNAME>" (AppConfigLocation)
+#endif
 #endif
 
-#ifdef __gnu_linux__
-#define NEROSHOP_CONFIG_PATH "/home/" + neroshop::device::get_user() + "/.config/neroshop"
-#endif
 #define NEROSHOP_CONFIG_FILE "config.lua"
 
 #include "script.hpp"//<script.hpp>
@@ -26,9 +43,9 @@ namespace neroshop {
 	static bool load_config() {
         std::string user = neroshop::device::get_user();
         // "/home/<user>/.config/neroshop"
-        std::string neroshop_config_path = "/home/" + user + "/.config/neroshop";
+        std::string neroshop_config_path = NEROSHOP_CONFIG_PATH;//"/home/" + user + "/.config/neroshop";
         // "/home/<user>/.config/neroshop/config.lua"
-        std::string neroshop_config_name = neroshop_config_path + "/config.lua";
+        std::string neroshop_config_name = neroshop_config_path + "/" + NEROSHOP_CONFIG_FILE;
         Script script;
         if(!script.load(lua_state, neroshop_config_name)) {return false;}
         neroshop::print("\033[1;94mloaded script \"" + script.get_file() + "\"");
@@ -59,13 +76,13 @@ namespace neroshop {
 "neroshop[\"wallet\"][\"file\"] = \"\"; -- include \".keys\" extension\n" // path or file
 "neroshop[\"wallet\"][\"restore_height\"] = \"2014-04-18\"; -- block height or date (YYYY-MM-DD)\n";
         // swap data_dir with user
-    #ifdef __gnu_linux__ // works!    
+    #if defined(__gnu_linux__) // works!    
         text = neroshop::string::swap_first_of(text, "/home/<user>/.bitmonero", ("/home/" + user + "/.bitmonero"));
     #endif    
         // "/home/<user>/.config/neroshop"
-        std::string neroshop_config_path = "/home/" + user + "/.config/neroshop"; // neroshop::device::get_user()
+        std::string neroshop_config_path = NEROSHOP_CONFIG_PATH;//"/home/" + user + "/.config/neroshop"; // neroshop::device::get_user()
         // "/home/<user>/.config/neroshop/config.lua"
-        std::string neroshop_config_name = neroshop_config_path + "/config.lua";
+        std::string neroshop_config_name = neroshop_config_path + "/" + NEROSHOP_CONFIG_FILE;
         // if file already exists, no need to create it again
         if(std::filesystem::is_regular_file(neroshop_config_name)) return false; // false because it will not be created // if true then it will cause "PANIC: unprotected error in call to Lua API (attempt to index a nil value)" error
         // check if script works before saving

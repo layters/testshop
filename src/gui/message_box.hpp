@@ -6,6 +6,10 @@
 #include <button.hpp>
 #include <edit.hpp>
 #include <timer.hpp>
+#elif defined(NEROSHOP_USE_QT)
+////#include <QMessageBox> // requires Qt5::Widgets // refer to: https://doc.qt.io/qt-5/qmessagebox.html
+#else
+// do nothing else
 #endif
 
 #include <memory> // std::shared_ptr, std::make_shared

@@ -146,21 +146,21 @@ if(NOT HIDAPI_FOUND)
     endif()
 endif()
 ######################################
-# Monero (monero-0.17.2.3 contents pasted in "monero-cpp/external/monero-project")
-set(MONERO_PROJECT_BUILD "${MONERO_PROJECT}/build/release")
+# Monero
+set(MONERO_PROJECT_BUILD "${MONERO_PROJECT}/build/release" CACHE STRING "Monero project build directory")
 message(STATUS "Using monero-project build" : ${MONERO_PROJECT_BUILD})
 #[[
-add_library(wallet_merged STATIC IMPORTED)
-set_target_properties(wallet_merged PROPERTIES IMPORTED_LOCATION
-    ${MONERO_PROJECT_BUILD}/lib/libwallet_merged.a)
-    
 add_library(wallet STATIC IMPORTED)
 set_target_properties(wallet PROPERTIES IMPORTED_LOCATION
     ${MONERO_PROJECT_BUILD}/lib/libwallet.a)
     
-add_library(wallet_crypto STATIC IMPORTED)
-set_target_properties(wallet_crypto PROPERTIES IMPORTED_LOCATION
-    ${MONERO_PROJECT_BUILD}/src/crypto/wallet/libwallet-crypto.a)
+# libwallet-crypto.a provides x86_64 asm for some wallet functions
+if (EXISTS ${MONERO_PROJECT_BUILD}/src/crypto/wallet/libwallet-crypto.a)
+  add_library(wallet_crypto_lib STATIC IMPORTED)
+  set_target_properties(wallet_crypto_lib PROPERTIES IMPORTED_LOCATION
+      ${MONERO_PROJECT_BUILD}/src/crypto/wallet/libwallet-crypto.a)
+  set(wallet_crypto wallet_crypto_lib)
+endif()
     
 add_library(lmdb STATIC IMPORTED)
 set_target_properties(lmdb PROPERTIES IMPORTED_LOCATION
@@ -170,9 +170,27 @@ add_library(epee STATIC IMPORTED)
 set_target_properties(epee PROPERTIES IMPORTED_LOCATION
     ${MONERO_PROJECT_BUILD}/contrib/epee/src/libepee.a)
     
-add_library(unbound STATIC IMPORTED)
-set_target_properties(unbound PROPERTIES IMPORTED_LOCATION
-    ${MONERO_PROJECT_BUILD}/external/unbound/libunbound.a)
+# Unbound
+find_package(Unbound)
+include_directories(${UNBOUND_INCLUDE_DIR})
+if ("${UNBOUND_LIBRARIES}" MATCHES "libunbound")
+  message(STATUS "Using libunbound: ${UNBOUND_LIBRARIES}")
+  add_library(unbound SHARED IMPORTED)
+  set_target_properties(unbound PROPERTIES IMPORTED_LOCATION
+      ${UNBOUND_LIBRARIES})
+endif()
+
+add_library(rpc_base STATIC IMPORTED)
+set_target_properties(rpc_base PROPERTIES IMPORTED_LOCATION
+    ${MONERO_PROJECT_BUILD}/src/rpc/librpc_base.a)
+
+add_library(net STATIC IMPORTED)
+set_target_properties(net PROPERTIES IMPORTED_LOCATION
+    ${MONERO_PROJECT_BUILD}/src/net/libnet.a)
+    
+add_library(hardforks STATIC IMPORTED)
+set_target_properties(hardforks PROPERTIES IMPORTED_LOCATION
+    ${MONERO_PROJECT_BUILD}/src/hardforks/libhardforks.a)    
     
 add_library(easylogging STATIC IMPORTED)
 set_target_properties(easylogging PROPERTIES IMPORTED_LOCATION
@@ -181,11 +199,15 @@ set_target_properties(easylogging PROPERTIES IMPORTED_LOCATION
 add_library(cryptonote_core STATIC IMPORTED)
 set_target_properties(cryptonote_core PROPERTIES IMPORTED_LOCATION
     ${MONERO_PROJECT_BUILD}/src/cryptonote_core/libcryptonote_core.a)
+    
+    add_library(cryptonote_protocol STATIC IMPORTED)
+set_target_properties(cryptonote_protocol PROPERTIES IMPORTED_LOCATION
+    ${MONERO_PROJECT_BUILD}/src/cryptonote_protocol/libcryptonote_protocol.a)
 
 add_library(cryptonote_basic STATIC IMPORTED)
 set_target_properties(cryptonote_basic PROPERTIES IMPORTED_LOCATION
     ${MONERO_PROJECT_BUILD}/src/cryptonote_basic/libcryptonote_basic.a)
-# new addition [2021-10-02]
+
 add_library(cryptonote_format_utils_basic STATIC IMPORTED)
 set_target_properties(cryptonote_format_utils_basic PROPERTIES IMPORTED_LOCATION
     ${MONERO_PROJECT_BUILD}/src/cryptonote_basic/libcryptonote_format_utils_basic.a)
@@ -240,11 +262,11 @@ set_target_properties(version PROPERTIES IMPORTED_LOCATION
     
 add_library(randomx STATIC IMPORTED)
 set_target_properties(randomx PROPERTIES IMPORTED_LOCATION
-    ${MONERO_PROJECT_BUILD}/external/randomx/librandomx.a)   
-]]    
+    ${MONERO_PROJECT_BUILD}/external/randomx/librandomx.a)
+]]
 ######################################
-set(monero_src wallet_merged wallet_crypto #[[wallet_api]] wallet lmdb epee unbound easylogging cryptonote_core cryptonote_basic cryptonote_format_utils_basic mnemonics ringct ringct_basic common cncrypto blockchain_db blocks checkpoints device device_trezor multisig version randomx 
-${Boost_LIBRARIES} ${Protobuf_LIBRARY} ${LibUSB_LIBRARIES} ${OPENSSL_LIBRARIES} ${SODIUM_LIBRARY} ${HIDAPI_LIBRARY} ${EXTRA_LIBRARIES})
+set(monero_src wallet rpc_base net lmdb unbound easylogging cryptonote_core cryptonote_protocol cryptonote_basic cryptonote_format_utils_basic mnemonics ringct ringct_basic common cncrypto blockchain_db blocks checkpoints device device_trezor multisig version randomx epee hardforks cncrypto ${wallet_crypto} 
+${UNBOUND_LIBRARIES} ${Boost_LIBRARIES} ${Protobuf_LIBRARY} ${LibUSB_LIBRARIES} ${OPENSSL_LIBRARIES} ${SODIUM_LIBRARY} ${HIDAPI_LIBRARY} ${EXTRA_LIBRARIES})
 ######################################
 # monero-cpp (wrapper) v0.5.1 => v0.5.5 => v0.5.10 => v0.6.4 => v0.7.0
 include_directories(${neroshop_root}/external/monero-cpp/src/)

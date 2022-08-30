@@ -6,8 +6,7 @@
 #endif
 #include <openssl/evp.h>
 #include <openssl/err.h>
-#include <string.hpp>
-#include <system.hpp> // System::get_user()
+
 #include <iostream>
 #include <string>
 #include <regex> // std::regex
@@ -17,8 +16,8 @@
 #include <iomanip> //std::put_time, std::setfill, std::setw
 
 #include "database.hpp"
-//  sha256 hash of wallet primary keys will be used to authenticate user 
 #include "config.hpp"
+#include "util.hpp"
 
 namespace neroshop {
 class Validator {// Authenticator {

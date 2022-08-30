@@ -1,15 +1,15 @@
 #ifndef NEROSHOP_HPP
 #define NEROSHOP_HPP
 
-#define APP_NAME      "neroshop"
-#define APP_AUTHOR    "larteyoh"
-#define APP_LICENSE   "MIT License" 
-#define APP_COPYRIGHT "Copyright (C) 2021-present larteyoh@protonmail.com"
-#define APP_VERSION_MAJOR "0"
-#define APP_VERSION_MINOR "1"
-#define APP_VERSION_PATCH "0"
-#define APP_VERSION APP_VERSION_MAJOR "." APP_VERSION_MINOR "." APP_VERSION_PATCH
-
+#define NEROSHOP_APPLICATION_NAME  "neroshop"
+#define NEROSHOP_AUTHOR    "larteyoh"
+#define NEROSHOP_LICENSE   "MIT License" 
+#define NEROSHOP_COPYRIGHT "Copyright (C) 2021-present larteyoh@protonmail.com"
+#define NEROSHOP_VERSION_MAJOR "0"
+#define NEROSHOP_VERSION_MINOR "1"
+#define NEROSHOP_VERSION_PATCH "0"
+#define NEROSHOP_VERSION NEROSHOP_VERSION_MAJOR "." NEROSHOP_VERSION_MINOR "." NEROSHOP_VERSION_PATCH
+// neroshop (core)
 #include "debug.hpp"
 #include "wallet.hpp" // causes error depending on where you place this header
 #include "config.hpp"
@@ -30,11 +30,13 @@
 //#include "carrier.hpp" // not currently in use
 #include "util.hpp"
 #include "process.hpp"
-
+// neroshop (gui)
 #if defined(NEROSHOP_BUILD_GUI)
 //#include "main_window.hpp" // already included in gui/main.cpp so there's no need to include this (I think?)
 #include "gui/icon.hpp"
+#include "gui/main_window.hpp"
 #include "gui/message_box.hpp"
+#include "gui/wallet_proxy.hpp"
 #endif
 
 #endif

@@ -3,11 +3,12 @@
 
 #include <curl/curl.h>
 #include <nlohmann/json.hpp>
-#include <string.hpp>
+
 #include <vector>
 #include <algorithm>
 
 #include "debug.hpp"
+#include "util.hpp"
 
 namespace neroshop {
 class Converter {

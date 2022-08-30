@@ -37,16 +37,16 @@ Coming soon
 | [json](https://github.com/nlohmann/json/)                          | ?                  | json parsing                                                           | :heavy_check_mark:                  |
 | [curl](https://github.com/curl/curl)                               | ?                  | currency conversion                                                    | :heavy_check_mark:                  |
 | [openssl](https://github.com/openssl/openssl)                      | 1.1.1              | for curl, sha256 sum and message encryption                            | :heavy_check_mark:                  |
-| [dokun-ui](external/dokun-ui)                                      | n/a                | graphical user interface                                               | :heavy_check_mark:                  |
-| [libuv](https://github.com/libuv/libuv)                            | ?                  | networking, child process and file system                              | :heavy_check_mark:                  |
+| [Qt](https://www.qt.io/) or [dokun-ui](external/dokun-ui)          | 5.12, n/a          | graphical user interface                                               | :heavy_check_mark:                  |
+| [libuv](https://github.com/libuv/libuv)                            | ?                  | networking and child process                                           | :heavy_check_mark:                  |
 | [raft](https://github.com/willemt/raft)                            | ?                  | consensus mechanism                                                    | :heavy_check_mark:                  |
 | [stduuid](https://github.com/mariusbancila/stduuid)                | ?                  | order number generation                                                | :heavy_check_mark:                  |
-| [linenoise](https://github.com/antirez/linenoise)                  | ?                  | command line interface                                                 | :o:                                 |
+| [linenoise](https://github.com/antirez/linenoise)                  | ?                  | command line interface                                                 | :heavy_check_mark:                  |
 
 ### Compiling neroshop from source
 **0. Clone neroshop**
 ```bash
-git clone https://github.com/larteyoh/testshop.git && cd testshop
+git clone --recurse-submodules https://github.com/larteyoh/testshop.git && cd testshop
 ```
 
 
@@ -54,23 +54,21 @@ git clone https://github.com/larteyoh/testshop.git && cd testshop
 
 Debian/Ubuntu
 ```bash
-sudo -s -- << EOF
 # prerequisites
 sudo apt install build-essential cmake git
-# neroshop, dokun-ui
-sudo apt install libx11-dev libgl1-mesa-dev libglu1-mesa-dev libcurl4-openssl-dev libssl-dev libuv1-dev
+# neroshop
+sudo apt install libx11-dev libgl1-mesa-dev libglu1-mesa-dev libglfw3-dev libcurl4-openssl-dev libssl-dev libuv1-dev qtdeclarative5-dev qml-module-qt-labs-platform qml-module-qtquick-controls qml-module-qtquick-controls2
 # monero-cpp (monero)
-sudo apt update && sudo apt install pkg-config libssl-dev libzmq3-dev libunbound-dev libsodium-dev libunwind8-dev liblzma-dev libreadline6-dev libldns-dev libexpat1-dev libpgm-dev qttools5-dev-tools libhidapi-dev libusb-1.0-0-dev libprotobuf-dev protobuf-compiler libudev-dev libboost-chrono-dev libboost-date-time-dev libboost-filesystem-dev libboost-locale-dev libboost-program-options-dev libboost-regex-dev libboost-serialization-dev libboost-system-dev libboost-thread-dev python3 ccache doxygen graphviz
-EOF
+sudo apt update && sudo apt install pkg-config libssl-dev libzmq3-dev libsodium-dev libunwind8-dev liblzma-dev libreadline6-dev libpgm-dev qttools5-dev-tools libhidapi-dev libusb-1.0-0-dev libprotobuf-dev protobuf-compiler libudev-dev libboost-chrono-dev libboost-date-time-dev libboost-filesystem-dev libboost-locale-dev libboost-program-options-dev libboost-regex-dev libboost-serialization-dev libboost-system-dev libboost-thread-dev python3 ccache
 ```
 Arch
 ```bash
 # prerequisites
 sudo pacman -Sy --needed base-devel cmake git
-# neroshop, dokun-ui
+# neroshop
 sudo pacman -Sy --needed libx11 lib32-mesa lib32-glu curl openssl libuv
 # monero-cpp (monero)
-sudo pacman -Syu --needed boost openssl zeromq libpgm unbound libsodium libunwind xz readline ldns expat gtest python3 ccache doxygen graphviz qt5-tools hidapi libusb protobuf systemd
+sudo pacman -Syu --needed boost openssl zeromq libpgm libsodium libunwind xz readline gtest python3 ccache qt5-tools hidapi libusb protobuf systemd
 ```
 Fedora
 ```bash
@@ -79,24 +77,16 @@ sudo dnf install gcc gcc-c++ make cmake git
 # neroshop, dokun-ui
 sudo dnf install libX11-devel mesa-libGL-devel mesa-libGLU-devel libcurl-devel openssl-devel libuv-devel libuv-static
 # monero-cpp (monero)
-sudo dnf install boost-static libstdc++-static pkgconf boost-devel openssl-devel zeromq-devel openpgm-devel unbound-devel libsodium-devel libunwind-devel xz-devel readline-devel ldns-devel expat-devel gtest-devel ccache doxygen graphviz qt5-linguist hidapi-devel libusbx-devel protobuf-devel protobuf-compiler systemd-devel
+sudo dnf install boost-static libstdc++-static pkgconf boost-devel openssl-devel zeromq-devel openpgm-devel libsodium-devel libunwind-devel xz-devel readline-devel gtest-devel ccache qt5-linguist hidapi-devel libusbx-devel protobuf-devel protobuf-compiler systemd-devel
 ```
 
 
-**2. Clone submodules and nested submodules**
+**2. Update monero-cpp submodules**
 ```bash
-cd external
-git clone --recurse-submodules https://github.com/monero-ecosystem/monero-cpp.git
-#git clone --recurse-submodules https://github.com/rg3/libbcrypt.git
-#git clone --recurse-submodules https://github.com/sqlite/sqlite.git
-git clone --recurse-submodules https://github.com/nayuki/QR-Code-generator.git
-git clone --recurse-submodules https://github.com/nlohmann/json.git
-#git clone --recurse-submodules https://github.com/curl/curl.git
-#git clone --recurse-submodules https://github.com/libuv/libuv.git
-git clone --recurse-submodules https://github.com/willemt/raft.git
-git clone --recurse-submodules https://github.com/mariusbancila/stduuid.git
-git clone https://github.com/antirez/linenoise.git
-cd ../
+cd external/monero-cpp && ./bin/update_submodules.sh
+```
+```bash
+cd external/monero-project
 ```
 
 
@@ -108,7 +98,8 @@ rm expat-2.4.8.tar.bz2
 cd expat-2.4.8
 ./configure --enable-static --disable-shared
 make
-make install
+sudo make install
+cd ../
 ```
 
 ```bash
@@ -118,20 +109,23 @@ rm unbound-1.16.1.tar.gz
 cd unbound-1.16.1
 ./configure --disable-shared --enable-static --without-pyunbound --with-libevent=no --without-pythonmodule --disable-flto --with-pthreads --with-libunbound-only --with-pic
 make
+sudo make install
+cd ../
 ```
 
 For Fedora users, you may need to add this line under the "find_package(Boost .." in case of an "undefined reference to icu_*" error:
 `set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -licuio -licui18n -licuuc -licudata")`
 
+<!-- git submodule update --init --force --> <!-- <= call this before building monero -->
 
 **4. Build monero-project to create .a libraries**
 ```bash
-cd external/monero-cpp/external/monero-project && make release-static
+make release-static
 cd ../../../../
 ```
 
 
-**5. Build dokun-ui**
+**5. Build dokun-ui (skip this step if using Qt)**
 ```bash
 # Build dokun-ui
 cd external/dokun-ui
@@ -191,7 +185,7 @@ To build for [Android](https://www.android.com/) (requires [Android NDK](https:/
 
 [//]: # (./clean.sh)
 [//]: # (git checkout -b test)
-[//]: # (git add .gitignore .gitmodules cmake/ CMakeLists.txt external/ premake5.lua README.md res/neroshop-logo.png res/wallets src/ test/)
+[//]: # (git add .gitignore .gitmodules cmake/ CMakeLists.txt external/ main.qml premake5.lua README.md res/neroshop-logo.png res/wallets src/ test/)
 [//]: # (git commit -m"...")
 [//]: # (git push -u origin test)
 [//]: # (https://git.slipfox.xyz/larteyoh/testshop/settings => Mirror Settings => Synchronize Now)

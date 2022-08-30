@@ -41,7 +41,7 @@ neroshop::User * neroshop::Buyer::on_login(const std::string& username) { // if 
     dynamic_cast<Buyer *>(user)->set_id(db.get_column_integer("users", "id", "name = " + DB::to_sql_string(username)));
     dynamic_cast<Buyer *>(user)->set_account_type(user_account_type::buyer); // set the account_type
 #ifdef NEROSHOP_DEBUG
-        std::cout << "\033[1;34m(account_type: " << String::lower(user->get_account_type_string()) << ", id: " << user->get_id() << ")\033[0m" << std::endl;
+        std::cout << "\033[1;34m(account_type: " << neroshop::string::lower(user->get_account_type_string()) << ", id: " << user->get_id() << ")\033[0m" << std::endl;
 #endif    
     ///////////
     // load orders
@@ -77,7 +77,7 @@ neroshop::User * neroshop::Buyer::on_login(const std::string& username) { // if 
     ////}
     ////////////////////////////////
 #ifdef NEROSHOP_DEBUG
-        std::cout << "\033[1;34m(account_type: " << String::lower(user->get_account_type_string()) << ", id: " << user->get_id() << ")\033[0m" << std::endl;
+        std::cout << "\033[1;34m(account_type: " << neroshop::string::lower(user->get_account_type_string()) << ", id: " << user->get_id() << ")\033[0m" << std::endl;
 #endif        
     ////////////////////////////////    
     return user;

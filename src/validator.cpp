@@ -70,7 +70,7 @@ void neroshop::Validator::save_user(const std::string& username, const char * pw
         db.column("users", "ADD", "role_id", "INTEGER");//db.column("users", "ADD", "role", "TEXT");//db.column("users", "ADD", "created_at", "TEXT");
         db.execute("CREATE UNIQUE INDEX idx_users_name ON Users (name);");// enforce that the user names are unique, in case there is an attempt to insert a new "name" of the same value - https://www.sqlitetutorial.net/sqlite-index/
     }
-    db.insert("users", "name, pw_hash, email, role_id", DB::Sqlite3::to_sql_string(String::lower(username)) + ", " + DB::Sqlite3::to_sql_string(pw_hash) + ", " + DB::Sqlite3::to_sql_string(email_hash) + ", " + std::to_string(1)); // usernames are stored in lowercase
+    db.insert("users", "name, pw_hash, email, role_id", DB::Sqlite3::to_sql_string(neroshop::string::lower(username)) + ", " + DB::Sqlite3::to_sql_string(pw_hash) + ", " + DB::Sqlite3::to_sql_string(email_hash) + ", " + std::to_string(1)); // usernames are stored in lowercase
     db.close();*/ // don't forget to close the db after you're done :)
     ////////////////////////////////
     // postgresql
@@ -102,7 +102,7 @@ void neroshop::Validator::save_user(const std::string& username, const char * pw
         DB::Postgres::get_singleton()->execute("CREATE UNIQUE INDEX index_users ON users (name, opt_email);");
     }
     // insert new data into table users
-    int user_id = DB::Postgres::get_singleton()->get_integer_params("INSERT INTO users (name, pw_hash, opt_email, account_type_id) VALUES ($1, $2, $3, $4) RETURNING id", { String::lower(username), pw_hash, email_hash, std::to_string(1) });//DB::Postgres::get_singleton()->execute_params("INSERT INTO users (name, pw_hash, opt_email, account_type_id) VALUES ($1, $2, $3, $4)", { String::lower(username), pw_hash, email_hash, std::to_string(1) });
+    int user_id = DB::Postgres::get_singleton()->get_integer_params("INSERT INTO users (name, pw_hash, opt_email, account_type_id) VALUES ($1, $2, $3, $4) RETURNING id", { neroshop::string::lower(username), pw_hash, email_hash, std::to_string(1) });//DB::Postgres::get_singleton()->execute_params("INSERT INTO users (name, pw_hash, opt_email, account_type_id) VALUES ($1, $2, $3, $4)", { neroshop::string::lower(username), pw_hash, email_hash, std::to_string(1) });
 	if(user_id < 1) {
 	    DB::Postgres::get_singleton()->execute("ROLLBACK;"); // abort transaction
 	    return; // exit function
@@ -143,7 +143,7 @@ bool neroshop::Validator::login(const std::string& username, const std::string& 
     /*DB::Sqlite3 db("neroshop.db");
 	if(!db.table_exists("users")) {NEROSHOP_TAG_OUT std::cout << "\033[0;33;49m" << "This account is not registered" << "\033[0m" << std::endl; return false;}
 	// SELECT pw_hash from Users WHERE name=username
-	std::string pw_hash = db.get_column_text("users", "pw_hash", "name = " + DB::Sqlite3::to_sql_string(String::lower(username)));
+	std::string pw_hash = db.get_column_text("users", "pw_hash", "name = " + DB::Sqlite3::to_sql_string(neroshop::string::lower(username)));
 	// if no pw_hash could be found then the user does not exist (or the db is missing or corrupted)
 	if(pw_hash.empty()) { NEROSHOP_TAG_OUT std::cout << "\033[0;33;49m" << "This user does not exist" << "\033[0m" << std::endl; return false; }
 	db.close();*/ // don't forget to close the db after you're done :)
@@ -155,7 +155,7 @@ bool neroshop::Validator::login(const std::string& username, const std::string& 
     //DB::Postgres::get_singleton()->connect("host=127.0.0.1 port=5432 user=postgres password=postgres dbname=neroshoptest");
     if(!DB::Postgres::get_singleton()->table_exists("users")) {NEROSHOP_TAG_OUT std::cout << "\033[0;33;49m" << "This account is not registered" << "\033[0m" << std::endl; /*DB::Postgres::get_singleton()->finish();*/ return false;}
     // SELECT pw_hash from users WHERE name=username
-    std::string pw_hash = DB::Postgres::get_singleton()->get_text_params("SELECT pw_hash FROM users WHERE name = $1;", { String::lower(username) });//DB::Postgres::get_singleton()->get_text("SELECT pw_hash FROM users WHERE name = " + DB::Postgres::to_psql_string(String::lower(username)) + ";");//std::cout << "pw_hash: " << pw_hash << " (retrieved from database)\n";
+    std::string pw_hash = DB::Postgres::get_singleton()->get_text_params("SELECT pw_hash FROM users WHERE name = $1;", { neroshop::string::lower(username) });//DB::Postgres::get_singleton()->get_text("SELECT pw_hash FROM users WHERE name = " + DB::Postgres::to_psql_string(neroshop::string::lower(username)) + ";");//std::cout << "pw_hash: " << pw_hash << " (retrieved from database)\n";
 	// if no pw_hash could be found then the user does not exist (or the db is missing or corrupted)
 	if(pw_hash.empty()) { NEROSHOP_TAG_OUT std::cout << "\033[0;33;49m" << "This user does not exist" << "\033[0m" << std::endl; /*DB::Postgres::get_singleton()->finish();*/ return false; }    
     /*DB::Postgres::get_singleton()->finish();*/
@@ -301,7 +301,7 @@ bool neroshop::Validator::validate_username(const std::string& username)
         return false; // exit function //}
     }
     // the name guest is reserved for guests only, so it cannot be used by any other user
-    if(String::lower(username) == "guest") {
+    if(neroshop::string::lower(username) == "guest") {
         neroshop::print("The name \"Guest\" is reserved for guests ONLY");
         return false;
     }
@@ -312,8 +312,8 @@ bool neroshop::Validator::validate_username(const std::string& username)
     DB::Sqlite3 db("neroshop.db");
 	if(db.table_exists("users")) 
 	{   // make sure table Users exists first
-	    std::string name = db.get_column_text("users", "name", "name='" + String::lower(username) + "'");
-	    if(name == String::lower(username)) { // names are stored in lowercase
+	    std::string name = db.get_column_text("users", "name", "name='" + neroshop::string::lower(username) + "'");
+	    if(name == neroshop::string::lower(username)) { // names are stored in lowercase
 	        neroshop::print("This username is already taken", 2);
 	        return false;
 	    }//std::cout << "name: " << name << " (retrieved from db)" << std::endl;
@@ -321,7 +321,7 @@ bool neroshop::Validator::validate_username(const std::string& username)
 	// make sure any deleted user's name is not re-used
 	if(db.table_exists("deleted_users")) {
 	    std::string deleted_user = db.get_column_text("deleted_users", "name", "name = " + DB::Sqlite3::to_sql_string(username));
-	    if(deleted_user == String::lower(username)) {
+	    if(deleted_user == neroshop::string::lower(username)) {
 	        neroshop::print("This username cannot be used", 2);
             return false;
 	    }
@@ -335,8 +335,8 @@ bool neroshop::Validator::validate_username(const std::string& username)
     //DB::Postgres::get_singleton()->connect("host=127.0.0.1 port=5432 user=postgres password=postgres dbname=neroshoptest");
 	if(DB::Postgres::get_singleton()->table_exists("users")) 
 	{   // make sure table Users exists first
-	    std::string name = DB::Postgres::get_singleton()->get_text_params("SELECT name FROM users WHERE name = $1;", { String::lower(username) });//+ DB::Postgres::to_psql_string(String::lower(username)));
-	    if(name == String::lower(username)) { // names are stored in lowercase
+	    std::string name = DB::Postgres::get_singleton()->get_text_params("SELECT name FROM users WHERE name = $1;", { neroshop::string::lower(username) });//+ DB::Postgres::to_psql_string(neroshop::string::lower(username)));
+	    if(name == neroshop::string::lower(username)) { // names are stored in lowercase
 	        neroshop::print("This username is already taken", 2);
 	        /*DB::Postgres::get_singleton()->finish();*/
 	        return false;
@@ -345,7 +345,7 @@ bool neroshop::Validator::validate_username(const std::string& username)
 	// make sure any deleted user's name is not re-used
 	if(DB::Postgres::get_singleton()->table_exists("deleted_users")) {
 	    std::string deleted_user = DB::Postgres::get_singleton()->get_text_params("SELECT name FROM deleted_users WHERE name = $1;", { username });//+ DB::Postgres::to_psql_string(username));
-	    if(deleted_user == String::lower(username)) {
+	    if(deleted_user == neroshop::string::lower(username)) {
 	        neroshop::print("This username cannot be used"/*re-used"*/, 2);
             /*DB::Postgres::get_singleton()->finish();*/
             return false;

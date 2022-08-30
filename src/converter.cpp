@@ -8,7 +8,7 @@ std::string neroshop::Converter::json_string ("");
 ////////////////////
 ////////////////////
 double neroshop::Converter::to_kg(double amount, const std::string& unit_name) const {
-    if(String::lower(unit_name) == "lb" || String::lower(unit_name) == "lbs" || String::lower(unit_name) == "pound") {return lb_to_kg(amount);}
+    if(neroshop::string::lower(unit_name) == "lb" || neroshop::string::lower(unit_name) == "lbs" || neroshop::string::lower(unit_name) == "pound") {return lb_to_kg(amount);}
     return 0.0;
 }
 ////////////////////
@@ -21,18 +21,18 @@ double neroshop::Converter::lb_to_kg(double lb) {
 ////////////////////
 ////////////////////
 std::string neroshop::Converter::get_currency_symbol(const std::string& currency_code) {
-    if(String::lower(currency_code) == "usd") return "$";// or US$
-    if(String::lower(currency_code) == "eur") return "€";
-    if(String::lower(currency_code) == "jpy") return "¥";
-    if(String::lower(currency_code) == "gbp") return "£";
-    if(String::lower(currency_code) == "cad") return "C$"; // or "$", "C$", "CA$", "CAD$";
-    if(String::lower(currency_code) == "chf") return "CHF";// or "francs";//francs comes after the number
-    if(String::lower(currency_code) == "aud") return "A$"; // or "$", "A$", "AUD$";
-    if(String::lower(currency_code) == "cny") return "CN¥";//or "元"//if(String::lower(currency_code) == "ghs") return "¢";// Ghanaian cedis//if(String::lower(currency_code) == "ngn") return "₦";// Nigerian Naira
-    if(String::lower(currency_code) == "sek") return "SEK";// e.g  20 kr, 50 kr, 100 kr, etc.
-    if(String::lower(currency_code) == "nzd") return "NZ$";// or $
-    if(String::lower(currency_code) == "mxn") return "MX$";// or $
-    //if(String::lower(currency_code) == "") return "";
+    if(neroshop::string::lower(currency_code) == "usd") return "$";// or US$
+    if(neroshop::string::lower(currency_code) == "eur") return "€";
+    if(neroshop::string::lower(currency_code) == "jpy") return "¥";
+    if(neroshop::string::lower(currency_code) == "gbp") return "£";
+    if(neroshop::string::lower(currency_code) == "cad") return "C$"; // or "$", "C$", "CA$", "CAD$";
+    if(neroshop::string::lower(currency_code) == "chf") return "CHF";// or "francs";//francs comes after the number
+    if(neroshop::string::lower(currency_code) == "aud") return "A$"; // or "$", "A$", "AUD$";
+    if(neroshop::string::lower(currency_code) == "cny") return "CN¥";//or "元"//if(neroshop::string::lower(currency_code) == "ghs") return "¢";// Ghanaian cedis//if(neroshop::string::lower(currency_code) == "ngn") return "₦";// Nigerian Naira
+    if(neroshop::string::lower(currency_code) == "sek") return "SEK";// e.g  20 kr, 50 kr, 100 kr, etc.
+    if(neroshop::string::lower(currency_code) == "nzd") return "NZ$";// or $
+    if(neroshop::string::lower(currency_code) == "mxn") return "MX$";// or $
+    //if(neroshop::string::lower(currency_code) == "") return "";
     return "";
 } // https://www.xe.com/symbols.php
 ////////////////////
@@ -63,7 +63,7 @@ double neroshop::Converter::convert_xmr(double quantity, std::string currency, b
         {"gbp", "2791"}, {"jpy", "2797"}, {"mxn", "2799"}, {"nzd", "2802"}, {"sek", "2807"},  {"btc", "1"}, {"eth", "1027"},
     }; //We can easily add new currencies, it must be added here in the coinmarketcap url that fetch usd prices
 
-    currency = String::lower(currency);
+    currency = neroshop::string::lower(currency);
 
     //Definition of variables that will be used later
     std::vector<double> prices;
@@ -80,7 +80,7 @@ double neroshop::Converter::convert_xmr(double quantity, std::string currency, b
         auto currencies = json_response["data"];
 
         for (int i = 0; i<currencies.size(); i++) {
-            std::string name = String::lower(currencies[i]["symbol"]);
+            std::string name = neroshop::string::lower(currencies[i]["symbol"]);
             currencies_in_usd[name] = currencies[i]["quotes"][0]["price"];
         }
     }
@@ -126,8 +126,8 @@ double neroshop::Converter::convert_xmr(double quantity, std::string currency, b
         if (request(url)) {
             response = get_json();
             json_response = nlohmann::json::parse(response);
-            if (json_response["data"]["XMR"][String::upper(currency)] != nullptr) {
-                price = json_response["data"]["XMR"][String::upper(currency)]["price"];
+            if (json_response["data"]["XMR"][neroshop::string::upper(currency)] != nullptr) {
+                price = json_response["data"]["XMR"][neroshop::string::upper(currency)]["price"];
             } else {
                 price = (double)json_response["data"]["XMR"]["USD"]["price"]/currencies_in_usd[currency];
             }

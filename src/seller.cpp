@@ -55,7 +55,7 @@ void neroshop::Seller::list_item(unsigned int item_id, unsigned int stock_qty, d
 	// SELECT TO_CHAR(now(), 'YYYY-MM-DD HH24:MI:SS') ;
 	// insert item in inventory
 	database->execute_params("INSERT INTO inventory (item_id, seller_id, stock_qty, sales_price, currency, condition) "
-	    "VALUES ($1, $2, $3, $4, $5, $6)", { std::to_string(item_id), std::to_string(get_id()), std::to_string(stock_qty), std::to_string(sales_price), String::lower(currency), condition });// end transaction////database->execute("COMMIT;");
+	    "VALUES ($1, $2, $3, $4, $5, $6)", { std::to_string(item_id), std::to_string(get_id()), std::to_string(stock_qty), std::to_string(sales_price), neroshop::string::lower(currency), condition });// end transaction////database->execute("COMMIT;");
 #ifdef DOKUN_DEBUG
 	std::string item_name = database->get_text_params("SELECT name FROM products WHERE id = $1", { std::to_string(item_id) });
 	NEROSHOP_TAG_OUT std::cout << "\033[1;37m" << item_name << " (id: " << item_id << ", stock_qty: " << stock_qty << ") has been listed by seller \033[1;34m" << get_name() << " (id: " << get_id() << ")" << "\033[0m" << std::endl;
@@ -471,7 +471,7 @@ std::vector<int> neroshop::Seller::get_pending_customer_orders() {
          }
     }
     pending_order_msg.append(")");
-    pending_order_msg = String::remove_last_of(pending_order_msg, "; ");
+    pending_order_msg = neroshop::string::remove_last_of(pending_order_msg, "; ");
 #ifdef NEROSHOP_DEBUG
     std::cout << pending_order_msg << std::endl;
 #endif
@@ -644,7 +644,7 @@ neroshop::User * neroshop::Seller::on_login(const std::string& username) { // as
         ////user->get_cart()->load_cart(user->get_id());
     ////}        
 #ifdef NEROSHOP_DEBUG
-    std::cout << "\033[1;34m(account_type: " << String::lower(user->get_account_type_string()) << ", id: " << user->get_id() << ", reputation: " << static_cast<Seller *>(user)->get_reputation() << ")\033[0m" << std::endl; // get_reputation() also opens the database hence the warning
+    std::cout << "\033[1;34m(account_type: " << neroshop::string::lower(user->get_account_type_string()) << ", id: " << user->get_id() << ", reputation: " << static_cast<Seller *>(user)->get_reputation() << ")\033[0m" << std::endl; // get_reputation() also opens the database hence the warning
 #endif    
     return user;          
 }

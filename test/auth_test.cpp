@@ -99,7 +99,6 @@ static bool auth_with_seed() {
     Wallet * wallet = new Wallet();
     // Initialize monero wallet with existing wallet mnemonic
     std::string wallet_mnemonic;// = "hefty value later extra artistic firm radar yodel talent future fungal nutshell because sanity awesome nail unjustly rage unafraid cedar delayed thumbs comb custom sanity";
-    std::string wallet_password;// = "supersecretpassword123"; // Apparently passwords are not used nor required for mnemonics. ONLY wallet files use passwords
     std::cout << "Please enter your wallet mnemonic:\n";
     std::getline(std::cin, wallet_mnemonic);
     // todo: allow user to specify a custom location for the wallet keyfile or use a default location
@@ -178,7 +177,7 @@ static bool auth_with_keys() {
 int main() {
     //register_user();
     //auth_with_seed();
-    //auth_with_wallet_file();
-    auth_with_keys();
+    auth_with_wallet_file();
+    //auth_with_keys();
     return 0;
 }
