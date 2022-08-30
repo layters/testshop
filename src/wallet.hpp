@@ -127,10 +127,8 @@ private:
     // callbacks
     void load_from_config(std::string/*const std::string&*/ password = "supersecretpassword123");
 private:
-    // monero-related
     std::unique_ptr<monero::monero_wallet_full> monero_wallet_obj; // monero wallet
     monero::monero_network_type network_type; // default will be mainnet when this application is released
-    // dokun-ui
     std::unique_ptr<Process> process; // monerod process // every wallet will have its own process
     //std::unique_ptr<Progressbar> sync_bar;
 };

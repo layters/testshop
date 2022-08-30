@@ -167,7 +167,6 @@ ApplicationWindow {
                 color: "#ffffff"// text color
                 background: Rectangle { 
                     color: "firebrick"
-                    //border.color:"#ffffff"
                 }            
             }            
             // wallet seed display

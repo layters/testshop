@@ -184,9 +184,9 @@ To build for [Android](https://www.android.com/) (requires [Android NDK](https:/
 > larteyoh@pm.me
 
 [//]: # (./clean.sh)
-[//]: # (git checkout -b test)
+[//]: # (git checkout -b main)
 [//]: # (git add .gitignore .gitmodules cmake/ CMakeLists.txt external/ main.qml premake5.lua README.md res/neroshop-logo.png res/wallets src/ test/)
 [//]: # (git commit -m"...")
-[//]: # (git push -u origin test --force)
+[//]: # (git push -u origin main --force)
 [//]: # (https://git.slipfox.xyz/larteyoh/testshop/settings => Mirror Settings => Synchronize Now)
 [//]: # (removing an external lib from submodules index: git rm --cached path/to/submodule)
