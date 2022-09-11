@@ -41,10 +41,10 @@ Coming soon
 | [libuv](https://github.com/libuv/libuv)                            | ?                  | networking and child process                                           | :heavy_check_mark:                  |
 | [raft](https://github.com/willemt/raft)                            | ?                  | consensus mechanism                                                    | :heavy_check_mark:                  |
 | [stduuid](https://github.com/mariusbancila/stduuid)                | ?                  | order number generation                                                | :heavy_check_mark:                  |
-| [linenoise](https://github.com/antirez/linenoise)                  | ?                  | command line interface                                                 | :heavy_check_mark:                  |
+| [linenoise](https://github.com/antirez/linenoise)                  | ?                  | command line interface                                                 | :heavy_check_mark: :o:              |
 
 ### Compiling neroshop from source
-**0. Clone neroshop**
+**0. Clone neroshop (and its submodules)**
 ```bash
 git clone --recurse-submodules https://github.com/larteyoh/testshop.git && cd testshop
 ```
@@ -57,11 +57,11 @@ Debian/Ubuntu
 # prerequisites
 sudo apt install build-essential cmake git
 # neroshop
-sudo apt install libx11-dev libgl1-mesa-dev libglu1-mesa-dev libglfw3-dev libcurl4-openssl-dev libssl-dev libuv1-dev qtdeclarative5-dev qml-module-qt-labs-platform qml-module-qtquick-controls qml-module-qtquick-controls2
+sudo apt install libx11-dev libgl1-mesa-dev libglu1-mesa-dev libglfw3-dev libcurl4-openssl-dev libssl-dev libuv1-dev qtdeclarative5-dev qml-module-qt-labs-platform qml-module-qtquick-controls qml-module-qtquick-controls2 qml-module-qtquick-shapes
 # monero-cpp (monero)
 sudo apt update && sudo apt install pkg-config libssl-dev libzmq3-dev libsodium-dev libunwind8-dev liblzma-dev libreadline6-dev libpgm-dev qttools5-dev-tools libhidapi-dev libusb-1.0-0-dev libprotobuf-dev protobuf-compiler libudev-dev libboost-chrono-dev libboost-date-time-dev libboost-filesystem-dev libboost-locale-dev libboost-program-options-dev libboost-regex-dev libboost-serialization-dev libboost-system-dev libboost-thread-dev python3 ccache
 ```
-Arch
+Arch (needs to be updated)
 ```bash
 # prerequisites
 sudo pacman -Sy --needed base-devel cmake git
@@ -70,7 +70,7 @@ sudo pacman -Sy --needed libx11 lib32-mesa lib32-glu curl openssl libuv
 # monero-cpp (monero)
 sudo pacman -Syu --needed boost openssl zeromq libpgm libsodium libunwind xz readline gtest python3 ccache qt5-tools hidapi libusb protobuf systemd
 ```
-Fedora
+Fedora (needs to be updated)
 ```bash
 # prerequisites
 sudo dnf install gcc gcc-c++ make cmake git
@@ -185,7 +185,7 @@ To build for [Android](https://www.android.com/) (requires [Android NDK](https:/
 
 [//]: # (./clean.sh)
 [//]: # (git checkout -b main)
-[//]: # (git add .gitignore .gitmodules cmake/ CMakeLists.txt external/ main.qml premake5.lua README.md res/neroshop-logo.png res/wallets src/ test/)
+[//]: # (git add .gitignore .gitmodules cmake/ CMakeLists.txt external/ qml/ main.qml premake5.lua README.md res/neroshop-logo.png res/wallets src/ test/)
 [//]: # (git commit -m"...")
 [//]: # (git push -u origin main --force)
 [//]: # (https://git.slipfox.xyz/larteyoh/testshop/settings => Mirror Settings => Synchronize Now)

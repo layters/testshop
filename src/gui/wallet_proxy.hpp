@@ -24,7 +24,7 @@ class Wallet : public QObject {
 public:    
     // functions (for use in QML)
     ////explicit Wallet(QObject* parent = 0);
-    Q_INVOKABLE void create_random_wallet(const QString& password, const QString& confirm_pwd, const QString& path);// const;
+    Q_INVOKABLE int create_random_wallet(const QString& password, const QString& confirm_pwd, const QString& path) const;
     Q_INVOKABLE QString get_mnemonic() const;
     Q_INVOKABLE neroshop::Wallet * get_wallet() const;
     Q_INVOKABLE void set_wallet(const neroshop::Wallet* wallet/*const neroshop::Wallet& wallet*/) {}//const { /*this->wallet = const_cast<neroshop::Wallet*>(wallet);*//*this->wallet = &const_cast<neroshop::Wallet&>(wallet);*//*emit wallet_changed(status);*/ }

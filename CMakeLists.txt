@@ -57,11 +57,11 @@ endif()
 if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
 # Set compiler-specific flags
 if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC -w -fsanitize=address") #-w=ignores all warnings
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC -w")# -fsanitize=address") #-w=ignores all warnings
     message(STATUS "Building with clang")
 else()
     message(STATUS "Building with gcc/g++")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC -no-pie -fsanitize=address") # -no-pie=detach from terminal
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC -no-pie")# -fsanitize=address") # -no-pie=detach from terminal
 endif()
 endif()
 
@@ -124,7 +124,6 @@ set(Boost_USE_MULTITHREADED ON)
 find_package(Boost 1.58 QUIET REQUIRED COMPONENTS chrono date_time filesystem program_options regex serialization wserialization system thread)
 message(STATUS "Using Boost include dir at ${Boost_INCLUDE_DIR}")
 include_directories(${Boost_INCLUDE_DIR})
-#add_definitions(-DBOOST_BIND_GLOBAL_PLACEHOLDERS) # to ignore warnings # remove this
 
 ######################################
 # OpenSSL
@@ -315,32 +314,22 @@ ${UNBOUND_LIBRARIES} ${Boost_LIBRARIES} ${Protobuf_LIBRARY} ${LibUSB_LIBRARIES} 
 ######################################
 # monero-cpp (wrapper)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/external/monero-cpp/src/)
-set(monero_cpp_src ${CMAKE_CURRENT_SOURCE_DIR}/build/libmonero-cpp.a)#set(monero_cpp_src external/monero-cpp/src/utils/gen_utils.cpp external/monero-cpp/src/utils/monero_utils.cpp external/monero-cpp/src/daemon/monero_daemon_model.cpp external/monero-cpp/src/daemon/monero_daemon.cpp external/monero-cpp/src/wallet/monero_wallet_model.cpp external/monero-cpp/src/wallet/monero_wallet_keys.cpp external/monero-cpp/src/wallet/monero_wallet_full.cpp)
+set(monero_cpp_src ${CMAKE_CURRENT_SOURCE_DIR}/build/libmonero-cpp.a)
 
 ######################################
 # libbcrypt (optional)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/external/libbcrypt)
-set(bcrypt_src ${CMAKE_CURRENT_SOURCE_DIR}/build/libbcrypt.a)#set(bcrypt_src external/libbcrypt/crypt_blowfish/crypt_blowfish.c external/libbcrypt/crypt_blowfish/crypt_gensalt.c external/libbcrypt/crypt_blowfish/wrapper.c external/libbcrypt/bcrypt.c)
+set(bcrypt_src ${CMAKE_CURRENT_SOURCE_DIR}/build/libbcrypt.a)
 
 ######################################
-# sqlite3 (will be built-in/bundled with neroshop)
-#[[find_package(SQLite3)
-if(SQLite3_FOUND)
-    message(STATUS "Using SQLite3: ${SQLite3_LIBRARY} (v${SQLite3_VERSION})")
-    include_directories(${SQLite3_INCLUDE_DIRS})
-    set(sqlite_src ${SQLite3_LIBRARY}) # or ${SQLite3_LIBRARIES}
-endif()
-if(NOT SQLite3_FOUND)
-    include_directories(${CMAKE_CURRENT_SOURCE_DIR}/external/sqlite)
-    set(sqlite_src ${CMAKE_CURRENT_SOURCE_DIR}/external/sqlite/sqlite3.c) # amalgamation - runs a bit faster
-endif()]]
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/external/sqlite)
-set(sqlite_src ${CMAKE_CURRENT_SOURCE_DIR}/build/libsqlite3.a)#set(sqlite_src ${CMAKE_CURRENT_SOURCE_DIR}/external/sqlite/sqlite3.c)
+# sqlite3
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/external/sqlite) # v3.39.1 (amalgamation - said to run a bit faster)
+set(sqlite_src ${CMAKE_CURRENT_SOURCE_DIR}/build/libsqlite3.a)
 
 ######################################
 # QR-Code-generator
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/external/QR-Code-generator/cpp)
-set(qr_code_generator_src ${CMAKE_CURRENT_SOURCE_DIR}/build/libqrcodegen.a)#set(qr_code_generator_src ${CMAKE_CURRENT_SOURCE_DIR}/external/QR-Code-generator/cpp/qrcodegen.cpp) # or ${CMAKE_CURRENT_SOURCE_DIR}/external/QR-Code-generator/c/qrcodegen.c
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/external/QR-Code-generator/cpp) # v1.8.0
+set(qr_code_generator_src ${CMAKE_CURRENT_SOURCE_DIR}/build/libqrcodegen.a)
 
 ######################################
 # json
@@ -348,7 +337,7 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR}/external/json/single_include)
 
 ######################################
 # curl
-find_package(CURL) # if curl is found on the system, use the system default shared library, otherwise use the curl that we've built from source
+find_package(CURL)
 if(CURL_FOUND) 
     message(STATUS "Using CURL: ${CURL_LIBRARIES} (v${CURL_VERSION_STRING})")
     include_directories(${CURL_INCLUDE_DIRS})
@@ -356,13 +345,13 @@ if(CURL_FOUND)
 endif()
 if(NOT CURL_FOUND)
     include_directories(${CMAKE_CURRENT_SOURCE_DIR}/external/curl/include ${CMAKE_CURRENT_SOURCE_DIR}/external/curl/lib)
-    set(curl_src ${CMAKE_CURRENT_SOURCE_DIR}/external/curl/lib/.libs/libcurl.a)
+    set(curl_src ${CMAKE_CURRENT_SOURCE_DIR}/external/curl/lib/.libs/libcurl.a) # In case user chooses to build libcurl themselves instead of installing it on the system
     add_definitions(-DCURL_STATICLIB)
-    set(CMAKE_CXX_LINK_EXECUTABLE "${CMAKE_CXX_LINK_EXECUTABLE} -lldap -llber -lnghttp2 -lpsl -lidn2 -lbrotlidec -lzstd -lrtmp") # for Arch (Manjaro) # https://stackoverflow.com/questions/68368557/linking-nghttp2-static-library#comment120830125_68368557
+    set(CMAKE_CXX_LINK_EXECUTABLE "${CMAKE_CXX_LINK_EXECUTABLE} -lldap -llber -lnghttp2 -lpsl -lidn2 -lbrotlidec -lzstd -lrtmp") # for Arch (Manjaro)
 endif()
 
 ######################################
-# libuv (supports Android :D)
+# libuv
 find_package(LibUV)
 if(LIBUV_FOUND)
     message(STATUS "Using LibUV: ${LibUV_LIBRARIES} (v${LibUV_VERSION})")
@@ -375,16 +364,16 @@ if(NOT LIBUV_FOUND)
 endif()
 
 ######################################
-# willemt/raft (BSD and has zero dependencies :D)
+# willemt/raft
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/external/raft/include)
-set(raft_src ${CMAKE_CURRENT_SOURCE_DIR}/build/libraft.a)#set(raft_src ${CMAKE_CURRENT_SOURCE_DIR}/external/raft/src/raft_log.c ${CMAKE_CURRENT_SOURCE_DIR}/external/raft/src/raft_node.c ${CMAKE_CURRENT_SOURCE_DIR}/external/raft/src/raft_server.c ${CMAKE_CURRENT_SOURCE_DIR}/external/raft/src/raft_server_properties.c)
+set(raft_src ${CMAKE_CURRENT_SOURCE_DIR}/build/libraft.a)
 
 ######################################
-# stduuid (header-only MIT library for generating uuids)
+# stduuid
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/external/stduuid ${CMAKE_CURRENT_SOURCE_DIR}/external/stduuid/catch ${CMAKE_CURRENT_SOURCE_DIR}/external/stduuid/include)
 
 ######################################
-# linenoise (BSD replacement for GNU readline)
+# linenoise
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/external/linenoise/)
 set(linenoise_src ${CMAKE_CURRENT_SOURCE_DIR}/build/liblinenoise.a)
 
@@ -397,7 +386,11 @@ set(lua_src ${CMAKE_CURRENT_SOURCE_DIR}/build/liblua.a)
 # png (needs zlib)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/external/png/) # v1.6.37
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/external/zlib/) #v1.2.12
-set(png_src ${CMAKE_CURRENT_SOURCE_DIR}/build/libpng.a ${CMAKE_CURRENT_SOURCE_DIR}/build/libz.a)
+if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
+    set(png_src ${CMAKE_CURRENT_SOURCE_DIR}/build/libpng.so ${CMAKE_CURRENT_SOURCE_DIR}/build/libz.a) # Linux requires libpng to be built dynamically to prevent the Gtk:ERROR: ... "Failed to load /usr/share/icons/Yaru/16x16/status/image-missing.png: Fatal error reading PNG image file: Invalid IHDR data (gdk-pixbuf-error-quark, 0)" when opening the QML FileDialog
+else()
+    set(png_src ${CMAKE_CURRENT_SOURCE_DIR}/build/libpng.a ${CMAKE_CURRENT_SOURCE_DIR}/build/libz.a)
+endif()
 
 ######################################
 # dokun-ui
@@ -435,7 +428,7 @@ link_directories(${CMAKE_CURRENT_SOURCE_DIR}/build) # target_link_directories on
 
 ######################################
 # neroshop core source files
-set(neroshop_src src/buyer.cpp #[[src/carrier.cpp]] src/cart.cpp src/catalog.cpp src/client.cpp src/converter.cpp src/database.cpp src/encryptor.cpp #[[src/icon.cpp]] src/item.cpp #[[src/main.cpp]] src/order.cpp src/process.cpp src/qr.cpp src/script.cpp src/seller.cpp src/server.cpp src/user.cpp src/validator.cpp src/wallet.cpp)
+set(neroshop_src src/buyer.cpp #[[src/carrier.cpp]] src/cart.cpp src/catalog.cpp src/client.cpp src/config.cpp src/converter.cpp src/database.cpp src/encryptor.cpp #[[src/icon.cpp]] src/item.cpp #[[src/main.cpp]] src/order.cpp src/process.cpp src/qr.cpp src/script.cpp src/seller.cpp src/server.cpp src/user.cpp src/validator.cpp src/wallet.cpp)
 
 ######################################
 # neroshop tests

@@ -3,16 +3,35 @@
 #ifndef WALLET_HPP_NEROSHOP
 #define WALLET_HPP_NEROSHOP
 
-#define EXPLORER_XMRCHAIN             "https://xmrchain.net/search?value="
-#define EXPLORER_XMRCHAIN_MAINNET     EXPLORER_XMRCHAIN
-#define EXPLORER_XMRCHAIN_STAGENET    "https://stagenet.xmrchain.net/search?value="
-#define EXPLORER_XMRCHAIN_TESTNET     "https://testnet.xmrchain.net/search?value="
-#define EXPLORER_XMRCHAIN_TX          "https://xmrchain.net/tx/"
-#define EXPLORER_XMRCHAIN_MAINNET_TX  EXPLORER_XMRCHAIN_TX
-#define EXPLORER_XMRCHAIN_STAGENET_TX "https://stagenet.xmrchain.net/tx/"
-#define EXPLORER_XMRCHAIN_TESTNET_TX  "https://testnet.xmrchain.net/tx/"
+#if defined(NEROSHOP_USE_QT)
+#include <QStandardPaths>
+#if defined(_WIN32)
+#define NEROSHOP_DEFAULT_WALLET_PATH (QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation) + "/neroshop")
+#else
+#define NEROSHOP_DEFAULT_WALLET_PATH (QStandardPaths::writableLocation(QStandardPaths::HomeLocation) + "/neroshop")
+#endif
+#endif
 
-#define NEROSHOP_DEFAULT_WALLET_PATH "/home/" + neroshop::device::get_user() + "/neroshop"//"/home/" + neroshop::device::get_user() + "/Monero/wallets"
+#if !defined(NEROSHOP_USE_QT)
+#if defined(__linux__) && !defined(__ANDROID__)
+#define NEROSHOP_DEFAULT_WALLET_PATH "/home/" + neroshop::device::get_user() + "/neroshop"
+#endif
+#if defined(_WIN32)
+#define NEROSHOP_DEFAULT_WALLET_PATH "C:/Users/" + neroshop::device::get_user() + "/Documents/neroshop"
+#endif
+#if defined(__APPLE__) && defined(__MACH__)
+// ...
+#endif
+#if defined(__ANDROID__)
+// ...
+#endif
+#if defined(__APPLE__)
+#include <TargetConditionals.h>
+#if TARGET_OS_IPHONE
+// ...
+#endif
+#endif
+#endif // endif !defined(NEROSHOP_USE_QT)
 
 #include <daemon/monero_daemon.h>
 #include <daemon/monero_daemon_model.h>
@@ -28,17 +47,20 @@
 #include <vector>
 #include <utility> // std::pair
 #include <cmath>
+#include <filesystem>
 
 #include "process.hpp" // for monerod daemon process
 
 namespace neroshop {
+// todo: maybe place enums in an "error.hpp" file or nah?
+enum class wallet_error : int { WALLET_SUCCESS = 0, WRONG_PASSWORD, PASSWORDS_NO_MATCH, WALLET_ALREADY_EXISTS/*Wallet I/O Error*/ };
 
 class Wallet : public monero_wallet_listener {
 public:
     Wallet();
     ~Wallet();
 
-    void create_random(const std::string& password, const std::string& confirm_pwd, const std::string& path);
+    /*void*/wallet_error create_random(const std::string& password, const std::string& confirm_pwd, const std::string& path);
     void create_from_mnemonic(const std::string& mnemonic, const std::string& password, const std::string& confirm_pwd, const std::string& path);
     void create_from_keys(const std::string& address, const std::string& view_key, const std::string& spend_key, const std::string& password, const std::string &confirm_pwd, const std::string& path);
     

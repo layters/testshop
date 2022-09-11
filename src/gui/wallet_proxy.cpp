@@ -20,9 +20,9 @@ neroshop::Wallet * neroshop::gui::Wallet::get_wallet() const {
     return wallet.get();
 }
 
-void neroshop::gui::Wallet::create_random_wallet(const QString& password, const QString& confirm_pwd, const QString& path) {//const {
-    // if the wallet already exists then this will crash so we must check if wallet exists first
-    wallet->create_random(password.toStdString(), confirm_pwd.toStdString(), path.toStdString());
+int neroshop::gui::Wallet::create_random_wallet(const QString& password, const QString& confirm_pwd, const QString& path) const {
+    auto error = wallet->create_random(password.toStdString(), confirm_pwd.toStdString(), path.toStdString());
+    return static_cast<int>(error);
 }
 
 QString neroshop::gui::Wallet::get_mnemonic() const {

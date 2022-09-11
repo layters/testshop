@@ -30,20 +30,25 @@ neroshop::Wallet::~Wallet()
 ////////////////////
 ////////////////////
 // Reminder: path is the path and name of the wallet without the .keys extension
-void neroshop::Wallet::create_random(const std::string& password, const std::string& confirm_pwd, const std::string& path) {
+neroshop::wallet_error neroshop::Wallet::create_random(const std::string& password, const std::string& confirm_pwd, const std::string& path) {
     if(confirm_pwd != password) {
         neroshop::print("Wallet passwords do not match", 1);
-        return;
+        return neroshop::wallet_error::PASSWORDS_NO_MATCH;
     }
-    // configure wallet
-    /*monero::monero_wallet_config wallet_config_obj;
+    
+    if(std::filesystem::is_regular_file(path + ".keys")) {
+        neroshop::print("Wallet file with the same name already exists", 1);
+        return neroshop::wallet_error::WALLET_ALREADY_EXISTS;
+    }
+    
+    monero::monero_wallet_config wallet_config_obj;
     wallet_config_obj.m_path = path;
     wallet_config_obj.m_password = password;
     wallet_config_obj.m_network_type = network_type;
-    // first argument is a "const monero_wallet_config &"
+    
     monero_wallet_obj = std::unique_ptr<monero_wallet_full>(monero_wallet_full::create_wallet (wallet_config_obj, nullptr));
-    */
-    monero_wallet_obj = std::unique_ptr<monero_wallet_full>(monero_wallet_full::create_wallet_random (path, password, network_type/*, const monero_rpc_connection &daemon_connection=monero_rpc_connection(), const std::string &language="English", std::unique_ptr< epee::net_utils::http::http_client_factory > http_client_factory=nullptr*/)); // deprecated :(
+    
+    ////monero_wallet_obj = std::unique_ptr<monero_wallet_full>(monero_wallet_full::create_wallet_random (path, password, network_type/*, const monero_rpc_connection &daemon_connection=monero_rpc_connection(), const std::string &language="English", std::unique_ptr< epee::net_utils::http::http_client_factory > http_client_factory=nullptr*/)); // deprecated :(
     if(monero_wallet_obj.get()) std::cout << "\033[1;35;49m" << "created wallet \"" << path << ".keys\"" << "\033[0m" << std::endl;
 }
 ////////////////////

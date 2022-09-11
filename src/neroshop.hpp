@@ -32,7 +32,6 @@
 #include "process.hpp"
 // neroshop (gui)
 #if defined(NEROSHOP_BUILD_GUI)
-//#include "main_window.hpp" // already included in gui/main.cpp so there's no need to include this (I think?)
 #include "gui/icon.hpp"
 #include "gui/main_window.hpp"
 #include "gui/message_box.hpp"

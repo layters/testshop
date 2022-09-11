@@ -1,7 +1,7 @@
 #ifndef ICON_HPP_NEROSHOP
 #define ICON_HPP_NEROSHOP
 
-#define NEROSHOP_RESOURCES_FOLDER "resources"
+#define NEROSHOP_RESOURCES_FOLDER "resources/images" //"assets/images"
 #define NEROSHOP_ASSETS_FOLDER NEROSHOP_RESOURCES_FOLDER
 
 #include <png.h>
@@ -46,6 +46,8 @@ private:
     static bool load_link();    // names: "external_link", "link"
     static bool load_shop();
     static bool load_copy();    // names: "copy", "clipboard"
+    static bool load_views(); // names: "grid", "list"
+    static bool load_triangle();
     //static bool load_();
     // non-icons8 icons
     static bool load_settings(); // cog//settings
