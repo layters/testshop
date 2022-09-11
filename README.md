@@ -1,6 +1,6 @@
 # neroshop 
 
-[![alt text](res/neroshop-logo.png)](https://github.com/larteyoh/testshop "neroshop logo")
+[![alt text](images/appicons/neroshop-logo.png)](https://github.com/larteyoh/testshop "neroshop logo")
 
 ## Overview
 A P2P marketplace for [Monero](https://getmonero.org/) users
@@ -185,7 +185,7 @@ To build for [Android](https://www.android.com/) (requires [Android NDK](https:/
 
 [//]: # (./clean.sh)
 [//]: # (git checkout -b main)
-[//]: # (git add .gitignore .gitmodules cmake/ CMakeLists.txt external/ qml/ main.qml premake5.lua README.md res/neroshop-logo.png res/wallets src/ test/)
+[//]: # (git add .gitignore .gitmodules cmake/ CMakeLists.txt external/ images/ main.qml premake5.lua qml/ README.md src/ test/)
 [//]: # (git commit -m"...")
 [//]: # (git push -u origin main --force)
 [//]: # (https://git.slipfox.xyz/larteyoh/testshop/settings => Mirror Settings => Synchronize Now)
