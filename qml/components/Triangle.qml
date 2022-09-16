@@ -13,7 +13,7 @@ Item {
     
     Image {
         id: triangle
-        source: neroshopResourceDir + "/triangle.png"
+        source: "file:///" + neroshopResourcesDir + "/triangle.png"//neroshopResourceDir + "/triangle.png"
         // direction: up
         x: parent.parentX + (parent.parentWidth - this.width) / 2
         y: parent.parentY - this.height// + 4

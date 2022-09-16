@@ -9,8 +9,7 @@
 #include <QGuiApplication> // requires Qt5::Gui
 #include <QQmlApplicationEngine> // requires Qt5::Qml
 #include <QQmlContext> // QQmlContext *	QQmlApplicationEngine::rootContext()
-//#include <QQuickView> // requires Qt5::Quick - we're not using QQuickView for now
-//#include <QMetaType> // requires Qt::Core
+#include <QQmlComponent> //#include <QQuickView> // requires Qt5::Quick - we're not using QQuickView for now//#include <QQmlComponent>
 #include <QStandardPaths>// requires Qt::Core (since Qt 5.0)
 #elif defined(NEROSHOP_USE_DOKUN_UI)
 #include <dokun_ui.hpp>
@@ -54,6 +53,25 @@ int main(int argc, char *argv[]) {
     // open configuration script
     neroshop::open_configuration_file();
     // initialize (sync) database
+    //std::string theme = Script::get_string(neroshop::get_lua_state(), "neroshop.theme");
+    //if(neroshop::string::lower(theme) == "dark") "NeroshopComponents.Style.darkTheme = true"
+    //else if(neroshop::string::lower(theme) == "light") "NeroshopComponents.Style.darkTheme = false"
+    // ...
+    //QObject * whot = object->findChild<QObject *>("NeroshopComponents.Style");
+    //if (whot) qml_theme_str->setProperty("darkTheme", false);
+    // Load from qrc file using "qrc:/"
+    ////QQmlComponent component(&engine, QUrl::fromLocalFile("../qml/components/Style.qml")); // same as://QQuickView view; view.setSource(QUrl::fromLocalFile("MyItem.qml")); view.show();
+    ////assert(component.status() == QQmlComponent::Ready); // #include <assert.h>
+    /*if(component.status == QQmlComponent::Error) {//!= QQmlComponent::Ready) {
+        throw std::runtime_error("Damn, the component wasn't ready");
+    }*/
+    ////QObject *object = component.create(); // same as://QObject *object = view.rootObject();
+    //QQuickItem *item = qobject_cast<QQuickItem*>(object);
+    ////QQmlProperty(object, "darkTheme").write(QVariant(true));////object->setProperty("Style.darkTheme", QVariant(true)); // https://doc.qt.io/qt-5/qobject.html
+    ////QObject *style = qvariant_cast<QObject*>(object->property("Style"));
+    ////style->setProperty("darkTheme", true);
+    //delete object;
+    // ...    
     // ...
     ////qRegisterMetaType<std::string>("std::string");
     // custom macros
@@ -63,7 +81,7 @@ int main(int argc, char *argv[]) {
     engine.rootContext()->setContextProperty("neroshopWalletDir", NEROSHOP_DEFAULT_WALLET_PATH);//QStandardPaths::writableLocation(QStandardPaths::AppLocalDataLocation));
     engine.rootContext()->setContextProperty("neroshopDataDir", NEROSHOP_DEFAULT_DATABASE_PATH);
     engine.rootContext()->setContextProperty("neroshopConfigDir", NEROSHOP_DEFAULT_CONFIGURATION_PATH);
-    engine.rootContext()->setContextProperty("neroshopResourceDir", QCoreApplication::applicationDirPath() + "/" + NEROSHOP_RESOURCES_FOLDER); // defined in icon.hpp
+    engine.rootContext()->setContextProperty("neroshopResourcesDir", QCoreApplication::applicationDirPath() + "/" + NEROSHOP_RESOURCES_FOLDER); // defined in icon.hpp//engine.rootContext()->setContextProperty("neroshopResourcesFolder", NEROSHOP_RESOURCES_FOLDER); // defined in icon.hpp
     // create neroshop directories - datadir and configdir
     if(!std::filesystem::is_directory(NEROSHOP_DEFAULT_WALLET_PATH.toStdString())) {
         neroshop::print(std::string("Creating directory \"") + NEROSHOP_DEFAULT_WALLET_PATH.toStdString() + "\"", 3);
@@ -79,7 +97,8 @@ int main(int argc, char *argv[]) {
     //gui::Wallet wallet;
     engine.rootContext()->setContextProperty("Wallet", new WalletProxy());//qmlRegisterUncreatableType<WalletProxy>("neroshop.Wallet", 1, 0, "Wallet", "Wallet cannot be instantiated directly.");
     //--------------------------
-    engine.load("../main.qml");//("main.qml");
+    // When using qrc.qml to store images, use: QUrl(QStringLiteral("qrc:///main.qml"))
+    engine.load(QUrl(QStringLiteral("qrc:/main.qml")));//("../main.qml");//("main.qml");//(QUrl(QStringLiteral("qrc:/main.qml")));
     if (engine.rootObjects().isEmpty()) {
         return -1;
     }

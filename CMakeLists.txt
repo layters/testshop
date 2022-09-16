@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.1.0 FATAL_ERROR)
+cmake_minimum_required(VERSION 3.5)
 project(neroshop) # tested on Ubuntu 20.04 LTS (focal) with gcc (Ubuntu 9.3.0-17ubuntu1~20.04) 9.3.0, manjaro-xfce-21.2.6 (Qonos) with gcc (GCC) 11.2.0
 
 set(CMAKE_CXX_STANDARD 17)
@@ -10,7 +10,7 @@ set(VERSION_PATCH "0")
 set(PROJECT_VERSION ${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_PATCH})
 
 option(NEROSHOP_BUILD_TESTS "Build neroshop tests" OFF)
-option(NEROSHOP_BUILD_CLI "Build neroshop CLI" OFF) # CLI is for testing only. This is an GUI-based ecommerce app so BUILD_CLI will be off by default
+option(NEROSHOP_BUILD_CLI "Build neroshop CLI" OFF) # CLI is for testing only. This is a GUI-based ecommerce app so BUILD_CLI will be off by default
 option(NEROSHOP_BUILD_GUI "Build neroshop GUI" ON)
 include(CMakeDependentOption)
 cmake_dependent_option(NEROSHOP_USE_QT "Build neroshop with Qt" ON "NEROSHOP_BUILD_GUI;NOT NEROSHOP_USE_DOKUN_UI" OFF)
@@ -27,6 +27,9 @@ if(NEROSHOP_BUILD_GUI AND NEROSHOP_USE_QT)
     if(CMAKE_VERSION VERSION_LESS "3.7.0")
         set(CMAKE_INCLUDE_CURRENT_DIR ON)
     endif()
+    find_package(Qt5 COMPONENTS Qml Quick Gui #[[QuickControls2]])# REQUIRED) # v5.12.8
+    # add the qml.qrc file
+    qt5_add_resources(neroshop_src qml.qrc)#qt_add_resources# <= introduced in Qt 5.15 and higher
 endif()
 
 ######################################
@@ -428,7 +431,7 @@ link_directories(${CMAKE_CURRENT_SOURCE_DIR}/build) # target_link_directories on
 
 ######################################
 # neroshop core source files
-set(neroshop_src src/buyer.cpp #[[src/carrier.cpp]] src/cart.cpp src/catalog.cpp src/client.cpp src/config.cpp src/converter.cpp src/database.cpp src/encryptor.cpp #[[src/icon.cpp]] src/item.cpp #[[src/main.cpp]] src/order.cpp src/process.cpp src/qr.cpp src/script.cpp src/seller.cpp src/server.cpp src/user.cpp src/validator.cpp src/wallet.cpp)
+set(neroshop_src ${neroshop_src} src/buyer.cpp #[[src/carrier.cpp]] src/cart.cpp src/catalog.cpp src/client.cpp src/config.cpp src/converter.cpp src/database.cpp src/encryptor.cpp #[[src/icon.cpp]] src/item.cpp #[[src/main.cpp]] src/order.cpp src/process.cpp src/qr.cpp src/script.cpp src/seller.cpp src/server.cpp src/user.cpp src/validator.cpp src/wallet.cpp)
 
 ######################################
 # neroshop tests
@@ -513,8 +516,6 @@ if(WIN32)
 endif()
 
 if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
-    #option(NEROSHOP_USE_QT_WIDGETS "Use Qt::Widgets" ON)#set(NEROSHOP_USE_QT_QML_QUICK ON)# QML/Quick is forced and cannot be turned off
-
     find_package(LibUUID) # optional
     if(UUID_SYSTEM_GENERATOR) # -DUUID_SYSTEM_GENERATOR=1
         message(STATUS "UUID_SYSTEM_GENERATOR option set to ON")
@@ -581,11 +582,8 @@ if(OPENGL_FOUND)
     endif()
 endif()
 
-find_package(Qt5 COMPONENTS Qml Quick Gui #[[QuickControls2]])# REQUIRED) # v5.12.8
 if(Qt5_FOUND)
     if(NEROSHOP_BUILD_GUI AND NEROSHOP_USE_QT)
-        # add the qml.qrc file
-        ####qt5_add_resources(qml_QRC qml.qrc)
         # Linux requires Qt::Widgets due to the lack of a native platform file dialog implementation
         if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
             message(STATUS "Using Qt5::Widgets")
@@ -596,6 +594,7 @@ if(Qt5_FOUND)
     
         message(STATUS "Using Qt5::Qml Qt5::Quick Qt5::Gui")
         target_compile_definitions(${neroshop_executable} PRIVATE NEROSHOP_USE_QT)
+        add_compile_definitions(QT_DISABLE_DEPRECATED_BEFORE=0x050F00) # Disable any API deprecated in 5.15 or older Qt versions
         #target_include_directories(${neroshop_executable} PRIVATE /usr/include/x86_64-linux-gnu/qt5/)
         target_link_libraries(${neroshop_executable} Qt5::Qml Qt5::Quick Qt5::Gui #[[Qt5::QuickControls2]])
     endif()

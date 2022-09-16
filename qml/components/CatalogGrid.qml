@@ -5,30 +5,17 @@ import QtQuick.Layouts 1.12 // GridLayout
 import QtQuick.Shapes 1.3 // (since Qt 5.10) // Shape
 import QtGraphicalEffects 1.12//Qt5Compat.GraphicalEffects 1.15//= Qt6// ColorOverlay
 
+import "." as NeroshopComponents
     // todo: place grid in stackview or swipeview for multiple grid pages (pagination mode)
     // todo: place grid in scrollview (infinite scroll mode) but in a separate file called CatalogGridViewInfiniteScroll.qml or CatalogGridViewLimitlessScroll.qml
     // todo: move this code to CatalogGridView.qml and create a CatalogListView
-    // stackview functions
-    ////function next_page() {}
-    ////function prev_page() {}
-// Pagination mode
-/*StackView {
-    id: catalog_pages
-    anchors.fill: parent*/
-    //index: 1//currentIndex: 1
-    // Repeater inside StackView?
-// Infinite scroll mode
-/*Flickable {
-    anchors.fill: parent
-    contentHeight: catalog_grid.height
-    contentWidth: catalog_grid.width*/
+    // Grid should have two modes: Pagination mode and Infinite scroll mode
     // catalog view (Grid)
     Grid {
         id: catalog_grid
         rows: 2
         columns: 3
         spacing: 5//rowSpacing: 5; columnSpacing: 5
-        anchors.centerIn: parent // place at center of parent
         //flow: Grid.TopToBottom
         function get_box(index) { // or get_item(index)?
             return catalog_grid_repeater.itemAt(index);
@@ -46,14 +33,14 @@ import QtGraphicalEffects 1.12//Qt5Compat.GraphicalEffects 1.15//= Qt6// ColorOv
                 visible: true
                 width: 220
                 height: 220
-                color: "#a0a0a0"// #a0a0a0 = 160,160,160
+                color: (NeroshopComponents.Style.darkTheme) ? "#2e2e2e"/*"#121212"*/ : "#a0a0a0"// #a0a0a0 = 160,160,160
                 //border.color: "white"
                 //border.width: 1
                 radius: 5
             
                 Image {
                     id: verified_purchase_icon
-                    source: neroshopResourceDir + "/paid.png"
+                    source: "file:///" + neroshopResourcesDir + "/paid.png"//neroshopResourceDir + "/paid.png"
                     visible: true//false // only show this icon if item has been purchased previously
                     anchors.left: parent.left
                     anchors.leftMargin: 10
@@ -78,8 +65,8 @@ import QtGraphicalEffects 1.12//Qt5Compat.GraphicalEffects 1.15//= Qt6// ColorOv
                             console.log("Grid Parent pos (" + parent.x + ", " + parent.y + ")")
                             //hint.x = catalog_grid_repeater.itemAt(index).children[0].x//hint.anchors.left = catalog_grid_repeater.itemAt(index).left//catalog_grid_repeater.itemAt(0).horizontalCenter//.left//parent.x + ((parent.width - this.width) / 2)
                             //hint.y = catalog_grid_repeater.itemAt(index).children[0].y
-                            hint.x = catalog_grid.x// + catalog_grid_repeater.itemAt(index).children[0].x + catalog_grid_repeater.itemAt(index).children[0].width
-                            hint.y = catalog_grid.y//catalog_grid_repeater.itemAt(index).children[0].x
+                            //hint.x = catalog_grid.x + catalog_grid_repeater.itemAt(index).children[0].x// + catalog_grid_repeater.itemAt(index).children[0].width
+                            //hint.y = catalog_grid.y + catalog_grid_repeater.itemAt(index).children[0].y
                             /*NeroshopComponents.Hint*/hint.show("You've previously purchased this item", -1)//(!is_favorited) ? "Add to favorites" : "Remove from favorites"
                             ////}
                         }   
@@ -101,7 +88,7 @@ import QtGraphicalEffects 1.12//Qt5Compat.GraphicalEffects 1.15//= Qt6// ColorOv
             
                 Image {
                     id: heart_icon
-                    source: neroshopResourceDir + "/heart.png"
+                    source: "file:///" + neroshopResourcesDir + "/heart.png"//neroshopResourceDir + "/heart.png"
                     visible: true
                     anchors.right: parent.right
                     anchors.rightMargin: 10
@@ -120,7 +107,7 @@ import QtGraphicalEffects 1.12//Qt5Compat.GraphicalEffects 1.15//= Qt6// ColorOv
                             
                 Image {
                     id: product_image
-                    source: neroshopResourceDir + "/image_gallery.png"
+                    source: "file:///" + neroshopResourcesDir + "/image_gallery.png"//neroshopResourceDir + "/image_gallery.png"
                     anchors.centerIn: parent
                 
                     width: 128

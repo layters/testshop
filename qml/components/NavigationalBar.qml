@@ -6,17 +6,55 @@ import "." as NeroshopComponents // Hint
 
 RowLayout {
     id: buttons_menu
-    anchors.left: parent.right
-    anchors.leftMargin: (-this.width - 20)
-    anchors.top: parent.top
-    anchors.topMargin: 20
+
+    Button {
+        id: wallet_button
+        text: qsTr("Wallet")
+        //onClicked: _stackview.currentIndex = 0
+        display: AbstractButton.IconOnly//AbstractButton.TextUnderIcon//AbstractButton.TextBesideIcon
         
+        icon.source: "file:///" + neroshopResourcesDir + "/wallet.png"//neroshopResourceDir + "/wallet.png"
+        icon.color: "#ffffff"
+
+        /*contentItem: Text {  
+            text: wallet_button.text
+            color: "#ffffff"
+        }   */
+                        
+        background: Rectangle {
+            color: wallet_button.down ? "white" : "transparent"//NeroshopComponents.Style.moneroOrangeColor
+            border.color: color
+            radius: 5
+        }   
+              
+        MouseArea {
+            //id: _mouse_area
+            anchors.fill: parent
+            hoverEnabled: true
+            onEntered: {
+                // Style 1
+                parent.background.border.color = NeroshopComponents.Style.moneroOrangeColor
+                parent.icon.color = NeroshopComponents.Style.moneroOrangeColor
+                // Style 2
+                //parent.background.color = NeroshopComponents.Style.moneroOrangeColor
+            }
+            onExited: {
+                // Style 1
+                parent.background.border.color = "transparent"
+                parent.icon.color = "#ffffff"
+                // Style 2
+                //parent.background.color = "transparent"
+            }
+            //onClicked: {}
+        }                
+    }
+                            
     Button {
         text: qsTr("Seller Hub")
         //onClicked: _stackview.currentIndex = 0
         display: AbstractButton.IconOnly//AbstractButton.TextBesideIcon
         
-        icon.source: neroshopResourceDir + "/shop.png"
+        icon.source: "file:///" + neroshopResourcesDir + "/shop.png"//neroshopResourceDir + "/shop.png"
         icon.color: "#ffffff"
                         
         background: Rectangle {
@@ -25,11 +63,11 @@ RowLayout {
     }
     
     Button {
-        text: qsTr("Messages")// todo: replace with message_count
+        text: qsTr("Messages")// todo: replace text with message_count
         //onClicked: _stackview.currentIndex = 0
         display: AbstractButton.IconOnly//AbstractButton.TextBesideIcon
         
-        icon.source: neroshopResourceDir + "/mail.png"
+        icon.source: "file:///" + neroshopResourcesDir + "/mail.png"//neroshopResourceDir + "/mail.png"
         icon.color: "#ffffff"
                         
         background: Rectangle {
@@ -43,7 +81,7 @@ RowLayout {
         //onClicked: _stackview.currentIndex = 0
         display: AbstractButton.IconOnly//AbstractButton.TextBesideIcon
         
-        icon.source: neroshopResourceDir + "/order.png"
+        icon.source: "file:///" + neroshopResourcesDir + "/order.png"//neroshopResourceDir + "/order.png"
         icon.color: "#ffffff"
                         
         background: Rectangle {
@@ -64,7 +102,7 @@ RowLayout {
         //flat: true
         //highlighted: true
         
-        icon.source: neroshopResourceDir + "/user.png"
+        icon.source: "file:///" + neroshopResourcesDir + "/user.png"//neroshopResourceDir + "/user.png"
         icon.color: "#ffffff"
                         
         background: Rectangle {
@@ -74,7 +112,7 @@ RowLayout {
 
     Button {
         id: cart_button
-        // ref: https://doc.qt.io/qt-5/qml-qtquick-layouts-layout.html
+        // reference: https://doc.qt.io/qt-5/qml-qtquick-layouts-layout.html
         // fix alignment to StackLayout parent (no longer needed since we've set the preffered size, I think?)
         Layout.alignment: Qt.AlignTop
         // tell the layout that this child will have unique dimensions from the other children
@@ -98,7 +136,7 @@ RowLayout {
         }
                 
         Image {
-            source: neroshopResourceDir + "/cart.png"
+            source: "file:///" + neroshopResourcesDir + "/cart.png"//neroshopResourceDir + "/cart.png"
             height: 24; width: 24
             anchors.left: cart_button_text.right
             anchors.leftMargin: 10
@@ -106,17 +144,4 @@ RowLayout {
             anchors.topMargin: (cart_button.background.height - this.height) / 2
         }
     }
-    
-    /*Button {
-        text: qsTr("")
-        //onClicked: _stackview.currentIndex = 0
-        display: AbstractButton.IconOnly//AbstractButton.TextBesideIcon
-        
-        icon.source: neroshopResourceDir + "/image.png"
-        icon.color: "#ffffff"
-                        
-        background: Rectangle {
-            color: "#808080"
-        }                    
-    }*/                  
 }

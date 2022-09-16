@@ -1,0 +1,40 @@
+<RCC>
+    <qresource prefix="/">
+        <file>main.qml</file>
+        <!-- qml sources: components -->
+        <file>qml/components/CatalogGrid.qml</file>
+        <file>qml/components/FilterBox.qml</file>
+        <file>qml/components/Hint.qml</file>
+        <file>qml/components/NavigationalBar.qml</file>
+        <file>qml/components/PaginationBar.qml</file>
+        <file>qml/components/qmldir</file>
+        <file>qml/components/SearchBar.qml</file>
+        <file>qml/components/Style.qml</file>
+        <file>qml/components/ThemeSwitch.qml</file>
+        <file>qml/components/Triangle.qml</file>
+        <file>qml/components/ViewToggle.qml</file>
+        <!-- qml sources: pages -->
+        <file>qml/pages/CatalogPage.qml</file>
+        <file>qml/pages/HomePage.qml</file>
+        <file>qml/pages/MainPage.qml</file>
+        <file>qml/pages/OrderCheckoutPage.qml</file>
+        <file>qml/pages/ProductPage.qml</file>
+        <!-- fonts -->
+        <file>fonts/FiraCode-Bold.ttf</file>
+        <file>fonts/FiraCode-Light.ttf</file>
+        <file>fonts/FiraCode-Medium.ttf</file>
+        <file>fonts/FiraCode-Regular.ttf</file>
+        <file>fonts/FiraCode-Retina.ttf</file>
+        <file>fonts/FiraCode-SemiBold.ttf</file>
+        <file>fonts/FontAwesome/FontAwesome.qml</file>
+        <file>fonts/FontAwesome/Object.qml</file>
+        <file>fonts/FontAwesome/otfs/Font Awesome 6 Brands-Regular-400.otf</file>
+        <file>fonts/FontAwesome/otfs/Font Awesome 6 Free-Regular-400.otf</file>
+        <file>fonts/FontAwesome/otfs/Font Awesome 6 Free-Solid-900.otf</file>
+        <file>fonts/FontAwesome/qmldir</file>
+        <!--<file>fonts/FontAwesome/svgs/</file>-->
+        <!-- images -->
+        <!--<file>images/appicons/neroshop-logo.png</file> -->
+        <!--<file>images/</file> -->
+    </qresource>
+</RCC>

@@ -19,7 +19,7 @@ Page {
     //    color:"red"
     //}
     ///////////////////////////
-    function copy_to_clipboard() { // copies seed (mnemonic)
+    function copy_to_clipboard() { 
         // If text edit string is empty, exit function
         if(!seed_display_edit.text) return;
         // Select all text from edit then copy the selected text
@@ -101,8 +101,6 @@ Page {
         nameFilters: ["Wallet files (*.keys)"]
         //options: FileDialog.ReadOnly // will not allow you to create folders while file dialog is opened
     }
-    // gtk error: Failed to load image-missing.png on Linux (fix: ?)
-    // See https://forums.wxwidgets.org/viewtopic.php?t=47187
     ///////////////////////////
     StackLayout { // Perfect for a stack of items where only one item is visible at a time//ColumnLayout { // From top to bottom
         id: auth_stack // auth_menu inside home menu
@@ -116,7 +114,7 @@ Page {
         // generate auth keys page
         Rectangle {
             id: genkey_page
-            color: (NeroshopComponents.Style.darkTheme) ? "black" : "#a0a0a0"//160, 160, 160
+            color: (NeroshopComponents.Style.darkTheme) ? "#2e2e2e" : "#a0a0a0"//160, 160, 160
             // optional pseudonym edit
             TextField {
                 id: opt_username_edit
@@ -153,6 +151,8 @@ Page {
                 onClicked: register_wallet()
                 
                 contentItem: Text {  
+                    font.family: "Consolas"; //font.family: NeroshopComponents.Style.fontFiraCodeLight.name
+                    //font.pointSize: 10
                     font.bold: true
                     text: wallet_register_button.text
                     color: "#ffffff" // white
@@ -174,6 +174,7 @@ Page {
                 placeholderTextColor: "#a9a9a9" // darkgray
                 color: NeroshopComponents.Style.moneroOrangeColor//"#ff6600" // textColor
                 echoMode: TextInput.Password//TextInput.PasswordEchoOnEdit
+                inputMethodHints: Qt.ImhSensitiveData
                 selectByMouse: true
                 //validator: RegularExpressionValidator { regularExpression: "^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])(?=.*?[#?!@$%^&*-]).{8,}$" }
                 //x: generate_key_button.x + generate_key_button.width + 15
@@ -197,6 +198,7 @@ Page {
                 placeholderTextColor: "#a9a9a9" // darkgray
                 color: NeroshopComponents.Style.moneroOrangeColor//"#ff6600" // textColor
                 echoMode: TextInput.Password
+                inputMethodHints: Qt.ImhSensitiveData
                 selectByMouse: true
                 x: wallet_password_create_edit.x
                 y: wallet_password_create_edit.y + wallet_password_create_edit.height + 5
@@ -219,6 +221,8 @@ Page {
                 onClicked: generate_keys()
                 
                 contentItem: Text {  
+                    font.family: "Consolas";
+                    font.pointSize: 10; 
                     font.bold: true
                     text: generate_key_button.text
                     color: "#ffffff" // white
@@ -317,7 +321,7 @@ Page {
                 ToolTip.visible: hovered
                 ToolTip.text: qsTr("Copy to clipboard")
                 
-                icon.source: neroshopResourceDir + "/copy.png"
+                icon.source: "file:///" + neroshopResourcesDir + "/copy.png"//neroshopResourceDir + "/copy.png"
                 icon.color: "#ffffff"
                 //icon.height: 24; icon.width: 24
                 
@@ -332,7 +336,7 @@ Page {
         // Upload button with read-only textfield
         Rectangle {
             id: wallet_file_auth_page
-            color: '#000000'//'#a0a0a0' // #a0a0a0 = 160,160,160
+            color: (NeroshopComponents.Style.darkTheme) ? "#2e2e2e" : "#a0a0a0"
             //gradient: Gradient {
             //    GradientStop { position: 0.0; color: "white" }
             //    GradientStop { position: 1.0; color: "black" }
@@ -371,7 +375,7 @@ Page {
                 width: 50
                 height: wallet_upload_edit.height
                 
-                icon.source: neroshopResourceDir + "/upload.png"
+                icon.source: "file:///" + neroshopResourcesDir + "/upload.png"//neroshopResourceDir + "/upload.png"
                 icon.color: "#ffffff"
                 // can only have 1 contentItem at a time (a contentItem is not needed for Button)
                 /*contentItem: Image {
@@ -444,23 +448,13 @@ Page {
         } // eof wallet_file_authentication_page
         Rectangle {
             id: seed_auth_page
-            color: 'plum'
+            color: (NeroshopComponents.Style.darkTheme) ? "#2e2e2e" : "#a0a0a0"
         }
         
         Rectangle {
             id: keys_auth_page
-            color: 'blue'
+            color: (NeroshopComponents.Style.darkTheme) ? "#2e2e2e" : "#a0a0a0"
         }        
-        /*Button {
-            // control properties
-            //padding: 10
-            // abstractbutton properties
-            text: "Ok"
-            onClicked: model.submit()
-            // button properties
-            flat: false
-            highlighted: false
-        }*/    
     }
     ///////////////////////////
     RowLayout {//TabBar {

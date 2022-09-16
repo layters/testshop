@@ -48,6 +48,7 @@ private:
     static bool load_copy();    // names: "copy", "clipboard"
     static bool load_views(); // names: "grid", "list"
     static bool load_triangle();
+    static bool load_theme(); // names: "sun", moon, "bulb"
     //static bool load_();
     // non-icons8 icons
     static bool load_settings(); // cog//settings

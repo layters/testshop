@@ -37,7 +37,7 @@ Coming soon
 | [json](https://github.com/nlohmann/json/)                          | ?                  | json parsing                                                           | :heavy_check_mark:                  |
 | [curl](https://github.com/curl/curl)                               | ?                  | currency conversion                                                    | :heavy_check_mark:                  |
 | [openssl](https://github.com/openssl/openssl)                      | 1.1.1              | for curl, sha256 sum and message encryption                            | :heavy_check_mark:                  |
-| [Qt](https://www.qt.io/) or [dokun-ui](external/dokun-ui)          | 5.12, n/a          | graphical user interface                                               | :heavy_check_mark:                  |
+| [Qt](https://www.qt.io/)                                           | 5.12               | graphical user interface                                               | :heavy_check_mark:                  |
 | [libuv](https://github.com/libuv/libuv)                            | ?                  | networking and child process                                           | :heavy_check_mark:                  |
 | [raft](https://github.com/willemt/raft)                            | ?                  | consensus mechanism                                                    | :heavy_check_mark:                  |
 | [stduuid](https://github.com/mariusbancila/stduuid)                | ?                  | order number generation                                                | :heavy_check_mark:                  |
@@ -74,7 +74,7 @@ Fedora (needs to be updated)
 ```bash
 # prerequisites
 sudo dnf install gcc gcc-c++ make cmake git
-# neroshop, dokun-ui
+# neroshop
 sudo dnf install libX11-devel mesa-libGL-devel mesa-libGLU-devel libcurl-devel openssl-devel libuv-devel libuv-static
 # monero-cpp (monero)
 sudo dnf install boost-static libstdc++-static pkgconf boost-devel openssl-devel zeromq-devel openpgm-devel libsodium-devel libunwind-devel xz-devel readline-devel gtest-devel ccache qt5-linguist hidapi-devel libusbx-devel protobuf-devel protobuf-compiler systemd-devel
@@ -125,18 +125,7 @@ cd ../../../../
 ```
 
 
-**5. Build dokun-ui (skip this step if using Qt)**
-```bash
-# Build dokun-ui
-cd external/dokun-ui
-mkdir build && cd build
-cmake ..
-make libdokun-ui -j4
-cd ../../../
-```
-
-
-**6. Build neroshop**
+**5. Build neroshop**
 
 To build with [CMake](https://cmake.org/):
 
@@ -185,7 +174,7 @@ To build for [Android](https://www.android.com/) (requires [Android NDK](https:/
 
 [//]: # (./clean.sh)
 [//]: # (git checkout -b main)
-[//]: # (git add .gitignore .gitmodules cmake/ CMakeLists.txt external/ images/ main.qml premake5.lua qml/ README.md src/ test/)
+[//]: # (git add .gitignore .gitmodules cmake/ CMakeLists.txt external/ fonts/ images/ main.qml premake5.lua qml/ qml.qrc README.md src/ test/)
 [//]: # (git commit -m"...")
 [//]: # (git push -u origin main --force)
 [//]: # (https://git.slipfox.xyz/larteyoh/testshop/settings => Mirror Settings => Synchronize Now)
