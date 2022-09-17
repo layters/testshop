@@ -8,7 +8,10 @@ import QtQuick.Dialogs 1.3 // MessageDialog (since Qt 5.2)
 import QtGraphicalEffects 1.12 // LinearGradient
 import Qt.labs.platform 1.1 // FileDialog (since Qt 5.8) // change to "import QtQuick.Dialogs" if using Qt 6.2
 
+//import "fonts" as FontAwesome//import FontAwesome 1.0
+
 //import neroshop.Wallet 1.0
+
 import "qml/components"
 import "qml/components" as NeroshopComponents
 import "qml/pages"

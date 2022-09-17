@@ -21,7 +21,6 @@ using namespace dokun;
 // neroshop (includes both the core headers and the gui headers)
 #include "../neroshop.hpp"
 using namespace neroshop;
-//lua_State * neroshop::lua_state = luaL_newstate();
 
 using WalletProxy = gui::Wallet;
 
@@ -53,6 +52,8 @@ int main(int argc, char *argv[]) {
     // open configuration script
     neroshop::open_configuration_file();
     // initialize (sync) database
+    std::string network_type = Script::get_string(lua_state, "neroshop.monero.daemon.network_type");
+    std::cout << "network_type: " << network_type << std::endl;
     //std::string theme = Script::get_string(neroshop::get_lua_state(), "neroshop.theme");
     //if(neroshop::string::lower(theme) == "dark") "NeroshopComponents.Style.darkTheme = true"
     //else if(neroshop::string::lower(theme) == "light") "NeroshopComponents.Style.darkTheme = false"

@@ -57,7 +57,7 @@ Debian/Ubuntu
 # prerequisites
 sudo apt install build-essential cmake git
 # neroshop
-sudo apt install libx11-dev libgl1-mesa-dev libglu1-mesa-dev libglfw3-dev libcurl4-openssl-dev libssl-dev libuv1-dev qtdeclarative5-dev qml-module-qt-labs-platform qml-module-qtquick-controls qml-module-qtquick-controls2 qml-module-qtquick-shapes
+sudo apt install libcurl4-openssl-dev libssl-dev libuv1-dev qtdeclarative5-dev qml-module-qt-labs-platform qml-module-qtquick-controls qml-module-qtquick-controls2 qml-module-qtquick-shapes
 # monero-cpp (monero)
 sudo apt update && sudo apt install pkg-config libssl-dev libzmq3-dev libsodium-dev libunwind8-dev liblzma-dev libreadline6-dev libpgm-dev qttools5-dev-tools libhidapi-dev libusb-1.0-0-dev libprotobuf-dev protobuf-compiler libudev-dev libboost-chrono-dev libboost-date-time-dev libboost-filesystem-dev libboost-locale-dev libboost-program-options-dev libboost-regex-dev libboost-serialization-dev libboost-system-dev libboost-thread-dev python3 ccache
 ```
@@ -66,7 +66,7 @@ Arch (needs to be updated)
 # prerequisites
 sudo pacman -Sy --needed base-devel cmake git
 # neroshop
-sudo pacman -Sy --needed libx11 lib32-mesa lib32-glu curl openssl libuv
+sudo pacman -Sy --needed curl openssl libuv
 # monero-cpp (monero)
 sudo pacman -Syu --needed boost openssl zeromq libpgm libsodium libunwind xz readline gtest python3 ccache qt5-tools hidapi libusb protobuf systemd
 ```
@@ -75,7 +75,7 @@ Fedora (needs to be updated)
 # prerequisites
 sudo dnf install gcc gcc-c++ make cmake git
 # neroshop
-sudo dnf install libX11-devel mesa-libGL-devel mesa-libGLU-devel libcurl-devel openssl-devel libuv-devel libuv-static
+sudo dnf install libcurl-devel openssl-devel libuv-devel libuv-static
 # monero-cpp (monero)
 sudo dnf install boost-static libstdc++-static pkgconf boost-devel openssl-devel zeromq-devel openpgm-devel libsodium-devel libunwind-devel xz-devel readline-devel gtest-devel ccache qt5-linguist hidapi-devel libusbx-devel protobuf-devel protobuf-compiler systemd-devel
 ```
@@ -121,6 +121,8 @@ For Fedora users, you may need to add this line under the "find_package(Boost ..
 **4. Build monero-project to create .a libraries**
 ```bash
 make release-static
+```
+```bash
 cd ../../../../
 ```
 

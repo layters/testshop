@@ -42,12 +42,10 @@ Page {
     function goToNextPage() {
         catalog_stack.currentIndex = catalog_stack.currentIndex + 1
         if(catalog_stack.currentIndex >= (catalog_stack.count - 1)) catalog_stack.currentIndex = (catalog_stack.count - 1)
-        console.log("CurrentIndex (next): " + catalog_stack.currentIndex)
     }
     function goToPrevPage() {
         catalog_stack.currentIndex = catalog_stack.currentIndex - 1
         if(catalog_stack.currentIndex <= 0) catalog_stack.currentIndex = 0
-        console.log("CurrentIndex (prev): " + catalog_stack.currentIndex)
     }
     function setCurrentPageIndex(numberInput) {
          // if numberInput is greater than (count - 1) then equal it to (count - 1)
@@ -59,19 +57,15 @@ Page {
              numberInput = 0
          }
          catalog_stack.currentIndex = numberInput
-         console.log("\n")
-         console.log("Pages count: " + catalog_stack.count)         
-         console.log("numberInput: " + numberInput)
-         console.log("catalog_stack.currentIndex: " + catalog_stack.currentIndex)
-         console.log("Pagination index: " + pagination.currentIndex)
-         console.log("Pagination displayText: " + pagination.numberField.displayText)
-         console.log("Pagination text: " + pagination.numberField.text)
     }
     function getPageCount() { // Returns total number of grid pages belonging to the catalog StackLayout
         return catalog_stack.count;
     }
     function getCurrentPageIndex() {
         return catalog_stack.currentIndex;
+    }
+    function getItemsCount() {
+        // ... boxesPerGrid * pageCount
     }
     // Pagination mode (Infinite Scroll mode replaces the StackLayout with a ScrollView)
     StackLayout {
@@ -85,7 +79,7 @@ Page {
             model: 10 // Number of page results from search
             delegate: NeroshopComponents.CatalogGrid {
             // To access each grid: pages.itemAt(index)
-            // To access each box inside the grid: pages.itemAt(gridIndex).children[gridBoxIndex] //or: pages.itemAt(gridIndex).get_box(gridBoxIndex)
+            // To access each box inside the grid: pages.itemAt(gridIndex).children[gridBoxIndex] //or: pages.itemAt(gridIndex).getBox(gridBoxIndex)
                 //id: catalog
                 // Items in a StackLayout support these attached properties (anchors cannot be used when managed by StackLayout or any other Layout type):
                 //Layout.minimumWidth
@@ -102,8 +96,8 @@ Page {
     // Custom pagination bar
     NeroshopComponents.PaginationBar {
         id: pagination
-        firstButton.onClicked: { goToPrevPage() }
-        secondButton.onClicked: { goToNextPage() }
+        firstButton.onClicked: { if(!firstButton.disabled) goToPrevPage() }
+        secondButton.onClicked: { if(!secondButton.disabled) goToNextPage() }
         numberField.onEditingFinished: { setCurrentPageIndex(numberField.text - 1) }
         currentIndex: catalog_stack.currentIndex
         count: catalog_stack.count

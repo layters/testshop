@@ -6,9 +6,8 @@ import QtQuick.Shapes 1.3 // (since Qt 5.10) // Shape
 import QtGraphicalEffects 1.12//Qt5Compat.GraphicalEffects 1.15//= Qt6// ColorOverlay
 
 import "." as NeroshopComponents
-    // todo: place grid in stackview or swipeview for multiple grid pages (pagination mode)
     // todo: place grid in scrollview (infinite scroll mode) but in a separate file called CatalogGridViewInfiniteScroll.qml or CatalogGridViewLimitlessScroll.qml
-    // todo: move this code to CatalogGridView.qml and create a CatalogListView
+    // todo: create a CatalogList.qml for the Catalog List View
     // Grid should have two modes: Pagination mode and Infinite scroll mode
     // catalog view (Grid)
     Grid {
@@ -17,10 +16,10 @@ import "." as NeroshopComponents
         columns: 3
         spacing: 5//rowSpacing: 5; columnSpacing: 5
         //flow: Grid.TopToBottom
-        function get_box(index) { // or get_item(index)?
+        function getBox(index) { // or get_item(index)?
             return catalog_grid_repeater.itemAt(index);
         }
-        function get_box_count() {
+        function getBoxCount() {
             return catalog_grid_repeater.count; // count is really just the number of items in the model :O
         }
         

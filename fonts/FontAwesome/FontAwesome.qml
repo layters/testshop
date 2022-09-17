@@ -25,10 +25,12 @@ Object {
 
     // Icons used in neroshop GUI (Font Awesome version 6.2.0)
     // To add new icons, check unicodes in Font Awesome Free's Cheatsheet:
-    // https://fontawesome.com/v5/cheatsheet/free/solid // filled with black
-    // https://fontawesome.com/v5/cheatsheet/free/regular // white
-    // https://fontawesome.com/v5/cheatsheet/free/brands    
+    // https://fontawesome.com/v5/cheatsheet/free/solid
+    // https://fontawesome.com/v5/cheatsheet/free/regular
+    // https://fontawesome.com/v5/cheatsheet/free/brands
     
+    property string arrowAltCircleRight: "\uf35a"
+    property string arrowAltCircleLeft: "\uf359"
     ////property string upload: "\u"
     ////property string ?: "\u"
     ////property string user: "\uf007"

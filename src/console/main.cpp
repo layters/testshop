@@ -6,8 +6,6 @@ using namespace neroshop;
 // linenoise
 #include <linenoise.h>
 
-lua_State * neroshop::lua_state = luaL_newstate(); // lua_state should be initialized by default
-
 int main() {
     
     if(!neroshop::create_config()) { 
@@ -16,13 +14,13 @@ int main() {
 
     std::vector<std::string> networks = {"mainnet", "stagenet", "testnet"};
 
-    std::string network_type = Script::get_string(lua_state, "neroshop.daemon.network_type");
+    std::string network_type = Script::get_string(lua_state, "neroshop.monero.daemon.network_type");
     if (std::find(networks.begin(), networks.end(), network_type) == networks.end()) {
         neroshop::print("\033[1;91mnetwork_type \"" + network_type + "\" is not valid");
         return 1;
     }
 
-    std::vector<std::string> nodes_list = Script::get_table_string(neroshop::get_lua_state(), "neroshop.nodes."+network_type);
+    std::vector<std::string> nodes_list = Script::get_table_string(lua_state, "neroshop.monero.nodes." + network_type);
     
     if(nodes_list.empty()) {
         std::cout << "failed to get nodes in the config file\nCheck your config file in ~/.config/neroshop" << std::endl;
@@ -47,7 +45,7 @@ int main() {
             }        
         }            
         else if(command == "version") {
-            std::cout << "\033[0;93m" << "neroshop v" << APP_VERSION << "\033[0m" << std::endl;
+            std::cout << "\033[0;93m" << "neroshop v" << NEROSHOP_VERSION << "\033[0m" << std::endl;
         }         
         else if(command == "exit") {
             break;//exit(0);
