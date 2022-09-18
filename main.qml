@@ -24,7 +24,7 @@ ApplicationWindow {
     height: 720
     minimumWidth: 850
     minimumHeight: 500    
-    color: '#202020'
+    color: NeroshopComponents.Style.getColorByThemeName()[0]
     ///////////////////////////
     // Global Tooltip
     /*NeroshopComponents.Hint {
@@ -32,10 +32,11 @@ ApplicationWindow {
         visible: false
     }*/
     header: Rectangle {
-        color: "#2e2e2e"
+        color: NeroshopComponents.Style.getColorByThemeName()[1]
         height: 100 // width should be set automatically to the parent's width
         
         NeroshopComponents.SearchBar {
+            id: searchBar
             visible: (!page_loader.source.toString().match("qml/pages/MainPage.qml")) ? true : false;
         
             anchors.left: parent.left
@@ -45,6 +46,7 @@ ApplicationWindow {
         }    
 
         NeroshopComponents.NavigationalBar {
+            id: navBar
             visible: (!page_loader.source.toString().match("qml/pages/MainPage.qml")) ? true : false;
         
             anchors.left: parent.right
@@ -74,18 +76,71 @@ ApplicationWindow {
             console.log(source);
             if (page_loader.status == Loader.Ready) console.log('Loaded') 
             else console.log('Not Loaded')
+            console.log( NeroshopComponents.Style.getColorByThemeName()[0] );
         }
     }
     //}
     // navigating between different pages: https://stackoverflow.com/a/15655043
     // The footer item is positioned to the bottom, and resized to the width of the window
-    footer: ToolBar {//DialogButtonBox {
-        background: Rectangle {
-            color: "#2e2e2e"
-        }
+    // Custom ToolBar
+    footer: Rectangle {
+        height: 40//; width: parent.width// width is automatically set to parent's width by default since this is the footer
+        color: NeroshopComponents.Style.getColorByThemeName()[1]
         
-        NeroshopComponents.ThemeSwitch {
-            width: 40
+        Row {
+            anchors.fill: parent
+            anchors.rightMargin: 20// use leftMargin only if using layoutDirection is Qt.LeftToRight
+            spacing: 20// Spacing between each Row item
+            layoutDirection: Qt.RightToLeft
+            
+            Rectangle {
+                width: themeSwitcher.width
+                height: footer.height//themeSwitcher.height
+                color: "transparent"
+                border.color: "blue"                
+                
+                NeroshopComponents.ThemeSwitch {
+                    id: themeSwitcher
+                    width: 40
+                    //anchors.fill: parent
+                }
+            }
+            
+            Rectangle {
+                width: daemonSyncBar.width
+                height: footer.height
+                color: "transparent"
+                border.color: "red"
+                                
+                NeroshopComponents.ProgressBar {
+                    id: daemonSyncBar
+                    radius: 20//5
+                    foregroundColor: "#564978"//"#6b5b95"
+                    //backgroundColor: ""
+                    //textObject.visible: true
+                    anchors.top: parent.top
+                    anchors.topMargin: (parent.height - this.height) / 2 // center vertically on footer (height)
+                }
+            }
+            Rectangle {
+                width: moneroDaemonSyncBar.width
+                height: footer.height
+                color: "transparent"
+                border.color: "plum"
+                                
+                NeroshopComponents.ProgressBar {
+                    id: moneroDaemonSyncBar
+                    radius: daemonSyncBar.radius
+                    foregroundColor: NeroshopComponents.Style.moneroOrangeColor
+                    backgroundColor: NeroshopComponents.Style.moneroGrayColor
+                    //textObject.visible: true
+                    textObject.color: "#ffffff"
+                    anchors.top: parent.top
+                    anchors.topMargin: (parent.height - this.height) / 2
+                }
+            }
+            //Rectangle {
+            //}            
         }
     }    
 }

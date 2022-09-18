@@ -81,7 +81,7 @@ import "." as NeroshopComponents
                 ColorOverlay {
                     anchors.fill: verified_purchase_icon
                     source: verified_purchase_icon
-                    color:"#808080"//#808080 = 128, 128, 128//#1e509b = active color //(has_purchased) ? color: "#1e509b" : "#808080"
+                    color: "#808080"//#808080 = 128, 128, 128//#1e509b = active color //(has_purchased) ? color: "#1e509b" : "#808080"
                     visible: verified_purchase_icon.visible
                 }            
             
