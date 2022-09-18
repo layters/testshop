@@ -6,12 +6,12 @@ Object {
     //fontawesome-free-6.2.0-desktop // source: https://fontawesome.com/v6/download
     FontLoader { 
         id: regular
-        source: "otfs/Font Awesome 6 Brands-Regular-400.otf" 
+        source: "otfs/Font Awesome 6 Free-Regular-400.otf"
     }
     
     FontLoader { 
         id: solid
-        source: "otfs/Font Awesome 6 Free-Solid-900.otf" 
+        source: "otfs/Font Awesome 6 Free-Solid-900.otf"
     }
     
     FontLoader { 
@@ -31,6 +31,8 @@ Object {
     
     property string arrowAltCircleRight: "\uf35a"
     property string arrowAltCircleLeft: "\uf359"
+    property string angleLeft: "\uf104"
+    property string angleRight: "\uf105"
     ////property string upload: "\u"
     ////property string ?: "\u"
     ////property string user: "\uf007"

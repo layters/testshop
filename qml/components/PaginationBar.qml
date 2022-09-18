@@ -19,7 +19,7 @@ Row {//RowLayout {
     
     Button {
         id: backButton
-        text: qsTr("%1 Previous").arg("\uf359")//qsTr("<")//solid: f104 (<), 
+        text: qsTr("%1  Previous").arg(FontAwesome.arrowAltCircleLeft)//.arg(FontAwesome.angleLeft)//qsTr("<")
         width: 150
         property bool disabled: (paginationBar.currentIndex == 0)//visible: (paginationBar.currentIndex != 0)
         background: Rectangle {
@@ -46,9 +46,6 @@ Row {//RowLayout {
         color: "black" // textColor
         
         background: Rectangle { 
-            //color: (NeroshopComponents.Style.darkTheme) ? "transparent": "#101010"//"#101010" = rgb(16, 16, 16)
-            //border.color: "#696969" // dim gray//"#ffffff"
-            //border.width: (NeroshopComponents.Style.darkTheme) ? 1 : 0
             radius: paginationBar.radius
             //opacity: 0.0
         }        
@@ -56,7 +53,7 @@ Row {//RowLayout {
 
     Button {
         id: forwardButton
-        text: qsTr("Next %1").arg(FontAwesome.arrowAltCircleRight)//qsTr(">")// solid: "\uf105" (>)
+        text: qsTr("Next  %1").arg(FontAwesome.arrowAltCircleRight)//.arg(FontAwesome.angleRight)//qsTr(">")
         width: 150
         property bool disabled: (paginationBar.currentIndex == (count - 1))
         background: Rectangle {
@@ -68,9 +65,8 @@ Row {//RowLayout {
             text: forwardButton.text
             color: "#ffffff"
             horizontalAlignment: Text.AlignHCenter
-            verticalAlignment: Text.AlignVCenter 
-            //font.family: FontAwesome.fontFamily
-            //font.weight: Font.Bold
+            verticalAlignment: Text.AlignVCenter
+            //font.family: "Font Awesome 6 Free"//FontAwesome.solid.name//fontFamilySolid
         }        
     }
 }

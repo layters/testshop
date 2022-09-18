@@ -8,8 +8,6 @@ external/cmake_install.cmake
 external/Makefile
 external/dokun-ui/build/
 
-res/
-
 # copied from https://gist.github.com/Yousha/3830712334ac30a90eb6041b932b68d7#file-gitignore-L952
 ##### Windows
 # Windows thumbnail cache files
