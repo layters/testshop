@@ -11,14 +11,17 @@ Page {
     //id: catalog_page
     background: Rectangle {
         //visible: true
-        color:"transparent" // fixes white edges on borders when grid box radius is set
+        color: "transparent" // fixes white edges on borders when grid box radius is set
     }
     
     NeroshopComponents.Hint {
-        id: hint
+        id: catalogHint
+        pointer.visible: false
+        delay: 500
     }
 
     NeroshopComponents.FilterBox {
+        id: productFilterBox
         anchors.left: parent.left
         anchors.leftMargin: 20
         anchors.top: parent.top
@@ -27,13 +30,16 @@ Page {
     
     // Text that displays current page results information
     Text {
+        id: pageResultsDisplay
         text: "Page " + (catalog_stack.currentIndex + 1) + " of " + catalog_stack.count
         font.bold: true
-        x: 500
-        y: 0
+        x: catalog_stack.x
+        y: viewToggle.y//0
+        color: (NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000"
     }
         
     NeroshopComponents.ViewToggle {
+        id: viewToggle
         x: parent.x + (parent.width - this.width) / 2
         y: parent.y + 20
     }        
@@ -77,6 +83,7 @@ Page {
         Repeater {
             id: pages
             model: 10 // Number of page results from search
+            // todo: use a Loader to switch between grid view and list view // https://forum.qt.io/topic/80826/dynamic-delegate-in-repeater/4 //// (viewToggle.checkedButton.text.match("List view")) ? 
             delegate: NeroshopComponents.CatalogGrid {
             // To access each grid: pages.itemAt(index)
             // To access each box inside the grid: pages.itemAt(gridIndex).children[gridBoxIndex] //or: pages.itemAt(gridIndex).getBox(gridBoxIndex)

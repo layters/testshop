@@ -25,25 +25,25 @@ QtObject {
     property string moneroGrayColor: "#4c4c4c"
     property string moneroOrangeColor: "#ff6600" // not sure if correct color
     // Functions
-    function getColorByThemeName() {
+    function getColorsByTheme() {
         let primaryColor = ""
         let secondaryColor = ""
         
         if(darkTheme) {
-            console.log("darkTheme is on")
             if(themeName.match("PurpleDust")) {
                 primaryColor = "#141419"
                 secondaryColor = "#292933"
             }
-            else { // "DefaultDark"
+            else { 
+                //themeName = "DefaultDark"
                 primaryColor = "#202020"// #121212 = rgb(18, 18, 18)
                 secondaryColor = "#2e2e2e"
             }
         }
-        else if(!darkTheme) { // "DefaultLight"
-            console.log("darkTheme is off")
-            primaryColor = "#a0a0a0"            
-            secondaryColor = "#ffffff"
+        else if(!darkTheme) { 
+            //themeName = "DefaultLight"
+            primaryColor = "#c1c1c5"//"#ffffff"
+            secondaryColor = "#909093"
         }
         return [primaryColor, secondaryColor];
     }    

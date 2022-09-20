@@ -7,9 +7,10 @@ import "." as NeroshopComponents
 Item {
     id: viewToggle
     property real radius: 3;
+    property alias checkedButton: viewButtonGroup.checkedButton
 
 ButtonGroup {
-    id: button_group
+    id: viewButtonGroup
     buttons: column.children
     exclusive: true // only one button in the group can be checked at any given time
     onClicked: {
@@ -25,7 +26,7 @@ Row {
     Button {
         checked: true
         text: qsTr("Grid view")
-        ButtonGroup.group: button_group // attaches a button to a button group
+        ButtonGroup.group: viewButtonGroup // attaches a button to a button group
         display: AbstractButton.IconOnly
         icon.source: "file:///" + neroshopResourcesDir + "/grid.png"//neroshopResourceDir + "/grid.png"
         icon.color: !this.checked ? "#39304f" : "#ffffff"// icon color is set automatically unless we set it ourselves, which we do here
@@ -37,7 +38,7 @@ Row {
 
     Button {
         text: qsTr("List view")
-        ButtonGroup.group: button_group
+        ButtonGroup.group: viewButtonGroup
         display: AbstractButton.IconOnly
         icon.source: "file:///" + neroshopResourcesDir + "/list.png"//neroshopResourceDir + "/list.png"
         icon.color: !this.checked ? "#39304f" : "#ffffff"

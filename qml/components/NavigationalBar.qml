@@ -6,9 +6,15 @@ import "." as NeroshopComponents // Hint
 
 RowLayout {
     id: buttons_menu
-
+        
+    NeroshopComponents.Hint {
+        id: navButtonHint
+        pointer.visible: false
+        delay: 0 // show immediately on hovering over button
+    }
+        
     Button {
-        id: wallet_button
+        id: walletButton
         text: qsTr("Wallet")
         //onClicked: _stackview.currentIndex = 0
         display: AbstractButton.IconOnly//AbstractButton.TextUnderIcon//AbstractButton.TextBesideIcon
@@ -17,18 +23,18 @@ RowLayout {
         icon.color: "#ffffff"
 
         /*contentItem: Text {  
-            text: wallet_button.text
+            text: walletButton.text
             color: "#ffffff"
         }   */
                         
         background: Rectangle {
-            color: wallet_button.down ? "white" : "transparent"//NeroshopComponents.Style.moneroOrangeColor
+            color: walletButton.down ? "white" : "transparent"//NeroshopComponents.Style.moneroOrangeColor
             border.color: color
             radius: 5
         }   
               
         MouseArea {
-            //id: _mouse_area
+            //id: walletButtonMouseArea
             anchors.fill: parent
             hoverEnabled: true
             onEntered: {
@@ -37,6 +43,9 @@ RowLayout {
                 parent.icon.color = NeroshopComponents.Style.moneroOrangeColor
                 // Style 2
                 //parent.background.color = NeroshopComponents.Style.moneroOrangeColor
+                navButtonHint.x = parent.x + (parent.background.width - navButtonHint.width) / 2
+                navButtonHint.y = parent.y + parent.background.height + 5
+                navButtonHint.show(parent.text, -1)
             }
             onExited: {
                 // Style 1
@@ -44,6 +53,7 @@ RowLayout {
                 parent.icon.color = "#ffffff"
                 // Style 2
                 //parent.background.color = "transparent"
+                navButtonHint.hide()
             }
             //onClicked: {}
         }                
@@ -87,11 +97,6 @@ RowLayout {
         background: Rectangle {
             color: "#607848"
         }                    
-        
-        NeroshopComponents.Hint {
-            id: order_button_hint
-            text: "Orders"
-        }
     }      
 
     Button {

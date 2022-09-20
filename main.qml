@@ -17,14 +17,14 @@ import "qml/components" as NeroshopComponents
 import "qml/pages"
 
 ApplicationWindow {
-    id: main_window
+    id: mainWindow
     visible: true
     title: qsTr("neroshop" + " v" + neroshopVersion)
     width: 1280
     height: 720
     minimumWidth: 850
     minimumHeight: 500    
-    color: NeroshopComponents.Style.getColorByThemeName()[0]
+    color: NeroshopComponents.Style.getColorsByTheme()[0]
     ///////////////////////////
     // Global Tooltip
     /*NeroshopComponents.Hint {
@@ -32,7 +32,7 @@ ApplicationWindow {
         visible: false
     }*/
     header: Rectangle {
-        color: NeroshopComponents.Style.getColorByThemeName()[1]
+        color: NeroshopComponents.Style.getColorsByTheme()[1]
         height: 100 // width should be set automatically to the parent's width
         
         NeroshopComponents.SearchBar {
@@ -76,7 +76,6 @@ ApplicationWindow {
             console.log(source);
             if (page_loader.status == Loader.Ready) console.log('Loaded') 
             else console.log('Not Loaded')
-            console.log( NeroshopComponents.Style.getColorByThemeName()[0] );
         }
     }
     //}
@@ -85,7 +84,7 @@ ApplicationWindow {
     // Custom ToolBar
     footer: Rectangle {
         height: 40//; width: parent.width// width is automatically set to parent's width by default since this is the footer
-        color: NeroshopComponents.Style.getColorByThemeName()[1]
+        color: NeroshopComponents.Style.getColorsByTheme()[1]
         
         Row {
             anchors.fill: parent
@@ -97,7 +96,7 @@ ApplicationWindow {
                 width: themeSwitcher.width
                 height: footer.height//themeSwitcher.height
                 color: "transparent"
-                border.color: "blue"                
+                //border.color: "blue"                
                 
                 NeroshopComponents.ThemeSwitch {
                     id: themeSwitcher
@@ -110,7 +109,7 @@ ApplicationWindow {
                 width: daemonSyncBar.width
                 height: footer.height
                 color: "transparent"
-                border.color: "red"
+                //border.color: "red"
                                 
                 NeroshopComponents.ProgressBar {
                     id: daemonSyncBar
@@ -126,7 +125,7 @@ ApplicationWindow {
                 width: moneroDaemonSyncBar.width
                 height: footer.height
                 color: "transparent"
-                border.color: "plum"
+                //border.color: "plum"
                                 
                 NeroshopComponents.ProgressBar {
                     id: moneroDaemonSyncBar

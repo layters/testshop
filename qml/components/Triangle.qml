@@ -4,6 +4,7 @@ import QtQuick.Shapes 1.3 // (since Qt 5.10) // Shape
 import QtGraphicalEffects 1.12//Qt5Compat.GraphicalEffects 1.15//= Qt6// ColorOverlay
 
 Item {
+    id: triangleTip
     property string direction: "up"//"down"
     property string color: "white"
     readonly property int parentWidth: parent.width // get the Hint (Tooltip)'s width
@@ -19,6 +20,7 @@ Item {
         y: parent.parentY - this.height// + 4
         //transform: Rotation { origin.x: triangle.x; origin.y: triangle.y; axis { x: 0; y: 0; z: 1 } angle: 180 }
         height: 24; width: 24
+        visible: triangleTip.visible
     }
     ColorOverlay {
         anchors.fill: triangle

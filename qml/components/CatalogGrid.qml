@@ -11,20 +11,20 @@ import "." as NeroshopComponents
     // Grid should have two modes: Pagination mode and Infinite scroll mode
     // catalog view (Grid)
     Grid {
-        id: catalog_grid
+        id: catalogGrid
         rows: 2
         columns: 3
         spacing: 5//rowSpacing: 5; columnSpacing: 5
         //flow: Grid.TopToBottom
         function getBox(index) { // or get_item(index)?
-            return catalog_grid_repeater.itemAt(index);
+            return catalogGridRepeater.itemAt(index);
         }
         function getBoxCount() {
-            return catalog_grid_repeater.count; // count is really just the number of items in the model :O
+            return catalogGridRepeater.count; // count is really just the number of items in the model :O
         }
         
         Repeater { // owns all items it instantiates
-            id: catalog_grid_repeater
+            id: catalogGridRepeater
             model: (rows * columns)//fruitModel // rows and columns already set so this is useless (I think)
             // product box (GridBox)
             delegate: Rectangle { // delegates have a readonly "index" property that indicates the index of the delegate within the repeater
@@ -32,15 +32,15 @@ import "." as NeroshopComponents
                 visible: true
                 width: 220
                 height: 220
-                color: (NeroshopComponents.Style.darkTheme) ? "#2e2e2e"/*"#121212"*/ : "#a0a0a0"// #a0a0a0 = 160,160,160
+                color: (NeroshopComponents.Style.darkTheme) ? "#2e2e2e"/*"#121212"*/ : "#a0a0a0"//"#ffffff"// #a0a0a0 = 160,160,160
                 //border.color: "white"
                 //border.width: 1
                 radius: 5
             
                 Image {
-                    id: verified_purchase_icon
+                    id: verifiedPurchaseIcon
                     source: "file:///" + neroshopResourcesDir + "/paid.png"//neroshopResourceDir + "/paid.png"
-                    visible: true//false // only show this icon if item has been purchased previously
+                    visible: false // only show this icon if item has been purchased previously
                     anchors.left: parent.left
                     anchors.leftMargin: 10
                     anchors.top: parent.top
@@ -48,45 +48,35 @@ import "." as NeroshopComponents
                 
                     height: 24; width: 24 // has no effect since image is scaled
                     fillMode:Image.PreserveAspectFit; // the image is scaled uniformly to fit button without cropping            
+                    mipmap: true
                     
                     MouseArea {
-                        id: verified_purchase_icon_mouse_area
+                        id: verifiedPurchaseIconMouseArea
                         anchors.fill: parent
                         hoverEnabled: true
-                        //acceptedButtons: Qt.LeftButton // for heart_icon ONLY
                         onEntered: {
-                            console.log("Mouse is over paid icon")
-                            // show tooltip - todo: show tooltip while mouse is hovered over
-                            ////if(has_purchased) {
-                            console.log("Icon pos (" + catalog_grid_repeater.itemAt(index).children[0].x + ", " + catalog_grid_repeater.itemAt(index).children[0].y + ")")
-                            console.log("Hint pos (" + hint.x + ", " + hint.y + ")")
-                            console.log("Grid pos (" + catalog_grid.x + ", " + catalog_grid.y + ")")
-                            console.log("Grid Parent pos (" + parent.x + ", " + parent.y + ")")
-                            //hint.x = catalog_grid_repeater.itemAt(index).children[0].x//hint.anchors.left = catalog_grid_repeater.itemAt(index).left//catalog_grid_repeater.itemAt(0).horizontalCenter//.left//parent.x + ((parent.width - this.width) / 2)
-                            //hint.y = catalog_grid_repeater.itemAt(index).children[0].y
-                            //hint.x = catalog_grid.x + catalog_grid_repeater.itemAt(index).children[0].x// + catalog_grid_repeater.itemAt(index).children[0].width
-                            //hint.y = catalog_grid.y + catalog_grid_repeater.itemAt(index).children[0].y
-                            /*NeroshopComponents.Hint*/hint.show("You've previously purchased this item", -1)//(!is_favorited) ? "Add to favorites" : "Remove from favorites"
+                            ////if(has_purchased) { // if item has been purchased previously then this icon will be visible, so no need for this
+                            let boxPositionInWindow = mapToItem(mainWindow.contentItem, verifiedPurchaseIconMouseArea.x, verifiedPurchaseIconMouseArea.y)
+                            let box = catalogGridRepeater.itemAt(index).children[0]
+                            catalogHint.x = boxPositionInWindow.x + (box.width - catalogHint.width) / 2
+                            catalogHint.y = boxPositionInWindow.y + box.height + 5
+                            catalogHint.show("You've previously purchased this item", 3000) // hide after 3 seconds
                             ////}
                         }   
                         onExited: {
-                            hint.hide()
-                        }         
-                        //onClicked: { // for heart_icon ColorOverlay ONLY
-                            //if(!is_favorited) heart_icon.color = "#808080"
-                            //else heart_icon.color = "#e05d5d"
-                        //}           
+                            catalogHint.hide()
+                        }
                     }                
                 }
                 ColorOverlay {
-                    anchors.fill: verified_purchase_icon
-                    source: verified_purchase_icon
-                    color: "#808080"//#808080 = 128, 128, 128//#1e509b = active color //(has_purchased) ? color: "#1e509b" : "#808080"
-                    visible: verified_purchase_icon.visible
+                    anchors.fill: verifiedPurchaseIcon
+                    source: verifiedPurchaseIcon
+                    color: (NeroshopComponents.Style.darkTheme) ? "#6699cc" : "#1e509b"//"#336699"// // activeColor
+                    visible: verifiedPurchaseIcon.visible
                 }            
             
                 Image {
-                    id: heart_icon
+                    id: heartIcon
                     source: "file:///" + neroshopResourcesDir + "/heart.png"//neroshopResourceDir + "/heart.png"
                     visible: true
                     anchors.right: parent.right
@@ -95,36 +85,62 @@ import "." as NeroshopComponents
                     anchors.topMargin: 10                
                 
                     height: 24; width: 24 // has no effect since image is scaled
-                    fillMode:Image.PreserveAspectFit; // the image is scaled uniformly to fit button without cropping                
+                    fillMode:Image.PreserveAspectFit; // the image is scaled uniformly to fit button without cropping
+                    mipmap: true
+                    
+                    MouseArea {
+                        id: heartIconMouseArea
+                        anchors.fill: parent
+                        hoverEnabled: true
+                        acceptedButtons: Qt.LeftButton
+                        onEntered: {
+                            let boxPositionInWindow = mapToItem(mainWindow.contentItem, heartIconMouseArea.x, heartIconMouseArea.y)
+                            let box = catalogGridRepeater.itemAt(index).children[0]
+                            catalogHint.x = boxPositionInWindow.x + (box.width - catalogHint.width) / 2
+                            catalogHint.y = boxPositionInWindow.y + box.height + 5
+                            catalogHint.show("Add to favorites", 3000)////(!is_favorited) ? catalogHint.show("Add to favorites", -1) : catalogHint.show("Remove from favorites")
+                        }   
+                        onExited: {
+                            catalogHint.hide()
+                        }         
+                        onClicked: { 
+                            /*if(!is_favorited) heartIconOverlay.color = "#808080"
+                            else heartIconOverlay.color = "#e05d5d"*/
+                            heartIconOverlay.color = "#e05d5d"
+                        }           
+                    }                                    
                 }
                 ColorOverlay {
-                    anchors.fill: heart_icon
-                    source: heart_icon
-                    color:"#808080"//#808080 = 128, 128, 128//#e05d5d = active color //(is_favorited) ? color: "#e05d5d" : "#808080"
-                    visible: heart_icon.visible
+                    id: heartIconOverlay
+                    anchors.fill: heartIcon
+                    source: heartIcon
+                    color: (NeroshopComponents.Style.darkTheme) ? "#ffffff" : NeroshopComponents.Style.disabledColor//#e05d5d = active color ////(is_favorited) ? color: "#e05d5d" : "#808080"
+                    visible: heartIcon.visible
                 }
                             
                 Image {
-                    id: product_image
+                    id: productImage
                     source: "file:///" + neroshopResourcesDir + "/image_gallery.png"//neroshopResourceDir + "/image_gallery.png"
                     anchors.centerIn: parent
                 
                     width: 128
                     height: 128
-                    fillMode:Image.Stretch                
+                    fillMode:Image.Stretch
+                    //mipmap: true
                 }
                 /*ColorOverlay {
-                    anchors.fill: product_image
-                    source: product_image
-                    color:"#808080"//#808080 = 128, 128, 128
-                }*/ 
+                    anchors.fill: productImage
+                    source: productImage
+                    color: (NeroshopComponents.Style.darkTheme) ? "#ffffff" : NeroshopComponents.Style.disabledColor
+                    visible: productImage.visible
+                }*/
                 
                 Label {
-                    id: product_name_label
+                    id: productNameLabel
                     text: ""//name
                     anchors.left: parent.left
                     anchors.leftMargin: 10
-                    anchors.top: product_image.bottom
+                    anchors.top: productImage.bottom
                     anchors.topMargin: 10
                 }           
             } // Catalog View Box (grid box)

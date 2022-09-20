@@ -12,6 +12,7 @@ ToolTip {
     //y: (parent.y + parent.height) + 5 //anchors.top: parent.bottom; anchors.topMargin: 5
     delay: 500 // shows tooltip after hovering over it for 0.5 seconds
     property string direction: "up"//"down"
+    property alias pointer: triangleTip
 
     contentItem: Text {
         text: hint.text
@@ -29,11 +30,11 @@ ToolTip {
         radius: 5//10
         //gradient: "NightFade"
         NeroshopComponents.Triangle {
+            id: triangleTip
             //anchors.left: hint.left//hint.horizontalCenter
             //anchors.leftMargin: 100
             //anchors.top: parent.top//hint.top
             //anchors. :
-                id: pointer
                 //x: this.x
                 //y: this.y
                 ////direction: hint.direction
