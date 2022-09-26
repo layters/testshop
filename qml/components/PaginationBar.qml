@@ -13,14 +13,16 @@ Row {//RowLayout {
     property alias numberField: currentPageTextField
     property int currentIndex: 0
     property int count: 0
+    property real buttonWidth: 150
     property string buttonColor: "#50446f"//NeroshopComponents.Style.neroshopPurpleColor
     property real buttonRadius: 5
     property real radius: buttonRadius
+    property bool showDirectionalIcons: false
     
     Button {
         id: backButton
-        text: qsTr("%1  Previous").arg(FontAwesome.arrowAltCircleLeft)//.arg(FontAwesome.angleLeft)//qsTr("<")
-        width: 150
+        text: (!showDirectionalIcons) ? qsTr("Previous") : qsTr("%1  Previous").arg(FontAwesome.arrowAltCircleLeft)//.arg(FontAwesome.angleLeft)//qsTr("<")
+        width: paginationBar.buttonWidth
         property bool disabled: (paginationBar.currentIndex == 0)//visible: (paginationBar.currentIndex != 0)
         background: Rectangle {
             color: paginationBar.buttonColor
@@ -40,11 +42,12 @@ Row {//RowLayout {
         width: 50
         //readOnly: true
         text: qsTr((parent.currentIndex + 1).toString())
+        //horizontalAlignment: TextInput.AlignHCenter
+        verticalAlignment: TextInput.AlignVCenter
         inputMethodHints: Qt.ImhDigitsOnly // for Android and iOS - typically used for input of languages such as Chinese or Japanese
         validator: RegExpValidator{ regExp: /[0-9]*/ }
         selectByMouse: true
-        color: "black" // textColor
-        
+        color: "#000000" // textColor
         background: Rectangle { 
             radius: paginationBar.radius
             //opacity: 0.0
@@ -53,8 +56,8 @@ Row {//RowLayout {
 
     Button {
         id: forwardButton
-        text: qsTr("Next  %1").arg(FontAwesome.arrowAltCircleRight)//.arg(FontAwesome.angleRight)//qsTr(">")
-        width: 150
+        text: (!showDirectionalIcons) ? qsTr("Next") : qsTr("Next  %1").arg(FontAwesome.arrowAltCircleRight)//.arg(FontAwesome.angleRight)//qsTr(">")
+        width: paginationBar.buttonWidth
         property bool disabled: (paginationBar.currentIndex == (count - 1))
         background: Rectangle {
             color: paginationBar.buttonColor

@@ -25,7 +25,7 @@ QtObject {
     property string moneroGrayColor: "#4c4c4c"
     property string moneroOrangeColor: "#ff6600" // not sure if correct color
     // Functions
-    function getColorsByTheme() {
+    function getColorsFromTheme() {
         let primaryColor = ""
         let secondaryColor = ""
         

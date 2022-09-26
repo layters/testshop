@@ -15,16 +15,16 @@ import "../components" as NeroshopComponents
 Page {
     id: main_page
     title: qsTr("Main Page")
-    //Rectangle {
-    //    color:"red"
-    //}
+    Rectangle {
+        color: "transparent"
+    }
     ///////////////////////////
-    function copy_to_clipboard() { 
+    function copyToClipboard() { 
         // If text edit string is empty, exit function
-        if(!seed_display_edit.text) return;
+        if(!seedDisplayEdit.text) return;
         // Select all text from edit then copy the selected text
-        seed_display_edit.selectAll()
-        seed_display_edit.copy()
+        seedDisplayEdit.selectAll()
+        seedDisplayEdit.copy()
         console.log("Copied to clipboard");
     }
     ///////////////////////////
@@ -32,42 +32,38 @@ Page {
     //    id: wallet
     //}
     ///////////////////////////
-    function generate_keys() {
+    function generateWalletKeys() {
         // generate a unique wallet seed (mnemonic)
-        let error = Wallet.create_random_wallet(wallet_password_create_edit.text, wallet_password_confirm_edit.text, neroshopWalletDir + "/auth")//"wallet")
+        let error = Wallet.create_random_wallet(walletPasswordField.text, walletPasswordConfirmField.text, neroshopWalletDir + "/auth")//"wallet")
         // if wallet passwords don't match, display error message
         let WALLET_PASSWORD_NO_MATCH = 2
         let WALLET_ALREADY_EXISTS = 3;
-        if(error == WALLET_PASSWORD_NO_MATCH) {//if(wallet_password_confirm_edit.text != wallet_password_create_edit.text) {
-            //important_message_field.x = wallet_password_confirm_edit.x
-            important_message_field.text = qsTr("Wallet passwords do not match")
-            important_message_field.visible = true
-            /*message_box.text = qsTr("Wallet passwords do not match")
-            message_box.open()*/
+        if(error == WALLET_PASSWORD_NO_MATCH) {//if(walletPasswordConfirmField.text != walletPasswordField.text) {
+            //walletMessageField.x = walletPasswordConfirmField.x
+            walletHint.show(qsTr("Wallet passwords do not match"), -1)
         }
         else if(error == WALLET_ALREADY_EXISTS) {
-            important_message_field.text = qsTr("A wallet file with the same name already exists")
-            important_message_field.visible = true
+            walletHint.show(qsTr("A wallet file with the same name already exists"), -1)
         }
         // then copy the mnemonic to the seed display edit
-        seed_display_edit.text = Wallet.get_mnemonic()
+        seedDisplayEdit.text = Wallet.get_mnemonic()
         // show important message (only if wallet keys were successfully created)
-        if(seed_display_edit.text) {
-            //important_message_field.x = (genkey_page.width / 2) - (important_message_field.width / 2)// place at center of genkey_page//generate_key_button.x
-            //important_message_field.y = generate_key_button.y + generate_key_button.height + 20        
-            important_message_field.text = qsTr("These words are the key to your account. Please store them safely!")
-            important_message_field.visible = true       
+        if(seedDisplayEdit.text) {
+            //walletMessageField.x = (registerPage.width / 2) - (walletMessageField.width / 2)// place at center of registerPage//generate_key_button.x
+            //walletMessageField.y = generate_key_button.y + generate_key_button.height + 20        
+            walletMessageField.text = qsTr("These words are the key to your account. Please store them safely!")
+            walletMessageField.visible = true       
             // clear wallet password text fields
-            wallet_password_create_edit.text = "";
-            wallet_password_confirm_edit.text = "";
+            walletPasswordField.text = "";
+            walletPasswordConfirmField.text = "";
         }
     }
     ///////////////////////////
-    function register_wallet() {
+    function registerWallet() {
         // if not key generated, then generate key
-        if(!seed_display_edit.text) {
-            message_box.text = qsTr("Please generate your keys before registering")
-            message_box.open()
+        if(!seedDisplayEdit.text) {
+            messageBox.text = qsTr("Please generate your keys before registering")
+            messageBox.open()
             return; // exit function and do not proceed any further
         }
         // do a regex check on the username before proceeding
@@ -75,12 +71,12 @@ Page {
         // register the wallet primary key to the database
         // switch (login) to home page
         //stack.push(home_page)
-        page_loader.source = "home_page.qml"
+        pageLoader.source = "HomePage.qml"
     }
     ///////////////////////////    
 // consists of login and registration menus
     MessageDialog {
-        id: message_box
+        id: messageBox
         //visible: false
         title: "message"
         text: "It's so cool that you are using Qt Quick."
@@ -94,7 +90,7 @@ Page {
     }
     ///////////////////////////
     FileDialog {
-        id: wallet_file_dialog
+        id: walletFileDialog
         fileMode: FileDialog.OpenFile
         currentFile: wallet_upload_edit.text // currentFile is deprecated since Qt 6.3. Use selectedFile instead
         folder: neroshopWalletDir//StandardPaths.writableLocation(StandardPaths.HomeLocation) + "/neroshop"//StandardPaths.writableLocation(StandardPaths.AppDataLocation) // refer to https://doc.qt.io/qt-5/qstandardpaths.html#StandardLocation-enum
@@ -102,74 +98,95 @@ Page {
         //options: FileDialog.ReadOnly // will not allow you to create folders while file dialog is opened
     }
     ///////////////////////////
+    TabBar {
+        id: buttonsBar
+        width: parent.width
+        anchors.top: parent.top
+        anchors.topMargin: 0//20
+        anchors.horizontalCenter: parent.horizontalCenter//x: authStack.x + (authStack.width / 2) - (this.width / 2) // center the x
+        //y: (authStack.y + authStack.height) + 5// 5 is the padding // lower the y
+        property string buttonColor: NeroshopComponents.Style.moneroGrayColor
+        
+        TabButton { // must be used in conjunction with a TabBar according to: https://doc.qt.io/qt-5/qml-qtquick-controls2-tabbutton.html
+            text: qsTr("Register")
+            width: implicitWidth
+            onClicked: authStack.currentIndex = 0
+        
+            background: Rectangle {
+                color: buttonsBar.buttonColor//"#00aebf"
+            }                    
+        }
+        TabButton {
+            id: login_button//auth_walletfile_button
+            text: qsTr("Login with Wallet file")
+            width: implicitWidth
+            onClicked: authStack.currentIndex = 1
+            
+            contentItem: Text {  
+                //font.family: "Consolas"; 
+                //font.pointSize: 10; 
+                //font.bold: true
+                
+                text: login_button.text
+                color: "#ffffff" // white text
+            }
+        
+            background: Rectangle {
+                color: buttonsBar.buttonColor//NeroshopComponents.Style.moneroOrangeColor//"#ff6600"//parent.down ? "#bbbbbb" :
+                        //(parent.hovered ? "#d6d6d6" : "#f6f6f6")
+                radius: 0
+                //border.color: login_button.hovered ? "#ffffff" : this.color//"#ffffff"//control.down ? "#17a81a" : "#21be2b"
+            }            
+        }
+        TabButton {
+            text: qsTr("Login with Seed (Mnemonic)")
+            width: implicitWidth
+            onClicked: authStack.currentIndex = 2
+        
+            background: Rectangle {
+                color: buttonsBar.buttonColor//NeroshopComponents.Style.moneroGrayColor
+            }                    
+        }  
+        TabButton {
+            text: qsTr("Login with Keys")
+            width: implicitWidth
+            onClicked: authStack.currentIndex = 3
+        
+        
+            background: Rectangle {
+                color: buttonsBar.buttonColor//"#402ef7"
+            }                    
+        }          
+        TabButton {
+            text: qsTr("Login with Hardware wallet")
+            width: implicitWidth
+            //onClicked: authStack.currentIndex = 4
+        
+            background: Rectangle {
+                color: buttonsBar.buttonColor//"red"
+            }                    
+        }                                
+    }    
+    ///////////////////////////
     StackLayout { // Perfect for a stack of items where only one item is visible at a time//ColumnLayout { // From top to bottom
-        id: auth_stack // auth_menu inside home menu
+        id: authStack // auth_menu inside home menu
         //anchors.fill: parent // will fill entire Window area
-        currentIndex: 1       
-        width: 800//500
-        height: 500//300 
-        x: parent.width / 2 - this.width / 2 // window is the id of ApplicationWindow
-        y: parent.height / 2 - this.height / 2
-
+        currentIndex: buttonsBar.currentIndex//currentIndex: 1       
+        width: parent.width
+        height: parent.height
+        anchors.top: buttonsBar.bottom//y: parent.height / 2 - this.height / 2
+        anchors.topMargin: 0
+        anchors.left: buttonsBar.left
+        anchors.leftMargin: 0
         // generate auth keys page
         Rectangle {
-            id: genkey_page
+            id: registerPage
             color: (NeroshopComponents.Style.darkTheme) ? "#2e2e2e" : "#a0a0a0"//160, 160, 160
-            // optional pseudonym edit
-            TextField {
-                id: opt_username_edit
-                placeholderText: qsTr("Pseudonym (optional)")
-                placeholderTextColor: "#696969" // dim gray
-                color:"#6b5b95"
-                //x: seed_display_scrollview.x
-                anchors.left: seed_display_scrollview.left
-                //y: seed_display_scrollview.y + seed_display_scrollview.height + 30
-                anchors.top: seed_display_scrollview.bottom
-                anchors.topMargin: 30
-                selectByMouse: true
-                
-                width: 300
-                background: Rectangle { 
-                    color: (NeroshopComponents.Style.darkTheme) ? "transparent": "#101010"//"#101010" = rgb(16, 16, 16)
-                    border.color: "#696969" // dim gray//"#ffffff"
-                    border.width: (NeroshopComponents.Style.darkTheme) ? 1 : 0
-                }                
-                //validator: RegExpValidator { regExp: /^(?=.{8,20}$)(?![_.])(?!.*[_.]{2})[a-zA-Z0-9._]+(?<![_.])$/ } // validator: RegularExpressionValidator { regularExpression: /[0-9A-F]+/ } // since Qt  5.14
-            }
-            // register button
-            Button {
-                id: wallet_register_button
-                text: qsTr("Register")
-                //x: copy_button.x//opt_username_edit.x + opt_username_edit.width + 50
-                anchors.left: opt_username_edit.right//copy_button.left
-                anchors.leftMargin: 20
-                //y: opt_username_edit.y + verticalCenter of username_edit
-                anchors.top: opt_username_edit.top
-                anchors.topMargin: (opt_username_edit.height / 2) - (this.height / 2)
-                width: 180//copy_button.width
-                height: 60 + 5//50 // width will be set automatically based on text length
-                onClicked: register_wallet()
-                
-                contentItem: Text {  
-                    font.family: "Consolas"; //font.family: NeroshopComponents.Style.fontFiraCodeLight.name
-                    //font.pointSize: 10
-                    font.bold: true
-                    text: wallet_register_button.text
-                    color: "#ffffff" // white
-                    horizontalAlignment: Text.AlignHCenter
-                    verticalAlignment: Text.AlignVCenter                    
-                }
-                
-                background: Rectangle {
-                    color: "#6b5b95" // #ff6600 is the monero orange color
-                    radius: 0
-                }                
-            }
             // change wallet path edit
             // ...
             // wallet password create edit
             TextField {
-                id: wallet_password_create_edit
+                id: walletPasswordField
                 placeholderText: qsTr("Wallet Password")
                 placeholderTextColor: "#a9a9a9" // darkgray
                 color: NeroshopComponents.Style.moneroOrangeColor//"#ff6600" // textColor
@@ -193,21 +210,38 @@ Page {
             }
             // wallet password confirm edit
             TextField {
-                id: wallet_password_confirm_edit
+                id: walletPasswordConfirmField
                 placeholderText: qsTr("Confirm Wallet Password")
                 placeholderTextColor: "#a9a9a9" // darkgray
                 color: NeroshopComponents.Style.moneroOrangeColor//"#ff6600" // textColor
                 echoMode: TextInput.Password
                 inputMethodHints: Qt.ImhSensitiveData
                 selectByMouse: true
-                x: wallet_password_create_edit.x
-                y: wallet_password_create_edit.y + wallet_password_create_edit.height + 5
-                width: wallet_password_create_edit.width; height: wallet_password_create_edit.height   
+                x: walletPasswordField.x
+                y: walletPasswordField.y + walletPasswordField.height + 5
+                width: walletPasswordField.width; height: walletPasswordField.height   
                 background: Rectangle { 
                     color: NeroshopComponents.Style.moneroGrayColor
                     border.color: parent.placeholderTextColor
                     border.width: (NeroshopComponents.Style.darkTheme) ? 1 : 0
                 }                              
+            }
+            // tooltip
+            NeroshopComponents.Hint {
+                id: walletHint
+                text: "This is the wallet password and psuedonym error message tooltip"
+                height: walletPasswordField.height + walletPasswordConfirmField.height + 5 // 5 is the gap between the two
+                x: walletPasswordField.x + walletPasswordField.width + 5//anchors.left: walletPasswordField.right
+                //anchors.leftMargin: 0
+                y: walletPasswordField.y//anchors.top: walletPasswordField.top
+                visible: false
+                color: "firebrick"
+                rect.opacity: 1.0
+                //textColor: "#ffffff"
+                //borderColor:
+                //borderWidth:
+                radius: 0
+                
             }
             // generate key button
             Button {
@@ -218,11 +252,11 @@ Page {
                 width: 150
                 height: 60 + 5//50 // width will be set automatically based on text length
                 
-                onClicked: generate_keys()
+                onClicked: generateWalletKeys()
                 
                 contentItem: Text {  
-                    font.family: "Consolas";
-                    font.pointSize: 10; 
+                    //font.family: "Consolas";
+                    //font.pointSize: 10; 
                     font.bold: true
                     text: generate_key_button.text
                     color: "#ffffff" // white
@@ -237,12 +271,13 @@ Page {
             }
             // Important message box
             TextField {
-                id: important_message_field
+                id: walletMessageField
                 visible: false
-                x: (genkey_page.width / 2) - (this.width / 2)// place at center of genkey_page//generate_key_button.x
-                y: generate_key_button.y + generate_key_button.height + 20                
-                /*x: seed_display_scrollview.x
-                y: seed_display_scrollview.y + seed_display_scrollview.height + 10*/
+                anchors.horizontalCenter: registerPage.horizontalCenter// place at center of registerPage//generate_key_button.x
+                anchors.top: generate_key_button.bottom
+                anchors.topMargin: 20              
+                /*x: seedDisplayScrollView.x
+                y: seedDisplayScrollView.y + seedDisplayScrollView.height + 10*/
                 readOnly: true
                 //text: qsTr("")
                 color: "#ffffff"// text color
@@ -252,15 +287,15 @@ Page {
             }            
             // wallet seed display
             ScrollView {
-                id: seed_display_scrollview
+                id: seedDisplayScrollView
                 //anchors.fill: parent
                 width: 500//300
                 height: 250//150    
                 x: generate_key_button.x//20       
-                y: (important_message_field.visible) ? important_message_field.y + important_message_field.height + 20 : generate_key_button.y + generate_key_button.height + 20//genkey_page.height - this.height - 20                     
+                y: (walletMessageField.visible) ? walletMessageField.y + walletMessageField.height + 20 : generate_key_button.y + generate_key_button.height + 20//registerPage.height - this.height - 20                     
                 
                 TextArea {
-                    id: seed_display_edit
+                    id: seedDisplayEdit
                     readOnly: true
                     //text: qsTr("")
                     color: "#000000" // text color
@@ -279,11 +314,11 @@ Page {
                         onClicked: (mouse)=> {
                             // left mouse = displayListOptions()
                             if ((mouse.button == Qt.LeftButton)) {
-                                //console.log("Left mouse clicked on seed_display_edit");
+                                //console.log("Left mouse clicked on seedDisplayEdit");
                             }
                             // right mouse = selectAll()
                             if ((mouse.button == Qt.RightButton)) {
-                                //console.log("Right mouse clicked on seed_display_edit");
+                                //console.log("Right mouse clicked on seedDisplayEdit");
                             }
                         }
                         /*onEntered: {
@@ -299,23 +334,23 @@ Page {
                         focus: true
                         x: seed_display_mouse_area.mouseX
                         y: seed_display_mouse_area.mouseY
-                    }*/                           
+                    }*/                                               
                 }
             }
             // copy_button (copies to the clipboard)
             Button {
                 id: copy_button
-                width: 100; height: seed_display_scrollview.height//50
-                //x: (seed_display_scrollview.x + seed_display_scrollview.width) + (genkey_page.width / 2) - ((this.width + seed_display_scrollview.width + 10) / 2) //(seed_display_scrollview.x + seed_display_scrollview.width) + 5
-                anchors.left: seed_display_scrollview.right//seed_display_scrollview.horizontalCenter
-                anchors.leftMargin: (parent.width / 2) - ((this.width + seed_display_scrollview.width + 10) / 2)
-                //y: seed_display_scrollview.y + (seed_display_scrollview.height / 2) - (this.height / 2)
-                anchors.top: seed_display_scrollview.top
-                anchors.topMargin: (seed_display_scrollview.height / 2) - (this.height / 2)
+                width: 100; height: seedDisplayScrollView.height//50
+                //x: (seedDisplayScrollView.x + seedDisplayScrollView.width) + (registerPage.width / 2) - ((this.width + seedDisplayScrollView.width + 10) / 2) //(seedDisplayScrollView.x + seedDisplayScrollView.width) + 5
+                anchors.left: seedDisplayScrollView.right//seedDisplayScrollView.horizontalCenter
+                anchors.leftMargin: (parent.width / 2) - ((this.width + seedDisplayScrollView.width + 10) / 2)
+                //y: seedDisplayScrollView.y + (seedDisplayScrollView.height / 2) - (this.height / 2)
+                anchors.top: seedDisplayScrollView.top
+                anchors.topMargin: (seedDisplayScrollView.height / 2) - (this.height / 2)
                 text: qsTr("Copy") // rather have an icon with a tooltip than a text
                 display: AbstractButton.IconOnly // will only show the icon and not the text
                 // this only works on selected text
-                onClicked: copy_to_clipboard()//seed_display_edit.copy()//copy_to_clipboard()
+                onClicked: copyToClipboard()//seedDisplayEdit.copy()//copyToClipboard()
                 
                 ToolTip.delay: 500 // shows tooltip after hovering for 0.5 second
                 ToolTip.visible: hovered
@@ -331,7 +366,55 @@ Page {
                     border.color: this.parent.hovered ? "#ffffff" : this.color
                 }                   
             }
-        } // eof genkey_page
+            // optional pseudonym edit
+            TextField {
+                id: optNameEdit
+                placeholderText: qsTr("Pseudonym (optional)")
+                placeholderTextColor: "#696969" // dim gray
+                color:"#6b5b95"
+                //x: seedDisplayScrollView.x
+                anchors.left: seedDisplayScrollView.left
+                //y: seedDisplayScrollView.y + seedDisplayScrollView.height + 30
+                anchors.top: seedDisplayScrollView.bottom
+                anchors.topMargin: 30
+                selectByMouse: true
+                
+                width: 300
+                background: Rectangle { 
+                    color: (NeroshopComponents.Style.darkTheme) ? "transparent": "#101010"//"#101010" = rgb(16, 16, 16)
+                    border.color: "#696969" // dim gray//"#ffffff"
+                    border.width: (NeroshopComponents.Style.darkTheme) ? 1 : 0
+                }                
+                //validator: RegExpValidator { regExp: /^(?=.{8,20}$)(?![_.])(?!.*[_.]{2})[a-zA-Z0-9._]+(?<![_.])$/ } // validator: RegularExpressionValidator { regularExpression: /[0-9A-F]+/ } // since Qt  5.14
+            }
+            // register button
+            Button {
+                id: wallet_register_button
+                text: qsTr("Register")
+                anchors.left: optNameEdit.right
+                anchors.leftMargin: 20
+                anchors.verticalCenter: optNameEdit.verticalCenter
+                
+                width: 180//copy_button.width
+                height: 60 + 5//50 // width will be set automatically based on text length
+                onClicked: registerWallet()
+                
+                contentItem: Text {  
+                    //font.family: "Consolas"; //font.family: NeroshopComponents.Style.fontFiraCodeLight.name
+                    //font.pointSize: 10
+                    font.bold: true
+                    text: wallet_register_button.text
+                    color: "#ffffff" // white
+                    horizontalAlignment: Text.AlignHCenter
+                    verticalAlignment: Text.AlignVCenter                    
+                }
+                
+                background: Rectangle {
+                    color: "#6b5b95" // #ff6600 is the monero orange color
+                    radius: 0
+                }                
+            }            
+        } // eof registerPage
         // walletfile auth page
         // Upload button with read-only textfield
         Rectangle {
@@ -354,7 +437,7 @@ Page {
                 y: 20 // top_margin
                 width: 300; height: 30
                 readOnly: true
-                text: wallet_file_dialog.file//property url source: wallet_file_dialog.file; text: this.source
+                text: walletFileDialog.file//property url source: walletFileDialog.file; text: this.source
                 ////placeholderText: qsTr("...") // eh ... probably not necessary (better to just leave it blank)
                 // change TextField color
                 background: Rectangle { 
@@ -367,7 +450,7 @@ Page {
             Button {
                 id: wallet_upload_button
                 text: qsTr("Upload")
-                onClicked: wallet_file_dialog.open()
+                onClicked: walletFileDialog.open()
                 display: AbstractButton.IconOnly//AbstractButton.TextBesideIcon//AbstractButton.TextOnly
                 //hoverEnabled: true
                 x: wallet_upload_edit.x + wallet_upload_edit.width + 5
@@ -455,65 +538,5 @@ Page {
             id: keys_auth_page
             color: (NeroshopComponents.Style.darkTheme) ? "#2e2e2e" : "#a0a0a0"
         }        
-    }
-    ///////////////////////////
-    RowLayout {//TabBar {
-        //id: access_buttons_container
-        x: auth_stack.x + (auth_stack.width / 2) - (this.width / 2) // center the x
-        y: (auth_stack.y + auth_stack.height) + 5// 5 is the padding // lower the y
-        
-        Button {//TabButton { // must be used in conjunction with a TabBar according to: https://doc.qt.io/qt-5/qml-qtquick-controls2-tabbutton.html
-            text: qsTr("register (genkey)")
-            onClicked: auth_stack.currentIndex = 0
-        
-            background: Rectangle {
-                color: "#00aebf"
-            }                    
-        }
-        Button {//TabButton {
-            id: login_button//auth_walletfile_button
-            text: qsTr("auth_with_walletfile")
-            onClicked: auth_stack.currentIndex = 1
-            
-            contentItem: Text {  
-                font.family: "Consolas"; 
-                font.pointSize: 10; 
-                font.bold: true
-                
-                text: login_button.text
-                color: "#ffffff" // white text
-            }
-        
-            background: Rectangle {
-                color: NeroshopComponents.Style.moneroOrangeColor//"#ff6600"//parent.down ? "#bbbbbb" :
-                        //(parent.hovered ? "#d6d6d6" : "#f6f6f6")
-                radius: 0
-                border.color: login_button.hovered ? "#ffffff" : this.color//"#ffffff"//control.down ? "#17a81a" : "#21be2b"
-            }            
-        }
-        Button {//TabButton {
-            text: qsTr("auth_with_seed")
-            onClicked: auth_stack.currentIndex = 2
-        
-            background: Rectangle {
-                color: NeroshopComponents.Style.moneroGrayColor
-            }                    
-        }  
-        Button {//TabButton {
-            text: qsTr("auth_with_keys")
-            onClicked: auth_stack.currentIndex = 3
-        
-            background: Rectangle {
-                color: "#402ef7"
-            }                    
-        }          
-        Button {//TabButton {
-            text: qsTr("auth_with_hw")
-            //onClicked: auth_stack.currentIndex = 4
-        
-            background: Rectangle {
-                color: "red"
-            }                    
-        }                                
     }    
 }    

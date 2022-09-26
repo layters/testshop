@@ -24,20 +24,15 @@ ApplicationWindow {
     height: 720
     minimumWidth: 850
     minimumHeight: 500    
-    color: NeroshopComponents.Style.getColorsByTheme()[0]
-    ///////////////////////////
-    // Global Tooltip
-    /*NeroshopComponents.Hint {
-        id: hint
-        visible: false
-    }*/
+    color: NeroshopComponents.Style.getColorsFromTheme()[0]
+
     header: Rectangle {
-        color: NeroshopComponents.Style.getColorsByTheme()[1]
+        color: NeroshopComponents.Style.getColorsFromTheme()[1]
         height: 100 // width should be set automatically to the parent's width
         
         NeroshopComponents.SearchBar {
             id: searchBar
-            visible: (!page_loader.source.toString().match("qml/pages/MainPage.qml")) ? true : false;
+            visible: (!pageLoader.source.toString().match("qml/pages/MainPage.qml")) ? true : false;
         
             anchors.left: parent.left
             anchors.leftMargin: 20
@@ -47,7 +42,7 @@ ApplicationWindow {
 
         NeroshopComponents.NavigationalBar {
             id: navBar
-            visible: (!page_loader.source.toString().match("qml/pages/MainPage.qml")) ? true : false;
+            visible: (!pageLoader.source.toString().match("qml/pages/MainPage.qml")) ? true : false;
         
             anchors.left: parent.right
             anchors.leftMargin: (-this.width - 20)
@@ -59,10 +54,10 @@ ApplicationWindow {
     //ScrollView {
     StackView {
         anchors.fill: parent
-        ////initialItem: page_loader
+        ////initialItem: pageLoader
     }
     Loader {
-        id: page_loader
+        id: pageLoader
         //anchors.centerIn: parent // place at center of parent // <= don't use this EVER. Not for loading pages
         anchors.fill: parent
         //source: "qrc:/qml/pages/MainPage.qml"
@@ -74,7 +69,7 @@ ApplicationWindow {
 
         onSourceChanged: {
             console.log(source);
-            if (page_loader.status == Loader.Ready) console.log('Loaded') 
+            if (pageLoader.status == Loader.Ready) console.log('Loaded') 
             else console.log('Not Loaded')
         }
     }
@@ -84,7 +79,7 @@ ApplicationWindow {
     // Custom ToolBar
     footer: Rectangle {
         height: 40//; width: parent.width// width is automatically set to parent's width by default since this is the footer
-        color: NeroshopComponents.Style.getColorsByTheme()[1]
+        color: NeroshopComponents.Style.getColorsFromTheme()[1]
         
         Row {
             anchors.fill: parent
@@ -101,7 +96,6 @@ ApplicationWindow {
                 NeroshopComponents.ThemeSwitch {
                     id: themeSwitcher
                     width: 40
-                    //anchors.fill: parent
                 }
             }
             
@@ -113,13 +107,20 @@ ApplicationWindow {
                                 
                 NeroshopComponents.ProgressBar {
                     id: daemonSyncBar
-                    radius: 20//5
-                    foregroundColor: "#564978"//"#6b5b95"
-                    //backgroundColor: ""
+                    radius: 20
+                    foregroundColor: "#564978"
                     //textObject.visible: true
-                    anchors.top: parent.top
-                    anchors.topMargin: (parent.height - this.height) / 2 // center vertically on footer (height)
-                }
+                    anchors.verticalCenter: parent.verticalCenter//anchors.top: parent.top; anchors.topMargin: (parent.height - this.height) / 2 // center vertically on footer (height)
+
+                    NeroshopComponents.Hint {
+                        visible: parent.hovered
+                        x: parent.x + (parent.width - this.width) / 2 // Popups don't have anchors :(
+                        height: contentHeight + 20; width: parent.width
+                        bottomMargin : footer.height + 5
+                        text: qsTr("neroshop-daemon (neromon) \nStatus: %1  \nProgress: %2").arg((parent.value < 1.0) ? "synchronizing" : "connected").arg((parent.value * 100).toString() + "%")
+                        pointer.visible: false
+                    }
+                }      
             }
             Rectangle {
                 width: moneroDaemonSyncBar.width
@@ -133,9 +134,9 @@ ApplicationWindow {
                     foregroundColor: NeroshopComponents.Style.moneroOrangeColor
                     backgroundColor: NeroshopComponents.Style.moneroGrayColor
                     //textObject.visible: true
-                    textObject.color: "#ffffff"
-                    anchors.top: parent.top
-                    anchors.topMargin: (parent.height - this.height) / 2
+                    //textObject.text: "wallet sync: " + (this.value * 100).toString() + "%"
+                    //textObject.color: "#ffffff"
+                    anchors.verticalCenter: parent.verticalCenter//anchors.top: parent.top; anchors.topMargin: (parent.height - this.height) / 2
                 }
             }
             //Rectangle {
@@ -151,6 +152,3 @@ ApplicationWindow {
 // error: /usr/lib/x86_64-linux-gnu/cmake/Qt5/Qt5Config.cmake will set Qt5_FOUND to FALSE so package "Qt5" is considered to be NOT FOUND due to Qml and Quick configuration files (/usr/lib/x86_64-linux-gnu/cmake/Qt5Qml/Qt5QmlConfig.cmake; /usr/lib/x86_64-linux-gnu/cmake/Qt5Quick/Qt5QuickConfig.cmake) not being found (fix: sudo apt install qtdeclarative5-dev)
 // error: module "QtQuick" is not installed (fix: qml-module-qtquick-controls qml-module-qtquick-controls2). This will also install qml-module-qtgraphicaleffects, qml-module-qtquick-layouts, qml-module-qtquick-window2, and qml-module-qtquick2
 // error: module "QtQuick.Shapes" is not installed (fix: qml-module-qtquick-shapes)
-
-// todo: create a top banner with a dot-styled pagination (See: PageIndicator)
-// todo: create a custom message box dialog in MessageBox.qml

@@ -1,152 +1,236 @@
 import QtQuick 2.12
 import QtQuick.Controls 2.12
 import QtQuick.Layouts 1.12
+//import QtGraphicalEffects 1.12// replaced with "import Qt5Compat.GraphicalEffects 1.15" in Qt6// ColorOverlay
 
 import "." as NeroshopComponents // Hint
 
 RowLayout {
-    id: buttons_menu
+    id: navBar
+    readonly property string defaultButtonColor: "#6b5b95"
+    property bool useDefaultButtonColor: false
+    function getCheckedButton() {
+        return navBarButtonGroup.checkedButton;
+    }
+    function uncheckAllButtons() {
+        navBarButtonGroup.checkState = Qt.Unchecked;
+    }
         
-    NeroshopComponents.Hint {
-        id: navButtonHint
-        pointer.visible: false
-        delay: 0 // show immediately on hovering over button
+    ButtonGroup {
+        id: navBarButtonGroup
+        exclusive: true
+        //checkState: conditionParentBox.checkState
+        onClicked: {
+            console.log("Selected", button.text, "button")
+            button.checked = true
+            if(button.text == walletButton.text) {
+                pageLoader.source = "../pages/settings/SettingsWallet.qml"//_stackview.currentIndex = 0
+            }
+            if(button.text == sellersHubButton.text) {
+                pageLoader.source = "../pages/settings/SettingsSellersHub.qml"
+            }
+            if(button.text == messagesButton.text) {
+                pageLoader.source = "../pages/settings/SettingsMessages.qml"
+            }
+            if(button.text == ordersButton.text) {
+                pageLoader.source = "../pages/settings/SettingsOrders.qml"
+            }
+            if(button.text == accountSettingsButton.text) {
+                pageLoader.source = "../pages/settings/SettingsAccount.qml"
+            }                                                        
+        }
     }
         
     Button {
         id: walletButton
         text: qsTr("Wallet")
-        //onClicked: _stackview.currentIndex = 0
-        display: AbstractButton.IconOnly//AbstractButton.TextUnderIcon//AbstractButton.TextBesideIcon
+        ButtonGroup.group: navBarButtonGroup // attaches a button to a button group
+        display: AbstractButton.IconOnly
+        //checkable: true
         
-        icon.source: "file:///" + neroshopResourcesDir + "/wallet.png"//neroshopResourceDir + "/wallet.png"
-        icon.color: "#ffffff"
-
-        /*contentItem: Text {  
-            text: walletButton.text
-            color: "#ffffff"
-        }   */
+        icon.source: "file:///" + neroshopResourcesDir + "/wallet.png"
+        icon.color: (!checked && this.hovered) ? NeroshopComponents.Style.moneroOrangeColor : "#ffffff"
+        //property string reservedColor: NeroshopComponents.Style.moneroOrangeColor
                         
         background: Rectangle {
-            color: walletButton.down ? "white" : "transparent"//NeroshopComponents.Style.moneroOrangeColor
-            border.color: color
+            color: (parent.checked) ? NeroshopComponents.Style.moneroOrangeColor : "transparent"
+            border.color: NeroshopComponents.Style.moneroOrangeColor
+            border.width: (!parent.checked && parent.hovered) ? 1 : 0
             radius: 5
-        }   
-              
-        MouseArea {
-            //id: walletButtonMouseArea
-            anchors.fill: parent
-            hoverEnabled: true
-            onEntered: {
-                // Style 1
-                parent.background.border.color = NeroshopComponents.Style.moneroOrangeColor
-                parent.icon.color = NeroshopComponents.Style.moneroOrangeColor
-                // Style 2
-                //parent.background.color = NeroshopComponents.Style.moneroOrangeColor
-                navButtonHint.x = parent.x + (parent.background.width - navButtonHint.width) / 2
-                navButtonHint.y = parent.y + parent.background.height + 5
-                navButtonHint.show(parent.text, -1)
-            }
-            onExited: {
-                // Style 1
-                parent.background.border.color = "transparent"
-                parent.icon.color = "#ffffff"
-                // Style 2
-                //parent.background.color = "transparent"
-                navButtonHint.hide()
-            }
-            //onClicked: {}
-        }                
+        }
+           
+        NeroshopComponents.Hint {
+            id: walletButtonHint
+            visible: parent.hovered
+            text: parent.text
+            pointer.visible: false
+            delay: 0 // Show immediately on hovering over button
+            //textObject.font.bold: true
+        }
     }
                             
     Button {
-        text: qsTr("Seller Hub")
-        //onClicked: _stackview.currentIndex = 0
+        id: sellersHubButton
+        text: qsTr("Sellers' Hub")
+        ButtonGroup.group: navBarButtonGroup
         display: AbstractButton.IconOnly//AbstractButton.TextBesideIcon
         
-        icon.source: "file:///" + neroshopResourcesDir + "/shop.png"//neroshopResourceDir + "/shop.png"
-        icon.color: "#ffffff"
+        icon.source: "file:///" + neroshopResourcesDir + "/shop.png"
+        icon.color: (!checked && this.hovered) ? reservedColor : "#ffffff"
+        property string reservedColor: (useDefaultButtonColor) ? defaultButtonColor : "royalblue"
                         
         background: Rectangle {
-            color: "royalblue"//"#808080"
-        }                  
+            color: (parent.checked) ? parent.reservedColor : "transparent"
+            border.color: parent.reservedColor
+            border.width: (!parent.checked && parent.hovered) ? 1 : 0
+            radius: 5
+        }
+           
+        NeroshopComponents.Hint {
+            visible: parent.hovered
+            text: parent.text
+            pointer.visible: false
+            delay: 0 // Show immediately on hovering over button
+            //textObject.font.bold: true
+        }
     }
     
     Button {
-        text: qsTr("Messages")// todo: replace text with message_count
-        //onClicked: _stackview.currentIndex = 0
+        id: messagesButton
+        text: (messagesButton.dummy_count > 0) ? qsTr("Messages : %1").arg(dummy_count.toString()) : qsTr("Messages")
+        ButtonGroup.group: navBarButtonGroup
         display: AbstractButton.IconOnly//AbstractButton.TextBesideIcon
+        property int dummy_count: 0
         
-        icon.source: "file:///" + neroshopResourcesDir + "/mail.png"//neroshopResourceDir + "/mail.png"
-        icon.color: "#ffffff"
+        icon.source: "file:///" + neroshopResourcesDir + "/mail.png"
+        icon.color: (!checked && this.hovered) ? reservedColor : "#ffffff"
+        property string reservedColor: (useDefaultButtonColor) ? defaultButtonColor : "#524656"
                         
         background: Rectangle {
-            color: "#524656"
-        }            
+            color: (parent.checked) ? parent.reservedColor : "transparent"
+            border.color: parent.reservedColor
+            border.width: (!parent.checked && parent.hovered) ? 1 : 0
+            radius: 5
+        }
+           
+        NeroshopComponents.Hint {
+            visible: parent.hovered
+            text: parent.text
+            pointer.visible: false
+            delay: 0
+            //textObject.font.bold: true
+        }
     }
     
     Button {
-        id: order_button
+        id: ordersButton
         text: qsTr("Orders")
-        //onClicked: _stackview.currentIndex = 0
+        ButtonGroup.group: navBarButtonGroup
         display: AbstractButton.IconOnly//AbstractButton.TextBesideIcon
         
-        icon.source: "file:///" + neroshopResourcesDir + "/order.png"//neroshopResourceDir + "/order.png"
-        icon.color: "#ffffff"
+        icon.source: "file:///" + neroshopResourcesDir + "/order.png"
+        icon.color: (!checked && this.hovered) ? reservedColor : "#ffffff"
+        property string reservedColor: (useDefaultButtonColor) ? defaultButtonColor : "#607848"
                         
         background: Rectangle {
-            color: "#607848"
-        }                    
+            color: (parent.checked) ? parent.reservedColor : "transparent"
+            border.color: parent.reservedColor
+            border.width: (!parent.checked && parent.hovered) ? 1 : 0
+            radius: 5
+        }
+           
+        NeroshopComponents.Hint {
+            visible: parent.hovered
+            text: parent.text
+            pointer.visible: false
+            delay: 0
+            //textObject.font.bold: true
+        }
     }      
 
     Button {
-        id: account_button
-        text: qsTr("User")//"Account Settings"
-        //onClicked: _stackview.currentIndex = 0
+        id: accountSettingsButton
+        text: qsTr("Account Settings")//qsTr("User")
+        ButtonGroup.group: navBarButtonGroup
         display: AbstractButton.IconOnly//AbstractButton.TextBesideIcon
-        //flat: true
-        //highlighted: true
         
-        icon.source: "file:///" + neroshopResourcesDir + "/user.png"//neroshopResourceDir + "/user.png"
-        icon.color: "#ffffff"
+        icon.source: "file:///" + neroshopResourcesDir + "/user.png"
+        icon.color: (!checked && this.hovered) ? reservedColor : "#ffffff"
+        property string reservedColor: (useDefaultButtonColor) ? defaultButtonColor : "#cd8500"
                         
         background: Rectangle {
-            color: "#cd8500"
-        }                  
+            color: (parent.checked) ? parent.reservedColor : "transparent"
+            border.color: parent.reservedColor
+            border.width: (!parent.checked && parent.hovered) ? 1 : 0
+            radius: 5
+        }
+           
+        NeroshopComponents.Hint {
+            visible: parent.hovered
+            text: parent.text
+            pointer.visible: false
+            delay: 0
+            //textObject.font.bold: true
+        }
     }
 
     Button {
-        id: cart_button
+        id: cartButton
+        ////ButtonGroup.group: navBarButtonGroup
+        ////autoExclusive: true
         // reference: https://doc.qt.io/qt-5/qml-qtquick-layouts-layout.html
-        // fix alignment to StackLayout parent (no longer needed since we've set the preffered size, I think?)
         Layout.alignment: Qt.AlignTop
         // tell the layout that this child will have unique dimensions from the other children
         Layout.preferredHeight : 40
         Layout.preferredWidth : 100
+        property string reservedColor: "#323232"//(useDefaultButtonColor) ? defaultButtonColor : "#323232"
      
         background: Rectangle {
-            //width: cart_button.width; height: cart_button.height//width: 100; height: 40
-            color: "#323232"
+            //width: cartButton.width; height: cartButton.height//width: 100; height: 40
+            color: parent.reservedColor//(parent.checked) ? parent.reservedColor : "transparent"
+            //border.color: parent.reservedColor
+            //border.width: (!parent.checked && parent.hovered) ? 1 : 0
+            radius: 5
         }        
 
         Text {
-            id: cart_button_text
+            id: cartButtonText
             text: "0"
             color: "#ffffff"
             font.bold: true
-            anchors.left: cart_button.background.left
+            anchors.left: cartButton.background.left
             anchors.leftMargin: 20
-            anchors.top: cart_button.background.top
-            anchors.topMargin: (cart_button.background.height - this.height) / 2
+            anchors.top: cartButton.background.top
+            anchors.topMargin: (cartButton.background.height - this.height) / 2
         }
                 
         Image {
-            source: "file:///" + neroshopResourcesDir + "/cart.png"//neroshopResourceDir + "/cart.png"
+            id: cartButtonIcon
+            source: "file:///" + neroshopResourcesDir + "/cart.png"
             height: 24; width: 24
-            anchors.left: cart_button_text.right
+            anchors.left: cartButtonText.right
             anchors.leftMargin: 10
-            anchors.top: cart_button.background.top
-            anchors.topMargin: (cart_button.background.height - this.height) / 2
+            anchors.top: cartButton.background.top
+            anchors.topMargin: (cartButton.background.height - this.height) / 2
+        }
+        /*ColorOverlay {
+            anchors.fill: cartButtonIcon
+            source: cartButtonIcon
+            color: "#ffffff"//(!parent.checked && parent.hovered) ? parent.reservedColor : "#ffffff"
+            visible: cartButtonIcon.visible
+        }*/
+           
+        NeroshopComponents.Hint {
+            visible: parent.hovered
+            text: "Cart"
+            pointer.visible: false
+            delay: 0
+            //textObject.font.bold: true
+        }        
+        
+        onClicked: {
+            navBar.uncheckAllButtons();
+            pageLoader.source = "../pages/CartPage.qml"
         }
     }
 }

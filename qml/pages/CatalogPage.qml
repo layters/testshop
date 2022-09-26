@@ -7,13 +7,61 @@ import QtGraphicalEffects 1.12//Qt5Compat.GraphicalEffects 1.15//= Qt6// ColorOv
 
 import "../components" as NeroshopComponents
 
-Page {
+ScrollView {//Page {//Flickable {    
+    function resetScrollBar() {
+        catalogScrollView.ScrollBar.vertical.position = 0.0
+        console.log("Scrollbar reset")
+    }
+    function goToNextPage() {
+        catalogStack.currentIndex = catalogStack.currentIndex + 1
+        if(catalogStack.currentIndex >= (catalogStack.count - 1)) catalogStack.currentIndex = (catalogStack.count - 1)
+        resetScrollBar()
+    }
+    function goToPrevPage() {
+        catalogStack.currentIndex = catalogStack.currentIndex - 1
+        if(catalogStack.currentIndex <= 0) catalogStack.currentIndex = 0
+        resetScrollBar()
+    }
+    function setCurrentPageIndex(numberInput) {
+         // if numberInput is greater than (count - 1) then equal it to (count - 1)
+         if(Number(numberInput) >= (catalogStack.count - 1)) {
+             numberInput = (catalogStack.count - 1)
+         }
+         // if numberInput is less than 0 then equal it to 0
+         if(Number(numberInput) <= 0) {
+             numberInput = 0
+         }
+         catalogStack.currentIndex = numberInput
+         ////resetScrollBar()
+    }
+    function getPageCount() { // Returns total number of grid pages belonging to the catalog StackLayout
+        return catalogStack.count;
+    }
+    function getCurrentPageIndex() {
+        return catalogStack.currentIndex;
+    }
+    function getItemsCount() {
+        // ... boxesPerGrid * pageCount
+    }
     //id: catalog_page
     background: Rectangle {
-        //visible: true
         color: "transparent" // fixes white edges on borders when grid box radius is set
     }
     
+    id: catalogScrollView
+    anchors.fill: parent
+    ScrollBar.vertical.policy: ScrollBar.AlwaysOn//ScrollBar.AsNeeded//ScrollBar.AlwaysOn        
+    clip: true // The area in which the contents of the filterBox will be bounded to (set width and height) // If clip is false then the contents will go beyond/outside of the filterBox's bounds
+    //contentWidth: mainWindow.width//catalogStack.width
+    contentHeight: catalogStack.height + 200//100 for viewToggle space and 100 for pagination space //mainWindow.height
+
+    NeroshopComponents.ViewToggle {
+        id: viewToggle
+        anchors.horizontalCenter: catalogStack.horizontalCenter//parent.horizontalCenter
+        anchors.top: parent.top
+        anchors.topMargin: 20
+    }   
+            
     NeroshopComponents.Hint {
         id: catalogHint
         pointer.visible: false
@@ -31,52 +79,22 @@ Page {
     // Text that displays current page results information
     Text {
         id: pageResultsDisplay
-        text: "Page " + (catalog_stack.currentIndex + 1) + " of " + catalog_stack.count
+        text: "Page " + (catalogStack.currentIndex + 1) + " of " + catalogStack.count
         font.bold: true
-        x: catalog_stack.x
-        y: viewToggle.y//0
+        anchors.left: catalogStack.left
+        anchors.top: viewToggle.top//0
         color: (NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000"
     }
-        
-    NeroshopComponents.ViewToggle {
-        id: viewToggle
-        x: parent.x + (parent.width - this.width) / 2
-        y: parent.y + 20
-    }        
+             
 
-    // stackview functions
-    function goToNextPage() {
-        catalog_stack.currentIndex = catalog_stack.currentIndex + 1
-        if(catalog_stack.currentIndex >= (catalog_stack.count - 1)) catalog_stack.currentIndex = (catalog_stack.count - 1)
-    }
-    function goToPrevPage() {
-        catalog_stack.currentIndex = catalog_stack.currentIndex - 1
-        if(catalog_stack.currentIndex <= 0) catalog_stack.currentIndex = 0
-    }
-    function setCurrentPageIndex(numberInput) {
-         // if numberInput is greater than (count - 1) then equal it to (count - 1)
-         if(Number(numberInput) >= (catalog_stack.count - 1)) {
-             numberInput = (catalog_stack.count - 1)
-         }
-         // if numberInput is less than 0 then equal it to 0
-         if(Number(numberInput) <= 0) {
-             numberInput = 0
-         }
-         catalog_stack.currentIndex = numberInput
-    }
-    function getPageCount() { // Returns total number of grid pages belonging to the catalog StackLayout
-        return catalog_stack.count;
-    }
-    function getCurrentPageIndex() {
-        return catalog_stack.currentIndex;
-    }
-    function getItemsCount() {
-        // ... boxesPerGrid * pageCount
-    }
     // Pagination mode (Infinite Scroll mode replaces the StackLayout with a ScrollView)
     StackLayout {
-        id: catalog_stack
-        anchors.centerIn: parent
+        id: catalogStack
+        //anchors.horizontalCenter: viewToggle.horizontalCenter
+        anchors.left: (productFilterBox.visible) ? productFilterBox.right : parent.left
+        anchors.leftMargin: (productFilterBox.visible) ? 10 : 20
+        anchors.top: viewToggle.bottom
+        anchors.topMargin: 50
         currentIndex: 0
         width: NeroshopComponents.CatalogGrid.width; height: NeroshopComponents.CatalogGrid.height//width: pages.itemAt(this.currentIndex).width; height: pages.itemAt(this.currentIndex).height;//width: catalog.width; height: catalog.height
 
@@ -106,12 +124,17 @@ Page {
         firstButton.onClicked: { if(!firstButton.disabled) goToPrevPage() }
         secondButton.onClicked: { if(!secondButton.disabled) goToNextPage() }
         numberField.onEditingFinished: { setCurrentPageIndex(numberField.text - 1) }
-        currentIndex: catalog_stack.currentIndex
-        count: catalog_stack.count
+        currentIndex: catalogStack.currentIndex
+        count: catalogStack.count
         // For Row ONLY, NOT RowLayout (use Layout.alignment for RowLayout instead)
-        anchors.left: catalog_stack.left
-        anchors.leftMargin: (catalog_stack.width - this.width) / 2
-        anchors.top: catalog_stack.bottom
+        anchors.horizontalCenter: catalogStack.horizontalCenter
+        anchors.top: catalogStack.bottom
         anchors.topMargin: 20
-    }                             
-}
+    }         
+    // This is not necessaary unless you are using a Flickable
+            /*ScrollBar.vertical: ScrollBar {
+            //width: 20
+            policy: ScrollBar.AlwaysOn//ScrollBar.AsNeeded//ScrollBar.AlwaysOn
+        }*/ // Scrollbar                    
+//} // Flickable
+} // Page

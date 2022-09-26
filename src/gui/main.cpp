@@ -42,11 +42,6 @@ int main(int argc, char *argv[]) {
     if(!Icon::load_all()) {
         neroshop::print("Failed to load all icons", 1);
     }
-    unsigned char * data = Icon::get<unsigned char *>("upload");
-    int size = Icon::get<int>("upload");
-    // Print icon information
-    std::cout << "Icon info (upload): \n" << "data=" << data << "\n" << "size=" << size << "\n";
-
     ////////////////////////////////////////////////////////    
     // Configuration file must be loaded right after Qt Application object has been created so that we can get the correct config location
     // open configuration script

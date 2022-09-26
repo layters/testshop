@@ -2,6 +2,7 @@
     <qresource prefix="/">
         <file>main.qml</file>
         <!-- qml sources: components -->
+        <file>qml/components/Banner.qml</file>
         <file>qml/components/CatalogGrid.qml</file>
         <file>qml/components/FilterBox.qml</file>
         <file>qml/components/Hint.qml</file>
@@ -15,11 +16,17 @@
         <file>qml/components/Triangle.qml</file>
         <file>qml/components/ViewToggle.qml</file>
         <!-- qml sources: pages -->
+        <file>qml/pages/CartPage.qml</file>
         <file>qml/pages/CatalogPage.qml</file>
         <file>qml/pages/HomePage.qml</file>
         <file>qml/pages/MainPage.qml</file>
         <file>qml/pages/OrderCheckoutPage.qml</file>
         <file>qml/pages/ProductPage.qml</file>
+        <file>qml/pages/settings/SettingsAccount.qml</file>
+        <file>qml/pages/settings/SettingsMessages.qml</file>
+        <file>qml/pages/settings/SettingsOrders.qml</file>
+        <file>qml/pages/settings/SettingsSellersHub.qml</file>
+        <file>qml/pages/settings/SettingsWallet.qml</file>
         <!-- fonts -->
         <file>fonts/FiraCode-Bold.ttf</file>
         <file>fonts/FiraCode-Light.ttf</file>

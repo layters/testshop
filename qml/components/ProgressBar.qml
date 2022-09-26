@@ -38,7 +38,7 @@ ProgressBar {
             text: (progressBar.value * 100).toString() + "%" // todo: for moneroDaemonSyncBar, display blocks (e.g 1509/16098674 blocks remaining)
             anchors.centerIn: parent
             visible: false
-            font.bold: true
+            //font.bold: true
             color: "#000000"
         }        
     }

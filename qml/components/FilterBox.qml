@@ -4,11 +4,13 @@ import QtQuick.Layouts 1.12
 
 import "." as NeroshopComponents
 
-Pane {//Item {
+Pane {
+    width: 250; height: 540
     background: Rectangle { 
-        color: "#a0a0a0"//(NeroshopComponents.Style.darkTheme) ? "#2e2e2e"/*"#121212"*/ : "#a0a0a0"
-    }    
-    
+        color: (NeroshopComponents.Style.darkTheme) ? "#2e2e2e"/*"#121212"*/ : "#a0a0a0"
+        radius: 3
+    }
+    // conditionGroup
     ButtonGroup {
         id: conditionButtonGroup
         buttons: conditionColumn.children
@@ -27,77 +29,146 @@ Pane {//Item {
             }
         }
     }
-
-    ScrollView { // inherits Pane
-        //ScrollBar.horizontal.policy: ScrollBar.AlwaysOn
-        //ScrollBar.vertical.policy: ScrollBar.AlwaysOn    
-        width: parent.width + 50; height: 500
-    
-        Column {//ColumnLayout {
-            id: conditionColumn
-            anchors.fill: parent
-            Text { 
-                text: qsTr("Condition"); 
-                font.bold: true 
+    // priceGroup
+    ButtonGroup {
+        id: priceButtonGroup
+        buttons: priceColumn.children
+        exclusive: false // more than one button in the group can be checked at any given time
+        checkState: priceParentBox.checkState
+        onClicked: {
+            console.log("Selected price range:", button.text)
+            if(checkState == Qt.Unchecked) {
+                console.log("checkState: NO button is checked")
             }
-            CheckBox {
-                id: conditionParentBox
-                text: qsTr("Any")//qsTr("Parent")
-                checkState: conditionButtonGroup.checkState
-            }        
-            CheckBox { 
-                //checked: false
-                text: qsTr("New")
-                leftPadding: indicator.width
-                ButtonGroup.group: conditionButtonGroup
-            }
-            CheckBox { 
-                text: qsTr("Used")
-                leftPadding: indicator.width
-                ButtonGroup.group: conditionButtonGroup
-            }
-            CheckBox { 
-                text: qsTr("Refurbished/Renewed")
-                leftPadding: indicator.width
-                ButtonGroup.group: conditionButtonGroup
+            if(checkState == Qt.Checked) {
+                console.log("checkState: All buttons are checked")
+            }            
+            if(checkState == Qt.PartiallyChecked) {
+                console.log("checkState: One or more buttons are checked")
             }
         }
-        // todo: sort by category, price, ratings, brand, color, etc.
-    //////////////
-    /*    ColumnLayout {
-            id: aColumn
-            //anchors.fill: parent
-            Text { 
-                qsTr("a")
-                font.bold: true 
+    }
+        
+    Flickable {
+        id: flickable
+        anchors.fill: parent
+        clip: true // The area in which the contents of the filterBox will be bounded to (set width and height) // If clip is false then the contents will go beyond/outside of the filterBox's bounds
+        contentWidth: columnLayout.width
+        contentHeight: columnLayout.height
+        ColumnLayout {
+            id: columnLayout//filterOptions
+            width: flickable.width// - 10//- 20
+            Frame {
+                Layout.fillWidth: true
+                background: Rectangle {
+                    color: "transparent"
+                    border.color: (NeroshopComponents.Style.darkTheme) ? "#ffffff" :  "#000000"//"#21be2b"
+                    radius: 2
+                    opacity: 0.1
+                }                
+                ColumnLayout {
+                    id: conditionColumn
+                    width: parent.width
+                    Label { 
+                        text: qsTr("Condition") 
+                        font.bold: true
+                        color: (NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000"                    
+                    }
+                    CheckBox { 
+                        id: conditionParentBox
+                        checkState: conditionButtonGroup.checkState
+                        Text {
+                            text: qsTr("Any")
+                            color: (NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000"
+                            anchors.left: parent.right
+                            anchors.leftMargin: 0
+                            anchors.top: parent.top
+                            anchors.topMargin: (parent.height - this.contentHeight) / 2
+                        }                        
+                    }
+                    CheckBox { 
+                        ButtonGroup.group: conditionButtonGroup
+                        Text {
+                            text: qsTr("New")
+                            color: (NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000"
+                            anchors.left: parent.right
+                            anchors.leftMargin: 0
+                            anchors.top: parent.top
+                            anchors.topMargin: (parent.height - this.contentHeight) / 2
+                        }                        
+                    }
+                    CheckBox { 
+                        ButtonGroup.group: conditionButtonGroup
+                        Text {
+                            text: qsTr("Used")
+                            color: (NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000"
+                            anchors.left: parent.right
+                            anchors.leftMargin: 0
+                            anchors.top: parent.top
+                            anchors.topMargin: (parent.height - this.contentHeight) / 2
+                        }                        
+                    }
+                    CheckBox { 
+                        ButtonGroup.group: conditionButtonGroup
+                        Text {
+                            text: qsTr("Refurbished/Renewed")
+                            color: (NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000"
+                            anchors.left: parent.right
+                            anchors.leftMargin: 0
+                            anchors.top: parent.top
+                            anchors.topMargin: (parent.height - this.contentHeight) / 2
+                        }                        
+                    }
+                }
             }
-            CheckBox { 
-                id: aParentBox
-                text: qsTr("Any")
-                checkState: aButtonGroup.checkState
+            Frame {
+                Layout.fillWidth: true
+                background: Rectangle {
+                    color: "transparent"
+                    border.color: (NeroshopComponents.Style.darkTheme) ? "#ffffff" :  "#000000"//"#21be2b"
+                    radius: 2
+                    opacity: 0.1
+                }                
+                ColumnLayout {
+                    id: priceColumn
+                    width: parent.width
+                    Label { 
+                        text: qsTr("Price") 
+                        font.bold: true
+                        color: (NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000"
+                    }
+                    // todo: maybe use a slider to set the price range instead?
+                    CheckBox { 
+                        id: priceParentBox
+                        checkState: priceButtonGroup.checkState
+                        Text {
+                            text: qsTr("Any")
+                            color: (NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000"
+                            anchors.left: parent.right
+                            anchors.leftMargin: 0
+                            anchors.top: parent.top
+                            anchors.topMargin: (parent.height - this.contentHeight) / 2
+                        }                        
+                    }
+                    CheckBox { 
+                        ButtonGroup.group: priceButtonGroup       
+                        Text {
+                            text: qsTr("$0.00-$1.00")
+                            color: (NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000"
+                            anchors.left: parent.right
+                            anchors.leftMargin: 0
+                            anchors.top: parent.top
+                            anchors.topMargin: (parent.height - this.contentHeight) / 2
+                        }                    
+                    }
+                }
             }
-            //CheckBox { 
-            //    text: qsTr("")
-            //    leftPadding: indicator.width
-            //    ButtonGroup.group: aButtonGroup            
-            //}
+        }
+        // CatalogPage has a scrollbar so there's no longer any need for this
+        /*ScrollBar.vertical: ScrollBar {
+            //width: 20
+            policy: ScrollBar.AsNeeded//ScrollBar.AlwaysOn
         }*/
     }
-    /*ButtonGroup {
-        id: aButtonGroup
-        buttons: aColumn.children
-        exclusive: true
-        onClicked: {
-            console.log("Selected ", button.text)
-        }
-    }
-    ScrollView {
-    ColumnLayout {
-        id: aColumn
-        //anchors.fill: parent
-        Text { font.bold: true }
-        CheckBox { text: qsTr("Test") }
-        //CheckBox { text: qsTr("") }
-    }
-    }*/
+    // todo: sort by category, price, ratings, brand, color, etc.
 }
