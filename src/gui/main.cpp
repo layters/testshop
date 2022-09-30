@@ -23,6 +23,7 @@ using namespace dokun;
 using namespace neroshop;
 
 using WalletProxy = gui::Wallet;
+using ScriptProxy = gui::Script;
 
 int main(int argc, char *argv[]) {
     #if defined(NEROSHOP_USE_QT)
@@ -92,6 +93,8 @@ int main(int argc, char *argv[]) {
     // we can also register an instance of a class instead of the class itself
     //gui::Wallet wallet;
     engine.rootContext()->setContextProperty("Wallet", new WalletProxy());//qmlRegisterUncreatableType<WalletProxy>("neroshop.Wallet", 1, 0, "Wallet", "Wallet cannot be instantiated directly.");
+    // register script
+    engine.rootContext()->setContextProperty("Script", new ScriptProxy());//qmlRegisterType<ScriptProxy>("neroshop.Script", 1, 0, "Script");
     //--------------------------
     // When using qrc.qml to store images, use: QUrl(QStringLiteral("qrc:///main.qml"))
     engine.load(QUrl(QStringLiteral("qrc:/main.qml")));//("../main.qml");//("main.qml");//(QUrl(QStringLiteral("qrc:/main.qml")));
@@ -100,34 +103,5 @@ int main(int argc, char *argv[]) {
     }
     return app.exec(); // starts 'event loop'
     #endif
-    ////////////////////////////////////////////////////////
-    #if defined(NEROSHOP_USE_DOKUN_UI)
-    std::cout << "Using dokun-ui\n";
-    #ifdef DOKUN_USE_GLFW
-    std::cout << "Using GLFW\n";
-    #endif
-    // First, initialize engine
-    if(!dokun::Engine::open()) {
-        std::cout << DOKUN_UI_TAG "engine failed to initialize" << std::endl;
-        return 1;
-    }    
-    // Create window
-    gui::MainWindow * window = new gui::MainWindow();
-    window->create("neroshop", 1280, 720, 0);
-    //window->set_vertical_synchronization(true);
-    window->show();
-    
-    while(window->is_open()) {
-        window->set_viewport(window->get_client_width(), window->get_client_height()); // causes "X connection to ? broken (explicit kill or server shutdown)." error
-        window->clear(32, 32, 32);	        
-        
-        window->poll_events();
-        
-        window->update();
-    }
-    window->destroy();
-    Engine::close(); // will call glfwTerminate();
-    #endif
-    ////////////////////////////////////////////////////////
     return 0;
 }

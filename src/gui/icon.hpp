@@ -12,7 +12,7 @@
 #include <tuple> // std::tuple
 #include <filesystem> // std::filesystem
 
-#include "../debug.hpp"
+#include "../core/debug.hpp"
 
 namespace neroshop {
 

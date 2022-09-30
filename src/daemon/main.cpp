@@ -12,8 +12,8 @@
 #include <vector>
 #include <iostream>
 // neroshop
-#include "server.hpp"
-#include "debug.hpp"
+#include "../core/server.hpp"
+#include "../core/debug.hpp"
 //#include "db2.hpp" // daemon should handle database server requests from the client ??
 #define NEROMON_TAG "\033[1;95m[neromon]:\033[0m "
 

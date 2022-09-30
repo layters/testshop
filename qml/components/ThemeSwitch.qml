@@ -7,7 +7,7 @@ import "." as NeroshopComponents
 Switch {
     id: control
     text: (this.checked) ? qsTr("ON") : qsTr("OFF");
-    checked: false // darkMode (default)
+    checked: !NeroshopComponents.Style.darkTheme
     onClicked: {
         if(this.checked === true) {
             NeroshopComponents.Style.darkTheme = false

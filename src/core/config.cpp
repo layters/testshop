@@ -22,57 +22,66 @@ bool neroshop::load_config() {
 
 bool neroshop::create_config() {
     std::string user = neroshop::device::get_user();
-    std::string text = "-- settings.lua\n"
-        "localhost = \"127.0.0.1\";\n"
-        "neroshop = {};\n"
-        "neroshop[\"currency\"] = \"usd\";\n"//\n"
-        "neroshop[\"window\"] = {};\n"
-        //"--neroshop[\"window\"][\"x\"] = 200;\n"
-        //"--neroshop[\"window\"][\"y\"] = 200;\n"
-        "neroshop[\"window\"][\"width\"] = 1280;\n"
-        "neroshop[\"window\"][\"height\"] = 720;\n"
-        "neroshop[\"window\"][\"mode\"] = 0; --0 (window_mode) or 1 (fullscreen)\n"//\n"
-        "\n"
-        "neroshop[\"monero\"] = {};\n"
-        "\n"
-        "neroshop[\"monero\"][\"daemon\"] = {};\n" // maybe change name from daemon to node or nah?
-        "neroshop[\"monero\"][\"daemon\"][\"network_type\"] = \"stagenet\"; --\"mainnet\", \"stagenet\", or \"testnet\"\n"
-        "neroshop[\"monero\"][\"daemon\"][\"ip\"] = localhost; -- set to \"0.0.0.0\" to allow other wallets to connect to your node\n"
-        "neroshop[\"monero\"][\"daemon\"][\"port\"] = \"38081\"; --\"18081\" (mainnet), \"38081\" (stagenet), or 28081 (testnet)\n"
-        "neroshop[\"monero\"][\"daemon\"][\"confirm_external_bind\"] = false; -- if true then it confirms that you want to allow connections from other wallets outside of this system, but only when ip is set to \"0.0.0.0\"\n"
-        "neroshop[\"monero\"][\"daemon\"][\"restricted_rpc\"] = true;\n"
-        "neroshop[\"monero\"][\"daemon\"][\"data_dir\"] = \"/home/<user>/.bitmonero\";\n"
-        "neroshop[\"monero\"][\"daemon\"][\"remote\"] = false; -- set to true if the node that you want to connect to is a remote node\n"//\n"
-        "\n"
-        "neroshop[\"monero\"][\"wallet\"] = {};\n"
-        "neroshop[\"monero\"][\"wallet\"][\"file\"] = \"\"; -- include \".keys\" extension\n" // path or file
-        "neroshop[\"monero\"][\"wallet\"][\"restore_height\"] = \"2014-04-18\"; -- block height or date (YYYY-MM-DD)\n"
-        "\n"
-        "neroshop[\"monero\"][\"nodes\"] = {}\n"
-        "neroshop[\"monero\"][\"nodes\"][\"mainnet\"] = {\n"
-        "    \"node.community.rino.io:18081\",\n"
-        "    \"node.sethforprivacy.com:18089\",\n"
-        "    \"node2.sethforprivacy.com:18089\",\n"
-        "    \"selsta1.featherwallet.net:18081\",\n"
-        "    \"selsta2.featherwallet.net:18081\",\n"
-        "    \"node.monerooutreach.org:18081\",\n"
-        "    \"node.majesticbank.is:18089\",\n"
-        "    \"node.majesticbank.su:18089\",\n"
-        "    \"xmr-node-eu.cakewallet.com:18081\",\n"
-        "    \"xmr-node-usa-east.cakewallet.com:18081\",\n"
-        "    \"canada.node.xmr.pm:18089\",\n"
-        "    \"singapore.node.xmr.pm:18089\",\n"
-        "    \"nodes.hashvault.pro:18081\",\n"
-        "    \"node.supportxmr.com:18081\",\n"
-        "    \"node.xmr.ru:18081\"\n"
-        "};\n"
-        "neroshop[\"monero\"][\"nodes\"][\"stagenet\"] = {\n"
-        "    \"super.fast.node.xmr.pm:38089\",\n"
-        "    \"stagenet.community.rino.io:38081\"\n"
-        "};\n" 
-        "neroshop[\"monero\"][\"nodes\"][\"testnet\"] = {\n" 
-        "    \"testnet.community.rino.io:28081\"\n"
-        "};\n";
+    std::string text = R"(-- settings.lua
+localhost = "127.0.0.1"
+neroshop = {
+    generalsettings = {
+        currency = "usd",
+        application = {
+            theme = {
+                dark = true,
+                name = "PurpleDust", --"DefaultDark", "DefaultLight"
+            },        
+            window = {
+                width = 1280,
+                height = 720,
+                mode = 0, --0 (window_mode) or 1 (fullscreen)
+            }
+        }        
+    },
+    
+    monero = {
+        wallet = {
+            file = "",
+            restore_height = "2014-04-18" -- block height or date (YYYY-MM-DD)
+        },
+        daemon = {
+            network_type = "stagenet",
+            ip = "localhost", -- set to "0.0.0.0" to allow other wallets to connect to your node
+            port = "38081", --"18081" (mainnet), "38081" (stagenet), or "28081" (testnet)
+            confirm_external_bind = false, -- if true then it confirms that you want to allow connections from other wallets outside of this system, but only when ip is set to "0.0.0.0"
+            restricted_rpc = true,
+            data_dir = "/home/<user>/.bitmonero",
+            remote = false -- set to true if the node that you want to connect to is a remote node
+        },
+        nodes = {
+            mainnet = {
+                "node.community.rino.io:18081",
+                "node.sethforprivacy.com:18089",
+                "node2.sethforprivacy.com:18089",
+                "selsta1.featherwallet.net:18081",
+                "selsta2.featherwallet.net:18081",
+                "node.monerooutreach.org:18081",
+                "node.majesticbank.is:18089",
+                "node.majesticbank.su:18089",
+                "xmr-node-eu.cakewallet.com:18081",
+                "xmr-node-usa-east.cakewallet.com:18081",
+                "canada.node.xmr.pm:18089",
+                "singapore.node.xmr.pm:18089",
+                "nodes.hashvault.pro:18081",
+                "node.supportxmr.com:18081",
+                "node.xmr.ru:18081"
+            },
+            stagenet = {
+                "super.fast.node.xmr.pm:38089",
+                "stagenet.community.rino.io:38081"
+            },
+            testnet = {
+                "testnet.community.rino.io:28081"
+            }
+        }
+    }
+})";
         // swap data_dir with user
     #if defined(__gnu_linux__) // works!    
         text = neroshop::string::swap_first_of(text, "/home/<user>/.bitmonero", ("/home/" + user + "/.bitmonero"));

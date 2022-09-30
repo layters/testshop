@@ -12,8 +12,8 @@ QtObject {
     property QtObject fontFiraCodeSemiBold: FontLoader { id: _fontFiraCodeSemiBold; source: "qrc:/fonts/FiraCode-SemiBold.ttf" }
     ////readonly property QtObject font<name><style>: FontLoader { id: _font<name><style>; source: "qrc:/fonts/" }
     // General settings
-    property bool darkTheme: true
-    property string themeName: "PurpleDust" // "DefaultDark", "DefaultLight"
+    property bool darkTheme: Script.get_boolean("neroshop.generalsettings.application.theme.dark")//true
+    property string themeName: Script.get_string("neroshop.generalsettings.application.theme.name")//"PurpleDust" // "DefaultDark", "DefaultLight"
     // Catalog settings
     property bool gridView: true
     //property bool infiniteScroll: false
@@ -34,14 +34,12 @@ QtObject {
                 primaryColor = "#141419"
                 secondaryColor = "#292933"
             }
-            else { 
-                //themeName = "DefaultDark"
+            else { //"DefaultDark"
                 primaryColor = "#202020"// #121212 = rgb(18, 18, 18)
                 secondaryColor = "#2e2e2e"
             }
         }
-        else if(!darkTheme) { 
-            //themeName = "DefaultLight"
+        else if(!darkTheme) { //"DefaultLight"
             primaryColor = "#c1c1c5"//"#ffffff"
             secondaryColor = "#909093"
         }

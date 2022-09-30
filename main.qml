@@ -78,7 +78,7 @@ ApplicationWindow {
     // The footer item is positioned to the bottom, and resized to the width of the window
     // Custom ToolBar
     footer: Rectangle {
-        height: 40//; width: parent.width// width is automatically set to parent's width by default since this is the footer
+        height: 40//; width: parent.width// width is automatically set to parent's width by default so no need to manually set the footer width
         color: NeroshopComponents.Style.getColorsFromTheme()[1]
         
         Row {

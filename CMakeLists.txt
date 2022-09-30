@@ -400,7 +400,7 @@ link_directories(${CMAKE_CURRENT_SOURCE_DIR}/build) # target_link_directories on
 
 ######################################
 # neroshop core source files
-set(neroshop_src src/buyer.cpp #[[src/carrier.cpp]] src/cart.cpp src/catalog.cpp src/client.cpp src/config.cpp src/converter.cpp src/database.cpp src/encryptor.cpp #[[src/icon.cpp]] src/item.cpp #[[src/main.cpp]] src/order.cpp src/process.cpp src/qr.cpp src/script.cpp src/seller.cpp src/server.cpp src/user.cpp src/validator.cpp src/wallet.cpp)
+set(neroshop_core_src src/core/buyer.cpp src/core/cart.cpp src/core/catalog.cpp src/core/client.cpp src/core/config.cpp src/core/converter.cpp src/core/database.cpp src/core/encryptor.cpp #[[src/core/icon.cpp]] src/core/item.cpp src/core/order.cpp src/core/process.cpp src/core/qr.cpp src/core/script.cpp src/core/seller.cpp src/core/server.cpp src/core/user.cpp src/core/validator.cpp src/core/wallet.cpp)
 
 ######################################
 # neroshop tests
@@ -413,7 +413,7 @@ endif()
 ######################################
 # neroshop-daemon
 set(daemon_executable "neromon")
-add_executable(${daemon_executable} src/daemon.cpp src/server.cpp)#target_link_libraries(daemon ${curl_src} ${OPENSSL_LIBRARIES}) # curl requires both openssl(used in monero) and zlib(used in dokun-ui)
+add_executable(${daemon_executable} src/daemon/main.cpp src/core/server.cpp)#target_link_libraries(daemon ${curl_src} ${OPENSSL_LIBRARIES}) # curl requires both openssl(used in monero) and zlib(used in dokun-ui)
 target_include_directories(${daemon_executable} PRIVATE #[[${CMAKE_CURRENT_SOURCE_DIR}/src/]])
 target_link_libraries(${daemon_executable} ${libuv_src})#set(CMAKE_CXX_LINK_EXECUTABLE "${CMAKE_CXX_LINK_EXECUTABLE} -ldl") # fixes undefined reference to symbol 'dlsym@@GLIBC_2.2.5' error
 
@@ -421,7 +421,7 @@ target_link_libraries(${daemon_executable} ${libuv_src})#set(CMAKE_CXX_LINK_EXEC
 # neroshop-console
 if(NEROSHOP_BUILD_CLI)
     set(neroshop_console "neroshop-console")
-    add_executable(${neroshop_console} src/console/main.cpp ${neroshop_src})
+    add_executable(${neroshop_console} src/console/main.cpp ${neroshop_core_src})
     target_compile_definitions(${neroshop_console} PRIVATE NEROSHOP_DEBUG)
     target_include_directories(${neroshop_console} PRIVATE #[[${CMAKE_CURRENT_SOURCE_DIR}/src/]])
     target_link_libraries(${neroshop_console} ${monero_cpp_src} ${sqlite_src} ${qr_code_generator_src} ${raft_src} ${libuv_src} ${curl_src} ${monero_src} ${lua_src} ${png_src} ${linenoise_src})
@@ -433,7 +433,7 @@ endif()
 if(NEROSHOP_BUILD_GUI)
     set(neroshop_executable "neroshop")
     add_executable(${neroshop_executable})
-    target_sources(${neroshop_executable} PRIVATE ${neroshop_res} ${neroshop_src} src/gui/icon.cpp src/gui/main.cpp src/gui/main_window.cpp src/gui/message_box.cpp src/gui/wallet_proxy.cpp)
+    target_sources(${neroshop_executable} PRIVATE ${neroshop_res} src/gui/main.cpp src/gui/icon.cpp src/gui/script_proxy.cpp src/gui/wallet_proxy.cpp ${neroshop_core_src})
     target_compile_definitions(${neroshop_executable} PRIVATE NEROSHOP_DEBUG)#set_target_properties(${neroshop_executable} PROPERTIES COMPILE_DEFINITIONS "NEROSHOP_DEBUG")
     target_include_directories(${neroshop_executable} PRIVATE #[[${CMAKE_CURRENT_SOURCE_DIR}/src/]])
     target_link_libraries(${neroshop_executable} ${monero_cpp_src} ${sqlite_src} ${qr_code_generator_src} ${raft_src} ${libuv_src} ${curl_src} ${monero_src} ${lua_src} ${png_src})
