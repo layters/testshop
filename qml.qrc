@@ -11,6 +11,7 @@
         <file>qml/components/ProgressBar.qml</file>
         <file>qml/components/qmldir</file>
         <file>qml/components/SearchBar.qml</file>
+        <file>qml/components/SettingsDialog.qml</file>
         <file>qml/components/Style.qml</file>
         <file>qml/components/ThemeSwitch.qml</file>
         <file>qml/components/Triangle.qml</file>
@@ -23,7 +24,6 @@
         <file>qml/pages/OrderCheckoutPage.qml</file>
         <file>qml/pages/ProductPage.qml</file>
         <file>qml/pages/settings/SettingsAccount.qml</file>
-        <file>qml/pages/settings/SettingsConfig.qml</file>
         <file>qml/pages/settings/SettingsMessages.qml</file>
         <file>qml/pages/settings/SettingsOrders.qml</file>
         <file>qml/pages/settings/SettingsSellersHub.qml</file>

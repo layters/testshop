@@ -15,8 +15,10 @@ Switch {
         else if(this.checked === false) {
             NeroshopComponents.Style.darkTheme = true
         }
+        settingsDialog.theme.displayText = (NeroshopComponents.Style.darkTheme) ? settingsDialog.theme.lastUsedDarkTheme : settingsDialog.theme.lastUsedLightTheme // correct the themeName
+        NeroshopComponents.Style.themeName = settingsDialog.theme.displayText // update the actual theme (name)
     }    
-    width: 56//64//72//88
+    implicitWidth: 56//64//72//88
     
     indicator: Rectangle {
         id: background

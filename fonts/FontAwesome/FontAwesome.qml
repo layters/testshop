@@ -29,10 +29,19 @@ Object {
     // https://fontawesome.com/v5/cheatsheet/free/regular
     // https://fontawesome.com/v5/cheatsheet/free/brands
     
+    // some icons will only be displayed when the font.weight is Font.Bold, Font.ExtraBold or Font.Black :(
+    property string monero: "\uf3d0"
     property string arrowAltCircleRight: "\uf35a"
     property string arrowAltCircleLeft: "\uf359"
     property string angleLeft: "\uf104"
     property string angleRight: "\uf105"
+    property string cog: "\uf013"
+    property string coins: "\uf51e"
+    property string lock: "\uf023"
+    property string lockOpen: "\uf3c1"
+    property string eye: "\uf06e"
+    property string eyeSlash: "\uf070"
+    ////property string terminal: ""
     ////property string upload: "\u"
     ////property string ?: "\u"
     ////property string user: "\uf007"

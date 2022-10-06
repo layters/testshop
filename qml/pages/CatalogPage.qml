@@ -7,7 +7,11 @@ import QtGraphicalEffects 1.12//Qt5Compat.GraphicalEffects 1.15//= Qt6// ColorOv
 
 import "../components" as NeroshopComponents
 
-ScrollView {//Page {//Flickable {    
+Page {
+    id: catalogPage
+    background: Rectangle {
+        color: "transparent"
+    }
     function resetScrollBar() {
         catalogScrollView.ScrollBar.vertical.position = 0.0
         console.log("Scrollbar reset")
@@ -42,13 +46,12 @@ ScrollView {//Page {//Flickable {
     }
     function getItemsCount() {
         // ... boxesPerGrid * pageCount
-    }
-    //id: catalog_page
+    }    
+ScrollView {//Flickable { 
+    id: catalogScrollView
     background: Rectangle {
         color: "transparent" // fixes white edges on borders when grid box radius is set
     }
-    
-    id: catalogScrollView
     anchors.fill: parent
     ScrollBar.vertical.policy: ScrollBar.AlwaysOn//ScrollBar.AsNeeded//ScrollBar.AlwaysOn        
     clip: true // The area in which the contents of the filterBox will be bounded to (set width and height) // If clip is false then the contents will go beyond/outside of the filterBox's bounds
@@ -136,5 +139,5 @@ ScrollView {//Page {//Flickable {
             //width: 20
             policy: ScrollBar.AlwaysOn//ScrollBar.AsNeeded//ScrollBar.AlwaysOn
         }*/ // Scrollbar                    
-//} // Flickable
+} // ScrollView or Flickable
 } // Page

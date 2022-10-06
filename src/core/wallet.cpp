@@ -227,9 +227,10 @@ std::vector<std::string> neroshop::Wallet::address_unused()
 // I get the error: "../../src/xcb_io.c:641: _XReply: Assertion `!xcb_xlib_threads_sequence_lost' failed." when using this function
 // or maybe its just some random threading error
 void neroshop::Wallet::on_sync_progress(uint64_t height, uint64_t start_height, uint64_t end_height, double percent_done, const std::string& message) {
+	    // all of this takes place in a separate thread
 	    // if monero_wallet is already synced, skip this function (this function keeps spamming throughout the entire app session -.-)
 	    if(monero_wallet_obj.get()->is_synced()) return;
-	    /*auto now = std::chrono::system_clock::now();
+	    auto now = std::chrono::system_clock::now();
         auto in_time_t = std::chrono::system_clock::to_time_t(now); // current time
 	    std::stringstream ss;
 	    ss << std::put_time(std::localtime(&in_time_t), "[%Y-%m-%d  %l:%M:%S %p]");
@@ -241,7 +242,7 @@ void neroshop::Wallet::on_sync_progress(uint64_t height, uint64_t start_height, 
         std::cout << "\033[0;35;49m" << date << " \033[1;33;49m" << message << ": " << (percent_done * 100) << "%" << "\033[0m" << std::endl;
         if((percent_done * 100) == 100) std::cout << "\033[0;35;49m" << date << " \033[1;32;49m" << "SYNCHRONIZATION DONE" << std::endl;
         std::cout << "\033[0;35;49m" << date << std::endl;
-        std::cout << "\033[0;35;49m" << date << " \033[1;33;49m" << "**********************************************************************" << "\033[0m" << std::endl;*/
+        std::cout << "\033[0;35;49m" << date << " \033[1;33;49m" << "**********************************************************************" << "\033[0m" << std::endl;
         // todo: REMOVE THE CODE BELOW
         #ifdef NEROSHOP_USE_DOKUN_UI
         /*if(!sync_bar.get()) {

@@ -10,6 +10,7 @@ import QtGraphicalEffects 1.12 // LinearGradient
 import Qt.labs.platform 1.1 // FileDialog (since Qt 5.8) // change to "import QtQuick.Dialogs" if using Qt 6.2
 
 //import neroshop.Wallet 1.0
+import "../../fonts/FontAwesome"//import FontAwesome 1.0
 import "../components" as NeroshopComponents
 
 Page {
@@ -72,6 +73,22 @@ Page {
         // switch (login) to home page
         //stack.push(home_page)
         pageLoader.source = "HomePage.qml"
+        // start local monero daemon or node synchronization (optional)
+        /*Wallet.daemonOpen(Script.getString("neroshop.monero.daemon.ip"), 
+            Script.getString("neroshop.monero.daemon.port"),
+            Script.getBoolean("neroshop.monero.daemon.confirm_external_bind"),
+            Script.getBoolean("neroshop.monero.daemon.restricted_rpc"),
+            Script.getBoolean("neroshop.monero.daemon.remote"),
+            Script.getString("neroshop.monero.daemon.data_dir"),
+            Script.getString("neroshop.monero.daemon.network_type"),
+            Script.getNumber("neroshop.monero.daemon.restore_height")
+        );*/
+        // connect to a remote monero node (default)(causes segfault)
+        let remote_node = Script.getTableStrings("neroshop.monero.nodes.stagenet")[1]//Script.getTableStrings("neroshop.monero.nodes.mainnet")[0]
+        let remote_node_ip = remote_node.split(":")[0]
+        let remote_node_port = remote_node.split(":")[1]
+        console.log("connecting to remote node " + remote_node_ip + " at port " + remote_node_port)
+        Wallet.daemonConnect(remote_node_ip, remote_node_port);//Wallet.daemonConnect(Script.getString("neroshop.monero.daemon.ip"), Script.getString("neroshop.monero.daemon.port"));
     }
     ///////////////////////////    
 // consists of login and registration menus
@@ -97,30 +114,21 @@ Page {
         nameFilters: ["Wallet files (*.keys)"]
         //options: FileDialog.ReadOnly // will not allow you to create folders while file dialog is opened
     }
-    ///////////////////////////
-    TabBar {
-        id: buttonsBar
-        width: parent.width
-        anchors.top: parent.top
-        anchors.topMargin: 0//20
-        anchors.horizontalCenter: parent.horizontalCenter//x: authStack.x + (authStack.width / 2) - (this.width / 2) // center the x
-        //y: (authStack.y + authStack.height) + 5// 5 is the padding // lower the y
-        property string buttonColor: NeroshopComponents.Style.moneroGrayColor
-        
-        TabButton { // must be used in conjunction with a TabBar according to: https://doc.qt.io/qt-5/qml-qtquick-controls2-tabbutton.html
+    ///////////////////////////        
+    /*    Button { // must be used in conjunction with a TabBar according to: https://doc.qt.io/qt-5/qml-qtquick-controls2-tabbutton.html
             text: qsTr("Register")
             width: implicitWidth
-            onClicked: authStack.currentIndex = 0
+            onClicked: mainPageStack.currentIndex = 0
         
             background: Rectangle {
                 color: buttonsBar.buttonColor//"#00aebf"
             }                    
         }
-        TabButton {
+        Button {
             id: login_button//auth_walletfile_button
             text: qsTr("Login with Wallet file")
             width: implicitWidth
-            onClicked: authStack.currentIndex = 1
+            onClicked: mainPageStack.currentIndex = 1
             
             contentItem: Text {  
                 //font.family: "Consolas"; 
@@ -138,50 +146,75 @@ Page {
                 //border.color: login_button.hovered ? "#ffffff" : this.color//"#ffffff"//control.down ? "#17a81a" : "#21be2b"
             }            
         }
-        TabButton {
+        Button {
             text: qsTr("Login with Seed (Mnemonic)")
             width: implicitWidth
-            onClicked: authStack.currentIndex = 2
+            onClicked: mainPageStack.currentIndex = 2
         
             background: Rectangle {
                 color: buttonsBar.buttonColor//NeroshopComponents.Style.moneroGrayColor
             }                    
         }  
-        TabButton {
+        Button {
             text: qsTr("Login with Keys")
             width: implicitWidth
-            onClicked: authStack.currentIndex = 3
+            onClicked: mainPageStack.currentIndex = 3
         
         
             background: Rectangle {
                 color: buttonsBar.buttonColor//"#402ef7"
             }                    
         }          
-        TabButton {
+        Button {
             text: qsTr("Login with Hardware wallet")
             width: implicitWidth
-            //onClicked: authStack.currentIndex = 4
+            //onClicked: mainPageStack.currentIndex = 4
         
             background: Rectangle {
                 color: buttonsBar.buttonColor//"red"
             }                    
-        }                                
-    }    
+        }       */                         
     ///////////////////////////
     StackLayout { // Perfect for a stack of items where only one item is visible at a time//ColumnLayout { // From top to bottom
-        id: authStack // auth_menu inside home menu
-        //anchors.fill: parent // will fill entire Window area
-        currentIndex: buttonsBar.currentIndex//currentIndex: 1       
-        width: parent.width
-        height: parent.height
-        anchors.top: buttonsBar.bottom//y: parent.height / 2 - this.height / 2
-        anchors.topMargin: 0
-        anchors.left: buttonsBar.left
-        anchors.leftMargin: 0
+        id: mainPageStack // auth_menu inside home menu
+        anchors.fill: parent // will fill entire Window area
+        currentIndex: 0//buttonsBar.currentIndex//currentIndex: 1
+                
         // generate auth keys page
         Rectangle {
             id: registerPage
-            color: (NeroshopComponents.Style.darkTheme) ? "#2e2e2e" : "#a0a0a0"//160, 160, 160
+            color: NeroshopComponents.Style.getColorsFromTheme()[0]
+            
+    ///////////////////////////
+        Button {
+            id: pageRedirectButton
+            anchors.verticalCenter: parent.verticalCenter//Layout.alignment: Qt.AlignVCenter// | Qt::AlignRight //or Qt::AlignLeft
+            anchors.right: parent.right//anchors.left: parent.left
+            anchors.rightMargin: 20
+            implicitWidth: 60; height: implicitWidth
+            text: qsTr(FontAwesome.angleRight)//qsTr(FontAwesome.angleLeft)
+            
+            background: Rectangle {
+                color: "#6b5b95"//"#121212"
+                radius: 100
+                border.color: parent.contentItem.color//(NeroshopComponents.Style.darkTheme) ? parent.contentItem.color : "#000000"
+                border.width: (parent.hovered) ? 1 : 0
+            }
+            
+            contentItem: Text {
+                text: parent.text
+                color: "#ffffff"
+                horizontalAlignment: Text.AlignHCenter
+                verticalAlignment: Text.AlignVCenter
+                font.bold: true
+                font.family: FontAwesome.fontFamily
+                font.pixelSize: (parent.width / 2)
+            }
+            
+            onClicked: {
+                mainPageStack.currentIndex = mainPageStack.currentIndex + 1
+            }
+        }            
             // change wallet path edit
             // ...
             // wallet password create edit
@@ -289,10 +322,11 @@ Page {
             ScrollView {
                 id: seedDisplayScrollView
                 //anchors.fill: parent
-                width: 500//300
+                width: 800//500//300
                 height: 250//150    
                 x: generate_key_button.x//20       
                 y: (walletMessageField.visible) ? walletMessageField.y + walletMessageField.height + 20 : generate_key_button.y + generate_key_button.height + 20//registerPage.height - this.height - 20                     
+                clip: true
                 
                 TextArea {
                     id: seedDisplayEdit
@@ -334,37 +368,32 @@ Page {
                         focus: true
                         x: seed_display_mouse_area.mouseX
                         y: seed_display_mouse_area.mouseY
-                    }*/                                               
+                    }*/          
+            // seedCopyButton (copies to the clipboard)
+                Button {
+                    id: seedCopyButton
+                    x: seedDisplayScrollView.width - seedDisplayScrollView.ScrollBar.horizontal.visualPosition//(seedDisplayScrollView.width - width)//anchors.left: parent.left//anchors.right: parent.right
+                    //y: seedDisplayScrollView.ScrollBar.vertical.visualPosition//(seedDisplayScrollView.height - height)//anchors.leftMargin: (parent.width - this.width - 10)//anchors.rightMargin: 10
+                    anchors.bottom: parent.bottom
+                    anchors.bottomMargin: 10
+                    width: 32; height: this.width//50
+                    text: qsTr("Copy")
+                    display: AbstractButton.IconOnly
+                    onClicked: copyToClipboard() // this only works on selected text
+                    icon.source: "file:///" + neroshopResourcesDir + "/copy.png"
+                    icon.color: "#ffffff"
+                    //clip: false
+                    //icon.height: 24; icon.width: 24
+                    background: Rectangle {
+                        color: "transparent"
+                        radius: 0
+                        border.color: this.parent.hovered ? "#ffffff" : this.color
+                    }
+                    ToolTip.delay: 500 // shows tooltip after hovering for 0.5 second
+                    ToolTip.visible: hovered
+                    ToolTip.text: qsTr("Copy to clipboard")                                   
+                }                                                         
                 }
-            }
-            // copy_button (copies to the clipboard)
-            Button {
-                id: copy_button
-                width: 100; height: seedDisplayScrollView.height//50
-                //x: (seedDisplayScrollView.x + seedDisplayScrollView.width) + (registerPage.width / 2) - ((this.width + seedDisplayScrollView.width + 10) / 2) //(seedDisplayScrollView.x + seedDisplayScrollView.width) + 5
-                anchors.left: seedDisplayScrollView.right//seedDisplayScrollView.horizontalCenter
-                anchors.leftMargin: (parent.width / 2) - ((this.width + seedDisplayScrollView.width + 10) / 2)
-                //y: seedDisplayScrollView.y + (seedDisplayScrollView.height / 2) - (this.height / 2)
-                anchors.top: seedDisplayScrollView.top
-                anchors.topMargin: (seedDisplayScrollView.height / 2) - (this.height / 2)
-                text: qsTr("Copy") // rather have an icon with a tooltip than a text
-                display: AbstractButton.IconOnly // will only show the icon and not the text
-                // this only works on selected text
-                onClicked: copyToClipboard()//seedDisplayEdit.copy()//copyToClipboard()
-                
-                ToolTip.delay: 500 // shows tooltip after hovering for 0.5 second
-                ToolTip.visible: hovered
-                ToolTip.text: qsTr("Copy to clipboard")
-                
-                icon.source: "file:///" + neroshopResourcesDir + "/copy.png"//neroshopResourceDir + "/copy.png"
-                icon.color: "#ffffff"
-                //icon.height: 24; icon.width: 24
-                
-                background: Rectangle {
-                    color: "#808080"
-                    radius: 0
-                    border.color: this.parent.hovered ? "#ffffff" : this.color
-                }                   
             }
             // optional pseudonym edit
             TextField {
@@ -395,7 +424,7 @@ Page {
                 anchors.leftMargin: 20
                 anchors.verticalCenter: optNameEdit.verticalCenter
                 
-                width: 180//copy_button.width
+                width: 180//seedCopyButton.width
                 height: 60 + 5//50 // width will be set automatically based on text length
                 onClicked: registerWallet()
                 
@@ -418,8 +447,9 @@ Page {
         // walletfile auth page
         // Upload button with read-only textfield
         Rectangle {
-            id: wallet_file_auth_page
-            color: (NeroshopComponents.Style.darkTheme) ? "#2e2e2e" : "#a0a0a0"
+            // todo: create buttons: restore from keys, restore from mnemonic, restore from hardware wallet
+            id: loginPage
+            color: NeroshopComponents.Style.getColorsFromTheme()[0]
             //gradient: Gradient {
             //    GradientStop { position: 0.0; color: "white" }
             //    GradientStop { position: 1.0; color: "black" }
@@ -428,12 +458,70 @@ Page {
             //implicitHeight: 200      
             // add spacing from parent (padding - located inside the borders of an element)
             //anchors.margins: 50//anchors.leftPadding: 20
+    ///////////////////////////
+        Button {
+            id: pageRedirectButton1
+            anchors.verticalCenter: parent.verticalCenter//Layout.alignment: Qt.AlignVCenter | Qt::AlignLeft
+            anchors.left: parent.left
+            anchors.leftMargin: 20
+            implicitWidth: 60; height: implicitWidth
+            text: qsTr(FontAwesome.angleLeft)
+            
+            background: Rectangle {
+                color: "#6b5b95"//"#121212"
+                radius: 100
+                border.color: parent.contentItem.color
+                border.width: (parent.hovered) ? 1 : 0
+            }
+            
+            contentItem: Text {
+                text: parent.text
+                color: "#ffffff"
+                horizontalAlignment: Text.AlignHCenter
+                verticalAlignment: Text.AlignVCenter
+                font.bold: true
+                font.family: FontAwesome.fontFamily
+                font.pixelSize: (parent.width / 2)
+            }
+            
+            onClicked: {
+                mainPageStack.currentIndex = mainPageStack.currentIndex - 1
+            }
+        }            
             // wallet_file name edit
+            // ...
+            /*    ButtonGroup {
+                    id: walletRestoreMethodButtonGroup
+                    exclusive: true // only one button selected at a time
+                    onClicked: {
+                        console.log("Selected", button.text, "button")
+                        button.checked = true
+                        //onClicked: walletRestoreStack.currentIndex = 0
+                    }
+                }
+            // to add a button to the button group (within the Button object itself): ButtonGroup.group: walletRestoreMethodButtonGroup // attaches a button to a button group
+            */
+            ////StackLayout {
+            ////    anchors.fill: loginPage
+            ////    id: walletRestoreStack
+            ////    Rectangle {
+            ////        id: restoreFromWalletFile
+            ////    }
+            ////    Rectangle {
+            ////        id: restoreFromMnemonicSeed
+            ////    }
+            ////    Rectangle {
+            ////        id: restoreFromKeys
+            ////    }
+            ////    Rectangle {
+            ////        id: restoreFromHardwareWallet
+            ////    }                                    
+            ////}
             //ScrollView {
             //    id: wallet_upload_scrollview
             TextField {
                 id: wallet_upload_edit // for displaying wallet file name or path
-                x: (wallet_file_auth_page.width - wallet_upload_button.width - this.width) / 2//20
+                x: (loginPage.width - wallet_upload_button.width - this.width) / 2//20
                 y: 20 // top_margin
                 width: 300; height: 30
                 readOnly: true
@@ -501,7 +589,7 @@ Page {
                 selectByMouse: true // can select parts of or all of text with mouse
                 // change TextField color (only works with TextFields not TextInputs)
                 background: Rectangle { 
-                    color: wallet_file_auth_page.color
+                    color: loginPage.color
                     //opacity: 0.5
                     border.color: "#696969" // dim gray//"#ffffff"
                 }      
@@ -511,7 +599,7 @@ Page {
                 id: wallet_file_confirm_button
                 text: qsTr("Confirm")
                 x: wallet_password_edit.x
-                y: wallet_file_auth_page.height - this.height - 20//wallet_password_edit.y + wallet_password_edit.height + 0
+                y: loginPage.height - this.height - 20//wallet_password_edit.y + wallet_password_edit.height + 0
                 width: 150; height: 60 
                 //onClicked: Authenticator.auth_walletfile()
 
@@ -529,14 +617,5 @@ Page {
                 }            
             }
         } // eof wallet_file_authentication_page
-        Rectangle {
-            id: seed_auth_page
-            color: (NeroshopComponents.Style.darkTheme) ? "#2e2e2e" : "#a0a0a0"
-        }
-        
-        Rectangle {
-            id: keys_auth_page
-            color: (NeroshopComponents.Style.darkTheme) ? "#2e2e2e" : "#a0a0a0"
-        }        
     }    
 }    

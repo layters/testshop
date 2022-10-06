@@ -6,6 +6,7 @@
 #if defined(NEROSHOP_USE_QT)
 #include <QObject>
 #include <QString>
+#include <QVariant>
 #endif
 
 #include "../core/script.hpp"
@@ -22,12 +23,14 @@ class Script : public QObject {
     //Q_PROPERTY(<type> <variable_name> READ ...)
 public:    
     // functions (for use in QML)
-    //Q_INVOKABLE <type> get_table(const QString& key) const {}    
-    Q_INVOKABLE QString get_string(const QString& key) const;// {}   
-    //Q_INVOKABLE <type> get_userdata(const QString& key) const {} 
-    Q_INVOKABLE double get_number(const QString& key) const;// {}    
-    Q_INVOKABLE bool get_boolean(const QString& key) const;// {}    
-    //Q_INVOKABLE <type> get_(const QString& key) const {}    
+    //Q_INVOKABLE <type> getTable(const QString& key) const {}
+    Q_INVOKABLE QString getString(const QString& key) const;// {}
+    //Q_INVOKABLE <type> getUserdata(const QString& key) const {}
+    Q_INVOKABLE double getNumber(const QString& key) const;// {}
+    Q_INVOKABLE bool getBoolean(const QString& key) const;// {}
+    //Q_INVOKABLE <type> get_(const QString& key) const {}
+    // Containers
+    Q_INVOKABLE QVariantList getTableStrings(const QString& key) const;
 #else
 class Script {    
 #endif

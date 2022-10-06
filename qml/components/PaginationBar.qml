@@ -69,7 +69,8 @@ Row {//RowLayout {
             color: "#ffffff"
             horizontalAlignment: Text.AlignHCenter
             verticalAlignment: Text.AlignVCenter
-            //font.family: "Font Awesome 6 Free"//FontAwesome.solid.name//fontFamilySolid
+            //font.family: "Font Awesome 6 Free"//FontAwesome.fontFamily//FontAwesome.fontFamilySolid
+            //font.weight: Font.Bold
         }        
     }
 }

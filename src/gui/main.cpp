@@ -91,10 +91,22 @@ int main(int argc, char *argv[]) {
     //qmlRegisterSingletonType(QUrl("qml/style.qml"), "neroshop.Styles", 1, 0, "style");
     ////qmlRegisterType<neroshop::gui::Wallet/*WalletProxy*/>("neroshop.Wallet", 1, 0, "Wallet"); // Usage: import neroshop.Wallet  ...  Wallet { id: wallet }
     // we can also register an instance of a class instead of the class itself
-    //gui::Wallet wallet;
-    engine.rootContext()->setContextProperty("Wallet", new WalletProxy());//qmlRegisterUncreatableType<WalletProxy>("neroshop.Wallet", 1, 0, "Wallet", "Wallet cannot be instantiated directly.");
+    gui::Wallet wallet;
+    engine.rootContext()->setContextProperty("Wallet", &wallet);//new WalletProxy());//qmlRegisterUncreatableType<WalletProxy>("neroshop.Wallet", 1, 0, "Wallet", "Wallet cannot be instantiated directly.");
     // register script
     engine.rootContext()->setContextProperty("Script", new ScriptProxy());//qmlRegisterType<ScriptProxy>("neroshop.Script", 1, 0, "Script");
+    // running functions in separate threads
+/*QThread::currentThread()->setObjectName("Main Thread");
+    //neroshop::gui::Wallet myObject;
+
+    QThread thread;
+    thread.setObjectName("My Thread");
+    QObject::connect(&thread, SIGNAL(started()), &wallet, SLOT(daemonConnect()));
+    //QObject::connect(&thread, SIGNAL(on_sync_progress()), &wallet, SLOT(quit()));
+    QObject::connect(&thread, SIGNAL(finished()), &app, SLOT(quit()));
+
+    wallet.moveToThread(&thread);
+    thread.start();    */
     //--------------------------
     // When using qrc.qml to store images, use: QUrl(QStringLiteral("qrc:///main.qml"))
     engine.load(QUrl(QStringLiteral("qrc:/main.qml")));//("../main.qml");//("main.qml");//(QUrl(QStringLiteral("qrc:/main.qml")));

@@ -29,4 +29,12 @@ QString neroshop::gui::Wallet::get_mnemonic() const {
     if(!wallet->get_monero_wallet()) return "";
     return QString::fromStdString(wallet->get_monero_wallet()->get_mnemonic());
 }
+
+void neroshop::gui::Wallet::daemonOpen(const QString& ip, const QString& port, bool confirm_external_bind, bool restricted_rpc, bool remote, QString data_dir, QString network_type, unsigned int restore_height) {//const {
+    wallet->daemon_open(ip.toStdString(), port.toStdString(), confirm_external_bind, restricted_rpc, remote, data_dir.toStdString(), network_type.toStdString(), restore_height);
+}
+
+void neroshop::gui::Wallet::daemonConnect(const QString& ip, const QString& port) {
+    bool synced = wallet->daemon_connect(ip.toStdString(), port.toStdString());
+}
 #endif

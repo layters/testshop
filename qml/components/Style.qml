@@ -12,8 +12,8 @@ QtObject {
     property QtObject fontFiraCodeSemiBold: FontLoader { id: _fontFiraCodeSemiBold; source: "qrc:/fonts/FiraCode-SemiBold.ttf" }
     ////readonly property QtObject font<name><style>: FontLoader { id: _font<name><style>; source: "qrc:/fonts/" }
     // General settings
-    property bool darkTheme: Script.get_boolean("neroshop.generalsettings.application.theme.dark")//true
-    property string themeName: Script.get_string("neroshop.generalsettings.application.theme.name")//"PurpleDust" // "DefaultDark", "DefaultLight"
+    property bool darkTheme: Script.getBoolean("neroshop.generalsettings.application.theme.dark")//true
+    property string themeName: Script.getString("neroshop.generalsettings.application.theme.name")//"DefaultDark"
     // Catalog settings
     property bool gridView: true
     //property bool infiniteScroll: false
@@ -28,22 +28,26 @@ QtObject {
     function getColorsFromTheme() {
         let primaryColor = ""
         let secondaryColor = ""
+        let tertiaryColor = ""
         
         if(darkTheme) {
             if(themeName.match("PurpleDust")) {
                 primaryColor = "#141419"
                 secondaryColor = "#292933"
+                tertiaryColor = "#393947"//"#4f4f63"//<= tint
             }
             else { //"DefaultDark"
-                primaryColor = "#202020"// #121212 = rgb(18, 18, 18)
-                secondaryColor = "#2e2e2e"
+                primaryColor = "#202020"//"#121212"
+                secondaryColor = "#2e2e2e"//"#262626"
+                tertiaryColor = "#595959"
             }
         }
         else if(!darkTheme) { //"DefaultLight"
-            primaryColor = "#c1c1c5"//"#ffffff"
+            primaryColor = "#c1c1c5"
             secondaryColor = "#909093"
+            tertiaryColor = "#d7d7da"
         }
-        return [primaryColor, secondaryColor];
+        return [primaryColor, secondaryColor, tertiaryColor];
     }    
     
 }

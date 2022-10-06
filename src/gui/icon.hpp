@@ -49,9 +49,10 @@ private:
     static bool load_views(); // names: "grid", "list"
     static bool load_triangle();
     static bool load_theme(); // names: "sun", moon, "bulb"
+    static bool load_settings(); // "cog", "tools"
+    static bool load_privacy();
     //static bool load_();
     // non-icons8 icons
-    static bool load_settings(); // cog//settings
     static bool load_speaker(); // volume_up, volume_down
     static bool load_bookmark();    
     static bool load_flag();  // flag, flag_outline (report)
