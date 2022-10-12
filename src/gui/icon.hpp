@@ -51,6 +51,12 @@ private:
     static bool load_theme(); // names: "sun", moon, "bulb"
     static bool load_settings(); // "cog", "tools"
     static bool load_privacy();
+    static bool load_key();
+    static bool load_sprout();
+    static bool load_file();
+    static bool load_usb();
+    static bool load_ellipsis();
+    static bool load_change();
     //static bool load_();
     // non-icons8 icons
     static bool load_speaker(); // volume_up, volume_down

@@ -36,7 +36,7 @@ Popup {
                 anchors.verticalCenter: titleBar.verticalCenter
                 anchors.right: titleBar.right
                 anchors.rightMargin: 10
-                text: qsTr("\uf00d")
+                text: qsTr(FontAwesome.xmark)
                 contentItem: Text {  
                     text: closeButton.text
                     color: "#ffffff"
@@ -207,9 +207,9 @@ Popup {
                     ComboBox {
                         id: themeBox
                         currentIndex: model.indexOf(NeroshopComponents.Style.themeName)//Component.onCompleted: currentIndex = model.indexOf(NeroshopComponents.Style.themeName) // Set the initial currentIndex to the index in the array containing themeName string
-                        displayText: currentText//"Theme: " + currentText
-                        property string lastUsedDarkTheme: "DefaultDark"
-                        property string lastUsedLightTheme: "DefaultLight"
+                        displayText: currentText
+                        property string lastUsedDarkTheme: (Script.getBoolean("neroshop.generalsettings.application.theme.dark")) ? Script.getString("neroshop.generalsettings.application.theme.name") : "DefaultDark"
+                        property string lastUsedLightTheme: (!Script.getBoolean("neroshop.generalsettings.application.theme.dark")) ? Script.getString("neroshop.generalsettings.application.theme.name") : "DefaultLight"
                         model: ["DefaultDark", "DefaultLight", "PurpleDust"]
                         onActivated: {
                             if(currentText == "PurpleDust") {
@@ -225,7 +225,7 @@ Popup {
                                 lastUsedLightTheme = currentText
                             }
                             displayText = currentText
-                            NeroshopComponents.Style.themeName = currentText // update the theme name
+                            NeroshopComponents.Style.themeName = displayText // update the actual theme (name)
                             themeSwitcher.checked = !NeroshopComponents.Style.darkTheme // update the theme switch                           
                             // NOTE:  on app launch, the theme will ALWAYS be reset back to its default unless you change the theme settings in your configuration file
                             //todo: change theme in configuration file too

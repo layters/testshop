@@ -50,7 +50,10 @@ Coming soon
 ### Compiling neroshop from source
 **0. Clone neroshop (and its submodules)**
 ```bash
-git clone --recurse-submodules https://github.com/larteyoh/testshop.git && cd testshop
+git clone --recurse-submodules https://github.com/larteyoh/testshop.git
+```
+```bash
+cd testshop
 ```
 
 

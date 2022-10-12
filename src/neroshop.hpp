@@ -30,11 +30,11 @@
 #include "core/encryptor.hpp"
 #include "core/util.hpp"
 #include "core/process.hpp"
-// neroshop (daemon)
+// neroshop-daemon
 // ...
 // neroshop (gui)
 #if defined(NEROSHOP_BUILD_GUI)
-// todo: remove icon.cpp and add icons to qml.qrc file
+// todo: remove icon.hpp/icon.cpp and add icon files to qml.qrc file instead
 #include "gui/icon.hpp"
 #include "gui/script_proxy.hpp"
 #include "gui/wallet_proxy.hpp"
