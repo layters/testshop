@@ -87,6 +87,8 @@ int main(int argc, char *argv[]) {
             return 1;
         }
     }
+    /*engine.rootContext()->setContextProperty("ApplicationClipboard", app.clipboard());
+    qDebug() << app.clipboard()->text();*/ // This correctly prints the copied text
     // register custom (class) modules
     //qmlRegisterSingletonType(QUrl("qml/style.qml"), "neroshop.Styles", 1, 0, "style");
     ////qmlRegisterType<neroshop::gui::Wallet/*WalletProxy*/>("neroshop.Wallet", 1, 0, "Wallet"); // Usage: import neroshop.Wallet  ...  Wallet { id: wallet }

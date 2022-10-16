@@ -519,8 +519,8 @@ endif()
 
 if(Qt5_FOUND)
     if(NEROSHOP_BUILD_GUI AND NEROSHOP_USE_QT)
-        # Linux requires Qt::Widgets due to the lack of a native platform file dialog implementation
-        if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
+        # Some Linux distros require Qt::Widgets due to the lack of a native platform file dialog implementation
+        if(NEROSHOP_USE_QT_WIDGETS)#if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
             message(STATUS "Using Qt5::Widgets")
             target_compile_definitions(${neroshop_executable} PRIVATE NEROSHOP_USE_QT_WIDGETS)
             find_package(Qt5 COMPONENTS Widgets)

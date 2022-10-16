@@ -25,6 +25,13 @@ int neroshop::gui::Wallet::createRandomWallet(const QString& password, const QSt
     return static_cast<int>(error);
 }
 
+void neroshop::gui::Wallet::copyMnemonicToClipboard() {
+    if(!wallet->get_monero_wallet()) return;
+    QClipboard * clipboard = QGuiApplication::clipboard();
+    clipboard->setText(getMnemonic());
+    std::cout << "Copied to clipboard\n";
+}
+
 QString neroshop::gui::Wallet::getMnemonic() const {
     if(!wallet->get_monero_wallet()) return "";
     return QString::fromStdString(wallet->get_monero_wallet()->get_mnemonic());

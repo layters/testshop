@@ -7,6 +7,8 @@
 #include <QObject>
 #include <QString>
 #include <QStringList>
+#include <QClipboard>
+#include <QGuiApplication>
 #include <QDebug>
 #include <QThread>
 #endif
@@ -28,6 +30,7 @@ public:
     // functions (for use in QML)
     ////explicit Wallet(QObject* parent = 0);
     Q_INVOKABLE int createRandomWallet(const QString& password, const QString& confirm_pwd, const QString& path) const;
+    Q_INVOKABLE void copyMnemonicToClipboard();
     Q_INVOKABLE QString getMnemonic() const;
     Q_INVOKABLE QStringList getMnemonicModel() const;
     Q_INVOKABLE neroshop::Wallet * getWallet() const;

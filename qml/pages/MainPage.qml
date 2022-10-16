@@ -20,19 +20,6 @@ Page {
         color: "transparent"
     }
     ///////////////////////////
-    function copyToClipboard() { 
-        // If text edit string is empty, exit function
-        if(!seedDisplayEdit.text) return;
-        // Select all text from edit then copy the selected text
-        seedDisplayEdit.selectAll()
-        seedDisplayEdit.copy()
-        console.log("Copied to clipboard");
-    }
-    ///////////////////////////
-    //Wallet {
-    //    id: wallet
-    //}
-    ///////////////////////////
     function generateWalletKeys() {
         // check if wallet has already been generated so that this function does not repeat
         if(Wallet.getMnemonic().length > 0) {
@@ -48,7 +35,7 @@ Page {
         let WALLET_PASSWORD_NO_MATCH = 2
         let WALLET_ALREADY_EXISTS = 3;
         if(error == WALLET_PASSWORD_NO_MATCH) {//if(walletPasswordConfirmField.text != walletPasswordField.text || !walletPasswordField.acceptableInput) {
-            walletMessageArea.text = (walletPasswordConfirmField.length > 0) ? qsTr("Wallet passwords do not match") : qsTr("Wallet password not confirmed")
+            walletMessageArea.text = (walletPasswordConfirmField.length > 0) ? qsTr("Wallet passwords do not match") : qsTr("Wallet password must be confirmed")
             walletMessageArea.messageCode = 1
             return
         }
@@ -61,9 +48,15 @@ Page {
          walletSeedDisplayRepeater.model = Wallet.getMnemonicModel()//walletSeedDisplay.model = Wallet.getMnemonicModel()////seedDisplayEdit.text = Wallet.getMnemonic()
         // show important message (only if wallet keys were successfully created)
         if(walletSeedDisplayRepeater.model) {
-            walletMessageArea.text = qsTr("These %1 words are the key to your account. Please store them safely!").arg(walletSeedDisplayRepeater.count)
+            walletMessageArea.text = qsTr("\"%1\" has been created successfully.").arg((walletNameField.text) ? qsTr(folderUrlToString + "/%1.keys").arg(walletNameField.text) : qsTr(folderUrlToString + "/%1.keys").arg(walletNameField.placeholderText))
             walletMessageArea.messageCode = 0
-            //walletMessageArea.visible = true       
+            // update wallet seed message
+            seedMessageArea.text = qsTr("These %1 words are the key to your account. Please store them safely!").arg(walletSeedDisplayRepeater.count)
+            seedMessageArea.messageCode = 0
+            // update wallet status
+            walletGenerationPage.isWalletGenerated = true
+            // clear wallet name text field
+            walletNameField.text = "";
             // clear wallet password text fields
             walletPasswordField.text = "";
             walletPasswordConfirmField.text = "";
@@ -72,8 +65,8 @@ Page {
     ///////////////////////////
     function registerWallet() {
         // if not key generated, then generate key
-        if(!seedDisplayEdit.text) {
-            messageBox.text = qsTr("Please generate your keys before registering")
+        if(!walletSeedDisplayRepeater.model) {
+            messageBox.text = qsTr("Please generate your wallet keys before registering")
             messageBox.open()
             return; // exit function and do not proceed any further
         }
@@ -94,6 +87,7 @@ Page {
             Script.getNumber("neroshop.monero.daemon.restore_height")
         );*/
         // connect to a remote monero node (default)(causes segfault)
+        // todo: figure out how to detach node thread from main thread and connect to node on app launch rather than on registration
         let remote_node = Script.getTableStrings("neroshop.monero.nodes.stagenet")[1]//Script.getTableStrings("neroshop.monero.nodes.mainnet")[0]
         let remote_node_ip = remote_node.split(":")[0]
         let remote_node_port = remote_node.split(":")[1]
@@ -102,18 +96,15 @@ Page {
     }
     ///////////////////////////    
 // consists of login and registration menus
-    MessageDialog {
+    NeroshopComponents.MessageBox {////MessageDialog {
         id: messageBox
         //visible: false
         title: "message"
         text: "It's so cool that you are using Qt Quick."
-        //detailedText:
-        //icon: StandardIcon.Question
-        ////standardButtons: StandardButton.Ok | StandardButton.Cancel
-        //modal: true // blocks input to other content beneath the dialog.
-
-        //onAccepted: console.log("Ok clicked")
-        //onRejected: console.log("Cancel clicked")
+        // Popup functions
+        ////anchors.centerIn: Overlay.overlay
+        x: mainWindow.x + (mainWindow.width - this.width) / 2
+        y: mainWindow.y + (mainWindow.height - this.height) / 2
     }
     ///////////////////////////
     // for login page
@@ -200,8 +191,9 @@ Page {
                 
         // generate auth keys page
         Rectangle {
-            id: registerPage
+            id: walletGenerationPage
             color: NeroshopComponents.Style.getColorsFromTheme()[0]
+            property bool isWalletGenerated: false
             
             Button {
                 id: pageRedirectButton
@@ -212,7 +204,7 @@ Page {
                 text: qsTr(FontAwesome.angleRight)
             
                 background: Rectangle {
-                    color: "#6b5b95"//"#121212"
+                    color: "#121212"//"#6b5b95"//
                     radius: 100
                     border.color: parent.contentItem.color//(NeroshopComponents.Style.darkTheme) ? parent.contentItem.color : "#000000"
                     border.width: (parent.hovered) ? 1 : 0
@@ -453,8 +445,8 @@ Page {
                 TextArea {
                     id: walletMessageArea
                     visible: true////false
-                    Layout.row: (!walletSeedDisplayRepeater.model) ? 7 : 0//QGridLayoutEngine::addItem: Cell (0, 0) already taken
-                    Layout.column: (!walletSeedDisplayRepeater.model) ? 0 : 1//QGridLayoutEngine::addItem: Cell (0, 0) already taken
+                    Layout.row: 7
+                    Layout.column: 0
                     Layout.fillWidth: true // extends the TextArea's width to the width of the Layout
                     Layout.maximumWidth: walletPathField.width // keeps textarea from going past grid bounds when text is added
                     Layout.preferredHeight: contentHeight + 20
@@ -483,6 +475,40 @@ Page {
                         font.family: FontAwesome.fontFamily
                     }
                 }
+                // wallet seed message box
+                TextArea {
+                    id: seedMessageArea
+                    visible: (walletSeedDisplayRepeater.model != null)
+                    Layout.row: 0//QGridLayoutEngine::addItem: Cell (0, 0) already taken
+                    Layout.column: 1//QGridLayoutEngine::addItem: Cell (0, 0) already taken
+                    Layout.fillWidth: true // extends the TextArea's width to the width of the Layout
+                    Layout.maximumWidth: walletPathField.width // keeps textarea from going past grid bounds when text is added
+                    Layout.preferredHeight: contentHeight + 20
+                    Layout.topMargin: 20//15
+                    selectByMouse: true
+                    readOnly: true
+                    verticalAlignment: TextEdit.AlignVCenter // align the text within the center of TextArea item's height
+                    wrapMode: TextEdit.Wrap // move text to newline if it reaches the width of the TextArea
+                    text: qsTr("")
+                    color: (messageCode == 1) ? "#b22222" : ((NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#404040")// text color
+                    property int messageCode: 0 //0 = info; 1 = warning or error
+                    background: Rectangle { 
+                        color: "transparent"
+                        border.color: (parent.messageCode == 1) ? "#b22222" : "#2196f3"////parent.color//(NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#404040"
+                        radius: 3
+                    }            
+                    leftPadding: 30 + circleInfo.contentWidth
+                    Text {
+                        ////id: circleInfo
+                        anchors.left: parent.left
+                        anchors.leftMargin: 15
+                        anchors.verticalCenter: parent.verticalCenter                         
+                        text: (parent.messageCode == 1) ? qsTr(FontAwesome.triangleExclamation) : qsTr(FontAwesome.circleInfo)
+                        color: (parent.messageCode == 1) ? "#b22222" : "#2196f3"
+                        font.bold: true
+                        font.family: FontAwesome.fontFamily
+                    }
+                }              
                 // testing listview for walletseed display   
                 Flow {////RowLayout {
                     id: walletSeedDisplay
@@ -518,74 +544,36 @@ Page {
                             //}
                         }
                     }
-                } // Flow?    
-                // wallet seed copy button         
-            } // GridLayout for registerPage            
-            /*            
-            // optional pseudonym edit
-            TextField {
-                id: optNameEdit
-                placeholderText: qsTr("Pseudonym (optional)")
-                placeholderTextColor: "#696969" // dim gray
-                color:"#6b5b95"
-                //x: seedDisplayScrollView.x
-                anchors.left: seedDisplayScrollView.left
-                //y: seedDisplayScrollView.y + seedDisplayScrollView.height + 30
-                anchors.top: seedDisplayScrollView.bottom
-                anchors.topMargin: 30
-                selectByMouse: true
+                } // Flow?
+                // wallet seed copy button  
+                Button {
+                    id: seedCopyButton
+                    Layout.row: 9
+                    Layout.column: 1
+                    Layout.fillWidth: true////width: contentWidth + 20; height: 40
+                    visible: (walletSeedDisplayRepeater.model != null)
+                    text: qsTr("Copy")
+                    icon.source: "file:///" + neroshopResourcesDir + "/copy.png"
+                    icon.color: "#ffffff"
+                    display: AbstractButton.IconOnly//AbstractButton.TextBesideIcon//AbstractButton.TextOnly//AbstractButton.TextUnderIcon
+                    onClicked: Wallet.copyMnemonicToClipboard()////copyToClipboard()
                 
-                width: 300
-                background: Rectangle { 
-                    color: (NeroshopComponents.Style.darkTheme) ? "transparent": "#101010"//"#101010" = rgb(16, 16, 16)
-                    border.color: "#696969" // dim gray//"#ffffff"
-                    border.width: (NeroshopComponents.Style.darkTheme) ? 1 : 0
-                }                
-                //validator: RegExpValidator { regExp: /^(?=.{8,20}$)(?![_.])(?!.*[_.]{2})[a-zA-Z0-9._]+(?<![_.])$/ } // validator: RegularExpressionValidator { regularExpression: /[0-9A-F]+/ } // since Qt  5.14
-            }
-            // register button
-            Button {
-                id: wallet_register_button
-                text: qsTr("Register")
-                anchors.left: optNameEdit.right
-                anchors.leftMargin: 20
-                anchors.verticalCenter: optNameEdit.verticalCenter
-                
-                width: 180//seedCopyButton.width
-                height: 60 + 5//50 // width will be set automatically based on text length
-                onClicked: registerWallet()
-                
-                contentItem: Text {  
-                    //font.family: "Consolas"; //font.family: NeroshopComponents.Style.fontFiraCodeLight.name
-                    //font.pointSize: 10
-                    font.bold: true
-                    text: wallet_register_button.text
-                    color: "#ffffff" // white
-                    horizontalAlignment: Text.AlignHCenter
-                    verticalAlignment: Text.AlignVCenter                    
-                }
-                
-                background: Rectangle {
-                    color: "#6b5b95" // #ff6600 is the monero orange color
-                    radius: 0
-                }                
-            }*/            
-        } // eof registerPage
-        // walletfile auth page
-        // Upload button with read-only textfield
+                    background: Rectangle {
+                        color: "#404040"
+                        radius: 5
+                        border.color: parent.hovered ? "#ffffff" : this.color//"#ffffff"//control.down ? "#17a81a" : "#21be2b"
+                    }
+
+                    ToolTip.delay: 1000
+                    ToolTip.visible: hovered
+                    ToolTip.text: qsTr("Copy seed phrase")////qsTr("Copy to clipboard")                    
+                } // copyButton                                                                    
+            } // GridLayout for walletGenerationPage                    
+        } // eof walletGenerationPage
         Rectangle {
-            // todo: create buttons: restore from keys, restore from mnemonic, restore from hardware wallet
-            id: loginPage
+            id: registrationPage
             color: NeroshopComponents.Style.getColorsFromTheme()[0]
-            //gradient: Gradient {
-            //    GradientStop { position: 0.0; color: "white" }
-            //    GradientStop { position: 1.0; color: "black" }
-            //}            
-            //anchors.right: parent.right//implicitWidth: 200
-            //implicitHeight: 200      
-            // add spacing from parent (padding - located inside the borders of an element)
-            //anchors.margins: 50//anchors.leftPadding: 20
-    ///////////////////////////
+
             Button {
                 id: pageRedirectButton1
                 anchors.verticalCenter: parent.verticalCenter//Layout.alignment: Qt.AlignVCenter | Qt::AlignLeft
@@ -595,7 +583,7 @@ Page {
                 text: qsTr(FontAwesome.angleLeft)
             
                 background: Rectangle {
-                    color: "#6b5b95"//"#121212"
+                    color: "#121212"//"#6b5b95"//
                     radius: 100
                     border.color: parent.contentItem.color
                     border.width: (parent.hovered) ? 1 : 0
@@ -614,8 +602,79 @@ Page {
                 onClicked: {
                     mainPageStack.currentIndex = mainPageStack.currentIndex - 1
                 }
-            }            
+            }
             
+            GridLayout {
+                anchors.centerIn: parent
+            	// optional pseudonym edit
+            	TextField {
+                	id: optNameField
+                	Layout.row: 0
+                	Layout.column: 0
+                	Layout.preferredWidth: 500
+                	Layout.preferredHeight: 50
+                	placeholderText: qsTr("Pseudonym (optional)")
+                	placeholderTextColor: "#696969" // dim gray
+                	color: "#6b5b95"////(NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000" // textColor
+                	//x: seedDisplayScrollView.x
+                	////anchors.left: seedDisplayScrollView.left
+                	//y: seedDisplayScrollView.y + seedDisplayScrollView.height + 30
+                	////anchors.top: seedDisplayScrollView.bottom
+                	////anchors.topMargin: 30
+                	selectByMouse: true
+                
+                	width: 300
+                	background: Rectangle { 
+                        color: (NeroshopComponents.Style.darkTheme) ? "#101010" : "#ffffff"
+                        border.color: (NeroshopComponents.Style.darkTheme) ? "#a9a9a9" : "#696969"
+                        radius: 3
+                    }              
+                	//validator: RegExpValidator { regExp: /^(?=.{8,20}$)(?![_.])(?!.*[_.]{2})[a-zA-Z0-9._]+(?<![_.])$/ } // validator: RegularExpressionValidator { regularExpression: /[0-9A-F]+/ } // since Qt  5.14
+                    
+                    ////Layout.topMargin: (optNameText.visible) ? 5 : 0
+                    ////placeholderTextColor: (NeroshopComponents.Style.darkTheme) ? "#a9a9a9" : "#696969" 	
+            	}
+            	// register button
+            	Button {
+                	id: registerButton
+                	Layout.row: 1
+                	Layout.column: 0         
+                	Layout.fillWidth: true
+                	Layout.preferredHeight: 50
+                	Layout.topMargin: 15
+                	text: qsTr("Register")
+                	onClicked: registerWallet()
+                	background: Rectangle {
+                    	color: "#6b5b95"
+                    	radius: 5
+                	}
+                	                
+                	contentItem: Text {  
+                    	//font.family: "Consolas"; //font.family: NeroshopComponents.Style.fontFiraCodeLight.name
+                    	//font.pointSize: 10
+                    	font.bold: true
+                    	text: registerButton.text
+                    	color: "#ffffff" // white
+                    	horizontalAlignment: Text.AlignHCenter
+                    	verticalAlignment: Text.AlignVCenter                    
+                	}                
+            	}            
+        } // GridLayout for registrationPage
+        } // eof registrationPage  
+        // walletfile auth page
+        // Upload button with read-only textfield
+        Rectangle {
+            // todo: create buttons: restore from keys, restore from mnemonic, restore from hardware wallet
+            id: loginPage
+            color: NeroshopComponents.Style.getColorsFromTheme()[0]
+            //gradient: Gradient {
+            //    GradientStop { position: 0.0; color: "white" }
+            //    GradientStop { position: 1.0; color: "black" }
+            //}            
+            //anchors.right: parent.right//implicitWidth: 200
+            //implicitHeight: 200      
+            // add spacing from parent (padding - located inside the borders of an element)
+            //anchors.margins: 50//anchors.leftPadding: 20            
             GridLayout {
                 anchors.horizontalCenter: parent.horizontalCenter
                 anchors.top: parent.top

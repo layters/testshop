@@ -7,6 +7,7 @@
         <file>qml/components/CatalogList.qml</file>
         <file>qml/components/FilterBox.qml</file>
         <file>qml/components/Hint.qml</file>
+        <file>qml/components/MessageBox.qml</file>
         <file>qml/components/NavigationalBar.qml</file>
         <file>qml/components/PaginationBar.qml</file>
         <file>qml/components/ProgressBar.qml</file>
