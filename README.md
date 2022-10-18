@@ -7,8 +7,7 @@ A P2P (peer-to-peer) marketplace for [**Monero**](https://getmonero.org/) users
 
 ## Table of contents
 <!-- - [The history behind neroshop](#about)-->
-- [Demo](#demo)
-<!-- - [Features](#features)--> <!-- - [Documentation](#documentation)-->
+- [Demo](#demo) <!-- - [Features](#features)--> <!-- - [Documentation](#documentation)-->
 - [Building neroshop](#building-neroshop)
   - [Dependencies](#dependencies)
   - [Compiling neroshop from source](#compiling-neroshop-from-source) <!-- - [Contributing](#contributing) --> <!-- - [Bug Bounty Program]-->
@@ -20,8 +19,11 @@ A P2P (peer-to-peer) marketplace for [**Monero**](https://getmonero.org/) users
 
 <details>
     <summary>Click to load images</summary>
-    ![Wallet Keys Generation](https://github.com/larteyoh/testshop/blob/main/images/screenshots/Wallet_Keys_Generation_2022-10-12 04-34-24.png)
-
+    
+    ![Wallet Keys Generation](https://github.com/larteyoh/testshop/blob/main/images/screenshots/Wallet_Keys_Generation_2022-10-12_04-34-24.png)
+    ![Registration](https://github.com/larteyoh/testshop/blob/main/images/screenshots/Registration_2022-10-17_22-40-12.png)
+    ![CatalogGrid Top](https://github.com/larteyoh/testshop/blob/main/images/screenshots/CatalogGrid_Top_022-09-26_04-08-42.png)
+    ![CatalogGrid Bottom](https://github.com/larteyoh/testshop/blob/main/images/screenshots/CatalogGrid_Bottom_2022-09-26_04-08-56.png)
 
 </details>
 
