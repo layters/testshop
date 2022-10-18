@@ -644,21 +644,7 @@ Page {
                     	verticalAlignment: Text.AlignVCenter                    
                 	}                
             	}
-            	Button {
-            	id: temporaryButtonThatWillBeDeletedSoon
-                Layout.row: 2
-                Layout.column: 0
-                Layout.fillWidth: true
-                text: "Test Button (" + value.toString() + ")"
-                property real value: 0.0
-                property bool walletgen: Wallet.isGenerated()
-                onClicked: {
-                    value = (Wallet.getSyncPercentage() * 100) // value will not be updated unless you do set it in some callback
-                    console.log("sync progress: " + value)
-                    console.log("Is wallet generated: " + walletgen)//Wallet.isGenerated())  // this is also not updated unless you the realtime "Wallet.isGenerated()"
-                }
-                } // tempButton              
-        } // GridLayout for registrationPage
+            } // GridLayout for registrationPage
         } // eof registrationPage  
         // walletfile auth page
         // Upload button with read-only textfield

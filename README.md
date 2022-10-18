@@ -7,8 +7,7 @@ A P2P (peer-to-peer) marketplace for [**Monero**](https://getmonero.org/) users
 
 ## Table of contents
 <!-- - [The history behind neroshop](#about)-->
-- [Demo](#demo)
-<!-- - [Features](#features)--> <!-- - [Documentation](#documentation)-->
+- [Demo](#demo) <!-- - [Features](#features)--> <!-- - [Documentation](#documentation)-->
 - [Building neroshop](#building-neroshop)
   - [Dependencies](#dependencies)
   - [Compiling neroshop from source](#compiling-neroshop-from-source) <!-- - [Contributing](#contributing) --> <!-- - [Bug Bounty Program]-->
