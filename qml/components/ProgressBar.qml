@@ -6,7 +6,7 @@ import "." as NeroshopComponents
 
 ProgressBar {
     id: progressBar
-    value: 0.5 // 50 / 100 (50%)
+    value: 0.0////0.5 // 50 / 100 (50%)
     from: 0.0 // startValue
     to: 1.0 // endValue
     padding: 0//2

@@ -1,13 +1,11 @@
-# neroshop 
-
-[![alt text](images/appicons/neroshop-logo.png)](https://github.com/larteyoh/testshop "neroshop logo")
-
-## Overview
-A P2P (peer-to-peer) marketplace for [Monero](https://getmonero.org/) users
+# neroshop - WORK IN PROGRESS
+[![banner](images/appicons/neroshop-logo.png)](https://github.com/larteyoh/testshop "neroshop logo")
+A P2P (peer-to-peer) marketplace for [**Monero**](https://getmonero.org/) users
 
 
 ## Table of contents
 <!-- - [The history behind neroshop](#about)-->
+- [Demo]
 <!-- - [Features](#features)--> <!-- - [Documentation](#documentation)-->
 - [Building neroshop](#building-neroshop)
   - [Dependencies](#dependencies)
@@ -15,8 +13,24 @@ A P2P (peer-to-peer) marketplace for [Monero](https://getmonero.org/) users
 - [Contact information](#contact)
 
 
+## Demo
+<!-- place link to videos here -->
+
+<details>
+<summary>Click to load images</summary>
+
+![Wallet Keys Generation](images/screenshots/Wallet_Keys_Generation_2022-10-12 04-34-24.png)
+![Registration](images/screenshots/Registration_2022-10-17 22-40-12.png)
+![CatalogGrid Top](images/screenshots/CatalogGrid_Top_022-09-26 04-08-42.png)
+![CatalogGrid Bottom](images/screenshots/CatalogGrid_Bottom_2022-09-26 04-08-56.png)
+<!--![alt text](images/screenshots/.png)-->
+
+</details>
+
 <!--## About
-This is currently a work in progress. There is nothing to see here :shrug:
+*neroshop* is a distributed P2P (peer-to-peer) marketplace that uses [**Monero**](https://getmonero.org/) as its default cryptocurrency and 
+caters not only to darknet market users, but also those who believe in a **truly** free market that is uncensorable, unseizable, and unregulatable.
+Neroshop aims to be simple for a beginner to use and easy for sellers to onboard their shop with just a few clicks.
 
 
 ## Features
@@ -136,7 +150,7 @@ cd ../../../../
 
 **5. Build neroshop**
 
-To build with [CMake](https://cmake.org/):
+To build with [**CMake**](https://cmake.org/):
 
 ```bash
 # Build external libraries
@@ -155,7 +169,7 @@ make
 ```
 
 
-To build with [Premake](https://premake.github.io/) (experimental - broken for now):
+To build with [**Premake**](https://premake.github.io/) (experimental - broken for now):
 
 ```bash
 # Build external libraries
@@ -173,7 +187,7 @@ cd build && make
 ```
 
 
-To build for [Android](https://www.android.com/) (requires [Android NDK](https://developer.android.com/ndk)):<!-- and [CMake](https://cmake.org/)):-->
+To build for [**Android**](https://www.android.com/) (requires [**Android NDK**](https://developer.android.com/ndk)):<!-- and [CMake](https://cmake.org/)):-->
 ```bash
 ```
 

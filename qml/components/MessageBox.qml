@@ -83,7 +83,6 @@ Window {
                 }
                 onClicked: {
                     messageBoxWindow.close()////messageBox.close()
-                    console.log(contentItem.font.pointSize)
                 }
             }
         }

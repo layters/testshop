@@ -20,12 +20,31 @@ Page {
         color: "transparent"
     }
     ///////////////////////////
+    function startWalletSync() {
+        // start local monero daemon or node synchronization (optional)
+        /*Wallet.daemonExecute(Script.getString("neroshop.monero.daemon.ip"), 
+            Script.getString("neroshop.monero.daemon.port"),
+            Script.getBoolean("neroshop.monero.daemon.confirm_external_bind"),
+            Script.getBoolean("neroshop.monero.daemon.restricted_rpc"),
+            Script.getBoolean("neroshop.monero.daemon.remote"),
+            Script.getString("neroshop.monero.daemon.data_dir"),
+            Script.getString("neroshop.monero.daemon.network_type"),
+            Script.getNumber("neroshop.monero.daemon.restore_height")
+        );*/
+        // connect to a remote monero node (default)
+        let remote_node = Script.getTableStrings("neroshop.monero.nodes.stagenet")[1]//[0]
+        let remote_node_ip = remote_node.split(":")[0]
+        let remote_node_port = remote_node.split(":")[1]
+        console.log("connecting to remote node " + remote_node_ip + " (port: " + remote_node_port + ")")
+        Wallet.daemonConnect(remote_node_ip, remote_node_port);//Wallet.daemonConnect(Script.getString("neroshop.monero.daemon.ip"), Script.getString("neroshop.monero.daemon.port"));    
+    }
+    ///////////////////////////
     function generateWalletKeys() {
         // check if wallet has already been generated so that this function does not repeat
+        // todo: if user decides to re-generate wallet keys, then destroy the current monero_wallet object and recreate it
         if(Wallet.getMnemonic().length > 0) {
             walletMessageArea.text = qsTr("Wallet has already been generated. One wallet per session to reduce spam")
-            walletMessageArea.messageCode = 1
-            // todo: if user decides to re-generate wallet keys, then destroy the current monero_wallet object and recreate it
+            walletMessageArea.messageCode = 1            
             return;
         }
         // generate a unique wallet seed (mnemonic)
@@ -37,35 +56,30 @@ Page {
         if(error == WALLET_PASSWORD_NO_MATCH) {//if(walletPasswordConfirmField.text != walletPasswordField.text || !walletPasswordField.acceptableInput) {
             walletMessageArea.text = (walletPasswordConfirmField.length > 0) ? qsTr("Wallet passwords do not match") : qsTr("Wallet password must be confirmed")
             walletMessageArea.messageCode = 1
-            return
         }
         else if(error == WALLET_ALREADY_EXISTS) {
             walletMessageArea.text = qsTr("A wallet file with the same name already exists")
             walletMessageArea.messageCode = 1
-            return
         }
-        // then copy the mnemonic to the seed display edit
-         walletSeedDisplayRepeater.model = Wallet.getMnemonicModel()//walletSeedDisplay.model = Wallet.getMnemonicModel()////seedDisplayEdit.text = Wallet.getMnemonic()
-        // show important message (only if wallet keys were successfully created)
-        if(walletSeedDisplayRepeater.model) {
-            walletMessageArea.text = qsTr("\"%1\" has been created successfully.").arg((walletNameField.text) ? qsTr(folderUrlToString + "/%1.keys").arg(walletNameField.text) : qsTr(folderUrlToString + "/%1.keys").arg(walletNameField.placeholderText))
-            walletMessageArea.messageCode = 0
-            // update wallet seed message
-            seedMessageArea.text = qsTr("These %1 words are the key to your account. Please store them safely!").arg(walletSeedDisplayRepeater.count)
-            seedMessageArea.messageCode = 0
-            // update wallet status
-            walletGenerationPage.isWalletGenerated = true
-            // clear wallet name text field
-            walletNameField.text = "";
-            // clear wallet password text fields
-            walletPasswordField.text = "";
-            walletPasswordConfirmField.text = "";
-        }
+        
+        if(!Wallet.isGenerated()) return;
+        // assign the mnemonic model to the repeater model
+        walletSeedRepeater.model = Wallet.getMnemonicModel()
+        // show wallet and seed message
+        walletMessageArea.text = qsTr("\"%1\" has been created successfully.").arg((walletNameField.text) ? qsTr(folderUrlToString + "/%1.keys").arg(walletNameField.text) : qsTr(folderUrlToString + "/%1.keys").arg(walletNameField.placeholderText))
+        walletMessageArea.messageCode = 0
+        seedMessageArea.text = qsTr("These %1 words are the key to your account. Please store them safely!").arg(walletSeedRepeater.count)
+        seedMessageArea.messageCode = 0
+        // clear wallet name and password text fields
+        walletNameField.text = ""
+        walletPasswordField.text = ""
+        walletPasswordConfirmField.text = ""
+        // start synching the monero node as soon we generate a wallet
+        startWalletSync();            
     }
     ///////////////////////////
     function registerWallet() {
-        // if not key generated, then generate key
-        if(!walletSeedDisplayRepeater.model) {
+        if(!Wallet.isGenerated()) {
             messageBox.text = qsTr("Please generate your wallet keys before registering")
             messageBox.open()
             return; // exit function and do not proceed any further
@@ -76,33 +90,11 @@ Page {
         // switch (login) to home page
         //stack.push(home_page)
         pageLoader.source = "HomePage.qml"
-        // start local monero daemon or node synchronization (optional)
-        /*Wallet.daemonOpen(Script.getString("neroshop.monero.daemon.ip"), 
-            Script.getString("neroshop.monero.daemon.port"),
-            Script.getBoolean("neroshop.monero.daemon.confirm_external_bind"),
-            Script.getBoolean("neroshop.monero.daemon.restricted_rpc"),
-            Script.getBoolean("neroshop.monero.daemon.remote"),
-            Script.getString("neroshop.monero.daemon.data_dir"),
-            Script.getString("neroshop.monero.daemon.network_type"),
-            Script.getNumber("neroshop.monero.daemon.restore_height")
-        );*/
-        // connect to a remote monero node (default)(causes segfault)
-        // todo: figure out how to detach node thread from main thread and connect to node on app launch rather than on registration
-        let remote_node = Script.getTableStrings("neroshop.monero.nodes.stagenet")[1]//Script.getTableStrings("neroshop.monero.nodes.mainnet")[0]
-        let remote_node_ip = remote_node.split(":")[0]
-        let remote_node_port = remote_node.split(":")[1]
-        console.log("connecting to remote node " + remote_node_ip + " at port " + remote_node_port)
-        Wallet.daemonConnect(remote_node_ip, remote_node_port);//Wallet.daemonConnect(Script.getString("neroshop.monero.daemon.ip"), Script.getString("neroshop.monero.daemon.port"));
     }
-    ///////////////////////////    
-// consists of login and registration menus
+    ///////////////////////////
     NeroshopComponents.MessageBox {////MessageDialog {
         id: messageBox
-        //visible: false
         title: "message"
-        text: "It's so cool that you are using Qt Quick."
-        // Popup functions
-        ////anchors.centerIn: Overlay.overlay
         x: mainWindow.x + (mainWindow.width - this.width) / 2
         y: mainWindow.y + (mainWindow.height - this.height) / 2
     }
@@ -114,7 +106,7 @@ Page {
         currentFile: walletFileField.text // currentFile is deprecated since Qt 6.3. Use selectedFile instead
         folder: neroshopWalletDir//StandardPaths.writableLocation(StandardPaths.HomeLocation) + "/neroshop"//StandardPaths.writableLocation(StandardPaths.AppDataLocation) // refer to https://doc.qt.io/qt-5/qstandardpaths.html#StandardLocation-enum
         nameFilters: ["Wallet files (*.keys)"]
-        //options: FileDialog.ReadOnly // will not allow you to create folders while file dialog is opened
+        ////options: FileDialog.ReadOnly // will not allow you to create folders while file dialog is opened
     }
     ///////////////////////////
     // for registration page
@@ -193,7 +185,6 @@ Page {
         Rectangle {
             id: walletGenerationPage
             color: NeroshopComponents.Style.getColorsFromTheme()[0]
-            property bool isWalletGenerated: false
             
             Button {
                 id: pageRedirectButton
@@ -226,7 +217,7 @@ Page {
             }            
 
             GridLayout {
-                anchors.horizontalCenter: parent.horizontalCenter//(walletSeedDisplayRepeater.model) ? this.horizontalCenter : parent.horizontalCenter
+                anchors.horizontalCenter: parent.horizontalCenter//(walletSeedRepeater.model) ? this.horizontalCenter : parent.horizontalCenter
                 anchors.verticalCenter: parent.verticalCenter
                 anchors.top: parent.top
                 anchors.topMargin: 20
@@ -245,7 +236,7 @@ Page {
                     Layout.row: 0
                     Layout.column: 0               
                     text: qsTr("Wallet name")
-                    //visible: !walletSeedDisplayRepeater.model
+                    //visible: !walletSeedRepeater.model
                     color: (NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000"
                     font.bold: true
                 }                
@@ -257,7 +248,7 @@ Page {
                     Layout.row: 1
                     Layout.column: 0
                     Layout.topMargin: (walletNameText.visible) ? 5 : 0
-                    //visible: !walletSeedDisplayRepeater.model
+                    //visible: !walletSeedRepeater.model
                     placeholderText: qsTr("auth"); placeholderTextColor: (NeroshopComponents.Style.darkTheme) ? "#a9a9a9" : "#696969"
                     color: (NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000" // textColor                
                     selectByMouse: true
@@ -276,7 +267,7 @@ Page {
                     Layout.preferredHeight: 50//width: 500; height: 50
                     Layout.row: 2
                     Layout.column: 0                
-                    //visible: !walletSeedDisplayRepeater.model
+                    //visible: !walletSeedRepeater.model
                     placeholderText: qsTr("Wallet Password")
                     placeholderTextColor: (NeroshopComponents.Style.darkTheme) ? "#a9a9a9" : "#696969"
                     color: NeroshopComponents.Style.moneroOrangeColor // textColor
@@ -323,7 +314,7 @@ Page {
                     Layout.column: 0
                     //Layout.topMargin: 5
                     //rightPadding
-                    //visible: !walletSeedDisplayRepeater.model
+                    //visible: !walletSeedRepeater.model
                     placeholderText: qsTr("Confirm Wallet Password")
                     placeholderTextColor: (NeroshopComponents.Style.darkTheme) ? "#a9a9a9" : "#696969"
                     color: walletPasswordField.color//NeroshopComponents.Style.moneroOrangeColor // textColor
@@ -359,7 +350,7 @@ Page {
                     Layout.column: 0               
                     Layout.topMargin: 10
                     text: qsTr("Wallet path")
-                    //visible: !walletSeedDisplayRepeater.model
+                    //visible: !walletSeedRepeater.model
                     color: (NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000"
                     font.bold: true                
                 }                
@@ -370,7 +361,7 @@ Page {
                     Layout.column: 0
                     Layout.preferredWidth: 500; Layout.preferredHeight: 50
                     Layout.topMargin: (walletPathText.visible) ? 5 : 0
-                    //visible: !walletSeedDisplayRepeater.model
+                    //visible: !walletSeedRepeater.model
                     text: walletFolderDialog.folder////(walletNameField.text) ? qsTr(walletFolderDialog.folder + "/%1.keys").arg(walletNameField.text) : qsTr(walletFolderDialog.folder + "/%1.keys").arg(walletNameField.placeholderText)
                     color: "#000000"//(NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000" // textColor                
                     selectByMouse: true
@@ -385,7 +376,7 @@ Page {
                 RowLayout {
                     Layout.row: 6
                     Layout.column: 0
-                    //visible: !walletSeedDisplayRepeater.model
+                    //visible: !walletSeedRepeater.model
                 // wallet path change or upload button
                 Button {
                     id: walletPathChangeButton
@@ -478,11 +469,11 @@ Page {
                 // wallet seed message box
                 TextArea {
                     id: seedMessageArea
-                    visible: (walletSeedDisplayRepeater.model != null)
-                    Layout.row: 0//QGridLayoutEngine::addItem: Cell (0, 0) already taken
-                    Layout.column: 1//QGridLayoutEngine::addItem: Cell (0, 0) already taken
+                    visible: (walletSeedRepeater.model != null)
+                    Layout.row: 0
+                    Layout.column: 1
                     Layout.fillWidth: true // extends the TextArea's width to the width of the Layout
-                    Layout.maximumWidth: walletPathField.width // keeps textarea from going past grid bounds when text is added
+                    Layout.maximumWidth: 550////walletPathField.width // keeps textarea from going past grid bounds when text is added
                     Layout.preferredHeight: contentHeight + 20
                     Layout.topMargin: 20//15
                     selectByMouse: true
@@ -514,8 +505,8 @@ Page {
                     id: walletSeedDisplay
                     //Layout.preferredHeight: 200
                     Layout.rowSpan: 7////8 // fill the row 8 times?
-                    Layout.row: 1//(!walletSeedDisplayRepeater.model) ? 0 : 1//8
-                    Layout.column: 1//(!walletSeedDisplayRepeater.model) ? 1 : 1//0
+                    Layout.row: 1
+                    Layout.column: 1
                     ////Layout.fillWidth: true // no reason to fill width since we set the maximum width
                     //Layout.preferredHeight: 40 * Layout.rowSpan // remove
                     Layout.maximumWidth: 550//walletMessageArea.width
@@ -524,7 +515,7 @@ Page {
                     spacing: 5
 
                     Repeater {
-                        id: walletSeedDisplayRepeater
+                        id: walletSeedRepeater
                         ////model: null
                         delegate: Rectangle {
                             width: 130; height: 40
@@ -551,7 +542,7 @@ Page {
                     Layout.row: 9
                     Layout.column: 1
                     Layout.fillWidth: true////width: contentWidth + 20; height: 40
-                    visible: (walletSeedDisplayRepeater.model != null)
+                    visible: (walletSeedRepeater.model != null)
                     text: qsTr("Copy")
                     icon.source: "file:///" + neroshopResourcesDir + "/copy.png"
                     icon.color: "#ffffff"
@@ -581,6 +572,7 @@ Page {
                 anchors.leftMargin: 20
                 implicitWidth: 60; height: implicitWidth
                 text: qsTr(FontAwesome.angleLeft)
+                visible: !Wallet.isGenerated() // hide if wallet has already been generated
             
                 background: Rectangle {
                     color: "#121212"//"#6b5b95"//
@@ -616,14 +608,7 @@ Page {
                 	placeholderText: qsTr("Pseudonym (optional)")
                 	placeholderTextColor: "#696969" // dim gray
                 	color: "#6b5b95"////(NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000" // textColor
-                	//x: seedDisplayScrollView.x
-                	////anchors.left: seedDisplayScrollView.left
-                	//y: seedDisplayScrollView.y + seedDisplayScrollView.height + 30
-                	////anchors.top: seedDisplayScrollView.bottom
-                	////anchors.topMargin: 30
                 	selectByMouse: true
-                
-                	width: 300
                 	background: Rectangle { 
                         color: (NeroshopComponents.Style.darkTheme) ? "#101010" : "#ffffff"
                         border.color: (NeroshopComponents.Style.darkTheme) ? "#a9a9a9" : "#696969"
@@ -658,7 +643,21 @@ Page {
                     	horizontalAlignment: Text.AlignHCenter
                     	verticalAlignment: Text.AlignVCenter                    
                 	}                
-            	}            
+            	}
+            	Button {
+            	id: temporaryButtonThatWillBeDeletedSoon
+                Layout.row: 2
+                Layout.column: 0
+                Layout.fillWidth: true
+                text: "Test Button (" + value.toString() + ")"
+                property real value: 0.0
+                property bool walletgen: Wallet.isGenerated()
+                onClicked: {
+                    value = (Wallet.getSyncPercentage() * 100) // value will not be updated unless you do set it in some callback
+                    console.log("sync progress: " + value)
+                    console.log("Is wallet generated: " + walletgen)//Wallet.isGenerated())  // this is also not updated unless you the realtime "Wallet.isGenerated()"
+                }
+                } // tempButton              
         } // GridLayout for registrationPage
         } // eof registrationPage  
         // walletfile auth page

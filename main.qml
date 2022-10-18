@@ -153,6 +153,7 @@ ApplicationWindow {
                     foregroundColor: "#564978"
                     //textObject.visible: true
                     anchors.verticalCenter: parent.verticalCenter//anchors.top: parent.top; anchors.topMargin: (parent.height - this.height) / 2 // center vertically on footer (height)
+                    value: 0.5 // placeholder value
 
                     NeroshopComponents.Hint {
                         visible: parent.hovered
@@ -179,13 +180,26 @@ ApplicationWindow {
                     //textObject.text: "wallet sync: " + (this.value * 100).toString() + "%"
                     //textObject.color: "#ffffff"
                     anchors.verticalCenter: parent.verticalCenter//anchors.top: parent.top; anchors.topMargin: (parent.height - this.height) / 2
+                    ////value: Wallet.isGenerated() ? Wallet.getSyncPercentage() : 0.0 // this does not work (fails to update value)
+                    /*Behavior on value { // defines animation to be ran whenever the ProgressBar's value changes
+                        PropertyAnimation { duration: 300; easing.type: Easing.Linear }
+                    }*/                
+                    Timer {
+                        interval: 1 // trigger every x miliseconds
+                        running: true // starts the timer, If set to true
+                        repeat: true // If repeat is true the timer is triggered repeatedly at the specified interval
+                        ////triggeredOnStart: false
+                        onTriggered: {
+                            moneroDaemonSyncBar.value = Wallet.getSyncPercentage()//Math.floor(Math.random() * (moneroDaemonSyncBar.to - moneroDaemonSyncBar.from + 1) + moneroDaemonSyncBar.from);
+                        }
+                    }                    
                 
                     NeroshopComponents.Hint {
                         visible: parent.hovered
                         x: parent.x + (parent.width - this.width) / 2
                         height: contentHeight + 20; width: parent.width
                         bottomMargin : footer.height + 5
-                        text: qsTr("monerod\nStatus: %1 (%2)\n Blocks remaining: %3 / %4").arg((parent.value < 1.0) ? "Synchronizing" : "Connected").arg((parent.value * 100).toString() + "%").arg("1362174").arg("2724348") // If connected to a remote node, "monerod" will be replaced by the <ip>:<port> of the remote node
+                        text: qsTr("%1\nStatus: %2 (%3)\n Blocks remaining: %4 / %5").arg("monerod").arg(!Wallet.isGenerated() ? "Disconnected" : ((parent.value < 1.0) ? Wallet.getSyncMessage() : "Connected")).arg((parent.value * 100).toFixed(2) + "%").arg(!Wallet.isGenerated() ? 0 : Wallet.getSyncHeight()).arg(!Wallet.isGenerated() ? 0 : Wallet.getSyncEndHeight()) // If connected to a remote node, "monerod" will be replaced by the <ip>:<port> of the remote node
                         pointer.visible: false
                     }                
                 }

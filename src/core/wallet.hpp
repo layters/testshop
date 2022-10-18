@@ -98,6 +98,12 @@ public:
     // setters
     void set_tx_note(const std::string& txid, const std::string& tx_note); // "set_tx_note <txid> [free note text here]" - useful for filling address information
     // getters
+    double get_sync_percentage() const;
+    unsigned int get_sync_height() const;
+    unsigned int get_sync_start_height() const;
+    unsigned int get_sync_end_height() const;
+    std::string get_sync_message() const;
+    
     std::string get_primary_address() const; // returns primary address string // "address"
     std::string get_address(unsigned int index) const; // returns address at "index"'s string (primary address is index 0) // "address all"
     unsigned int get_address_count() const; // address_list.size();
@@ -152,7 +158,10 @@ private:
     std::unique_ptr<monero::monero_wallet_full> monero_wallet_obj; // monero wallet
     monero::monero_network_type network_type; // default will be mainnet when this application is released
     std::unique_ptr<Process> process; // monerod process // every wallet will have its own process
-    //std::unique_ptr<Progressbar> sync_bar;
+    volatile double progress; // sync progress
+    mutable std::mutex wallet_data_mutex;
+    volatile unsigned int height, start_height, end_height;
+    /*volatile */std::string message;
 };
 
 }

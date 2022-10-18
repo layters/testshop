@@ -31,17 +31,23 @@ public:
     ////explicit Wallet(QObject* parent = 0);
     Q_INVOKABLE int createRandomWallet(const QString& password, const QString& confirm_pwd, const QString& path) const;
     Q_INVOKABLE void copyMnemonicToClipboard();
+    Q_INVOKABLE double getSyncPercentage() const;
+    Q_INVOKABLE unsigned int getSyncHeight() const;
+    Q_INVOKABLE unsigned int getSyncStartHeight() const;
+    Q_INVOKABLE unsigned int getSyncEndHeight() const;
+    Q_INVOKABLE QString getSyncMessage() const;
     Q_INVOKABLE QString getMnemonic() const;
     Q_INVOKABLE QStringList getMnemonicModel() const;
     Q_INVOKABLE neroshop::Wallet * getWallet() const;
     Q_INVOKABLE void setWallet(const neroshop::Wallet* wallet/*const neroshop::Wallet& wallet*/) {}//const { /*this->wallet = const_cast<neroshop::Wallet*>(wallet);*//*this->wallet = &const_cast<neroshop::Wallet&>(wallet);*//*emit wallet_changed(status);*/ }
     //Q_INVOKABLE <type> <function_name>() const {}
-    Q_INVOKABLE void daemonOpen/*Local*/(const QString& ip, const QString& port, bool confirm_external_bind, bool restricted_rpc, bool remote, QString data_dir, QString network_type, unsigned int restore_height);// const;
+    Q_INVOKABLE void daemonExecute(const QString& ip, const QString& port, bool confirm_external_bind, bool restricted_rpc, bool remote, QString data_dir, QString network_type, unsigned int restore_height);// const;
+    Q_INVOKABLE bool isGenerated() const;
 public slots:       
     Q_INVOKABLE void daemonConnect/*RemoteNode*/(const QString& ip, const QString& port);// const;
 signals:
 //    void wallet_changed(int status);
-    Q_INVOKABLE void on_sync_progress(uint64_t height, uint64_t start_height, uint64_t end_height, double percent_done, const std::string& message);
+    //Q_INVOKABLE void on_sync_progress(uint64_t height, uint64_t start_height, uint64_t end_height, double percent_done, const std::string& message);
 //public slots:    
 #else
 class Wallet { 

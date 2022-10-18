@@ -3,7 +3,7 @@
 ////////////////////
 // constructors and destructors
 ////////////////////
-neroshop::Wallet::Wallet() : process(nullptr), monero_wallet_obj(nullptr), network_type(monero_network_type::STAGENET)
+neroshop::Wallet::Wallet() : process(nullptr), progress(0.0), monero_wallet_obj(nullptr), network_type(monero_network_type::STAGENET)
 {}
 ////////////////////
 neroshop::Wallet::~Wallet() 
@@ -230,6 +230,9 @@ void neroshop::Wallet::on_sync_progress(uint64_t height, uint64_t start_height, 
 	    // all of this takes place in a separate thread
 	    // if monero_wallet is already synced, skip this function (this function keeps spamming throughout the entire app session -.-)
 	    if(monero_wallet_obj.get()->is_synced()) return;
+        std::cout << "Node Sync Thread ID: " << std::this_thread::get_id() << std::endl;
+        //std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+        std::lock_guard<std::mutex> lock(wallet_data_mutex);
 	    auto now = std::chrono::system_clock::now();
         auto in_time_t = std::chrono::system_clock::to_time_t(now); // current time
 	    std::stringstream ss;
@@ -243,55 +246,38 @@ void neroshop::Wallet::on_sync_progress(uint64_t height, uint64_t start_height, 
         if((percent_done * 100) == 100) std::cout << "\033[0;35;49m" << date << " \033[1;32;49m" << "SYNCHRONIZATION DONE" << std::endl;
         std::cout << "\033[0;35;49m" << date << std::endl;
         std::cout << "\033[0;35;49m" << date << " \033[1;33;49m" << "**********************************************************************" << "\033[0m" << std::endl;
-        // todo: REMOVE THE CODE BELOW
-        #ifdef NEROSHOP_USE_DOKUN_UI
-        /*if(!sync_bar.get()) {
-            sync_bar = std::unique_ptr<Progressbar>(new Progressbar());//sync_bar->set_range(0.0, 100.0); // 0-100%//sync_bar->set_outline(true);
-            sync_bar->set_size(300, 30);
-            dokun::Label * sync_label = new dokun::Label();//std::unique_ptr<dokun::Label>(new dokun::Label());
-            dokun::Font * sync_font = new dokun::Font(DOKUN_DEFAULT_FONT_PATH);//std::unique_ptr<dokun::Font> sync_font = std::unique_ptr<dokun::Font>(new dokun::Font(DOKUN_DEFAULT_FONT_PATH));
-            sync_label->set_font(*sync_font);//(sync_font.get());
-            sync_label->set_alignment("center");
-            sync_bar->set_label(*sync_label);
-        }
-        dokun::Window * window = static_cast<dokun::Window *>(Factory::get_window_factory()->get_object(0)); // using dokun::Window::get_active() causes a seg fault when window loses focus while syncing - since it only gets the window that has focus :(
-        window->poll_events(); // check for events
-        window->set_viewport(Renderer::get_display_size().x, Renderer::get_display_size().y);//(1280, 720);
-        window->clear(32, 32, 32);
-        double progress = percent_done * 100; //sync_bar->set_range(0, 100);
-        //////////
-        if(progress < 100) { // while progress is not 100%, send a fake event to keep the progressbar going
-        #ifdef DOKUN_X11 // if using X Window System on Linux
-            dokun::Keyboard::fake_event(window->get_display(), window->get_handle());
-        #endif
-        }
-        //////////
-        sync_bar->get_label()->set_string(String::to_string_with_precision(progress, 2) + "%");
-        sync_bar->set_value(progress);
-        //////////
-        if(progress >= 100 && !neroshop::Message::get_second()->is_visible()) { // only show this msg once
-            // box text (label)        
-            neroshop::Message::get_second()->set_text("SYNCHRONIZATION DONE", 107,142,35);
-            neroshop::Message::get_second()->get_label(0)->set_alignment("none");
-            neroshop::Message::get_second()->get_label(0)->set_relative_position((neroshop::Message::get_second()->get_width() / 2) - (neroshop::Message::get_second()->get_label(0)->get_width() / 2), ((neroshop::Message::get_second()->get_height() - neroshop::Message::get_second()->get_label(0)->get_height()) / 2) - 20);            
-            // close button
-            neroshop::Message::get_second()->get_button(0)->set_text("Close");
-            neroshop::Message::get_second()->get_button(0)->set_color(214, 31, 31, 1.0);                    
-            neroshop::Message::get_second()->get_button(0)->set_relative_position((neroshop::Message::get_second()->get_width() / 2) - (neroshop::Message::get_second()->get_button(0)->get_width() / 2), neroshop::Message::get_second()->get_height() - neroshop::Message::get_second()->get_button(0)->get_height() - 20);            
-            // show message box and button
-            neroshop::Message::get_second()->get_button(0)->show();
-            neroshop::Message::get_second()->show();
-            // when sync is complete, we return to the main thread with no time to draw the msgbox, so its best to draw msgbox in main thread at all times
-        }
-        // on close button pressed
-        if(neroshop::Message::get_second()->get_button(0)->is_pressed()) {
-            neroshop::Message::get_second()->hide();
-        }
-        sync_bar->set_position((window->get_client_width() / 2) - (sync_bar->get_width() / 2), (window->get_client_height() / 2) - (sync_bar->get_height() / 2));// center progressbar
-        sync_bar->draw();        
-        ////////////////
-        window->update();*/
-        #endif
+        
+        this->progress = percent_done;
+        this->height = height;
+        this->start_height = start_height;
+        this->end_height = end_height;
+        this->message = message;
+        // This will run in the same thread
+        /*std::thread worker([height, start_height, end_height, percent_done, message]() {
+                std::cout << "\033[0;35;49m" << "" << " \033[1;33;49m" << message << ": " << (percent_done * 100) << "%" << "\033[0m" << std::endl;
+            }
+        );
+        worker.join();*/
+        // This should run in different threads (without std::future it acts asynchronously)
+        ////std::cout << "Node Sync Thread ID: " << std::this_thread::get_id() << std::endl;
+        /*std::future<void> node_worker = std::async(std::launch::async, [height, start_height, end_height, percent_done, message, this]() {
+                std::cout << "\033[0;35;49m" << "" << " \033[1;33;49m" << message << ": " << (percent_done * 100) << "%" << "\033[0m" << std::endl;
+                //do something while node is syncing
+            }
+        );     
+        node_worker.get();*/
+        // With a packaged_task
+        /*std::packaged_task<void(void)> sync_job([height, start_height, end_height, percent_done, message, this]() {
+                std::cout << "\033[0;35;49m" << "" << " \033[1;33;49m" << message << ": " << (percent_done * 100) << "%" << "\033[0m" << std::endl;
+                this->progress = percent_done;//std::cout << "wallet progress change: " << progress << "\n";
+            }
+        );     
+        
+        std::future<void> _01 = sync_job.get_future();
+        
+        std::thread node_worker(std::move(sync_job));
+        
+        node_worker.join();*/
 }
 ////////////////////
 void neroshop::Wallet::on_output_received(const monero_output_wallet& output) {
@@ -398,14 +384,14 @@ void neroshop::Wallet::daemon_open(const std::string& ip, const std::string& por
 bool neroshop::Wallet::daemon_connect(const std::string& ip, const std::string& port) { // connect to a running daemon (node)
     if(!monero_wallet_obj.get()) throw std::runtime_error("monero_wallet_full is not opened");
     // connect to the daemon
-	monero_wallet_obj->set_daemon_connection(monero_rpc_connection(std::string("http://" + ip + ":" + port)));//, string("superuser"), string("abctesting123")));
+	monero_wallet_obj->set_daemon_connection(monero_rpc_connection(std::string("http://" + ip + ":" + port)));
     std::cout << "\033[1;90;49m" << "waiting for daemon" << "\033[0m" << std::endl;
     bool connected = false; bool synced = false;
     while(!connected) {
         if(monero_wallet_obj.get()->is_connected_to_daemon()) {
             std::cout << "\033[1;90;49m" << "connected to daemon" << "\033[0m" << std::endl; // connected to a daemon but it may not be fully synced with the network
             connected = true;
-            // when connected to daemon, listen to sync progress (use this only on a detached daemon)
+            // once connected to daemon, listen to sync progress (use this only on a detached daemon)
             std::cout << "\033[1;90;49m" << "sync in progress .." << "\033[0m" << std::endl;
             // it is not safe to connect to a daemon that has not fully synced, so listen to the sync progress before attempting to do anything else
             // wallet height is 938308 (2021-10-07) - will store all txs/balances but takes longer to sync //std::cout << "syncing from wallet height: " << monero_wallet_obj->get_height() << std::endl;
@@ -413,15 +399,26 @@ bool neroshop::Wallet::daemon_connect(const std::string& ip, const std::string& 
             // if height is wallet's height then it will sync from the time of the wallet's creation date to the current date which takes longer to sync
             // if height is daemon height, it will sync instantly but balances will not be updated and you will not be able to generate unique addresses
             // if height is zero, then it will sync from 80% but will still take long to sync
-            monero_wallet_obj->sync(0, *this);// 0 = start_height	is the start height to sync from (ignored if less than last processed block) //(sync_listener);//monero_sync_result sync_result = monero_wallet_obj->sync(sync_listener); // synchronize the wallet with the daemon as a one-time synchronous process//if(sync_result.m_received_money) {neroshop::print(std::string("blocks fetched: ") + std::to_string(sync_result.m_num_blocks_fetched));neroshop::print("you have received money");}
-            monero_wallet_obj->remove_listener(*this);//(sync_listener); // remove sync_listener, since we are done getting the sync progress           
+            std::packaged_task<void(void)> sync_job([this]() {
+                monero_wallet_obj->sync(0, *this);////monero_wallet_obj->sync(0, *this);// 0 = start_height	is the start height to sync from (ignored if less than last processed block) //(sync_listener);//monero_sync_result sync_result = monero_wallet_obj->sync(sync_listener); // synchronize the wallet with the daemon as a one-time synchronous process//if(sync_result.m_received_money) {neroshop::print(std::string("blocks fetched: ") + std::to_string(sync_result.m_num_blocks_fetched));neroshop::print("you have received money");}
+                monero_wallet_obj->remove_listener(*this);//(sync_listener); // remove sync_listener, since we are done getting the sync progress           
+
             // continue syncing in order to receive tx notifications
-            monero_wallet_obj->start_syncing(5000); // begin syncing the wallet constantly in the background (every 5 seconds)
+                monero_wallet_obj->start_syncing(5000); // begin syncing the wallet constantly in the background (every 5 seconds)                  
+            });
+            std::future<void> job_value = sync_job.get_future();
+            // move the task (function) to a separate thread
+            std::thread worker(std::move(sync_job));
+            worker.detach();//worker.join();       
+      
             // check if wallet's daemon is synced with the network
-            if(monero_wallet_obj.get()->is_daemon_synced()) synced = true;//{std::cout << "\033[1;90;49m" << "daemon is now fully synced with the network" << "\033[0m" << std::endl;synced = true;}
+            if(monero_wallet_obj.get()->is_daemon_synced()) {
+                synced = true;
+                std::cout << "\033[1;90;49m" << "daemon is now fully synced with the network" << "\033[0m" << std::endl;
+            }   
         }
     }
-    monero_wallet_obj->add_listener(*this);//(wallet_listener); // add wallet_listener
+    monero_wallet_obj->add_listener(*this); // add wallet_listener
     return synced;
 }
 ////////////////////
@@ -473,6 +470,32 @@ void neroshop::Wallet::set_tx_note(const std::string& txid, const std::string& t
 ////////////////////
 ////////////////////
 // getters
+////////////////////
+double neroshop::Wallet::get_sync_percentage() const {
+    std::lock_guard<std::mutex> lock(wallet_data_mutex);
+    return progress;
+}
+////////////////////
+unsigned int neroshop::Wallet::get_sync_height() const {
+    std::lock_guard<std::mutex> lock(wallet_data_mutex);
+    return height;
+}
+////////////////////
+unsigned int neroshop::Wallet::get_sync_start_height() const {
+    std::lock_guard<std::mutex> lock(wallet_data_mutex);
+    return start_height;
+}
+////////////////////
+unsigned int neroshop::Wallet::get_sync_end_height() const {
+    std::lock_guard<std::mutex> lock(wallet_data_mutex);
+    return end_height;
+}
+////////////////////
+std::string neroshop::Wallet::get_sync_message() const {
+    std::lock_guard<std::mutex> lock(wallet_data_mutex);
+    return message;
+}
+////////////////////
 ////////////////////
 std::string neroshop::Wallet::get_primary_address() const {
     if(!monero_wallet_obj.get()) throw std::runtime_error("monero_wallet_full is not opened");
