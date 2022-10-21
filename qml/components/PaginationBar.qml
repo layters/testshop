@@ -3,7 +3,7 @@ import QtQuick.Controls 2.12
 import QtQuick.Layouts 1.12
 
 import "." as NeroshopComponents
-import "../../fonts/FontAwesome"//import FontAwesome 1.0
+import FontAwesome 1.0
 
 Row {//RowLayout {
     id: paginationBar

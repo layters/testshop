@@ -8,7 +8,7 @@ import QtQuick.Dialogs 1.3 // MessageDialog (since Qt 5.2)
 import QtGraphicalEffects 1.12 // LinearGradient
 import Qt.labs.platform 1.1 // FileDialog (since Qt 5.8) // change to "import QtQuick.Dialogs" if using Qt 6.2
 
-import "fonts/FontAwesome"//import FontAwesome 1.0
+import FontAwesome 1.0
 
 //import neroshop.Wallet 1.0
 
@@ -52,10 +52,10 @@ ApplicationWindow {
     }
     ///////////////////////////
     //ScrollView {
-    StackView {
+    /*StackView {
         anchors.fill: parent
         ////initialItem: pageLoader
-    }
+    }*/
     Loader {
         id: pageLoader
         //anchors.centerIn: parent // place at center of parent // <= don't use this EVER. Not for loading pages
@@ -160,7 +160,7 @@ ApplicationWindow {
                         x: parent.x + (parent.width - this.width) / 2 // Popups don't have anchors :(
                         height: contentHeight + 20; width: parent.width
                         bottomMargin : footer.height + 5
-                        text: qsTr("neromon\nStatus: %1  \nProgress: %2").arg((parent.value < 1.0) ? "Synchronizing" : "Connected").arg((parent.value * 100).toString() + "%")
+                        text: qsTr("neromon\n%1 (%2)").arg((parent.value < 1.0) ? "Synchronizing" : "Connected").arg((parent.value * 100).toString() + "%")
                         pointer.visible: false
                     }
                 }      
@@ -180,10 +180,7 @@ ApplicationWindow {
                     //textObject.text: "wallet sync: " + (this.value * 100).toString() + "%"
                     //textObject.color: "#ffffff"
                     anchors.verticalCenter: parent.verticalCenter//anchors.top: parent.top; anchors.topMargin: (parent.height - this.height) / 2
-                    ////value: Wallet.isGenerated() ? Wallet.getSyncPercentage() : 0.0 // this does not work (fails to update value)
-                    /*Behavior on value { // defines animation to be ran whenever the ProgressBar's value changes
-                        PropertyAnimation { duration: 300; easing.type: Easing.Linear }
-                    }*/                
+                    ////value: Wallet.isGenerated() ? Wallet.getSyncPercentage() : 0.0 // this does not work (fails to update value so we use Timer instead)     
                     Timer {
                         interval: 1 // trigger every x miliseconds
                         running: true // starts the timer, If set to true
@@ -199,7 +196,7 @@ ApplicationWindow {
                         x: parent.x + (parent.width - this.width) / 2
                         height: contentHeight + 20; width: parent.width
                         bottomMargin : footer.height + 5
-                        text: qsTr("%1\nStatus: %2 (%3)\n Blocks remaining: %4 / %5").arg("monerod").arg(!Wallet.isGenerated() ? "Disconnected" : ((parent.value < 1.0) ? Wallet.getSyncMessage() : "Connected")).arg((parent.value * 100).toFixed(2) + "%").arg(!Wallet.isGenerated() ? 0 : Wallet.getSyncHeight()).arg(!Wallet.isGenerated() ? 0 : Wallet.getSyncEndHeight()) // If connected to a remote node, "monerod" will be replaced by the <ip>:<port> of the remote node
+                        text: qsTr("%1\n%2 (%3)\n Blocks remaining: %4 / %5").arg("monerod").arg(!Wallet.isGenerated() ? "Disconnected" : ((parent.value < 1.0) ? Wallet.getSyncMessage() : "Connected")).arg((parent.value * 100).toFixed(2) + "%").arg(!Wallet.isGenerated() ? 0 : Wallet.getSyncHeight()).arg(!Wallet.isGenerated() ? 0 : Wallet.getSyncEndHeight()) // If connected to a remote node, "monerod" will be replaced by the <ip>:<port> of the remote node
                         pointer.visible: false
                     }                
                 }

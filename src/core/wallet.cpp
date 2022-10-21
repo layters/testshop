@@ -3,7 +3,7 @@
 ////////////////////
 // constructors and destructors
 ////////////////////
-neroshop::Wallet::Wallet() : process(nullptr), progress(0.0), monero_wallet_obj(nullptr), network_type(monero_network_type::STAGENET)
+neroshop::Wallet::Wallet() : process(nullptr), percentage(0.0), monero_wallet_obj(nullptr), network_type(monero_network_type::STAGENET)
 {}
 ////////////////////
 neroshop::Wallet::~Wallet() 
@@ -47,6 +47,7 @@ neroshop::wallet_error neroshop::Wallet::create_random(const std::string& passwo
     wallet_config_obj.m_network_type = network_type;
     
     monero_wallet_obj = std::unique_ptr<monero_wallet_full>(monero_wallet_full::create_wallet (wallet_config_obj, nullptr));
+    // account creation date could be used as the wallet's restore height
     
     ////monero_wallet_obj = std::unique_ptr<monero_wallet_full>(monero_wallet_full::create_wallet_random (path, password, network_type/*, const monero_rpc_connection &daemon_connection=monero_rpc_connection(), const std::string &language="English", std::unique_ptr< epee::net_utils::http::http_client_factory > http_client_factory=nullptr*/)); // deprecated :(
     if(monero_wallet_obj.get()) std::cout << "\033[1;35;49m" << "created wallet \"" << path << ".keys\"" << "\033[0m" << std::endl;
@@ -134,6 +135,17 @@ void neroshop::Wallet::transfer(const std::string& address, double amount) {
 } // "transfer"
 ////////////////////
 ////////////////////
+monero::monero_subaddress neroshop::Wallet::create_subaddress(unsigned int account_idx, const std::string & label) const {
+    if(!monero_wallet_obj.get()) throw std::runtime_error("monero_wallet_full is not opened");
+    monero_subaddress subaddress = monero_wallet_obj->create_subaddress(account_idx, label);
+    // we have to make sure that each newly generated subaddress is unique (meaning it has never been used)
+    if(subaddress.m_is_used.get()) {
+        throw std::runtime_error("subaddress " + subaddress.m_address.get() + " was previously used. Is your wallet node properly synced?");////neroshop::print("subaddress " + subaddress.m_address.get() + " was previously used");
+    }    
+    return subaddress;
+}
+////////////////////
+////////////////////
 void neroshop::Wallet::sweep_all(const std::string& address) {
     if(!monero_wallet_obj.get()) throw std::runtime_error("monero_wallet_full is not opened");
     //std::vector< std::shared_ptr< monero_tx_wallet > > monero::monero_wallet_full::sweep_dust 	( 	bool  	relay = false	) 	
@@ -144,11 +156,11 @@ std::string neroshop::Wallet::address_new() const {
     if(!monero_wallet_obj.get()) throw std::runtime_error("monero_wallet_full is not opened");
     // Create a subaddress within an account (account_0 to be specific).
     monero_subaddress subaddress = monero_wallet_obj->create_subaddress(0);//monero_subaddress monero::monero_wallet_full::create_subaddress	(	uint32_t 	account_idx,const std::string & 	label = "" )
-#ifdef NEROSHOP_DEBUG0
+#ifdef NEROSHOP_DEBUG
     std::cout << "address_new: " << subaddress.m_address.get() << " (account_idx: " << subaddress.m_account_index.get() << ", subaddress_idx: " << subaddress.m_index.get() << ")" << std::endl;
 #endif
     //if subaddress has already been used
-    if(subaddress.m_is_used.get()) { std::cout << "subaddress already in use!" << std::endl; return ""; }
+    if(subaddress.m_is_used.get()) { std::cout << "subaddress " << subaddress.m_address.get() << " already in use!" << std::endl; return ""; }
     return subaddress.m_address.get();// return the newly created subaddress
     // store new subaddress//subaddress_list.push_back(subaddress.m_address.get());
 } // generates a new subaddress from main account // "address new"
@@ -247,7 +259,7 @@ void neroshop::Wallet::on_sync_progress(uint64_t height, uint64_t start_height, 
         std::cout << "\033[0;35;49m" << date << std::endl;
         std::cout << "\033[0;35;49m" << date << " \033[1;33;49m" << "**********************************************************************" << "\033[0m" << std::endl;
         
-        this->progress = percent_done;
+        this->percentage = percent_done;
         this->height = height;
         this->start_height = start_height;
         this->end_height = end_height;
@@ -269,7 +281,6 @@ void neroshop::Wallet::on_sync_progress(uint64_t height, uint64_t start_height, 
         // With a packaged_task
         /*std::packaged_task<void(void)> sync_job([height, start_height, end_height, percent_done, message, this]() {
                 std::cout << "\033[0;35;49m" << "" << " \033[1;33;49m" << message << ": " << (percent_done * 100) << "%" << "\033[0m" << std::endl;
-                this->progress = percent_done;//std::cout << "wallet progress change: " << progress << "\n";
             }
         );     
         
@@ -381,15 +392,14 @@ void neroshop::Wallet::daemon_open(const std::string& ip, const std::string& por
     //}//}
 }
 ////////////////////
-bool neroshop::Wallet::daemon_connect(const std::string& ip, const std::string& port) { // connect to a running daemon (node)
+bool neroshop::Wallet::daemon_connect_local(const std::string& ip, const std::string& port) { // connect to a running daemon (node)
     if(!monero_wallet_obj.get()) throw std::runtime_error("monero_wallet_full is not opened");
     // connect to the daemon
 	monero_wallet_obj->set_daemon_connection(monero_rpc_connection(std::string("http://" + ip + ":" + port)));
     std::cout << "\033[1;90;49m" << "waiting for daemon" << "\033[0m" << std::endl;
     bool connected = false; bool synced = false;
     while(!connected) {
-        if(monero_wallet_obj.get()->is_connected_to_daemon()) {
-            std::cout << "\033[1;90;49m" << "connected to daemon" << "\033[0m" << std::endl; // connected to a daemon but it may not be fully synced with the network
+        if(monero_wallet_obj.get()->is_connected_to_daemon()) {          
             connected = true;
             // once connected to daemon, listen to sync progress (use this only on a detached daemon)
             std::cout << "\033[1;90;49m" << "sync in progress .." << "\033[0m" << std::endl;
@@ -400,26 +410,54 @@ bool neroshop::Wallet::daemon_connect(const std::string& ip, const std::string& 
             // if height is daemon height, it will sync instantly but balances will not be updated and you will not be able to generate unique addresses
             // if height is zero, then it will sync from 80% but will still take long to sync
             std::packaged_task<void(void)> sync_job([this]() {
-                monero_wallet_obj->sync(0, *this);////monero_wallet_obj->sync(0, *this);// 0 = start_height	is the start height to sync from (ignored if less than last processed block) //(sync_listener);//monero_sync_result sync_result = monero_wallet_obj->sync(sync_listener); // synchronize the wallet with the daemon as a one-time synchronous process//if(sync_result.m_received_money) {neroshop::print(std::string("blocks fetched: ") + std::to_string(sync_result.m_num_blocks_fetched));neroshop::print("you have received money");}
-                monero_wallet_obj->remove_listener(*this);//(sync_listener); // remove sync_listener, since we are done getting the sync progress           
-
+                // monero_wallet_obj->get_daemon_height() is the height that the wallet's daemon is currently synced to
+                monero_wallet_obj->sync(monero_wallet_obj->get_sync_height()/*monero_wallet_obj->get_daemon_height()*/, *this);////monero_wallet_obj->sync(0, *this);// 0 = start_height	is the start height to sync from (ignored if less than last processed block) //(sync_listener);//monero_sync_result sync_result = monero_wallet_obj->sync(sync_listener); // synchronize the wallet with the daemon as a one-time synchronous process//if(sync_result.m_received_money) {neroshop::print(std::string("blocks fetched: ") + std::to_string(sync_result.m_num_blocks_fetched));neroshop::print("you have received money");}
             // continue syncing in order to receive tx notifications
-                monero_wallet_obj->start_syncing(5000); // begin syncing the wallet constantly in the background (every 5 seconds)                  
+            std::cout << "\033[1;90;49m" << "starting background sync" << "\033[0m" << std::endl;
+            monero_wallet_obj->start_syncing(5000); // begin syncing the wallet constantly in the background (every 5 seconds)
+            // check if wallet's daemon is synced with the network
+            if(monero_wallet_obj.get()->is_daemon_synced()) {
+                //synced = true;
+                std::cout << "\033[1;90;49m" << "daemon is now fully synced with the network" << "\033[0m" << std::endl;
+                // add new listener when done syncing
+                monero_wallet_obj->add_listener(*this); // add wallet_listener 
+            }   
             });
             std::future<void> job_value = sync_job.get_future();
             // move the task (function) to a separate thread
             std::thread worker(std::move(sync_job));
             worker.detach();//worker.join();       
-      
-            // check if wallet's daemon is synced with the network
-            if(monero_wallet_obj.get()->is_daemon_synced()) {
-                synced = true;
-                std::cout << "\033[1;90;49m" << "daemon is now fully synced with the network" << "\033[0m" << std::endl;
-            }   
+            // todo: store wallet restore height in database on registration
+            
+
         }
     }
-    monero_wallet_obj->add_listener(*this); // add wallet_listener
     return synced;
+}
+////////////////////
+void neroshop::Wallet::daemon_connect_remote(const std::string& ip, const std::string& port) {
+    if(!monero_wallet_obj.get()) throw std::runtime_error("monero_wallet_full is not opened");
+    monero_wallet_obj->set_daemon_connection(monero_rpc_connection(std::string("http://" + ip + ":" + port)));
+    if(monero_wallet_obj.get()->is_connected_to_daemon()) {
+        std::cout << "\033[1;90;49m" << "connected to daemon" << "\033[0m" << std::endl;
+            std::packaged_task<void(void)> sync_job([this]() {
+                std::cout << "\033[1;90;49m" << "sync in progress ..." << "\033[0m" << std::endl;
+                monero_wallet_obj->sync(monero_wallet_obj->get_sync_height(), *this); // a start_height of 0 is ignored // get_sync_height() is the height of the first block that the wallet scans// get_daemon_height() is the height that the wallet's daemon is currently synced to (will sync instantly but will not guarantee unique subaddress generation)
+                // begin syncing the wallet constantly in the background (every 5 seconds) in order to receive tx notifications
+                monero_wallet_obj->start_syncing(5000);
+                // check if wallet's daemon is synced with the network
+                if(monero_wallet_obj.get()->is_daemon_synced()) {////if(monero_wallet_obj->get_daemon_height() == monero_wallet_obj->get_daemon_max_peer_height()) {
+                    std::cout << "\033[1;90;49m" << "daemon is now fully synced with the network" << "\033[0m" << std::endl;
+                    // add new wallet_listener when done syncing
+                    monero_wallet_obj->add_listener(*this);
+                }   
+            });
+            std::future<void> job_value = sync_job.get_future();
+            // move the task (function) to a separate thread to prevent blocking of the main thread
+            std::thread node_worker(std::move(sync_job));
+            node_worker.detach();
+            // todo: store wallet restore height in database on registration
+    }  
 }
 ////////////////////
 void neroshop::Wallet::daemon_close() {
@@ -473,7 +511,7 @@ void neroshop::Wallet::set_tx_note(const std::string& txid, const std::string& t
 ////////////////////
 double neroshop::Wallet::get_sync_percentage() const {
     std::lock_guard<std::mutex> lock(wallet_data_mutex);
-    return progress;
+    return percentage;
 }
 ////////////////////
 unsigned int neroshop::Wallet::get_sync_height() const {

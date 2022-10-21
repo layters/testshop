@@ -10,7 +10,7 @@ import QtGraphicalEffects 1.12 // LinearGradient
 import Qt.labs.platform 1.1 // FileDialog (since Qt 5.8) // change to "import QtQuick.Dialogs" if using Qt 6.2
 
 //import neroshop.Wallet 1.0
-import "../../fonts/FontAwesome"//import FontAwesome 1.0
+import FontAwesome 1.0
 import "../components" as NeroshopComponents
 
 Page {
@@ -32,7 +32,7 @@ Page {
             Script.getNumber("neroshop.monero.daemon.restore_height")
         );*/
         // connect to a remote monero node (default)
-        let remote_node = Script.getTableStrings("neroshop.monero.nodes.stagenet")[1]//[0]
+        let remote_node = Script.getTableStrings("neroshop.monero.nodes.stagenet")[1]
         let remote_node_ip = remote_node.split(":")[0]
         let remote_node_port = remote_node.split(":")[1]
         console.log("connecting to remote node " + remote_node_ip + " (port: " + remote_node_port + ")")
@@ -49,7 +49,7 @@ Page {
         }
         // generate a unique wallet seed (mnemonic)
         let folderUrlToString = walletFolderDialog.folder.toString().replace("file://","")
-        let error = Wallet.createRandomWallet(walletPasswordField.text, walletPasswordConfirmField.text, (walletNameField.text) ? qsTr(folderUrlToString + "/%1").arg(walletNameField.text) : qsTr(folderUrlToString + "/%1").arg(walletNameField.placeholderText))//walletPathField.text)//neroshopWalletDir + "/auth")//"wallet")
+        let error = Wallet.createRandomWallet(walletPasswordField.text, walletPasswordConfirmField.text, (walletNameField.text) ? qsTr(folderUrlToString + "/%1").arg(walletNameField.text) : qsTr(folderUrlToString + "/%1").arg(walletNameField.placeholderText))
         // if wallet passwords don't match, display error message
         let WALLET_PASSWORD_NO_MATCH = 2
         let WALLET_ALREADY_EXISTS = 3;
@@ -64,7 +64,7 @@ Page {
         
         if(!Wallet.isGenerated()) return;
         // assign the mnemonic model to the repeater model
-        walletSeedRepeater.model = Wallet.getMnemonicModel()
+        walletSeedRepeater.model = Wallet.getMnemonicList()
         // show wallet and seed message
         walletMessageArea.text = qsTr("\"%1\" has been created successfully.").arg((walletNameField.text) ? qsTr(folderUrlToString + "/%1.keys").arg(walletNameField.text) : qsTr(folderUrlToString + "/%1.keys").arg(walletNameField.placeholderText))
         walletMessageArea.messageCode = 0
@@ -74,6 +74,8 @@ Page {
         walletNameField.text = ""
         walletPasswordField.text = ""
         walletPasswordConfirmField.text = ""
+        // hide backButton if wallet has already been generated (not sure if this is a good idea? User may forget to copy their seed phrase)
+        pageBackButton.visible = false
         // start synching the monero node as soon we generate a wallet
         startWalletSync();            
     }
@@ -90,6 +92,11 @@ Page {
         // switch (login) to home page
         //stack.push(home_page)
         pageLoader.source = "HomePage.qml"
+        console.log("Primary address: ", Wallet.getPrimaryAddress())
+        console.log("Balance: ", Wallet.getBalanceLocked(0))
+        console.log("Unlocked balance: ", Wallet.getBalanceUnlocked(0))
+        //console.log("subaddress: ", (!Wallet.isGenerated()) ? "" : Wallet.createUniqueSubaddressObject(0).address)//console.log(Wallet.isGenerated() ? Wallet.getAddressesAll() : "no addresses found")
+        //console.log("subaddress balance: ", (!Wallet.isGenerated()) ? "" : Wallet.createUniqueSubaddressObject(0).balance)        
     }
     ///////////////////////////
     NeroshopComponents.MessageBox {////MessageDialog {
@@ -104,7 +111,7 @@ Page {
         id: walletFileDialog
         fileMode: FileDialog.OpenFile
         currentFile: walletFileField.text // currentFile is deprecated since Qt 6.3. Use selectedFile instead
-        folder: neroshopWalletDir//StandardPaths.writableLocation(StandardPaths.HomeLocation) + "/neroshop"//StandardPaths.writableLocation(StandardPaths.AppDataLocation) // refer to https://doc.qt.io/qt-5/qstandardpaths.html#StandardLocation-enum
+        folder: (isWindows) ? StandardPaths.writableLocation(StandardPaths.DocumentsLocation) + "/neroshop" : StandardPaths.writableLocation(StandardPaths.HomeLocation) + "/neroshop"//StandardPaths.writableLocation(StandardPaths.AppDataLocation) // refer to https://doc.qt.io/qt-5/qstandardpaths.html#StandardLocation-enum
         nameFilters: ["Wallet files (*.keys)"]
         ////options: FileDialog.ReadOnly // will not allow you to create folders while file dialog is opened
     }
@@ -113,7 +120,7 @@ Page {
     FolderDialog {
         id: walletFolderDialog
         currentFolder: walletPathField.text
-        folder: StandardPaths.writableLocation(StandardPaths.HomeLocation) + "/neroshop"
+        folder: (isWindows) ? StandardPaths.writableLocation(StandardPaths.DocumentsLocation) + "/neroshop" : StandardPaths.writableLocation(StandardPaths.HomeLocation) + "/neroshop"
     }
     ///////////////////////////        
     /*    Button { // must be used in conjunction with a TabBar according to: https://doc.qt.io/qt-5/qml-qtquick-controls2-tabbutton.html
@@ -187,7 +194,7 @@ Page {
             color: NeroshopComponents.Style.getColorsFromTheme()[0]
             
             Button {
-                id: pageRedirectButton
+                id: pageNextButton
                 anchors.verticalCenter: parent.verticalCenter//Layout.alignment: Qt.AlignVCenter | Qt::AlignRight
                 anchors.right: parent.right
                 anchors.rightMargin: 20
@@ -222,9 +229,9 @@ Page {
                 anchors.top: parent.top
                 anchors.topMargin: 20
                 //anchors.left: parent.left
-                //anchors.leftMargin: pageRedirectButton.width + 20
+                //anchors.leftMargin: pageNextButton.width + 20
                 //width: 800
-                ////anchors.rightMargin: pageRedirectButton.width + 20//anchors.margins: 50
+                ////anchors.rightMargin: pageNextButton.width + 20//anchors.margins: 50
                 columns: 2 // Set column limit to 2
                 columnSpacing: 100 // The default value is 5. Same with rowSpacing
                 ////rows: 10
@@ -566,13 +573,12 @@ Page {
             color: NeroshopComponents.Style.getColorsFromTheme()[0]
 
             Button {
-                id: pageRedirectButton1
+                id: pageBackButton
                 anchors.verticalCenter: parent.verticalCenter//Layout.alignment: Qt.AlignVCenter | Qt::AlignLeft
                 anchors.left: parent.left
                 anchors.leftMargin: 20
                 implicitWidth: 60; height: implicitWidth
                 text: qsTr(FontAwesome.angleLeft)
-                visible: !Wallet.isGenerated() // hide if wallet has already been generated
             
                 background: Rectangle {
                     color: "#121212"//"#6b5b95"//

@@ -3,36 +3,6 @@
 #ifndef WALLET_HPP_NEROSHOP
 #define WALLET_HPP_NEROSHOP
 
-#if defined(NEROSHOP_USE_QT)
-#include <QStandardPaths>
-#if defined(_WIN32)
-#define NEROSHOP_DEFAULT_WALLET_PATH (QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation) + "/neroshop")
-#else
-#define NEROSHOP_DEFAULT_WALLET_PATH (QStandardPaths::writableLocation(QStandardPaths::HomeLocation) + "/neroshop")
-#endif
-#endif
-
-#if !defined(NEROSHOP_USE_QT)
-#if defined(__linux__) && !defined(__ANDROID__)
-#define NEROSHOP_DEFAULT_WALLET_PATH "/home/" + neroshop::device::get_user() + "/neroshop"
-#endif
-#if defined(_WIN32)
-#define NEROSHOP_DEFAULT_WALLET_PATH "C:/Users/" + neroshop::device::get_user() + "/Documents/neroshop"
-#endif
-#if defined(__APPLE__) && defined(__MACH__)
-// ...
-#endif
-#if defined(__ANDROID__)
-// ...
-#endif
-#if defined(__APPLE__)
-#include <TargetConditionals.h>
-#if TARGET_OS_IPHONE
-// ...
-#endif
-#endif
-#endif // endif !defined(NEROSHOP_USE_QT)
-
 #include <daemon/monero_daemon.h>
 #include <daemon/monero_daemon_model.h>
 #include <utils/gen_utils.h>
@@ -73,10 +43,11 @@ public:
     std::string upload(bool open = true, std::string password = ""); // change to mainnet later    
     
     // todo: create a function that connects a hardware wallet
+    monero::monero_subaddress create_subaddress(unsigned int account_idx, const std::string & label = "") const; // generates a new subaddress from main account // monero addresses start with 4 or 8
     
     void transfer(const std::string& address, double amount); // "transfer" will be used for sending refunds
     void sweep_all(const std::string& address); // sends entire balance, including dust to an address // "sweep_all <address>"
-    std::string address_new() const; // generates a new subaddress from main account // "address new" // monero addresses start with 4 or 8
+    std::string address_new() const; // this function is deprecated and will be removed soon
     unsigned int address_book_add(const std::string& address, std::string description = ""); // "address_book add <address> <description>"
     void address_book_delete(unsigned int index); // "address_book delete 0"  
     std::vector<std::string> address_all(); // show all addresses
@@ -90,7 +61,8 @@ public:
     ////void on_output_spent (const monero_output_wallet &output);
     // daemon or node-related functions
     void daemon_open(const std::string& ip, const std::string& port, bool confirm_external_bind = false, bool restricted_rpc = true, bool remote = false, std::string data_dir = std::string("/home/") + neroshop::device::get_user() + std::string("/.bitmonero")/*""*/, std::string network_type = "stagenet", unsigned int restore_height = 0);
-    bool daemon_connect(const std::string& ip, const std::string& port);
+    bool daemon_connect_local(const std::string& ip, const std::string& port);
+    void daemon_connect_remote(const std::string& ip, const std::string& port);
     void daemon_close();
     //void explore_address(const std::string& address); //{Browser::open(this->addr_url + address);}// will detect address before opening explorer
     //void explore_tx(const std::string& tx_hash);
@@ -115,14 +87,6 @@ public:
     unsigned int get_transactions_count() const;
     // subaddress
     std::string get_last_subaddress() const; // returns the last subaddress to be created
-    // proof (proving the transaction was submitted) - https://web.getmonero.org/resources/user-guides/prove-payment.html
-    ////std::string get_tx_note(const std::string& txid) const; // "get_tx_note <txid>" - useful for retrieving address information
-    // get_spend_proof <txid> [<message>]
-    // get_tx_proof <txid> <address> [<message>]
-    // get_reserve_proof (all|<amount>) [<message>]
-    // check_reserve_proof <address> <signature_file> [<message>]
-    // check_spend_proof <txid> <signature_file> [<message>]
-    // check_tx_proof <txid> <address> <signature_file> [<message>]
     // NOTE: use address_new to automatically generate a unique subaddress for each customer to make it easier to track who and where the payments are coming from 
     std::string get_private_view_key() const; // secret view key
     std::string get_public_view_key() const;
@@ -158,10 +122,11 @@ private:
     std::unique_ptr<monero::monero_wallet_full> monero_wallet_obj; // monero wallet
     monero::monero_network_type network_type; // default will be mainnet when this application is released
     std::unique_ptr<Process> process; // monerod process // every wallet will have its own process
-    volatile double progress; // sync progress
+    volatile double percentage; // sync progress
     mutable std::mutex wallet_data_mutex;
     volatile unsigned int height, start_height, end_height;
     /*volatile */std::string message;
+    uint64_t/*unsigned long long*/ restore_height;
 };
 
 }
