@@ -62,7 +62,13 @@ Coming soon
 | [openpgp](external/openpgp)                                        | ?                  | public-key encryption and digital signatures                           | :grey_question:                     |
 
 ### Compiling neroshop from source
-**0. Clone neroshop (and its submodules)**
+**0. Install prerequisites**
+```bash
+# prerequisites
+sudo apt install build-essential cmake git
+```
+
+**1. Clone neroshop (and its submodules)**
 ```bash
 git clone --recurse-submodules https://github.com/larteyoh/testshop.git
 ```
@@ -70,13 +76,11 @@ git clone --recurse-submodules https://github.com/larteyoh/testshop.git
 cd testshop
 ```
 
-
-**1. Install dependencies**
+**2. Install dependencies**
 
 Debian/Ubuntu
 ```bash
-# prerequisites
-sudo apt install build-essential cmake git
+
 # neroshop
 sudo apt install libcurl4-openssl-dev libssl-dev libuv1-dev qtdeclarative5-dev qml-module-qt-labs-platform qml-module-qtquick-controls qml-module-qtquick-controls2 qml-module-qtquick-shapes
 # monero-cpp (monero)
@@ -102,7 +106,7 @@ sudo dnf install boost-static libstdc++-static pkgconf boost-devel openssl-devel
 ```
 
 
-**2. Update monero-cpp submodules**
+**3. Update monero-cpp submodules**
 ```bash
 cd external/monero-cpp && ./bin/update_submodules.sh
 ```
@@ -111,7 +115,7 @@ cd external/monero-project
 ```
 
 
-**3. Install expat (dependency of unbound) and unbound:**
+**4. Install expat (dependency of unbound) and unbound:**
 ```bash
 wget https://github.com/libexpat/libexpat/releases/download/R_2_4_8/expat-2.4.8.tar.bz2
 tar -xf expat-2.4.8.tar.bz2
@@ -139,7 +143,7 @@ For Fedora users, you may need to add this line under the "find_package(Boost ..
 
 <!-- git submodule update --init --force --> <!-- <= call this before building monero -->
 
-**4. Build monero-project to create .a libraries**
+**5. Build monero-project to create .a libraries**
 ```bash
 make release-static
 ```
@@ -148,7 +152,7 @@ cd ../../../../
 ```
 
 
-**5. Build neroshop**
+**6. Build neroshop**
 
 To build with [**CMake**](https://cmake.org/):
 
