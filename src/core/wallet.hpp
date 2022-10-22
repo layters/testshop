@@ -47,12 +47,13 @@ public:
     
     void transfer(const std::string& address, double amount); // "transfer" will be used for sending refunds
     void sweep_all(const std::string& address); // sends entire balance, including dust to an address // "sweep_all <address>"
-    std::string address_new() const; // this function is deprecated and will be removed soon
+    std::string address_new() const; // this function has been replaced by create_subaddress() and is deprecated. Will be removed soon
     unsigned int address_book_add(const std::string& address, std::string description = ""); // "address_book add <address> <description>"
     void address_book_delete(unsigned int index); // "address_book delete 0"  
-    std::vector<std::string> address_all(); // show all addresses
-    std::vector<std::string> address_used(); // show all used addresses
-    std::vector<std::string> address_unused(); // show all unused addresses
+    
+    std::vector<monero::monero_subaddress> get_addresses_all(unsigned int account_idx);
+    std::vector<monero::monero_subaddress> get_addresses_used(unsigned int account_idx);
+    std::vector<monero::monero_subaddress> get_addresses_unused(unsigned int account_idx);
 
     void on_sync_progress(uint64_t height, uint64_t start_height, uint64_t end_height, double percent_done, const std::string& message);
     ////void on_new_block (uint64_t height);

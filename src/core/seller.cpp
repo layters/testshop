@@ -658,12 +658,12 @@ void neroshop::Seller::on_order_received(std::string& subaddress) {
     // generate 10 new subaddress after each order (just to be sure there are enough unused subaddresses to choose from)
     for(int i = 0; i < 10; i++) wallet->address_new();
     // get a list of all unused subaddresses
-    std::vector<std::string> unused_subaddress_list = wallet->address_unused();
+    std::vector<monero::monero_subaddress> unused_subaddress_list = wallet->get_addresses_unused(0);
     // now pick from the list of unused subaddresses (random)
 	std::random_device rd; // Generating random numbers with C++11's random requires an engine and a distribution.
     std::mt19937 mt(rd()); // This is an engine based on the Mersenne Twister 19937 (64 bits):
     std::uniform_real_distribution<double> dist(0, unused_subaddress_list.size() - 1);
-    subaddress = unused_subaddress_list[static_cast<int>(dist(mt))];
+    subaddress = unused_subaddress_list[static_cast<int>(dist(mt))].m_address.get();
     // copy random subaddress
     // USED SUBADDRESS IS NOT REMOVED FROM Wallet::address_unused() UNTIL THE SECOND CONFIRMATION (OUTPUT RECEIVED ...) 
 #ifdef NEROSHOP_DEBUG0

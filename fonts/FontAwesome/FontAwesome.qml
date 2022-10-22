@@ -46,6 +46,7 @@ Object {
     property string circleInfo: "\uf05a"
     property string triangleExclamation: "\uf071"
     property string circleExclamation: "\uf06a"
+    property string seedling: "\uf4d8"
     ////property string terminal: ""
     ////property string upload: "\u"
     ////property string ?: "\u"

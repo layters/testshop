@@ -177,60 +177,52 @@ void neroshop::Wallet::address_book_delete(unsigned int index) {
 ////////////////////
 //void  neroshop::Wallet::explore(const std::string& address) {} // will detect address before opening explorer
 ////////////////////
-std::vector<std::string> neroshop::Wallet::address_all() 
-{
+std::vector<monero::monero_subaddress> neroshop::Wallet::get_addresses_all(unsigned int account_idx) {
     if(!monero_wallet_obj.get()) throw std::runtime_error("monero_wallet_full is not opened");
     if(!monero_wallet_obj.get()->is_synced()) throw std::runtime_error("wallet is not synced with a daemon");
-    std::vector<std::string> address_list;
-    std::vector<unsigned int> subaddress_indices;
-    for(int i = 0; i < monero_wallet_obj->get_account(0, true).m_subaddresses.size(); i++) {
-        std::vector<monero_subaddress> subaddresses = monero_wallet_obj->get_subaddresses(0, subaddress_indices); // retrieve subaddress from account_0
-#ifdef NEROSHOP_DEBUG0
-        std::cout << subaddresses[i].m_index.get() << " " << subaddresses[i].m_address.get() << (subaddresses[i].m_is_used.get() ? " (used)" : "") << std::endl;//std::cout << "account(" << subaddresses[i].m_account_index.get() << "), subaddress(" << subaddresses[i].m_index.get() << "): " << subaddresses[i].m_address.get() << std::endl;//std::cout << "account(" << monero_wallet_obj->get_account(0, true).m_index.get() << "), subaddress(" << monero_wallet_obj->get_account(0, true).m_subaddresses[i].m_index.get() << "): " << monero_wallet_obj->get_account(0, true).m_subaddresses[i].m_address.get() << std::endl;
-#endif
-        address_list.push_back(subaddresses[i].m_address.get()); // store all addresses in vector - bad idea as it can store duplicate addresses
+    std::vector<monero::monero_subaddress> addresses = {};
+    std::vector<unsigned int> subaddress_indices = {};
+    for(int i = 0; i < monero_wallet_obj->get_account(account_idx, true).m_subaddresses.size(); i++) {
+        addresses = monero_wallet_obj->get_subaddresses(account_idx, subaddress_indices); // retrieve subaddress from account at 'account_idx'
+        std::cout << addresses[i].m_index.get() << " " << addresses[i].m_address.get() << (addresses[i].m_is_used.get() ? " (used)" : "") << std::endl;
     }
-    return address_list;
+    return addresses;
 }
-////////////////////
-std::vector<std::string> neroshop::Wallet::address_used() 
-{
+
+std::vector<monero::monero_subaddress> neroshop::Wallet::get_addresses_used(unsigned int account_idx) {
     if(!monero_wallet_obj.get()) throw std::runtime_error("monero_wallet_full is not opened");
     if(!monero_wallet_obj.get()->is_synced()) throw std::runtime_error("wallet is not synced with a daemon");
-    std::vector<std::string> address_list;
-    std::vector<unsigned int> subaddress_indices;
-    for(int i = 0; i < monero_wallet_obj->get_account(0, true).m_subaddresses.size(); i++) {
-        std::vector<monero_subaddress> subaddresses = monero_wallet_obj->get_subaddresses(0, subaddress_indices); // retrieve subaddress from account_0
-        if(subaddresses[i].m_is_used.get()) {
-#ifdef NEROSHOP_DEBUG0        
-            std::cout << subaddresses[i].m_index.get() << " " << subaddresses[i].m_address.get() << std::endl;
-#endif            
-            address_list.push_back(subaddresses[i].m_address.get()); // store used addresses in vector
+    std::vector<monero::monero_subaddress> addresses = {};
+    std::vector<unsigned int> subaddress_indices = {};
+    for(int i = 0; i < monero_wallet_obj->get_account(account_idx, true).m_subaddresses.size(); i++) {
+        addresses = monero_wallet_obj->get_subaddresses(account_idx, subaddress_indices); // retrieve subaddress from account at 'account_idx'
+        if(addresses[i].m_is_used.get()) {
+            std::cout << addresses[i].m_index.get() << " " << addresses[i].m_address.get() << std::endl;
         }
     }
-    return address_list;
+    return addresses;
 }
-////////////////////
-std::vector<std::string> neroshop::Wallet::address_unused() 
-{
+
+std::vector<monero::monero_subaddress> neroshop::Wallet::get_addresses_unused(unsigned int account_idx) {
     if(!monero_wallet_obj.get()) throw std::runtime_error("monero_wallet_full is not opened");
     if(!monero_wallet_obj.get()->is_synced()) throw std::runtime_error("wallet is not synced with a daemon");
-    std::vector<std::string> address_list; // local std::vector
-    std::vector<unsigned int> subaddress_indices;
-    for(int i = 0; i < monero_wallet_obj->get_account(0, true).m_subaddresses.size(); i++) {
-        std::vector<monero_subaddress> subaddresses = monero_wallet_obj->get_subaddresses(0, subaddress_indices); // retrieve subaddress from account_0
-        if(!subaddresses[i].m_is_used.get()) {
-#ifdef NEROSHOP_DEBUG
-            std::cout << ((std::find(recent_address_list.begin(), recent_address_list.end(), subaddresses[i].m_address.get()) != recent_address_list.end()) ? "\033[91m" : "\033[0m") << subaddresses[i].m_index.get() << " " << subaddresses[i].m_address.get() << "\033[0m" << std::endl;// if subaddress is found in recent_address_list, mark it red
-#endif
-            // skip any recently used subaddress
-            if(std::find(recent_address_list.begin(), recent_address_list.end(), subaddresses[i].m_address.get()) != recent_address_list.end()) 
-                continue;    
-            address_list.push_back(subaddresses[i].m_address.get()); // store unused addresses in vector
+    std::vector<monero::monero_subaddress> addresses = {};
+    std::vector<unsigned int> subaddress_indices = {};
+    for(int i = 0; i < monero_wallet_obj->get_account(account_idx, true).m_subaddresses.size(); i++) {
+        std::vector<monero::monero_subaddress> unused_addresses = monero_wallet_obj->get_subaddresses(account_idx, subaddress_indices); // retrieve subaddress from account at 'account_idx'
+        if(!unused_addresses[i].m_is_used.get()) {
+            std::cout << ((std::find(recent_address_list.begin(), recent_address_list.end(), unused_addresses[i].m_address.get()) != recent_address_list.end()) ? "\033[91m" : "\033[0m") << unused_addresses[i].m_index.get() << " " << unused_addresses[i].m_address.get() << "\033[0m" << std::endl;// if subaddress is found in recent_address_list, mark it red
+            // skip any recently used subaddress (to ensure the uniqueness of a subaddress)
+            if(std::find(recent_address_list.begin(), recent_address_list.end(), unused_addresses[i].m_address.get()) != recent_address_list.end()) 
+                continue;
+            addresses.push_back(unused_addresses[i]); // store unused addresses in vector
         }
     }
-    return address_list;
+    return addresses;
 }
+
+////////////////////
+////////////////////
 ////////////////////
 ////////////////////
 ////////////////////

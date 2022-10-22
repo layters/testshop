@@ -73,20 +73,20 @@ QString neroshop::gui::Wallet::getPrimaryAddress() const {
 QStringList neroshop::gui::Wallet::getAddressesAll() const {
     if(!wallet) throw std::runtime_error("neroshop::Wallet is not initialized");
     QStringList addresses;
-    for(auto address : wallet->address_all()) {
-        addresses << QString::fromStdString(address);//std::cout << address << std::endl;
+    for(auto address : wallet->get_addresses_all(0)) {
+        addresses << QString::fromStdString(address.m_address.get());//std::cout << address << std::endl;
     }
     return addresses;
 }
 
 /*QStringList neroshop::gui::Wallet::getAddressesUsed() const{
     if(!wallet) throw std::runtime_error("neroshop::Wallet is not initialized");
-    return wallet->get_address_used();
+    return wallet->get_addresses_used(0);
 }
 
 QStringList neroshop::gui::Wallet::getAddressesUnused() const {
     if(!wallet) throw std::runtime_error("neroshop::Wallet is not initialized");
-    return wallet->get_address_unused();
+    return wallet->get_addresses_unused(0);
 }*/
 
 double neroshop::gui::Wallet::getBalanceLocked(unsigned int account_index) const {
