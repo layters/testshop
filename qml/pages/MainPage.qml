@@ -122,66 +122,6 @@ Page {
         currentFolder: walletPathField.text
         folder: (isWindows) ? StandardPaths.writableLocation(StandardPaths.DocumentsLocation) + "/neroshop" : StandardPaths.writableLocation(StandardPaths.HomeLocation) + "/neroshop"
     }
-    ///////////////////////////        
-    /*    Button { // must be used in conjunction with a TabBar according to: https://doc.qt.io/qt-5/qml-qtquick-controls2-tabbutton.html
-            text: qsTr("Register")
-            width: implicitWidth
-            onClicked: mainPageStack.currentIndex = 0
-        
-            background: Rectangle {
-                color: buttonsBar.buttonColor//"#00aebf"
-            }                    
-        }
-        Button {
-            id: login_button//auth_walletfile_button
-            text: qsTr("Login with Wallet file")
-            width: implicitWidth
-            onClicked: mainPageStack.currentIndex = 1
-            
-            contentItem: Text {  
-                //font.family: "Consolas"; 
-                //font.pointSize: 10; 
-                //font.bold: true
-                
-                text: login_button.text
-                color: "#ffffff" // white text
-            }
-        
-            background: Rectangle {
-                color: buttonsBar.buttonColor//NeroshopComponents.Style.moneroOrangeColor//"#ff6600"//parent.down ? "#bbbbbb" :
-                        //(parent.hovered ? "#d6d6d6" : "#f6f6f6")
-                radius: 0
-                //border.color: login_button.hovered ? "#ffffff" : this.color//"#ffffff"//control.down ? "#17a81a" : "#21be2b"
-            }            
-        }
-        Button {
-            text: qsTr("Login with Seed (Mnemonic)")
-            width: implicitWidth
-            onClicked: mainPageStack.currentIndex = 2
-        
-            background: Rectangle {
-                color: buttonsBar.buttonColor//NeroshopComponents.Style.moneroGrayColor
-            }                    
-        }  
-        Button {
-            text: qsTr("Login with Keys")
-            width: implicitWidth
-            onClicked: mainPageStack.currentIndex = 3
-        
-        
-            background: Rectangle {
-                color: buttonsBar.buttonColor//"#402ef7"
-            }                    
-        }          
-        Button {
-            text: qsTr("Login with Hardware wallet")
-            width: implicitWidth
-            //onClicked: mainPageStack.currentIndex = 4
-        
-            background: Rectangle {
-                color: buttonsBar.buttonColor//"red"
-            }                    
-        }       */                         
     ///////////////////////////
     StackLayout { // Perfect for a stack of items where only one item is visible at a time//ColumnLayout { // From top to bottom
         id: mainPageStack // auth_menu inside home menu
@@ -207,6 +147,7 @@ Page {
                 anchors.rightMargin: 20
                 implicitWidth: 60; height: implicitWidth
                 text: qsTr(FontAwesome.angleRight)
+                hoverEnabled: true
             
                 background: Rectangle {
                     color: "#121212"//"#6b5b95"//
@@ -273,6 +214,7 @@ Page {
                 //display: AbstractButton.IconOnly//AbstractButton.TextBesideIcon//AbstractButton.TextOnly//AbstractButton.TextUnderIcon
                 //icon.source: "file:///" + neroshopResourcesDir + "/ellipsis.png"//"/upload.png"
                 //icon.color: "#ffffff"
+                hoverEnabled: true
                 onClicked: walletFileDialog.open()
                 
                 background: Rectangle {
@@ -331,6 +273,7 @@ Page {
                         icon.source: "file:///" + neroshopResourcesDir + "/file.png" // keys (key.png), seed (sprout.png), file, hardware
                         //icon.color: "#ffffff"
                         display: AbstractButton.IconOnly//hovered ? AbstractButton.TextBesideIcon : AbstractButton.IconOnly//AbstractButton.TextUnderIcon
+                        hoverEnabled: true
                         background: Rectangle {
                             color: (parent.checked) ? "#39304f" : "#6b5b95"
                             //border.color:
@@ -356,6 +299,7 @@ Page {
                      icon.source: "file:///" + neroshopResourcesDir + "/sprout.png" // keys (key.png), seed (sprout.png), file, hardware
                      //icon.color: "#ffffff"
                      display: AbstractButton.IconOnly//hovered ? AbstractButton.TextBesideIcon : AbstractButton.IconOnly//AbstractButton.TextUnderIcon
+                     hoverEnabled: true
                      background: Rectangle {
                          color: (parent.checked) ? "#39304f" : "#6b5b95"
                          //border.color:
@@ -373,6 +317,7 @@ Page {
                     icon.source: "file:///" + neroshopResourcesDir + "/key.png" // keys (key.png), seed (sprout.png), file, hardware
                     //icon.color: "#ffffff"
                     display: AbstractButton.IconOnly//hovered ? AbstractButton.TextBesideIcon : AbstractButton.IconOnly//AbstractButton.TextUnderIcon
+                    hoverEnabled: true
                     background: Rectangle {
                         color: (parent.checked) ? "#39304f" : "#6b5b95"
                         //border.color:
@@ -390,6 +335,7 @@ Page {
                     icon.source: "file:///" + neroshopResourcesDir + "/usb.png" // keys (key.png), seed (sprout.png), file, hardware
                     //icon.color: "#ffffff"
                     display: AbstractButton.IconOnly//hovered ? AbstractButton.TextBesideIcon : AbstractButton.IconOnly//AbstractButton.TextUnderIcon
+                    hoverEnabled: true
                     background: Rectangle {
                         color: (parent.checked) ? "#39304f" : "#6b5b95"
                         //border.color:
@@ -528,6 +474,7 @@ Page {
                 anchors.leftMargin: 20
                 implicitWidth: 60; height: implicitWidth
                 text: qsTr(FontAwesome.angleLeft)
+                hoverEnabled: true
                 visible: (walletSeedRepeater.model == null)
             
                 background: Rectangle {
@@ -559,6 +506,7 @@ Page {
                 anchors.rightMargin: 20
                 implicitWidth: 60; height: implicitWidth
                 text: qsTr(FontAwesome.angleRight)
+                hoverEnabled: true
                 visible: (walletSeedRepeater.model != null)
             
                 background: Rectangle {
@@ -660,6 +608,7 @@ Page {
                         implicitWidth: 24; implicitHeight: 24
                         checkable: true
                         checked: true//false
+                        hoverEnabled: true
                         // checked = show, unchecked = hide. Passwords are hidden by default
                         background: Rectangle {
                             color: "transparent"
@@ -753,7 +702,8 @@ Page {
                 text: qsTr("Change")
                 //display: AbstractButton.IconOnly//AbstractButton.TextBesideIcon//AbstractButton.TextOnly
                 //icon.source: "file:///" + neroshopResourcesDir + "/change.png"
-                //icon.color: "#ffffff"                
+                //icon.color: "#ffffff"
+                hoverEnabled: true                
                 onClicked: walletFolderDialog.open()
                 
                 background: Rectangle {
@@ -781,7 +731,8 @@ Page {
                 Layout.topMargin: 10//20      
                 Layout.preferredWidth: (walletPathChangeButton.width * 3) - parent.spacing//150
                 Layout.preferredHeight: 50          
-                text: qsTr("Generate")//("Generate Keys")                
+                text: qsTr("Generate")//("Generate Keys")
+                hoverEnabled: true
                 onClicked: generateWalletKeys()
                 
                 contentItem: Text {  
@@ -914,6 +865,7 @@ Page {
                     icon.source: "file:///" + neroshopResourcesDir + "/copy.png"
                     icon.color: "#ffffff"
                     display: AbstractButton.IconOnly//AbstractButton.TextBesideIcon//AbstractButton.TextOnly//AbstractButton.TextUnderIcon
+                    hoverEnabled: true
                     onClicked: Wallet.copyMnemonicToClipboard()////copyToClipboard()
                 
                     background: Rectangle {
@@ -939,6 +891,7 @@ Page {
                 anchors.leftMargin: 20
                 implicitWidth: 60; height: implicitWidth
                 text: qsTr(FontAwesome.angleLeft)
+                hoverEnabled: true
             
                 background: Rectangle {
                     color: "#121212"//"#6b5b95"//
@@ -994,6 +947,7 @@ Page {
                 	Layout.preferredHeight: 50
                 	Layout.topMargin: 15
                 	text: qsTr("Register")
+                	hoverEnabled: true
                 	onClicked: registerWallet()
                 	background: Rectangle {
                     	color: "#6b5b95"

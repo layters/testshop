@@ -47,6 +47,7 @@ RowLayout {
         ButtonGroup.group: navBarButtonGroup // attaches a button to a button group
         display: AbstractButton.IconOnly
         //checkable: true
+        hoverEnabled: true
         
         icon.source: "file:///" + neroshopResourcesDir + "/wallet.png"
         icon.color: (!checked && this.hovered) ? NeroshopComponents.Style.moneroOrangeColor : "#ffffff"
@@ -74,6 +75,7 @@ RowLayout {
         text: qsTr("Sellers' Hub")
         ButtonGroup.group: navBarButtonGroup
         display: AbstractButton.IconOnly//AbstractButton.TextBesideIcon
+        hoverEnabled: true
         
         icon.source: "file:///" + neroshopResourcesDir + "/shop.png"
         icon.color: (!checked && this.hovered) ? reservedColor : "#ffffff"
@@ -100,6 +102,7 @@ RowLayout {
         text: (messagesButton.dummy_count > 0) ? qsTr("Messages : %1").arg(dummy_count.toString()) : qsTr("Messages")
         ButtonGroup.group: navBarButtonGroup
         display: AbstractButton.IconOnly//AbstractButton.TextBesideIcon
+        hoverEnabled: true
         property int dummy_count: 0
         
         icon.source: "file:///" + neroshopResourcesDir + "/mail.png"
@@ -127,6 +130,7 @@ RowLayout {
         text: qsTr("Orders")
         ButtonGroup.group: navBarButtonGroup
         display: AbstractButton.IconOnly//AbstractButton.TextBesideIcon
+        hoverEnabled: true
         
         icon.source: "file:///" + neroshopResourcesDir + "/order.png"
         icon.color: (!checked && this.hovered) ? reservedColor : "#ffffff"
@@ -153,6 +157,7 @@ RowLayout {
         text: qsTr("Account Settings")//qsTr("User")
         ButtonGroup.group: navBarButtonGroup
         display: AbstractButton.IconOnly//AbstractButton.TextBesideIcon
+        hoverEnabled: true
         
         icon.source: "file:///" + neroshopResourcesDir + "/user.png"
         icon.color: (!checked && this.hovered) ? reservedColor : "#ffffff"
@@ -184,6 +189,7 @@ RowLayout {
         Layout.preferredHeight : 40
         Layout.preferredWidth : 100
         property string reservedColor: "#323232"//(useDefaultButtonColor) ? defaultButtonColor : "#323232"
+        hoverEnabled: true
      
         background: Rectangle {
             //width: cartButton.width; height: cartButton.height//width: 100; height: 40

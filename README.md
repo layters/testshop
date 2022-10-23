@@ -63,10 +63,20 @@ Coming soon
 
 ### Compiling neroshop from source
 **0. Install prerequisites**
+
+Debian/Ubuntu
 ```bash
-# prerequisites
 sudo apt install build-essential cmake git
 ```
+Arch
+```bash
+sudo pacman -Sy --needed base-devel cmake git
+```
+Fedora
+```bash
+sudo dnf install gcc gcc-c++ make cmake git
+```
+
 
 **1. Clone neroshop (and its submodules)**
 ```bash
@@ -88,8 +98,6 @@ sudo apt update && sudo apt install pkg-config libssl-dev libzmq3-dev libsodium-
 ```
 Arch (needs to be updated)
 ```bash
-# prerequisites
-sudo pacman -Sy --needed base-devel cmake git
 # neroshop
 sudo pacman -Sy --needed curl openssl libuv
 # monero-cpp (monero)
@@ -97,8 +105,6 @@ sudo pacman -Syu --needed boost openssl zeromq libpgm libsodium libunwind xz rea
 ```
 Fedora (needs to be updated)
 ```bash
-# prerequisites
-sudo dnf install gcc gcc-c++ make cmake git
 # neroshop
 sudo dnf install libcurl-devel openssl-devel libuv-devel libuv-static
 # monero-cpp (monero)
@@ -138,7 +144,7 @@ sudo make install
 cd ../
 ```
 
-For Fedora users, you may need to add this line under the "find_package(Boost .." in case of an "undefined reference to icu_*" error:
+In some cases, you may need to add this line under the "find_package(Boost .." in "external/monero-cpp/external/monero-project/CMakeLists.txt" in case of an "undefined reference to icu_*" error:
 `set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -licuio -licui18n -licuuc -licudata")`
 
 <!-- git submodule update --init --force --> <!-- <= call this before building monero -->

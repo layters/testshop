@@ -120,6 +120,7 @@ ApplicationWindow {
                     icon.color: "#001677"////hovered ? "#001677" : "#ffffff"//(!checked && hovered) ? "#001677" : "#ffffff"
                     //icon.width: parent.width//footer.height
                     //icon.height: parent.height//32//footer.height
+                    hoverEnabled: true
                     anchors.verticalCenter: parent.verticalCenter
                     background: Rectangle {
                         color: "transparent"//(parent.checked) ? "#001677" : "transparent"
@@ -152,6 +153,7 @@ ApplicationWindow {
                     radius: 20
                     foregroundColor: "#564978"
                     //textObject.visible: true
+                    hoverEnabled: true
                     anchors.verticalCenter: parent.verticalCenter//anchors.top: parent.top; anchors.topMargin: (parent.height - this.height) / 2 // center vertically on footer (height)
                     value: 0.5 // placeholder value
 
@@ -179,6 +181,7 @@ ApplicationWindow {
                     //textObject.visible: true
                     //textObject.text: "wallet sync: " + (this.value * 100).toString() + "%"
                     //textObject.color: "#ffffff"
+                    hoverEnabled: true
                     anchors.verticalCenter: parent.verticalCenter//anchors.top: parent.top; anchors.topMargin: (parent.height - this.height) / 2
                     ////value: Wallet.isGenerated() ? Wallet.getSyncPercentage() : 0.0 // this does not work (fails to update value so we use Timer instead)     
                     Timer {
