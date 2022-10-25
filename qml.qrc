@@ -46,6 +46,38 @@
         <!--<file>fonts/FontAwesome/svgs/</file>-->
         <!-- images -->
         <!--<file>images/appicons/neroshop-logo.png</file> -->
+        <file>images/cart.png</file>
+        <file>images/clipboard.png</file>
+        <file>images/cog.png</file>
+        <file>images/copy.png</file>
+        <file>images/eye.png</file>
+        <file>images/eye_slash.png</file>
+        <file>images/file.png</file>
+        <file>images/grid.png</file>
+        <file>images/heart.png</file>
+        <file>images/image.png</file>
+        <file>images/image_gallery.png</file>     
+        <file>images/key.png</file>
+        <file>images/list.png</file>
+        <file>images/mail.png</file> <!-- not in used -->
+        <file>images/mailbox.png</file>
+        <file>images/mask.png</file>
+        <file>images/monero_symbol.png</file>
+        <file>images/monero_symbol_white.png</file>
+        <file>images/order.png</file>
+        <file>images/paid.png</file>
+        <file>images/search.png</file>
+        <file>images/send.png</file>
+        <file>images/shop.png</file>        
+        <file>images/sprout.png</file>
+        <file>images/star.png</file>
+        <file>images/star_half.png</file>        
+        <file>images/trash.png</file>
+        <file>images/triangle.png</file>
+        <file>images/usb.png</file>
+        <file>images/user.png</file>
+        <file>images/wallet.png</file>
+        <file>images/wownero_logo.png</file>        
         <!--<file>images/</file> -->
     </qresource>
 </RCC>

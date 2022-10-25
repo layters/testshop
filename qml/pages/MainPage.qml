@@ -51,9 +51,9 @@ Page {
         let folderUrlToString = walletFolderDialog.folder.toString().replace("file://","")
         let error = Wallet.createRandomWallet(walletPasswordField.text, walletPasswordConfirmField.text, (walletNameField.text) ? qsTr(folderUrlToString + "/%1").arg(walletNameField.text) : qsTr(folderUrlToString + "/%1").arg(walletNameField.placeholderText))
         // if wallet passwords don't match, display error message
-        let WALLET_PASSWORD_NO_MATCH = 2
+        let WALLET_PASSWORDS_NO_MATCH = 2
         let WALLET_ALREADY_EXISTS = 3;
-        if(error == WALLET_PASSWORD_NO_MATCH) {//if(walletPasswordConfirmField.text != walletPasswordField.text || !walletPasswordField.acceptableInput) {
+        if(error == WALLET_PASSWORDS_NO_MATCH) {//if(walletPasswordConfirmField.text != walletPasswordField.text || !walletPasswordField.acceptableInput) {
             walletMessageArea.text = (walletPasswordConfirmField.length > 0) ? qsTr("Wallet passwords do not match") : qsTr("Wallet password must be confirmed")
             walletMessageArea.messageCode = 1
         }
@@ -212,7 +212,7 @@ Page {
                 Layout.preferredHeight: walletFileField.height
                 text: qsTr("Browse")
                 //display: AbstractButton.IconOnly//AbstractButton.TextBesideIcon//AbstractButton.TextOnly//AbstractButton.TextUnderIcon
-                //icon.source: "file:///" + neroshopResourcesDir + "/ellipsis.png"//"/upload.png"
+                //icon.source: "qrc:/images/ellipsis.png"//"/upload.png"
                 //icon.color: "#ffffff"
                 hoverEnabled: true
                 onClicked: walletFileDialog.open()
@@ -270,7 +270,7 @@ Page {
                         checked: true
                         text: qsTr("Restore from file")//.arg("\uf8e9")
                         Layout.preferredHeight: 40
-                        icon.source: "file:///" + neroshopResourcesDir + "/file.png" // keys (key.png), seed (sprout.png), file, hardware
+                        icon.source: "qrc:/images/file.png" // keys (key.png), seed (sprout.png), file, hardware
                         //icon.color: "#ffffff"
                         display: AbstractButton.IconOnly//hovered ? AbstractButton.TextBesideIcon : AbstractButton.IconOnly//AbstractButton.TextUnderIcon
                         hoverEnabled: true
@@ -296,7 +296,7 @@ Page {
                      text: qsTr("Restore from seed")//.arg("\uf8e9")
                      //width: contentWidth + 20;
                      Layout.preferredHeight: 40
-                     icon.source: "file:///" + neroshopResourcesDir + "/sprout.png" // keys (key.png), seed (sprout.png), file, hardware
+                     icon.source: "qrc:/images/sprout.png" // keys (key.png), seed (sprout.png), file, hardware
                      //icon.color: "#ffffff"
                      display: AbstractButton.IconOnly//hovered ? AbstractButton.TextBesideIcon : AbstractButton.IconOnly//AbstractButton.TextUnderIcon
                      hoverEnabled: true
@@ -314,7 +314,7 @@ Page {
                     text: qsTr("Restore from keys")//.arg("\uf8e9")
                     //width: contentWidth + 20;
                     Layout.preferredHeight: 40
-                    icon.source: "file:///" + neroshopResourcesDir + "/key.png" // keys (key.png), seed (sprout.png), file, hardware
+                    icon.source: "qrc:/images/key.png" // keys (key.png), seed (sprout.png), file, hardware
                     //icon.color: "#ffffff"
                     display: AbstractButton.IconOnly//hovered ? AbstractButton.TextBesideIcon : AbstractButton.IconOnly//AbstractButton.TextUnderIcon
                     hoverEnabled: true
@@ -332,7 +332,7 @@ Page {
                     text: qsTr("Restore from hardware wallet")//.arg("\uf8e9")
                     //width: contentWidth + 20;
                     Layout.preferredHeight: 40
-                    icon.source: "file:///" + neroshopResourcesDir + "/usb.png" // keys (key.png), seed (sprout.png), file, hardware
+                    icon.source: "qrc:/images/usb.png" // keys (key.png), seed (sprout.png), file, hardware
                     //icon.color: "#ffffff"
                     display: AbstractButton.IconOnly//hovered ? AbstractButton.TextBesideIcon : AbstractButton.IconOnly//AbstractButton.TextUnderIcon
                     hoverEnabled: true
@@ -390,7 +390,7 @@ Page {
                 width: 50
                 height: walletFileUploadField.height
                 
-                icon.source: "file:///" + neroshopResourcesDir + "/upload.png"//neroshopResourceDir + "/upload.png"
+                icon.source: "qrc:/images/upload.png"//neroshopResourceDir + "/upload.png"
                 icon.color: "#ffffff"
                 // can only have 1 contentItem at a time (a contentItem is not needed for Button)
                 //contentItem: Image {
@@ -701,7 +701,7 @@ Page {
                 Layout.preferredHeight: 50//walletPathField.Layout.preferredHeight
                 text: qsTr("Change")
                 //display: AbstractButton.IconOnly//AbstractButton.TextBesideIcon//AbstractButton.TextOnly
-                //icon.source: "file:///" + neroshopResourcesDir + "/change.png"
+                //icon.source: "qrc:/images/change.png"
                 //icon.color: "#ffffff"
                 hoverEnabled: true                
                 onClicked: walletFolderDialog.open()
@@ -862,7 +862,7 @@ Page {
                     Layout.fillWidth: true////width: contentWidth + 20; height: 40
                     visible: (walletSeedRepeater.model != null)
                     text: qsTr("Copy")
-                    icon.source: "file:///" + neroshopResourcesDir + "/copy.png"
+                    icon.source: "qrc:/images/copy.png"
                     icon.color: "#ffffff"
                     display: AbstractButton.IconOnly//AbstractButton.TextBesideIcon//AbstractButton.TextOnly//AbstractButton.TextUnderIcon
                     hoverEnabled: true

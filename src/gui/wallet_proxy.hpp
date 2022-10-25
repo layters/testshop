@@ -27,6 +27,7 @@ class Wallet : public QObject, public neroshop::Wallet {
     Q_PROPERTY(neroshop::Wallet* wallet READ getWallet WRITE setWallet);// NOTIFY wallet_changed);
     //Q_PROPERTY(<type> <variable_name> READ <get_function_name>)
 public:    
+    //Q_ENUM(wallet_error)
     // functions (for use in QML)
     ////explicit Wallet(QObject* parent = 0);
     Q_INVOKABLE int createRandomWallet(const QString& password, const QString& confirm_pwd, const QString& path) const;
@@ -42,8 +43,8 @@ public:
     Q_INVOKABLE QString getPrimaryAddress() const;
     // todo: change getAddresses* functions to return a QVariantList (array) containing QVariantMaps (objects) that represent a monero subaddress
     Q_INVOKABLE QStringList getAddressesAll() const;
-    ////Q_INVOKABLE QStringList getAddressesUsed() const;
-    ////Q_INVOKABLE QStringList getAddressesUnused() const;
+    Q_INVOKABLE QStringList getAddressesUsed() const;
+    Q_INVOKABLE QStringList getAddressesUnused() const;
     Q_INVOKABLE double getBalanceLocked(unsigned int account_index) const;
     Q_INVOKABLE double getBalanceLocked(unsigned int account_index, unsigned int subaddress_index) const;
     Q_INVOKABLE double getBalanceUnlocked(unsigned int account_index) const;

@@ -34,8 +34,6 @@
 // ...
 // neroshop (gui)
 #if defined(NEROSHOP_BUILD_GUI)
-// todo: remove icon.hpp/icon.cpp and add icon files to qml.qrc file instead
-#include "gui/icon.hpp"
 #include "gui/script_proxy.hpp"
 #include "gui/wallet_proxy.hpp"
 #endif

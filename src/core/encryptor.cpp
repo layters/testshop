@@ -159,7 +159,7 @@ std::string neroshop::Encryptor::encrypt_message(const EVP_PKEY * key, const std
     EVP_PKEY_CTX_free(ctx);
     // Encrypted data is outlen bytes written to buffer out
     //std::cout << "cipher_text (encrypted): " << out << " (" << outlen << ")" << std::endl << std::endl;
-    std::string cipher_text = std::string(reinterpret_cast<const char*>(out));
+    std::string cipher_text = std::string(reinterpret_cast<const char*>(out), outlen);
     // free output buffer
     OPENSSL_free(out);
     // return cipher text
@@ -204,7 +204,7 @@ std::string neroshop::Encryptor::decrypt_message(const EVP_PKEY * key, const std
     EVP_PKEY_CTX_free(ctx);
     // Decrypted data is outlen bytes written to buffer out
     //std::cout << "plain_text (decrypted): " << out << " (" << outlen << ")" << std::endl << std::endl;
-    std::string plain_text = std::string(reinterpret_cast<const char*>(out));
+    std::string plain_text = std::string(reinterpret_cast<const char*>(out), outlen);
     // free output buffer
     OPENSSL_free(out);
     // return plain text

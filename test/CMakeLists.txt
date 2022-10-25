@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.1.0 FATAL_ERROR)
 project(test)
 
 set(neroshop_root ..)
-set(neroshop_srcs ${neroshop_root}/src/buyer.cpp #[[${neroshop_root}/src/carrier.cpp]] ${neroshop_root}/src/cart.cpp ${neroshop_root}/src/catalog.cpp ${neroshop_root}/src/client.cpp ${neroshop_root}/src/converter.cpp ${neroshop_root}/src/database.cpp ${neroshop_root}/src/encryptor.cpp #[[${neroshop_root}/src/icon.cpp]] ${neroshop_root}/src/item.cpp #[[${neroshop_root}/src/message.cpp]] ${neroshop_root}/src/order.cpp  ${neroshop_root}/src/process.cpp ${neroshop_root}/src/qr.cpp ${neroshop_root}/src/script.cpp ${neroshop_root}/src/seller.cpp ${neroshop_root}/src/server.cpp ${neroshop_root}/src/user.cpp ${neroshop_root}/src/validator.cpp ${neroshop_root}/src/wallet.cpp)
+set(neroshop_srcs ${neroshop_root}/src/core/buyer.cpp #[[${neroshop_root}/src/core/carrier.cpp]] ${neroshop_root}/src/core/cart.cpp ${neroshop_root}/src/core/catalog.cpp ${neroshop_root}/src/core/client.cpp ${neroshop_root}/src/core/converter.cpp ${neroshop_root}/src/core/database.cpp ${neroshop_root}/src/core/encryptor.cpp #[[${neroshop_root}/src/core/icon.cpp]] ${neroshop_root}/src/core/item.cpp #[[${neroshop_root}/src/core/message.cpp]] ${neroshop_root}/src/core/order.cpp  ${neroshop_root}/src/core/process.cpp ${neroshop_root}/src/core/qr.cpp ${neroshop_root}/src/core/script.cpp ${neroshop_root}/src/core/seller.cpp ${neroshop_root}/src/core/server.cpp ${neroshop_root}/src/core/user.cpp ${neroshop_root}/src/core/validator.cpp ${neroshop_root}/src/core/wallet.cpp)
 #set(neroshop_headers ) # not needed
 set(neroshop_include_dir ${neroshop_root}/include ${neroshop_root}/src)
 include_directories(${neroshop_include_dir})
@@ -352,66 +352,40 @@ set(lua_src liblua.a)
 # png (needs zlib)
 include_directories(${neroshop_root}/external/png) # v1.6.37
 include_directories(${neroshop_root}/external/zlib) #v1.2.12
+if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
+set(png_src libpng.so libz.a)
+else()
 set(png_src libpng.a libz.a)
-
-######################################
-# dokun-ui_dependencies
-include_directories(${neroshop_root}/external/dokun-ui/external/lua/lua-5.4.1/src) # lua
-include_directories(${neroshop_root}/external/dokun-ui/external/glew/include)
-include_directories(${neroshop_root}/external/dokun-ui/external/png ${neroshop_root}/external/dokun-ui/external/zlib)
-include_directories(${neroshop_root}/external/dokun-ui/external/freetype/include                   # public headers - ft2build.h
-   ${neroshop_root}/external/dokun-ui/external/freetype/include/freetype           # public headers
-   ${neroshop_root}/external/dokun-ui/external/freetype/include/freetype/config    # public config headers
-   ${neroshop_root}/external/dokun-ui/external/freetype/include/freetype/internal) # private headers - added 2019-07-29
-include_directories(${neroshop_root}/external/dokun-ui/external/ogg/include)
-include_directories(${neroshop_root}/external/dokun-ui/external/vorbis/include
-   ${neroshop_root}/external/dokun-ui/external/vorbis/lib)
-include_directories(${neroshop_root}/external/dokun-ui/external/theora/include)
-#include_directories(${neroshop_root}/external/dokun-ui/external/utf8/source)
-include_directories(${neroshop_root}/external/dokun-ui/external/openal/include
-   ${neroshop_root}/external/dokun-ui/external/openal-soft/include)
-include_directories(${neroshop_root}/external/dokun-ui/external/jpeg
-   ${neroshop_root}/external/dokun-ui/external/jpeg/jpeg-6b)
-include_directories(${neroshop_root}/external/dokun-ui/external/tiff/libtiff)
-include_directories(${neroshop_root}/external/dokun-ui/external/gif/lib)
-include_directories(#[[${neroshop_root}/external/flac]] # config.h
-   ${neroshop_root}/external/dokun-ui/external/flac/include
-   ${neroshop_root}/external/dokun-ui/external/flac/src/libFLAC/include) # for "private/cpu.h"
-include_directories(${neroshop_root}/external/dokun-ui/external/glm)
-######################################
-# dokun-ui
-include_directories(${neroshop_root}/external/dokun-ui/include)
-link_directories(${neroshop_root}/external/dokun-ui/build ${neroshop_root}/external/dokun-ui/src)
-set(dokun_ui_src libdokun-ui.a) # definitions added: DOKUN_OPENGL, DOKUN_BUILD_LIBRARY#add_subdirectory(${neroshop_root}/external/dokun-ui)
+endif()
 
 ######################################
 # network_test
 set(test_network "network_test")
 add_executable(${test_network} network_test.cpp ${neroshop_srcs})
-target_link_libraries(${test_network} ${monero_cpp_src} ${sqlite_src} ${qr_code_generator_src} ${dokun_ui_src} ${raft_src} ${libuv_src} ${curl_src} ${monero_src} ${lua_src} ${png_src})
+target_link_libraries(${test_network} ${monero_cpp_src} ${sqlite_src} ${qr_code_generator_src} ${raft_src} ${libuv_src} ${curl_src} ${monero_src} ${lua_src} ${png_src})
 # network_uv test
 #[[set(test_network_uv "network_uv_test")
 add_executable(${test_network_uv} network_test_uv.cpp ${neroshop_srcs})
-target_link_libraries(${test_network_uv} ${monero_cpp_src} ${sqlite_src} ${qr_code_generator_src} ${dokun_ui_src} ${raft_src} ${libuv_src} ${curl_src} ${monero_src} ${lua_src} ${png_src})]]
+target_link_libraries(${test_network_uv} ${monero_cpp_src} ${sqlite_src} ${qr_code_generator_src} ${raft_src} ${libuv_src} ${curl_src} ${monero_src} ${lua_src} ${png_src})]]
 # utility test
 set(test_utility "utility_test")
 add_executable(${test_utility} utility_test.cpp ${neroshop_srcs})
-target_link_libraries(${test_utility} ${monero_cpp_src} ${sqlite_src} ${qr_code_generator_src} ${dokun_ui_src} ${raft_src} ${libuv_src} ${curl_src} ${monero_src} ${lua_src} ${png_src})
+target_link_libraries(${test_utility} ${monero_cpp_src} ${sqlite_src} ${qr_code_generator_src} ${raft_src} ${libuv_src} ${curl_src} ${monero_src} ${lua_src} ${png_src})
 # auth_test
 set(test_auth "auth_test")
 add_executable(${test_auth} auth_test.cpp ${neroshop_srcs})
-target_link_libraries(${test_auth} ${monero_cpp_src} ${sqlite_src} ${qr_code_generator_src} ${dokun_ui_src} ${raft_src} ${libuv_src} ${curl_src} ${monero_src} ${lua_src} ${png_src})
+target_link_libraries(${test_auth} ${monero_cpp_src} ${sqlite_src} ${qr_code_generator_src} ${raft_src} ${libuv_src} ${curl_src} ${monero_src} ${lua_src} ${png_src})
 # uuid_test
 set(test_uuid "uuid_test")
 add_executable(${test_uuid} uuid_test.cpp)
 # qr_code_test
 set(test_qr_code "qr_test")
 add_executable(${test_qr_code} qr_test.cpp ${neroshop_srcs})
-target_link_libraries(${test_qr_code} ${monero_cpp_src} ${sqlite_src} ${qr_code_generator_src} ${dokun_ui_src} ${raft_src} ${libuv_src} ${curl_src} ${monero_src} ${lua_src} ${png_src})
+target_link_libraries(${test_qr_code} ${monero_cpp_src} ${sqlite_src} ${qr_code_generator_src} ${raft_src} ${libuv_src} ${curl_src} ${monero_src} ${lua_src} ${png_src})
 # msg_encryption_test
 set(test_crypt "encryption_test")
 add_executable(${test_crypt} encryption_test.cpp ${neroshop_srcs})
-target_link_libraries(${test_crypt} ${monero_cpp_src} ${sqlite_src} ${qr_code_generator_src} ${dokun_ui_src} ${raft_src} ${libuv_src} ${curl_src} ${monero_src} ${lua_src} ${png_src})
+target_link_libraries(${test_crypt} ${monero_cpp_src} ${sqlite_src} ${qr_code_generator_src} ${raft_src} ${libuv_src} ${curl_src} ${monero_src} ${lua_src} ${png_src})
 # Qt gui_test
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
@@ -422,12 +396,12 @@ add_executable(${test_gui_qt} main_window.ui main_window.cpp gui_qt_test.cpp ${n
 #[[target_]] 
 include_directories(#[[${test_gui_qt} ]] /usr/include/x86_64-linux-gnu/qt5/ /usr/include/x86_64-linux-gnu/qt5/QtWidgets/)
 #target_compile_definitions(${test_gui_qt} PRIVATE )
-target_link_libraries(${test_gui_qt} ${monero_cpp_src} ${sqlite_src} ${qr_code_generator_src} ${dokun_ui_src} ${raft_src} ${libuv_src} ${curl_src} ${monero_src} ${lua_src} ${png_src})
+target_link_libraries(${test_gui_qt} ${monero_cpp_src} ${sqlite_src} ${qr_code_generator_src} ${raft_src} ${libuv_src} ${curl_src} ${monero_src} ${lua_src} ${png_src})
 
 #[[
 set(test_ "")
 add_executable(${test_} .cpp ${neroshop_srcs})
-target_link_libraries(${test_} ${monero_cpp_src} ${sqlite_src} ${qr_code_generator_src} ${dokun_ui_src} ${raft_src} ${libuv_src} ${curl_src} ${monero_src} ${lua_src} ${png_src})
+target_link_libraries(${test_} ${monero_cpp_src} ${sqlite_src} ${qr_code_generator_src} ${raft_src} ${libuv_src} ${curl_src} ${monero_src} ${lua_src} ${png_src})
 ]]
 
 ######################################
@@ -461,19 +435,12 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
     endif()
 endif()
 
-set(OpenGL_GL_PREFERENCE "LEGACY") # LEGACY (libGL.so) or GLVND (libOpenGL.so and libGLX.so)
+#[[set(OpenGL_GL_PREFERENCE "LEGACY") # LEGACY (libGL.so) or GLVND (libOpenGL.so and libGLX.so)
 find_package(OpenGL REQUIRED)
 if(OPENGL_FOUND)
-    #[[target_compile_definitions(${test_} PRIVATE DOKUN_USE_OPENGL)
-	target_link_libraries(${test_} ${OPENGL_LIBRARIES})]]
-endif()
-
-find_package(GLFW3 REQUIRED)
-if(GLFW3_FOUND)
-    message(STATUS "Using GLFW3: ${GLFW3_LIBRARY}")
-	#[[target_compile_definitions(${test_} PRIVATE DOKUN_USE_GLFW) # already defined in libdokun-ui.a so I dunno if we hafta define it again
-    #target_link_libraries(${test_} ${GLFW3_LIBRARY})]]
-endif()
+    #target_compile_definitions(${test_} PRIVATE DOKUN_USE_OPENGL)
+	#target_link_libraries(${test_} ${OPENGL_LIBRARIES})
+endif()]]
 
 # Qt
 find_package(Qt5 COMPONENTS Widgets REQUIRED)

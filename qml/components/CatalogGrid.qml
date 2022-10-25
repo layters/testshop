@@ -40,7 +40,7 @@ import "." as NeroshopComponents
                             
                 Image {
                     id: productImage
-                    source: "file:///" + neroshopResourcesDir + "/image_gallery.png"
+                    source: "qrc:/images/image_gallery.png"
                     anchors.horizontalCenter: parent.horizontalCenter//anchors.centerIn: parent
                     anchors.top: heartIconButton.top//parent.top
                     anchors.topMargin: 20
@@ -76,7 +76,7 @@ import "." as NeroshopComponents
             
                 Image {
                     id: verifiedPurchaseIcon
-                    source: "file:///" + neroshopResourcesDir + "/paid.png"//neroshopResourceDir + "/paid.png"
+                    source: "qrc:/images/paid.png"//neroshopResourceDir + "/paid.png"
                     visible: false // only show this icon if item has been purchased previously
                     anchors.left: parent.left
                     anchors.leftMargin: 10
@@ -119,7 +119,7 @@ import "." as NeroshopComponents
                     anchors.top: parent.top
                     anchors.topMargin: 5//10
                     
-                    icon.source: "file:///" + neroshopResourcesDir + "/heart.png"
+                    icon.source: "qrc:/images/heart.png"
                     icon.color: "#ffffff"
                     icon.height: 24; icon.width: 24
                     
@@ -176,7 +176,7 @@ import "." as NeroshopComponents
                 
                 Image {
                     id: moneroSymbol
-                    source: "file:///" + neroshopResourcesDir + "/monero_symbol.png"//"/monero_symbol_white.png"
+                    source: "qrc:/images/monero_symbol.png"//"/monero_symbol_white.png"
                     visible: !catalogGrid.hideProductDetails
                     anchors.left: parent.left
                     anchors.leftMargin: 10

@@ -28,7 +28,7 @@ Item {
         anchors.top: search_bar.top
         width: 50; height: search_bar.height
         
-        icon.source: "file:///" + neroshopResourcesDir + "/search.png"//neroshopResourceDir + "/search.png"
+        icon.source: "qrc:/images/search.png"//neroshopResourceDir + "/search.png"
         icon.color: "#ffffff"
                         
         background: Rectangle {

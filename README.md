@@ -11,6 +11,7 @@ A P2P (peer-to-peer) marketplace for [**Monero**](https://getmonero.org/) users
 - [Building neroshop](#building-neroshop)
   - [Dependencies](#dependencies)
   - [Compiling neroshop from source](#compiling-neroshop-from-source) <!-- - [Contributing](#contributing) --> <!-- - [Bug Bounty Program]-->
+- [Donations](#donations)
 - [Contact information](#contact)
 
 
@@ -90,7 +91,6 @@ cd testshop
 
 Debian/Ubuntu
 ```bash
-
 # neroshop
 sudo apt install libcurl4-openssl-dev libssl-dev libuv1-dev qtdeclarative5-dev qml-module-qt-labs-platform qml-module-qtquick-controls qml-module-qtquick-controls2 qml-module-qtquick-shapes qml-module-qtquick-dialogs
 # monero-cpp (monero)
@@ -200,6 +200,16 @@ cd build && make
 To build for [**Android**](https://www.android.com/) (requires [**Android NDK**](https://developer.android.com/ndk)):<!-- and [CMake](https://cmake.org/)):-->
 ```bash
 ```
+
+
+## Donations
+You may support the neroshop project directly by donating Monero (XMR) to the address below. Received payments will be used to reward developers for their contributions to the project (mostly by completing bounties) and will also be used to fund our official website domain name.
+```
+83QbQvnnyo7515rEnW8XwF1hbP5qMab6sHXFzP6pg3EKGscgXCbVjbt1FX5SF7AV9p4Ur1tiommuQSzrQQRHkZicVYu6j8Y
+```
+<p align="center">
+    <a href="monero:83QbQvnnyo7515rEnW8XwF1hbP5qMab6sHXFzP6pg3EKGscgXCbVjbt1FX5SF7AV9p4Ur1tiommuQSzrQQRHkZicVYu6j8Y" target="_blank"><img src="images/donate_xmr.png" width="128" height="128"></img></a>
+</p>
 
 
 ## Contact

@@ -2,7 +2,7 @@
 // neroshop
 /*#include "../src/neroshop.hpp"
 using namespace neroshop;*/
-#include "../src/config.hpp"
+#include "../src/core/config.hpp"
 // Qt
 #include "main_window.hpp"
 #include <QApplication>

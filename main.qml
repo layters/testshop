@@ -1,10 +1,7 @@
 // requires Qt version 5.12 (latest is 5.15 as of this writing). See https://doc.qt.io/qt-5/qt5-intro.html
 import QtQuick 2.12//2.7 //(QtQuick 2.7 is lowest version for Qt 5.7)
 import QtQuick.Controls 2.12//2.0 // (requires at least Qt 5.12 where QtQuick.Controls 1 is deprecated. See https://doc.qt.io/qt-5/qtquickcontrols-index.html#versions) // needed for built-in styles // TextField, TextArea (multi-lined TextField), TextFieldStyle//import QtQuick.Controls.Material 2.12 // Other styles: 
-//import QtQuick.Controls.Material 2.0
-//import QtQuick.Controls.Styles 1.4 // ApplicationWindowStyle, TextFieldStyle
 import QtQuick.Layouts 1.12//1.15 // The module is new in Qt 5.1 and requires Qt Quick 2.1. // RowLayout, ColumnLayout, GridLayout, StackLayout, Layout
-import QtQuick.Dialogs 1.3 // MessageDialog (since Qt 5.2)
 import QtGraphicalEffects 1.12 // LinearGradient
 import Qt.labs.platform 1.1 // FileDialog (since Qt 5.8) // change to "import QtQuick.Dialogs" if using Qt 6.2
 
@@ -116,7 +113,7 @@ ApplicationWindow {
                     display: AbstractButton.IconOnly
                     checkable: true
                     checked: settingsDialog.visible
-                    icon.source: "file:///" + neroshopResourcesDir + "/cog.png"//"/tools.png"
+                    icon.source: "qrc:/images/cog.png"//"/tools.png"
                     icon.color: "#001677"////hovered ? "#001677" : "#ffffff"//(!checked && hovered) ? "#001677" : "#ffffff"
                     //icon.width: parent.width//footer.height
                     //icon.height: parent.height//32//footer.height
@@ -152,6 +149,7 @@ ApplicationWindow {
                     id: daemonSyncBar
                     radius: 20
                     foregroundColor: "#564978"
+                    backgroundColor: (NeroshopComponents.Style.darkTheme) ? "#8c8c8c" : "#d9d9d9"//backgroundColor: "#d9d9d9"
                     //textObject.visible: true
                     hoverEnabled: true
                     anchors.verticalCenter: parent.verticalCenter//anchors.top: parent.top; anchors.topMargin: (parent.height - this.height) / 2 // center vertically on footer (height)
@@ -177,18 +175,17 @@ ApplicationWindow {
                     id: moneroDaemonSyncBar
                     radius: daemonSyncBar.radius
                     foregroundColor: NeroshopComponents.Style.moneroOrangeColor
-                    backgroundColor: NeroshopComponents.Style.moneroGrayColor
+                    backgroundColor: (NeroshopComponents.Style.darkTheme) ? "#8c8c8c" : "#d9d9d9"//backgroundColor: "#d9d9d9"//(NeroshopComponents.Style.darkTheme) ? "#8c8c8c" : NeroshopComponents.Style.moneroGrayColor
                     //textObject.visible: true
                     //textObject.text: "wallet sync: " + (this.value * 100).toString() + "%"
                     //textObject.color: "#ffffff"
                     hoverEnabled: true
                     anchors.verticalCenter: parent.verticalCenter//anchors.top: parent.top; anchors.topMargin: (parent.height - this.height) / 2
-                    ////value: Wallet.isGenerated() ? Wallet.getSyncPercentage() : 0.0 // this does not work (fails to update value so we use Timer instead)     
+                    ////value: Wallet.isGenerated() ? Wallet.getSyncPercentage() : 0.0 // this does not work (fails to update value so we use Timer instead)
                     Timer {
                         interval: 1 // trigger every x miliseconds
-                        running: true // starts the timer, If set to true
+                        running: true
                         repeat: true // If repeat is true the timer is triggered repeatedly at the specified interval
-                        ////triggeredOnStart: false
                         onTriggered: {
                             moneroDaemonSyncBar.value = Wallet.getSyncPercentage()//Math.floor(Math.random() * (moneroDaemonSyncBar.to - moneroDaemonSyncBar.from + 1) + moneroDaemonSyncBar.from);
                         }

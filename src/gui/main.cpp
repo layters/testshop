@@ -2,11 +2,11 @@
 #if defined(NEROSHOP_USE_QT_WIDGETS)
 #include <QApplication> // For QWidget based Qt applications (QWidget depends on QApplication), but we will be using QML so no need for this
 #endif
-#include <QGuiApplication> // requires Qt5::Gui
-#include <QQmlApplicationEngine> // requires Qt5::Qml
+#include <QGuiApplication>
+#include <QQmlApplicationEngine>
 #include <QQmlContext> // QQmlContext *	QQmlApplicationEngine::rootContext()
-#include <QQmlComponent> //#include <QQuickView> // requires Qt5::Quick - we're not using QQuickView for now//#include <QQmlComponent>
-#include <QStandardPaths>// requires Qt::Core (since Qt 5.0)
+////#include <QQuickView> // we're not using QQuickView for now//#include <QQmlComponent>
+#include <QStandardPaths>
 #endif
 
 // neroshop (includes both the core headers and the gui headers)
@@ -52,20 +52,12 @@ int main(int argc, char *argv[]) {
     
     QQmlApplicationEngine engine;
     //--------------------------
-    ////////////////////////////////////////////////////////
-    // load all icon images
-    if(!Icon::load_all()) {
-        neroshop::print("Failed to load all icons", 1);
-    }
     ////////////////////////////////////////////////////////    
     // Configuration file must be loaded right after Qt Application object has been created so that we can get the correct config location
     // open configuration script
     neroshop::open_configuration_file();
-    // initialize (sync) database
     std::string network_type = Script::get_string(lua_state, "neroshop.monero.daemon.network_type");
     std::cout << "network_type: " << network_type << std::endl;
-    // ...
-    ////qRegisterMetaType<std::string>("std::string");
     // import paths
     engine.addImportPath(":/fonts"); // import FontAwesome 1.0
     // platform macros
@@ -79,15 +71,12 @@ int main(int argc, char *argv[]) {
     // custom macros
     engine.rootContext()->setContextProperty("neroshopAppDirPath", QCoreApplication::applicationDirPath());
     engine.rootContext()->setContextProperty("neroshopVersion", NEROSHOP_VERSION);
-    
-    engine.rootContext()->setContextProperty("neroshopDataDir", NEROSHOP_DEFAULT_DATABASE_PATH);
-    engine.rootContext()->setContextProperty("neroshopConfigDir", NEROSHOP_DEFAULT_CONFIGURATION_PATH);
-    engine.rootContext()->setContextProperty("neroshopResourcesDir", QCoreApplication::applicationDirPath() + "/" + NEROSHOP_RESOURCES_FOLDER); // defined in icon.hpp//engine.rootContext()->setContextProperty("neroshopResourcesFolder", NEROSHOP_RESOURCES_FOLDER); // defined in icon.hpp
-    // create neroshop directories - datadir and configdir
-    QString defaultWalletPath = (isWindows) ? (QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation) + "/neroshop") : (QStandardPaths::writableLocation(QStandardPaths::HomeLocation) + "/neroshop");
-    if(!std::filesystem::is_directory(defaultWalletPath.toStdString())) {
-        neroshop::print(std::string("Creating directory \"") + defaultWalletPath.toStdString() + "\"", 3);
-        if(!std::filesystem::create_directories(defaultWalletPath.toStdString())) {
+    engine.rootContext()->setContextProperty("neroshopDataDirPath", QStandardPaths::writableLocation(QStandardPaths::AppConfigLocation));////QStandardPaths::writableLocation(QStandardPaths::AppLocalDataLocation)); // both "data.sqlite3" and "settings.lua" will be stored here
+    // create neroshop wallet directory
+    QString defaultWalletDirPath = (isWindows) ? (QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation) + "/neroshop") : (QStandardPaths::writableLocation(QStandardPaths::HomeLocation) + "/neroshop");
+    if(!std::filesystem::is_directory(defaultWalletDirPath.toStdString())) {
+        neroshop::print(std::string("Creating directory \"") + defaultWalletDirPath.toStdString() + "\"", 3);
+        if(!std::filesystem::create_directories(defaultWalletDirPath.toStdString())) {
             throw std::runtime_error("Failed to create neroshop datadir");
             return 1;
         }

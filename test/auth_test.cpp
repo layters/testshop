@@ -2,6 +2,13 @@
 #include "../src/neroshop.hpp"
 using namespace neroshop;
 
+#if defined(__linux__) && !defined(__ANDROID__)
+#define NEROSHOP_DEFAULT_WALLET_PATH "/home/" + neroshop::device::get_user() + "/neroshop"
+#endif
+#if defined(_WIN32)
+#define NEROSHOP_DEFAULT_WALLET_PATH "C:/Users/" + neroshop::device::get_user() + "/AppData/Local/neroshop"
+#endif
+
 lua_State * neroshop::lua_state = luaL_newstate();
 
 static void register_user() {

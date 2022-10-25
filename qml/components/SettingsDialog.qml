@@ -70,7 +70,7 @@ Popup {
                 width: implicitWidth + 20
                 onClicked: settingsStack.currentIndex = 0
                 //display: (hideTabText) ? AbstractButton.IconOnly : AbstractButton.TextBesideIcon
-                //icon.source: "file:///" + neroshopResourcesDir + "/cog.png"//"/tools.png"
+                //icon.source: "file:///" + neroshopResourcesDirPath + "/cog.png"//"/tools.png"
                 checkable: true
                 checked: (settingsStack.currentIndex == 0)                
                 background: Rectangle {
