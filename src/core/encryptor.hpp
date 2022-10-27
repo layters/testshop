@@ -33,8 +33,8 @@ public:
     // signing and verifying functions - login system (not implemented yet)
     // static private_sign(const std::string& private_key);
     // static public_verify(const std::string& public_key);
-    static unsigned char */*std::string*/ sign_message(const EVP_PKEY * signing_key, const std::string& message); // sign a message using private key // returns the signature
-    static std::string verify_signature(const EVP_PKEY * verify_key, unsigned char */*const std::string&*/ signature); // verify signature using public_key // returns the message
+    static std::string sign_message(const EVP_PKEY * signing_key, const std::string& message); // sign a message using private key // returns the signature
+    static bool verify_signature(const EVP_PKEY * verify_key, const std::string& message, const std::string& signature); // verify signature of a message using public_key
     // getters
     static std::string get_public_key(const EVP_PKEY * pkey);
     static std::string get_private_key(const EVP_PKEY * pkey);
