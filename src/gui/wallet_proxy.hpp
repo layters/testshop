@@ -7,10 +7,7 @@
 #include <QObject>
 #include <QString>
 #include <QStringList>
-#include <QClipboard>
-#include <QGuiApplication>
 #include <QVariant>
-////#include <QDebug>
 #endif
 #include <memory> // std::unique_ptr
 
@@ -27,11 +24,18 @@ class Wallet : public QObject, public neroshop::Wallet {
     Q_PROPERTY(neroshop::Wallet* wallet READ getWallet WRITE setWallet);// NOTIFY wallet_changed);
     //Q_PROPERTY(<type> <variable_name> READ <get_function_name>)
 public:    
-    //Q_ENUM(wallet_error)
+    // I don't know how to use or compare enums in QML. It never works, but oh well :|
+    enum KeyfileStatus {
+        KeyfileStatus_Ok = 0,
+        KeyfileStatus_Wrong_Password,
+        KeyfileStatus_No_Matching_Passwords,
+        KeyfileStatus_Exists,
+    };
+    Q_ENUM(KeyfileStatus)
     // functions (for use in QML)
     ////explicit Wallet(QObject* parent = 0);
     Q_INVOKABLE int createRandomWallet(const QString& password, const QString& confirm_pwd, const QString& path) const;
-    Q_INVOKABLE void copyMnemonicToClipboard();
+    Q_INVOKABLE void closeWallet(bool save = false);
     Q_INVOKABLE QVariantMap/*QMap<QString, QVariant>*/ createUniqueSubaddressObject(unsigned int account_idx, const QString & label = "");
     Q_INVOKABLE double getSyncPercentage() const;
     Q_INVOKABLE unsigned int getSyncHeight() const;
@@ -54,6 +58,7 @@ public:
     //Q_INVOKABLE <type> <function_name>() const {}
     Q_INVOKABLE void daemonExecute(const QString& ip, const QString& port, bool confirm_external_bind, bool restricted_rpc, bool remote, QString data_dir, QString network_type, unsigned int restore_height);// const;
     Q_INVOKABLE bool isGenerated() const;
+    Q_INVOKABLE bool fileExists(const QString& filename) const;
 public slots:       
     Q_INVOKABLE void daemonConnect/*RemoteNode*/(const QString& ip, const QString& port);// const;
 signals:

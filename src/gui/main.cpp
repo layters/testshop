@@ -87,6 +87,8 @@ int main(int argc, char *argv[]) {
     engine.rootContext()->setContextProperty("Wallet", &wallet);//new WalletProxy());//qmlRegisterUncreatableType<WalletProxy>("neroshop.Wallet", 1, 0, "Wallet", "Wallet cannot be instantiated directly.");
     // register script
     engine.rootContext()->setContextProperty("Script", new ScriptProxy());//qmlRegisterType<ScriptProxy>("neroshop.Script", 1, 0, "Script");
+    // register backend
+    engine.rootContext()->setContextProperty("Backend", new Backend());
     //--------------------------
     // When using qrc.qml to store images, use: QUrl(QStringLiteral("qrc:///main.qml"))
     engine.load(QUrl(QStringLiteral("qrc:/main.qml")));//("../main.qml");//("main.qml");//(QUrl(QStringLiteral("qrc:/main.qml")));

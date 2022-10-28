@@ -14,11 +14,12 @@ import FontAwesome 1.0
 import "../components" as NeroshopComponents
 
 Page {
-    id: main_page
+    id: mainPage
     title: qsTr("Main Page")
     Rectangle {
         color: "transparent"
     }
+    property int walletGenerationCount: 0
     ///////////////////////////
     function startWalletSync() {
         // start local monero daemon or node synchronization (optional)
@@ -40,44 +41,37 @@ Page {
     }
     ///////////////////////////
     function generateWalletKeys() {
-        // check if wallet has already been generated so that this function does not repeat
-        // todo: if user decides to re-generate wallet keys, then destroy the current monero_wallet object and recreate it
-        if(Wallet.getMnemonic().length > 0) {
-            walletMessageArea.text = qsTr("Wallet has already been generated. One wallet per session to reduce spam")
-            walletMessageArea.messageCode = 1            
-            return;
-        }
-        // generate a unique wallet seed (mnemonic)
-        let folderUrlToString = walletFolderDialog.folder.toString().replace("file://","")
-        let error = Wallet.createRandomWallet(walletPasswordField.text, walletPasswordConfirmField.text, (walletNameField.text) ? qsTr(folderUrlToString + "/%1").arg(walletNameField.text) : qsTr(folderUrlToString + "/%1").arg(walletNameField.placeholderText))
-        // if wallet passwords don't match, display error message
-        let WALLET_PASSWORDS_NO_MATCH = 2
-        let WALLET_ALREADY_EXISTS = 3;
-        if(error == WALLET_PASSWORDS_NO_MATCH) {//if(walletPasswordConfirmField.text != walletPasswordField.text || !walletPasswordField.acceptableInput) {
+        // Convert folder url to string
+        let folder = Backend.urlToLocalFile(walletFolderDialog.folder);////let folder = (isWindows) ? walletFolderDialog.folder.toString().replace("file:///", "") : walletFolderDialog.folder.toString().replace("file://", "")
+        // Check whether wallet file exists
+        if(Wallet.fileExists((walletNameField.text) ? qsTr(folder + "/%1").arg(walletNameField.text) : qsTr(folder + "/%1").arg(walletNameField.placeholderText))) {
+            walletMessageArea.text = qsTr("A wallet file with the same name already exists")
+            walletMessageArea.messageCode = 1
+            return; // exit function and do not proceed any further
+        }        
+        // Close (destroy) the current monero_wallet first before re-creating a new monero_wallet (In case user decides to re-generate wallet keys)
+        if(Wallet.isGenerated()) Wallet.closeWallet();
+        // Generate wallet
+        Wallet.createRandomWallet(walletPasswordField.text, walletPasswordConfirmField.text, (walletNameField.text) ? qsTr(folder + "/%1").arg(walletNameField.text) : qsTr(folder + "/%1").arg(walletNameField.placeholderText))
+        // In case wallet passwords do not match, display error message
+        if(walletPasswordConfirmField.text != walletPasswordField.text || !walletPasswordField.acceptableInput) {
             walletMessageArea.text = (walletPasswordConfirmField.length > 0) ? qsTr("Wallet passwords do not match") : qsTr("Wallet password must be confirmed")
             walletMessageArea.messageCode = 1
         }
-        else if(error == WALLET_ALREADY_EXISTS) {
-            walletMessageArea.text = qsTr("A wallet file with the same name already exists")
-            walletMessageArea.messageCode = 1
-        }
-        
+        // Exit function if wallet fails to generate
         if(!Wallet.isGenerated()) return;
-        // assign the mnemonic model to the repeater model
+        // Increase the number of times a wallet has been generated this session (not necessary)
+        walletGenerationCount = walletGenerationCount + 1
+        // Display seed phrase in Repeater model
         walletSeedRepeater.model = Wallet.getMnemonicList()
-        // show wallet and seed message
-        walletMessageArea.text = qsTr("\"%1\" has been created successfully.").arg((walletNameField.text) ? qsTr(folderUrlToString + "/%1.keys").arg(walletNameField.text) : qsTr(folderUrlToString + "/%1.keys").arg(walletNameField.placeholderText))
+        // Show wallet-related message(s)
+        walletMessageArea.text = qsTr("\"%1\" has been created successfully.").arg((walletNameField.text) ? qsTr(folder + "/%1.keys").arg(walletNameField.text) : qsTr(folder + "/%1.keys").arg(walletNameField.placeholderText))
         walletMessageArea.messageCode = 0
         seedMessageArea.text = qsTr("These %1 words are the key to your account. Please store them safely!").arg(walletSeedRepeater.count)
-        seedMessageArea.messageCode = 2
-        // clear wallet name and password text fields
-        walletNameField.text = ""
+        seedMessageArea.messageCode = 0//2
+        // Clear wallet password fields
         walletPasswordField.text = ""
         walletPasswordConfirmField.text = ""
-        // hide backButton if wallet has already been generated (not sure if this is a good idea? User may forget to copy their seed phrase)
-        ////registrationPageBackButton.visible = false
-        // start synching the monero node as soon we generate a wallet
-        startWalletSync();            
     }
     ///////////////////////////
     function registerWallet() {
@@ -86,17 +80,19 @@ Page {
             messageBox.open()
             return; // exit function and do not proceed any further
         }
-        // do a regex check on the username before proceeding
-        // make sure username is not taken (requires a database check)
-        // register the wallet primary key to the database
-        // switch (login) to home page
-        //stack.push(home_page)
-        pageLoader.source = "HomePage.qml"
+        // Do a regex check on the username to make sure that it is valid
+        // ...
+        // Make sure username is not taken (requires a database check)
+        // ...
+        // Register hash of the wallet primary key to the database
+        // ...
+        // Switch to HomePage
+        pageLoader.source = "HomePage.qml"//stack.push(home_page)
         console.log("Primary address: ", Wallet.getPrimaryAddress())
         console.log("Balance: ", Wallet.getBalanceLocked(0))
         console.log("Unlocked balance: ", Wallet.getBalanceUnlocked(0))
-        //console.log("subaddress: ", (!Wallet.isGenerated()) ? "" : Wallet.createUniqueSubaddressObject(0).address)//console.log(Wallet.isGenerated() ? Wallet.getAddressesAll() : "no addresses found")
-        //console.log("subaddress balance: ", (!Wallet.isGenerated()) ? "" : Wallet.createUniqueSubaddressObject(0).balance)        
+        // start synching the monero node as soon we hit the register button (this confirms that we are satified with the wallet key that we've generated and won't turn back to re-generate a new one)
+        startWalletSync();    
     }
     ///////////////////////////
     NeroshopComponents.MessageBox {////MessageDialog {
@@ -174,12 +170,168 @@ Page {
             GridLayout {
                 anchors.horizontalCenter: parent.horizontalCenter
                 anchors.top: parent.top
-                anchors.topMargin: 20
+                anchors.topMargin: 20                
+                //rowSpacing: 5
+            
+                Text {
+                    id: loginPageTitle
+                    Layout.row: 0
+                    Layout.column: 0
+                    text: qsTr("Restore Wallet (Login)")
+                    color: (NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000"
+                    font.bold: true                    
+                    font.pointSize: 14
+                }
+                ButtonGroup {
+                    id: walletRestoreMethodButtonGroup
+                    exclusive: true // only one button selected at a time
+                    onClicked: {
+                        console.log("Selected", button.text, "button")
+                        button.checked = true
+                        if(button.text == restoreFromFileButton.text) {
+                            walletRestoreStack.currentIndex = 0
+                            console.log(button.width)
+                        }
+                        if(button.text == restoreFromSeedButton.text) {
+                            walletRestoreStack.currentIndex = 1
+                            console.log(button.width)
+                        }
+                        if(button.text == restoreFromKeysButton.text) {
+                            walletRestoreStack.currentIndex = 2
+                            console.log(button.width)
+                        }
+                        if(button.text == restoreFromHWButton.text) {
+                            walletRestoreStack.currentIndex = 3
+                            console.log(button.width)
+                        }                                                                        
+                    }
+                }
+                RowLayout {
+                    id: walletRestoreButtonsRow
+                    //Layout.preferredWidth: 
+                    //Layout.preferredHeight: 
+                    Layout.row: 1
+                    Layout.column: 0    
+                    Layout.fillWidth: true                
+                    Layout.topMargin: 15
+                    // to add a button to the button group (within the Button object itself): ButtonGroup.group: walletRestoreMethodButtonGroup // attaches a button to a button group
+                    Button {
+                        id: restoreFromFileButton
+                        ButtonGroup.group: walletRestoreMethodButtonGroup
+                        checked: true
+                        text: qsTr("Restore from file")//.arg("\uf8e9")
+                        Layout.preferredHeight: 40
+                        Layout.preferredWidth: hovered ? 180 : (500 / 4)
+                        Layout.maximumWidth: 180//contentWidth + 20
+                        icon.source: "qrc:/images/file.png" // keys (key.png), seed (sprout.png), file, hardware
+                        //icon.color: "#ffffff"
+                        display: hovered ? AbstractButton.TextBesideIcon : AbstractButton.IconOnly//AbstractButton.TextUnderIcon
+                        hoverEnabled: true
+                        background: Rectangle {
+                            color: (parent.checked) ? "#39304f" : "#6b5b95"
+                            //border.color:
+                            //border.width: 1
+                            radius: 3
+                        }
+                         /*contentItem: Text { 
+                             text: parent.text
+                             color: "#ffffff"
+                             horizontalAlignment: Text.AlignHCenter
+                             verticalAlignment: Text.AlignVCenter
+                             font.bold: true
+                             //font.family: FontAwesome.fontFamilySolid
+                         }*/
+                         NeroshopComponents.Hint {
+                             id: restoreFileHint
+                             visible: parent.hovered
+                             text: parent.text
+                             pointer.visible: true//false
+                             y: parent.y - (parent.height + pointer.height)//(parent.height - this.height) / 2
+                         }
+                     }
+
+                 Button {
+                     id: restoreFromSeedButton
+                     ButtonGroup.group: walletRestoreMethodButtonGroup
+                     text: qsTr("Restore from seed")//.arg("\uf8e9")
+                     Layout.preferredWidth: hovered ? 180 : (500 / 4)//width: contentWidth + 20;
+                     Layout.preferredHeight: 40
+                     icon.source: "qrc:/images/sprout.png" // keys (key.png), seed (sprout.png), file, hardware
+                     //icon.color: "#ffffff"
+                     display: hovered ? AbstractButton.TextBesideIcon : AbstractButton.IconOnly//AbstractButton.TextUnderIcon
+                     hoverEnabled: true
+                     background: Rectangle {
+                         color: (parent.checked) ? "#39304f" : "#6b5b95"
+                         //border.color:
+                         //border.width: 1
+                         radius: 3
+                     }
+                 }
+
+                Button {
+                    id: restoreFromKeysButton
+                    ButtonGroup.group: walletRestoreMethodButtonGroup
+                    text: qsTr("Restore from keys")//.arg("\uf8e9")
+                    Layout.preferredWidth: hovered ? 180 : (500 / 4)//width: contentWidth + 20;
+                    Layout.preferredHeight: 40
+                    icon.source: "qrc:/images/key.png" // keys (key.png), seed (sprout.png), file, hardware
+                    //icon.color: "#ffffff"
+                    display: hovered ? AbstractButton.TextBesideIcon : AbstractButton.IconOnly//AbstractButton.TextUnderIcon
+                    hoverEnabled: true
+                    background: Rectangle {
+                        color: (parent.checked) ? "#39304f" : "#6b5b95"
+                        //border.color:
+                        //border.width: 1
+                        radius: 3
+                    }
+                }
+
+                Button {
+                    id: restoreFromHWButton
+                    ButtonGroup.group: walletRestoreMethodButtonGroup
+                    text: qsTr("Restore from HW")//("Restore from hardware")//.arg("\uf8e9")
+                    Layout.preferredWidth: hovered ? Layout.maximumWidth : (500 / 4)//width: contentWidth + 20;
+                    Layout.preferredHeight: 40
+                    Layout.maximumWidth: 180//280
+                    icon.source: "qrc:/images/usb.png" // keys (key.png), seed (sprout.png), file, hardware
+                    //icon.color: "#ffffff"
+                    display: hovered ? AbstractButton.TextBesideIcon : AbstractButton.IconOnly//AbstractButton.TextUnderIcon
+                    hoverEnabled: true
+                    background: Rectangle {
+                        color: (parent.checked) ? "#39304f" : "#6b5b95"
+                        //border.color:
+                        //border.width: 1
+                        radius: 3
+                    }
+                }         
+            } // RowLayout
+            // walletRestoreStack
+            StackLayout {
+                id: walletRestoreStack
+                    Layout.row: 2
+                    Layout.column: 0           
+                    Layout.alignment: Qt.AlignHCenter//          
+                    currentIndex: 0
+                // WalletFileStackContent    
+                ColumnLayout {
+                    id: restoreFromWalletFile
+                    Layout.alignment: Qt.AlignHCenter | Qt.AlignTop | Qt.AlignVCenter
+                    Layout.topMargin: 20               
+                    //Layout.minimumHeight: 
+                    Layout.preferredWidth: 500
+                    Layout.maximumWidth: 600
+                    //Layout.preferredHeight: 380
+                    //GridLayout {}
+                    /*color: "transparent"
+                    border.color: (NeroshopComponents.Style.darkTheme) ? "#a9a9a9" : "#696969"
+                    //radius: 3*/
+
                 // wallet file text
                 Text {
                     id: walletFileText
                     Layout.row: 0
                     Layout.column: 0               
+                    Layout.topMargin: 15
                     text: qsTr("Wallet file")
                     //visible: false
                     color: (NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000"
@@ -190,7 +342,9 @@ Page {
                 id: walletFileField
                 Layout.row: 1
                 Layout.column: 0
-                Layout.preferredWidth: 500; Layout.preferredHeight: 50
+                //Layout.alignment: Qt.AlignHCenter//Layout.fillWidth: true
+                Layout.preferredWidth: 500
+                Layout.preferredHeight: 50
                 Layout.topMargin: (walletFileText.visible) ? 5 : 0
                 text: walletFileDialog.file
                 color: "#000000"////(NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000" // textColor                
@@ -199,17 +353,18 @@ Page {
                 
                 background: Rectangle { 
                     color: "#708090"////(NeroshopComponents.Style.darkTheme) ? "#101010" : "#ffffff"
-                    border.color: (NeroshopComponents.Style.darkTheme) ? "#a9a9a9" : "#696969" // if path exists, make border.color green, if not then make red
+                    border.color: (NeroshopComponents.Style.darkTheme) ? "#a9a9a9" : "#696969"
                     radius: 3
                 }                     
             }
             // wallet file upload or browse button
             Button {
                 id: walletFileBrowseButton
-                Layout.row: 1
-                Layout.column: 1        
+                Layout.row: 2
+                Layout.column: 0       
                 Layout.preferredWidth: walletFileBrowseButtonText.contentWidth + 20  
                 Layout.preferredHeight: walletFileField.height
+                Layout.topMargin: 20
                 text: qsTr("Browse")
                 //display: AbstractButton.IconOnly//AbstractButton.TextBesideIcon//AbstractButton.TextOnly//AbstractButton.TextUnderIcon
                 //icon.source: "qrc:/images/ellipsis.png"//"/upload.png"
@@ -234,146 +389,63 @@ Page {
                 ToolTip.delay: 1000
                 ToolTip.visible: hovered
                 ToolTip.text: qsTr("Browse wallet file")
-            }                
-            
-                ButtonGroup {
-                    id: walletRestoreMethodButtonGroup
-                    exclusive: true // only one button selected at a time
-                    onClicked: {
-                        console.log("Selected", button.text, "button")
-                        button.checked = true
-                        /*if(button.text == restoreFromFileButton.text) {
-                            walletRestoreStack.currentIndex = 0
-                        }*/
-                        /*if(button.text == restoreFromSeedButton.text) {
-                            walletRestoreStack.currentIndex = 1
-                        }*/
-                        /*if(button.text == restoreFromKeysButton.text) {
-                            walletRestoreStack.currentIndex = 2
-                        }*/
-                        /*if(button.text == restoreFromHWButton.text) {
-                            walletRestoreStack.currentIndex = 3
-                        }*/                                                                        
-                    }
-                }
-                RowLayout {
-                    id: walletRestoreButtonsRow
-                    //Layout.preferredWidth: 
-                    //Layout.preferredHeight: 
-                    Layout.row: 2
-                    Layout.column: 0                    
-                    Layout.topMargin: 15
-                    // to add a button to the button group (within the Button object itself): ButtonGroup.group: walletRestoreMethodButtonGroup // attaches a button to a button group
-                    Button {
-                        id: restoreFromFileButton
-                        ButtonGroup.group: walletRestoreMethodButtonGroup
-                        checked: true
-                        text: qsTr("Restore from file")//.arg("\uf8e9")
-                        Layout.preferredHeight: 40
-                        icon.source: "qrc:/images/file.png" // keys (key.png), seed (sprout.png), file, hardware
-                        //icon.color: "#ffffff"
-                        display: AbstractButton.IconOnly//hovered ? AbstractButton.TextBesideIcon : AbstractButton.IconOnly//AbstractButton.TextUnderIcon
-                        hoverEnabled: true
-                        background: Rectangle {
-                            color: (parent.checked) ? "#39304f" : "#6b5b95"
-                            //border.color:
-                            //border.width: 1
-                            radius: 3
-                        }
-                         //contentItem: Text { 
-                         //    text: parent.text
-                         //    color: "#ffffff"
-                         //    horizontalAlignment: Text.AlignHCenter
-                         //    verticalAlignment: Text.AlignVCenter
-                         //    font.bold: true
-                         //    font.family: FontAwesome.fontFamilySolid
-                         //}
-                     }
-
-                 Button {
-                     id: restoreFromSeedButton
-                     ButtonGroup.group: walletRestoreMethodButtonGroup
-                     text: qsTr("Restore from seed")//.arg("\uf8e9")
-                     //width: contentWidth + 20;
-                     Layout.preferredHeight: 40
-                     icon.source: "qrc:/images/sprout.png" // keys (key.png), seed (sprout.png), file, hardware
-                     //icon.color: "#ffffff"
-                     display: AbstractButton.IconOnly//hovered ? AbstractButton.TextBesideIcon : AbstractButton.IconOnly//AbstractButton.TextUnderIcon
-                     hoverEnabled: true
-                     background: Rectangle {
-                         color: (parent.checked) ? "#39304f" : "#6b5b95"
-                         //border.color:
-                         //border.width: 1
-                         radius: 3
-                     }
-                 }
-
-                Button {
-                    id: restoreFromKeysButton
-                    ButtonGroup.group: walletRestoreMethodButtonGroup
-                    text: qsTr("Restore from keys")//.arg("\uf8e9")
-                    //width: contentWidth + 20;
-                    Layout.preferredHeight: 40
-                    icon.source: "qrc:/images/key.png" // keys (key.png), seed (sprout.png), file, hardware
-                    //icon.color: "#ffffff"
-                    display: AbstractButton.IconOnly//hovered ? AbstractButton.TextBesideIcon : AbstractButton.IconOnly//AbstractButton.TextUnderIcon
-                    hoverEnabled: true
-                    background: Rectangle {
-                        color: (parent.checked) ? "#39304f" : "#6b5b95"
-                        //border.color:
-                        //border.width: 1
-                        radius: 3
-                    }
-                }
-
-                Button {
-                    id: restoreFromHWButton
-                    ButtonGroup.group: walletRestoreMethodButtonGroup
-                    text: qsTr("Restore from hardware wallet")//.arg("\uf8e9")
-                    //width: contentWidth + 20;
-                    Layout.preferredHeight: 40
-                    icon.source: "qrc:/images/usb.png" // keys (key.png), seed (sprout.png), file, hardware
-                    //icon.color: "#ffffff"
-                    display: AbstractButton.IconOnly//hovered ? AbstractButton.TextBesideIcon : AbstractButton.IconOnly//AbstractButton.TextUnderIcon
-                    hoverEnabled: true
-                    background: Rectangle {
-                        color: (parent.checked) ? "#39304f" : "#6b5b95"
-                        //border.color:
-                        //border.width: 1
-                        radius: 3
-                    }
-                }         
-            } // RowLayout
-            StackLayout {
-                id: walletRestoreStack
-                    Layout.row: 3
-                    Layout.column: 0                     
-                    currentIndex: 0
-                Rectangle {
-                    id: restoreFromWalletFile
-                    visible: restoreFromFileButton.checked                    
-                    //Layout.minimumHeight: 
+            }                    
+                    
+                TextField {
+                    id: walletPasswordRestoreField
+                    //Layout.alignment: Qt.AlignHCenter//Layout.fillWidth: true
                     Layout.preferredWidth: 500
-                    Layout.preferredHeight: 300
-                    Layout.topMargin: 5
-                    //GridLayout {}
-                    color: "transparent"
-                    border.color: (NeroshopComponents.Style.darkTheme) ? "#a9a9a9" : "#696969"
-                    //radius: 3
+                    Layout.preferredHeight: 50
+                    Layout.row: 3
+                    Layout.column: 0
+                    Layout.topMargin: 15
+                    placeholderText: qsTr("Wallet Password"); placeholderTextColor: (NeroshopComponents.Style.darkTheme) ? "#a9a9a9" : "#696969"
+                    color: (NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000" // textColor
+                    selectByMouse: true
+                
+                    background: Rectangle { 
+                        color: (NeroshopComponents.Style.darkTheme) ? "#101010" : "#ffffff"
+                        border.color: (NeroshopComponents.Style.darkTheme) ? "#a9a9a9" : "#696969"
+                        radius: 3
+                    }                     
+                }                    
                 }
-            ////    Rectangle {
-            ////        id: restoreFromMnemonicSeed
-            ////        visible: restoreFrom?Button.checked
-            ////    }
-            ////    Rectangle {
-            ////        id: restoreFromKeys
-            ////        visible: restoreFrom?Button.checked
-            ////    }
-            ////    Rectangle {
-            ////        id: restoreFromHardwareWallet
-            ////        visible: restoreFrom?Button.checked
-            ////    }                                    
+               Rectangle {
+                    id: restoreFromMnemonicSeed
+                }
+                Rectangle {
+                    id: restoreFromKeys
+                }
+                Rectangle {
+                    id: restoreFromHardwareWallet
+                }                           
             }
+                // confirm button
+                Button {
+                    id: loginButton
+                    Layout.row: 3
+                    Layout.column: 0
+                    Layout.fillWidth: true
+                    Layout.preferredWidth: 500
+                    Layout.preferredHeight: 50
+                    text: qsTr("Confirm")
+                	hoverEnabled: true
+                	////onClicked: login()
+                	background: Rectangle {
+                    	color: "#6b5b95"
+                    	radius: 5
+                	}
+                	                
+                	contentItem: Text {  
+                    	//font.family: "Consolas"; //font.family: NeroshopComponents.Style.fontFiraCodeLight.name
+                    	//font.pointSize: 10
+                    	font.bold: true
+                    	text: loginButton.text
+                    	color: "#ffffff" // white
+                    	horizontalAlignment: Text.AlignHCenter
+                    	verticalAlignment: Text.AlignVCenter                    
+                	}                    
+                }            
             //ScrollView {
             //    id: wallet_upload_scrollview
             /*             
@@ -545,10 +617,19 @@ Page {
                 ////rows: 10
                 ////rowSpacing: 15
                 // Reminder: Layout. functions work for items inside Layouts but not for the Layout itself!
+                Text {
+                    id: walletGenPageTitle
+                    Layout.row: 0
+                    Layout.column: 0
+                    text: qsTr("Create Wallet")
+                    color: (NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000"
+                    font.bold: true                    
+                    font.pointSize: 14
+                }                
                 // wallet name creation text
                 Text {
                     id: walletNameText
-                    Layout.row: 0
+                    Layout.row: 1
                     Layout.column: 0               
                     text: qsTr("Wallet name")
                     //visible: !walletSeedRepeater.model
@@ -560,12 +641,12 @@ Page {
                     id: walletNameField
                     Layout.preferredWidth: 500
                     Layout.preferredHeight: 50//width: 500; height: 50
-                    Layout.row: 1
+                    Layout.row: 2
                     Layout.column: 0
                     Layout.topMargin: (walletNameText.visible) ? 5 : 0
                     //visible: !walletSeedRepeater.model
-                    placeholderText: qsTr("auth"); placeholderTextColor: (NeroshopComponents.Style.darkTheme) ? "#a9a9a9" : "#696969"
-                    color: (NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000" // textColor                
+                    placeholderText: qsTr("wallet"); placeholderTextColor: (NeroshopComponents.Style.darkTheme) ? "#a9a9a9" : "#696969"
+                    color: (NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000" // textColor
                     selectByMouse: true
                     // todo: validator regex for preventing special characters like: * . " / \ [ ] : ; | , from being added to the wallet name
                 
@@ -580,7 +661,7 @@ Page {
                     id: walletPasswordField
                     Layout.preferredWidth: 500
                     Layout.preferredHeight: 50//width: 500; height: 50
-                    Layout.row: 2
+                    Layout.row: 3
                     Layout.column: 0                
                     //visible: !walletSeedRepeater.model
                     placeholderText: qsTr("Wallet Password")
@@ -626,7 +707,7 @@ Page {
                     id: walletPasswordConfirmField
                     Layout.preferredWidth: 500
                     Layout.preferredHeight: 50//width: 500; height: 50
-                    Layout.row: 3
+                    Layout.row: 4
                     Layout.column: 0
                     //Layout.topMargin: 5
                     //rightPadding
@@ -662,7 +743,7 @@ Page {
                 // wallet path text
                 Text {
                     id: walletPathText
-                    Layout.row: 4
+                    Layout.row: 5
                     Layout.column: 0               
                     Layout.topMargin: 10
                     text: qsTr("Wallet path")
@@ -673,7 +754,7 @@ Page {
                 // wallet path field
                 TextField {
                     id: walletPathField
-                    Layout.row: 5
+                    Layout.row: 6
                     Layout.column: 0
                     Layout.preferredWidth: 500; Layout.preferredHeight: 50
                     Layout.topMargin: (walletPathText.visible) ? 5 : 0
@@ -685,12 +766,12 @@ Page {
                 
                     background: Rectangle { 
                         color: "#708090"//(NeroshopComponents.Style.darkTheme) ? "#101010" : "#ffffff"
-                        border.color: (NeroshopComponents.Style.darkTheme) ? "#a9a9a9" : "#696969" // if path exists, make border.color green, if not then make red
+                        border.color: (NeroshopComponents.Style.darkTheme) ? "#a9a9a9" : "#696969"
                         radius: 3
                     }                     
                 }
                 RowLayout {
-                    Layout.row: 6
+                    Layout.row: 7
                     Layout.column: 0
                     //visible: !walletSeedRepeater.model
                 // wallet path change or upload button
@@ -754,7 +835,7 @@ Page {
                 TextArea {
                     id: walletMessageArea
                     visible: true////false
-                    Layout.row: 7
+                    Layout.row: 8
                     Layout.column: 0
                     Layout.fillWidth: true // extends the TextArea's width to the width of the Layout
                     Layout.maximumWidth: walletPathField.width // keeps textarea from going past grid bounds when text is added
@@ -792,8 +873,8 @@ Page {
                     Layout.column: 1
                     Layout.fillWidth: true // extends the TextArea's width to the width of the Layout
                     Layout.maximumWidth: 550////walletPathField.width // keeps textarea from going past grid bounds when text is added
-                    Layout.preferredHeight: contentHeight + 20
-                    Layout.topMargin: 20//15
+                    implicitHeight: contentHeight + 20////Layout.preferredHeight: contentHeight + 20  // cause of QML TextArea: Binding loop detected for property "implicitWidth" error
+                    ////Layout.topMargin: 20//15
                     selectByMouse: true
                     readOnly: true
                     verticalAlignment: TextEdit.AlignVCenter // align the text within the center of TextArea item's height
@@ -803,7 +884,7 @@ Page {
                     property int messageCode: 0 //0 = info; 1 = warning or error
                     background: Rectangle { 
                         color: "transparent"
-                        border.color: (parent.messageCode == 2) ? "#228b22" : ((parent.messageCode == 1) ? "#b22222" : "#2196f3")////parent.color//(NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#404040"
+                        border.color: (parent.messageCode == 1) ? "#b22222" : ((NeroshopComponents.Style.darkTheme) ? "#a9a9a9" : parent.color)////parent.color
                         radius: 3
                     }            
                     leftPadding: 30 + circleInfo.contentWidth
@@ -812,8 +893,8 @@ Page {
                         anchors.left: parent.left
                         anchors.leftMargin: 15
                         anchors.verticalCenter: parent.verticalCenter                         
-                        text: (parent.messageCode == 2) ? qsTr(FontAwesome.seedling) : ((parent.messageCode == 1) ? qsTr(FontAwesome.triangleExclamation) : qsTr(FontAwesome.circleInfo))
-                        color: (parent.messageCode == 2) ? "#228b22" : ((parent.messageCode == 1) ? "#b22222" : "#2196f3")
+                        text: (parent.messageCode == 1) ? qsTr(FontAwesome.triangleExclamation) : qsTr(FontAwesome.circleInfo)//(parent.messageCode == 2) ? qsTr(FontAwesome.seedling) : ((parent.messageCode == 1) ? qsTr(FontAwesome.triangleExclamation) : qsTr(FontAwesome.circleInfo))
+                        color: (parent.messageCode == 1) ? "#b22222" : "#2196f3"//(parent.messageCode == 2) ? "#228b22" : ((parent.messageCode == 1) ? "#b22222" : "#2196f3")
                         font.bold: true
                         font.family: FontAwesome.fontFamily
                     }
@@ -866,7 +947,7 @@ Page {
                     icon.color: "#ffffff"
                     display: AbstractButton.IconOnly//AbstractButton.TextBesideIcon//AbstractButton.TextOnly//AbstractButton.TextUnderIcon
                     hoverEnabled: true
-                    onClicked: Wallet.copyMnemonicToClipboard()////copyToClipboard()
+                    onClicked: Backend.copyTextToClipboard(Wallet.getMnemonic())
                 
                     background: Rectangle {
                         color: "#404040"

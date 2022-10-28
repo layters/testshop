@@ -38,16 +38,17 @@ ToolTip {
         border.width: hint.borderWidth
         radius: hint.radius
         //gradient: "NightFade"
+        // todo: Place triangle outside of the ToolTip. It is absolutely NOT suppose to be part of the ToolTip background. Both ToolTip and Triangle should be enclosed within an Item
         NeroshopComponents.Triangle {
             id: triangleTip
-            //anchors.left: hint.left//hint.horizontalCenter
-            //anchors.leftMargin: 100
-            //anchors.top: parent.top//hint.top
-            //anchors. :
-                //x: this.x
-                //y: this.y
-                ////direction: hint.direction
-                color: "black"
+            // side: BottomCentered
+            anchors.bottom: hint.bottom//anchors.top: hint.top
+            //anchors.bottomMargin: 0
+            anchors.horizontalCenter: hint.horizontalCenter
+            width: 16; height: width / 2
+            direction: Triangle.Direction.Down
+            fillColor: "black"
+            strokeColor: this.fillColor
         }       
     }
 }

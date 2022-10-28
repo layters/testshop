@@ -34,6 +34,7 @@
 // ...
 // neroshop (gui)
 #if defined(NEROSHOP_BUILD_GUI)
+#include "gui/backend.hpp"
 #include "gui/script_proxy.hpp"
 #include "gui/wallet_proxy.hpp"
 #endif

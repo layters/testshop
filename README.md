@@ -2,7 +2,7 @@
 [![banner](images/appicons/neroshop-logo.png)](https://github.com/larteyoh/testshop "neroshop logo")
 
 
-A P2P (peer-to-peer) marketplace for [**Monero**](https://getmonero.org/) users
+A distributed P2P (peer-to-peer) marketplace for [**Monero**](https://getmonero.org/) users
 
 
 ## Table of contents

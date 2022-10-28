@@ -26,12 +26,10 @@ int neroshop::gui::Wallet::createRandomWallet(const QString& password, const QSt
     return static_cast<int>(error);
 }
 
-void neroshop::gui::Wallet::copyMnemonicToClipboard() {
+void neroshop::gui::Wallet::closeWallet(bool save) {
     if(!wallet) throw std::runtime_error("neroshop::Wallet is not initialized");
-    if(!wallet->get_monero_wallet()) return;
-    QClipboard * clipboard = QGuiApplication::clipboard();
-    clipboard->setText(getMnemonic());
-    std::cout << "Copied to clipboard\n";
+    wallet->get_monero_wallet()->close(save);
+    wallet->monero_wallet_obj.reset(); // set monero_wallet to nullptr so that we know it has been deleted
 }
 
 QVariantMap neroshop::gui::Wallet::createUniqueSubaddressObject(unsigned int account_idx, const QString & label) {
@@ -163,4 +161,9 @@ QString neroshop::gui::Wallet::getSyncMessage() const {
 bool neroshop::gui::Wallet::isGenerated() const {
     return (wallet->get_monero_wallet() != nullptr);
 }
+
+bool neroshop::gui::Wallet::fileExists(const QString& filename) const {
+    return wallet->file_exists(filename.toStdString());
+}
+
 #endif
