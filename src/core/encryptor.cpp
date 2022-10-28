@@ -353,107 +353,143 @@ std::pair<std::string, std::string> neroshop::Encryptor::get_key_pair(const EVP_
 //Experimental function for signing data using a public key. Couldn't get it
 //complete working
 // None of the code below work properly and are not functional
-unsigned char */*std::string*/ neroshop::Encryptor::sign_message(const EVP_PKEY * key, const std::string& message) {
- // md is a SHA-256 digest in this example.
-    unsigned char *md = reinterpret_cast<unsigned char *>( const_cast<char *>(message.c_str()) );
-    unsigned char *sig;
-    size_t mdlen = 32, siglen;
-    // custom
-    //EVP_MD_CTX tmp_ctx;
+std::string neroshop::Encryptor::sign_message(const EVP_PKEY *key, const std::string &message)
+{
+    // NB: assumes signing_key and md are set up before the next
+    // step. signing_key must be an RSA private key and md must
+    // point to the SHA-256 digest to be signed.
 
-    //EVP_MD_CTX_init(&tmp_ctx);
-	//EVP_MD_CTX_copy_ex(&tmp_ctx,ctx);   
-	//EVP_DigestFinal_ex(&tmp_ctx,&(m[0]),&m_len);
-	//EVP_MD_CTX_cleanup(&tmp_ctx);
+    EVP_PKEY_CTX *ctx = EVP_PKEY_CTX_new(const_cast<EVP_PKEY *>(key), NULL); // NULL=no engine
+    if (!ctx) {
+        neroshop::print("EVP_PKEY_CTX_new failed", 1);
+        return NULL;
+    } //"";
 
-     // NB: assumes signing_key and md are set up before the next
-     // step. signing_key must be an RSA private key and md must
-     // point to the SHA-256 digest to be signed.
-
-    EVP_PKEY_CTX * ctx = EVP_PKEY_CTX_new(const_cast<EVP_PKEY *>(key), NULL); // NULL=no engine
-    if(!ctx) { neroshop::print("EVP_PKEY_CTX_new failed", 1); return NULL; }//""; }
-
-    if(EVP_PKEY_sign_init(ctx) <= 0) {
+    if (EVP_PKEY_sign_init(ctx) <= 0) {
         EVP_PKEY_CTX_free(ctx);
         neroshop::print(std::string(ERR_error_string(ERR_get_error(), nullptr)), 1);
-        return NULL;//"";
+        return NULL; //"";
     }
-    if (EVP_PKEY_CTX_set_rsa_padding(ctx, RSA_PKCS1_PADDING/*RSA_PKCS1_PSS_PADDING*/) <= 0) {
+    if (EVP_PKEY_CTX_set_rsa_padding(ctx, RSA_PKCS1_PADDING) <= 0) {
         EVP_PKEY_CTX_free(ctx);
         neroshop::print(std::string(ERR_error_string(ERR_get_error(), nullptr)), 1);
-        return NULL;//"";
+        return NULL; //"";
     }
     if (EVP_PKEY_CTX_set_signature_md(ctx, EVP_sha256()) <= 0) {
         EVP_PKEY_CTX_free(ctx);
         neroshop::print(std::string(ERR_error_string(ERR_get_error(), nullptr)), 1);
-        return NULL;//"";
+        return NULL; //"";
     }
- // Determine buffer length (siglen)
-    if (EVP_PKEY_sign(ctx, NULL, &siglen, md, mdlen) <= 0) {
-        EVP_PKEY_CTX_free(ctx);
-        neroshop::print(std::string(ERR_error_string(ERR_get_error(), nullptr)), 1);
-        return NULL;//"";
-    }
-    sig = (unsigned char *)OPENSSL_malloc(siglen);
-    if(!sig) { neroshop::print("OPENSSL_malloc failed", 1); return NULL; }//""; }
 
-    if (EVP_PKEY_sign(ctx, sig, &siglen, md, mdlen) <= 0) {
+    unsigned char digest[SHA256_DIGEST_LENGTH];
+    SHA256_CTX sha256_ctx;
+    if (SHA256_Init(&sha256_ctx) != 1) {
         EVP_PKEY_CTX_free(ctx);
         neroshop::print(std::string(ERR_error_string(ERR_get_error(), nullptr)), 1);
-        return NULL;//"";
+        return NULL; //"";
+    }
+
+    if (SHA256_Update(&sha256_ctx, message.c_str(), message.size()) != 1) {
+        EVP_PKEY_CTX_free(ctx);
+        neroshop::print(std::string(ERR_error_string(ERR_get_error(), nullptr)), 1);
+        return NULL; //"";
+    }
+
+    if (SHA256_Final(digest, &sha256_ctx) != 1) {
+        EVP_PKEY_CTX_free(ctx);
+        neroshop::print(std::string(ERR_error_string(ERR_get_error(), nullptr)), 1);
+        return NULL; //"";
+    }
+
+    std::size_t siglen = 0;
+    // Determine buffer length (siglen)
+    if (EVP_PKEY_sign(ctx, NULL, &siglen, digest, SHA256_DIGEST_LENGTH) <= 0) {
+        EVP_PKEY_CTX_free(ctx);
+        neroshop::print(std::string(ERR_error_string(ERR_get_error(), nullptr)), 1);
+        return NULL; //"";
+    }
+    unsigned char *sig = reinterpret_cast<unsigned char *>(OPENSSL_malloc(siglen));
+    if (!sig) {
+        neroshop::print("OPENSSL_malloc failed", 1);
+        return NULL;
+    } //""; }
+
+    if (EVP_PKEY_sign(ctx, sig, &siglen, digest, SHA256_DIGEST_LENGTH) <= 0) {
+        EVP_PKEY_CTX_free(ctx);
+        neroshop::print(std::string(ERR_error_string(ERR_get_error(), nullptr)), 1);
+        return NULL; //"";
     }
     // Free context
     EVP_PKEY_CTX_free(ctx);
-    // Signature is siglen bytes written to buffer sig
-    unsigned char */*std::string*/ signature = sig;//std::string(reinterpret_cast<const char *>(sig));
+    std::string signature = std::string(reinterpret_cast<const char *>(sig), siglen);
     // Free signature output buffer
     OPENSSL_free(sig);
     return signature;
 }
 ////////////////////
-std::string neroshop::Encryptor::verify_signature(const EVP_PKEY * key, unsigned char */*const std::string&*/ signature) {
-    unsigned char *md = reinterpret_cast<unsigned char *>(const_cast<char *>("Hello World"));
-    size_t mdlen = 11;
-    unsigned char *sig = signature;//reinterpret_cast<unsigned char *>( const_cast<char *>(signature.c_str()) );
-    size_t siglen = std::string(reinterpret_cast<const char *>( &signature )).length();//signature.length();
+bool neroshop::Encryptor::verify_signature(const EVP_PKEY * verify_key, const std::string& message, const std::string& signature)
+{
     // NB: assumes verify_key, sig, siglen md and mdlen are already set up
     // and that verify_key is an RSA public key
- 
-    EVP_PKEY_CTX * ctx = EVP_PKEY_CTX_new(const_cast<EVP_PKEY *>(key), NULL); //NULL=no engine
-    if(!ctx) { neroshop::print("EVP_PKEY_CTX_new failed", 1); return ""; }
+
+    EVP_PKEY_CTX * ctx = EVP_PKEY_CTX_new(const_cast<EVP_PKEY *>(verify_key), NULL); //NULL=no engine
+    if(!ctx) {
+        neroshop::print("EVP_PKEY_CTX_new failed", 1);
+        return false;
+    }
     // Error occurred
     if(EVP_PKEY_verify_init(ctx) <= 0) {
         EVP_PKEY_CTX_free(ctx);
         neroshop::print(std::string(ERR_error_string(ERR_get_error(), nullptr)), 1);
-        return "";
+        return false;
     }
-    if(EVP_PKEY_CTX_set_rsa_padding(ctx, RSA_PKCS1_PADDING/*RSA_PKCS1_PSS_PADDING*/) <= 0) {
+    if(EVP_PKEY_CTX_set_rsa_padding(ctx, RSA_PKCS1_PADDING) <= 0) {
         EVP_PKEY_CTX_free(ctx);
         neroshop::print(std::string(ERR_error_string(ERR_get_error(), nullptr)), 1);
-        return "";
+        return false;
     }
     if(EVP_PKEY_CTX_set_signature_md(ctx, EVP_sha256()) <= 0) {
         EVP_PKEY_CTX_free(ctx);
         neroshop::print(std::string(ERR_error_string(ERR_get_error(), nullptr)), 1);
-        return "";
+        return false;
     }
-    // Perform operation
-    int ret = EVP_PKEY_verify(ctx, sig, siglen, md, mdlen);
-    if(ret <= 0) {
+
+    unsigned char digest[SHA256_DIGEST_LENGTH];
+    SHA256_CTX sha256_ctx;
+    if (SHA256_Init(&sha256_ctx) != 1) {
         EVP_PKEY_CTX_free(ctx);
         neroshop::print(std::string(ERR_error_string(ERR_get_error(), nullptr)), 1);
-        return "";        
+        return NULL; //"";
     }
+
+    if (SHA256_Update(&sha256_ctx, message.c_str(), message.size()) != 1) {
+        EVP_PKEY_CTX_free(ctx);
+        neroshop::print(std::string(ERR_error_string(ERR_get_error(), nullptr)), 1);
+        return NULL; //"";
+    }
+
+    if (SHA256_Final(digest, &sha256_ctx) != 1) {
+        EVP_PKEY_CTX_free(ctx);
+        neroshop::print(std::string(ERR_error_string(ERR_get_error(), nullptr)), 1);
+        return NULL; //"";
+    }
+
+    // Perform operation
+    int ret = EVP_PKEY_verify(ctx,
+                              reinterpret_cast<const unsigned char *>(signature.c_str()),
+                              signature.size(),
+                              digest,
+                              SHA256_DIGEST_LENGTH);
     // ret == 1 indicates success, 0 verify failure and < 0 for some
-    // other error.   
-    std::cout << "successfully verified signature!\n";
+    // other error.
+    if(ret != 1) {
+        EVP_PKEY_CTX_free(ctx);
+        neroshop::print(std::string(ERR_error_string(ERR_get_error(), nullptr)), 1);
+        return false;
+    }
     // Free context
     EVP_PKEY_CTX_free(ctx);
-    // Signature is siglen bytes written to buffer sig
-    std::string message = std::string(reinterpret_cast<const char *>(sig));
-    // Free signature output buffer
-    OPENSSL_free(sig);
-    return message;
+    return true;
 }
 ////////////////////
 ////////////////////
