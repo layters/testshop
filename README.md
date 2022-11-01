@@ -217,7 +217,7 @@ You may support the neroshop project directly by donating Monero (XMR) to the ad
 
 [//]: # (./clean.sh)
 [//]: # (git checkout -b main)
-[//]: # (git add .gitignore .gitmodules cmake/ CMakeLists.txt external/ fonts/ images/ main.qml premake5.lua qml/ qml.qrc README.md src/ test/)
+[//]: # (git add .gitignore .gitmodules cmake/ CMakeLists.txt external/ fonts/ images/ premake5.lua qml/ qml.qrc README.md shaders/ src/ test/)
 [//]: # (git commit -m"...")
 [//]: # (git push -u origin main --force)
 [//]: # (https://git.slipfox.xyz/larteyoh/testshop/settings => Mirror Settings => Synchronize Now)

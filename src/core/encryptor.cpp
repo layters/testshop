@@ -350,9 +350,6 @@ std::pair<std::string, std::string> neroshop::Encryptor::get_key_pair(const EVP_
 // refer to: https://www.openssl.org/docs/man3.0/man3/EVP_PKEY_sign.html
 //           https://www.openssl.org/docs/man3.0/man3/EVP_PKEY_verify.html
 ////////////////////
-//Experimental function for signing data using a public key. Couldn't get it
-//complete working
-// None of the code below work properly and are not functional
 std::string neroshop::Encryptor::sign_message(const EVP_PKEY *key, const std::string &message)
 {
     // NB: assumes signing_key and md are set up before the next

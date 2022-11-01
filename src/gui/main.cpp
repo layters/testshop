@@ -52,7 +52,6 @@ int main(int argc, char *argv[]) {
     
     QQmlApplicationEngine engine;
     //--------------------------
-    ////////////////////////////////////////////////////////    
     // Configuration file must be loaded right after Qt Application object has been created so that we can get the correct config location
     // open configuration script
     neroshop::open_configuration_file();
@@ -90,8 +89,8 @@ int main(int argc, char *argv[]) {
     // register backend
     engine.rootContext()->setContextProperty("Backend", new Backend());
     //--------------------------
-    // When using qrc.qml to store images, use: QUrl(QStringLiteral("qrc:///main.qml"))
-    engine.load(QUrl(QStringLiteral("qrc:/main.qml")));//("../main.qml");//("main.qml");//(QUrl(QStringLiteral("qrc:/main.qml")));
+    // Load main.qml from the "qml/" directory
+    engine.load(QUrl(QStringLiteral("qrc:/qml/main.qml")));
     if (engine.rootObjects().isEmpty()) {
         return -1;
     }

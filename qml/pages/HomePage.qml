@@ -34,7 +34,7 @@ Page {
                 Layout.preferredWidth: scrollView.width////parent.width // will not fill page if you use parent.width. Use scrollView.width instead
                 Layout.row: 0 // sets the row position
 
-                NeroshopComponents.BannerPage {
+                NeroshopComponents.BannerItem {
                     Rectangle {
                         id: firstPage
                         anchors.fill: parent
@@ -47,7 +47,7 @@ Page {
                     }
                 }
 
-                NeroshopComponents.BannerPage {
+                NeroshopComponents.BannerItem {
                     Rectangle {
                         id: secondPage
                         anchors.fill: parent
@@ -55,7 +55,7 @@ Page {
                     }
                 }
 
-                NeroshopComponents.BannerPage {
+                NeroshopComponents.BannerItem {
                     Rectangle {
                         id: thirdPage
                         anchors.fill: parent
@@ -63,6 +63,36 @@ Page {
                     }
                 }
             } // Banner
+            Text {
+                Layout.row: 2
+                Layout.topMargin: 10
+                text: "Recently added"//"Featured items"//"Best sellers"//"On Sale"//"Recommended items"//"Shop by Category"
+                color: (NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000"
+                font.bold: true
+                font.pointSize: 16
+            }
+            Flow {
+                Layout.row: 3
+                Layout.preferredWidth: parent.width////scrollView.width
+                Layout.maximumWidth: scrollView.width////mainWindow.width
+                Layout.topMargin: 10
+                spacing: 5
+                //Layout.alignment: Qt.AlignHCenter | Qt.AlignTop // does nothing
+                Repeater {
+                    id: itemsRepeater
+                    model: 16//6
+                    delegate: Rectangle {
+                        implicitWidth: 200
+                        implicitHeight: implicitWidth
+                        color: NeroshopComponents.Style.getColorsFromTheme()[1]
+                        radius: 3
+                        Image {
+                            source: "qrc:/images/image_gallery.png"
+                            anchors.centerIn: parent
+                        }
+                    }
+                }
+            }
         } // GridLayout
     } // ScrollView
 }

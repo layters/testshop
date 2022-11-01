@@ -1,9 +1,9 @@
 <RCC>
     <qresource prefix="/">
-        <file>main.qml</file>
+        <file>qml/main.qml</file>
         <!-- qml sources: components -->
         <file>qml/components/Banner.qml</file>
-        <file>qml/components/BannerPage.qml</file>
+        <file>qml/components/BannerItem.qml</file>
         <file>qml/components/CatalogGrid.qml</file>
         <file>qml/components/CatalogList.qml</file>
         <file>qml/components/FilterBox.qml</file>
@@ -31,10 +31,6 @@
         <file>qml/pages/settings/SettingsOrders.qml</file>
         <file>qml/pages/settings/SettingsSellersHub.qml</file>
         <file>qml/pages/settings/SettingsWallet.qml</file>
-        <!-- shaders -->
-        <file>qml/shaders/opacity_mask_qt5.fsh</file>
-        <file>qml/shaders/opacity_mask_qt6.frag</file>
-        <file>qml/shaders/opacity_mask_qt6.frag.qsb</file>
         <!-- fonts -->
         <file>fonts/FiraCode-Bold.ttf</file>
         <file>fonts/FiraCode-Light.ttf</file>
@@ -84,5 +80,9 @@
         <file>images/wallet.png</file>
         <file>images/wownero_logo.png</file>        
         <!--<file>images/</file> -->
+        <!-- shaders -->
+        <file>shaders/opacity_mask_qt5.fsh</file>
+        <file>shaders/opacity_mask_qt6.frag</file>
+        <file>shaders/opacity_mask_qt6.frag.qsb</file>
     </qresource>
 </RCC>

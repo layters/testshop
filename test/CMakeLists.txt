@@ -386,6 +386,10 @@ target_link_libraries(${test_qr_code} ${monero_cpp_src} ${sqlite_src} ${qr_code_
 set(test_crypt "encryption_test")
 add_executable(${test_crypt} encryption_test.cpp ${neroshop_srcs})
 target_link_libraries(${test_crypt} ${monero_cpp_src} ${sqlite_src} ${qr_code_generator_src} ${raft_src} ${libuv_src} ${curl_src} ${monero_src} ${lua_src} ${png_src})
+# sign_verify_test
+set(test_sign_verify "sign_verify_test")
+add_executable(${test_sign_verify} sign_verify_test.cpp ${neroshop_srcs})
+target_link_libraries(${test_sign_verify} ${monero_cpp_src} ${sqlite_src} ${qr_code_generator_src} ${raft_src} ${libuv_src} ${curl_src} ${monero_src} ${lua_src} ${png_src})
 # Qt gui_test
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
@@ -427,6 +431,7 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
     target_link_libraries(${test_auth} ${posix_src})
     target_link_libraries(${test_qr_code} ${posix_src})
     target_link_libraries(${test_crypt} ${posix_src})
+    target_link_libraries(${test_sign_verify} ${posix_src})
     target_link_libraries(${test_gui_qt} ${posix_src})
     #target_link_libraries(${test_} ${posix_src})
     find_package(X11 REQUIRED)

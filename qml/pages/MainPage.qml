@@ -132,7 +132,7 @@ Page {
             //    GradientStop { position: 0.0; color: "white" }
             //    GradientStop { position: 1.0; color: "black" }
             //}            
-            //anchors.right: parent.right//implicitWidth: 200
+            //Layout.alignment: Qt.AlignVCenter
             //implicitHeight: 200      
             // add spacing from parent (padding - located inside the borders of an element)
             //anchors.margins: 50//anchors.leftPadding: 20        
@@ -190,19 +190,15 @@ Page {
                         button.checked = true
                         if(button.text == restoreFromFileButton.text) {
                             walletRestoreStack.currentIndex = 0
-                            console.log(button.width)
                         }
                         if(button.text == restoreFromSeedButton.text) {
                             walletRestoreStack.currentIndex = 1
-                            console.log(button.width)
                         }
                         if(button.text == restoreFromKeysButton.text) {
                             walletRestoreStack.currentIndex = 2
-                            console.log(button.width)
                         }
                         if(button.text == restoreFromHWButton.text) {
                             walletRestoreStack.currentIndex = 3
-                            console.log(button.width)
                         }                                                                        
                     }
                 }
@@ -214,18 +210,20 @@ Page {
                     Layout.column: 0    
                     Layout.fillWidth: true                
                     Layout.topMargin: 15
+                    property real buttonWidth: (500 / 4)
+                    property real buttonHeight: 40
                     // to add a button to the button group (within the Button object itself): ButtonGroup.group: walletRestoreMethodButtonGroup // attaches a button to a button group
                     Button {
                         id: restoreFromFileButton
                         ButtonGroup.group: walletRestoreMethodButtonGroup
                         checked: true
                         text: qsTr("Restore from file")//.arg("\uf8e9")
-                        Layout.preferredHeight: 40
-                        Layout.preferredWidth: hovered ? 180 : (500 / 4)
-                        Layout.maximumWidth: 180//contentWidth + 20
+                        Layout.preferredHeight: parent.buttonHeight
+                        Layout.preferredWidth: parent.buttonWidth//hovered ? 180 : parent.buttonWidth
+                        //Layout.maximumWidth: 180//contentWidth + 20
                         icon.source: "qrc:/images/file.png" // keys (key.png), seed (sprout.png), file, hardware
                         //icon.color: "#ffffff"
-                        display: hovered ? AbstractButton.TextBesideIcon : AbstractButton.IconOnly//AbstractButton.TextUnderIcon
+                        display: AbstractButton.IconOnly//hovered ? AbstractButton.TextBesideIcon : AbstractButton.IconOnly//AbstractButton.TextUnderIcon
                         hoverEnabled: true
                         background: Rectangle {
                             color: (parent.checked) ? "#39304f" : "#6b5b95"
@@ -243,10 +241,10 @@ Page {
                          }*/
                          NeroshopComponents.Hint {
                              id: restoreFileHint
-                             visible: parent.hovered
+                             visible: parent.hovered; delay: 0
                              text: parent.text
-                             pointer.visible: true//false
-                             y: parent.y - (parent.height + pointer.height)//(parent.height - this.height) / 2
+                             pointer.visible: false
+                             //y: parent.y - (parent.height + pointer.height)//(parent.height - this.height) / 2
                          }
                      }
 
@@ -254,11 +252,11 @@ Page {
                      id: restoreFromSeedButton
                      ButtonGroup.group: walletRestoreMethodButtonGroup
                      text: qsTr("Restore from seed")//.arg("\uf8e9")
-                     Layout.preferredWidth: hovered ? 180 : (500 / 4)//width: contentWidth + 20;
-                     Layout.preferredHeight: 40
+                     Layout.preferredWidth: parent.buttonWidth//width: contentWidth + 20;
+                     Layout.preferredHeight: parent.buttonHeight
                      icon.source: "qrc:/images/sprout.png" // keys (key.png), seed (sprout.png), file, hardware
                      //icon.color: "#ffffff"
-                     display: hovered ? AbstractButton.TextBesideIcon : AbstractButton.IconOnly//AbstractButton.TextUnderIcon
+                     display: AbstractButton.IconOnly
                      hoverEnabled: true
                      background: Rectangle {
                          color: (parent.checked) ? "#39304f" : "#6b5b95"
@@ -266,17 +264,23 @@ Page {
                          //border.width: 1
                          radius: 3
                      }
+                         NeroshopComponents.Hint {
+                             visible: parent.hovered; delay: 0
+                             text: parent.text
+                             pointer.visible: false
+                             //y: parent.y - (parent.height + pointer.height)//(parent.height - this.height) / 2
+                         }                     
                  }
 
                 Button {
                     id: restoreFromKeysButton
                     ButtonGroup.group: walletRestoreMethodButtonGroup
                     text: qsTr("Restore from keys")//.arg("\uf8e9")
-                    Layout.preferredWidth: hovered ? 180 : (500 / 4)//width: contentWidth + 20;
-                    Layout.preferredHeight: 40
+                    Layout.preferredWidth: parent.buttonWidth//width: contentWidth + 20;
+                    Layout.preferredHeight: parent.buttonHeight
                     icon.source: "qrc:/images/key.png" // keys (key.png), seed (sprout.png), file, hardware
                     //icon.color: "#ffffff"
-                    display: hovered ? AbstractButton.TextBesideIcon : AbstractButton.IconOnly//AbstractButton.TextUnderIcon
+                    display: AbstractButton.IconOnly
                     hoverEnabled: true
                     background: Rectangle {
                         color: (parent.checked) ? "#39304f" : "#6b5b95"
@@ -284,18 +288,24 @@ Page {
                         //border.width: 1
                         radius: 3
                     }
+                         NeroshopComponents.Hint {
+                             visible: parent.hovered; delay: 0
+                             text: parent.text
+                             pointer.visible: false
+                             //y: parent.y - (parent.height + pointer.height)//(parent.height - this.height) / 2
+                         }                    
                 }
 
                 Button {
                     id: restoreFromHWButton
                     ButtonGroup.group: walletRestoreMethodButtonGroup
                     text: qsTr("Restore from HW")//("Restore from hardware")//.arg("\uf8e9")
-                    Layout.preferredWidth: hovered ? Layout.maximumWidth : (500 / 4)//width: contentWidth + 20;
-                    Layout.preferredHeight: 40
-                    Layout.maximumWidth: 180//280
+                    Layout.preferredWidth: parent.buttonWidth//hovered ? Layout.maximumWidth : parent.buttonWidth//width: contentWidth + 20;
+                    Layout.preferredHeight: parent.buttonHeight
+                    //Layout.maximumWidth: 180//280
                     icon.source: "qrc:/images/usb.png" // keys (key.png), seed (sprout.png), file, hardware
                     //icon.color: "#ffffff"
-                    display: hovered ? AbstractButton.TextBesideIcon : AbstractButton.IconOnly//AbstractButton.TextUnderIcon
+                    display: AbstractButton.IconOnly
                     hoverEnabled: true
                     background: Rectangle {
                         color: (parent.checked) ? "#39304f" : "#6b5b95"
@@ -303,6 +313,12 @@ Page {
                         //border.width: 1
                         radius: 3
                     }
+                         NeroshopComponents.Hint {
+                             visible: parent.hovered; delay: 0
+                             text: parent.text
+                             pointer.visible: false
+                             //y: parent.y - (parent.height + pointer.height)//(parent.height - this.height) / 2
+                         }                    
                 }         
             } // RowLayout
             // walletRestoreStack
@@ -315,13 +331,11 @@ Page {
                 // WalletFileStackContent    
                 ColumnLayout {
                     id: restoreFromWalletFile
-                    Layout.alignment: Qt.AlignHCenter | Qt.AlignTop | Qt.AlignVCenter
-                    Layout.topMargin: 20               
+                    Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter// | Qt.AlignTop; Layout.topMargin: 20               
                     //Layout.minimumHeight: 
                     Layout.preferredWidth: 500
                     Layout.maximumWidth: 600
                     //Layout.preferredHeight: 380
-                    //GridLayout {}
                     /*color: "transparent"
                     border.color: (NeroshopComponents.Style.darkTheme) ? "#a9a9a9" : "#696969"
                     //radius: 3*/
@@ -342,7 +356,7 @@ Page {
                 id: walletFileField
                 Layout.row: 1
                 Layout.column: 0
-                //Layout.alignment: Qt.AlignHCenter//Layout.fillWidth: true
+                Layout.fillWidth: true//Layout.alignment: Qt.AlignHCenter
                 Layout.preferredWidth: 500
                 Layout.preferredHeight: 50
                 Layout.topMargin: (walletFileText.visible) ? 5 : 0
@@ -360,9 +374,11 @@ Page {
             // wallet file upload or browse button
             Button {
                 id: walletFileBrowseButton
-                Layout.row: 2
-                Layout.column: 0       
-                Layout.preferredWidth: walletFileBrowseButtonText.contentWidth + 20  
+                Layout.row: 2//1
+                Layout.column: 0//1
+                Layout.alignment: Qt.AlignHCenter
+                ////Layout.fillWidth: true
+                Layout.preferredWidth: 125////walletFileBrowseButtonText.contentWidth + 20  
                 Layout.preferredHeight: walletFileField.height
                 Layout.topMargin: 20
                 text: qsTr("Browse")
@@ -394,6 +410,7 @@ Page {
                 TextField {
                     id: walletPasswordRestoreField
                     //Layout.alignment: Qt.AlignHCenter//Layout.fillWidth: true
+                    Layout.fillWidth: true
                     Layout.preferredWidth: 500
                     Layout.preferredHeight: 50
                     Layout.row: 3
@@ -401,6 +418,8 @@ Page {
                     Layout.topMargin: 15
                     placeholderText: qsTr("Wallet Password"); placeholderTextColor: (NeroshopComponents.Style.darkTheme) ? "#a9a9a9" : "#696969"
                     color: (NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000" // textColor
+                    echoMode: TextInput.Password
+                    inputMethodHints: Qt.ImhSensitiveData
                     selectByMouse: true
                 
                     background: Rectangle { 
@@ -412,12 +431,20 @@ Page {
                 }
                Rectangle {
                     id: restoreFromMnemonicSeed
+                    //ColumnLayout {
+                    //    TextArea {
+                    //    }
+                    //}
                 }
                 Rectangle {
                     id: restoreFromKeys
+                    //ColumnLayout {
+                    //}                    
                 }
                 Rectangle {
                     id: restoreFromHardwareWallet
+                    //ColumnLayout {
+                    //}                    
                 }                           
             }
                 // confirm button
@@ -428,6 +455,7 @@ Page {
                     Layout.fillWidth: true
                     Layout.preferredWidth: 500
                     Layout.preferredHeight: 50
+                    Layout.topMargin: 15
                     text: qsTr("Confirm")
                 	hoverEnabled: true
                 	////onClicked: login()
@@ -880,6 +908,7 @@ Page {
                     verticalAlignment: TextEdit.AlignVCenter // align the text within the center of TextArea item's height
                     wrapMode: TextEdit.Wrap // move text to newline if it reaches the width of the TextArea
                     text: qsTr("")
+                    //font.bold: true
                     color: (messageCode == 1) ? "#b22222" : ((NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#404040")// text color
                     property int messageCode: 0 //0 = info; 1 = warning or error
                     background: Rectangle { 
@@ -887,7 +916,7 @@ Page {
                         border.color: (parent.messageCode == 1) ? "#b22222" : ((NeroshopComponents.Style.darkTheme) ? "#a9a9a9" : parent.color)////parent.color
                         radius: 3
                     }            
-                    leftPadding: 30 + circleInfo.contentWidth
+                    leftPadding: 25 + circleInfo.contentWidth
                     Text {
                         ////id: circleInfo
                         anchors.left: parent.left
