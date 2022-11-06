@@ -2,6 +2,8 @@ import QtQuick 2.12
 import QtQuick.Controls 2.12
 import QtQuick.Layouts 1.12
 
+import FontAwesome 1.0
+
 import "." as NeroshopComponents
 
 Pane {
@@ -48,6 +50,46 @@ Pane {
             }
         }
     }
+    // ratingsGroup
+    ButtonGroup {
+        id: ratingsButtonGroup
+        //buttons: ratingsColumn.children
+        exclusive: false // more than one button in the group can be checked at any given time
+        checkState: ratingsParentBox.checkState
+        onClicked: {
+            console.log("Selected ratings option:", button.text)
+        }
+    }  
+    /*// brandGroup
+    ButtonGroup {
+        id: ?ButtonGroup
+        //buttons: ?Column.children
+        exclusive: false // more than one button in the group can be checked at any given time
+        checkState: ?ParentBox.checkState
+        onClicked: {
+            console.log("Selected ?:", button.text)
+        }
+    }*/  
+    // colorGroup
+    ButtonGroup {
+        id: colorButtonGroup
+        //buttons: ?Column.children
+        exclusive: false // more than one button in the group can be checked at any given time
+        checkState: colorParentBox.checkState
+        onClicked: {
+            console.log("Selected color:", button.text)
+        }
+    }       
+    // sizeGroup
+    /*ButtonGroup {
+        id: ?ButtonGroup
+        buttons: ?Column.children
+        exclusive: false // more than one button in the group can be checked at any given time
+        checkState: ?ParentBox.checkState
+        onClicked: {
+            console.log("Selected ?:", button.text)
+        }
+    }*/           
         
     Flickable {
         id: flickable
@@ -163,6 +205,276 @@ Pane {
                     }
                 }
             }
+            Frame {
+                Layout.fillWidth: true
+                background: Rectangle {
+                    color: "transparent"
+                    border.color: (NeroshopComponents.Style.darkTheme) ? "#ffffff" :  "#000000"//"#21be2b"
+                    radius: 2
+                    opacity: 0.1
+                }                
+                ColumnLayout {
+                    id: ratingsColumn
+                    width: parent.width
+                    Label { 
+                        text: qsTr("Ratings") 
+                        font.bold: true
+                        color: (NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000"
+                    }
+                    // todo: maybe use a slider to set the . range instead?
+                    CheckBox { 
+                        id: ratingsParentBox
+                        checkState: ratingsButtonGroup.checkState
+                        Text {
+                            text: qsTr("Any")
+                            color: (NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000"
+                            anchors.left: parent.right
+                            anchors.leftMargin: 0
+                            anchors.top: parent.top
+                            anchors.topMargin: (parent.height - this.contentHeight) / 2
+                        }                        
+                    }
+                    CheckBox { 
+                        ButtonGroup.group: ratingsButtonGroup       
+                        Text {
+                            text: qsTr(FontAwesome.star)//qsTr("1 stars")
+                            color: "#ffb344"
+                            font.bold: true
+                            font.family: FontAwesome.fontFamily
+                            anchors.left: parent.right
+                            anchors.leftMargin: 0
+                            anchors.top: parent.top
+                            anchors.topMargin: (parent.height - this.contentHeight) / 2
+                        }                    
+                    }
+                    CheckBox { 
+                        ButtonGroup.group: ratingsButtonGroup       
+                        Text {
+                            text: qsTr(FontAwesome.star + FontAwesome.star)//qsTr("2 stars")
+                            color: "#ffb344"
+                            font.bold: true
+                            font.family: FontAwesome.fontFamily                            
+                            anchors.left: parent.right
+                            anchors.leftMargin: 0
+                            anchors.top: parent.top
+                            anchors.topMargin: (parent.height - this.contentHeight) / 2
+                        }                    
+                    }
+                    CheckBox { 
+                        ButtonGroup.group: ratingsButtonGroup       
+                        Text {
+                            text: qsTr(FontAwesome.star + FontAwesome.star + FontAwesome.star)//qsTr("3 stars")
+                            color: "#ffb344"
+                            font.bold: true
+                            font.family: FontAwesome.fontFamily                            
+                            anchors.left: parent.right
+                            anchors.leftMargin: 0
+                            anchors.top: parent.top
+                            anchors.topMargin: (parent.height - this.contentHeight) / 2
+                        }                    
+                    }
+                    CheckBox { 
+                        ButtonGroup.group: ratingsButtonGroup       
+                        Text {
+                            text: qsTr(FontAwesome.star + FontAwesome.star + FontAwesome.star + FontAwesome.star)//qsTr("4 stars")
+                            color: "#ffb344"
+                            font.bold: true
+                            font.family: FontAwesome.fontFamily                            
+                            anchors.left: parent.right
+                            anchors.leftMargin: 0
+                            anchors.top: parent.top
+                            anchors.topMargin: (parent.height - this.contentHeight) / 2
+                        }                    
+                    }
+                    CheckBox { 
+                        ButtonGroup.group: ratingsButtonGroup       
+                        Text {
+                            text: qsTr(FontAwesome.star + FontAwesome.star + FontAwesome.star + FontAwesome.star + FontAwesome.star)//qsTr("5 stars")
+                            color: "#ffb344"
+                            font.bold: true
+                            font.family: FontAwesome.fontFamily                            
+                            anchors.left: parent.right
+                            anchors.leftMargin: 0
+                            anchors.top: parent.top
+                            anchors.topMargin: (parent.height - this.contentHeight) / 2
+                        }                    
+                    }                                                                                                    
+                }
+            }
+            Frame {
+                Layout.fillWidth: true
+                background: Rectangle {
+                    color: "transparent"
+                    border.color: (NeroshopComponents.Style.darkTheme) ? "#ffffff" :  "#000000"//"#21be2b"
+                    radius: 2
+                    opacity: 0.1
+                }                
+                ColumnLayout {
+                    id: colorColumn
+                    width: parent.width
+                    Label { 
+                        text: qsTr("Color") 
+                        font.bold: true
+                        color: (NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000"
+                    }
+                    // todo: maybe use a slider to set the . range instead?
+                    CheckBox { 
+                        id: colorParentBox
+                        checkState: colorButtonGroup.checkState
+                        Text {
+                            text: qsTr("Any")
+                            color: (NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000"
+                            anchors.left: parent.right
+                            anchors.leftMargin: 0
+                            anchors.top: parent.top
+                            anchors.topMargin: (parent.height - this.contentHeight) / 2
+                        }                        
+                    }
+                    CheckBox { 
+                        ButtonGroup.group: colorButtonGroup       
+                        Text {
+                            text: qsTr(FontAwesome.square)
+                            color: "#ff0000"
+                            font.bold: true
+                            //font.family: FontAwesome.fontFamily                            
+                            anchors.left: parent.right
+                            anchors.leftMargin: 0
+                            anchors.top: parent.top
+                            anchors.topMargin: (parent.height - this.contentHeight) / 2
+                        }                    
+                    }
+                    CheckBox { 
+                        ButtonGroup.group: colorButtonGroup       
+                        Text {
+                            text: qsTr(FontAwesome.square)
+                            color: "#ffa500"
+                            font.bold: true
+                            //font.family: FontAwesome.fontFamily                            
+                            anchors.left: parent.right
+                            anchors.leftMargin: 0
+                            anchors.top: parent.top
+                            anchors.topMargin: (parent.height - this.contentHeight) / 2
+                        }                    
+                    }
+                    CheckBox { 
+                        ButtonGroup.group: colorButtonGroup       
+                        Text {
+                            text: qsTr(FontAwesome.square)
+                            color: "#ffff00"
+                            font.bold: true
+                            //font.family: FontAwesome.fontFamily                            
+                            anchors.left: parent.right
+                            anchors.leftMargin: 0
+                            anchors.top: parent.top
+                            anchors.topMargin: (parent.height - this.contentHeight) / 2
+                        }                    
+                    }
+                    CheckBox { 
+                        ButtonGroup.group: colorButtonGroup       
+                        Text {
+                            text: qsTr(FontAwesome.square)
+                            color: "#008000"
+                            font.bold: true
+                            //font.family: FontAwesome.fontFamily                            
+                            anchors.left: parent.right
+                            anchors.leftMargin: 0
+                            anchors.top: parent.top
+                            anchors.topMargin: (parent.height - this.contentHeight) / 2
+                        }                    
+                    }
+                    CheckBox { 
+                        ButtonGroup.group: colorButtonGroup       
+                        Text {
+                            text: qsTr(FontAwesome.square)
+                            color: "#1560bd"//"#0000ff"
+                            font.bold: true
+                            //font.family: FontAwesome.fontFamily                            
+                            anchors.left: parent.right
+                            anchors.leftMargin: 0
+                            anchors.top: parent.top
+                            anchors.topMargin: (parent.height - this.contentHeight) / 2
+                        }                    
+                    }
+                    CheckBox { 
+                        ButtonGroup.group: colorButtonGroup       
+                        Text {
+                            text: qsTr(FontAwesome.square)
+                            color: "#4b0082"//"#800080"
+                            font.bold: true
+                            //font.family: FontAwesome.fontFamily                            
+                            anchors.left: parent.right
+                            anchors.leftMargin: 0
+                            anchors.top: parent.top
+                            anchors.topMargin: (parent.height - this.contentHeight) / 2
+                        }                    
+                    }
+                    CheckBox { 
+                        ButtonGroup.group: colorButtonGroup       
+                        Text {
+                            text: qsTr(FontAwesome.square)
+                            color: "#ffc0cb"
+                            font.bold: true
+                            //font.family: FontAwesome.fontFamily                            
+                            anchors.left: parent.right
+                            anchors.leftMargin: 0
+                            anchors.top: parent.top
+                            anchors.topMargin: (parent.height - this.contentHeight) / 2
+                        }                    
+                    }
+                    CheckBox { 
+                        ButtonGroup.group: colorButtonGroup       
+                        Text {
+                            text: qsTr(FontAwesome.square)
+                            color: "#664c28"
+                            font.bold: true
+                            //font.family: FontAwesome.fontFamily                            
+                            anchors.left: parent.right
+                            anchors.leftMargin: 0
+                            anchors.top: parent.top
+                            anchors.topMargin: (parent.height - this.contentHeight) / 2
+                        }                    
+                    }
+                    CheckBox { 
+                        ButtonGroup.group: colorButtonGroup       
+                        Text {
+                            text: qsTr(FontAwesome.square)
+                            color: "#808080"
+                            font.bold: true
+                            //font.family: FontAwesome.fontFamily                            
+                            anchors.left: parent.right
+                            anchors.leftMargin: 0
+                            anchors.top: parent.top
+                            anchors.topMargin: (parent.height - this.contentHeight) / 2
+                        }                    
+                    }
+                    CheckBox { 
+                        ButtonGroup.group: colorButtonGroup       
+                        Text {
+                            text: qsTr(FontAwesome.square)
+                            color: "#000000"
+                            font.bold: true
+                            //font.family: FontAwesome.fontFamily                            
+                            anchors.left: parent.right
+                            anchors.leftMargin: 0
+                            anchors.top: parent.top
+                            anchors.topMargin: (parent.height - this.contentHeight) / 2
+                        }                    
+                    }
+                    CheckBox { 
+                        ButtonGroup.group: colorButtonGroup       
+                        Text {
+                            text: qsTr(FontAwesome.square)
+                            color: "#ffffff"
+                            font.bold: true
+                            //font.family: FontAwesome.fontFamily                            
+                            anchors.left: parent.right
+                            anchors.leftMargin: 0
+                            anchors.top: parent.top
+                            anchors.topMargin: (parent.height - this.contentHeight) / 2
+                        }                    
+                    }                                                                                                                                                                                                                            
+                }
+            }            
         }
         // CatalogPage has a scrollbar so there's no longer any need for this
         /*ScrollBar.vertical: ScrollBar {
@@ -170,5 +482,5 @@ Pane {
             policy: ScrollBar.AsNeeded//ScrollBar.AlwaysOn
         }*/
     }
-    // todo: sort by category, price, ratings, brand, color, etc.
+    // todo: sort by category, brand, price, ratings, color, material, size, popularity, etc.
 }

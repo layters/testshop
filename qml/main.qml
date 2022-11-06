@@ -55,7 +55,6 @@ ApplicationWindow {
     }*/
     Loader {
         id: pageLoader
-        //anchors.centerIn: parent // place at center of parent // <= don't use this EVER. Not for loading pages
         anchors.fill: parent
         source: "qrc:/qml/pages/MainPage.qml"
         //source: "qrc:/qml/pages/HomePage.qml"
@@ -204,6 +203,59 @@ ApplicationWindow {
             //Rectangle {
             //}            
         }
+        /*Row {
+            width: priceDisplayText.contentWidth
+            height: footer.height
+            anchors.left: footer.left
+            anchors.leftMargin: 20
+            anchors.top: footer.top
+            anchors.topMargin: 0*/
+            Rectangle {
+                anchors.left: footer.left
+                anchors.leftMargin: 20
+                width: (priceChangePercentageText.visible) ? priceDisplayText.contentWidth + priceChangePercentageText.contentWidth + 10 : priceDisplayText.contentWidth // 10 is the spacing between the price and the price change percentage
+                height: footer.height
+                color: "transparent"
+                //border.color: NeroshopComponents.Style.moneroOrangeColor
+                
+                Text {
+                    id: priceDisplayText
+                    property real amount: 1
+                    property string scriptCurrency: Script.getString("neroshop.generalsettings.currency")
+                    property string currency: Backend.isSupportedCurrency(scriptCurrency) ? scriptCurrency : "usd"
+                    property double price: Backend.convertXmr(amount, currency, false)
+                    text: qsTr(/*amount.toString() + " " + */FontAwesome.monero + "  %1%2").arg(Backend.getCurrencySymbol(currency)).arg(price.toFixed(2))////.arg(currency.toUpperCase())
+                    color: (NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000"
+                    font.bold: true
+                    anchors.verticalCenter: parent.verticalCenter//verticalAlignment: Text.AlignVCenter                  
+                }
+                
+                Text {
+                    id: priceChangePercentageText
+                    property double percent: 0.00
+                    visible: false // hide this for now until I can get the actual price change percent value
+                    text: qsTr("%1%2%").arg((percent >= 0) ? "+" : "").arg(percent.toFixed(2))
+                    color: (percent >= 0) ? "green" : "red"
+                    anchors.right: priceDisplayText.right
+                    anchors.rightMargin: -(contentWidth + 10)
+                    anchors.verticalCenter: priceDisplayText.verticalCenter
+                    font.pointSize: 10
+                    font.bold: true
+                }
+                                    
+                HoverHandler {
+                    id: priceDisplayHoverHandler
+                }
+                                        
+                NeroshopComponents.Hint {
+                    visible: false////priceDisplayHoverHandler.hovered // <- uncomment this to make the tooltip visible on hover
+                    height: contentHeight + 20; width: contentWidth + 20
+                    bottomMargin : footer.height + 5
+                    text: qsTr("Monero price")
+                    pointer.visible: false
+                }                             
+            }
+        //}
     }    
 }
 // error: module "QtQuick.Layouts" version 1.15 is not installed (fix by changing the version specified in /usr/lib/x86_64-linux-gnu/qt5/qml/QtQuick/Layouts/plugins.qmltypes)

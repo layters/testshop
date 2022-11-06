@@ -20,7 +20,7 @@
 #include "util.hpp"
 
 namespace neroshop {
-class Validator {// Authenticator {
+class Validator {
 public:
     static bool register_user(const std::string& username, const std::string& password, const std::string& confirm_pw, std::string opt_email = "");
     static bool login(const std::string& username, const std::string& password);

@@ -43,14 +43,12 @@ bool neroshop::Converter::is_supported_currency(const std::string& currency_code
     std::vector<std::string> supported_currency {"usd", "eur", "jpy", "gbp", "cad", "btc", "eth",
                                                 "chf", "aud", "cny", "sek", "nzd", "mxn"};
 
-    auto it = std::find(supported_currency.begin(), supported_currency.end(), currency_code);
+    auto it = std::find(supported_currency.begin(), supported_currency.end(), neroshop::string::lower(currency_code));
 
     if (it != supported_currency.end()) {
         return true;
-    } 
-    else {
-        return false;
     }
+    return false;
 }
 ////////////////////
 ////////////////////

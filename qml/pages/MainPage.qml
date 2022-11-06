@@ -67,7 +67,7 @@ Page {
         // Show wallet-related message(s)
         walletMessageArea.text = qsTr("\"%1\" has been created successfully.").arg((walletNameField.text) ? qsTr(folder + "/%1.keys").arg(walletNameField.text) : qsTr(folder + "/%1.keys").arg(walletNameField.placeholderText))
         walletMessageArea.messageCode = 0
-        seedMessageArea.text = qsTr("These %1 words are the key to your account. Please store them safely!").arg(walletSeedRepeater.count)
+        seedMessageArea.text = qsTr("These %1 words are the key to your account. Please store them safely before proceeding to the registration page.").arg(walletSeedRepeater.count)
         seedMessageArea.messageCode = 0//2
         // Clear wallet password fields
         walletPasswordField.text = ""
@@ -901,7 +901,7 @@ Page {
                     Layout.column: 1
                     Layout.fillWidth: true // extends the TextArea's width to the width of the Layout
                     Layout.maximumWidth: 550////walletPathField.width // keeps textarea from going past grid bounds when text is added
-                    implicitHeight: contentHeight + 20////Layout.preferredHeight: contentHeight + 20  // cause of QML TextArea: Binding loop detected for property "implicitWidth" error
+                    ////implicitHeight: contentHeight + 20////Layout.preferredHeight: contentHeight + 20  // cause of QML TextArea: Binding loop detected for property "implicitWidth" error
                     ////Layout.topMargin: 20//15
                     selectByMouse: true
                     readOnly: true

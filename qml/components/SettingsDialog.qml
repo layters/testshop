@@ -15,6 +15,7 @@ Popup {
     visible: false
     property bool hideTabText: false
     property alias theme: themeBox
+    property alias currency: currencyBox
     background: Rectangle {
         implicitWidth: 700
         implicitHeight: 500
@@ -165,6 +166,10 @@ Popup {
                         text: qsTr("Preffered local currency:")
                     }
                     ComboBox {
+                        id: currencyBox
+                        currentIndex: 0//model.indexOf(Script.getString("neroshop.generalsettings.currency").toUpperCase()) // causes segfault on app close
+                        displayText: currentText
+                        ////property string lastCurrencySet: (Script.getString("neroshop.generalsettings.currency")) ? Script.getString("neroshop.generalsettings.currency") : "USD"
                         //editable: true; selectTextByMouse: true
                         model: ["USD", "EUR", "JPY", "GBP", "CAD", "CHF", "AUD", "CNY", "SEK", "NZD", "MXN",]/*ListModel {
                             id: currencyModel
@@ -176,6 +181,14 @@ Popup {
                         onAccepted: {
                             if (find(editText) === -1)
                                 model.append({text: editText})
+                        }
+                        
+                        onActivated: {    
+                            displayText = currentText
+                            priceDisplayText.currency = displayText
+                            priceDisplayText.price = Backend.convertXmr(priceDisplayText.amount, priceDisplayText.currency, false)
+                            priceDisplayText.text = qsTr(FontAwesome.monero + "  %1%2").arg(Backend.getCurrencySymbol(priceDisplayText.currency)).arg(priceDisplayText.price.toFixed(2))
+                            ////lastCurrencySet = currentText
                         }
 }
                 }          

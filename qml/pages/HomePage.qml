@@ -66,7 +66,7 @@ Page {
             Text {
                 Layout.row: 2
                 Layout.topMargin: 10
-                text: "Recently added"//"Featured items"//"Best sellers"//"On Sale"//"Recommended items"//"Shop by Category"
+                text: "Recently added"//"Recent listings"//"Featured items"//"Best sellers"//"On Sale"//"Recommended items"//"Shop by Category"
                 color: (NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000"
                 font.bold: true
                 font.pointSize: 16

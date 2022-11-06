@@ -34,8 +34,24 @@ caters not only to darknet market users, but also those who believe in a **truly
 Neroshop aims to be simple for a beginner to use and easy for sellers to onboard their shop with just a few clicks.
 
 
-## Features
-Coming soon
+## Planned Features
+* Distributed P2P network
+* Buy and sell products with Monero
+* Anonymous payments
+* No censorship
+* Pseudonymous identities (sellers and buyers are identified by their unique ids)
+* No registration required (for buyers only)
+* No KYC nor AML
+* No listing fees, sales tax, or any other fees (except for miner transaction fees and shipping costs)
+* End-to-end encrypted messaging system for communications between sellers and buyers
+* Subaddress generator (a unique subaddresses will be generated from a seller's synced wallet account for each order placed by a customer)
+* Option to run a local Monero node or connect to remote Monero nodes (so that sellers will not have to sync the entire blockchain)
+* Option to choose between sending funds directly to a seller or using a multisignature escrow.
+* Tor integration (Internet traffic can be optionally routed through tor for more added privacy)
+* Reputation system
+* Product rating system
+* Wishlists
+
 
 -->
 ## Building neroshop
@@ -179,24 +195,6 @@ make
 ```
 
 
-To build with [**Premake**](https://premake.github.io/) (experimental - broken for now):
-
-```bash
-# Build external libraries
-cd external/
-premake5 gmake
-cd ../build && make
-
-# Build neroshop
-cd ..
-premake5 gmake
-cd build && make
-
-# Run neroshop
-./bin/Debug/neroshop
-```
-
-
 To build for [**Android**](https://www.android.com/) (requires [**Android NDK**](https://developer.android.com/ndk)):<!-- and [CMake](https://cmake.org/)):-->
 ```bash
 ```
@@ -217,7 +215,7 @@ You may support the neroshop project directly by donating Monero (XMR) to the ad
 
 [//]: # (./clean.sh)
 [//]: # (git checkout -b main)
-[//]: # (git add .gitignore .gitmodules cmake/ CMakeLists.txt external/ fonts/ images/ premake5.lua qml/ qml.qrc README.md shaders/ src/ test/)
+[//]: # (git add .gitignore .gitmodules cmake/ CMakeLists.txt external/ fonts/ images/ qml/ qml.qrc README.md shaders/ src/ test/)
 [//]: # (git commit -m"...")
 [//]: # (git push -u origin main --force)
 [//]: # (https://git.slipfox.xyz/larteyoh/testshop/settings => Mirror Settings => Synchronize Now)
