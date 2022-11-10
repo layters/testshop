@@ -10,11 +10,9 @@ import "../components" as NeroshopComponents
 
 import FontAwesome 1.0
 
-ApplicationWindow {
+Item {
     width: 700
     height: 500
-
-    visible: true
 
     component Star: Label {
         color: "red"
