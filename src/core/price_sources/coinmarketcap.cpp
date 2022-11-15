@@ -1,0 +1,84 @@
+#include "coinmarketcap.hpp"
+
+#if defined(NEROSHOP_USE_QT)
+#include <QEventLoop>
+#include <QJsonArray>
+#include <QJsonDocument>
+#include <QJsonObject>
+#include <QJsonParseError>
+#include <QNetworkAccessManager>
+#include <QNetworkReply>
+#include <QNetworkRequest>
+#endif
+
+#include <map>
+#if defined(NEROSHOP_USE_QT)
+#include <QString>
+#endif
+
+namespace {
+
+const QString BASE_URL{QStringLiteral("https://api.coinmarketcap.com/data-api/v3/"
+                                      "cryptocurrency/quote/latest?id=%1&convertId=%2")};
+
+const std::map<neroshop::Currency, QString> CURRENCY_TO_ID{
+    {neroshop::Currency::USD, "2781"},
+    {neroshop::Currency::AUD, "2782"},
+    {neroshop::Currency::CAD, "2784"},
+    {neroshop::Currency::CHF, "2785"},
+    {neroshop::Currency::CNY, "2787"},
+    {neroshop::Currency::EUR, "2790"},
+    {neroshop::Currency::GBP, "2791"},
+    {neroshop::Currency::JPY, "2797"},
+    {neroshop::Currency::MXN, "2799"},
+    {neroshop::Currency::NZD, "2802"},
+    {neroshop::Currency::SEK, "2807"},
+    {neroshop::Currency::BTC, "1"},
+    {neroshop::Currency::ETH, "1027"},
+    {neroshop::Currency::XMR, "328"},
+};
+
+}
+
+std::optional<double> CoinMarketCapPriceSource::price(neroshop::Currency from, neroshop::Currency to) const
+{
+    auto it = CURRENCY_TO_ID.find(from);
+    if (it == CURRENCY_TO_ID.cend()) {
+        return std::nullopt;
+    }
+    const auto idFrom = it->second;
+
+    it = CURRENCY_TO_ID.find(to);
+    if (it == CURRENCY_TO_ID.cend()) {
+        return std::nullopt;
+    }
+    const auto idTo = it->second;
+
+    QNetworkAccessManager manager;
+    QEventLoop loop;
+    QObject::connect(&manager, &QNetworkAccessManager::finished, &loop, &QEventLoop::quit);
+
+    const QUrl url(BASE_URL.arg(idFrom, idTo));
+    auto reply = manager.get(QNetworkRequest(url));
+    loop.exec();
+    QJsonParseError error;
+    const auto json_doc = QJsonDocument::fromJson(reply->readAll(), &error);
+    if (error.error != QJsonParseError::NoError) {
+        return std::nullopt;
+    }
+    const auto root_obj = json_doc.object();
+    const auto data_val = root_obj.value("data");
+    if (!data_val.isArray()) {
+        return std::nullopt;
+    }
+    const auto data_arr = data_val.toArray();
+    if (data_arr.empty()) {
+        return std::nullopt;
+    }
+    const auto item = data_arr.first().toObject();
+    const auto quote = item.value("quotes").toArray().first().toObject();
+    if (!quote.contains("price")) {
+        return std::nullopt;
+    }
+    return quote.value("price").toDouble();
+}

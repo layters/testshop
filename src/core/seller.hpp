@@ -10,7 +10,7 @@
 #include "wallet.hpp"
 #include "user.hpp"
 #include "item.hpp"
-#include "converter.hpp"
+#include "currency_converter.hpp"
 
 namespace neroshop {
 class Seller : public User { 

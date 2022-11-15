@@ -1,7 +1,66 @@
-#include "converter.hpp"
+#include "currency_converter.hpp"
+
+#if defined(NEROSHOP_USE_QT) // I just don't want neroshop-console to depend on Qt
+#include "price_sources/price_source_factory.hpp"
 
 ////////////////////
+double neroshop::Converter::get_price(neroshop::Currency from, neroshop::Currency to)//, PriceSourceFactory::Source source)
+{
+    const std::vector<PriceSourceFactory::Source> SOURCES_TO_USE{
+        PriceSourceFactory::Source::CoinMarketCap,
+        PriceSourceFactory::Source::CoinGecko,
+        PriceSourceFactory::Source::CryptoWatch,
+        PriceSourceFactory::Source::CoinTelegraph,
+        PriceSourceFactory::Source::CryptoRank,
+        PriceSourceFactory::Source::CoinCodex,
+    };
+    double price = 0.0;
+    auto source = PriceSourceFactory::Source::CoinGecko; // todo: allow user to change price source
+    auto price_source = PriceSourceFactory::makePriceSouce(source);
+    auto price_opt = price_source->price(from, to);
+    while((*price_opt) == 0.00) {
+        // change the source to a random one
+	    std::random_device rd;
+        std::mt19937 mt(rd());
+        std::uniform_real_distribution<double> dist(0, SOURCES_TO_USE.size() - 1);
+            
+        price_source = PriceSourceFactory::makePriceSouce(SOURCES_TO_USE[0]);//(SOURCES_TO_USE[static_cast<int>(dist(mt))]);
+        price_opt = price_source->price(from, to);
+    }
+    if (price_opt.has_value()) {
+        price = (*price_opt);
+        return price;
+    }
+    return 0.0;
+}
 ////////////////////
+double neroshop::Converter::get_price_average(neroshop::Currency from, neroshop::Currency to)
+{
+    const std::vector<PriceSourceFactory::Source> SOURCES_TO_USE{
+        PriceSourceFactory::Source::CoinMarketCap,
+        PriceSourceFactory::Source::CoinGecko,
+        PriceSourceFactory::Source::CryptoWatch,
+        PriceSourceFactory::Source::CoinTelegraph,
+        PriceSourceFactory::Source::CryptoRank,
+        PriceSourceFactory::Source::CoinCodex,
+    };
+    std::size_t valid_prices = 0;
+    double sum_price = 0.0;
+    for (const auto &source : SOURCES_TO_USE) {
+        auto price_source = PriceSourceFactory::makePriceSouce(source);
+        const auto price_opt = price_source->price(from, to);
+        if (price_opt.has_value()) {
+            sum_price += (*price_opt);
+            ++valid_prices;
+        }
+    }
+
+    if (valid_prices > 0) {
+        return sum_price / valid_prices;
+    }
+    return 0.0;
+}
+#endif
 ////////////////////
 ////////////////////
 std::string neroshop::Converter::json_string ("");

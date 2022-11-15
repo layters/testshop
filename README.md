@@ -117,14 +117,14 @@ Arch (needs to be updated)
 # neroshop
 sudo pacman -Sy --needed curl openssl libuv
 # monero-cpp (monero)
-sudo pacman -Syu --needed boost openssl zeromq libpgm libsodium libunwind xz readline gtest python3 ccache qt5-tools hidapi libusb protobuf systemd
+sudo pacman -Syu --needed boost openssl zeromq libpgm unbound libsodium libunwind xz readline gtest python3 ccache qt5-tools hidapi libusb protobuf systemd
 ```
 Fedora (needs to be updated)
 ```bash
 # neroshop
 sudo dnf install libcurl-devel openssl-devel libuv-devel libuv-static
 # monero-cpp (monero)
-sudo dnf install boost-static libstdc++-static pkgconf boost-devel openssl-devel zeromq-devel openpgm-devel libsodium-devel libunwind-devel xz-devel readline-devel gtest-devel ccache qt5-linguist hidapi-devel libusbx-devel protobuf-devel protobuf-compiler systemd-devel
+sudo dnf install boost-static libstdc++-static pkgconf boost-devel openssl-devel zeromq-devel openpgm-devel unbound-devel libsodium-devel libunwind-devel xz-devel readline-devel gtest-devel ccache qt5-linguist hidapi-devel libusbx-devel protobuf-devel protobuf-compiler systemd-devel
 ```
 
 
@@ -137,7 +137,7 @@ cd external/monero-project
 ```
 
 
-**4. Install expat (dependency of unbound) and unbound:**
+**4. Install expat and unbound (May be required to build monero-project on Debian/Ubuntu otherwise, this step can be skipped):**
 ```bash
 wget https://github.com/libexpat/libexpat/releases/download/R_2_4_8/expat-2.4.8.tar.bz2
 tar -xf expat-2.4.8.tar.bz2
@@ -156,7 +156,6 @@ rm unbound-1.16.1.tar.gz
 cd unbound-1.16.1
 ./configure --disable-shared --enable-static --without-pyunbound --with-libevent=no --without-pythonmodule --disable-flto --with-pthreads --with-libunbound-only --with-pic
 make
-sudo make install
 cd ../
 ```
 

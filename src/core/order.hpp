@@ -13,7 +13,7 @@
 
 //#include "wallet.hpp"
 #include "cart.hpp"      // includes db.hpp
-#include "converter.hpp" // currency converter
+#include "currency_converter.hpp" // currency converter
 #include "config.hpp" // neroshop::lua_state
 
 enum class payment_status{ PAYMENT_NOT_RECEIVED, // red // https://stackoverflow.com/a/46740323

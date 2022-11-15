@@ -23,7 +23,7 @@ QtObject {
     property string neroshopPurpleShadedColor: "#39304f"//"#50446f"//"#39304f"
     property string disabledColor: "#808080"
     property string moneroGrayColor: "#4c4c4c"
-    property string moneroOrangeColor: "#ff6600" // not sure if correct color
+    property string moneroOrangeColor: "#ff6600"
     // Functions
     function getColorsFromTheme() {
         let primaryColor = ""

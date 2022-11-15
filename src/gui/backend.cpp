@@ -10,9 +10,37 @@ void neroshop::Backend::copyTextToClipboard(const QString& text) {
     std::cout << "Copied text to clipboard\n";
 }
 
+QStringList neroshop::Backend::getCurrencyList() const {
+    QStringList currency_list;
+    for (const auto& [key, value] : neroshop::CurrencyMap) {
+        currency_list << QString::fromStdString(key);
+    }
+    return currency_list;
+}
 
-double neroshop::Backend::convertXmr(double amount, const QString& currency, bool to) const {
-    return neroshop::Converter::convert_xmr(amount, currency.toStdString(), to);
+int neroshop::Backend::getCurrencyDecimals(const QString& currency) const {
+    auto map_key = currency.toUpper().toStdString();
+    auto map_value = neroshop::CurrencyMap[map_key];
+    // Check if key exists in std::map
+    if(neroshop::CurrencyMap.count(map_key) > 0) {
+        int decimal_places = std::get<2>(map_value);
+        return decimal_places;
+    }
+    return 2;
+}
+
+double neroshop::Backend::getPrice(double amount, const QString& currency) const {
+    neroshop::Currency preferred_currency = neroshop::Currency::USD;
+
+    auto map_key = currency.toUpper().toStdString();
+    auto map_value = neroshop::CurrencyMap[map_key];
+    // Check if key exists in std::map
+    if(neroshop::CurrencyMap.count(map_key) > 0) {////if(neroshop::CurrencyMap.find(map_key) != neroshop::CurrencyMap.end()) {
+        preferred_currency = std::get<0>(map_value);
+        return neroshop::Converter::get_price(neroshop::Currency::XMR, preferred_currency) * amount;
+    }
+    neroshop::print(currency.toUpper().toStdString() + " is not supported", 1);
+    return 0.0;
 }
 
 QString neroshop::Backend::getCurrencySymbol(const QString& currency) const {
