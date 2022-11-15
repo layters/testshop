@@ -20,9 +20,9 @@ QStringList neroshop::Backend::getCurrencyList() const {
 
 int neroshop::Backend::getCurrencyDecimals(const QString& currency) const {
     auto map_key = currency.toUpper().toStdString();
-    auto map_value = neroshop::CurrencyMap[map_key];
     // Check if key exists in std::map
     if(neroshop::CurrencyMap.count(map_key) > 0) {
+        auto map_value = neroshop::CurrencyMap[map_key];
         int decimal_places = std::get<2>(map_value);
         return decimal_places;
     }
@@ -33,9 +33,9 @@ double neroshop::Backend::getPrice(double amount, const QString& currency) const
     neroshop::Currency preferred_currency = neroshop::Currency::USD;
 
     auto map_key = currency.toUpper().toStdString();
-    auto map_value = neroshop::CurrencyMap[map_key];
     // Check if key exists in std::map
     if(neroshop::CurrencyMap.count(map_key) > 0) {////if(neroshop::CurrencyMap.find(map_key) != neroshop::CurrencyMap.end()) {
+        auto map_value = neroshop::CurrencyMap[map_key];
         preferred_currency = std::get<0>(map_value);
         return neroshop::Converter::get_price(neroshop::Currency::XMR, preferred_currency) * amount;
     }
@@ -43,8 +43,8 @@ double neroshop::Backend::getPrice(double amount, const QString& currency) const
     return 0.0;
 }
 
-QString neroshop::Backend::getCurrencySymbol(const QString& currency) const {
-    return QString::fromStdString(neroshop::Converter::get_currency_symbol(currency.toStdString()));
+QString neroshop::Backend::getCurrencySign(const QString& currency) const {
+    return QString::fromStdString(neroshop::Converter::get_currency_sign(currency.toStdString()));
 }
 
 bool neroshop::Backend::isSupportedCurrency(const QString& currency) const {

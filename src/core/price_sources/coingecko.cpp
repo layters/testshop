@@ -1,21 +1,5 @@
 #include "coingecko.hpp"
 
-#if defined(NEROSHOP_USE_QT)
-#include <QEventLoop>
-#include <QJsonArray>
-#include <QJsonDocument>
-#include <QJsonObject>
-#include <QJsonParseError>
-#include <QNetworkAccessManager>
-#include <QNetworkReply>
-#include <QNetworkRequest>
-#endif
-
-#include <map>
-#if defined(NEROSHOP_USE_QT)
-#include <QString>
-#endif
-
 namespace {
 
 const QString BASE_URL{
@@ -27,27 +11,16 @@ const std::map<neroshop::Currency, QString> CURRENCY_TO_ID{
     {neroshop::Currency::XMR, "monero"},
 };
 
-const std::map<neroshop::Currency, QString> CURRENCY_TO_VS{
-    {neroshop::Currency::USD, "usd"},
-    {neroshop::Currency::AUD, "aud"},
-    {neroshop::Currency::CAD, "cad"},
-    {neroshop::Currency::CHF, "chf"},
-    {neroshop::Currency::CNY, "cny"},
-    {neroshop::Currency::EUR, "eur"},
-    {neroshop::Currency::GBP, "gpb"},
-    {neroshop::Currency::JPY, "jpy"},
-    {neroshop::Currency::MXN, "mxn"},
-    {neroshop::Currency::NZD, "nzd"},
-    {neroshop::Currency::SEK, "sek"},
-    {neroshop::Currency::BTC, "btc"},
-    {neroshop::Currency::ETH, "eth"},
-    {neroshop::Currency::XMR, "xmr"},
-};
-
 } // namespace
 
 std::optional<double> CoinGeckoPriceSource::price(neroshop::Currency from, neroshop::Currency to) const
 {
+    // Fill map with initial currency ids and codes
+    std::map<neroshop::Currency, QString> CURRENCY_TO_VS;
+    for (const auto& [key, value] : neroshop::CurrencyMap) {
+        CURRENCY_TO_VS[std::get<0>(value)] = QString::fromStdString(key).toLower();
+    }
+
     auto it = CURRENCY_TO_ID.find(from);
     if (it == CURRENCY_TO_ID.cend()) {
         return std::nullopt;

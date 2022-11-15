@@ -29,8 +29,8 @@ neroshop = {
         currency = "usd",
         application = {
             theme = {
-                dark = true,
-                name = "PurpleDust", --"DefaultDark", "DefaultLight"
+                dark = false,
+                name = "DefaultLight", --"DefaultDark", "DefaultLight", "PurpleDust",
             },        
             window = {
                 width = 1280,

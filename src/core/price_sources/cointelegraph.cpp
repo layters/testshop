@@ -1,21 +1,5 @@
 #include "cointelegraph.hpp"
 
-#if defined(NEROSHOP_USE_QT)
-#include <QEventLoop>
-#include <QJsonArray>
-#include <QJsonDocument>
-#include <QJsonObject>
-#include <QJsonParseError>
-#include <QNetworkAccessManager>
-#include <QNetworkReply>
-#include <QNetworkRequest>
-#endif
-
-#include <map>
-#if defined(NEROSHOP_USE_QT)
-#include <QString>
-#endif
-
 namespace {
 
 const QString BASE_URL{QStringLiteral("https://ticker-api.cointelegraph.com/rates/?full=true")};

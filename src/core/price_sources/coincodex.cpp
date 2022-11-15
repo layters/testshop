@@ -1,21 +1,5 @@
 #include "coincodex.hpp"
 
-#if defined(NEROSHOP_USE_QT)
-#include <QEventLoop>
-#include <QJsonArray>
-#include <QJsonDocument>
-#include <QJsonObject>
-#include <QJsonParseError>
-#include <QNetworkAccessManager>
-#include <QNetworkReply>
-#include <QNetworkRequest>
-#endif
-
-#include <map>
-#if defined(NEROSHOP_USE_QT)
-#include <QString>
-#endif
-
 namespace {
 
 const QString BASE_URL{QStringLiteral("https://coincodex.com/api/coincodex/get_coin/%1")};
@@ -26,14 +10,16 @@ const std::map<neroshop::Currency, QString> CURRENCY_TO_ID{
     {neroshop::Currency::XMR, "xmr"},
 };
 
-const std::map<neroshop::Currency, QString> CURRENCY_TO_VS{
-    {neroshop::Currency::USD, "usd"},
-};
-
 } // namespace
 
 std::optional<double> CoinCodexPriceSource::price(neroshop::Currency from, neroshop::Currency to) const
 {
+    // Fill map with initial currency ids and codes
+    std::map<neroshop::Currency, QString> CURRENCY_TO_VS;
+    for (const auto& [key, value] : neroshop::CurrencyMap) {
+        CURRENCY_TO_VS[std::get<0>(value)] = QString::fromStdString(key).toLower();
+    }
+    
     auto it = CURRENCY_TO_ID.find(from);
     if (it == CURRENCY_TO_ID.cend()) {
         return std::nullopt;

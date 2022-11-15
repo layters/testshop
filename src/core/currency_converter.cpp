@@ -79,18 +79,23 @@ double neroshop::Converter::lb_to_kg(double lb) {
 ////////////////////
 ////////////////////
 ////////////////////
-std::string neroshop::Converter::get_currency_symbol(const std::string& currency_code) {
+std::string neroshop::Converter::get_currency_sign(const std::string& currency_code) {
     if(neroshop::string::lower(currency_code) == "usd") return "$";// or US$
     if(neroshop::string::lower(currency_code) == "eur") return "€";
     if(neroshop::string::lower(currency_code) == "jpy") return "¥";
     if(neroshop::string::lower(currency_code) == "gbp") return "£";
-    if(neroshop::string::lower(currency_code) == "cad") return "C$"; // or "$", "C$", "CA$", "CAD$";
-    if(neroshop::string::lower(currency_code) == "chf") return "CHF";// or "francs";//francs comes after the number
-    if(neroshop::string::lower(currency_code) == "aud") return "A$"; // or "$", "A$", "AUD$";
-    if(neroshop::string::lower(currency_code) == "cny") return "CN¥";//or "元"//if(neroshop::string::lower(currency_code) == "ghs") return "¢";// Ghanaian cedis//if(neroshop::string::lower(currency_code) == "ngn") return "₦";// Nigerian Naira
-    if(neroshop::string::lower(currency_code) == "sek") return "SEK";// e.g  20 kr, 50 kr, 100 kr, etc.
-    if(neroshop::string::lower(currency_code) == "nzd") return "NZ$";// or $
-    if(neroshop::string::lower(currency_code) == "mxn") return "MX$";// or $
+    if(neroshop::string::lower(currency_code) == "cad") return "$"; // or "$", "C$", "CA$", "CAD$";
+    if(neroshop::string::lower(currency_code) == "chf") return "Fr";// CHF or "francs";//francs comes after the number
+    if(neroshop::string::lower(currency_code) == "aud") return "$"; // or "$", "A$", "AUD$";
+    if(neroshop::string::lower(currency_code) == "cny") return "¥";//or "元"
+    if(neroshop::string::lower(currency_code) == "sek") return "kr";// e.g  20 kr, 50 kr, 100 kr, etc.
+    if(neroshop::string::lower(currency_code) == "nzd") return "$";// NZ$ or $
+    if(neroshop::string::lower(currency_code) == "mxn") return "$";// MX$ or $
+    if(neroshop::string::lower(currency_code) == "ngn") return "₦";
+    if(neroshop::string::lower(currency_code) == "ghs") return "₵";
+    if(neroshop::string::lower(currency_code) == "rub") return "₽‎";
+    if(neroshop::string::lower(currency_code) == "php") return "₱";
+    if(neroshop::string::lower(currency_code) == "inr") return "₹";
     //if(neroshop::string::lower(currency_code) == "") return "";
     return "";
 } // https://www.xe.com/symbols.php
@@ -99,15 +104,7 @@ std::string neroshop::Converter::get_currency_symbol(const std::string& currency
 ////////////////////
 ////////////////////
 bool neroshop::Converter::is_supported_currency(const std::string& currency_code) {
-    std::vector<std::string> supported_currency {"usd", "eur", "jpy", "gbp", "cad", "btc", "eth",
-                                                "chf", "aud", "cny", "sek", "nzd", "mxn"};
-
-    auto it = std::find(supported_currency.begin(), supported_currency.end(), neroshop::string::lower(currency_code));
-
-    if (it != supported_currency.end()) {
-        return true;
-    }
-    return false;
+    return (neroshop::CurrencyMap.count(neroshop::string::upper(currency_code)) > 0);
 }
 ////////////////////
 ////////////////////

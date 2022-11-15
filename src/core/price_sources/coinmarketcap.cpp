@@ -1,21 +1,5 @@
 #include "coinmarketcap.hpp"
 
-#if defined(NEROSHOP_USE_QT)
-#include <QEventLoop>
-#include <QJsonArray>
-#include <QJsonDocument>
-#include <QJsonObject>
-#include <QJsonParseError>
-#include <QNetworkAccessManager>
-#include <QNetworkReply>
-#include <QNetworkRequest>
-#endif
-
-#include <map>
-#if defined(NEROSHOP_USE_QT)
-#include <QString>
-#endif
-
 namespace {
 
 const QString BASE_URL{QStringLiteral("https://api.coinmarketcap.com/data-api/v3/"
@@ -33,6 +17,12 @@ const std::map<neroshop::Currency, QString> CURRENCY_TO_ID{
     {neroshop::Currency::MXN, "2799"},
     {neroshop::Currency::NZD, "2802"},
     {neroshop::Currency::SEK, "2807"},
+    {neroshop::Currency::NGN, "2819"},
+    {neroshop::Currency::GHS, "3540"},
+    {neroshop::Currency::RUB, "2806"},
+    {neroshop::Currency::PHP, "2803"},
+    {neroshop::Currency::INR, "2796"},
+    //{neroshop::Currency::},
     {neroshop::Currency::BTC, "1"},
     {neroshop::Currency::ETH, "1027"},
     {neroshop::Currency::XMR, "328"},

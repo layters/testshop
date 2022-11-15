@@ -1,21 +1,5 @@
 #include "cryptorank.hpp"
 
-#if defined(NEROSHOP_USE_QT)
-#include <QEventLoop>
-#include <QJsonArray>
-#include <QJsonDocument>
-#include <QJsonObject>
-#include <QJsonParseError>
-#include <QNetworkAccessManager>
-#include <QNetworkReply>
-#include <QNetworkRequest>
-#endif
-
-#include <map>
-#if defined(NEROSHOP_USE_QT)
-#include <QString>
-#endif
-
 namespace {
 
 const QString BASE_URL{QStringLiteral("https://api.cryptorank.io/v0/coins/%1?locale=en")};
@@ -26,27 +10,16 @@ const std::map<neroshop::Currency, QString> CURRENCY_TO_ID{
     {neroshop::Currency::XMR, "monero"},
 };
 
-const std::map<neroshop::Currency, QString> CURRENCY_TO_VS{
-    {neroshop::Currency::USD, "USD"},
-    {neroshop::Currency::AUD, "AUD"},
-    {neroshop::Currency::CAD, "CAD"},
-    {neroshop::Currency::CHF, "CHF"},
-    {neroshop::Currency::CNY, "CNY"},
-    {neroshop::Currency::EUR, "EUR"},
-    {neroshop::Currency::GBP, "GPB"},
-    {neroshop::Currency::JPY, "JPY"},
-    {neroshop::Currency::MXN, "MXN"},
-    {neroshop::Currency::NZD, "NZD"},
-    {neroshop::Currency::SEK, "SEK"},
-    {neroshop::Currency::BTC, "BTC"},
-    {neroshop::Currency::ETH, "ETH"},
-    {neroshop::Currency::XMR, "XMR"},
-};
-
 } // namespace
 
 std::optional<double> CryptoRankPriceSource::price(neroshop::Currency from, neroshop::Currency to) const
 {
+    // Fill map with initial currency ids and codes
+    std::map<neroshop::Currency, QString> CURRENCY_TO_VS;
+    for (const auto& [key, value] : neroshop::CurrencyMap) {
+        CURRENCY_TO_VS[std::get<0>(value)] = QString::fromStdString(key).toLower();
+    }
+    
     auto it = CURRENCY_TO_ID.find(from);
     if (it == CURRENCY_TO_ID.cend()) {
         return std::nullopt;

@@ -28,7 +28,7 @@ public:
     Q_INVOKABLE QStringList getCurrencyList() const;
     Q_INVOKABLE int getCurrencyDecimals(const QString& currency) const;
     Q_INVOKABLE double getPrice(double amount, const QString& currency) const;
-    Q_INVOKABLE QString getCurrencySymbol(const QString& currency) const;
+    Q_INVOKABLE QString getCurrencySign(const QString& currency) const;
     Q_INVOKABLE bool isSupportedCurrency(const QString& currency) const;
     
     //Q_INVOKABLE bool initializeDatabase() const;
