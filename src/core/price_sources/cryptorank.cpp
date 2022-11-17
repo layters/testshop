@@ -17,7 +17,7 @@ std::optional<double> CryptoRankPriceSource::price(neroshop::Currency from, nero
     // Fill map with initial currency ids and codes
     std::map<neroshop::Currency, QString> CURRENCY_TO_VS;
     for (const auto& [key, value] : neroshop::CurrencyMap) {
-        CURRENCY_TO_VS[std::get<0>(value)] = QString::fromStdString(key).toLower();
+        CURRENCY_TO_VS[std::get<0>(value)] = QString::fromStdString(key).toUpper();
     }
     
     auto it = CURRENCY_TO_ID.find(from);

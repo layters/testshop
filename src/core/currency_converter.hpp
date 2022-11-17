@@ -3,11 +3,15 @@
 #ifndef CURRENCY_CONVERTER_HPP_NEROSHOP
 #define CURRENCY_CONVERTER_HPP_NEROSHOP
 
+#if defined(NEROSHOP_USE_QT)
+#else
 #include <curl/curl.h>
 #include <nlohmann/json.hpp>
+#endif
 
 #include <vector>
 #include <algorithm>
+#include <map>
 #include <random>
 #include <thread>
 #include <future>
@@ -39,6 +43,8 @@ enum class Currency {
     XMR,
     BTC,
     ETH,
+    LTC,
+    WOW,
 };
 
 static std::map<std::string, std::tuple<neroshop::Currency, std::string, int>> CurrencyMap {// { currency_code, { id, name, decimals } }
@@ -206,9 +212,11 @@ static std::map<std::string, std::tuple<neroshop::Currency, std::string, int>> C
     //{ "ZMW", { neroshop::Currency::, "Zambia Kwacha" } },
     //{ "ZWD", { neroshop::Currency::, "Zimbabwe Dollar" } },
     // Crypto
-    { "XMR", { neroshop::Currency::XMR, "Monero (XMR)", 12 } },
-    { "BTC", { neroshop::Currency::BTC, "Bitcoin (BTC)", 8 } },
-    { "ETH", { neroshop::Currency::ETH, "Ether (ETH)", 18 } },    
+    { "XMR", { neroshop::Currency::XMR, "Monero", 12 } },
+    { "BTC", { neroshop::Currency::BTC, "Bitcoin", 8 } },
+    { "ETH", { neroshop::Currency::ETH, "Ether", 18 } },    
+    { "LTC", { neroshop::Currency::LTC, "Litecoin", 8 } },
+    { "WOW", { neroshop::Currency::WOW, "Wownero", 12 } },
 };
 
 class Converter {

@@ -8,6 +8,8 @@ const QString BASE_URL{
 const std::map<neroshop::Currency, QString> CURRENCY_TO_ID{
     {neroshop::Currency::BTC, "bitcoin"},
     {neroshop::Currency::ETH, "ethereum"},
+    {neroshop::Currency::LTC, "litecoin"},    
+    {neroshop::Currency::WOW, "wownero"},
     {neroshop::Currency::XMR, "monero"},
 };
 

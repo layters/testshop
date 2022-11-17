@@ -30,13 +30,11 @@ int neroshop::Backend::getCurrencyDecimals(const QString& currency) const {
 }
 
 double neroshop::Backend::getPrice(double amount, const QString& currency) const {
-    neroshop::Currency preferred_currency = neroshop::Currency::USD;
-
     auto map_key = currency.toUpper().toStdString();
     // Check if key exists in std::map
     if(neroshop::CurrencyMap.count(map_key) > 0) {////if(neroshop::CurrencyMap.find(map_key) != neroshop::CurrencyMap.end()) {
         auto map_value = neroshop::CurrencyMap[map_key];
-        preferred_currency = std::get<0>(map_value);
+        neroshop::Currency preferred_currency = std::get<0>(map_value);
         return neroshop::Converter::get_price(neroshop::Currency::XMR, preferred_currency) * amount;
     }
     neroshop::print(currency.toUpper().toStdString() + " is not supported", 1);

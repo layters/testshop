@@ -25,6 +25,8 @@ const std::map<neroshop::Currency, QString> CURRENCY_TO_ID{
     //{neroshop::Currency::},
     {neroshop::Currency::BTC, "1"},
     {neroshop::Currency::ETH, "1027"},
+    {neroshop::Currency::LTC, "2"},    
+    {neroshop::Currency::WOW, "4978"},
     {neroshop::Currency::XMR, "328"},
 };
 

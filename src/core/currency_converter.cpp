@@ -85,7 +85,7 @@ std::string neroshop::Converter::get_currency_sign(const std::string& currency_c
     if(neroshop::string::lower(currency_code) == "jpy") return "¥";
     if(neroshop::string::lower(currency_code) == "gbp") return "£";
     if(neroshop::string::lower(currency_code) == "cad") return "$"; // or "$", "C$", "CA$", "CAD$";
-    if(neroshop::string::lower(currency_code) == "chf") return "Fr";// CHF or "francs";//francs comes after the number
+    if(neroshop::string::lower(currency_code) == "chf") return "CHF"; // does not have an actual sign so CHF is used
     if(neroshop::string::lower(currency_code) == "aud") return "$"; // or "$", "A$", "AUD$";
     if(neroshop::string::lower(currency_code) == "cny") return "¥";//or "元"
     if(neroshop::string::lower(currency_code) == "sek") return "kr";// e.g  20 kr, 50 kr, 100 kr, etc.
@@ -111,7 +111,7 @@ bool neroshop::Converter::is_supported_currency(const std::string& currency_code
 ////////////////////
 ////////////////////
 double neroshop::Converter::convert_xmr(double quantity, std::string currency, bool to) { //to: if we want currency->xmr (true) or rather xmr->currency (false)
-    
+#if !defined(NEROSHOP_USE_QT)    
     std::map<std::string, std::string>  currency_to_id_coinmarketcap = {
         {"usd", "2781"}, {"aud", "2782"}, {"cad", "2784"}, {"chf", "2785"}, {"cny", "2787"}, {"eur", "2790"},
         {"gbp", "2791"}, {"jpy", "2797"}, {"mxn", "2799"}, {"nzd", "2802"}, {"sek", "2807"},  {"btc", "1"}, {"eth", "1027"},
@@ -228,6 +228,7 @@ double neroshop::Converter::convert_xmr(double quantity, std::string currency, b
             return price*quantity;
         }
     }
+#endif    
     return -1;
 }
 ////////////////////
@@ -236,6 +237,7 @@ double neroshop::Converter::convert_xmr(double quantity, std::string currency, b
 ////////////////////
 bool neroshop::Converter::request(const std::string& url)
 {
+#if !defined(NEROSHOP_USE_QT)
     // parse raw json str
     //std::string buffer;
     CURL * curl = curl_easy_init();
@@ -259,6 +261,7 @@ bool neroshop::Converter::request(const std::string& url)
         //if (http_code == 200) std::cout << "\nGot successful response from " << url << std::endl; // opt
     } 
     else { std::cout << "Could not initialize curl" << std::endl; return false; }
+#endif    
     return true;
 }
 ////////////////////
