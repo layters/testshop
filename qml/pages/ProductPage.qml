@@ -14,92 +14,6 @@ Item {
     width: 700
     height: 500
 
-    component Star: Label {
-        color: "red"
-        width: 20
-        height: 20
-
-        property int value
-
-        Component.onCompleted: configure()
-
-        function configure()
-        {
-            if (value === 0) // Empty
-            {
-                text = FontAwesome.star
-            }
-            else if (value === 1) // Half
-            {
-                text = "<b>"+FontAwesome.starHalf+"</b>"
-            }
-            else if (value === 2) // Full
-            {
-                text = "<b>"+FontAwesome.star+"</b>"
-            }
-        }
-
-        onValueChanged: configure()
-    }
-
-    component Rating: Row {
-
-        property int value
-
-        onValueChanged:{
-            var stars = value
-            var emptyStars = 5 - stars
-            var count = 0
-
-            while (stars > 0)
-            {
-
-                if (stars < 1)
-                {
-                    allStars[count].value = 1
-                }
-                else
-                {
-                    allStars[count].value = 2
-                }
-
-                count++;
-                stars--;
-            }
-
-            while (emptyStars >= 1)
-            {
-                allStars[count].value = 0
-                count++;
-                emptyStars--;
-            }
-        }
-
-        spacing: 5
-
-        Star {
-            id: star1
-        }
-
-        Star {
-            id: star2
-        }
-
-        Star {
-            id: star3
-        }
-
-        Star {
-            id: star4
-        }
-
-        Star {
-            id: star5
-        }
-
-        property var allStars: [star1, star2, star3, star4, star5]
-    }
-
     SwipeView {
         id: sv
         anchors.fill: parent
@@ -299,7 +213,7 @@ Item {
                         font.pixelSize: 25
                     }
 
-                    Rating {
+                    NeroshopComponents.Rating {
                         id: reviews
 
                         Label {
@@ -519,7 +433,7 @@ Item {
                             font.pixelSize: 20
                         }
 
-                        Rating {
+                        NeroshopComponents.Rating {
                             value: model.rating
 
                             Label {
