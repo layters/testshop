@@ -1,7 +1,66 @@
-#include "converter.hpp"
+#include "currency_converter.hpp"
+
+#if defined(NEROSHOP_USE_QT) // I just don't want neroshop-console to depend on Qt
+#include "price_sources/price_source_factory.hpp"
 
 ////////////////////
+double neroshop::Converter::get_price(neroshop::Currency from, neroshop::Currency to)//, PriceSourceFactory::Source source)
+{
+    const std::vector<PriceSourceFactory::Source> SOURCES_TO_USE{
+        PriceSourceFactory::Source::CoinMarketCap,
+        PriceSourceFactory::Source::CoinGecko,
+        PriceSourceFactory::Source::CryptoWatch,
+        PriceSourceFactory::Source::CoinTelegraph,
+        PriceSourceFactory::Source::CryptoRank,
+        PriceSourceFactory::Source::CoinCodex,
+    };
+    double price = 0.0;
+    auto source = PriceSourceFactory::Source::CoinGecko; // todo: allow user to change price source
+    auto price_source = PriceSourceFactory::makePriceSouce(source);
+    auto price_opt = price_source->price(from, to);
+    while((*price_opt) == 0.00) {
+        // change the source to a random one
+	    std::random_device rd;
+        std::mt19937 mt(rd());
+        std::uniform_real_distribution<double> dist(0, SOURCES_TO_USE.size() - 1);
+            
+        price_source = PriceSourceFactory::makePriceSouce(SOURCES_TO_USE[0]);//(SOURCES_TO_USE[static_cast<int>(dist(mt))]);
+        price_opt = price_source->price(from, to);
+    }
+    if (price_opt.has_value()) {
+        price = (*price_opt);
+        return price;
+    }
+    return 0.0;
+}
 ////////////////////
+double neroshop::Converter::get_price_average(neroshop::Currency from, neroshop::Currency to)
+{
+    const std::vector<PriceSourceFactory::Source> SOURCES_TO_USE{
+        PriceSourceFactory::Source::CoinMarketCap,
+        PriceSourceFactory::Source::CoinGecko,
+        PriceSourceFactory::Source::CryptoWatch,
+        PriceSourceFactory::Source::CoinTelegraph,
+        PriceSourceFactory::Source::CryptoRank,
+        PriceSourceFactory::Source::CoinCodex,
+    };
+    std::size_t valid_prices = 0;
+    double sum_price = 0.0;
+    for (const auto &source : SOURCES_TO_USE) {
+        auto price_source = PriceSourceFactory::makePriceSouce(source);
+        const auto price_opt = price_source->price(from, to);
+        if (price_opt.has_value()) {
+            sum_price += (*price_opt);
+            ++valid_prices;
+        }
+    }
+
+    if (valid_prices > 0) {
+        return sum_price / valid_prices;
+    }
+    return 0.0;
+}
+#endif
 ////////////////////
 ////////////////////
 std::string neroshop::Converter::json_string ("");
@@ -20,18 +79,23 @@ double neroshop::Converter::lb_to_kg(double lb) {
 ////////////////////
 ////////////////////
 ////////////////////
-std::string neroshop::Converter::get_currency_symbol(const std::string& currency_code) {
+std::string neroshop::Converter::get_currency_sign(const std::string& currency_code) {
     if(neroshop::string::lower(currency_code) == "usd") return "$";// or US$
     if(neroshop::string::lower(currency_code) == "eur") return "€";
     if(neroshop::string::lower(currency_code) == "jpy") return "¥";
     if(neroshop::string::lower(currency_code) == "gbp") return "£";
-    if(neroshop::string::lower(currency_code) == "cad") return "C$"; // or "$", "C$", "CA$", "CAD$";
-    if(neroshop::string::lower(currency_code) == "chf") return "CHF";// or "francs";//francs comes after the number
-    if(neroshop::string::lower(currency_code) == "aud") return "A$"; // or "$", "A$", "AUD$";
-    if(neroshop::string::lower(currency_code) == "cny") return "CN¥";//or "元"//if(neroshop::string::lower(currency_code) == "ghs") return "¢";// Ghanaian cedis//if(neroshop::string::lower(currency_code) == "ngn") return "₦";// Nigerian Naira
-    if(neroshop::string::lower(currency_code) == "sek") return "SEK";// e.g  20 kr, 50 kr, 100 kr, etc.
-    if(neroshop::string::lower(currency_code) == "nzd") return "NZ$";// or $
-    if(neroshop::string::lower(currency_code) == "mxn") return "MX$";// or $
+    if(neroshop::string::lower(currency_code) == "cad") return "$"; // or "$", "C$", "CA$", "CAD$";
+    if(neroshop::string::lower(currency_code) == "chf") return "CHF"; // does not have an actual sign so CHF is used
+    if(neroshop::string::lower(currency_code) == "aud") return "$"; // or "$", "A$", "AUD$";
+    if(neroshop::string::lower(currency_code) == "cny") return "¥";//or "元"
+    if(neroshop::string::lower(currency_code) == "sek") return "kr";// e.g  20 kr, 50 kr, 100 kr, etc.
+    if(neroshop::string::lower(currency_code) == "nzd") return "$";// NZ$ or $
+    if(neroshop::string::lower(currency_code) == "mxn") return "$";// MX$ or $
+    if(neroshop::string::lower(currency_code) == "ngn") return "₦";
+    if(neroshop::string::lower(currency_code) == "ghs") return "₵";
+    if(neroshop::string::lower(currency_code) == "rub") return "₽‎";
+    if(neroshop::string::lower(currency_code) == "php") return "₱";
+    if(neroshop::string::lower(currency_code) == "inr") return "₹";
     //if(neroshop::string::lower(currency_code) == "") return "";
     return "";
 } // https://www.xe.com/symbols.php
@@ -40,22 +104,14 @@ std::string neroshop::Converter::get_currency_symbol(const std::string& currency
 ////////////////////
 ////////////////////
 bool neroshop::Converter::is_supported_currency(const std::string& currency_code) {
-    std::vector<std::string> supported_currency {"usd", "eur", "jpy", "gbp", "cad", "btc", "eth",
-                                                "chf", "aud", "cny", "sek", "nzd", "mxn"};
-
-    auto it = std::find(supported_currency.begin(), supported_currency.end(), neroshop::string::lower(currency_code));
-
-    if (it != supported_currency.end()) {
-        return true;
-    }
-    return false;
+    return (neroshop::CurrencyMap.count(neroshop::string::upper(currency_code)) > 0);
 }
 ////////////////////
 ////////////////////
 ////////////////////
 ////////////////////
 double neroshop::Converter::convert_xmr(double quantity, std::string currency, bool to) { //to: if we want currency->xmr (true) or rather xmr->currency (false)
-    
+#if !defined(NEROSHOP_USE_QT)    
     std::map<std::string, std::string>  currency_to_id_coinmarketcap = {
         {"usd", "2781"}, {"aud", "2782"}, {"cad", "2784"}, {"chf", "2785"}, {"cny", "2787"}, {"eur", "2790"},
         {"gbp", "2791"}, {"jpy", "2797"}, {"mxn", "2799"}, {"nzd", "2802"}, {"sek", "2807"},  {"btc", "1"}, {"eth", "1027"},
@@ -172,6 +228,7 @@ double neroshop::Converter::convert_xmr(double quantity, std::string currency, b
             return price*quantity;
         }
     }
+#endif    
     return -1;
 }
 ////////////////////
@@ -180,6 +237,7 @@ double neroshop::Converter::convert_xmr(double quantity, std::string currency, b
 ////////////////////
 bool neroshop::Converter::request(const std::string& url)
 {
+#if !defined(NEROSHOP_USE_QT)
     // parse raw json str
     //std::string buffer;
     CURL * curl = curl_easy_init();
@@ -203,6 +261,7 @@ bool neroshop::Converter::request(const std::string& url)
         //if (http_code == 200) std::cout << "\nGot successful response from " << url << std::endl; // opt
     } 
     else { std::cout << "Could not initialize curl" << std::endl; return false; }
+#endif    
     return true;
 }
 ////////////////////

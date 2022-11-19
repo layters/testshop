@@ -38,7 +38,7 @@ Neroshop aims to be simple for a beginner to use and easy for sellers to onboard
 * Distributed P2P network
 * Buy and sell products with Monero
 * Anonymous payments
-* No censorship
+* No censorship (censorship-resistant)
 * Pseudonymous identities (sellers and buyers are identified by their unique ids)
 * No registration required (for buyers only)
 * No KYC nor AML
@@ -57,7 +57,7 @@ Neroshop aims to be simple for a beginner to use and easy for sellers to onboard
 ## Building neroshop
 
 ### Dependencies
-:heavy_check_mark: = Currently in use; :o: = Optional; :x: = Not currently in use or removed; :grey_question: = Not yet in use, but up for consideration
+:heavy_check_mark: = Currently in use; :o: = Optional; :x: = Not currently in use or removed; :grey_question: = Not yet in use, but up for consideration; :white_square_button: = Exclusive to CLI
 
 |      Library                                                       | Minimum Ver.       |         Purpose                                                        | Status                              |
 |--------------------------------------------------------------------|--------------------|------------------------------------------------------------------------|-------------------------------------|
@@ -65,14 +65,14 @@ Neroshop aims to be simple for a beginner to use and easy for sellers to onboard
 | [libbcrypt](https://github.com/rg3/libbcrypt)                      | 1.3                | password hashing                                                       | :o:                                 |
 | [sqlite3](https://sqlite.org/)                                     | 3.38.0             | database management                                                    | :heavy_check_mark:                  |
 | [QR Code generator](https://github.com/nayuki/QR-Code-generator)   | ?                  | qr code generation                                                     | :heavy_check_mark:                  |
-| [json](https://github.com/nlohmann/json/)                          | ?                  | json parsing                                                           | :heavy_check_mark:                  |
-| [curl](https://github.com/curl/curl)                               | ?                  | currency conversion                                                    | :heavy_check_mark:                  |
+| [json](https://github.com/nlohmann/json/)                          | ?                  | json parsing                                                           | :o:                                 |
+| [curl](https://github.com/curl/curl)                               | ?                  | currency conversion                                                    | :o:                                 |
 | [openssl](https://github.com/openssl/openssl)                      | 1.1.1              | for curl, sha256 sum and message encryption                            | :heavy_check_mark:                  |
 | [Qt](https://www.qt.io/)                                           | 5.12.8             | graphical user interface                                               | :heavy_check_mark:                  |
 | [libuv](https://github.com/libuv/libuv)                            | ?                  | networking and child process                                           | :heavy_check_mark:                  |
 | [raft](https://github.com/willemt/raft)                            | ?                  | consensus mechanism                                                    | :heavy_check_mark:                  |
-| [stduuid](https://github.com/mariusbancila/stduuid)                | ?                  | order number generation                                                | :heavy_check_mark:                  |
-| [linenoise](https://github.com/antirez/linenoise)                  | ?                  | command line interface                                                 | :heavy_check_mark: :o:              |
+| [stduuid](https://github.com/mariusbancila/stduuid)                | ?                  | order number generation                                                | :o:                                 |
+| [linenoise](https://github.com/antirez/linenoise)                  | ?                  | command line interface                                                 | :o: :white_square_button:           |
 | [lua](https://www.lua.org/)                                        | 5.1.5              | configuration script                                                   | :heavy_check_mark:                  |
 | [libpng](http://www.libpng.org/pub/png/)                           | 1.6.37             | image exportation                                                      | :heavy_check_mark:                  |
 | [zlib](https://www.zlib.net/)                                      | 1.2.12             | for libpng                                                             | :heavy_check_mark:                  |
@@ -117,14 +117,14 @@ Arch (needs to be updated)
 # neroshop
 sudo pacman -Sy --needed curl openssl libuv
 # monero-cpp (monero)
-sudo pacman -Syu --needed boost openssl zeromq libpgm libsodium libunwind xz readline gtest python3 ccache qt5-tools hidapi libusb protobuf systemd
+sudo pacman -Syu --needed boost openssl zeromq libpgm unbound libsodium libunwind xz readline gtest python3 ccache qt5-tools hidapi libusb protobuf systemd
 ```
 Fedora (needs to be updated)
 ```bash
 # neroshop
 sudo dnf install libcurl-devel openssl-devel libuv-devel libuv-static
 # monero-cpp (monero)
-sudo dnf install boost-static libstdc++-static pkgconf boost-devel openssl-devel zeromq-devel openpgm-devel libsodium-devel libunwind-devel xz-devel readline-devel gtest-devel ccache qt5-linguist hidapi-devel libusbx-devel protobuf-devel protobuf-compiler systemd-devel
+sudo dnf install boost-static libstdc++-static pkgconf boost-devel openssl-devel zeromq-devel openpgm-devel unbound-devel libsodium-devel libunwind-devel xz-devel readline-devel gtest-devel ccache qt5-linguist hidapi-devel libusbx-devel protobuf-devel protobuf-compiler systemd-devel
 ```
 
 
@@ -137,7 +137,7 @@ cd external/monero-project
 ```
 
 
-**4. Install expat (dependency of unbound) and unbound:**
+**4. Install expat and unbound (May be required to build monero-project on Debian/Ubuntu otherwise, this step can be skipped):**
 ```bash
 wget https://github.com/libexpat/libexpat/releases/download/R_2_4_8/expat-2.4.8.tar.bz2
 tar -xf expat-2.4.8.tar.bz2
@@ -156,7 +156,6 @@ rm unbound-1.16.1.tar.gz
 cd unbound-1.16.1
 ./configure --disable-shared --enable-static --without-pyunbound --with-libevent=no --without-pythonmodule --disable-flto --with-pthreads --with-libunbound-only --with-pic
 make
-sudo make install
 cd ../
 ```
 

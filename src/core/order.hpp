@@ -3,17 +3,19 @@
 #ifndef ORDER_HPP_NEROSHOP
 #define ORDER_HPP_NEROSHOP
 
-//#if defined(__cplusplus) && (__cplusplus >= 201703L)
+#if defined(NEROSHOP_USE_QT)
+#include <QUuid>
+#else
 #include <uuid.h>
 //#include <catch.hpp>
-//#endif
+#endif
 
 #include <iostream>
 #include <map>
 
 //#include "wallet.hpp"
 #include "cart.hpp"      // includes db.hpp
-#include "converter.hpp" // currency converter
+#include "currency_converter.hpp" // currency converter
 #include "config.hpp" // neroshop::lua_state
 
 enum class payment_status{ PAYMENT_NOT_RECEIVED, // red // https://stackoverflow.com/a/46740323

@@ -167,16 +167,11 @@ Popup {
                     }
                     ComboBox {
                         id: currencyBox
-                        currentIndex: 0//model.indexOf(Script.getString("neroshop.generalsettings.currency").toUpperCase()) // causes segfault on app close
+                        currentIndex: model.indexOf(Script.getString("neroshop.generalsettings.currency").toUpperCase())
                         displayText: currentText
                         ////property string lastCurrencySet: (Script.getString("neroshop.generalsettings.currency")) ? Script.getString("neroshop.generalsettings.currency") : "USD"
                         //editable: true; selectTextByMouse: true
-                        model: ["USD", "EUR", "JPY", "GBP", "CAD", "CHF", "AUD", "CNY", "SEK", "NZD", "MXN",]/*ListModel {
-                            id: currencyModel
-                            ListElement { text: "usd" }
-                            ListElement { text: "eur" }
-                            ListElement { text: "jpy" }
-                        }*/
+                        model: Backend.getCurrencyList()
                         //implicitContentWidthPolicy: ComboBox.WidestText//ComboBox.ContentItemImplicitWidth
                         onAccepted: {
                             if (find(editText) === -1)
@@ -186,8 +181,8 @@ Popup {
                         onActivated: {    
                             displayText = currentText
                             priceDisplayText.currency = displayText
-                            priceDisplayText.price = Backend.convertXmr(priceDisplayText.amount, priceDisplayText.currency, false)
-                            priceDisplayText.text = qsTr(FontAwesome.monero + "  %1%2").arg(Backend.getCurrencySymbol(priceDisplayText.currency)).arg(priceDisplayText.price.toFixed(2))
+                            priceDisplayText.price = Backend.getPrice(priceDisplayText.amount, priceDisplayText.currency)
+                            priceDisplayText.text = qsTr(FontAwesome.monero + "  %1%2").arg(Backend.getCurrencySign(priceDisplayText.currency)).arg(priceDisplayText.price.toFixed(Backend.getCurrencyDecimals(priceDisplayText.currency)))
                             ////lastCurrencySet = currentText
                         }
 }

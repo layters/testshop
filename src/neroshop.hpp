@@ -17,7 +17,7 @@
 #include "core/database.hpp"
 #include "core/qr.hpp"
 #include "core/validator.hpp"
-#include "core/converter.hpp"
+#include "core/currency_converter.hpp"
 #include "core/user.hpp"
 #include "core/buyer.hpp"
 #include "core/seller.hpp"

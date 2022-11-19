@@ -16,6 +16,7 @@ import "pages"
 ApplicationWindow {
     id: mainWindow
     visible: true
+    visibility: (Script.getNumber("neroshop.generalsettings.application.window.mode") == 1) ? "FullScreen" : "Windowed"
     title: qsTr("neroshop" + " v" + neroshopVersion)
     width: Script.getNumber("neroshop.generalsettings.application.window.width")
     height: Script.getNumber("neroshop.generalsettings.application.window.height")
@@ -121,7 +122,7 @@ ApplicationWindow {
                     background: Rectangle {
                         color: "transparent"//(parent.checked) ? "#001677" : "transparent"
                         radius: 3
-                        border.color: parent.hovered ? "#001677" : this.color//"#001677"
+                        border.color: parent.hovered ? parent.icon.color : this.color//"#001677"
                         //border.width: (!parent.checked && parent.hovered) ? 1 : 0
                     }              
                     onClicked: {
@@ -223,8 +224,8 @@ ApplicationWindow {
                     property real amount: 1
                     property string scriptCurrency: Script.getString("neroshop.generalsettings.currency")
                     property string currency: Backend.isSupportedCurrency(scriptCurrency) ? scriptCurrency : "usd"
-                    property double price: Backend.convertXmr(amount, currency, false)
-                    text: qsTr(/*amount.toString() + " " + */FontAwesome.monero + "  %1%2").arg(Backend.getCurrencySymbol(currency)).arg(price.toFixed(2))////.arg(currency.toUpperCase())
+                    property double price: Backend.getPrice(amount, currency)
+                    text: qsTr(/*amount.toString() + " " + */FontAwesome.monero + "  %1%2").arg(Backend.getCurrencySign(currency)).arg(price.toFixed(Backend.getCurrencyDecimals(currency)))////.arg(currency.toUpperCase())
                     color: (NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000"
                     font.bold: true
                     anchors.verticalCenter: parent.verticalCenter//verticalAlignment: Text.AlignVCenter                  
