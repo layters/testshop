@@ -1,5 +1,5 @@
 # neroshop - WORK IN PROGRESS
-[![banner](images/appicons/neroshop-logo.png)](https://github.com/larteyoh/testshop "neroshop logo")
+[![banner](images/appicons/LogoLight250x250.png)](https://github.com/larteyoh/testshop "neroshop logo")
 
 
 A distributed P2P (peer-to-peer) marketplace for [**Monero**](https://getmonero.org/) users
@@ -12,7 +12,8 @@ A distributed P2P (peer-to-peer) marketplace for [**Monero**](https://getmonero.
   - [Dependencies](#dependencies)
   - [Compiling neroshop from source](#compiling-neroshop-from-source) <!-- - [Contributing](#contributing) --> <!-- - [Bug Bounty Program]-->
 - [Donations](#donations)
-- [Contact information](#contact)
+- [Resources](#resources)
+- [Credits](#credits)
 
 
 ## Demo
@@ -59,24 +60,24 @@ Neroshop aims to be simple for a beginner to use and easy for sellers to onboard
 ### Dependencies
 :heavy_check_mark: = Currently in use; :o: = Optional; :x: = Not currently in use or removed; :grey_question: = Not yet in use, but up for consideration; :white_square_button: = Exclusive to CLI
 
-|      Library                                                       | Minimum Ver.       |         Purpose                                                        | Status                              |
-|--------------------------------------------------------------------|--------------------|------------------------------------------------------------------------|-------------------------------------|
-| [monero-cpp](https://github.com/monero-ecosystem/monero-cpp)       | latest             | monero wallet and payment system                                       | :heavy_check_mark:                  |
-| [libbcrypt](https://github.com/rg3/libbcrypt)                      | 1.3                | password hashing                                                       | :o:                                 |
-| [sqlite3](https://sqlite.org/)                                     | 3.38.0             | database management                                                    | :heavy_check_mark:                  |
-| [QR Code generator](https://github.com/nayuki/QR-Code-generator)   | ?                  | qr code generation                                                     | :heavy_check_mark:                  |
-| [json](https://github.com/nlohmann/json/)                          | ?                  | json parsing                                                           | :o:                                 |
-| [curl](https://github.com/curl/curl)                               | ?                  | currency conversion                                                    | :o:                                 |
-| [openssl](https://github.com/openssl/openssl)                      | 1.1.1              | for curl, sha256 sum and message encryption                            | :heavy_check_mark:                  |
-| [Qt](https://www.qt.io/)                                           | 5.12.8             | graphical user interface                                               | :heavy_check_mark:                  |
-| [libuv](https://github.com/libuv/libuv)                            | ?                  | networking and child process                                           | :heavy_check_mark:                  |
-| [raft](https://github.com/willemt/raft)                            | ?                  | consensus mechanism                                                    | :heavy_check_mark:                  |
-| [stduuid](https://github.com/mariusbancila/stduuid)                | ?                  | order number generation                                                | :o:                                 |
-| [linenoise](https://github.com/antirez/linenoise)                  | ?                  | command line interface                                                 | :o: :white_square_button:           |
-| [lua](https://www.lua.org/)                                        | 5.1.5              | configuration script                                                   | :heavy_check_mark:                  |
-| [libpng](http://www.libpng.org/pub/png/)                           | 1.6.37             | image exportation                                                      | :heavy_check_mark:                  |
-| [zlib](https://www.zlib.net/)                                      | 1.2.12             | for libpng                                                             | :heavy_check_mark:                  |
-| [openpgp](external/openpgp)                                        | ?                  | public-key encryption and digital signatures                           | :grey_question:                     |
+|      Library                                                       | Minimum Ver.       |         Purpose                                                        | Status                                   |
+|--------------------------------------------------------------------|--------------------|------------------------------------------------------------------------|------------------------------------------|
+| [monero-cpp](https://github.com/monero-ecosystem/monero-cpp)       | latest             | monero wallet and payment system                                       | :heavy_check_mark:                       |
+| [libbcrypt](https://github.com/rg3/libbcrypt)                      | 1.3                | password hashing                                                       | :o:                                      |
+| [sqlite3](https://sqlite.org/)                                     | 3.38.0             | database management                                                    | :heavy_check_mark:                       |
+| [QR Code generator](https://github.com/nayuki/QR-Code-generator)   | ?                  | qr code generation                                                     | :heavy_check_mark:                       |
+| [json](https://github.com/nlohmann/json/)                          | ?                  | json parsing                                                           | :o:                                      |
+| [curl](https://github.com/curl/curl)                               | ?                  | currency conversion                                                    | :o:                                      |
+| [openssl](https://github.com/openssl/openssl)                      | 1.1.1              | for curl, sha256 sum and message encryption                            | :heavy_check_mark:                       |
+| [Qt](https://www.qt.io/)                                           | 5.12.8             | graphical user interface                                               | :heavy_check_mark:                       |
+| [libuv](https://github.com/libuv/libuv)                            | ?                  | networking and child process                                           | :heavy_check_mark:                       |
+| [raft](https://github.com/willemt/raft)                            | ?                  | consensus mechanism                                                    | :heavy_check_mark:                       |
+| [stduuid](https://github.com/mariusbancila/stduuid)                | ?                  | order number generation                                                | :o:                                      |
+| [linenoise](https://github.com/antirez/linenoise)                  | ?                  | command line interface                                                 | :heavy_check_mark: :white_square_button: |
+| [lua](https://www.lua.org/)                                        | 5.1.5              | configuration script                                                   | :heavy_check_mark:                       |
+| [libpng](http://www.libpng.org/pub/png/)                           | 1.6.37             | image exportation                                                      | :heavy_check_mark:                       |
+| [zlib](https://www.zlib.net/)                                      | 1.2.12             | for libpng                                                             | :heavy_check_mark:                       |
+| [openpgp](external/openpgp)                                        | ?                  | public-key encryption and digital signatures                           | :grey_question:                          |
 
 ### Compiling neroshop from source
 **0. Install prerequisites**
@@ -209,8 +210,17 @@ You may support the neroshop project directly by donating Monero (XMR) to the ad
 </p>
 
 
-## Contact
-> larteyoh@pm.me
+## Resources
+> Website: [neroshop.org](https://neroshop.org/)
+> Git (Unofficial): [github.com/larteyoh/testshop](https://github.com/larteyoh/testshop)
+> Git (Official): [github.com/larteyoh/neroshop](https://github.com/larteyoh/neroshop)
+> Mail: neroshop@protonmail.com
+> Matrix: [#neroshop:matrix.org](https://matrix.to/#/#neroshop:matrix.org)
+
+
+## Credits
+Credits to [u/EchoingCat](https://www.reddit.com/u/EchoingCat) for the official neroshop logo design
+
 
 [//]: # (./clean.sh)
 [//]: # (git checkout -b main)
