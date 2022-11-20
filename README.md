@@ -212,9 +212,13 @@ You may support the neroshop project directly by donating Monero (XMR) to the ad
 
 ## Resources
 > Website: [neroshop.org](https://neroshop.org/)
+
 > Git (Unofficial): [github.com/larteyoh/testshop](https://github.com/larteyoh/testshop)
+
 > Git (Official): [github.com/larteyoh/neroshop](https://github.com/larteyoh/neroshop)
+
 > Mail: neroshop@protonmail.com
+
 > Matrix: [#neroshop:matrix.org](https://matrix.to/#/#neroshop:matrix.org)
 
 
