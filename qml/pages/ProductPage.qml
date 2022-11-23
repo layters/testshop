@@ -2,17 +2,93 @@
 import QtQuick 2.12
 import QtQuick.Controls 2.12
 import QtQuick.Layouts 1.12
-import QtQuick.Controls.Material 2.15
-import QtQuick.Controls.Material.impl 2.15
-
+import QtQuick.Controls.Material 2.12
+import QtQuick.Controls.Material.impl 2.12
 
 import "../components" as NeroshopComponents
 
-import FontAwesome 1.0
+import Icons 1.0
 
 Item {
-    width: 700
-    height: 500
+    implicitWidth: 700
+    implicitHeight: 500
+
+    // Sample data
+    Component.onCompleted: {
+        loadProduct(0,
+                    "https://media.npr.org/assets/img/2022/07/31/19391873408_8af93aab12_o_sq-15394fcba9dec85dd46b7e9c55190ab2142ba9ae.jpg",
+                    "Candy",
+                    "$ 5.00",
+                    4,
+                    sampleReviewsModel,
+                    "Debayan's Candy Shop",
+                    "6504",
+                    "Best Candy you have <i>ever</i> tasted!<br/><b>Finger lickin' good!</b>")
+    }
+
+    // Sample Review Model Model
+    ListModel {
+        id: sampleReviewsModel
+
+        ListElement {
+            name: "Jack"
+            rating: 4
+            review: "These candies are actually unique! Must try!"
+            description: "They really taste good. It melts in my mouth. Wrapping could have been better though."
+        }
+
+        ListElement {
+            name: "Jill"
+            rating: 1
+            review: "Ugliest and disgusting candies! Never try please"
+            description: "Pathetic packing, bland taste. Do yourself a favour and spend your money somewhere else!"
+        }
+
+        ListElement {
+            name: "Rock"
+            rating: 2
+            review: "Meh"
+            description: ""
+        }
+
+        ListElement {
+            name: "Stan"
+            rating: 5
+            review: ""
+            description: ""
+        }
+
+        ListElement {
+            name: "Rahul"
+            rating: 5
+            review: "Fantastic"
+            description: "I absolutely loved it!"
+        }
+
+        ListElement {
+            name: "Daisy"
+            rating: 4
+            review: "My mom loved it!"
+            description: ""
+        }
+
+    }
+
+    function loadProduct(ID, productImageURL, name, price, reviewsStars, reviewsModel,
+                         sellerName, sellerID, description)
+    {
+        productPage.productID = ID
+        image.source = productImageURL
+        nameLabel.text = name
+        priceLabel.text = price
+        rating.value = reviewsStars
+        reviews.model = reviewsModel
+        noOfReviewsLabel.text = reviewsModel.count + " reviews"
+        sellerNameLabel.text = sellerName
+        productPage.sellerID = sellerID
+        descriptionLabel.text = description
+    }
+
 
     SwipeView {
         id: sv
@@ -22,25 +98,8 @@ Item {
 
         currentIndex: 0
 
-        onCurrentIndexChanged: {
-            if (sv.currentIndex === 0)
-            {
-                productPageItem.opacity = 1
-                reviewsPageItem.opacity = 0
-            }
-            else
-            {
-                productPageItem.opacity = 0
-                reviewsPageItem.opacity = true
-            }
-        }
-
         Item {
             id: productPageItem
-
-            Behavior on opacity {
-                PropertyAnimation {}
-            }
 
             Rectangle
             {
@@ -55,80 +114,6 @@ Item {
 
                 property string productID;
                 property string sellerID;
-
-                Component.onCompleted: {
-                    // Debug value
-                    loadProduct("p01",
-                                "https://media.npr.org/assets/img/2022/07/31/19391873408_8af93aab12_o_sq-15394fcba9dec85dd46b7e9c55190ab2142ba9ae.jpg",
-                                "Candy",
-                                "$ 5.00",
-                                4,
-                                sampleReviewModel.count,
-                                "Debayan's Candy Shop",
-                                "6504",
-                                "Best Candy you have <i>ever</i> tasted!<br/><b>Finger lickin' good!</b>")
-                }
-
-                // Sample List Model
-                ListModel {
-                    id: sampleReviewModel
-
-                    ListElement {
-                        name: "Jack"
-                        rating: 4
-                        review: "These candies are actually unique! Must try!"
-                        description: "They really taste good. It melts in my mouth. Wrapping could have been better though."
-                    }
-
-                    ListElement {
-                        name: "Jill"
-                        rating: 1
-                        review: "Ugliest and disgusting candies! Never try please"
-                        description: "Pathetic packing, bland taste. Do yourself a favour and spend your money somewhere else!"
-                    }
-
-                    ListElement {
-                        name: "Rock"
-                        rating: 2
-                        review: "Meh"
-                        description: ""
-                    }
-
-                    ListElement {
-                        name: "Stan"
-                        rating: 5
-                        review: ""
-                        description: ""
-                    }
-
-                    ListElement {
-                        name: "Rahul"
-                        rating: 5
-                        review: "Fantastic"
-                        description: "I absolutely loved it!"
-                    }
-
-                    ListElement {
-                        name: "Daisy"
-                        rating: 4
-                        review: "My mom loved it!"
-                    }
-
-                }
-
-                function loadProduct(ID, productImageURL, name, price, reviewsStars, noOfReviews,
-                                     sellerName, sellerID, description)
-                {
-                    productID = ID
-                    image.source = productImageURL
-                    nameLabel.text = name
-                    priceLabel.text = price
-                    reviews.value = reviewsStars
-                    noOfReviewsLabel.text = noOfReviews + " reviews"
-                    sellerNameLabel.text = sellerName
-                    this.sellerID = sellerID
-                    descriptionLabel.text = description
-                }
 
                 function openSellerPage()
                 {
@@ -170,8 +155,7 @@ Item {
                         right: parent.right
                     }
 
-                    // Did not use FontAwesome here because no entry for Close button was created
-                    text: qsTr("X")
+                    icon.source: Icons.close
                     onClicked: {
                         // FIXME: Implement
                         console.log("Product page closed.");
@@ -213,16 +197,23 @@ Item {
                         font.pixelSize: 25
                     }
 
-                    NeroshopComponents.Rating {
-                        id: reviews
+                    Row {
+                        spacing: 10
+
+                        NeroshopComponents.Rating {
+                            id: rating
+
+                            anchors.verticalCenter: parent.verticalCenter
+
+                        }
 
                         Label {
                             id: noOfReviewsLabel
 
+                            anchors.verticalCenter: parent.verticalCenter
+
                             font.underline: true
                             color: "blue"
-
-                            leftPadding: 5
 
                             MouseArea {
                                 anchors.fill: parent
@@ -231,6 +222,7 @@ Item {
                             }
                         }
                     }
+
 
                     Row {
                         Label {
@@ -245,7 +237,6 @@ Item {
 
                             MouseArea {
                                 anchors.fill: parent
-
                                 onClicked: productPage.openSellerPage()
                             }
                         }
@@ -343,10 +334,6 @@ Item {
         Item {
             id: reviewsPageItem
 
-            Behavior on opacity {
-                PropertyAnimation {}
-            }
-
             Rectangle {
                 id: reviewHeader
 
@@ -368,7 +355,7 @@ Item {
                 RoundButton {
                     id: closeReviewsButton
                     flat: true
-                    text: qsTr("←")
+                    icon.source: Icons.arrowBack
                     onClicked: sv.currentIndex = 0
 
                     anchors {
@@ -390,6 +377,7 @@ Item {
             }
 
             ListView {
+                id: reviews
 
                 anchors {
                     margins: 10
@@ -405,13 +393,10 @@ Item {
 
                 spacing: 20
 
-                // FIXME: Replace model with proper QAbstractItemModel
-                model: sampleReviewModel
-
                 delegate: Rectangle {
 
                     radius: 3
-                    width: parent.width
+                    width: reviews.width
                     height: col.implicitHeight + (col.anchors.margins * 2)
 
 
@@ -447,11 +432,12 @@ Item {
                             wrapMode: Text.WordWrap
                             width: parent.width
                             text: model.description
+                            visible: model.description.length > 0
                         }
                     }
                 }
             }
-
         }
     }
 }
+

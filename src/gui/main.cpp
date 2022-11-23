@@ -59,6 +59,7 @@ int main(int argc, char *argv[]) {
     std::cout << "network_type: " << network_type << std::endl;
     // import paths
     engine.addImportPath(":/fonts"); // import FontAwesome 1.0
+    engine.addImportPath(":/images"); // import Icons 1.0
     // platform macros
     engine.rootContext()->setContextProperty("isLinux", isLinux);
     engine.rootContext()->setContextProperty("isWindows", isWindows);
