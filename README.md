@@ -63,7 +63,7 @@ Neroshop aims to be simple for a beginner to use and easy for sellers to onboard
 |      Library                                                       | Minimum Ver.       |         Purpose                                                        | Status                                   |
 |--------------------------------------------------------------------|--------------------|------------------------------------------------------------------------|------------------------------------------|
 | [monero-cpp](https://github.com/monero-ecosystem/monero-cpp)       | latest             | monero wallet and payment system                                       | :heavy_check_mark:                       |
-| [libbcrypt](https://github.com/rg3/libbcrypt)                      | 1.3                | password hashing                                                       | :o:                                      |
+| [libbcrypt](https://github.com/rg3/libbcrypt)                      | 1.3                | password hashing                                                       | :x:                                      |
 | [sqlite3](https://sqlite.org/)                                     | 3.38.0             | database management                                                    | :heavy_check_mark:                       |
 | [QR Code generator](https://github.com/nayuki/QR-Code-generator)   | ?                  | qr code generation                                                     | :heavy_check_mark:                       |
 | [json](https://github.com/nlohmann/json/)                          | ?                  | json parsing                                                           | :o:                                      |
@@ -223,7 +223,7 @@ You may support the neroshop project directly by donating Monero (XMR) to the ad
 
 
 ## Credits
-Credits to [u/EchoingCat](https://www.reddit.com/u/EchoingCat) for the official neroshop logo design
+Official neroshop logo design — [u/EchoingCat](https://www.reddit.com/u/EchoingCat)
 
 
 [//]: # (./clean.sh)

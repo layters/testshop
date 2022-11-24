@@ -46,7 +46,11 @@
         <file>fonts/FontAwesome/qmldir</file>
         <!--<file>fonts/FontAwesome/svgs/</file>-->
         <!-- images -->
-        <!--<file>images/appicons/neroshop-logo.png</file> -->
+        <file>images/appicons/LogoLight250x250.png</file>
+        <file>images/appicons/LogoLight375x375.png</file>
+        <file>images/appicons/LogoLight500x500.png</file>
+        <file>images/appicons/LogoLight1000x1000.png</file>
+        <file>images/appicons/LogoLight1500x1500.png</file>
         <file>images/cart.png</file>
         <file>images/clipboard.png</file>
         <file>images/cog.png</file>
