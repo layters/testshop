@@ -47,7 +47,7 @@ import "." as NeroshopComponents
                 
                     width: 128
                     height: 128
-                    fillMode:Image.Stretch
+                    fillMode: Image.Stretch
                     mipmap: true
                     
                     MouseArea {

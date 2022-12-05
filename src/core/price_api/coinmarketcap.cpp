@@ -44,7 +44,7 @@ const std::map<neroshop::Currency, QString> CURRENCY_TO_ID{
 
 }
 
-std::optional<double> CoinMarketCapPriceSource::price(neroshop::Currency from, neroshop::Currency to) const
+std::optional<double> CoinMarketCapApi::price(neroshop::Currency from, neroshop::Currency to) const
 {
     auto it = CURRENCY_TO_ID.find(from);
     if (it == CURRENCY_TO_ID.cend()) {

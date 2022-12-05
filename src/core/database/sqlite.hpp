@@ -43,6 +43,8 @@ public:
 	int get_integer_params(const std::string& command, const std::vector<std::string>& args);
 	double get_real(const std::string& command); // NOTE: both floats and doubles are of the 'real' datatype
 	double get_real_params(const std::string& command, const std::vector<std::string>& args);
+
+	std::vector<std::string> get_rows(const std::string& command);
     // boolean
     bool is_open() const;
     bool table_exists(const std::string& table_name);

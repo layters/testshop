@@ -57,6 +57,8 @@ int main(int argc, char *argv[]) {
     neroshop::open_configuration_file();
     std::string network_type = Script::get_string(lua_state, "neroshop.monero.daemon.network_type");
     std::cout << "network_type: " << network_type << std::endl;
+    // start database
+    Backend::initializeDatabase();
     // import paths
     engine.addImportPath(":/fonts"); // import FontAwesome 1.0
     // platform macros

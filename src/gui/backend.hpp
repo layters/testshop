@@ -31,8 +31,10 @@ public:
     Q_INVOKABLE QString getCurrencySign(const QString& currency) const;
     Q_INVOKABLE bool isSupportedCurrency(const QString& currency) const;
     
-    //Q_INVOKABLE bool initializeDatabase() const;
-    Q_INVOKABLE void testFunction(gui::Wallet * wallet);
+    /*Q_INVOKABLE */static void initializeDatabase(); // Cannot be a Q_INVOKABLE since it will only be used in C++
+    static std::string getDatabaseHash();
+    Q_INVOKABLE QVariantList getCategoryList() const;
+    //Q_INVOKABLE QStringList getSubCategoryList(int category_id);
     
     Q_INVOKABLE void registerUser();
     Q_INVOKABLE void loginWithWalletFile();
@@ -40,8 +42,21 @@ public:
     Q_INVOKABLE void loginWithKeys();
     Q_INVOKABLE void loginWithHW();
     
-    // catalog functions here
-    // seller/user functions here
+    //Q_INVOKABLE QVariantList getListings(); // Products listed by sellers
+    //Q_INVOKABLE QVariantList getListingsByMostRecent();
+    //Q_INVOKABLE QVariantList getListingsByMostFavorited();
+    //Q_INVOKABLE QVariantList getListingsByMostSales();
+    //Q_INVOKABLE QVariantList getProducts(); // Registered products
+    //Q_INVOKABLE QVariantList get();
+    
+    ////Q_INVOKABLE void listItem();
+    //Q_INVOKABLE void addToCart();
+    //Q_INVOKABLE void createOrder();
+    //Q_INVOKABLE void rateItem();
+    //Q_INVOKABLE void rateSeller();
+    //Q_INVOKABLE void addToFavorites();
+    //Q_INVOKABLE void removeFromFavorites();
+    //Q_INVOKABLE void ();
 private:
 };
 }

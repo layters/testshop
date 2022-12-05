@@ -21,7 +21,9 @@
 #include <sstream> // std::ostringstream
 #include <vector>
 #include <algorithm> // std::transform
+#if defined(__cplusplus) && (__cplusplus >= 201703L)
 #include <filesystem> // std::filesystem
+#endif
 
 namespace neroshop {
 

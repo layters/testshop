@@ -48,7 +48,7 @@ bool is_currency(neroshop::Currency c)
 
 } // namespace
 
-std::optional<double> CoinTelegraphPriceSource::price(neroshop::Currency from, neroshop::Currency to) const
+std::optional<double> CoinTelegraphApi::price(neroshop::Currency from, neroshop::Currency to) const
 {
     if (is_currency(from) && is_currency(to)) {
         return std::nullopt;

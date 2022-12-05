@@ -2,6 +2,7 @@ import QtQuick 2.12
 import QtQuick.Controls 2.12
 import QtQuick.Layouts 1.12
 //import QtGraphicalEffects 1.12
+import Qt.labs.platform 1.1 // FileDialog (since Qt 5.8) // change to "import QtQuick.Dialogs" if using Qt 6.2
 
 import FontAwesome 1.0
 import "." as NeroshopComponents
@@ -21,7 +22,7 @@ Popup {
         implicitHeight: 500
         color: NeroshopComponents.Style.getColorsFromTheme()[2]
         border.color: "white"
-        //DragHandler { target: settingsDialog }
+        //DragHandler { target: settingsDialog }   
         
         Rectangle {
             id: titleBar
@@ -56,7 +57,20 @@ Popup {
             }
         }
     }
+
+    FileDialog {
+        id: moneroDaemonFileDialog
+        fileMode: FileDialog.OpenFile
+        currentFile: monerodLocationField.text // currentFile is deprecated since Qt 6.3. Use selectedFile instead
+        folder: (isWindows) ? StandardPaths.writableLocation(StandardPaths.DocumentsLocation) + "/neroshop" : StandardPaths.writableLocation(StandardPaths.HomeLocation) + "/neroshop"
+        nameFilters: ["Executable files (*.exe *.AppImage *)"]
+    }   
     
+    FolderDialog {
+        id: moneroDataDirFolderDialog
+        currentFolder: moneroDataDirField.text
+    }
+              
         TabBar {
             id: settingsBar
             anchors.top: parent.top
@@ -263,6 +277,256 @@ Popup {
             } // GroupBox3    
             
         } // ColumnLayout (positions items vertically (up-and-down) I think, while RowLayout items are side-by-side)
+        
+        // Monero settings
+            GridLayout {
+                id: moneroSettings
+                Layout.minimumWidth: parent.width - 10 // 10 is the scrollView's right margin
+                            
+                    
+                Frame { //GroupBox {
+                    //title: qsTr("Select a node type")
+                    Layout.row: 0
+                    Layout.alignment: Qt.AlignHCenter
+                    Layout.preferredWidth: 500//250////Layout.fillWidth: true
+                    Layout.preferredHeight: contentHeight + (contentHeight / 2)//implicitContentHeight
+                    /*label: Label {
+                        text: parent.title
+                        color: (NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000"
+                        font.bold: true
+                    }*/
+                    background: Rectangle {
+                        radius: 3
+                        color: "transparent"
+                        border.color: (NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000"
+                    }
+                    
+                    RowLayout {
+                        spacing: (contentWidth + remoteNodeLabel.contentWidth)//20//100
+                        anchors.verticalCenter: parent.verticalCenter
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        anchors.fill: parent
+                                        
+                        ButtonGroup { 
+                            id: nodeTypeGroup 
+                            onClicked: { console.log("Selected condition:", button.text) }
+                        }
+
+                        RadioButton {
+                            id: remoteNodeButton
+                            checked: true
+                            ButtonGroup.group: nodeTypeGroup
+                            Label {
+                                id: remoteNodeLabel
+                                anchors.left: parent.right
+                                anchors.leftMargin: 0
+                                anchors.verticalCenter: parent.verticalCenter
+                                text: FontAwesome.cloud//"Remote node"
+                                color: (NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000"
+                                font.bold: true
+                                //font.family: FontAwesome.fontFamily
+                                font.pointSize: 15
+                            }                               
+                        }
+
+                        RadioButton {
+                            id: localNodeButton
+                            checked: false
+                            ButtonGroup.group: nodeTypeGroup
+                            Label {
+                                anchors.left: parent.right
+                                anchors.leftMargin: 0
+                                anchors.verticalCenter: parent.verticalCenter
+                                text: FontAwesome.house//"Local node"
+                                color: (NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000"
+                                font.bold: true
+                                font.family: FontAwesome.fontFamily
+                                font.pointSize: 15
+                            }                            
+                        }                                                
+                    }               
+                } // GroupBox or Frame         
+                
+                TextField {
+                    id: monerodLocationField
+                    Layout.row: 1
+                    Layout.alignment: Qt.AlignHCenter
+                    //Layout.fillWidth: true
+                    Layout.preferredWidth: 500
+                    Layout.preferredHeight: 50
+                    placeholderText: qsTr("monerod"); placeholderTextColor: (NeroshopComponents.Style.darkTheme) ? "#a9a9a9" : "#696969"
+                    color: (NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000"
+                    selectByMouse: true
+                    text: moneroDaemonFileDialog.file
+                
+                    background: Rectangle { 
+                        color: (NeroshopComponents.Style.darkTheme) ? "#101010" : "#ffffff"
+                        border.color: (NeroshopComponents.Style.darkTheme) ? "#a9a9a9" : "#696969"
+                        radius: 3
+                    }       
+                    // 
+                    rightPadding: 15 + moneroDaemonFileSelectionButton.width
+                    // 
+                    Button {
+                        id: moneroDaemonFileSelectionButton
+                        text: FontAwesome.ellipsis
+                        anchors.right: parent.right
+                        anchors.rightMargin: 10
+                        anchors.verticalCenter: parent.verticalCenter
+                        implicitWidth: 32; implicitHeight: 24
+                        hoverEnabled: true
+                        onClicked: moneroDaemonFileDialog.open()
+                        background: Rectangle {
+                            color: NeroshopComponents.Style.moneroGrayColor
+                            radius: 5
+                        }
+                        contentItem: Text {
+                            text: parent.text
+                            color: "#ffffff"
+                            verticalAlignment: Text.AlignVCenter
+                            horizontalAlignment: Text.AlignHCenter
+                            font.bold: true
+                        }
+                    }                                 
+                }
+                
+                TextField {
+                    id: moneroDataDirField
+                    Layout.row: 2
+                    Layout.alignment: Qt.AlignHCenter
+                    Layout.preferredWidth: 500
+                    Layout.preferredHeight: 50
+                    property string defaultMoneroDataDirFolder: (isWindows) ? StandardPaths.writableLocation(StandardPaths.AppDataLocation) + "/bitmonero" : StandardPaths.writableLocation(StandardPaths.HomeLocation) + "/.bitmonero" // C:/ProgramData/bitmonero (Windows) or ~/.bitmonero (Linux and Mac OS X)
+                    placeholderText: qsTr(defaultMoneroDataDirFolder); placeholderTextColor: (NeroshopComponents.Style.darkTheme) ? "#a9a9a9" : "#696969"
+                    color: (NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000"
+                    selectByMouse: true
+                    text: moneroDataDirFolderDialog.folder
+                
+                    background: Rectangle { 
+                        color: (NeroshopComponents.Style.darkTheme) ? "#101010" : "#ffffff"
+                        border.color: (NeroshopComponents.Style.darkTheme) ? "#a9a9a9" : "#696969"
+                        radius: 3
+                    }      
+                    rightPadding: 15 + moneroDataDirFolderSelectionButton.width
+                    Button {
+                        id: moneroDataDirFolderSelectionButton
+                        text: FontAwesome.ellipsis
+                        anchors.right: parent.right
+                        anchors.rightMargin: 10
+                        anchors.verticalCenter: parent.verticalCenter
+                        implicitWidth: 32; implicitHeight: 24
+                        hoverEnabled: true
+                        onClicked: moneroDataDirFolderDialog.open()
+                        background: Rectangle {
+                            color: NeroshopComponents.Style.moneroGrayColor
+                            radius: 5
+                        }
+                        contentItem: Text {
+                            text: parent.text
+                            color: "#ffffff"
+                            verticalAlignment: Text.AlignVCenter
+                            horizontalAlignment: Text.AlignHCenter
+                            font.bold: true
+                        }
+                    }                                  
+                }
+                
+                Rectangle {
+                    Layout.row: 3
+                    Layout.alignment: Qt.AlignHCenter
+                    Layout.preferredWidth: 500////Layout.fillWidth: true
+                    Layout.preferredHeight: 50
+                    radius: 3
+                    color: "transparent"
+                    //border.color: (NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000"         
+                    
+                    RowLayout {
+                        anchors.fill: parent
+                                       
+                        /*Label {
+                            id: networkTypeLabel
+                            text: qsTr("Network Type")
+                            color: (NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000"
+                            Layout.alignment: Qt.AlignLeft
+                            Layout.leftMargin: 5//25
+                        }*/
+                        
+                        ComboBox {
+                            id: moneroNetworkTypeBox
+                            model: ["mainnet", "stagenet", "testnet"]
+                            currentIndex: model.indexOf(Script.getString("neroshop.monero.daemon.network_type").toLowerCase())
+                            displayText: currentText
+                            Layout.fillWidth: true/*Layout.alignment: Qt.AlignRight
+                            Layout.rightMargin: 5*/
+                        
+                            onActivated: {    
+                                displayText = currentText
+                                // = displayText
+                            }
+                        }
+                    }
+                }
+
+                RowLayout {
+                    Layout.row: 4
+                    Layout.alignment: Qt.AlignHCenter
+                    
+                    TextField {
+                        id: moneroIPField
+                        ////Layout.row: 4
+                        ////Layout.alignment: Qt.AlignHCenter
+                        Layout.preferredWidth: 250////500
+                        Layout.preferredHeight: 50
+                        placeholderText: qsTr(/*(confirmExternalBindSwitch.checked) ? "0.0.0.0" : */Script.getString("neroshop.monero.daemon.ip")); placeholderTextColor: (NeroshopComponents.Style.darkTheme) ? "#a9a9a9" : "#696969"
+                        color: (NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000"
+                        selectByMouse: true
+                
+                        background: Rectangle { 
+                            color: (NeroshopComponents.Style.darkTheme) ? "#101010" : "#ffffff"
+                            border.color: (NeroshopComponents.Style.darkTheme) ? "#a9a9a9" : "#696969"
+                            radius: 3
+                        }               
+                    }
+                
+                    TextField {
+                        id: moneroPortField
+                        ////Layout.row: 5
+                        ////Layout.alignment: Qt.AlignHCenter
+                        Layout.preferredWidth: 245 // Default row spacing is 5 so this is reduced by 5////500
+                        Layout.preferredHeight: 50
+                        //property string portByNetworkType: {}
+                        placeholderText: qsTr(Script.getString("neroshop.monero.daemon.port")); placeholderTextColor: (NeroshopComponents.Style.darkTheme) ? "#a9a9a9" : "#696969"
+                        color: (NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000"
+                        selectByMouse: true
+                
+                        background: Rectangle { 
+                            color: (NeroshopComponents.Style.darkTheme) ? "#101010" : "#ffffff"
+                            border.color: (NeroshopComponents.Style.darkTheme) ? "#a9a9a9" : "#696969"
+                            radius: 3
+                        }     
+                    }          
+                }                  
+                /*Row {
+                    NeroshopComponents.Switch {
+                        id: confirmExternalBindSwitch
+                        Layout.row: 5
+                    }
+                }
+                Row {
+                    NeroshopComponents.Switch {
+                        id: restrictedRpcSwitch
+                        Layout.row: 6
+                    }                
+                }
+                //ListView {}
+                //    id: remoteNodeList
+                //}
+                // manage daemon buttons: stop daemon, start daemon, etc.
+                //Button {
+                    //id:saveSettingsButton
+                //}
+                */                
+            } // moneroSettings
         } // StackLayout
     } // ScrollView 
 }

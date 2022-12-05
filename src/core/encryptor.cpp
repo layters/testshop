@@ -490,4 +490,51 @@ bool neroshop::Encryptor::verify_signature(const EVP_PKEY * verify_key, const st
 }
 ////////////////////
 ////////////////////
+std::string neroshop::Encryptor::private_sign(const std::string& private_key, const std::string& message) {
+    // Write the private key to a BIO
+    BIO * bio_private = BIO_new(BIO_s_mem());
+    if(BIO_write(bio_private, private_key.c_str(), private_key.length()) <= 0) {
+        neroshop::print("BIO_write failed", 1);
+        return "";
+    }    
+    // Store the private key in a EVP_PKEY*
+    EVP_PKEY * pkey = PEM_read_bio_PrivateKey(bio_private, nullptr, nullptr, nullptr);
+    if(pkey == nullptr) { 
+        BIO_free_all(bio_private);
+        neroshop::print("PEM_read_bio_PrivateKey failed", 1); 
+        return ""; 
+    }
+    // Free the bio since we no longer need it
+    BIO_free_all(bio_private);
+    // We will now get the signature
+    std::string signature = sign_message(pkey, message);
+    // Free the pkey now that we are done with it
+    EVP_PKEY_free(pkey);    
+    // Return the signature
+    return signature;
+}
+
+bool neroshop::Encryptor::public_verify(const std::string& public_key, const std::string& message, const std::string& signature) {
+    // Write the public key to a BIO
+    BIO * bio_public = BIO_new(BIO_s_mem());
+    if(BIO_write(bio_public, public_key.c_str(), public_key.length()) <= 0) {
+        neroshop::print("BIO_write failed", 1);
+        return false;
+    }
+    // Store the public key in a EVP_PKEY*
+    EVP_PKEY * pkey = PEM_read_bio_PUBKEY(bio_public, nullptr, nullptr, nullptr); // or // EVP_PKEY * pkey = nullptr; PEM_read_bio_PUBKEY(bio_public, &pkey, nullptr, nullptr);
+    if(pkey == nullptr) {
+        BIO_free_all(bio_public);
+        neroshop::print("PEM_read_bio_PUBKEY failed", 1); 
+        return false;
+    }
+    // Free the bio since we no longer need it
+    BIO_free_all(bio_public);
+    // We will now verify the signature
+    bool verified = verify_signature(pkey, message, signature);
+    // Free the pkey now that we are done with it
+    EVP_PKEY_free(pkey);
+    // Return the verification result
+    return verified;
+}
 ////////////////////
