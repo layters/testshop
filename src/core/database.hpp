@@ -3,7 +3,7 @@
 
 #if defined(NEROSHOP_USE_QT)
 #include <QStandardPaths>
-#define NEROSHOP_DEFAULT_DATABASE_PATH QStandardPaths::writableLocation(QStandardPaths::AppConfigLocation) //(QStandardPaths::AppLocalDataLocation)
+#define NEROSHOP_DEFAULT_DATABASE_PATH QStandardPaths::writableLocation(QStandardPaths::AppConfigLocation).toStdString() //(QStandardPaths::AppLocalDataLocation).toStdString()
 #endif
 
 #if !defined(NEROSHOP_USE_QT)
@@ -14,10 +14,6 @@
 #define NEROSHOP_DEFAULT_DATABASE_PATH "C:/Users/" + neroshop::device::get_user() + "/AppData/Local/neroshop"
 #endif
 #endif // endif !defined(NEROSHOP_USE_QT)
-
-#define NEROSHOP_DATABASE_NAME "data"
-#define NEROSHOP_DATABASE_EXTENSION "sqlite3"
-#define NEROSHOP_DATABASE_FILE NEROSHOP_DATABASE_NAME "." NEROSHOP_DATABASE_EXTENSION
 
 #include "database/sqlite.hpp"
 

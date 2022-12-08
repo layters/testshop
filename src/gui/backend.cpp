@@ -53,13 +53,9 @@ bool neroshop::Backend::isSupportedCurrency(const QString& currency) const {
 void neroshop::Backend::initializeDatabase() {
     std::cout << "sqlite3 v" << db::Sqlite3::get_sqlite_version() << std::endl;
     
-    db::Sqlite3 * database = db::Sqlite3::get_singleton();//std::unique_ptr<db::Sqlite3> database = std::make_unique<db::Sqlite3>();
-    if(!database->open("data.sqlite3")) {
-        neroshop::print("database could not be opened", 1);
-    }
+    db::Sqlite3 * database = db::Sqlite3::get_database();
     database->execute("BEGIN;");
      //-------------------------
-    
     
     // table users
     if(!database->table_exists("users")) { 
@@ -169,7 +165,6 @@ void neroshop::Backend::initializeDatabase() {
         //database->execute("ALTER TABLE images ADD COLUMN ?col ?datatype;");
         //database->execute("ALTER TABLE images ADD COLUMN ?col ?datatype;");
     }    
-    //-------------------------
     // avatars - each user will have a single avatar
     if(!database->table_exists("avatars")) {
         //database->execute("CREATE TABLE avatars(id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT);");
@@ -251,7 +246,7 @@ std::string neroshop::Backend::getDatabaseHash() {
 
 QVariantList neroshop::Backend::getCategoryList() const {
     // Do some database reading to fetch each category row (database reads do not require consensus)
-    neroshop::db::Sqlite3 * database = neroshop::db::Sqlite3::get_singleton();
+    neroshop::db::Sqlite3 * database = neroshop::db::Sqlite3::get_database();
     if(!database->get_handle()) throw std::runtime_error("database is not connected");
     sqlite3_stmt * stmt = nullptr;
     // Prepare (compile) statement
@@ -266,7 +261,7 @@ QVariantList neroshop::Backend::getCategoryList() const {
     }
     
     QVariantList category_list;
-    // Get all table values row by row instead of column by column
+    // Get all table values row by row
     while(sqlite3_step(stmt) == SQLITE_ROW) {
         QVariantMap category_object; // Create an object for each row
         for(int i = 0; i < sqlite3_column_count(stmt); i++) {

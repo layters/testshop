@@ -145,19 +145,24 @@ Popup {
         anchors.leftMargin: 10; anchors.rightMargin: anchors.leftMargin
         //contentWidth: configSettings.width; 
         //contentHeight: configSettings.height
-        //clip: true
-        ScrollBar.vertical.policy: ScrollBar.AlwaysOn
+        clip: true
+        ScrollBar.vertical.policy: ScrollBar.AsNeeded//ScrollBar.AlwaysOn
         background: Rectangle { color: "transparent"; /*border.color: "blue"*/ } // todo: remove border from ScrollView
     
         StackLayout {
             id: settingsStack
             anchors.fill: parent//anchors.top: parent.top//settingsBar.bottom
-        ColumnLayout {
+        GridLayout {
             id: generalSettings
+            Layout.preferredWidth: parent.width//Layout.minimumWidth: parent.width - 10 // 10 is the scrollView's right margin
             //Layout.topMargin: 20 //Layout.fillWidth: true//Layout.alignment//anchors.fill: parent
             //spacing: 10
             GroupBox {
+                Layout.row: 0
+                Layout.alignment: Qt.AlignHCenter
+                Layout.preferredWidth: 500
                 title: qsTr("Currency")
+                
                 background: Rectangle {
                     y: parent.topPadding - parent.bottomPadding
                     width: parent.width
@@ -175,12 +180,18 @@ Popup {
                 }
                 // GroupBox content goes here
                 RowLayout {
-                    spacing: 200 // spacing between Row items
+                    //spacing: 200 // spacing between Row items
+                    anchors.fill: parent
                     Text {
                         text: qsTr("Preffered local currency:")
+                        color: (NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000"
+                        Layout.alignment: Qt.AlignLeft
+                        Layout.leftMargin: 0
                     }
                     ComboBox {
                         id: currencyBox
+                        Layout.alignment: Qt.AlignRight
+                        Layout.rightMargin: 0
                         currentIndex: model.indexOf(Script.getString("neroshop.generalsettings.currency").toUpperCase())
                         displayText: currentText
                         ////property string lastCurrencySet: (Script.getString("neroshop.generalsettings.currency")) ? Script.getString("neroshop.generalsettings.currency") : "USD"
@@ -204,6 +215,9 @@ Popup {
             }
 
             GroupBox {
+                Layout.row: 1
+                Layout.alignment: Qt.AlignHCenter
+                Layout.preferredWidth: 500
                 title: qsTr("Application")
                 //width: scrollView.width//contentWidth // does nothing
                 background: Rectangle {
@@ -223,11 +237,17 @@ Popup {
                 }
                 
                 RowLayout {
+                    anchors.fill: parent
                     Text {
                         text: qsTr("Theme:")
+                        color: (NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000"
+                        Layout.alignment: Qt.AlignLeft
+                        Layout.leftMargin: 0
                     }
                     ComboBox {
                         id: themeBox
+                        Layout.alignment: Qt.AlignRight
+                        Layout.rightMargin: 0
                         currentIndex: model.indexOf(NeroshopComponents.Style.themeName)//Component.onCompleted: currentIndex = model.indexOf(NeroshopComponents.Style.themeName) // Set the initial currentIndex to the index in the array containing themeName string
                         displayText: currentText
                         property string lastUsedDarkTheme: (Script.getBoolean("neroshop.generalsettings.application.theme.dark")) ? Script.getString("neroshop.generalsettings.application.theme.name") : "DefaultDark"
@@ -258,7 +278,11 @@ Popup {
                 } // RowLayout2
            } // GroupBox2        
                        GroupBox {
+                       Layout.row: 2
+                       Layout.alignment: Qt.AlignHCenter
+                       Layout.preferredWidth: 500
                 title: qsTr("Language")
+                
                 background: Rectangle {
                     y: parent.topPadding - parent.bottomPadding
                     width: parent.width
@@ -282,6 +306,7 @@ Popup {
             GridLayout {
                 id: moneroSettings
                 Layout.minimumWidth: parent.width - 10 // 10 is the scrollView's right margin
+                //rowSpacing:  // The default value is 5 but we'll set this later
                             
                     
                 Frame { //GroupBox {
@@ -349,12 +374,13 @@ Popup {
                 
                 TextField {
                     id: monerodLocationField
-                    Layout.row: 1
+                    Layout.row: 1//(localNodeButton.checked) ? 1 : 2
                     Layout.alignment: Qt.AlignHCenter
                     //Layout.fillWidth: true
                     Layout.preferredWidth: 500
                     Layout.preferredHeight: 50
-                    placeholderText: qsTr("monerod"); placeholderTextColor: (NeroshopComponents.Style.darkTheme) ? "#a9a9a9" : "#696969"
+                    ////visible: (localNodeButton.checked) // error: Qt Quick Layouts: Polish loop detected. Aborting after two iterations.
+                    placeholderText: qsTr((isWindows) ? "monerod.exe" : "monerod"); placeholderTextColor: (NeroshopComponents.Style.darkTheme) ? "#a9a9a9" : "#696969"
                     color: (NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000"
                     selectByMouse: true
                     text: moneroDaemonFileDialog.file
@@ -392,10 +418,11 @@ Popup {
                 
                 TextField {
                     id: moneroDataDirField
-                    Layout.row: 2
+                    Layout.row: 2//(localNodeButton.checked) ? 2 : 3
                     Layout.alignment: Qt.AlignHCenter
                     Layout.preferredWidth: 500
                     Layout.preferredHeight: 50
+                    ////visible: (localNodeButton.checked)
                     property string defaultMoneroDataDirFolder: (isWindows) ? StandardPaths.writableLocation(StandardPaths.AppDataLocation) + "/bitmonero" : StandardPaths.writableLocation(StandardPaths.HomeLocation) + "/.bitmonero" // C:/ProgramData/bitmonero (Windows) or ~/.bitmonero (Linux and Mac OS X)
                     placeholderText: qsTr(defaultMoneroDataDirFolder); placeholderTextColor: (NeroshopComponents.Style.darkTheme) ? "#a9a9a9" : "#696969"
                     color: (NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000"
@@ -430,54 +457,103 @@ Popup {
                         }
                     }                                  
                 }
-                
-                Rectangle {
-                    Layout.row: 3
-                    Layout.alignment: Qt.AlignHCenter
-                    Layout.preferredWidth: 500////Layout.fillWidth: true
-                    Layout.preferredHeight: 50
-                    radius: 3
-                    color: "transparent"
-                    //border.color: (NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000"         
-                    
-                    RowLayout {
-                        anchors.fill: parent
-                                       
-                        /*Label {
-                            id: networkTypeLabel
-                            text: qsTr("Network Type")
-                            color: (NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000"
-                            Layout.alignment: Qt.AlignLeft
-                            Layout.leftMargin: 5//25
-                        }*/
-                        
-                        ComboBox {
-                            id: moneroNetworkTypeBox
-                            model: ["mainnet", "stagenet", "testnet"]
-                            currentIndex: model.indexOf(Script.getString("neroshop.monero.daemon.network_type").toLowerCase())
-                            displayText: currentText
-                            Layout.fillWidth: true/*Layout.alignment: Qt.AlignRight
-                            Layout.rightMargin: 5*/
-                        
-                            onActivated: {    
-                                displayText = currentText
-                                // = displayText
-                            }
-                        }
-                    }
-                }
 
                 RowLayout {
-                    Layout.row: 4
+                    Layout.row: 3//(localNodeButton.checked) ? 3 : 1
                     Layout.alignment: Qt.AlignHCenter
+                    ////visible: (localNodeButton.checked)
                     
                     TextField {
-                        id: moneroIPField
-                        ////Layout.row: 4
-                        ////Layout.alignment: Qt.AlignHCenter
-                        Layout.preferredWidth: 250////500
+                        id: moneroDaemonIPField
+                        Layout.preferredWidth: (moneroDaemonPortField.width * 3) - parent.spacing // Default row spacing is 5 so the width is reduced by 5
                         Layout.preferredHeight: 50
-                        placeholderText: qsTr(/*(confirmExternalBindSwitch.checked) ? "0.0.0.0" : */Script.getString("neroshop.monero.daemon.ip")); placeholderTextColor: (NeroshopComponents.Style.darkTheme) ? "#a9a9a9" : "#696969"
+                        placeholderText: qsTr((confirmExternalBindSwitch.checked) ? "0.0.0.0" : Script.getString("neroshop.monero.daemon.ip")); placeholderTextColor: (NeroshopComponents.Style.darkTheme) ? "#a9a9a9" : "#696969"
+                        color: (NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000"
+                        selectByMouse: true
+                        readOnly: localNodeButton.checked
+                
+                        background: Rectangle { 
+                            color: (NeroshopComponents.Style.darkTheme) ? "#101010" : "#ffffff"
+                            border.color: (NeroshopComponents.Style.darkTheme) ? "#a9a9a9" : "#696969"
+                            radius: 3
+                        }               
+                    }
+                
+                    TextField {
+                        id: moneroDaemonPortField
+                        Layout.preferredWidth: (500 / 4)
+                        Layout.preferredHeight: 50
+                        placeholderText: qsTr(Script.getString("neroshop.monero.daemon.port")); placeholderTextColor: (NeroshopComponents.Style.darkTheme) ? "#a9a9a9" : "#696969"
+                        color: (NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000"
+                        selectByMouse: true
+                        readOnly: localNodeButton.checked
+                
+                        background: Rectangle { 
+                            color: (NeroshopComponents.Style.darkTheme) ? "#101010" : "#ffffff"
+                            border.color: (NeroshopComponents.Style.darkTheme) ? "#a9a9a9" : "#696969"
+                            radius: 3
+                        }     
+                    }          
+                }          
+                        
+                RowLayout {
+                    Layout.row: 4//(localNodeButton.checked) ? 4 : 2
+                    Layout.alignment: Qt.AlignHCenter
+                    Layout.preferredWidth: 500
+                    ////visible: (localNodeButton.checked)
+                    
+                    Label {
+                        Layout.alignment: Qt.AlignLeft
+                        Layout.leftMargin: 0
+                        text: qsTr("Confirm external bind")
+                        color: (NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000"
+                        font.bold: true
+                    }
+                    
+                    NeroshopComponents.Switch {
+                        id: confirmExternalBindSwitch
+                        Layout.alignment: Qt.AlignRight
+                        Layout.rightMargin: 5
+                        checked: Script.getBoolean("neroshop.monero.daemon.confirm_external_bind");//false
+                        radius: 13
+                        backgroundCheckedColor: NeroshopComponents.Style.moneroOrangeColor
+                    }
+                }
+                
+                RowLayout {
+                    Layout.row: 5//(localNodeButton.checked) ? 5 : 3
+                    Layout.alignment: Qt.AlignHCenter
+                    Layout.preferredWidth: 500
+                    ////visible: (localNodeButton.checked)
+
+                    Label {
+                        Layout.alignment: Qt.AlignLeft
+                        Layout.leftMargin: 0
+                        text: qsTr("Restricted RPC")
+                        color: (NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000"
+                        font.bold: true
+                    }
+                                        
+                    NeroshopComponents.Switch {
+                        id: restrictedRpcSwitch
+                        Layout.alignment: Qt.AlignRight
+                        Layout.rightMargin: 5
+                        checked: Script.getBoolean("neroshop.monero.daemon.restricted_rpc");//true
+                        radius: 13
+                        backgroundCheckedColor: NeroshopComponents.Style.moneroOrangeColor
+                    }                
+                }
+                // todo: add rpc-login option so full node mainainers can require a login in order for others to connect to their daemon
+                /*RowLayout {
+                    Layout.row: 6//(localNodeButton.checked) ? 6 : 4
+                    Layout.alignment: Qt.AlignHCenter
+                    ////visible: (localNodeButton.checked)
+                    
+                    TextField {
+                        id: moneroDaemonRpcLoginUser
+                        Layout.preferredWidth: (500 / 2) - parent.spacing // Default row spacing is 5 so the width is reduced by 5
+                        Layout.preferredHeight: 50
+                        placeholderText: qsTr("RPC Login Username (optional)"); placeholderTextColor: (NeroshopComponents.Style.darkTheme) ? "#a9a9a9" : "#696969"
                         color: (NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000"
                         selectByMouse: true
                 
@@ -489,13 +565,10 @@ Popup {
                     }
                 
                     TextField {
-                        id: moneroPortField
-                        ////Layout.row: 5
-                        ////Layout.alignment: Qt.AlignHCenter
-                        Layout.preferredWidth: 245 // Default row spacing is 5 so this is reduced by 5////500
+                        id: moneroDaemonRpcLoginPwd
+                        Layout.preferredWidth: (500 / 2)
                         Layout.preferredHeight: 50
-                        //property string portByNetworkType: {}
-                        placeholderText: qsTr(Script.getString("neroshop.monero.daemon.port")); placeholderTextColor: (NeroshopComponents.Style.darkTheme) ? "#a9a9a9" : "#696969"
+                        placeholderText: qsTr("RPC Login Password (optional)"); placeholderTextColor: (NeroshopComponents.Style.darkTheme) ? "#a9a9a9" : "#696969"
                         color: (NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000"
                         selectByMouse: true
                 
@@ -505,21 +578,11 @@ Popup {
                             radius: 3
                         }     
                     }          
-                }                  
-                /*Row {
-                    NeroshopComponents.Switch {
-                        id: confirmExternalBindSwitch
-                        Layout.row: 5
-                    }
-                }
-                Row {
-                    NeroshopComponents.Switch {
-                        id: restrictedRpcSwitch
-                        Layout.row: 6
-                    }                
-                }
-                //ListView {}
+                }*/                
+                /*//ScrollView { // NO need for this. TableView provides a scrollbar
+                //ListView { // NO need for this. TableView provides a listview
                 //    id: remoteNodeList
+                //}
                 //}
                 // manage daemon buttons: stop daemon, start daemon, etc.
                 //Button {

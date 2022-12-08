@@ -14,8 +14,6 @@ neroshop::db::Sqlite3::~Sqlite3() {
     close();
 }
 ////////////////////
-std::unique_ptr<neroshop::db::Sqlite3> neroshop::db::Sqlite3::singleton (nullptr);//(std::make_unique<neroshop::db::Sqlite3>());
-////////////////////
 // SQLite database should only need to be opened once per application session and closed once when the application is terminated
 bool neroshop::db::Sqlite3::open(const std::string& filename)
 {
@@ -108,11 +106,11 @@ sqlite3 * neroshop::db::Sqlite3::get_handle() const {
     return handle;
 }
 ////////////////////
-neroshop::db::Sqlite3 * neroshop::db::Sqlite3::get_singleton() {
-    if(!singleton.get()) {
-        singleton = std::make_unique<neroshop::db::Sqlite3>();
-    }
-    return singleton.get();
+neroshop::db::Sqlite3 * neroshop::db::Sqlite3::get_database() {
+    std::string database_path = NEROSHOP_DEFAULT_DATABASE_PATH;
+    std::string database_file = "data.sqlite3";
+    static neroshop::db::Sqlite3 database_obj { database_path + "/" + database_file };
+    return &database_obj;
 }
 ////////////////////
 void * neroshop::db::Sqlite3::get_blob(const std::string& command) {
