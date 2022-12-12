@@ -49,6 +49,9 @@ int main(int argc, char *argv[]) {
     #else
     QGuiApplication app(argc, argv);
     #endif
+    //app.setOrganizationName("Some Company");
+    app.setOrganizationDomain("neroshop.org");
+    app.setApplicationName("neroshop");
     
     QQmlApplicationEngine engine;
     //--------------------------

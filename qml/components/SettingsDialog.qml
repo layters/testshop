@@ -30,6 +30,14 @@ Popup {
             height: 40
             width: parent.width
             
+            Label {
+                text: "Settings"
+                color: "#ffffff"
+                font.bold: true
+                anchors.horizontalCenter: parent.horizontalCenter
+                anchors.verticalCenter: parent.verticalCenter
+            }
+            
             Button {
                 id: closeButton
                 width: 25//20
@@ -57,19 +65,6 @@ Popup {
             }
         }
     }
-
-    FileDialog {
-        id: moneroDaemonFileDialog
-        fileMode: FileDialog.OpenFile
-        currentFile: monerodLocationField.text // currentFile is deprecated since Qt 6.3. Use selectedFile instead
-        folder: (isWindows) ? StandardPaths.writableLocation(StandardPaths.DocumentsLocation) + "/neroshop" : StandardPaths.writableLocation(StandardPaths.HomeLocation) + "/neroshop"
-        nameFilters: ["Executable files (*.exe *.AppImage *)"]
-    }   
-    
-    FolderDialog {
-        id: moneroDataDirFolderDialog
-        currentFolder: moneroDataDirField.text
-    }
               
         TabBar {
             id: settingsBar
@@ -78,6 +73,7 @@ Popup {
             anchors.horizontalCenter: parent.horizontalCenter
             property string buttonColor: "#030380"
             background: Rectangle { color: "transparent" } // hide white corners when tabButton radius is set
+            property real buttonRadius: 5
             
             TabButton { 
                 id: generalSettingsButton
@@ -90,7 +86,7 @@ Popup {
                 checked: (settingsStack.currentIndex == 0)                
                 background: Rectangle {
                     color: (parent.checked) ? settingsBar.buttonColor : "#ffffff"
-                    radius: 3
+                    radius: settingsBar.buttonRadius
                 }
                 // This will remove the icon :(
                 contentItem: Text {
@@ -104,7 +100,7 @@ Popup {
             }
             
             TabButton { 
-                text: (hideTabText) ? qsTr(FontAwesome.monero) : qsTr("%1   Monero Settings").arg(FontAwesome.monero)//
+                text: (hideTabText) ? qsTr(FontAwesome.monero) : qsTr("%1  monerod").arg(FontAwesome.monero)//
                 width: implicitWidth + 20
                 onClicked: settingsStack.currentIndex = 1
                 display: AbstractButton.TextOnly
@@ -112,7 +108,7 @@ Popup {
                 checked: (settingsStack.currentIndex == 1)
                 background: Rectangle {
                     color: (parent.checked) ? settingsBar.buttonColor : "#ffffff"
-                    radius: 3
+                    radius: settingsBar.buttonRadius
                 }
                 contentItem: Text {
                     text: parent.text
@@ -281,7 +277,7 @@ Popup {
                        Layout.row: 2
                        Layout.alignment: Qt.AlignHCenter
                        Layout.preferredWidth: 500
-                title: qsTr("Language")
+                title: qsTr("Localization")
                 
                 background: Rectangle {
                     y: parent.topPadding - parent.bottomPadding
@@ -298,6 +294,21 @@ Popup {
                     color: parent.background.border.color//"#030380"
                     elide: Text.ElideRight
                 }
+            RowLayout {
+                anchors.fill: parent
+                Label {
+                    text: qsTr("Language:")
+                    color: NeroshopComponents.Style.darkTheme ? "#ffffff" : "#000000"
+                }
+
+                ComboBox {
+                    id: languageComboBox
+                    Layout.alignment: Qt.AlignRight
+                    Layout.rightMargin: 0
+                    currentIndex: model.indexOf("English"/*Script.getString("neroshop.generalsettings.currency").toUpperCase()*/)
+                    model: ["English"] // TODO logic from controller
+                }
+            }                
             } // GroupBox3    
             
         } // ColumnLayout (positions items vertically (up-and-down) I think, while RowLayout items are side-by-side)
@@ -307,79 +318,186 @@ Popup {
                 id: moneroSettings
                 Layout.minimumWidth: parent.width - 10 // 10 is the scrollView's right margin
                 //rowSpacing:  // The default value is 5 but we'll set this later
+                ////Layout.minimumHeight: 500 // Increase this value whenever more items are added inside the scrollview
                             
                     
-                Frame { //GroupBox {
+                /*Frame { //GroupBox {
                     //title: qsTr("Select a node type")
                     Layout.row: 0
                     Layout.alignment: Qt.AlignHCenter
                     Layout.preferredWidth: 500//250////Layout.fillWidth: true
-                    Layout.preferredHeight: contentHeight + (contentHeight / 2)//implicitContentHeight
+                    Layout.preferredHeight: contentHeight + (contentHeight / 2)//implicitContentHeight*/
                     /*label: Label {
                         text: parent.title
                         color: (NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000"
                         font.bold: true
                     }*/
+                    /*background: Rectangle {
+                        radius: 3
+                        color: "transparent"
+                        border.color: (NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000"
+                    }*/
+                    
+                    RowLayout {
+                        Layout.row: 0
+                        Layout.alignment: Qt.AlignHCenter
+                        Layout.preferredWidth: 500
+                        /*spacing: (contentWidth + remoteNodeLabel.contentWidth)//20//100
+                        anchors.verticalCenter: parent.verticalCenter
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        anchors.fill: parent*/
+                        property string checkedColor: NeroshopComponents.Style.moneroOrangeColor////"#0069d9"
+                                        
+                        ButtonGroup { 
+                            id: nodeTypeGroup 
+                            onClicked: { nodeTypeStackLayout.currentIndex = button.stackLayoutIndex }
+                        }
+                        
+                        Rectangle {
+                            color: (remoteNodeButton.checked) ? parent.checkedColor : "#ffffff"//"transparent"
+                            border.color: (remoteNodeButton.checked) ? parent.checkedColor : "#989999"
+                            border.width: (remoteNodeButton.checked) ? 0 : 2
+                            radius: 3
+                            Layout.preferredWidth: 250
+                            Layout.preferredHeight: 50//Layout.fillHeight: true
+                            
+                        MouseArea {
+                            anchors.fill: parent
+                            ////cursorShape: Qt.PointingHandCursor
+                            onClicked: { remoteNodeButton.checked = true 
+                                nodeTypeStackLayout.currentIndex = remoteNodeButton.stackLayoutIndex
+                            }
+                        }
+
+                        NeroshopComponents.RadioButton {
+                            id: remoteNodeButton
+                            anchors.horizontalCenter: parent.horizontalCenter
+                            anchors.verticalCenter: parent.verticalCenter
+                            checked: true
+                            ButtonGroup.group: nodeTypeGroup
+                            text: qsTr("Remote node")//FontAwesome.cloud
+                            color: checked ? parent.parent.checkedColor : "#d9dada"
+                            borderColor: checked ? "#ffffff" : "#d9dada"
+                            textColor: checked ? "#ffffff" : "#989999"
+                            textObject.font.bold: true
+                            ////innercolor: borderColor
+                            property int stackLayoutIndex: 0
+                            //font.family: FontAwesome.fontFamily
+                            //font.pointSize: 15                       
+                        }
+                        
+                        }
+
+                        Rectangle {
+                            color: (localNodeButton.checked) ? parent.checkedColor : "#ffffff"//"transparent"
+                            border.color: (localNodeButton.checked) ? parent.checkedColor : "#989999"
+                            border.width: (localNodeButton.checked) ? 0 : 2
+                            radius: 3
+                            Layout.preferredWidth: 250 - parent.spacing
+                            Layout.preferredHeight: 50//Layout.fillHeight: true
+                            
+                        MouseArea {
+                            anchors.fill: parent
+                            ////cursorShape: Qt.PointingHandCursor
+                            onClicked: { localNodeButton.checked = true 
+                                nodeTypeStackLayout.currentIndex = localNodeButton.stackLayoutIndex
+                            }
+                        }
+                        
+                        NeroshopComponents.RadioButton {
+                            id: localNodeButton
+                            anchors.horizontalCenter: parent.horizontalCenter
+                            anchors.verticalCenter: parent.verticalCenter
+                            checked: false
+                            ButtonGroup.group: nodeTypeGroup
+                            text: qsTr("Local node")//FontAwesome.house
+                            color: checked ? parent.parent.checkedColor : "#d9dada"
+                            borderColor: checked ? "#ffffff" : "#d9dada"
+                            textColor: checked ? "#ffffff" : "#989999"
+                            textObject.font.bold: true
+                            ////innercolor: borderColor
+                            property int stackLayoutIndex: 1                 
+                        }        
+                        }                                        
+                    }               
+                //} // GroupBox or Frame                         
+                
+                StackLayout {
+                    id: nodeTypeStackLayout
+                    Layout.row: 1
+                    Layout.fillWidth: true
+                    Layout.fillHeight: true
+                    
+Item {
+    ColumnLayout {
+        anchors.fill: parent
+
+            Frame {
+                    Layout.alignment: Qt.AlignHCenter
+                    Layout.preferredWidth: 500
+                    Layout.preferredHeight: 200//300////Layout.fillHeight: true  
                     background: Rectangle {
                         radius: 3
                         color: "transparent"
                         border.color: (NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000"
+                        //border.width: 1
                     }
+
+                NeroshopComponents.NodeList {
+                    anchors.fill: parent
+                    // Use the below code if not using a frame
+                    /*Layout.alignment: Qt.AlignHCenter
+                    Layout.preferredWidth: 500
+                    Layout.preferredHeight: 500*/
                     
-                    RowLayout {
-                        spacing: (contentWidth + remoteNodeLabel.contentWidth)//20//100
-                        anchors.verticalCenter: parent.verticalCenter
-                        anchors.horizontalCenter: parent.horizontalCenter
-                        anchors.fill: parent
-                                        
-                        ButtonGroup { 
-                            id: nodeTypeGroup 
-                            onClicked: { console.log("Selected condition:", button.text) }
-                        }
-
-                        RadioButton {
-                            id: remoteNodeButton
-                            checked: true
-                            ButtonGroup.group: nodeTypeGroup
-                            Label {
-                                id: remoteNodeLabel
-                                anchors.left: parent.right
-                                anchors.leftMargin: 0
-                                anchors.verticalCenter: parent.verticalCenter
-                                text: FontAwesome.cloud//"Remote node"
-                                color: (NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000"
-                                font.bold: true
-                                //font.family: FontAwesome.fontFamily
-                                font.pointSize: 15
-                            }                               
-                        }
-
-                        RadioButton {
-                            id: localNodeButton
-                            checked: false
-                            ButtonGroup.group: nodeTypeGroup
-                            Label {
-                                anchors.left: parent.right
-                                anchors.leftMargin: 0
-                                anchors.verticalCenter: parent.verticalCenter
-                                text: FontAwesome.house//"Local node"
-                                color: (NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000"
-                                font.bold: true
-                                font.family: FontAwesome.fontFamily
-                                font.pointSize: 15
-                            }                            
-                        }                                                
-                    }               
-                } // GroupBox or Frame         
+                }
+            }
+                RowLayout {
+                    Layout.alignment: Qt.AlignHCenter
+                    
+                    TextField {
+                        id: customMoneroNodeIPField
+                        Layout.preferredWidth: (moneroDaemonPortField.width * 3) - parent.spacing // Default row spacing is 5 so the width is reduced by 5
+                        Layout.preferredHeight: 50
+                        placeholderText: qsTr("Custom node IP address"); placeholderTextColor: (NeroshopComponents.Style.darkTheme) ? "#a9a9a9" : "#696969"
+                        color: (NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000"
+                        selectByMouse: true
+                
+                        background: Rectangle { 
+                            color: (NeroshopComponents.Style.darkTheme) ? "#101010" : "#ffffff"
+                            border.color: (NeroshopComponents.Style.darkTheme) ? "#a9a9a9" : "#696969"
+                            radius: 3
+                        }               
+                    }
+                
+                    TextField {
+                        id: customMoneroNodePortField
+                        Layout.preferredWidth: (500 / 4)
+                        Layout.preferredHeight: 50
+                        placeholderText: qsTr("Custom node port number"); placeholderTextColor: (NeroshopComponents.Style.darkTheme) ? "#a9a9a9" : "#696969"
+                        color: (NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000"
+                        selectByMouse: true
+                
+                        background: Rectangle { 
+                            color: (NeroshopComponents.Style.darkTheme) ? "#101010" : "#ffffff"
+                            border.color: (NeroshopComponents.Style.darkTheme) ? "#a9a9a9" : "#696969"
+                            radius: 3
+                        }     
+                    }          
+                }            
+    }
+} // Item 0                    
+                    
+                    Item {
+            ColumnLayout {
+                anchors.fill: parent//Layout.fillWidth: true
+                //Layout.fillHeight: true
                 
                 TextField {
                     id: monerodLocationField
-                    Layout.row: 1//(localNodeButton.checked) ? 1 : 2
                     Layout.alignment: Qt.AlignHCenter
-                    //Layout.fillWidth: true
-                    Layout.preferredWidth: 500
+                    Layout.preferredWidth: 500//Layout.fillWidth: true
                     Layout.preferredHeight: 50
-                    ////visible: (localNodeButton.checked) // error: Qt Quick Layouts: Polish loop detected. Aborting after two iterations.
                     placeholderText: qsTr((isWindows) ? "monerod.exe" : "monerod"); placeholderTextColor: (NeroshopComponents.Style.darkTheme) ? "#a9a9a9" : "#696969"
                     color: (NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000"
                     selectByMouse: true
@@ -418,11 +536,9 @@ Popup {
                 
                 TextField {
                     id: moneroDataDirField
-                    Layout.row: 2//(localNodeButton.checked) ? 2 : 3
                     Layout.alignment: Qt.AlignHCenter
                     Layout.preferredWidth: 500
                     Layout.preferredHeight: 50
-                    ////visible: (localNodeButton.checked)
                     property string defaultMoneroDataDirFolder: (isWindows) ? StandardPaths.writableLocation(StandardPaths.AppDataLocation) + "/bitmonero" : StandardPaths.writableLocation(StandardPaths.HomeLocation) + "/.bitmonero" // C:/ProgramData/bitmonero (Windows) or ~/.bitmonero (Linux and Mac OS X)
                     placeholderText: qsTr(defaultMoneroDataDirFolder); placeholderTextColor: (NeroshopComponents.Style.darkTheme) ? "#a9a9a9" : "#696969"
                     color: (NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000"
@@ -459,9 +575,7 @@ Popup {
                 }
 
                 RowLayout {
-                    Layout.row: 3//(localNodeButton.checked) ? 3 : 1
                     Layout.alignment: Qt.AlignHCenter
-                    ////visible: (localNodeButton.checked)
                     
                     TextField {
                         id: moneroDaemonIPField
@@ -497,10 +611,8 @@ Popup {
                 }          
                         
                 RowLayout {
-                    Layout.row: 4//(localNodeButton.checked) ? 4 : 2
                     Layout.alignment: Qt.AlignHCenter
                     Layout.preferredWidth: 500
-                    ////visible: (localNodeButton.checked)
                     
                     Label {
                         Layout.alignment: Qt.AlignLeft
@@ -521,10 +633,8 @@ Popup {
                 }
                 
                 RowLayout {
-                    Layout.row: 5//(localNodeButton.checked) ? 5 : 3
                     Layout.alignment: Qt.AlignHCenter
                     Layout.preferredWidth: 500
-                    ////visible: (localNodeButton.checked)
 
                     Label {
                         Layout.alignment: Qt.AlignLeft
@@ -545,9 +655,7 @@ Popup {
                 }
                 // todo: add rpc-login option so full node mainainers can require a login in order for others to connect to their daemon
                 /*RowLayout {
-                    Layout.row: 6//(localNodeButton.checked) ? 6 : 4
                     Layout.alignment: Qt.AlignHCenter
-                    ////visible: (localNodeButton.checked)
                     
                     TextField {
                         id: moneroDaemonRpcLoginUser
@@ -578,18 +686,44 @@ Popup {
                             radius: 3
                         }     
                     }          
-                }*/                
-                /*//ScrollView { // NO need for this. TableView provides a scrollbar
-                //ListView { // NO need for this. TableView provides a listview
-                //    id: remoteNodeList
-                //}
-                //}
-                // manage daemon buttons: stop daemon, start daemon, etc.
+                }*/          
+                
+                /*TextField {
+                        id: moneroDaemonOptFlags
+                        Layout.alignment: Qt.AlignHCenter
+                        Layout.preferredWidth: 500 // Default row spacing is 5 so the width is reduced by 5
+                        Layout.preferredHeight: 50
+                        placeholderText: qsTr("Daemon flags (optional)"); placeholderTextColor: (NeroshopComponents.Style.darkTheme) ? "#a9a9a9" : "#696969"
+                        color: (NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000"
+                        selectByMouse: true
+                
+                        background: Rectangle { 
+                            color: (NeroshopComponents.Style.darkTheme) ? "#101010" : "#ffffff"
+                            border.color: (NeroshopComponents.Style.darkTheme) ? "#a9a9a9" : "#696969"
+                            radius: 3
+                        }               
+                    }*/      
+                /*// manage daemon buttons: stop daemon, start daemon, etc.
                 //Button {
                     //id:saveSettingsButton
                 //}
-                */                
+                */   
+                } // ColumnLayout
+    FileDialog {
+        id: moneroDaemonFileDialog
+        fileMode: FileDialog.OpenFile
+        currentFile: monerodLocationField.text // currentFile is deprecated since Qt 6.3. Use selectedFile instead
+        folder: (isWindows) ? StandardPaths.writableLocation(StandardPaths.DocumentsLocation) + "/neroshop" : StandardPaths.writableLocation(StandardPaths.HomeLocation) + "/neroshop"
+        nameFilters: ["Executable files (*.exe *.AppImage *)"]
+    }   
+    
+    FolderDialog {
+        id: moneroDataDirFolderDialog
+        currentFolder: moneroDataDirField.text
+    }                
+                } // Item 1
+                } // StackLayout (node)             
             } // moneroSettings
-        } // StackLayout
+        } // StackLayout (settings)
     } // ScrollView 
 }

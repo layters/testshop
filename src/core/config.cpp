@@ -5,13 +5,10 @@ lua_State * neroshop::lua_state(luaL_newstate());
 bool neroshop::load_config() {
         std::string user = neroshop::device::get_user();
         // "/home/<user>/.config/neroshop"
-        #if defined(NEROSHOP_USE_QT)
-        std::string neroshop_config_path = NEROSHOP_DEFAULT_CONFIGURATION_PATH.toStdString();
-        #else
-        std::string neroshop_config_path = NEROSHOP_DEFAULT_CONFIGURATION_PATH;
-        #endif
+        std::string configuration_path = NEROSHOP_DEFAULT_CONFIGURATION_PATH;
+        std::string configuration_file = "settings.lua";
         // "/home/<user>/.config/neroshop/settings.lua"
-        std::string neroshop_config_name = neroshop_config_path + "/" + NEROSHOP_CONFIGURATION_FILE;
+        std::string neroshop_config_name = configuration_path + "/" + configuration_file;
         Script script;
         if(!script.load(lua_state, neroshop_config_name)) {
             return false;
@@ -87,13 +84,10 @@ neroshop = {
         text = neroshop::string::swap_first_of(text, "/home/<user>/.bitmonero", ("/home/" + user + "/.bitmonero"));
     #endif    
         // "/home/<user>/.config/neroshop"
-        #if defined(NEROSHOP_USE_QT)
-        std::string neroshop_config_path = NEROSHOP_DEFAULT_CONFIGURATION_PATH.toStdString();
-        #else        
-        std::string neroshop_config_path = NEROSHOP_DEFAULT_CONFIGURATION_PATH;//"/home/" + user + "/.config/neroshop"; // neroshop::device::get_user()
-        #endif
+        std::string configuration_path = NEROSHOP_DEFAULT_CONFIGURATION_PATH;//"/home/" + user + "/.config/neroshop";
+        std::string configuration_file = "settings.lua";
         // "/home/<user>/.config/neroshop/config.lua"
-        std::string neroshop_config_name = neroshop_config_path + "/" + NEROSHOP_CONFIGURATION_FILE;
+        std::string neroshop_config_name = configuration_path + "/" + configuration_file;
         // if file already exists, no need to create it again
         if(std::filesystem::is_regular_file(neroshop_config_name)) return false; // false because it will not be created // if true then it will cause "PANIC: unprotected error in call to Lua API (attempt to index a nil value)" error
         // check if script works before saving
@@ -103,11 +97,11 @@ neroshop = {
 		    return false; // exit function so it does not save text
 	    }
         // if path does not exist
-        if(!std::filesystem::is_directory(neroshop_config_path)) 
+        if(!std::filesystem::is_directory(configuration_path)) 
         {   // create the path
-            neroshop::print("directory \"" + neroshop_config_path + "\" does not exist, but I will create it for you (^_^)", 2);
-            if(!std::filesystem::create_directories(neroshop_config_path)) { neroshop::print("create_config error: failed to make the path. Sorry (ᵕ人ᵕ)! ...", 1); return false; }
-            neroshop::print("\033[1;97;49mcreated path \"" + neroshop_config_path + "\"");
+            neroshop::print("directory \"" + configuration_path + "\" does not exist, but I will create it for you (^_^)", 2);
+            if(!std::filesystem::create_directories(configuration_path)) { neroshop::print("create_config error: failed to make the path. Sorry (ᵕ人ᵕ)! ...", 1); return false; }
+            neroshop::print("\033[1;97;49mcreated path \"" + configuration_path + "\"");
         }
         // if path exists, but the file is missing or deleted
         if(!std::filesystem::is_regular_file(neroshop_config_name)) {

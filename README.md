@@ -10,7 +10,8 @@ A distributed P2P (peer-to-peer) marketplace for [**Monero**](https://getmonero.
 - [Demo](#demo) <!-- - [Features](#features)--> <!-- - [Documentation](#documentation)-->
 - [Building neroshop](#building-neroshop)
   - [Dependencies](#dependencies)
-  - [Compiling neroshop from source](#compiling-neroshop-from-source) <!-- - [Contributing](#contributing) --> <!-- - [Bug Bounty Program]-->
+  - [Compiling neroshop from source](#compiling-neroshop-from-source)
+  - [Contributing](#contributing) <!-- - [Bug Bounty Program]-->
 - [Donations](#donations)
 - [Resources](#resources)
 - [Credits](#credits)
@@ -195,9 +196,8 @@ make
 ```
 
 
-To build for [**Android**](https://www.android.com/) (requires [**Android NDK**](https://developer.android.com/ndk)):<!-- and [CMake](https://cmake.org/)):-->
-```bash
-```
+## Contributing
+See [CONTRIBUTING.md](CONTRIBUTING.md)
 
 
 ## Donations
@@ -228,7 +228,7 @@ Official neroshop logo design — [u/EchoingCat](https://www.reddit.com/u/Echoin
 
 [//]: # (./clean.sh)
 [//]: # (git checkout -b main)
-[//]: # (git add .gitignore .gitmodules cmake/ CMakeLists.txt external/ fonts/ images/ qml/ qml.qrc README.md shaders/ src/ test/)
+[//]: # (git add .gitignore .gitmodules cmake/ CMakeLists.txt CONTRIBUTING.md external/ fonts/ images/ LICENSE qml/ qml.qrc README.md shaders/ src/ test/)
 [//]: # (git commit -m"...")
 [//]: # (git push -u origin main --force)
 [//]: # (https://git.slipfox.xyz/larteyoh/testshop/settings => Mirror Settings => Synchronize Now)

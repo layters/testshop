@@ -11,9 +11,11 @@
         <file>qml/components/Hint.qml</file>
         <file>qml/components/MessageBox.qml</file>
         <file>qml/components/NavigationalBar.qml</file>
+        <file>qml/components/NodeList.qml</file>
         <file>qml/components/PaginationBar.qml</file>
         <file>qml/components/ProgressBar.qml</file>
         <file>qml/components/qmldir</file>
+        <file>qml/components/RadioButton.qml</file>
         <file>qml/components/SearchBar.qml</file>
         <file>qml/components/SettingsDialog.qml</file>
         <file>qml/components/Style.qml</file>
