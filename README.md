@@ -11,7 +11,7 @@ A distributed P2P (peer-to-peer) marketplace for [**Monero**](https://getmonero.
 - [Building neroshop](#building-neroshop)
   - [Dependencies](#dependencies)
   - [Compiling neroshop from source](#compiling-neroshop-from-source)
-  - [Contributing](#contributing) <!-- - [Bug Bounty Program]-->
+- [Contributing](#contributing) <!-- - [Bug Bounty Program]-->
 - [Donations](#donations)
 - [Resources](#resources)
 - [Credits](#credits)
