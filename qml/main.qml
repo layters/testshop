@@ -52,10 +52,10 @@ ApplicationWindow {
     Loader {
         id: pageLoader
         anchors.fill: parent
-        //source: "qrc:/qml/pages/MainPage.qml"
+        source: "qrc:/qml/pages/MainPage.qml"
         //source: "qrc:/qml/pages/HomePage.qml"
         //source: "qrc:/qml/pages/CartPage.qml"
-        source: "qrc:/qml/pages/CatalogPage.qml"
+        //source: "qrc:/qml/pages/CatalogPage.qml"
         //source: "qrc:/qml/pages/ProductPage.qml"
         //source: "qrc:/qml/pages/OrderCheckoutPage.qml"
         ////source: "qrc:/qml/pages/ProfilePage.qml"

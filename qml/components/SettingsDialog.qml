@@ -342,10 +342,7 @@ Popup {
                         Layout.row: 0
                         Layout.alignment: Qt.AlignHCenter
                         Layout.preferredWidth: 500
-                        /*spacing: (contentWidth + remoteNodeLabel.contentWidth)//20//100
-                        anchors.verticalCenter: parent.verticalCenter
-                        anchors.horizontalCenter: parent.horizontalCenter
-                        anchors.fill: parent*/
+                        //spacing: 5
                         property string checkedColor: NeroshopComponents.Style.moneroOrangeColor////"#0069d9"
                                         
                         ButtonGroup { 
@@ -444,12 +441,7 @@ Item {
                     }
 
                 NeroshopComponents.NodeList {
-                    anchors.fill: parent
-                    // Use the below code if not using a frame
-                    /*Layout.alignment: Qt.AlignHCenter
-                    Layout.preferredWidth: 500
-                    Layout.preferredHeight: 500*/
-                    
+                    anchors.fill: parent                    
                 }
             }
                 RowLayout {
