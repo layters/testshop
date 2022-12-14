@@ -85,7 +85,12 @@ Page {
         // Make sure username is not taken (requires a database check)
         // ...
         // Register hash of the wallet primary key to the database
-        // ...
+        let register_result = Backend.registerUser(Wallet.getPrimaryAddress(), optNameField.text)
+        if(!register_result [0] ) {
+            messageBox.text = register_result [1];
+            messageBox.open()
+            return; // exit function and do not proceed any further
+        }
         // Switch to HomePage
         pageLoader.source = "HomePage.qml"//stack.push(home_page)
         console.log("Primary address: ", Wallet.getPrimaryAddress())

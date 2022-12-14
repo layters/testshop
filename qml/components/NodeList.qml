@@ -57,7 +57,12 @@ Item {
             Layout.fillWidth: true
             Layout.fillHeight: true
             ScrollBar.vertical: ScrollBar { }
-            model: 50
+            model: {
+                let network_type = moneroNetworkTypeBox.displayText.toLowerCase()
+                return Script.getTableStrings("neroshop.monero.nodes." + network_type)
+                //Todo: replace Script.getTableStrings() with Backend.getNodeList() when app is released with mainnet
+                //return Backend.getNodeList() // <- This will only work for mainnet nodes
+            }//50
             delegate: Item {
                 width: listView.width
                 height: 25
@@ -89,7 +94,7 @@ Item {
                     Label {
                         id: nodeAddressLabel
                         Layout.fillWidth: true
-                        text: "node.neroshop.org:38081"//:18081" // TODO create normal model
+                        text: modelData//"node.neroshop.org:38081"//:18081"
                         color: (NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000"
                         elide: Label.ElideRight
                     }
@@ -98,7 +103,7 @@ Item {
                         id: nodeHeightLabel
                         Layout.minimumWidth: heightTitle.width//50
                         Layout.maximumWidth: heightTitle.width//50
-                        text: "100500" // TODO create normal model
+                        text: "1243821" // TODO create normal model
                         color: nodeAddressLabel.color
                         elide: Label.ElideRight
                     }

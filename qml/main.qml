@@ -71,7 +71,6 @@ ApplicationWindow {
     NeroshopComponents.SettingsDialog {
         id: settingsDialog
         anchors.centerIn: Overlay.overlay//parent: Overlay.overlay; anchors.centerIn: parent
-        closePolicy: Popup.CloseOnEscape
         dim: true      
         enter: Transition {
             NumberAnimation { property: "opacity"; from: 0.0; to: 1.0 }

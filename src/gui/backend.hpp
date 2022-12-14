@@ -36,7 +36,12 @@ public:
     Q_INVOKABLE QVariantList getCategoryList() const;
     //Q_INVOKABLE QStringList getSubCategoryList(int category_id);
     
-    Q_INVOKABLE void registerUser();
+    Q_INVOKABLE QVariantList getMoneroNodeList() const;
+
+    QVariantList validateDisplayName(const QString& display_name) const; // Validates display name based on regex requirements
+    QVariantList checkDisplayName(const QString& display_name) const; // Checks database for display name availability
+    
+    Q_INVOKABLE QVariantList/*bool*/ registerUser(const QString& primary_address/*gui::Wallet* wallet*/, const QString& display_name);
     Q_INVOKABLE void loginWithWalletFile();
     Q_INVOKABLE void loginWithMnemonic();
     Q_INVOKABLE void loginWithKeys();

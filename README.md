@@ -27,6 +27,8 @@ A distributed P2P (peer-to-peer) marketplace for [**Monero**](https://getmonero.
 ![Registration](https://github.com/larteyoh/testshop/blob/main/images/screenshots/Registration.png)
 ![CatalogGrid_Top](https://github.com/larteyoh/testshop/blob/main/images/screenshots/CatalogGrid_Top.png)
 ![CatalogGrid_Bottom](https://github.com/larteyoh/testshop/blob/main/images/screenshots/CatalogGrid_Bottom.png)
+![SettingsDialog_Monero](https://github.com/larteyoh/testshop/blob/main/images/screenshots/SettingsDialog_Monero.png)
+![HomePage](https://github.com/larteyoh/testshop/blob/main/images/screenshots/HomePage.png)
 
 </details>
 

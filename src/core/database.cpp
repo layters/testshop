@@ -109,7 +109,7 @@ sqlite3 * neroshop::db::Sqlite3::get_handle() const {
 neroshop::db::Sqlite3 * neroshop::db::Sqlite3::get_database() {
     std::string database_path = NEROSHOP_DEFAULT_DATABASE_PATH;
     std::string database_file = "data.sqlite3";
-    static neroshop::db::Sqlite3 database_obj { database_path + "/" + database_file };
+    static neroshop::db::Sqlite3 database_obj { database_file };////static neroshop::db::Sqlite3 database_obj { database_path + "/" + database_file };
     return &database_obj;
 }
 ////////////////////
@@ -215,7 +215,7 @@ std::string neroshop::db::Sqlite3::get_text_params(const std::string& command, c
     // Check the type of the statement's return value
     int column_type = sqlite3_column_type(statement, 0);
     if(column_type != SQLITE_TEXT) {
-        neroshop::print("sqlite3_column_type: invalid column type", 1);
+        ////neroshop::print("sqlite3_column_type: invalid column type", 1);
         sqlite3_finalize(statement);
         return "";
     }

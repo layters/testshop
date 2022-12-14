@@ -65,7 +65,7 @@ public:
     void on_output_received(const monero_output_wallet& output);
     ////void on_output_spent (const monero_output_wallet &output);
     // daemon or node-related functions
-    void daemon_open(const std::string& ip, const std::string& port, bool confirm_external_bind = false, bool restricted_rpc = true, bool remote = false, std::string data_dir = std::string("/home/") + neroshop::device::get_user() + std::string("/.bitmonero")/*""*/, std::string network_type = "stagenet", unsigned int restore_height = 0);
+    void daemon_open(const std::string& daemon_dir, const std::string& ip, const std::string& port, bool confirm_external_bind = false, bool restricted_rpc = true, std::string data_dir = std::string("/home/") + neroshop::device::get_user() + std::string("/.bitmonero")/*""*/, std::string network_type = "stagenet", unsigned int restore_height = 0);
     bool daemon_connect_local(const std::string& ip, const std::string& port);
     void daemon_connect_remote(const std::string& ip, const std::string& port);
     void daemon_close();

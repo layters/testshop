@@ -60,11 +60,11 @@ void neroshop::Backend::initializeDatabase() {
     // table users
     if(!database->table_exists("users")) { 
         database->execute("CREATE TABLE users(id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT);");
-        database->execute("ALTER TABLE users ADD COLUMN name TEXT;"); // optional display name
+        database->execute("ALTER TABLE users ADD COLUMN name TEXT;");// DEFAULT '' NOT NULL;"); // optional display name
         database->execute("ALTER TABLE users ADD COLUMN monero_address TEXT;"); // verify_key - public_key used for logins and for verification of signatures
-        database->execute("ALTER TABLE users ADD COLUMN public_key TEXT;"); // encrypt_key - public_key used for encryption of messages
+        database->execute("ALTER TABLE users ADD COLUMN public_key TEXT DEFAULT NULL;"); // encrypt_key - public_key used for encryption of messages
         
-        database->execute("CREATE UNIQUE INDEX index_user_names ON users (name);"); // enforce that the user names are unique, in case there is an attempt to insert a new "name" of the same value
+        ////database->execute("CREATE UNIQUE INDEX index_user_names ON users (name);"); // Will not allow empty strings :(
         database->execute("CREATE UNIQUE INDEX index_user_auth_keys ON users (monero_address);");
         database->execute("CREATE UNIQUE INDEX index_public_keys ON users (public_key);");
     }    
@@ -247,7 +247,7 @@ std::string neroshop::Backend::getDatabaseHash() {
 QVariantList neroshop::Backend::getCategoryList() const {
     // Do some database reading to fetch each category row (database reads do not require consensus)
     neroshop::db::Sqlite3 * database = neroshop::db::Sqlite3::get_database();
-    if(!database->get_handle()) throw std::runtime_error("database is not connected");
+    if(!database) throw std::runtime_error("database is NULL");
     sqlite3_stmt * stmt = nullptr;
     // Prepare (compile) statement
     if(sqlite3_prepare_v2(database->get_handle(), "SELECT * FROM categories;", -1, &stmt, nullptr) != SQLITE_OK) {
@@ -281,21 +281,237 @@ QVariantList neroshop::Backend::getCategoryList() const {
     return category_list;
 }
 
+// Todo: fetch monero nodes from monero.fail // Each node will represent a QML object (QVariantMap) with properties: address, height, and status
+Q_INVOKABLE QVariantList neroshop::Backend::getMoneroNodeList() const {
+    QVariantList node_list;
+    return node_list;
+}
 
-void neroshop::Backend::registerUser() {
+QVariantList neroshop::Backend::validateDisplayName(const QString& display_name) const {
+    // username (will appear only in lower-case letters within the app)
+    std::string username = display_name.toStdString();
+    // Empty display names are acceptable
+    if(display_name.isEmpty()) return { true, "" };
+    // If display name is set, make sure it is at least 2 characters short (min_user_length=2)
+    unsigned int min_user_length = 2;
+    if(username.length() < min_user_length) {
+        std::string message = "Your username must be at least " + std::to_string(min_user_length) + " characters in length";
+        return { false, QString::fromStdString(message) };
+    }
+    // make sure username is at least 30 characters long (max_user_length=30)
+    unsigned int max_user_length = 30; // what if a company has a long name? :o // also consider the textbox's max-length
+    if(username.length() > max_user_length) {
+        std::string message = "Your username must not exceed " + std::to_string(max_user_length) + " characters in length";
+        return { false, QString::fromStdString(message) };
+    }
+    for(int i = 0; i < username.length(); i++)
+    {
+        // make sure username does not contain any spaces //std::cout << username[i] << " - char\n";
+        if(isspace(username[i])) {
+            std::string message = "Your username cannot contain any spaces";
+            return { false, QString::fromStdString(message) };
+        }
+        // make sure username can only contain letters, numbers, and these specific symbols: a hyphen, underscore, and period (-,_,.) //https://stackoverflow.com/questions/39819830/what-are-the-allowed-character-in-snapchat-username#comment97381763_41959421
+        // symbols like @,#,$,etc. are invalid
+        if(!isalnum(username[i])) {
+            if(username[i] != '-'){
+            if(username[i] != '_'){
+            if(username[i] != '.'){
+                std::string message = "Your username cannot contain any symbols except (-, _, .)";// + username[i];
+                return { false, QString::fromStdString(message) };
+            }}}
+        }
+    }
+    // make sure username begins with a letter (username cannot start with a symbol or number)
+    char first_char = username.at(username.find_first_of(username));
+    if(!isalpha(first_char)) {
+        std::string message = "Your username must begin with a letter";// + first_char;
+        return { false, QString::fromStdString(message) };
+    }
+    // make sure username does not end with a symbol (username can end with a number, but NOT with a symbol)
+    char last_char = username.at(username.find_last_of(username));
+    if(!isalnum(last_char)) { //if(last_char != '_') { // underscore allowed at end of username? :o
+        std::string message = "Your username must end with a letter or number";// + last_char;
+        return { false, QString::fromStdString(message) };
+    }
+    // the name guest is reserved for guests only, so it cannot be used by any other user
+    if(neroshop::string::lower(username) == "guest") {
+        std::string message = "The name \"Guest\" is reserved for guests ONLY";
+        return { false, QString::fromStdString(message) };
+    }
+    
+    // Check database to see if display name is available
+    auto name_check_result = checkDisplayName(display_name);
+    if(!name_check_result[0].toBool()) {////if(!Validator::validate_display_name(display_name.toStdString())) return false;
+        bool boolean_result = name_check_result[0].toBool();
+        QString message_result = name_check_result[1].toString();
+        return { boolean_result, message_result };
+    }    
+    return { true, "" };
+}
 
+QVariantList neroshop::Backend::checkDisplayName(const QString& display_name) const {    
+    neroshop::db::Sqlite3 * database = neroshop::db::Sqlite3::get_database();
+    if(!database->table_exists("users")) { return {true, ""}; } 
+    std::string name = database->get_text_params("SELECT name FROM users WHERE name = $1;", { display_name.toLower().toStdString() });
+    if(name.empty()) return { true, "Display name is available for use" };// Name is not taken which means that the user is good to go!
+    // Empty display names are acceptable
+    bool is_name_empty = display_name.isEmpty();
+    if(is_name_empty) return { true, "No display name set" };
+    // Note: names are stored inside the database as lowercase strings
+    if(name == display_name.toLower().toStdString()) { 
+	    return { false, "This username is already taken" };////result_list << false << QString("This username is already taken");return result_list;
+	}   
+	return { true, "" };
+}
+
+QVariantList neroshop::Backend::registerUser(const QString& primary_address/*gui::Wallet* wallet*/, const QString& display_name) {
+    neroshop::db::Sqlite3 * database = neroshop::db::Sqlite3::get_database();
+    if(!database) throw std::runtime_error("database is NULL");
+    // Validate display name
+    auto name_validation_result = validateDisplayName(display_name);
+    if(!name_validation_result[0].toBool()) {
+        bool boolean_result = name_validation_result[0].toBool();
+        QString message_result = name_validation_result[1].toString();
+        return { boolean_result, message_result };
+    }
+    // Get wallet primary address and check its validity
+    ////std::string primary_address = wallet->get_monero_wallet()->get_primary_address();//neroshop::print("Primary address: \033[1;33m" + primary_address.toStdString() + "\033[1;37m\n");
+    if(!monero_utils::is_valid_address(primary_address.toStdString(), monero_network_type::STAGENET)) {//network_type)) {
+        return { false, "Invalid monero address" };
+    }
+    // Store login credentials in database
+    // Todo: make this command (DB entry) a client request that the server must respond to and the consensus must agree with
+    // Note: Multiple users cannot have the same display_name. Each display_name must be unique!
+    int user_id = database->get_integer_params("INSERT INTO users(name, monero_address) VALUES($1, $2) RETURNING id;", { display_name.toLower().toStdString(), primary_address.toStdString() });
+    if(user_id == 0) { return { false, "Account registration failed (due to database error)" }; }
+    // Display registration message
+    bool is_name_empty = display_name.isEmpty();
+    neroshop::print(((!is_name_empty) ? "Welcome to neroshop, " : "Welcome to neroshop") + display_name.toStdString(), 4);
+    return { true, "" };
 }
 
 void neroshop::Backend::loginWithWalletFile() {
-
+/*
+    neroshop::db::Sqlite3 * database = neroshop::db::Sqlite3::get_database();
+    if(!database) throw std::runtime_error("database is NULL");
+    //----------------------------
+    Wallet * wallet = new Wallet();
+    // Initialize monero wallet with existing wallet file
+    std::string wallet_password;// = "supersecretpassword123"; // Apparently passwords are not used nor required for mnemonics. ONLY wallet files use passwords
+    //std::cout << "Please upload your wallet file:\n";
+    std::cout << "Please enter your wallet password:\n";
+    std::getline(std::cin, wallet_password);
+    // Upload wallet via file dialog
+    wallet->upload(true, wallet_password);
+    // Get the hash of the primary address
+    std::string primary_address = wallet->get_monero_wallet()->get_primary_address();
+    std::string user_auth_key;// = neroshop::algo::sha256(primary_address);
+    Validator::generate_sha256_hash(primary_address, user_auth_key); // temp
+    neroshop::print("Primary address: \033[1;33m" + primary_address + "\033[1;37m\nSHA256 hash: " + user_auth_key);
+    //$ echo -n "528qdm2pXnYYesCy5VdmBneWeaSZutEijFVAKjpVHeVd4unsCSM55CjgViQsK9WFNHK1eZgcCuZ3fRqYpzKDokqSKp4yp38" | sha256sum
+    // Check database to see if user key (hash of primary address) exists
+    bool user_key_found = database->get_integer_params("SELECT EXISTS(SELECT * FROM users WHERE key = $1)", { user_auth_key });
+    // If user key is not found in the database, then create one. This is like registering for an account
+    if(!user_key_found) {
+        // In reality, this function will return false if user key is not registered in the database
+        neroshop::print("user key not found in database. Please try again or register", 1);
+        return false;
+    }
+    // Save user information in memory
+    int user_id = database->get_integer_params("SELECT id FROM users WHERE key = $1", { user_auth_key });
+    // This number will scale as the user count grows
+    int min_digits = 15; // 15 digits = 100 trillionth place (000,000,000,000,000)
+    int precision = min_digits - std::min<int>(min_digits, std::to_string(user_id).size());
+    std::string formatted_user_id = std::string(precision, '0').append(std::to_string(user_id));
+    neroshop::print("Welcome back, user " + formatted_user_id, 4);
+    // Set user_id
+    // ...    
+    return true;
+*/
 }
 
 void neroshop::Backend::loginWithMnemonic() {
-
+/*
+    neroshop::db::Sqlite3 * database = neroshop::db::Sqlite3::get_database();
+    if(!database) throw std::runtime_error("database is NULL");
+    //----------------------------
+    Wallet * wallet = new Wallet();
+    // Initialize monero wallet with existing wallet mnemonic
+    std::string wallet_mnemonic;// = "hefty value later extra artistic firm radar yodel talent future fungal nutshell because sanity awesome nail unjustly rage unafraid cedar delayed thumbs comb custom sanity";
+    std::cout << "Please enter your wallet mnemonic:\n";
+    std::getline(std::cin, wallet_mnemonic);
+    // todo: allow user to specify a custom location for the wallet keyfile or use a default location
+    wallet->restore_from_mnemonic(wallet_mnemonic);
+    // Get the hash of the primary address
+    std::string primary_address = wallet->get_monero_wallet()->get_primary_address();
+    std::string user_auth_key;// = neroshop::algo::sha256(primary_address);
+    Validator::generate_sha256_hash(primary_address, user_auth_key); // temp
+    neroshop::print("Primary address: \033[1;33m" + primary_address + "\033[1;37m\nSHA256 hash: " + user_auth_key);
+    //$ echo -n "528qdm2pXnYYesCy5VdmBneWeaSZutEijFVAKjpVHeVd4unsCSM55CjgViQsK9WFNHK1eZgcCuZ3fRqYpzKDokqSKp4yp38" | sha256sum
+    // Check database to see if user key (hash of primary address) exists
+    bool user_key_found = database->get_integer_params("SELECT EXISTS(SELECT * FROM users WHERE key = $1)", { user_auth_key });
+    // If user key is not found in the database, then create one. This is like registering for an account
+    if(!user_key_found) {
+        // In reality, this function will return false if user key is not registered in the database
+        neroshop::print("user key not found in database. Please try again or register", 1);
+        return false;
+    }
+    // Save user information in memory
+    int user_id = database->get_integer_params("SELECT id FROM users WHERE key = $1", { user_auth_key });
+    // This number will scale as the user count grows
+    int min_digits = 15; // 15 digits = 100 trillionth place (000,000,000,000,000)
+    int precision = min_digits - std::min<int>(min_digits, std::to_string(user_id).size());
+    std::string formatted_user_id = std::string(precision, '0').append(std::to_string(user_id));
+    neroshop::print("Welcome back, user " + formatted_user_id, 4);
+    // Set user_id
+    // ...    
+    return true;
+*/
 }
 
 void neroshop::Backend::loginWithKeys() {
-
+/*
+    neroshop::db::Sqlite3 * database = neroshop::db::Sqlite3::get_database();
+    if(!database) throw std::runtime_error("database is NULL");
+    //----------------------------
+    Wallet * wallet = new Wallet();
+    // Initialize monero wallet with existing wallet mnemonic
+    std::string primary_address;
+    std::string secret_view_key;
+    std::string secret_spend_key;
+    std::cout << "Please enter your primary address:\n";
+    std::getline(std::cin, primary_address);
+    std::cout << "Please enter your secret view key:\n";
+    std::getline(std::cin, secret_view_key);
+    std::cout << "Please enter your secret spend key (optional):\n";
+    std::getline(std::cin, secret_spend_key);
+    // todo: allow user to specify a custom location for the wallet keyfile or use a default location
+    wallet->restore_from_keys(primary_address, secret_view_key, secret_spend_key);
+    // Get the hash of the primary address
+    std::string user_auth_key;// = neroshop::algo::sha256(primary_address);
+    Validator::generate_sha256_hash(primary_address, user_auth_key); // temp
+    neroshop::print("Primary address: \033[1;33m" + primary_address + "\033[1;37m\nSHA256 hash: " + user_auth_key);
+    //$ echo -n "528qdm2pXnYYesCy5VdmBneWeaSZutEijFVAKjpVHeVd4unsCSM55CjgViQsK9WFNHK1eZgcCuZ3fRqYpzKDokqSKp4yp38" | sha256sum
+    // Check database to see if user key (hash of primary address) exists
+    bool user_key_found = database->get_integer_params("SELECT EXISTS(SELECT * FROM users WHERE key = $1)", { user_auth_key });
+    // If user key is not found in the database, then create one. This is like registering for an account
+    if(!user_key_found) {
+        // In reality, this function will return false if user key is not registered in the database
+        neroshop::print("user key not found in database. Please try again or register", 1);
+        return false;
+    }
+    // Save user information in memory
+    int user_id = database->get_integer_params("SELECT id FROM users WHERE key = $1", { user_auth_key });
+    // This number will scale as the user count grows
+    int min_digits = 15; // 15 digits = 100 trillionth place (000,000,000,000,000)
+    int precision = min_digits - std::min<int>(min_digits, std::to_string(user_id).size());
+    std::string formatted_user_id = std::string(precision, '0').append(std::to_string(user_id));
+    neroshop::print("Welcome back, user " + formatted_user_id, 4);
+    // Set user_id
+    // ...
+    return true;
+*/
 }
 
 void neroshop::Backend::loginWithHW() {

@@ -5,7 +5,7 @@ import QtQuick.Layouts 1.12
 Item {
     id: banner
     implicitWidth: 300
-    implicitHeight: 150
+    implicitHeight: 300//150
 
     default property alias content: view.contentData
 

@@ -14,6 +14,8 @@ import "." as NeroshopComponents
 Popup {
     id: settingsDialog
     visible: false
+    modal: true//clip: true
+    closePolicy: Popup.CloseOnEscape    
     property bool hideTabText: false
     property alias theme: themeBox
     property alias currency: currencyBox
@@ -21,14 +23,26 @@ Popup {
         implicitWidth: 700
         implicitHeight: 500
         color: NeroshopComponents.Style.getColorsFromTheme()[2]
-        border.color: "white"
+        ////border.color: "white"//; border.width: 1
+        radius: 8
         //DragHandler { target: settingsDialog }   
         
         Rectangle {
             id: titleBar
             color: "#323232"
-            height: 40
+            height: 40//settingsDialog.topPadding
             width: parent.width
+            anchors.left: parent.left
+            anchors.right: parent.right
+            radius: 6
+            // Rounded top corners??
+            Rectangle {
+                anchors.left: parent.left
+                anchors.right: parent.right
+                anchors.bottom: parent.bottom
+                height: parent.height / 2
+                color: parent.color
+            }
             
             Label {
                 text: "Settings"
@@ -100,7 +114,7 @@ Popup {
             }
             
             TabButton { 
-                text: (hideTabText) ? qsTr(FontAwesome.monero) : qsTr("%1  monerod").arg(FontAwesome.monero)//
+                text: (hideTabText) ? qsTr(FontAwesome.monero) : qsTr("Monero")//.arg(FontAwesome.monero)
                 width: implicitWidth + 20
                 onClicked: settingsStack.currentIndex = 1
                 display: AbstractButton.TextOnly
@@ -317,8 +331,8 @@ Popup {
             GridLayout {
                 id: moneroSettings
                 Layout.minimumWidth: parent.width - 10 // 10 is the scrollView's right margin
+                Layout.minimumHeight: 500 // Increase this value whenever more items are added inside the scrollview
                 //rowSpacing:  // The default value is 5 but we'll set this later
-                ////Layout.minimumHeight: 500 // Increase this value whenever more items are added inside the scrollview
                             
                     
                 /*Frame { //GroupBox {
@@ -429,10 +443,49 @@ Item {
     ColumnLayout {
         anchors.fill: parent
 
+                // This will not be necessary once we switch to mainnet (permanently)
+                // Todo: remove this on release with mainnet
+                Rectangle {
+                    Layout.alignment: Qt.AlignHCenter
+                    Layout.preferredWidth: 500////Layout.fillWidth: true
+                    Layout.preferredHeight: 50
+                    radius: 3
+                    color: "transparent"
+                    //border.color: (NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000"
+                    
+                    RowLayout {
+                        anchors.fill: parent
+                                       
+                        /*Label {
+                            id: networkTypeLabel
+                            text: qsTr("Network Type")
+                            color: (NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000"
+                            Layout.alignment: Qt.AlignLeft
+                            Layout.leftMargin: 5//25
+                        }*/
+                        
+                        ComboBox {
+                            id: moneroNetworkTypeBox
+                            model: ["mainnet", "stagenet", "testnet"]
+                            currentIndex: model.indexOf(Script.getString("neroshop.monero.daemon.network_type").toLowerCase())
+                            displayText: currentText
+                            Layout.fillWidth: true////Layout.alignment: Qt.AlignRight; Layout.rightMargin: 5
+                        
+                            onActivated: {    
+                                if(currentIndex == 0) moneroNodePortField.placeholderText = "18081"
+                                if(currentIndex == 1) moneroNodePortField.placeholderText = "38081"
+                                if(currentIndex == 2) moneroNodePortField.placeholderText = "28081"
+                                displayText = currentText
+                                // = displayText
+                            }
+                        }
+                    }
+                }
+
             Frame {
                     Layout.alignment: Qt.AlignHCenter
                     Layout.preferredWidth: 500
-                    Layout.preferredHeight: 200//300////Layout.fillHeight: true  
+                    Layout.fillHeight: true////Layout.preferredHeight: 200//300
                     background: Rectangle {
                         radius: 3
                         color: "transparent"
@@ -448,7 +501,7 @@ Item {
                     Layout.alignment: Qt.AlignHCenter
                     
                     TextField {
-                        id: customMoneroNodeIPField
+                        id: moneroNodeIPField
                         Layout.preferredWidth: (moneroDaemonPortField.width * 3) - parent.spacing // Default row spacing is 5 so the width is reduced by 5
                         Layout.preferredHeight: 50
                         placeholderText: qsTr("Custom node IP address"); placeholderTextColor: (NeroshopComponents.Style.darkTheme) ? "#a9a9a9" : "#696969"
@@ -463,10 +516,10 @@ Item {
                     }
                 
                     TextField {
-                        id: customMoneroNodePortField
+                        id: moneroNodePortField
                         Layout.preferredWidth: (500 / 4)
                         Layout.preferredHeight: 50
-                        placeholderText: qsTr("Custom node port number"); placeholderTextColor: (NeroshopComponents.Style.darkTheme) ? "#a9a9a9" : "#696969"
+                        placeholderText: qsTr(Script.getString("neroshop.monero.daemon.port")); placeholderTextColor: (NeroshopComponents.Style.darkTheme) ? "#a9a9a9" : "#696969"
                         color: (NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000"
                         selectByMouse: true
                 
@@ -695,11 +748,43 @@ Item {
                             radius: 3
                         }               
                     }*/      
-                /*// manage daemon buttons: stop daemon, start daemon, etc.
+                // manage daemon buttons: stop daemon, start daemon, etc.
+                RowLayout {
+                    Layout.alignment: Qt.AlignHCenter
+                    Layout.preferredWidth: 500
+                    
+                    Button {
+                        width: parent.width / visibleChildren.length//children.length
+                        height: contentHeight + 20
+                        text: qsTr("Launch daemon")
+                        background: Rectangle {
+                            color: NeroshopComponents.Style.moneroOrangeColor
+                            radius: 6
+                        }
+                        contentItem: Text {
+                            text: parent.text
+                            color: "#ffffff"
+                            horizontalAlignment: Text.AlignHCenter
+                            verticalAlignment: Text.AlignVCenter
+                        }
+                        onClicked: {
+                            Wallet.daemonExecute(Backend.urlToLocalFile(monerodLocationField.text),
+                                moneroDaemonIPField.placeholderText, 
+                                moneroDaemonPortField.placeholderText, 
+                                confirmExternalBindSwitch.checked, 
+                                restrictedRpcSwitch.checked, 
+                                (moneroDataDirField.text.length < 1) ? Backend.urlToLocalFile(moneroDataDirField.placeholderText) : Backend.urlToLocalFile(moneroDataDirField.text),
+                                "stagenet", // change this later
+                                0, // placeholder restore_height
+                                );
+                           if(!Wallet.isGenerated()) return; // no need for this if we are only launching the monerod executable
+                           Wallet.daemonConnect(moneroDaemonIPField.placeholderText, moneroDaemonPortField.placeholderText)     
+                        }
+                    }
+                }   
                 //Button {
                     //id:saveSettingsButton
-                //}
-                */   
+                //}                
                 } // ColumnLayout
     FileDialog {
         id: moneroDaemonFileDialog
