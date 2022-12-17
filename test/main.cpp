@@ -71,7 +71,7 @@ static void start_and_initialize_database() {
         // passwords will no longer be stored as salted bcrpyt hashes, only public keys will be stored
     }
     //-------------------------
-    // products (items)
+    // products (items or services)
     if(!database->table_exists("products")) {
         database->execute("CREATE TABLE products(id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT);");
         database->execute("ALTER TABLE products ADD COLUMN name TEXT;");

@@ -10,7 +10,8 @@ A distributed P2P (peer-to-peer) marketplace for [**Monero**](https://getmonero.
 - [Demo](#demo) <!-- - [Features](#features)--> <!-- - [Documentation](#documentation)-->
 - [Building neroshop](#building-neroshop)
   - [Dependencies](#dependencies)
-  - [Compiling neroshop from source](#compiling-neroshop-from-source) <!-- - [Contributing](#contributing) --> <!-- - [Bug Bounty Program]-->
+  - [Compiling neroshop from source](#compiling-neroshop-from-source)
+- [Contributing](#contributing) <!-- - [Bug Bounty Program]-->
 - [Donations](#donations)
 - [Resources](#resources)
 - [Credits](#credits)
@@ -26,6 +27,8 @@ A distributed P2P (peer-to-peer) marketplace for [**Monero**](https://getmonero.
 ![Registration](https://github.com/larteyoh/testshop/blob/main/images/screenshots/Registration.png)
 ![CatalogGrid_Top](https://github.com/larteyoh/testshop/blob/main/images/screenshots/CatalogGrid_Top.png)
 ![CatalogGrid_Bottom](https://github.com/larteyoh/testshop/blob/main/images/screenshots/CatalogGrid_Bottom.png)
+![SettingsDialog_Monero](https://github.com/larteyoh/testshop/blob/main/images/screenshots/SettingsDialog_Monero.png)
+![HomePage](https://github.com/larteyoh/testshop/blob/main/images/screenshots/HomePage.png)
 
 </details>
 
@@ -63,7 +66,7 @@ Neroshop aims to be simple for a beginner to use and easy for sellers to onboard
 |      Library                                                       | Minimum Ver.       |         Purpose                                                        | Status                                   |
 |--------------------------------------------------------------------|--------------------|------------------------------------------------------------------------|------------------------------------------|
 | [monero-cpp](https://github.com/monero-ecosystem/monero-cpp)       | latest             | monero wallet and payment system                                       | :heavy_check_mark:                       |
-| [libbcrypt](https://github.com/rg3/libbcrypt)                      | 1.3                | password hashing                                                       | :o:                                      |
+| [libbcrypt](https://github.com/rg3/libbcrypt)                      | 1.3                | password hashing                                                       | :x:                                      |
 | [sqlite3](https://sqlite.org/)                                     | 3.38.0             | database management                                                    | :heavy_check_mark:                       |
 | [QR Code generator](https://github.com/nayuki/QR-Code-generator)   | ?                  | qr code generation                                                     | :heavy_check_mark:                       |
 | [json](https://github.com/nlohmann/json/)                          | ?                  | json parsing                                                           | :o:                                      |
@@ -195,9 +198,8 @@ make
 ```
 
 
-To build for [**Android**](https://www.android.com/) (requires [**Android NDK**](https://developer.android.com/ndk)):<!-- and [CMake](https://cmake.org/)):-->
-```bash
-```
+## Contributing
+See [CONTRIBUTING.md](CONTRIBUTING.md)
 
 
 ## Donations
@@ -223,12 +225,12 @@ You may support the neroshop project directly by donating Monero (XMR) to the ad
 
 
 ## Credits
-Credits to [u/EchoingCat](https://www.reddit.com/u/EchoingCat) for the official neroshop logo design
+Official neroshop logo design — [u/EchoingCat](https://www.reddit.com/u/EchoingCat)
 
 
 [//]: # (./clean.sh)
 [//]: # (git checkout -b main)
-[//]: # (git add .gitignore .gitmodules cmake/ CMakeLists.txt external/ fonts/ images/ qml/ qml.qrc README.md shaders/ src/ test/)
+[//]: # (git add .gitignore .gitmodules cmake/ CMakeLists.txt CONTRIBUTING.md external/ fonts/ images/ LICENSE qml/ qml.qrc README.md shaders/ src/ test/)
 [//]: # (git commit -m"...")
 [//]: # (git push -u origin main --force)
 [//]: # (https://git.slipfox.xyz/larteyoh/testshop/settings => Mirror Settings => Synchronize Now)

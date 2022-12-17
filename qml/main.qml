@@ -48,20 +48,17 @@ ApplicationWindow {
             anchors.topMargin: 20        
         }
     }
-    ///////////////////////////
-    //ScrollView {
-    /*StackView {
-        anchors.fill: parent
-        ////initialItem: pageLoader
-    }*/
+    
     Loader {
         id: pageLoader
         anchors.fill: parent
         source: "qrc:/qml/pages/MainPage.qml"
         //source: "qrc:/qml/pages/HomePage.qml"
+        //source: "qrc:/qml/pages/CartPage.qml"
         //source: "qrc:/qml/pages/CatalogPage.qml"
         //source: "qrc:/qml/pages/ProductPage.qml"
         //source: "qrc:/qml/pages/OrderCheckoutPage.qml"
+        ////source: "qrc:/qml/pages/ProfilePage.qml"
         ////source: "qrc:/qml/pages/Page.qml"
 
         onSourceChanged: {
@@ -74,7 +71,6 @@ ApplicationWindow {
     NeroshopComponents.SettingsDialog {
         id: settingsDialog
         anchors.centerIn: Overlay.overlay//parent: Overlay.overlay; anchors.centerIn: parent
-        closePolicy: Popup.CloseOnEscape
         dim: true      
         enter: Transition {
             NumberAnimation { property: "opacity"; from: 0.0; to: 1.0 }
@@ -114,7 +110,7 @@ ApplicationWindow {
                     checkable: true
                     checked: settingsDialog.visible
                     icon.source: "qrc:/images/cog.png"//"/tools.png"
-                    icon.color: "#001677"////hovered ? "#001677" : "#ffffff"//(!checked && hovered) ? "#001677" : "#ffffff"
+                    icon.color: (NeroshopComponents.Style.darkTheme) ? "#8fa4ff" : "#001677"////hovered ? "#001677" : "#ffffff"//(!checked && hovered) ? "#001677" : "#ffffff"
                     //icon.width: parent.width//footer.height
                     //icon.height: parent.height//32//footer.height
                     hoverEnabled: true
@@ -149,7 +145,7 @@ ApplicationWindow {
                     id: daemonSyncBar
                     radius: 20
                     foregroundColor: "#564978"
-                    backgroundColor: (NeroshopComponents.Style.darkTheme) ? "#8c8c8c" : "#d9d9d9"//backgroundColor: "#d9d9d9"
+                    backgroundColor: "#d9d9d9"
                     //textObject.visible: true
                     hoverEnabled: true
                     anchors.verticalCenter: parent.verticalCenter//anchors.top: parent.top; anchors.topMargin: (parent.height - this.height) / 2 // center vertically on footer (height)
@@ -160,7 +156,7 @@ ApplicationWindow {
                         x: parent.x + (parent.width - this.width) / 2 // Popups don't have anchors :(
                         height: contentHeight + 20; width: parent.width
                         bottomMargin : footer.height + 5
-                        text: qsTr("neromon\n%1 (%2)").arg((parent.value < 1.0) ? "Synchronizing" : "Connected").arg((parent.value * 100).toString() + "%")
+                        text: qsTr("neromon\n%1 %2").arg((parent.value < 1.0) ? "Synchronizing" : "Connected").arg((parent.value > 0.0 && parent.value < 1.0) ? ("(" + (parent.value * 100).toString() + "%)") : "")
                         pointer.visible: false
                     }
                 }      
@@ -175,7 +171,7 @@ ApplicationWindow {
                     id: moneroDaemonSyncBar
                     radius: daemonSyncBar.radius
                     foregroundColor: NeroshopComponents.Style.moneroOrangeColor
-                    backgroundColor: (NeroshopComponents.Style.darkTheme) ? "#8c8c8c" : "#d9d9d9"//backgroundColor: "#d9d9d9"//(NeroshopComponents.Style.darkTheme) ? "#8c8c8c" : NeroshopComponents.Style.moneroGrayColor
+                    backgroundColor: daemonSyncBar.backgroundColor//(NeroshopComponents.Style.darkTheme) ? "#8c8c8c" : NeroshopComponents.Style.moneroGrayColor
                     //textObject.visible: true
                     //textObject.text: "wallet sync: " + (this.value * 100).toString() + "%"
                     //textObject.color: "#ffffff"
@@ -196,7 +192,7 @@ ApplicationWindow {
                         x: parent.x + (parent.width - this.width) / 2
                         height: contentHeight + 20; width: parent.width
                         bottomMargin : footer.height + 5
-                        text: qsTr("%1\n%2 (%3)\n Blocks remaining: %4 / %5").arg("monerod").arg(!Wallet.isGenerated() ? "Disconnected" : ((parent.value < 1.0) ? Wallet.getSyncMessage() : "Connected")).arg((parent.value * 100).toFixed(2) + "%").arg(!Wallet.isGenerated() ? 0 : Wallet.getSyncHeight()).arg(!Wallet.isGenerated() ? 0 : Wallet.getSyncEndHeight()) // If connected to a remote node, "monerod" will be replaced by the <ip>:<port> of the remote node
+                        text: qsTr("%1\n%2 %3\n Blocks remaining: %4 / %5").arg("monerod").arg(!Wallet.isGenerated() ? "Disconnected" : ((parent.value < 1.0) ? Wallet.getSyncMessage() : "Connected")).arg((parent.value > 0.0 && parent.value != 1.0) ? ("(" + (parent.value * 100).toFixed(2) + "%)") : "").arg(!Wallet.isGenerated() ? 0 : Wallet.getSyncHeight()).arg(!Wallet.isGenerated() ? 0 : Wallet.getSyncEndHeight()) // If connected to a remote node, "monerod" will be replaced by the <ip>:<port> of the remote node
                         pointer.visible: false
                     }                
                 }
@@ -228,7 +224,7 @@ ApplicationWindow {
                     text: qsTr(/*amount.toString() + " " + */FontAwesome.monero + "  %1%2").arg(Backend.getCurrencySign(currency)).arg(price.toFixed(Backend.getCurrencyDecimals(currency)))////.arg(currency.toUpperCase())
                     color: (NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000"
                     font.bold: true
-                    anchors.verticalCenter: parent.verticalCenter//verticalAlignment: Text.AlignVCenter                  
+                    anchors.verticalCenter: parent.verticalCenter
                 }
                 
                 Text {
@@ -252,7 +248,7 @@ ApplicationWindow {
                     visible: false////priceDisplayHoverHandler.hovered // <- uncomment this to make the tooltip visible on hover
                     height: contentHeight + 20; width: contentWidth + 20
                     bottomMargin : footer.height + 5
-                    text: qsTr("Monero price")
+                    text: qsTr("XMR / %1").arg(priceDisplayText.currency.toUpperCase())
                     pointer.visible: false
                 }                             
             }

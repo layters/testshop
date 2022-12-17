@@ -4,20 +4,24 @@
         <!-- qml sources: components -->
         <file>qml/components/Banner.qml</file>
         <file>qml/components/BannerItem.qml</file>
+        <file>qml/components/CartTable.qml</file>
         <file>qml/components/CatalogGrid.qml</file>
         <file>qml/components/CatalogList.qml</file>
         <file>qml/components/FilterBox.qml</file>
         <file>qml/components/Hint.qml</file>
         <file>qml/components/MessageBox.qml</file>
         <file>qml/components/NavigationalBar.qml</file>
+        <file>qml/components/NodeList.qml</file>
         <file>qml/components/PaginationBar.qml</file>
         <file>qml/components/ProgressBar.qml</file>
         <file>qml/components/qmldir</file>
         <file>qml/components/Rating.qml</file>
         <file>qml/components/RatingStar.qml</file>
+        <file>qml/components/RadioButton.qml</file>
         <file>qml/components/SearchBar.qml</file>
         <file>qml/components/SettingsDialog.qml</file>
         <file>qml/components/Style.qml</file>
+        <file>qml/components/Switch.qml</file>
         <file>qml/components/ThemeSwitch.qml</file>
         <file>qml/components/Triangle.qml</file>
         <file>qml/components/UserReviews.qml</file>
@@ -30,6 +34,7 @@
         <file>qml/pages/MainPage.qml</file>
         <file>qml/pages/OrderCheckoutPage.qml</file>
         <file>qml/pages/ProductPage.qml</file>
+        <file>qml/pages/ProfilePage.qml</file>
         <file>qml/pages/settings/SettingsAccount.qml</file>
         <file>qml/pages/settings/SettingsMessages.qml</file>
         <file>qml/pages/settings/SettingsOrders.qml</file>
@@ -50,7 +55,11 @@
         <file>fonts/FontAwesome/qmldir</file>
         <!--<file>fonts/FontAwesome/svgs/</file>-->
         <!-- images -->
-        <!--<file>images/appicons/neroshop-logo.png</file> -->
+        <file>images/appicons/LogoLight250x250.png</file>
+        <file>images/appicons/LogoLight375x375.png</file>
+        <file>images/appicons/LogoLight500x500.png</file>
+        <file>images/appicons/LogoLight1000x1000.png</file>
+        <file>images/appicons/LogoLight1500x1500.png</file>
         <file>images/cart.png</file>
         <file>images/clipboard.png</file>
         <file>images/cog.png</file>

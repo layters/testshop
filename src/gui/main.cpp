@@ -49,6 +49,7 @@ int main(int argc, char *argv[]) {
     #else
     QGuiApplication app(argc, argv);
     #endif
+    app.setApplicationName("neroshop");
     
     QQmlApplicationEngine engine;
     //--------------------------
@@ -57,6 +58,8 @@ int main(int argc, char *argv[]) {
     neroshop::open_configuration_file();
     std::string network_type = Script::get_string(lua_state, "neroshop.monero.daemon.network_type");
     std::cout << "network_type: " << network_type << std::endl;
+    // start database
+    Backend::initializeDatabase();
     // import paths
     engine.addImportPath(":/fonts"); // import FontAwesome 1.0
     engine.addImportPath(":/images"); // import Icons 1.0
@@ -74,17 +77,17 @@ int main(int argc, char *argv[]) {
     engine.rootContext()->setContextProperty("neroshopDataDirPath", QStandardPaths::writableLocation(QStandardPaths::AppConfigLocation));////QStandardPaths::writableLocation(QStandardPaths::AppLocalDataLocation)); // both "data.sqlite3" and "settings.lua" will be stored here
     // create neroshop wallet directory
     QString defaultWalletDirPath = (isWindows) ? (QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation) + "/neroshop") : (QStandardPaths::writableLocation(QStandardPaths::HomeLocation) + "/neroshop");
-    if(!std::filesystem::is_directory(defaultWalletDirPath.toStdString())) {
+    if(!neroshop::filesystem::is_directory(defaultWalletDirPath.toStdString())) {
         neroshop::print(std::string("Creating directory \"") + defaultWalletDirPath.toStdString() + "\"", 3);
-        if(!std::filesystem::create_directories(defaultWalletDirPath.toStdString())) {
+        if(!neroshop::filesystem::make_directory(defaultWalletDirPath.toStdString())) {
             throw std::runtime_error("Failed to create neroshop datadir");
             return 1;
         }
-    }
-    ////qmlRegisterType<neroshop::gui::Wallet/*WalletProxy*/>("neroshop.Wallet", 1, 0, "Wallet"); // Usage: import neroshop.Wallet  ...  Wallet { id: wallet }
+    }    
     // we can also register an instance of a class instead of the class itself
     gui::Wallet wallet;
-    engine.rootContext()->setContextProperty("Wallet", &wallet);//new WalletProxy());//qmlRegisterUncreatableType<WalletProxy>("neroshop.Wallet", 1, 0, "Wallet", "Wallet cannot be instantiated directly.");
+    engine.rootContext()->setContextProperty("Wallet", &wallet);//new WalletProxy());//qmlRegisterUncreatableType<WalletProxy>("neroshop.Wallet", 1, 0, "Wallet", "Wallet cannot be instantiated directly.");//qmlRegisterType<WalletProxy>("neroshop.Wallet", 1, 0, "Wallet"); // Usage: import neroshop.Wallet  ...  Wallet { id: wallet }
+    //qRegisterMetaType<gui::Wallet*>("const gui::Wallet*");
     // register script
     engine.rootContext()->setContextProperty("Script", new ScriptProxy());//qmlRegisterType<ScriptProxy>("neroshop.Script", 1, 0, "Script");
     // register backend

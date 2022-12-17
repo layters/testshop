@@ -7,7 +7,7 @@ import FontAwesome 1.0
 import "." as NeroshopComponents
 
 Pane {
-    width: 250; height: 540
+    width: 250; height: (parent.height - 100)//1000
     background: Rectangle { 
         color: (NeroshopComponents.Style.darkTheme) ? "#2e2e2e"/*"#121212"*/ : "#a0a0a0"
         radius: 3
@@ -195,7 +195,7 @@ Pane {
                     CheckBox { 
                         ButtonGroup.group: priceButtonGroup       
                         Text {
-                            text: qsTr("$0.00-$1.00")
+                            text: qsTr("%1 1.00 and under").arg(Backend.getCurrencySign(priceDisplayText.currency))
                             color: (NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000"
                             anchors.left: parent.right
                             anchors.leftMargin: 0
@@ -203,6 +203,72 @@ Pane {
                             anchors.topMargin: (parent.height - this.contentHeight) / 2
                         }                    
                     }
+                    CheckBox { 
+                        ButtonGroup.group: priceButtonGroup       
+                        Text {
+                            text: qsTr("%1 5.00 to %1 10.00").arg(Backend.getCurrencySign(priceDisplayText.currency))
+                            color: (NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000"
+                            anchors.left: parent.right
+                            anchors.leftMargin: 0
+                            anchors.top: parent.top
+                            anchors.topMargin: (parent.height - this.contentHeight) / 2
+                        }                    
+                    }
+                    CheckBox { 
+                        ButtonGroup.group: priceButtonGroup       
+                        Text {
+                            text: qsTr("%1 15.00 to %1 20.00").arg(Backend.getCurrencySign(priceDisplayText.currency))
+                            color: (NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000"
+                            anchors.left: parent.right
+                            anchors.leftMargin: 0
+                            anchors.top: parent.top
+                            anchors.topMargin: (parent.height - this.contentHeight) / 2
+                        }                    
+                    }                             
+                    CheckBox { 
+                        ButtonGroup.group: priceButtonGroup       
+                        Text {
+                            text: qsTr("%1 25.00 to %1 30.00").arg(Backend.getCurrencySign(priceDisplayText.currency))
+                            color: (NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000"
+                            anchors.left: parent.right
+                            anchors.leftMargin: 0
+                            anchors.top: parent.top
+                            anchors.topMargin: (parent.height - this.contentHeight) / 2
+                        }                    
+                    }
+                    CheckBox { 
+                        ButtonGroup.group: priceButtonGroup       
+                        Text {
+                            text: qsTr("%1 35.00 to %1 40.00").arg(Backend.getCurrencySign(priceDisplayText.currency))
+                            color: (NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000"
+                            anchors.left: parent.right
+                            anchors.leftMargin: 0
+                            anchors.top: parent.top
+                            anchors.topMargin: (parent.height - this.contentHeight) / 2
+                        }                    
+                    }                             
+                    CheckBox { 
+                        ButtonGroup.group: priceButtonGroup       
+                        Text {
+                            text: qsTr("%1 45.00 to %1 50.00").arg(Backend.getCurrencySign(priceDisplayText.currency))
+                            color: (NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000"
+                            anchors.left: parent.right
+                            anchors.leftMargin: 0
+                            anchors.top: parent.top
+                            anchors.topMargin: (parent.height - this.contentHeight) / 2
+                        }                    
+                    }
+                    CheckBox { 
+                        ButtonGroup.group: priceButtonGroup       
+                        Text {
+                            text: qsTr("%1 55.00 and over").arg(Backend.getCurrencySign(priceDisplayText.currency))
+                            color: (NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000"
+                            anchors.left: parent.right
+                            anchors.leftMargin: 0
+                            anchors.top: parent.top
+                            anchors.topMargin: (parent.height - this.contentHeight) / 2
+                        }                    
+                    }                                                              
                 }
             }
             Frame {

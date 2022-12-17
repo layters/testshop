@@ -19,7 +19,7 @@ const QString BASE_URL{QStringLiteral("https://billboard.service.cryptowat.ch/"
 
 } // namespace
 
-std::optional<double> CryptoWatchPriceSource::price(neroshop::Currency from, neroshop::Currency to) const
+std::optional<double> CryptoWatchApi::price(neroshop::Currency from, neroshop::Currency to) const
 {
     // Fill map with initial currency ids and codes
     std::map<neroshop::Currency, QString> CURRENCY_TO_ID;

@@ -7,12 +7,11 @@
 #define SQLITE3_TAG_ERR "\033[1;36m[sqlite3]:\033[0;91m "
 
 #include <sqlite3.h>
+
 #include <iostream>
 #include <cstdarg>
 #include <fstream>
 #include <sstream>
-#include <utility> // std::pair
-#include <memory> // std::unique_ptr
 #include <vector> // std::vector
 #include <stdexcept> // std::runtime_error
 
@@ -29,12 +28,10 @@ public:
 	void close();
 	void execute(const std::string& command);
 	void execute_params(const std::string& command, const std::vector<std::string>& args);
-	// setters
-	//void set_singleton(const Sqlite3& singleton); // transfer ownership of singleton to the Sqlite3 unique_ptr
 	// getters
 	static std::string get_sqlite_version();
     sqlite3 * get_handle() const;
-    static Sqlite3 * get_singleton();
+    static Sqlite3 * get_database();
 	void * get_blob(const std::string& command);
 	void * get_blob_params(const std::string& command, const std::vector<std::string>& args);    
 	std::string get_text(const std::string& command);// const;
@@ -43,13 +40,13 @@ public:
 	int get_integer_params(const std::string& command, const std::vector<std::string>& args);
 	double get_real(const std::string& command); // NOTE: both floats and doubles are of the 'real' datatype
 	double get_real_params(const std::string& command, const std::vector<std::string>& args);
+	std::vector<std::string> get_rows(const std::string& command);
     // boolean
     bool is_open() const;
     bool table_exists(const std::string& table_name);
     //bool rowid_exists(const std::string& table_name, int rowid);
 private:
 	sqlite3 * handle;
-	static std::unique_ptr<Sqlite3> singleton;
 	bool opened;
 	static int callback(void *not_used, int argc, char **argv, char **az_col_name);
 };

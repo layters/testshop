@@ -36,7 +36,7 @@ void neroshop::Seller::list_item(unsigned int item_id, unsigned int stock_qty, d
     // make sure currency is supported
     if(!neroshop::Converter::is_supported_currency(currency)) {neroshop::print(currency + " is not a supported currency", 2); return;}
     ////////////////////////////////
-    db::Sqlite3 */*std::unique_ptr<db::Sqlite3>*/ database = db::Sqlite3::get_singleton();//std::make_unique<db::Sqlite3>(NEROSHOP_DATABASE_FILE);
+    db::Sqlite3 */*std::unique_ptr<db::Sqlite3>*/ database = db::Sqlite3::get_database();//std::make_unique<db::Sqlite3>(NEROSHOP_DATABASE_FILE);
     // to prevent duplicating item_id that is being sold by the same seller_id (a seller cannot list the same item twice, except change the stock amount)
     int listed_item = database->get_integer_params("SELECT item_id FROM inventory WHERE item_id = $1 AND seller_id = $2", { std::to_string(item_id), std::to_string(get_id()) });
 	if(listed_item == item_id) { 

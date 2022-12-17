@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.1.0 FATAL_ERROR)
 project(test)
 
 set(neroshop_root ..)
-set(neroshop_srcs ${neroshop_root}/src/core/buyer.cpp #[[${neroshop_root}/src/core/carrier.cpp]] ${neroshop_root}/src/core/cart.cpp ${neroshop_root}/src/core/catalog.cpp ${neroshop_root}/src/core/client.cpp ${neroshop_root}/src/core/converter.cpp ${neroshop_root}/src/core/database.cpp ${neroshop_root}/src/core/encryptor.cpp #[[${neroshop_root}/src/core/icon.cpp]] ${neroshop_root}/src/core/item.cpp #[[${neroshop_root}/src/core/message.cpp]] ${neroshop_root}/src/core/order.cpp  ${neroshop_root}/src/core/process.cpp ${neroshop_root}/src/core/qr.cpp ${neroshop_root}/src/core/script.cpp ${neroshop_root}/src/core/seller.cpp ${neroshop_root}/src/core/server.cpp ${neroshop_root}/src/core/user.cpp ${neroshop_root}/src/core/validator.cpp ${neroshop_root}/src/core/wallet.cpp)
+set(neroshop_srcs ${neroshop_root}/src/core/buyer.cpp #[[${neroshop_root}/src/core/carrier.cpp]] ${neroshop_root}/src/core/cart.cpp ${neroshop_root}/src/core/catalog.cpp ${neroshop_root}/src/core/client.cpp ${neroshop_root}/src/core/currency_converter.cpp ${neroshop_root}/src/core/database.cpp ${neroshop_root}/src/core/encryptor.cpp #[[${neroshop_root}/src/core/icon.cpp]] ${neroshop_root}/src/core/item.cpp #[[${neroshop_root}/src/core/message.cpp]] ${neroshop_root}/src/core/order.cpp  ${neroshop_root}/src/core/process.cpp ${neroshop_root}/src/core/qr.cpp ${neroshop_root}/src/core/script.cpp ${neroshop_root}/src/core/seller.cpp ${neroshop_root}/src/core/server.cpp ${neroshop_root}/src/core/user.cpp ${neroshop_root}/src/core/validator.cpp ${neroshop_root}/src/core/wallet.cpp)
 #set(neroshop_headers ) # not needed
 set(neroshop_include_dir ${neroshop_root}/include ${neroshop_root}/src)
 include_directories(${neroshop_include_dir})
@@ -382,10 +382,14 @@ add_executable(${test_uuid} uuid_test.cpp)
 set(test_qr_code "qr_test")
 add_executable(${test_qr_code} qr_test.cpp ${neroshop_srcs})
 target_link_libraries(${test_qr_code} ${monero_cpp_src} ${sqlite_src} ${qr_code_generator_src} ${raft_src} ${libuv_src} ${curl_src} ${monero_src} ${lua_src} ${png_src})
-# msg_encryption_test
+# encryption_test
 set(test_crypt "encryption_test")
 add_executable(${test_crypt} encryption_test.cpp ${neroshop_srcs})
 target_link_libraries(${test_crypt} ${monero_cpp_src} ${sqlite_src} ${qr_code_generator_src} ${raft_src} ${libuv_src} ${curl_src} ${monero_src} ${lua_src} ${png_src})
+# signing_test
+set(test_sign "signing_test")
+add_executable(${test_sign} signing_test.cpp ${neroshop_srcs})
+target_link_libraries(${test_sign} ${monero_cpp_src} ${sqlite_src} ${qr_code_generator_src} ${raft_src} ${libuv_src} ${curl_src} ${monero_src} ${lua_src} ${png_src})
 # sign_verify_test
 set(test_sign_verify "sign_verify_test")
 add_executable(${test_sign_verify} sign_verify_test.cpp ${neroshop_srcs})

@@ -14,8 +14,6 @@ neroshop::db::Sqlite3::~Sqlite3() {
     close();
 }
 ////////////////////
-std::unique_ptr<neroshop::db::Sqlite3> neroshop::db::Sqlite3::singleton (nullptr);//(std::make_unique<neroshop::db::Sqlite3>());
-////////////////////
 // SQLite database should only need to be opened once per application session and closed once when the application is terminated
 bool neroshop::db::Sqlite3::open(const std::string& filename)
 {
@@ -108,11 +106,11 @@ sqlite3 * neroshop::db::Sqlite3::get_handle() const {
     return handle;
 }
 ////////////////////
-neroshop::db::Sqlite3 * neroshop::db::Sqlite3::get_singleton() {
-    if(!singleton.get()) {
-        singleton = std::make_unique<neroshop::db::Sqlite3>();
-    }
-    return singleton.get();
+neroshop::db::Sqlite3 * neroshop::db::Sqlite3::get_database() {
+    std::string database_path = NEROSHOP_DEFAULT_DATABASE_PATH;
+    std::string database_file = "data.sqlite3";
+    static neroshop::db::Sqlite3 database_obj { database_file };////static neroshop::db::Sqlite3 database_obj { database_path + "/" + database_file };
+    return &database_obj;
 }
 ////////////////////
 void * neroshop::db::Sqlite3::get_blob(const std::string& command) {
@@ -217,7 +215,7 @@ std::string neroshop::db::Sqlite3::get_text_params(const std::string& command, c
     // Check the type of the statement's return value
     int column_type = sqlite3_column_type(statement, 0);
     if(column_type != SQLITE_TEXT) {
-        neroshop::print("sqlite3_column_type: invalid column type", 1);
+        ////neroshop::print("sqlite3_column_type: invalid column type", 1);
         sqlite3_finalize(statement);
         return "";
     }
@@ -341,6 +339,43 @@ double neroshop::db::Sqlite3::get_real_params(const std::string& command, const 
     double number = sqlite3_column_double(statement, 0);
     sqlite3_finalize(statement);
     return number;
+}
+////////////////////
+std::vector<std::string> neroshop::db::Sqlite3::get_rows(const std::string& command) {
+    if(!handle) throw std::runtime_error("database is not connected");
+    sqlite3_stmt * stmt = nullptr;
+    std::vector<std::string> row_values = {};
+    // Prepare (compile) statement
+    if(sqlite3_prepare_v2(handle, command.c_str(), -1, &stmt, nullptr) != SQLITE_OK) {
+        neroshop::print("sqlite3_prepare_v2: " + std::string(sqlite3_errmsg(handle)), 1);
+        return {};
+    }
+    // Check whether the prepared statement returns no data (for example an UPDATE)
+    // "SELECT name FROM users ORDER BY id;"      = 1 column
+    // "SELECT name, age FROM users ORDER BY id;" = 2 columns
+    // "SELECT * FROM users ORDER BY id;"         = all column(s) including the id
+    if(sqlite3_column_count(stmt) == 0) {
+        neroshop::print("No data found. Be sure to use an appropriate SELECT statement", 1);
+        return {};
+    }
+    // Get all table values row by row instead of column by column
+    int result = 0;
+    while((result = sqlite3_step(stmt)) == SQLITE_ROW) {
+        for(int i = 0; i < sqlite3_column_count(stmt); i++) {
+            std::string column_value = (sqlite3_column_text(stmt, i) == nullptr) ? "" : reinterpret_cast<const char *>(sqlite3_column_text(stmt, i));////if(sqlite3_column_text(stmt, i) == nullptr) {throw std::runtime_error("column is NULL");}
+            row_values.push_back(column_value); //std::cout << sqlite3_column_text(stmt, i) << std::endl;//std::cout << sqlite3_column_name(stmt, i) << std::endl;
+            // To get a specific column use: if(i == 0) {} or any number
+            // or call sqlite3_column_name for each column
+        }
+    }
+
+    if(result != SQLITE_DONE) {
+        neroshop::print("sqlite3_step: " + std::string(sqlite3_errmsg(handle)), 1);
+    }
+    
+    sqlite3_finalize(stmt);
+    
+    return row_values;
 }
 ////////////////////
 ////////////////////

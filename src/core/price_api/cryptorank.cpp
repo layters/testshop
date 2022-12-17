@@ -1,4 +1,4 @@
-#include "coincodex.hpp"
+#include "cryptorank.hpp"
 
 #include <QEventLoop>
 #include <QJsonArray>
@@ -14,22 +14,22 @@
 
 namespace {
 
-const QString BASE_URL{QStringLiteral("https://coincodex.com/api/coincodex/get_coin/%1")};
+const QString BASE_URL{QStringLiteral("https://api.cryptorank.io/v0/coins/%1?locale=en")};
 
 const std::map<neroshop::Currency, QString> CURRENCY_TO_ID{
-    {neroshop::Currency::BTC, "btc"},
-    {neroshop::Currency::ETH, "eth"},
-    {neroshop::Currency::XMR, "xmr"},
+    {neroshop::Currency::BTC, "bitcoin"},
+    {neroshop::Currency::ETH, "ethereum"},
+    {neroshop::Currency::XMR, "monero"},
 };
 
 } // namespace
 
-std::optional<double> CoinCodexPriceSource::price(neroshop::Currency from, neroshop::Currency to) const
+std::optional<double> CryptoRankApi::price(neroshop::Currency from, neroshop::Currency to) const
 {
     // Fill map with initial currency ids and codes
     std::map<neroshop::Currency, QString> CURRENCY_TO_VS;
     for (const auto& [key, value] : neroshop::CurrencyMap) {
-        CURRENCY_TO_VS[std::get<0>(value)] = QString::fromStdString(key).toLower();
+        CURRENCY_TO_VS[std::get<0>(value)] = QString::fromStdString(key).toUpper();
     }
     
     auto it = CURRENCY_TO_ID.find(from);
@@ -42,6 +42,7 @@ std::optional<double> CoinCodexPriceSource::price(neroshop::Currency from, neros
     if (it == CURRENCY_TO_VS.cend()) {
         return std::nullopt;
     }
+    const auto idTo = it->second;
 
     QNetworkAccessManager manager;
     QEventLoop loop;
@@ -56,5 +57,10 @@ std::optional<double> CoinCodexPriceSource::price(neroshop::Currency from, neros
         return std::nullopt;
     }
     const auto root_obj = json_doc.object();
-    return root_obj.value("last_price_usd").toDouble();
+    const auto data_obj = root_obj.value("data").toObject();
+    const auto price_obj = data_obj.value("price").toObject();
+    if (!price_obj.contains(idTo)) {
+        return std::nullopt;
+    }
+    return price_obj.value(idTo).toDouble();
 }

@@ -5,7 +5,7 @@
 
 #if defined(NEROSHOP_USE_QT)
 #include <QStandardPaths>
-#define NEROSHOP_DEFAULT_CONFIGURATION_PATH QStandardPaths::writableLocation(QStandardPaths::AppConfigLocation)
+#define NEROSHOP_DEFAULT_CONFIGURATION_PATH QStandardPaths::writableLocation(QStandardPaths::AppConfigLocation).toStdString()
 #endif
 
 #if !defined(NEROSHOP_USE_QT)
@@ -30,10 +30,6 @@
 #endif
 #endif
 #endif // endif !defined(NEROSHOP_USE_QT)
-
-#define NEROSHOP_CONFIGURATION_NAME "settings"
-#define NEROSHOP_CONFIGURATION_EXTENSION "lua"
-#define NEROSHOP_CONFIGURATION_FILE NEROSHOP_CONFIGURATION_NAME "." NEROSHOP_CONFIGURATION_EXTENSION
 
 #define LUA_TAG "\033[1;34m[lua]:\033[0m "
 

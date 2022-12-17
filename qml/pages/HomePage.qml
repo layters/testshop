@@ -66,6 +66,76 @@ Page {
             Text {
                 Layout.row: 2
                 Layout.topMargin: 10
+                text: "Categories"
+                color: (NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000"
+                font.bold: true
+                font.pointSize: 16
+            }
+            Flow {
+                Layout.row: 3
+                Layout.preferredWidth: parent.width////scrollView.width
+                Layout.maximumWidth: scrollView.width////mainWindow.width
+                Layout.topMargin: 10
+                spacing: 5
+                //Layout.alignment: Qt.AlignHCenter | Qt.AlignTop // does nothing
+                Repeater {
+                    id: categoryRepeater
+                    model: Backend.getCategoryList()
+                    delegate: Rectangle {
+                        implicitWidth: 150//200
+                        implicitHeight: 90//implicitWidth / 2
+                        color: NeroshopComponents.Style.getColorsFromTheme()[1]
+                        radius: 5//3
+                        border.color: categoryHoverHandler.hovered ? "white" : "transparent"
+                        HoverHandler {
+                            id: categoryHoverHandler
+                        }                        
+                        NeroshopComponents.Hint {/*TextArea {
+                            id: categoryNameText
+                            text: modelData.name
+                            color: (NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000"
+                            readOnly: true
+                            wrapMode: TextEdit.Wrap
+                            width: parent.width
+                            verticalAlignment: TextEdit.AlignVCenter
+                            anchors.top: parent.top
+                            anchors.topMargin: 10*/
+                            visible: categoryHoverHandler.hovered // <- uncomment this to make the tooltip visible on hover
+                            height: contentHeight + 20; width: contentWidth + 20
+                            text: qsTr(modelData.name)
+                            pointer.visible: false; delay: 0
+                        }
+                        Image {
+                            id: categoryThumbnail
+                            source: (modelData.thumbnail == "NULL") ? "qrc:/images/image_gallery.png" : modelData.thumbnail
+                            anchors.horizontalCenter: parent.horizontalCenter
+                            anchors.top: parent.top//anchors.bottom: categoryNameText.bottom
+                            anchors.topMargin: 10//anchors.bottomMargin: 20////anchors.centerIn: parent
+                            fillMode: Image.PreserveAspectFit
+                            width: 32; height: 32
+                        }
+                        Rectangle {
+                            anchors.bottom: parent.bottom//categoryRepeater.itemAt(index).children[0].bottom
+                            anchors.bottomMargin: 10//20
+                            anchors.horizontalCenter: parent.horizontalCenter
+                            implicitWidth: 75
+                            implicitHeight: 25
+                            color: parent.color//"#000000"
+                            radius: 5
+                            border.color: "#ffffff"
+                            Text {
+                                text: modelData.id//index//index.toString() + ", " + modelData//"10" // Number of products that fall under this particular category
+                                color: "#ffffff"
+                                anchors.horizontalCenter: parent.horizontalCenter
+                                anchors.verticalCenter: parent.verticalCenter
+                            }
+                        }
+                    }
+                }
+            }            
+            /*Text {
+                Layout.row: 2
+                Layout.topMargin: 10
                 text: "Recently added"//"Recent listings"//"Featured items"//"Best sellers"//"On Sale"//"Recommended items"//"Shop by Category"
                 color: (NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000"
                 font.bold: true
@@ -92,7 +162,7 @@ Page {
                         }
                     }
                 }
-            }
+            }*/
         } // GridLayout
     } // ScrollView
 }

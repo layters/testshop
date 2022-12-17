@@ -1,16 +1,16 @@
 #pragma once
 
-#ifndef PRICE_SOURCE_HPP_NEROSHOP
-#define PRICE_SOURCE_HPP_NEROSHOP
+#ifndef PRICE_API_HPP_NEROSHOP
+#define PRICE_API_HPP_NEROSHOP
 
 #include "../../core/currency_converter.hpp"
 
 #include <optional>
 
-class PriceSource
+class PriceApi
 {
 public:
-    virtual ~PriceSource() = default;
+    virtual ~PriceApi() = default;
 
     virtual std::optional<double> price(neroshop::Currency from, neroshop::Currency to) const = 0;
 };

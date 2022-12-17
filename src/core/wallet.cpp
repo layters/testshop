@@ -357,13 +357,14 @@ void neroshop::Wallet::on_balances_changed(uint64_t new_balance, uint64_t new_un
 // daemon
 ////////////////////
 // open the daemon before opening the wallet
-void neroshop::Wallet::daemon_open(const std::string& ip, const std::string& port, bool confirm_external_bind, bool restricted_rpc, bool remote, std::string data_dir, std::string network_type, unsigned int restore_height) 
+void neroshop::Wallet::daemon_open(const std::string& daemon_dir, const std::string& ip, const std::string& port, bool confirm_external_bind, bool restricted_rpc, std::string data_dir, std::string network_type, unsigned int restore_height) 
 {
+    // Todo: use QProcess to launch monerod
     // search for monero daemon (that is packaged with neroshop executable)
-    std::string daemon_dir = static_cast<std::string>(std::filesystem::current_path()) + "/external/monero-cpp/external/monero-project/build/release/bin/monerod";
-    // connect to a remote node
-    // either neroshop's daemon does not exist or remote is set to true
-    if(!std::filesystem::is_regular_file(daemon_dir) || remote == true) { std::cout << "\033[1;90;49m" << "connecting to remote node - " << (ip + ":" + port) << "\033[0m" << std::endl; return;} // exit function
+    ////std::string daemon_dir = static_cast<std::string>(std::filesystem::current_path()) + "/external/monero-cpp/external/monero-project/build/release/bin/monerod";
+    std::cout << "daemon_dir: " << daemon_dir << std::endl;
+    // either neroshop's daemon does not exist
+    if(!std::filesystem::is_regular_file(daemon_dir)) { std::cout << "monerod not found. Please set the path or use a remote node instead"/*"\033[1;90;49m" << "connecting to remote node - " << (ip + ":" + port) << "\033[0m"*/ << "\n"; return;} // exit function
     // check if there is another monerod process running in the background
     int monerod = Process::get_process_by_name("monerod");//(argv[1]);//cout << "pid: " << monerod << endl;
     if(monerod != -1) { std::cout << "\033[1;90;49m" << "monerod is running (ID:" << monerod << ")\033[0m" << std::endl; return;} // daemon that was previously running in the background // exit function

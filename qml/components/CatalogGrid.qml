@@ -12,7 +12,7 @@ import "." as NeroshopComponents
     // catalog view (Grid)
     Grid {
         id: catalogGrid
-        rows: 20//2
+        rows: 10//20
         columns: 3
         spacing: 5//rowSpacing: 5; columnSpacing: 5
         //flow: Grid.TopToBottom
@@ -23,15 +23,20 @@ import "." as NeroshopComponents
             return catalogGridRepeater.count; // count is really just the number of items in the model :O
         }
         property bool hideProductDetails: true//false // hides product name, price, and star ratings if set to true
+        property real boxWidth: (hideProductDetails) ? 250 : 300//220 : 250//300
+        property real boxHeight: (hideProductDetails) ? 300 : 400//220 : 250//220
+        property real fullWidth: (this.boxWidth * columns) + (spacing * (columns - 1)) // Full width of the entire grid
+        property alias count: catalogGridRepeater.count
+        
         Repeater { // owns all items it instantiates
             id: catalogGridRepeater
             model: (rows * columns)// rows and columns already set so this is useless (I think)
             // product box (GridBox)
             delegate: Rectangle { // delegates have a readonly "index" property that indicates the index of the delegate within the repeater
-                id: product_box
+                id: productBox
                 visible: true
-                width: (hideProductDetails) ? 250 : 300//220 : 250//300
-                height: (hideProductDetails) ? 300 : 400//220 : 250//220
+                width: catalogGrid.boxWidth
+                height: catalogGrid.boxHeight
                 color: (NeroshopComponents.Style.darkTheme) ? "#2e2e2e"/*"#121212"*/ : "#a0a0a0"//"#ffffff"// #a0a0a0 = 160,160,160
                 border.color: (NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000"
                 border.width: 0
@@ -47,7 +52,7 @@ import "." as NeroshopComponents
                 
                     width: 128
                     height: 128
-                    fillMode:Image.Stretch
+                    fillMode: Image.Stretch
                     mipmap: true
                     
                     MouseArea {

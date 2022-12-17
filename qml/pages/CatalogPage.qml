@@ -99,25 +99,26 @@ ScrollView {//Flickable {
         anchors.top: viewToggle.bottom
         anchors.topMargin: 50
         currentIndex: 0
-        width: NeroshopComponents.CatalogGrid.width; height: NeroshopComponents.CatalogGrid.height//width: pages.itemAt(this.currentIndex).width; height: pages.itemAt(this.currentIndex).height;//width: catalog.width; height: catalog.height
 
         Repeater {
             id: pages
             model: 10 // Number of page results from search
             // todo: use a Loader to switch between grid view and list view // https://forum.qt.io/topic/80826/dynamic-delegate-in-repeater/4 //// (viewToggle.checkedButton.text.match("List view")) ? 
-            delegate: NeroshopComponents.CatalogGrid {
-            // To access each grid: pages.itemAt(index)
-            // To access each box inside the grid: pages.itemAt(gridIndex).children[gridBoxIndex] //or: pages.itemAt(gridIndex).getBox(gridBoxIndex)
-                //id: catalog
-                // Items in a StackLayout support these attached properties (anchors cannot be used when managed by StackLayout or any other Layout type):
-                //Layout.minimumWidth
-                //Layout.minimumHeight
-                //Layout.preferredWidth
-                //Layout.preferredHeight
-                //Layout.maximumWidth
-                //Layout.maximumHeight
-                //Layout.fillWidth: true
-                //Layout.fillHeight: true                
+            delegate: Loader {////NeroshopComponents.CatalogGrid {
+                id: catalogViewLoader
+                source: (viewToggle.checkedButton.text == "Grid view") ? "qrc:/qml/components/CatalogGrid.qml" : "qrc:/qml/components/CatalogList.qml"        
+                // displaying the catalog grid's properties
+                //onLoaded: {
+                    /*console.log("Full width of Grid (actual):", catalogViewLoader.item.width)
+                    console.log("catalogGrid.fullWidth:", catalogViewLoader.item.fullWidth)*/
+                    //console.log(catalogViewLoader.item.rows)
+                    //console.log("model count:", catalogViewLoader.item.count)
+                //}
+                // Changing the catalog grid's properties
+                /*Component.onCompleted: {
+                    catalogViewLoader.setSource(catalogViewLoader.source,
+                             { "rows": "2" });
+                }*/
             }
         }
     } // StackLayout

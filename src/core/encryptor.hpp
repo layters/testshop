@@ -31,8 +31,8 @@ public:
     static std::string encrypt_message(const EVP_PKEY * key, const std::string& plain_text); // returns encrypted text
     static std::string decrypt_message(const EVP_PKEY * key, const std::string& cipher_text); // returns decrypted text    
     // signing and verifying functions - login system (not implemented yet)
-    // static private_sign(const std::string& private_key);
-    // static public_verify(const std::string& public_key);
+    static std::string private_sign(const std::string& private_key, const std::string& message);
+    static bool public_verify(const std::string& public_key, const std::string& message, const std::string& signature);
     static std::string sign_message(const EVP_PKEY * signing_key, const std::string& message); // sign a message using private key // returns the signature
     static bool verify_signature(const EVP_PKEY * verify_key, const std::string& message, const std::string& signature); // verify signature of a message using public_key
     // getters

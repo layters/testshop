@@ -56,7 +56,7 @@ public:
     Q_INVOKABLE neroshop::Wallet * getWallet() const;
     Q_INVOKABLE void setWallet(const neroshop::Wallet* wallet/*const neroshop::Wallet& wallet*/) {}//const { /*this->wallet = const_cast<neroshop::Wallet*>(wallet);*//*this->wallet = &const_cast<neroshop::Wallet&>(wallet);*//*emit wallet_changed(status);*/ }
     //Q_INVOKABLE <type> <function_name>() const {}
-    Q_INVOKABLE void daemonExecute(const QString& ip, const QString& port, bool confirm_external_bind, bool restricted_rpc, bool remote, QString data_dir, QString network_type, unsigned int restore_height);// const;
+    Q_INVOKABLE void daemonExecute(const QString& daemon_dir, const QString& ip, const QString& port, bool confirm_external_bind, bool restricted_rpc, QString data_dir, QString network_type, unsigned int restore_height);// const;
     Q_INVOKABLE bool isGenerated() const;
     Q_INVOKABLE bool fileExists(const QString& filename) const;
 public slots:       
