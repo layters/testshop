@@ -70,8 +70,7 @@ neroshop = {
                 "node.xmr.ru:18081"
             },
             stagenet = {
-                "super.fast.node.xmr.pm:38089",
-                "stagenet.community.rino.io:38081"
+                "stagenet.community.rino.io:38081",
             },
             testnet = {
                 "testnet.community.rino.io:28081"

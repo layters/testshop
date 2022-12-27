@@ -1,7 +1,7 @@
 #include "user.hpp"
 
 ////////////////////
-neroshop::User::User() : id(0), logged(false), account_type(user_account_type::guest), cart(nullptr), order_list({}), favorites_list({}) {
+neroshop::User::User() : id(""), logged(false), account_type(user_account_type::guest), cart(nullptr), order_list({}), favorites_list({}) {
     cart = std::unique_ptr<Cart>(new Cart());
 }
 ////////////////////
@@ -560,29 +560,87 @@ void neroshop::User::load_favorites() {
 // avatar-related stuff here
 ////////////////////
 void neroshop::User::upload_avatar(const std::string& filename) {
-#if defined(NEROSHOP_USE_POSTGRESQL)
-    // before we upload a new avatar, we must first check if a VALID avatar already exists, if so delete it
-    Oid avatar_oid = DB::Postgres::get_singleton()->get_integer_params("SELECT data FROM avatars WHERE user_id = $1;", { std::to_string(this->id) });//std::cout << avatar_oid << std::endl;
-    if(avatar_oid != InvalidOid) { 
-        neroshop::print("avatar with oid(" + std::to_string(avatar_oid) + ") for this user has been found. I will delete it now before a new avatar is uploaded", 2);//2 for warnings and alerts
-        delete_avatar(); // there's a transaction occuring here. Not sure if it will interfere with the transaction below
+    neroshop::db::Sqlite3 * database = neroshop::db::Sqlite3::get_database();
+    if(!database) throw std::runtime_error("database is NULL");
+    //----------------------------
+    //unsigned int user_id = 1;
+    //----------------------------
+    std::string image_file = filename;
+    std::string image_name = image_file.substr(image_file.find_last_of("\\/") + 1);// get filename from path
+    image_name = image_name.substr(0, image_name.find_last_of(".")); // remove ext
+    std::string image_ext = image_file.substr(image_file.find_last_of(".") + 1);
+    
+    std::cout << "image name: " << image_name << std::endl;
+    std::cout << "image file: " << image_file << std::endl;
+    std::cout << "image extension: " << image_ext << std::endl;    
+    ///////////////////////////
+    // Todo: replace user id with monero_address
+    //////////////////////////
+    database->execute("BEGIN;");
+    //////////////////////////
+    // Todo: check if column exists first
+    bool row_exists = database->get_integer_params("SELECT EXISTS(SELECT * FROM users WHERE monero_address = $1);", { this->id });
+    if(!row_exists) {
+        std::cout << "User with id " << this->id << " does not exist\n";
+        database->execute("ROLLBACK;"); // abort transaction
+        return;
     }
-    /////////////////////////////////////////////////
-    // create table avatar, if it does not yet exist
-    if(!DB::Postgres::get_singleton()->table_exists("avatars")) {
-        DB::Postgres::get_singleton()->create_table("avatars");
-        DB::Postgres::get_singleton()->execute("ALTER TABLE avatars ADD COLUMN IF NOT EXISTS user_id integer REFERENCES users(id);");//DB::Postgres::get_singleton()->add_column("ALTER TABLE avatars ADD COLUMN IF NOT EXISTS name text;");
-        DB::Postgres::get_singleton()->execute("ALTER TABLE avatars ADD COLUMN IF NOT EXISTS data oid;");
+    //////////////////////////
+    //static char lo_content[] = "Lorem ipsum dolor sit amet, fabulas conclusionemque ius ad.";//std::cout << "lo_content size: " << sizeof(lo_content) << std::endl;//60
+    std::ifstream image_file_r(image_file, std::ios::binary); // std::ios::binary is the same as std::ifstream::binary
+    if(!image_file_r.good()) {
+        std::cout << NEROSHOP_TAG "failed to load " << image_file << std::endl; 
+        database->execute("ROLLBACK;"); return;
     }
-    /////////////////////////////////////////////////
-    // begin transaction (required when dealing with large objects)
-    DB::Postgres::get_singleton()->execute("BEGIN;");
-    /////////////////////////////////////////////////
-    // ...
-    /////////////////////////////////////////////////
-    // end transaction
-    DB::Postgres::get_singleton()->execute("COMMIT;");        
-#endif    
+    image_file_r.seekg(0, std::ios::end); // std::ios::end is the same as image_file_r.end
+    size_t size = static_cast<int>(image_file_r.tellg()); // in bytes
+    // Limit avatar image size to 1048576 bytes (1 megabyte)
+    // Todo: Database cannot scale to billions of users if I am storing blobs so I'll have to switch to text later
+    if(size >= 1048576) {
+        neroshop::print("Avatar upload image cannot exceed 1 MB (one megabyte)", 1);
+        database->execute("ROLLBACK;"); return;
+    }
+    image_file_r.seekg(0); // image_file_r.seekg(0, image_file_r.beg);
+    std::vector<unsigned char> buffer(size); // or unsigned char buffer[size];// or unsigned char * buffer = new unsigned char[size];
+    if(!image_file_r.read(reinterpret_cast<char *>(&buffer[0]), size)) {// read data as a block
+        std::cout << NEROSHOP_TAG "error: only " << image_file_r.gcount() << " could be read";
+        database->execute("ROLLBACK;"); // abort transaction
+        return; // exit function
+    }    
+    ////for(auto content : buffer) std::cout << content << std::endl; // temp
+    image_file_r.close();
+    ///////////////////////////
+    std::string command = "UPDATE users SET avatar = $1 WHERE monero_address = $2;";
+    sqlite3_stmt * statement = nullptr;
+    int result = sqlite3_prepare_v2(database->get_handle(), command.c_str(), -1, &statement, nullptr);
+    if(result != SQLITE_OK) {
+        neroshop::print("sqlite3_prepare_v2: " + std::string(sqlite3_errmsg(database->get_handle())), 1);
+        database->execute("ROLLBACK;"); return;// nullptr;
+    }
+    // Bind user-defined parameter arguments
+    result = sqlite3_bind_blob(statement, 1, buffer.data(), size, SQLITE_STATIC);
+    if(result != SQLITE_OK) {
+        neroshop::print("sqlite3_bind_blob: " + std::string(sqlite3_errmsg(database->get_handle())), 1);
+        sqlite3_finalize(statement);
+        database->execute("ROLLBACK;"); return;// nullptr;
+    }  
+    
+    result = sqlite3_bind_text(statement, 2, this->id.c_str(), this->id.length(), SQLITE_STATIC);
+    if(result != SQLITE_OK) {
+        neroshop::print("sqlite3_bind_text: " + std::string(sqlite3_errmsg(database->get_handle())), 1);
+        sqlite3_finalize(statement);
+        database->execute("ROLLBACK;"); return;// nullptr;
+    }  
+    
+    result = sqlite3_step(statement);
+    if (result != SQLITE_DONE) {
+        neroshop::print("sqlite3_step: " + std::string(sqlite3_errmsg(database->get_handle())), 1);
+    }
+        
+    sqlite3_finalize(statement);
+    ///////////////////////////
+    database->execute("COMMIT;");
+    std::cout << "uploadImage succeeded\n";
 }
 ////////////////////
 void neroshop::User::delete_avatar() {
@@ -615,7 +673,11 @@ void neroshop::User::delete_avatar() {
 ////////////////////
 ////////////////////
 ////////////////////
-void neroshop::User::set_id(unsigned int id) {
+//void neroshop::User::set_id(unsigned int id) {
+//    this->id = id;
+//}
+////////////////////
+void neroshop::User::set_id(const std::string& id) {
     this->id = id;
 }
 ////////////////////
@@ -636,7 +698,11 @@ void neroshop::User::set_logged(bool logged) { // protected function, so only de
 ////////////////////
 ////////////////////
 ////////////////////
-unsigned int neroshop::User::get_id() const {
+//unsigned int neroshop::User::get_id() const {
+//    return id;
+//}
+////////////////////
+std::string neroshop::User::get_id() const {
     return id;
 }
 ////////////////////
@@ -912,7 +978,7 @@ void neroshop::User::logout() {
     //edit: guests can definitely logout too//if(is_guest()) return; // guests don't have an account so therefore they cannot logout
     // do something when logged is set to false ...
     // reset private members to their default values
-    this->id = 0; // clear id
+    this->id = ""; // clear id
     this->name.clear(); // clear name
     this->account_type = user_account_type::guest; // set account type to the default
     this->logged = false; // make sure user is no longer logged in

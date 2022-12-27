@@ -17,8 +17,25 @@ Popup {
     modal: true//clip: true
     closePolicy: Popup.CloseOnEscape    
     property bool hideTabText: false
+    // General tab properties
     property alias theme: themeBox
     property alias currency: currencyBox
+    // Monero tab properties
+    property alias moneroNodeType: nodeTypeStackLayout.currentIndex//nodeTypeGroup.checkedButton.stackLayoutIndex
+    property string moneroNodeAddress: (nodeTypeStackLayout.currentIndex == remoteNodeButton.stackLayoutIndex) ? moneroRemoteNodeList.selectedNode : (moneroDaemonIPField.placeholderText + ":" + moneroDaemonPortField.placeholderText)
+    property string moneroNodeDefaultPort: moneroDaemonPortField.placeholderText
+    property string monerodPath: Backend.urlToLocalFile(monerodPathField.text)
+    property string moneroDataDir: (moneroDataDirField.text.length < 1) ? Backend.urlToLocalFile(moneroDataDirField.placeholderText) : Backend.urlToLocalFile(moneroDataDirField.text)
+    property bool confirmExternalBind: confirmExternalBindSwitch.checked
+    property bool restrictedRpc: restrictedRpcSwitch.checked
+    property string moneroDaemonUsername: moneroDaemonRpcLoginUser.text
+    property string moneroDaemonPassword: moneroDaemonRpcLoginPwd.text
+    property bool moneroDaemonAutoSync: (nodeTypeStackLayout.currentIndex == remoteNodeButton.stackLayoutIndex) ? autoNodeSyncSwitch.checked : autoDaemonSyncSwitch.checked
+  
+    function resetScrollBar() {
+        scrollView.ScrollBar.vertical.position = 0.0
+    }
+    
     background: Rectangle {
         implicitWidth: 700
         implicitHeight: 500
@@ -93,7 +110,10 @@ Popup {
                 id: generalSettingsButton
                 text: qsTr("General")
                 width: implicitWidth + 20
-                onClicked: settingsStack.currentIndex = 0
+                onClicked: {
+                    settingsStack.currentIndex = 0
+                    resetScrollBar()
+                }
                 //display: (hideTabText) ? AbstractButton.IconOnly : AbstractButton.TextBesideIcon
                 //icon.source: "file:///" + neroshopResourcesDirPath + "/cog.png"//"/tools.png"
                 checkable: true
@@ -116,7 +136,10 @@ Popup {
             TabButton { 
                 text: (hideTabText) ? qsTr(FontAwesome.monero) : qsTr("Monero")//.arg(FontAwesome.monero)
                 width: implicitWidth + 20
-                onClicked: settingsStack.currentIndex = 1
+                onClicked: {
+                    settingsStack.currentIndex = 1
+                    resetScrollBar()
+                }
                 display: AbstractButton.TextOnly
                 checkable: true
                 checked: (settingsStack.currentIndex == 1)
@@ -448,14 +471,14 @@ Item {
                 Rectangle {
                     Layout.alignment: Qt.AlignHCenter
                     Layout.preferredWidth: 500////Layout.fillWidth: true
-                    Layout.preferredHeight: 50
+                    Layout.preferredHeight: 50 + children[0].anchors.margins
                     radius: 3
                     color: "transparent"
-                    //border.color: (NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000"
+                    border.color: (NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000"
                     
                     RowLayout {
                         anchors.fill: parent
-                                       
+                        anchors.margins: 10               
                         /*Label {
                             id: networkTypeLabel
                             text: qsTr("Network Type")
@@ -466,17 +489,29 @@ Item {
                         
                         ComboBox {
                             id: moneroNetworkTypeBox
-                            model: ["mainnet", "stagenet", "testnet"]
-                            currentIndex: model.indexOf(Script.getString("neroshop.monero.daemon.network_type").toLowerCase())
+                            model: ["Mainnet", "Testnet", "Stagenet"]
+                            currentIndex: {
+                                let network_type = Wallet.getNetworkTypeString()
+                                let network_type_cap = (network_type.length < 1) ? "Mainnet" : (network_type.charAt(0).toUpperCase() + network_type.slice(1))
+                                return model.indexOf(network_type_cap)
+                            }
                             displayText: currentText
                             Layout.fillWidth: true////Layout.alignment: Qt.AlignRight; Layout.rightMargin: 5
                         
                             onActivated: {    
-                                if(currentIndex == 0) moneroNodePortField.placeholderText = "18081"
-                                if(currentIndex == 1) moneroNodePortField.placeholderText = "38081"
-                                if(currentIndex == 2) moneroNodePortField.placeholderText = "28081"
+                                if(currentIndex == 0) {
+                                    moneroNodePortField.placeholderText = "18081"
+                                    Wallet.setNetworkTypeByString(currentText)
+                                }
+                                if(currentIndex == 1) {
+                                    moneroNodePortField.placeholderText = "28081"
+                                    Wallet.setNetworkTypeByString(currentText)
+                                }
+                                if(currentIndex == 2) {
+                                    moneroNodePortField.placeholderText = "38081"
+                                    Wallet.setNetworkTypeByString(currentText)
+                                }                                
                                 displayText = currentText
-                                // = displayText
                             }
                         }
                     }
@@ -494,6 +529,7 @@ Item {
                     }
 
                 NeroshopComponents.NodeList {
+                    id: moneroRemoteNodeList
                     anchors.fill: parent                    
                 }
             }
@@ -502,7 +538,7 @@ Item {
                     
                     TextField {
                         id: moneroNodeIPField
-                        Layout.preferredWidth: (moneroDaemonPortField.width * 3) - parent.spacing // Default row spacing is 5 so the width is reduced by 5
+                        Layout.preferredWidth: (moneroNodePortField.width * 3) - parent.spacing // Default row spacing is 5 so the width is reduced by 5
                         Layout.preferredHeight: 50
                         placeholderText: qsTr("Custom node IP address"); placeholderTextColor: (NeroshopComponents.Style.darkTheme) ? "#a9a9a9" : "#696969"
                         color: (NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000"
@@ -529,7 +565,29 @@ Item {
                             radius: 3
                         }     
                     }          
-                }            
+                }
+                
+                RowLayout {
+                    Layout.alignment: Qt.AlignHCenter
+                    Layout.preferredWidth: 500
+
+                    Label {
+                        Layout.alignment: Qt.AlignLeft
+                        Layout.leftMargin: 0
+                        text: qsTr("Automatically sync to daemon on login")
+                        color: (NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000"
+                        font.bold: true
+                    }
+                                        
+                    NeroshopComponents.Switch {
+                        id: autoNodeSyncSwitch
+                        Layout.alignment: Qt.AlignRight
+                        Layout.rightMargin: 5
+                        checked: true
+                        radius: 13
+                        backgroundCheckedColor: NeroshopComponents.Style.moneroOrangeColor
+                    }                
+                }                            
     }
 } // Item 0                    
                     
@@ -539,7 +597,7 @@ Item {
                 //Layout.fillHeight: true
                 
                 TextField {
-                    id: monerodLocationField
+                    id: monerodPathField
                     Layout.alignment: Qt.AlignHCenter
                     Layout.preferredWidth: 500//Layout.fillWidth: true
                     Layout.preferredHeight: 50
@@ -655,6 +713,59 @@ Item {
                     }          
                 }          
                         
+                // Full node mainainers can require a login in order for others to connect to their daemon
+                RowLayout {
+                    Layout.alignment: Qt.AlignHCenter
+                    
+                    TextField {
+                        id: moneroDaemonRpcLoginUser
+                        Layout.preferredWidth: (500 / 2) - parent.spacing // Default row spacing is 5 so the width is reduced by 5
+                        Layout.preferredHeight: 50
+                        placeholderText: qsTr("Daemon Username (optional)"); placeholderTextColor: (NeroshopComponents.Style.darkTheme) ? "#a9a9a9" : "#696969"
+                        color: (NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000"
+                        selectByMouse: true
+                
+                        background: Rectangle { 
+                            color: (NeroshopComponents.Style.darkTheme) ? "#101010" : "#ffffff"
+                            border.color: (NeroshopComponents.Style.darkTheme) ? "#a9a9a9" : "#696969"
+                            radius: 3
+                        }               
+                    }
+                
+                    TextField {
+                        id: moneroDaemonRpcLoginPwd
+                        Layout.preferredWidth: (500 / 2)
+                        Layout.preferredHeight: 50
+                        placeholderText: qsTr("Daemon Password"); placeholderTextColor: (NeroshopComponents.Style.darkTheme) ? "#a9a9a9" : "#696969"
+                        color: (NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000"
+                        selectByMouse: true
+                        echoMode: TextInput.PasswordEchoOnEdit
+                        inputMethodHints: Qt.ImhSensitiveData
+                
+                        background: Rectangle { 
+                            color: (NeroshopComponents.Style.darkTheme) ? "#101010" : "#ffffff"
+                            border.color: (NeroshopComponents.Style.darkTheme) ? "#a9a9a9" : "#696969"
+                            radius: 3
+                        }     
+                    }          
+                }
+                
+                /*TextField {
+                        id: moneroDaemonOptFlags
+                        Layout.alignment: Qt.AlignHCenter
+                        Layout.preferredWidth: 500 // Default row spacing is 5 so the width is reduced by 5
+                        Layout.preferredHeight: 50
+                        placeholderText: qsTr("Daemon flags (optional)"); placeholderTextColor: (NeroshopComponents.Style.darkTheme) ? "#a9a9a9" : "#696969"
+                        color: (NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000"
+                        selectByMouse: true
+                
+                        background: Rectangle { 
+                            color: (NeroshopComponents.Style.darkTheme) ? "#101010" : "#ffffff"
+                            border.color: (NeroshopComponents.Style.darkTheme) ? "#a9a9a9" : "#696969"
+                            radius: 3
+                        }               
+                    }*/                              
+                        
                 RowLayout {
                     Layout.alignment: Qt.AlignHCenter
                     Layout.preferredWidth: 500
@@ -698,56 +809,6 @@ Item {
                         backgroundCheckedColor: NeroshopComponents.Style.moneroOrangeColor
                     }                
                 }
-                // todo: add rpc-login option so full node mainainers can require a login in order for others to connect to their daemon
-                /*RowLayout {
-                    Layout.alignment: Qt.AlignHCenter
-                    
-                    TextField {
-                        id: moneroDaemonRpcLoginUser
-                        Layout.preferredWidth: (500 / 2) - parent.spacing // Default row spacing is 5 so the width is reduced by 5
-                        Layout.preferredHeight: 50
-                        placeholderText: qsTr("RPC Login Username (optional)"); placeholderTextColor: (NeroshopComponents.Style.darkTheme) ? "#a9a9a9" : "#696969"
-                        color: (NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000"
-                        selectByMouse: true
-                
-                        background: Rectangle { 
-                            color: (NeroshopComponents.Style.darkTheme) ? "#101010" : "#ffffff"
-                            border.color: (NeroshopComponents.Style.darkTheme) ? "#a9a9a9" : "#696969"
-                            radius: 3
-                        }               
-                    }
-                
-                    TextField {
-                        id: moneroDaemonRpcLoginPwd
-                        Layout.preferredWidth: (500 / 2)
-                        Layout.preferredHeight: 50
-                        placeholderText: qsTr("RPC Login Password (optional)"); placeholderTextColor: (NeroshopComponents.Style.darkTheme) ? "#a9a9a9" : "#696969"
-                        color: (NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000"
-                        selectByMouse: true
-                
-                        background: Rectangle { 
-                            color: (NeroshopComponents.Style.darkTheme) ? "#101010" : "#ffffff"
-                            border.color: (NeroshopComponents.Style.darkTheme) ? "#a9a9a9" : "#696969"
-                            radius: 3
-                        }     
-                    }          
-                }*/          
-                
-                /*TextField {
-                        id: moneroDaemonOptFlags
-                        Layout.alignment: Qt.AlignHCenter
-                        Layout.preferredWidth: 500 // Default row spacing is 5 so the width is reduced by 5
-                        Layout.preferredHeight: 50
-                        placeholderText: qsTr("Daemon flags (optional)"); placeholderTextColor: (NeroshopComponents.Style.darkTheme) ? "#a9a9a9" : "#696969"
-                        color: (NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000"
-                        selectByMouse: true
-                
-                        background: Rectangle { 
-                            color: (NeroshopComponents.Style.darkTheme) ? "#101010" : "#ffffff"
-                            border.color: (NeroshopComponents.Style.darkTheme) ? "#a9a9a9" : "#696969"
-                            radius: 3
-                        }               
-                    }*/      
                 // manage daemon buttons: stop daemon, start daemon, etc.
                 RowLayout {
                     Layout.alignment: Qt.AlignHCenter
@@ -768,28 +829,46 @@ Item {
                             verticalAlignment: Text.AlignVCenter
                         }
                         onClicked: {
-                            Wallet.daemonExecute(Backend.urlToLocalFile(monerodLocationField.text),
-                                moneroDaemonIPField.placeholderText, 
-                                moneroDaemonPortField.placeholderText, 
+                            Wallet.daemonExecute(Backend.urlToLocalFile(monerodPathField.text),
                                 confirmExternalBindSwitch.checked, 
                                 restrictedRpcSwitch.checked, 
                                 (moneroDataDirField.text.length < 1) ? Backend.urlToLocalFile(moneroDataDirField.placeholderText) : Backend.urlToLocalFile(moneroDataDirField.text),
                                 "stagenet", // change this later
                                 0, // placeholder restore_height
                                 );
-                           if(!Wallet.isGenerated()) return; // no need for this if we are only launching the monerod executable
-                           Wallet.daemonConnect(moneroDaemonIPField.placeholderText, moneroDaemonPortField.placeholderText)     
+                           if(!Wallet.isOpened()) return; // no need for this if we are only launching the monerod executable
+                           Wallet.daemonConnect()//(moneroDaemonRpcLoginUser.text, moneroDaemonRpcLoginPwd.text)     
                         }
                     }
-                }   
-                //Button {
-                    //id:saveSettingsButton
-                //}                
+                }
+                
+                RowLayout {
+                    Layout.alignment: Qt.AlignHCenter
+                    Layout.preferredWidth: 500
+
+                    Label {
+                        Layout.alignment: Qt.AlignLeft
+                        Layout.leftMargin: 0
+                        text: qsTr("Automatically sync to daemon on login")
+                        color: (NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000"
+                        font.bold: true
+                    }
+                                        
+                    NeroshopComponents.Switch {
+                        id: autoDaemonSyncSwitch
+                        Layout.alignment: Qt.AlignRight
+                        Layout.rightMargin: 5
+                        checked: true
+                        radius: 13
+                        backgroundCheckedColor: NeroshopComponents.Style.moneroOrangeColor
+                    }                
+                }
+                                   
                 } // ColumnLayout
     FileDialog {
         id: moneroDaemonFileDialog
         fileMode: FileDialog.OpenFile
-        currentFile: monerodLocationField.text // currentFile is deprecated since Qt 6.3. Use selectedFile instead
+        currentFile: monerodPathField.text // currentFile is deprecated since Qt 6.3. Use selectedFile instead
         folder: (isWindows) ? StandardPaths.writableLocation(StandardPaths.DocumentsLocation) + "/neroshop" : StandardPaths.writableLocation(StandardPaths.HomeLocation) + "/neroshop"
         nameFilters: ["Executable files (*.exe *.AppImage *)"]
     }   

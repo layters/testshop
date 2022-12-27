@@ -56,6 +56,13 @@
         <file>images/appicons/LogoLight500x500.png</file>
         <file>images/appicons/LogoLight1000x1000.png</file>
         <file>images/appicons/LogoLight1500x1500.png</file>
+        <file>images/appicons/LogoDark250x250.png</file>
+        <file>images/appicons/LogoDark375x375.png</file>
+        <file>images/appicons/LogoDark500x500.png</file>
+        <file>images/appicons/LogoDark1000x1000.png</file>
+        <file>images/appicons/LogoDark1500x1500.png</file>
+        <file>images/appicons/Vector_Illustrator Files/LogoDark.svg</file>
+        <file>images/appicons/Vector_Illustrator Files/LogoLight.svg</file>
         <file>images/cart.png</file>
         <file>images/clipboard.png</file>
         <file>images/cog.png</file>

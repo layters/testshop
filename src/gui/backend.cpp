@@ -56,17 +56,19 @@ void neroshop::Backend::initializeDatabase() {
     db::Sqlite3 * database = db::Sqlite3::get_database();
     database->execute("BEGIN;");
      //-------------------------
-    
+    // Todo: Make monero_address the primary key and remove id. Also, replace all foreign key references from id to monero_address
     // table users
     if(!database->table_exists("users")) { 
-        database->execute("CREATE TABLE users(id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT);");
-        database->execute("ALTER TABLE users ADD COLUMN name TEXT;");// DEFAULT '' NOT NULL;"); // optional display name
-        database->execute("ALTER TABLE users ADD COLUMN monero_address TEXT;"); // verify_key - public_key used for logins and for verification of signatures
+        database->execute("CREATE TABLE users("//id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,"
+            "name TEXT, "
+            "monero_address TEXT PRIMARY KEY"//, UNIQUE"
+        ");");
+        //database->execute("ALTER TABLE users ADD COLUMN monero_address TEXT;"); // verify_key - public_key used for logins and for verification of signatures
         database->execute("ALTER TABLE users ADD COLUMN public_key TEXT DEFAULT NULL;"); // encrypt_key - public_key used for encryption of messages
+        database->execute("ALTER TABLE users ADD COLUMN avatar BLOB DEFAULT NULL;"); // encrypt_key - public_key used for encryption of messages
         
-        ////database->execute("CREATE UNIQUE INDEX index_user_names ON users (name);"); // Will not allow empty strings :(
-        database->execute("CREATE UNIQUE INDEX index_user_auth_keys ON users (monero_address);");
-        database->execute("CREATE UNIQUE INDEX index_public_keys ON users (public_key);");
+        // Notes: Display names are optional which means they can be an empty string but making the "name" column UNIQUE will not allow empty strings on multiple names
+        ////database->execute("CREATE UNIQUE INDEX index_public_keys ON users (public_key);"); // This is commented out to allow multiple users to use the same public key, in the case of a user having two neroshop accounts?
     }    
     // products (represents both items and services)
     if(!database->table_exists("products")) {
@@ -87,7 +89,7 @@ void neroshop::Backend::initializeDatabase() {
     if(!database->table_exists("inventory")) {
         database->execute("CREATE TABLE inventory(id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT);");
         database->execute("ALTER TABLE inventory ADD COLUMN product_id INTEGER REFERENCES products(id);");
-        database->execute("ALTER TABLE inventory ADD COLUMN seller_id INTEGER REFERENCES users(id);"); // alternative names: "store_id"
+        database->execute("ALTER TABLE inventory ADD COLUMN seller_id TEXT REFERENCES users(monero_address);"); // alternative names: "store_id"
         database->execute("ALTER TABLE inventory ADD COLUMN stock_qty INTEGER;"); // alternative names: "stock" or "stock_available"
         database->execute("ALTER TABLE inventory ADD COLUMN sales_price REAL;");//numeric(20,12);"); // alternative names: "seller_price" or "list_price" // this is the final price of a product
         database->execute("ALTER TABLE inventory ADD COLUMN currency TEXT;"); // the fiat currency the seller is selling the item in
@@ -106,7 +108,7 @@ void neroshop::Backend::initializeDatabase() {
         //database->execute("CREATE TABLE cart(id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT, product_id INTEGER REFERENCES products(id));");
         // public cart - copied to all peers' databases
         database->execute("CREATE TABLE cart(id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT);");
-        database->execute("ALTER TABLE cart ADD COLUMN user_id INTEGER REFERENCES users(id);");//database->execute("CREATE TABLE cart(id INTEGER NOT NULL PRIMARY KEY, user_id INTEGER REFERENCES users(id));");
+        database->execute("ALTER TABLE cart ADD COLUMN user_id TEXT REFERENCES users(monero_address);");//database->execute("CREATE TABLE cart(id INTEGER NOT NULL PRIMARY KEY, user_id TEXT REFERENCES users(monero_address));");
         // cart_items (public cart)
         database->execute("CREATE TABLE cart_item(id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT);");
         database->execute("ALTER TABLE cart_item ADD COLUMN cart_id INTEGER REFERENCES cart(id);");
@@ -121,7 +123,7 @@ void neroshop::Backend::initializeDatabase() {
         database->execute("ALTER TABLE orders ADD COLUMN timestamp TEXT DEFAULT CURRENT_TIMESTAMP;"); // creation_date // to get UTC time: set to datetime('now');
         database->execute("ALTER TABLE orders ADD COLUMN number TEXT;"); // uuid
         database->execute("ALTER TABLE orders ADD COLUMN status TEXT;");
-        database->execute("ALTER TABLE orders ADD COLUMN user_id INTEGER REFERENCES users(id);"); // the user that placed the order
+        database->execute("ALTER TABLE orders ADD COLUMN user_id TEXT REFERENCES users(monero_address);"); // the user that placed the order
         //database->execute("ALTER TABLE orders ADD COLUMN weight REAL;"); // weight of all order items combined - not essential
         database->execute("ALTER TABLE orders ADD COLUMN subtotal numeric(20, 12);");
         database->execute("ALTER TABLE orders ADD COLUMN discount numeric(20, 12);");
@@ -133,7 +135,7 @@ void neroshop::Backend::initializeDatabase() {
         database->execute("CREATE TABLE order_item(id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT);");
         database->execute("ALTER TABLE order_item ADD COLUMN order_id INTEGER REFERENCES orders(id);");
         database->execute("ALTER TABLE order_item ADD COLUMN product_id INTEGER REFERENCES products(id);");
-        database->execute("ALTER TABLE order_item ADD COLUMN seller_id INTEGER REFERENCES users(id);");
+        database->execute("ALTER TABLE order_item ADD COLUMN seller_id TEXT REFERENCES users(monero_address);");
         database->execute("ALTER TABLE order_item ADD COLUMN item_qty INTEGER;");
         //database->execute("ALTER TABLE order_item ADD COLUMN item_price ?datatype;");
         //database->execute("ALTER TABLE order_item ADD COLUMN ?col ?datatype;");
@@ -141,20 +143,20 @@ void neroshop::Backend::initializeDatabase() {
     // ratings - product_ratings, seller_ratings
     // maybe merge both item ratings and seller ratings together or nah?
     if(!database->table_exists("seller_ratings")) {//if(!database->table_exists("user_ratings")) {
-        // seller
         database->execute("CREATE TABLE seller_ratings(id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT);");
-        database->execute("ALTER TABLE seller_ratings ADD COLUMN seller_id INTEGER REFERENCES users(id);"); // seller_pkey or seller_pubkey//database->execute("ALTER TABLE user_ratings ADD COLUMN user_id INTEGER REFERENCES users(id);"); // seller_pkey or seller_pubkey
+        database->execute("ALTER TABLE seller_ratings ADD COLUMN seller_id TEXT REFERENCES users(monero_address);"); // seller_pkey or seller_pubkey//database->execute("ALTER TABLE user_ratings ADD COLUMN user_id TEXT REFERENCES users(monero_address);"); // seller_pkey or seller_pubkey
         database->execute("ALTER TABLE seller_ratings ADD COLUMN score INTEGER;");
-        database->execute("ALTER TABLE seller_ratings ADD COLUMN user_id INTEGER REFERENCES users(id);"); // or rater_id // user_pkey or user_pubkey//database->execute("ALTER TABLE user_ratings ADD COLUMN rater_id INTEGER REFERENCES users(id);"); // user_pkey or user_pubkey
+        database->execute("ALTER TABLE seller_ratings ADD COLUMN user_id TEXT REFERENCES users(monero_address);"); // or rater_id // user_pkey or user_pubkey//database->execute("ALTER TABLE user_ratings ADD COLUMN rater_id TEXT REFERENCES users(monero_address);"); // user_pkey or user_pubkey
         database->execute("ALTER TABLE seller_ratings ADD COLUMN comments TEXT;"); // plain text
+        database->execute("ALTER TABLE seller_ratings ADD COLUMN signature TEXT;");
     }
     if(!database->table_exists("product_ratings")) {
-        // product - put in a separate table reviews (but revies only mean comments)
         database->execute("CREATE TABLE product_ratings(id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT);");
         database->execute("ALTER TABLE product_ratings ADD COLUMN product_id INTEGER REFERENCES products(id);");
         database->execute("ALTER TABLE product_ratings ADD COLUMN stars INTEGER;");
-        database->execute("ALTER TABLE product_ratings ADD COLUMN user_id INTEGER REFERENCES users(id);");
+        database->execute("ALTER TABLE product_ratings ADD COLUMN user_id TEXT REFERENCES users(monero_address);");
         database->execute("ALTER TABLE product_ratings ADD COLUMN comments TEXT;"); // plain text
+        database->execute("ALTER TABLE product_ratings ADD COLUMN signature TEXT;");
     }
     // images
     if(!database->table_exists("images")) {
@@ -166,15 +168,17 @@ void neroshop::Backend::initializeDatabase() {
         //database->execute("ALTER TABLE images ADD COLUMN ?col ?datatype;");
     }    
     // avatars - each user will have a single avatar
-    if(!database->table_exists("avatars")) {
+    // Edit: Since each user can only have one avatar, there won't be a need to store avatars in a separate table
+    // It will be stored in a column in the users table instead.
+    /*if(!database->table_exists("avatars")) {
         //database->execute("CREATE TABLE avatars(id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT);");
-        //database->execute("ALTER TABLE avatars ADD COLUMN user_id INTEGER REFERENCES users(id);");
+        //database->execute("ALTER TABLE avatars ADD COLUMN user_id TEXT REFERENCES users(monero_address);");
         //database->execute("ALTER TABLE avatars ADD COLUMN data BLOB;");
-    }    
+    }*/    
     // favorites (wishlists)
     if(!database->table_exists("favorites")) {
         //database->execute("CREATE TABLE ?tbl(id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT);");
-        //database->execute("ALTER TABLE ?tbl ADD COLUMN user_id INTEGER REFERENCES users(id);");
+        //database->execute("ALTER TABLE ?tbl ADD COLUMN user_id TEXT REFERENCES users(monero_address);");
         //database->execute("ALTER TABLE ?tbl ADD COLUMN product_ids integer[];");
         //database->execute("ALTER TABLE ?tbl ADD COLUMN ?col ?datatype;");
     }                    
@@ -282,10 +286,18 @@ QVariantList neroshop::Backend::getCategoryList() const {
 }
 
 // Todo: fetch monero nodes from monero.fail // Each node will represent a QML object (QVariantMap) with properties: address, height, and status
-Q_INVOKABLE QVariantList neroshop::Backend::getMoneroNodeList() const {
+Q_INVOKABLE QVariantList neroshop::Backend::getWalletNodeList() const {
     QVariantList node_list;
     return node_list;
 }
+// Todo: use QProcess to check if monero daemon is running
+bool neroshop::Backend::isWalletDaemonRunning() const {
+    int monerod = Process::get_process_by_name("monerod");
+    if(monerod == -1) { return false; }
+    std::cout << "\033[1;90;49m" << "monerod is running (ID:" << monerod << ")\033[0m" << std::endl; 
+    return true;
+}
+
 
 QVariantList neroshop::Backend::validateDisplayName(const QString& display_name) const {
     // username (will appear only in lower-case letters within the app)
@@ -353,19 +365,21 @@ QVariantList neroshop::Backend::validateDisplayName(const QString& display_name)
 QVariantList neroshop::Backend::checkDisplayName(const QString& display_name) const {    
     neroshop::db::Sqlite3 * database = neroshop::db::Sqlite3::get_database();
     if(!database->table_exists("users")) { return {true, ""}; } 
-    std::string name = database->get_text_params("SELECT name FROM users WHERE name = $1;", { display_name.toLower().toStdString() });
+    std::string name = database->get_text_params("SELECT name FROM users WHERE name = $1 COLLATE NOCASE;", { display_name.toStdString() });
     if(name.empty()) return { true, "Display name is available for use" };// Name is not taken which means that the user is good to go!
     // Empty display names are acceptable
     bool is_name_empty = display_name.isEmpty();
     if(is_name_empty) return { true, "No display name set" };
-    // Note: names are stored inside the database as lowercase strings
-    if(name == display_name.toLower().toStdString()) { 
+    // Note: both database and input display names are converted to lowercase strings and then compared within the app
+    std::string name_lowercase = QString::fromStdString(name).toLower().toStdString();//QString::fromUtf8(name.data(), name.size()).toLower();
+    std::string display_name_lowercase = display_name.toLower().toStdString();
+    if(name_lowercase == display_name_lowercase) { 
 	    return { false, "This username is already taken" };////result_list << false << QString("This username is already taken");return result_list;
 	}   
 	return { true, "" };
 }
 
-QVariantList neroshop::Backend::registerUser(const QString& primary_address/*gui::Wallet* wallet*/, const QString& display_name) {
+QVariantList neroshop::Backend::registerUser(WalletController* wallet_controller, const QString& display_name, UserController * user_controller) {
     neroshop::db::Sqlite3 * database = neroshop::db::Sqlite3::get_database();
     if(!database) throw std::runtime_error("database is NULL");
     // Validate display name
@@ -375,68 +389,87 @@ QVariantList neroshop::Backend::registerUser(const QString& primary_address/*gui
         QString message_result = name_validation_result[1].toString();
         return { boolean_result, message_result };
     }
+    // Get wallet (model) from wallet_controller
+    neroshop::Wallet * wallet = wallet_controller->getWallet();    
     // Get wallet primary address and check its validity
-    ////std::string primary_address = wallet->get_monero_wallet()->get_primary_address();//neroshop::print("Primary address: \033[1;33m" + primary_address.toStdString() + "\033[1;37m\n");
-    if(!monero_utils::is_valid_address(primary_address.toStdString(), monero_network_type::STAGENET)) {//network_type)) {
+    std::string primary_address = wallet->get_monero_wallet()->get_primary_address();//neroshop::print("Primary address: \033[1;33m" + primary_address + "\033[1;37m\n");
+    if(!wallet->is_valid_address(primary_address)) {
         return { false, "Invalid monero address" };
     }
     // Store login credentials in database
     // Todo: make this command (DB entry) a client request that the server must respond to and the consensus must agree with
     // Note: Multiple users cannot have the same display_name. Each display_name must be unique!
-    int user_id = database->get_integer_params("INSERT INTO users(name, monero_address) VALUES($1, $2) RETURNING id;", { display_name.toLower().toStdString(), primary_address.toStdString() });
-    if(user_id == 0) { return { false, "Account registration failed (due to database error)" }; }
+    std::string user_id = database->get_text_params("INSERT INTO users(name, monero_address) VALUES($1, $2) RETURNING monero_address;", { display_name.toStdString(), primary_address });//int user_id = database->get_integer_params("INSERT INTO users(name, monero_address) VALUES($1, $2) RETURNING id;", { display_name.toStdString(), primary_address.toStdString() });
+    if(user_id.empty()) { return { false, "Account registration failed (due to database error)" }; }//if(user_id == 0) { return { false, "Account registration failed (due to database error)" }; }
+    // initialize user obj (Todo: make a seperate class headers + source files for User)
+    std::unique_ptr<neroshop::User> seller(neroshop::Seller::on_login(display_name.toStdString()));
+    user_controller->user = std::move(seller);
+        if(user_controller->getUser() == nullptr) {
+            return {false, "user is NULL"};
+        }
+        // Set user properties
+        //user_controller->getUser()->set_id(user_id);
+    ////if(user_controller->getUser()->get_id().empty()) {
+        //user_controller->user = std::make_unique<neroshop::Seller>();
+        ////user_controller->getUser()->set_id(user_id);
+        
+        /*user_controller->getSeller()->set_wallet(*wallet);
+        std::cout << "Seller wallet set: " << user_controller->getSeller()->get_wallet()->get_primary_address() << std::endl;*/
+        
+        /*std::string signature = wallet->sign_message("Turtles are cool", monero_message_signature_type::SIGN_WITH_SPEND_KEY);
+        std::cout << "\033[34mSignature: " << signature << std::endl;
+        std::string verified = (wallet->verify_message("Turtles are cool", signature)) ? "true" : "false";
+        std::cout << "\033[34mIs verified: " << verified << "\033[0m" << std::endl;*/
+        
+        //user_controller->getUser()->upload_avatar("../images/appicons/LogoLight250x250.png");
+        //exportAvatarImage(QString::fromStdString(user_controller->getUser()->get_id()));
+    ////}
     // Display registration message
-    bool is_name_empty = display_name.isEmpty();
-    neroshop::print(((!is_name_empty) ? "Welcome to neroshop, " : "Welcome to neroshop") + display_name.toStdString(), 4);
+    neroshop::print(((!display_name.isEmpty()) ? "Welcome to neroshop, " : "Welcome to neroshop") + display_name.toStdString(), 4);
     return { true, "" };
 }
 
-void neroshop::Backend::loginWithWalletFile() {
-/*
+bool neroshop::Backend::loginWithWalletFile(WalletController* wallet_controller, const QString& path, const QString& password) {
     neroshop::db::Sqlite3 * database = neroshop::db::Sqlite3::get_database();
     if(!database) throw std::runtime_error("database is NULL");
-    //----------------------------
-    Wallet * wallet = new Wallet();
-    // Initialize monero wallet with existing wallet file
-    std::string wallet_password;// = "supersecretpassword123"; // Apparently passwords are not used nor required for mnemonics. ONLY wallet files use passwords
-    //std::cout << "Please upload your wallet file:\n";
-    std::cout << "Please enter your wallet password:\n";
-    std::getline(std::cin, wallet_password);
-    // Upload wallet via file dialog
-    wallet->upload(true, wallet_password);
-    // Get the hash of the primary address
+    // Get the wallet from the wallet controller
+    neroshop::Wallet * wallet = wallet_controller->getWallet();
+    // Open wallet file
+    if(!wallet->open(path.toStdString(), password.toStdString())) {
+        throw std::runtime_error("Invalid password or wallet network type");
+        return false;
+    }
+    // Get the primary address
     std::string primary_address = wallet->get_monero_wallet()->get_primary_address();
-    std::string user_auth_key;// = neroshop::algo::sha256(primary_address);
-    Validator::generate_sha256_hash(primary_address, user_auth_key); // temp
-    neroshop::print("Primary address: \033[1;33m" + primary_address + "\033[1;37m\nSHA256 hash: " + user_auth_key);
-    //$ echo -n "528qdm2pXnYYesCy5VdmBneWeaSZutEijFVAKjpVHeVd4unsCSM55CjgViQsK9WFNHK1eZgcCuZ3fRqYpzKDokqSKp4yp38" | sha256sum
+    neroshop::print("Primary address: \033[1;33m" + primary_address + "\033[1;37m");
     // Check database to see if user key (hash of primary address) exists
-    bool user_key_found = database->get_integer_params("SELECT EXISTS(SELECT * FROM users WHERE key = $1)", { user_auth_key });
+    bool user_found = database->get_integer_params("SELECT EXISTS(SELECT * FROM users WHERE monero_address = $1)", { primary_address });
     // If user key is not found in the database, then create one. This is like registering for an account
-    if(!user_key_found) {
+    if(!user_found) {
         // In reality, this function will return false if user key is not registered in the database
-        neroshop::print("user key not found in database. Please try again or register", 1);
+        neroshop::print("user not found in database. Please try again or register", 1);
         return false;
     }
     // Save user information in memory
-    int user_id = database->get_integer_params("SELECT id FROM users WHERE key = $1", { user_auth_key });
-    // This number will scale as the user count grows
-    int min_digits = 15; // 15 digits = 100 trillionth place (000,000,000,000,000)
-    int precision = min_digits - std::min<int>(min_digits, std::to_string(user_id).size());
-    std::string formatted_user_id = std::string(precision, '0').append(std::to_string(user_id));
-    neroshop::print("Welcome back, user " + formatted_user_id, 4);
+    /*std::unique_ptr<neroshop::User> seller(neroshop::Seller::on_login(display_name.toStdString()));
+    user_controller->user = std::move(seller);
+    if(user_controller->getUser() == nullptr) {
+        return false;//{false, "user is NULL"};
+    }*/
+    // Display message
+    std::string display_name = database->get_text_params("SELECT name FROM users WHERE monero_address = $1", { primary_address });
+    neroshop::print("Welcome back, user " + ((!display_name.empty()) ? display_name : primary_address), 4);
     // Set user_id
     // ...    
     return true;
-*/
 }
 
-void neroshop::Backend::loginWithMnemonic() {
+void neroshop::Backend::loginWithMnemonic(WalletController* wallet_controller, const QString& mnemonic) {
 /*
     neroshop::db::Sqlite3 * database = neroshop::db::Sqlite3::get_database();
     if(!database) throw std::runtime_error("database is NULL");
-    //----------------------------
-    Wallet * wallet = new Wallet();
+    // Get the wallet from the wallet controller
+    neroshop::Wallet * wallet = wallet_controller->getWallet();
     // Initialize monero wallet with existing wallet mnemonic
     std::string wallet_mnemonic;// = "hefty value later extra artistic firm radar yodel talent future fungal nutshell because sanity awesome nail unjustly rage unafraid cedar delayed thumbs comb custom sanity";
     std::cout << "Please enter your wallet mnemonic:\n";
@@ -470,12 +503,12 @@ void neroshop::Backend::loginWithMnemonic() {
 */
 }
 
-void neroshop::Backend::loginWithKeys() {
+void neroshop::Backend::loginWithKeys(WalletController* wallet_controller) {
 /*
     neroshop::db::Sqlite3 * database = neroshop::db::Sqlite3::get_database();
     if(!database) throw std::runtime_error("database is NULL");
-    //----------------------------
-    Wallet * wallet = new Wallet();
+    // Get the wallet from the wallet controller
+    neroshop::Wallet * wallet = wallet_controller->getWallet();
     // Initialize monero wallet with existing wallet mnemonic
     std::string primary_address;
     std::string secret_view_key;
@@ -514,6 +547,117 @@ void neroshop::Backend::loginWithKeys() {
 */
 }
 
-void neroshop::Backend::loginWithHW() {
+void neroshop::Backend::loginWithHW(WalletController* wallet_controller) {
 
+}
+
+bool neroshop::Backend::exportAvatarImage(const QString& user_id) { // This function is called after login or registration
+    neroshop::db::Sqlite3 * database = neroshop::db::Sqlite3::get_database();
+    if(!database) throw std::runtime_error("database is NULL");
+    //----------------------------
+    // Check if avatar column exists first and that its not null
+    bool has_avatar = database->get_integer_params("SELECT EXISTS(SELECT avatar FROM users WHERE monero_address = $1 AND avatar IS NOT NULL);", { user_id.toStdString() });
+    if(!has_avatar) {
+        neroshop::print("No avatar found", 2);
+        return false;//database->execute("ROLLBACK;"); return false;
+    }    
+    //----------------------------
+    // Check if default appdata path exists
+    std::string data_path = NEROSHOP_DEFAULT_DATABASE_PATH;
+    if(!std::filesystem::is_directory(data_path)) { 
+        neroshop::print("directory \"" + data_path + "\" not found", 1); 
+        return false; 
+    }
+    // Create cache folder within the default appdata path
+    std::string cache_folder = data_path + "/cache";
+    if(!std::filesystem::is_directory(cache_folder)) { 
+        neroshop::print("Creating directory \"" + cache_folder + "\" (^_^) ...", 2);
+        if(!std::filesystem::create_directories(cache_folder)) {
+            neroshop::print("Failed to create folder \"" + cache_folder + "\" (ᵕ人ᵕ)!", 1);
+            return false;
+        }
+        neroshop::print("\033[1;97;49mcreated path \"" + cache_folder + "\""); // bold bright white
+    }
+    // Generate a name for the avatar (to save to a file)
+    std::string image_filename = cache_folder + "/avatar_" + user_id.toStdString();
+    // Check if image already exists in cache so that we do not export the same image more than once
+    if(std::filesystem::is_regular_file(image_filename)) {
+        neroshop::print(image_filename + " already exists", 2);
+        return true;
+    }
+    // Open file for writing
+    std::ofstream image_file_w(image_filename.c_str(), std::ios::binary);    
+    if(!image_file_w.is_open()) {
+        neroshop::print("Failed to open " + image_filename, 1); 
+        return false;
+    }
+    //----------------------------
+    // Get the avatar's image data (blob) from the database
+    std::string command = "SELECT avatar FROM users WHERE monero_address = $1";
+    sqlite3_stmt * statement = nullptr;
+    int bytes = 0;
+    // Prepare (compile) the statement
+    int result = sqlite3_prepare_v2(database->get_handle(), command.c_str(), -1, &statement, nullptr);
+    if(result != SQLITE_OK) {
+        neroshop::print("sqlite3_prepare_v2: " + std::string(sqlite3_errmsg(database->get_handle())), 1);
+        return false;
+    }
+    // Bind text to user id (1st arg)
+    result = sqlite3_bind_text(statement, 1, user_id.toStdString().c_str(), user_id.toStdString().length(), SQLITE_STATIC);
+    if(result != SQLITE_OK) {
+        neroshop::print("sqlite3_bind_text: " + std::string(sqlite3_errmsg(database->get_handle())), 1);
+        sqlite3_finalize(statement);
+        return false;
+    }      
+    // Execute the statement
+    result = sqlite3_step(statement);
+    // Get image size in bytes
+    if(result == SQLITE_ROW) {
+        bytes = sqlite3_column_bytes(statement, 0);//std::cout << "bytes: " << bytes << std::endl;
+    }    
+    // Write (export) to file
+    image_file_w.write(reinterpret_cast<const char*>(static_cast<const unsigned char *>(sqlite3_column_blob(statement, 0))), bytes);//reinterpret_cast<unsigned char*>(const_cast<const void *>(sqlite3_column_blob(statement, 0)));
+    // close file
+    image_file_w.close();
+    // Finalize the statement    
+    sqlite3_finalize(statement);    
+    //printf("Autocommit: %d\n", sqlite3_get_autocommit(database->get_handle()));
+    //----------------------------    
+    neroshop::print("exported \"" + image_filename + "\" to \"" + cache_folder + "\"", 3);
+    return true;
+}
+
+unsigned char * neroshop::Backend::getAvatarImage() {
+    return nullptr;
+}
+
+
+void neroshop::Backend::startServerDaemon() {
+    // on launching neroshop, start the neromon process, if it has not yet been started    
+    int neromon = Process::get_process_by_name("neromon");
+    if(neromon != -1) {
+        neroshop::print("neromon is already running in the background", 4);
+        return;
+    }
+    /*server_process = new Process(); // don't forget to delete this!
+    server_process->create("./neromon", "");
+    // show all processes
+    ////Process::show_processes();*/
+    #ifdef Q_OS_WIN
+    QString program = "neromon.exe";
+    #else
+    QString program = "./neromon";
+    #endif
+    ////QStringList arguments;
+    ////arguments << "--ip" << "12.0.0.1";
+    /*QProcess * process = new QProcess(this);
+    QString folder = "";
+    process->start(program, QStringList() << folder);    */
+    
+    int exit_code = QProcess::execute(program, {});//, const QStringList &arguments = {});
+    if(exit_code < 0) { throw std::runtime_error("program either cannot be started or has crashed"); }
+    // Note: If the calling process exits, the detached process will continue to run unaffected.
+    //bool success = QProcess::startDetached(program, const QStringList &arguments = {}, const QString &workingDirectory = QString(), qint64 *pid = nullptr);
+    //if(!success) { throw std::runtime_error("neromon could not be started") }
+    std::cout << "\033[35mneromon started\033[0m\n";// (pid: " << pid << std::endl;
 }

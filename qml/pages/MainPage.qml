@@ -21,23 +21,54 @@ Page {
     }
     property int walletGenerationCount: 0
     ///////////////////////////
+    function onAutoSync() {
+        console.log("Auto-sync is turned " + ((settingsDialog.moneroDaemonAutoSync) ? "on" : "off"))
+        if(!settingsDialog.moneroDaemonAutoSync) return;
+        startWalletSync(); // connects to a monero daemon (either local or remote) then starts the sync process
+    }
+    ///////////////////////////
     function startWalletSync() {
-        // start local monero daemon or node synchronization (optional)
-        /*Wallet.daemonExecute(Script.getString("neroshop.monero.daemon.ip"), 
-            Script.getString("neroshop.monero.daemon.port"),
-            Script.getBoolean("neroshop.monero.daemon.confirm_external_bind"),
-            Script.getBoolean("neroshop.monero.daemon.restricted_rpc"),
-            Script.getBoolean("neroshop.monero.daemon.remote"),
-            Script.getString("neroshop.monero.daemon.data_dir"),
-            Script.getString("neroshop.monero.daemon.network_type"),
-            Script.getNumber("neroshop.monero.daemon.restore_height")
-        );*/
+        // Check if daemon is already synced
+        if(Wallet.isDaemonSynced()) return;//{ console.log("Daemon is already connected and synced with the network"); return; }    
+        // SettingsDialog should retrieve data  from settings.lua and all other components can retrieve from SettingsDialog
+        console.log("******************************************************");
+        console.log("Node type: ", (settingsDialog.moneroNodeType == 0) ? "remote node" : "local node")
+        console.log("Path to monerod: ", settingsDialog.monerodPath)
+        console.log("Selected node address: ", settingsDialog.moneroNodeAddress)
+        console.log("Monero data dir: ", settingsDialog.moneroDataDir)
+        console.log("Daemon username: ", settingsDialog.moneroDaemonUsername)
+        console.log("Daemon Password: ", settingsDialog.moneroDaemonPassword)
+        console.log("Confirm external bind: ", settingsDialog.confirmExternalBind)
+        console.log("Restricted RPC: ", settingsDialog.restrictedRpc)
+        console.log("Auto-sync: ", settingsDialog.moneroDaemonAutoSync)
+        console.log("******************************************************");
+        // start the monero daemon (local node) (optional)
+        if(settingsDialog.moneroNodeType == 1) {
+            // Dectect any running monero daemon (local)
+            if(Backend.isWalletDaemonRunning()) {
+                console.log("monerod is currently running in the background as detected. Now connecting to local node 127.0.0.1:" + settingsDialog.moneroNodeDefaultPort)
+                Wallet.daemonConnect();//(moneroDaemonRpcLoginUser.text, moneroDaemonRpcLoginPwd.text)
+                return; // exit function and do not proceed any further
+            }
+            
+            if(settingsDialog.monerodPath.length < 1) { // Will not show when redirecting to HomePage
+                messageBox.text = "You've selected Local node, but the path to monerod has not been specified"
+                messageBox.open()
+                //return; // exit function and do not proceed any further
+            }
+            
+            Wallet.daemonExecute(settingsDialog.monerodPath, settingsDialog.confirmExternalBind, settingsDialog.restrictedRpc, settingsDialog.moneroDataDir, 0/*Script.getNumber("neroshop.monero.wallet.restore_height")*/);
+            Wallet.daemonConnect();//(moneroDaemonRpcLoginUser.text, moneroDaemonRpcLoginPwd.text)
+            // Don't connect to daemon until we are sure that it has been launched/is ready (or else it will crash app)
+        }
         // connect to a remote monero node (default)
-        let remote_node = Script.getTableStrings("neroshop.monero.nodes.stagenet")[1]
-        let remote_node_ip = remote_node.split(":")[0]
-        let remote_node_port = remote_node.split(":")[1]
-        console.log("connecting to remote node " + remote_node_ip + " (port: " + remote_node_port + ")")
-        Wallet.daemonConnect(remote_node_ip, remote_node_port);//Wallet.daemonConnect(Script.getString("neroshop.monero.daemon.ip"), Script.getString("neroshop.monero.daemon.port"));    
+        if(settingsDialog.moneroNodeType == 0) {
+            let remote_node_ip = settingsDialog.moneroNodeAddress.split(":")[0]
+            let remote_node_port = settingsDialog.moneroNodeAddress.split(":")[1]
+            console.log("connecting to remote node " + remote_node_ip + ":" + remote_node_port)
+            // Todo: use custom remote node
+            Wallet.nodeConnect(remote_node_ip, remote_node_port)//, moneroDaemonRpcLoginUser.text, moneroDaemonRpcLoginPwd.text);//Wallet.nodeConnect(Script.getString("neroshop.monero.daemon.ip"), Script.getString("neroshop.monero.daemon.port"), moneroDaemonRpcLoginUser.text, moneroDaemonRpcLoginPwd.text);
+        }
     }
     ///////////////////////////
     function generateWalletKeys() {
@@ -50,7 +81,7 @@ Page {
             return; // exit function and do not proceed any further
         }        
         // Close (destroy) the current monero_wallet first before re-creating a new monero_wallet (In case user decides to re-generate wallet keys)
-        if(Wallet.isGenerated()) Wallet.closeWallet();
+        if(Wallet.isOpened()) Wallet.close();
         // Generate wallet
         Wallet.createRandomWallet(walletPasswordField.text, walletPasswordConfirmField.text, (walletNameField.text) ? qsTr(folder + "/%1").arg(walletNameField.text) : qsTr(folder + "/%1").arg(walletNameField.placeholderText))
         // In case wallet passwords do not match, display error message
@@ -59,7 +90,7 @@ Page {
             walletMessageArea.messageCode = 1
         }
         // Exit function if wallet fails to generate
-        if(!Wallet.isGenerated()) return;
+        if(!Wallet.isOpened()) return;
         // Increase the number of times a wallet has been generated this session (not necessary)
         walletGenerationCount = walletGenerationCount + 1
         // Display seed phrase in Repeater model
@@ -75,7 +106,7 @@ Page {
     }
     ///////////////////////////
     function registerWallet() {
-        if(!Wallet.isGenerated()) {
+        if(!Wallet.isOpened()) {
             messageBox.text = qsTr("Please generate your wallet keys before registering")
             messageBox.open()
             return; // exit function and do not proceed any further
@@ -84,20 +115,22 @@ Page {
         // ...
         // Make sure username is not taken (requires a database check)
         // ...
-        // Register hash of the wallet primary key to the database
-        let register_result = Backend.registerUser(Wallet.getPrimaryAddress(), optNameField.text)
+        // Register the wallet primary key to the database
+        let register_result = Backend.registerUser(Wallet, optNameField.text, User)
         if(!register_result [0] ) {
             messageBox.text = register_result [1];
             messageBox.open()
             return; // exit function and do not proceed any further
         }
+        //User.uploadAvatar("../images/appicons/LogoLight250x250.png");
         // Switch to HomePage
         pageLoader.source = "HomePage.qml"//stack.push(home_page)
         console.log("Primary address: ", Wallet.getPrimaryAddress())
         console.log("Balance: ", Wallet.getBalanceLocked(0))
         console.log("Unlocked balance: ", Wallet.getBalanceUnlocked(0))
         // start synching the monero node as soon we hit the register button (this confirms that we are satified with the wallet key that we've generated and won't turn back to re-generate a new one)
-        startWalletSync();    
+        // Todo: Add an auto-connect on login/registration button and only sync automatically if that option is turned on (will be turned on by default)
+        onAutoSync()
     }
     ///////////////////////////
     NeroshopComponents.MessageBox {////MessageDialog {
@@ -106,6 +139,19 @@ Page {
         x: mainWindow.x + (mainWindow.width - this.width) / 2
         y: mainWindow.y + (mainWindow.height - this.height) / 2
     }
+    ///////////////////////////
+    NeroshopComponents.MessageBox {////MessageDialog {
+        id: monerodMessageBox
+        title: "prompt"
+        x: mainWindow.x + (mainWindow.width - this.width) / 2
+        y: mainWindow.y + (mainWindow.height - this.height) / 2
+        acceptButton.visible: true
+        acceptButton.onClicked: {
+            console.log("Now connecting to a local node ...")
+            Wallet.daemonConnect();//(moneroDaemonRpcLoginUser.text, moneroDaemonRpcLoginPwd.text)
+            monerodMessageBox.close();
+        }        
+    }    
     ///////////////////////////
     // for login page
     FileDialog {
@@ -331,7 +377,7 @@ Page {
                 id: walletRestoreStack
                     Layout.row: 2
                     Layout.column: 0           
-                    Layout.alignment: Qt.AlignHCenter//          
+                    Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
                     currentIndex: 0
                 // WalletFileStackContent    
                 ColumnLayout {
@@ -434,12 +480,21 @@ Page {
                     }                     
                 }                    
                 }
-               Rectangle {
+               Rectangle {//ColumnLayout {
                     id: restoreFromMnemonicSeed
-                    //ColumnLayout {
-                    //    TextArea {
-                    //    }
-                    //}
+                    Layout.fillWidth: true
+                    Layout.fillHeight: true
+                    border.color: "blue"
+                    
+                    TextArea {
+                        id: mnemonicSeedInput
+                        Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
+                        Layout.preferredWidth: 500
+                        Layout.preferredHeight: 500
+                        //verticalAlignment: TextEdit.AlignVCenter // align the text within the center of TextArea item's height
+                        wrapMode: TextEdit.Wrap
+                        selectByMouse: true                        
+                    }
                 }
                 Rectangle {
                     id: restoreFromKeys
@@ -477,93 +532,57 @@ Page {
                     	color: "#ffffff" // white
                     	horizontalAlignment: Text.AlignHCenter
                     	verticalAlignment: Text.AlignVCenter                    
-                	}                    
+                	}               
+                	
+                	onClicked: {
+                	    // restore from file
+                	    if(walletRestoreStack.currentIndex == 0) {
+                	    // Todo: place this in a seperate function
+                	        if(Wallet.isOpened()) {
+                	            /*messageBox.text = qsTr("Wallet is already opened")
+                	            messageBox.open()
+                	            return;*/
+                	            
+                	            /*Wallet.close()
+                	            if(!Wallet.isOpened()) console.log("old wallet closed");*/
+                	        }                	        
+                	        if(walletFileField.text.length == 0) {
+                	            messageBox.text = qsTr("Wallet path must be specified")
+                	            messageBox.open()
+                	            return;
+                	        }
+                	        // Process login credentials
+                	        //if(!Wallet.isOpened()) {
+                	        if(!Backend.loginWithWalletFile(Wallet, Backend.urlToLocalFile(walletFileField.text), walletPasswordRestoreField.text)) {
+                	                messageBox.text = qsTr("Invalid password or wallet network type")
+                	                messageBox.open()
+                	                return;                	        
+                	        }
+                            // Start synching the monero node as soon we hit the login button only sync automatically if auto-sync option is turned on (will be turned on by default)
+                            onAutoSync();
+                            // Switch to HomePage
+                            pageLoader.source = "HomePage.qml"
+                            console.log("Primary address:", Wallet.getPrimaryAddress())
+                            console.log("Balance:", Wallet.getBalanceLocked(0))
+                            console.log("Unlocked balance:", Wallet.getBalanceUnlocked(0))
+                            //console.log("Mnemonic:", Wallet.getMnemonic())
+                	    }
+                	    // restore from seed
+                	    if(walletRestoreStack.currentIndex == 1) {
+                	        if(mnemonicSeedInput.text.length == 0) {
+                	            messageBox.text = qsTr("No mnemonic was entered")
+                	            messageBox.open()
+                	            return;                	        
+                	        }
+                	        Wallet.restoreFromMnemonic(mnemonicSeedInput.text)
+                	        // Process login credentials
+                	        // ...
+                	        onAutoSync();
+                            // Switch to HomePage
+                            ////pageLoader.source = "HomePage.qml"//stack.push(home_page)                	        
+                	    }
+                	}     
                 }            
-            //ScrollView {
-            //    id: wallet_upload_scrollview
-            /*             
-            //}
-            // upload button
-            Button {
-                id: walletPathButton
-                text: restoreFromFileButton.checked ? qsTr("Browse") : qsTr("Change")//qsTr("Browse")//qsTr("...")//qsTr("Upload")
-                onClicked: walletFileDialog.open()
-                display: AbstractButton.IconOnly//AbstractButton.TextBesideIcon//AbstractButton.TextOnly
-                //hoverEnabled: true
-                x: walletFileUploadField.x + walletFileUploadField.width + 5
-                y: walletFileUploadField.y            
-                width: 50
-                height: walletFileUploadField.height
-                
-                icon.source: "qrc:/images/upload.png"//neroshopResourceDir + "/upload.png"
-                icon.color: "#ffffff"
-                // can only have 1 contentItem at a time (a contentItem is not needed for Button)
-                //contentItem: Image {
-                //    source: neroshopResourceDir + "/upload.png"
-                //    height: 24; width: 24 // has no effect since image is scaled
-                //    fillMode:Image.PreserveAspectFit; // the image is scaled uniformly to fit button without cropping // https://doc.qt.io/qt-6/qml-qtquick-image.html#fillMode-prop
-                //}          
-                //contentItem: Text {  
-                //    text: walletPathButton.text
-                //    color: "#ffffff"
-                //    horizontalAlignment: Text.AlignHCenter
-                //    verticalAlignment: Text.AlignVCenter
-                //}
-        
-                background: Rectangle {
-                    color: "#808080"//parent.down ? "#bbbbbb" : (parent.hovered ? "#d6d6d6" : "#f6f6f6")
-                    radius: 0
-                    border.color: walletPathButton.hovered ? "#ffffff" : this.color//"#ffffff"//control.down ? "#17a81a" : "#21be2b"
-                }            
-            
-                ToolTip.delay: 500 // shows tooltip after hovering for 0.5 second
-                ToolTip.visible: hovered
-                ToolTip.text: qsTr("Upload wallet file")            
-            }        
-            //Label {
-            //    id: wallet_file_password_label
-            //    text: qsTr("Wallet file password")
-            //}            
-            // wallet password textfield
-            TextField {//TextInput {
-                id: wallet_password_edit
-                x: walletFileUploadField.x
-                y: walletFileUploadField.y + walletFileUploadField.height + 10
-                width: walletFileUploadField.width//; height: 
-                placeholderText: qsTr("Wallet Password")
-                placeholderTextColor: "#696969" // dim gray
-                color: "#5f3dc4"//"#402ef7"//"orange" // textColor
-                echoMode: TextInput.Password//TextInput.PasswordEchoOnEdit // hide sensative text
-                selectByMouse: true // can select parts of or all of text with mouse
-                // change TextField color (only works with TextFields not TextInputs)
-                background: Rectangle { 
-                    color: loginPage.color
-                    //opacity: 0.5
-                    border.color: "#696969" // dim gray//"#ffffff"
-                }      
-            }
-            // confirm button
-            Button {
-                id: wallet_file_confirm_button
-                text: qsTr("Confirm")
-                x: wallet_password_edit.x
-                y: loginPage.height - this.height - 20//wallet_password_edit.y + wallet_password_edit.height + 0
-                width: 150; height: 60 
-                //onClicked: Authenticator.auth_walletfile()
-
-                contentItem: Text {  
-                    text: wallet_file_confirm_button.text
-                    color: "#ffffff"
-                    // place text at center of button
-                    horizontalAlignment: Text.AlignHCenter//anchors.centerIn: parent // no work :(
-                    verticalAlignment: Text.AlignVCenter
-                }
-                                
-                background: Rectangle {
-                    color: '#6b5b95'//#5f3dc4 = (95, 61, 196)//add to cart button colors =>//"#6b5b95"//#6b5b95 = (107, 91, 149)//"#483d8b"//#483d8b = (72, 61, 139)//"#ff6600"//#ff6600 is the monero orange color
-                    radius: 0
-                }            
-            }*/
             } // GridLayout
         } // eof wallet_file_authentication_page
                 
@@ -1039,7 +1058,7 @@ Page {
                 	Layout.column: 0
                 	Layout.preferredWidth: 500
                 	Layout.preferredHeight: 50
-                	placeholderText: qsTr("Pseudonym (optional)")
+                	placeholderText: qsTr("Display name (optional)")
                 	placeholderTextColor: "#696969" // dim gray
                 	color: "#6b5b95"////(NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000" // textColor
                 	selectByMouse: true

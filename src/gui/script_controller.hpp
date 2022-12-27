@@ -1,7 +1,7 @@
 #pragma once
 
-#ifndef SCRIPT_PROXY_HPP_NEROSHOP
-#define SCRIPT_PROXY_HPP_NEROSHOP
+#ifndef SCRIPT_CONTROLLER_HPP_NEROSHOP
+#define SCRIPT_CONTROLLER_HPP_NEROSHOP
 
 #if defined(NEROSHOP_USE_QT)
 #include <QObject>
@@ -14,10 +14,8 @@
 
 namespace neroshop {
 
-namespace gui { 
-
 #if defined(NEROSHOP_USE_QT)
-class Script : public QObject {
+class ScriptController : public QObject {
     Q_OBJECT 
     // properties (for use in QML)
     //Q_PROPERTY(<type> <variable_name> READ ...)
@@ -32,14 +30,12 @@ public:
     // Containers
     Q_INVOKABLE QVariantList getTableStrings(const QString& key) const;
 #else
-class Script {    
+class ScriptController {    
 #endif
 public:
     //Script();
     //~Script();
 };
-
-}
 
 }
 

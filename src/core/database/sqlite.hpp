@@ -55,6 +55,5 @@ private:
 /*
 	// Would it be more appropriate if the server handles the database queries instead of the client?
 	// The client would send the server a request to execute a SQLite query. This sounds good.
-	// Since neroshop will only be using one database file, should we create a singleton object?
 */
 #endif

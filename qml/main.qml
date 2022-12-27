@@ -26,22 +26,42 @@ ApplicationWindow {
 
     header: Rectangle {
         color: NeroshopComponents.Style.getColorsFromTheme()[1]
-        height: 100 // width should be set automatically to the parent's width
+        height: 80//100 // width should be set automatically to the parent's width
+        visible: (!pageLoader.source.toString().match("qml/pages/MainPage.qml")) ? true : false;
+        
+        Button {//Image { 
+            id: neroshopLogoImage
+            visible: true//false
+            property real iconSize: 30
+            icon.source: (NeroshopComponents.Style.darkTheme) ? "qrc:/images/appicons/Vector_Illustrator Files/LogoLight.svg" : "qrc:/images/appicons/Vector_Illustrator Files/LogoDark.svg"
+            icon.color: icon.color
+            icon.width: iconSize; icon.height: iconSize
+            display: AbstractButton.IconOnly
+            hoverEnabled: true
+            background: Rectangle {
+                color: "transparent"
+                radius: 5
+                border.color: parent.hovered ? "#ffffff" : "transparent"
+            }
+            anchors.verticalCenter: parent.verticalCenter
+            anchors.left: parent.left
+            anchors.leftMargin: 20
+            //width: 35; height: this.width
+            onClicked: { 
+                navBar.uncheckAllButtons()
+                pageLoader.source = "qrc:/qml/pages/HomePage.qml" 
+            }
+        }
         
         NeroshopComponents.SearchBar {
             id: searchBar
-            visible: (!pageLoader.source.toString().match("qml/pages/MainPage.qml")) ? true : false;
-        
-            anchors.left: parent.left
+            anchors.left: (neroshopLogoImage.visible) ? neroshopLogoImage.right : parent.left
             anchors.leftMargin: 20
-            anchors.top: parent.top
-            anchors.topMargin: 20        
+            anchors.top: parent.top; anchors.topMargin: 20        
         }    
 
         NeroshopComponents.NavigationalBar {
             id: navBar
-            visible: (!pageLoader.source.toString().match("qml/pages/MainPage.qml")) ? true : false;
-        
             anchors.left: parent.right
             anchors.leftMargin: (-this.width - 20)
             anchors.top: parent.top
@@ -177,7 +197,7 @@ ApplicationWindow {
                     //textObject.color: "#ffffff"
                     hoverEnabled: true
                     anchors.verticalCenter: parent.verticalCenter//anchors.top: parent.top; anchors.topMargin: (parent.height - this.height) / 2
-                    ////value: Wallet.isGenerated() ? Wallet.getSyncPercentage() : 0.0 // this does not work (fails to update value so we use Timer instead)
+                    ////value: Wallet.isOpened() ? Wallet.getSyncPercentage() : 0.0 // this does not work (fails to update value so we use Timer instead)
                     Timer {
                         interval: 1 // trigger every x miliseconds
                         running: true
@@ -192,7 +212,7 @@ ApplicationWindow {
                         x: parent.x + (parent.width - this.width) / 2
                         height: contentHeight + 20; width: parent.width
                         bottomMargin : footer.height + 5
-                        text: qsTr("%1\n%2 %3\n Blocks remaining: %4 / %5").arg("monerod").arg(!Wallet.isGenerated() ? "Disconnected" : ((parent.value < 1.0) ? Wallet.getSyncMessage() : "Connected")).arg((parent.value > 0.0 && parent.value != 1.0) ? ("(" + (parent.value * 100).toFixed(2) + "%)") : "").arg(!Wallet.isGenerated() ? 0 : Wallet.getSyncHeight()).arg(!Wallet.isGenerated() ? 0 : Wallet.getSyncEndHeight()) // If connected to a remote node, "monerod" will be replaced by the <ip>:<port> of the remote node
+                        text: qsTr("%1\n%2 %3\n Blocks remaining: %4 / %5").arg("monerod").arg(!Wallet.isOpened() ? "Disconnected" : ((parent.value < 1.0) ? Wallet.getSyncMessage() : "Connected")).arg((parent.value > 0.0 && parent.value != 1.0) ? ("(" + (parent.value * 100).toFixed(2) + "%)") : "").arg(!Wallet.isOpened() ? 0 : Wallet.getSyncHeight()).arg(!Wallet.isOpened() ? 0 : Wallet.getSyncEndHeight()) // If connected to a remote node, "monerod" will be replaced by the <ip>:<port> of the remote node
                         pointer.visible: false
                     }                
                 }

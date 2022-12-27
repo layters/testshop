@@ -7,7 +7,8 @@ import "." as NeroshopComponents
 
 Item {
     id: root
-
+    property string selectedNode: (listView.currentItem == null) ? "" : listView.currentItem.children[2].selectedNode
+    
     ColumnLayout {
         anchors.fill: parent
         spacing: 2
@@ -69,7 +70,7 @@ Item {
 
                 Rectangle {
                     anchors.fill: parent
-                    color: parent.ListView.isCurrentItem ? NeroshopComponents.Style.moneroOrangeColor : "transparent"
+                    color: parent.ListView.isCurrentItem ? "#ff8b3d" : "transparent"
                 }
 
                 MouseArea {
@@ -83,6 +84,7 @@ Item {
                 RowLayout {
                     id: delegateRow
                     anchors.fill: parent
+                    property string selectedNode: delegateRow.parent.ListView.isCurrentItem ? nodeAddressLabel.text : ""
 
                     Label {
                         id: nodeStatusLabel
@@ -95,7 +97,8 @@ Item {
                         id: nodeAddressLabel
                         Layout.fillWidth: true
                         text: modelData//"node.neroshop.org:38081"//:18081"
-                        color: (NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000"
+                        color: delegateRow.parent.ListView.isCurrentItem ? "#471d00" : ((NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000")
+                        font.bold: delegateRow.parent.ListView.isCurrentItem ? true : false
                         elide: Label.ElideRight
                     }
 
@@ -105,6 +108,7 @@ Item {
                         Layout.maximumWidth: heightTitle.width//50
                         text: "1243821" // TODO create normal model
                         color: nodeAddressLabel.color
+                        font.bold: nodeAddressLabel.font.bold
                         elide: Label.ElideRight
                     }
                 }

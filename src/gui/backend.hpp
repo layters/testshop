@@ -9,12 +9,14 @@
 #include <QStringList>
 #include <QClipboard>
 #include <QGuiApplication>
+#include <QProcess> // Note: QProcess is not supported on VxWorks, iOS, tvOS, or watchOS.
 
 #include "../core/currency_converter.hpp"
 #include "../core/validator.hpp"
 #include "../core/seller.hpp"
 
-#include "wallet_proxy.hpp"
+#include "wallet_controller.hpp"
+#include "user_controller.hpp"
 
 #include <iostream>
 
@@ -36,16 +38,20 @@ public:
     Q_INVOKABLE QVariantList getCategoryList() const;
     //Q_INVOKABLE QStringList getSubCategoryList(int category_id);
     
-    Q_INVOKABLE QVariantList getMoneroNodeList() const;
+    Q_INVOKABLE QVariantList getWalletNodeList() const;
+    Q_INVOKABLE bool isWalletDaemonRunning() const;
 
     QVariantList validateDisplayName(const QString& display_name) const; // Validates display name based on regex requirements
     QVariantList checkDisplayName(const QString& display_name) const; // Checks database for display name availability
     
-    Q_INVOKABLE QVariantList/*bool*/ registerUser(const QString& primary_address/*gui::Wallet* wallet*/, const QString& display_name);
-    Q_INVOKABLE void loginWithWalletFile();
-    Q_INVOKABLE void loginWithMnemonic();
-    Q_INVOKABLE void loginWithKeys();
-    Q_INVOKABLE void loginWithHW();
+    Q_INVOKABLE QVariantList registerUser(WalletController* wallet_controller, const QString& display_name, UserController * user_controller);
+    Q_INVOKABLE bool loginWithWalletFile(WalletController* wallet_controller, const QString& path, const QString& password = "");
+    Q_INVOKABLE void loginWithMnemonic(WalletController* wallet_controller, const QString& mnemonic);
+    Q_INVOKABLE void loginWithKeys(WalletController* wallet_controller);
+    Q_INVOKABLE void loginWithHW(WalletController* wallet_controller);
+    // Todo: Move the avatar functions to UserController
+    static bool exportAvatarImage(const QString& user_id);//(UserController * user_controller);
+    static unsigned char * getAvatarImage();//(UserController * user_controller);
     
     //Q_INVOKABLE QVariantList getListings(); // Products listed by sellers
     //Q_INVOKABLE QVariantList getListingsByMostRecent();
@@ -54,14 +60,9 @@ public:
     //Q_INVOKABLE QVariantList getProducts(); // Registered products
     //Q_INVOKABLE QVariantList get();
     
-    ////Q_INVOKABLE void listItem();
-    //Q_INVOKABLE void addToCart();
-    //Q_INVOKABLE void createOrder();
-    //Q_INVOKABLE void rateItem();
-    //Q_INVOKABLE void rateSeller();
-    //Q_INVOKABLE void addToFavorites();
-    //Q_INVOKABLE void removeFromFavorites();
     //Q_INVOKABLE void ();
+    // Test function
+    static void startServerDaemon();
 private:
 };
 }

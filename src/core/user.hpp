@@ -40,7 +40,7 @@ public:
     // setters
     // getters
     // account-related stuff - getters
-    unsigned int get_id() const;
+    std::string get_id() const;//unsigned int get_id() const;
     std::string get_name() const;
     user_account_type get_account_type() const;
     std::string get_account_type_string() const;
@@ -72,9 +72,10 @@ public:
     void on_checkout();//(const neroshop::Order& order); // for all users
     virtual void on_order_received(); // for sellers only
     // friends
-    // ...
+    friend class Backend;
+    friend class UserController;
 protected: // can only be accessed by classes that inherit from class User (even instants of the bass class User cannot call these functions unless you dynamically cast them into a derived class)
-    void set_id(unsigned int id);
+    void set_id(const std::string& id);//void set_id(unsigned int id);
     void set_name(const std::string& name); // the same for every derived class 
     void set_account_type(user_account_type account_type); // either buyer or seller // the same for every derived class 
     void set_logged(bool logged); // the same for every derived class
@@ -84,7 +85,7 @@ protected: // can only be accessed by classes that inherit from class User (even
     void load_orders(); // on login, load all orders this user has made so far (this function is called only once per login)
     void load_favorites(); // on login, load favorites (this function is called only once per login)
 private:
-    unsigned int id;
+    std::string id;
     std::string name;
     user_account_type account_type; // seller, buyer (guest)
     bool logged; // determines whether user is logged in or not//bool online;

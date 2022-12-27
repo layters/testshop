@@ -13,9 +13,6 @@
 #include "../neroshop.hpp"
 using namespace neroshop;
 
-using WalletProxy = gui::Wallet;
-using ScriptProxy = gui::Script;
-
 bool isIOS = false;
 bool isAndroid = false;
 bool isWindows = false;
@@ -54,6 +51,8 @@ int main(int argc, char *argv[]) {
     QQmlApplicationEngine engine;
     //--------------------------
     // Configuration file must be loaded right after Qt Application object has been created so that we can get the correct config location
+    // start server daemon
+    Backend::startServerDaemon();
     // open configuration script
     neroshop::open_configuration_file();
     std::string network_type = Script::get_string(lua_state, "neroshop.monero.daemon.network_type");
@@ -84,13 +83,16 @@ int main(int argc, char *argv[]) {
         }
     }    
     // we can also register an instance of a class instead of the class itself
-    gui::Wallet wallet;
-    engine.rootContext()->setContextProperty("Wallet", &wallet);//new WalletProxy());//qmlRegisterUncreatableType<WalletProxy>("neroshop.Wallet", 1, 0, "Wallet", "Wallet cannot be instantiated directly.");//qmlRegisterType<WalletProxy>("neroshop.Wallet", 1, 0, "Wallet"); // Usage: import neroshop.Wallet  ...  Wallet { id: wallet }
-    //qRegisterMetaType<gui::Wallet*>("const gui::Wallet*");
+    //WalletController wallet;
+    engine.rootContext()->setContextProperty("Wallet", new WalletController());//qmlRegisterUncreatableType<WalletProxy>("neroshop.Wallet", 1, 0, "Wallet", "Wallet cannot be instantiated directly.");//qmlRegisterType<WalletProxy>("neroshop.Wallet", 1, 0, "Wallet"); // Usage: import neroshop.Wallet  ...  Wallet { id: wallet }
+    qRegisterMetaType<WalletController*>(); // Wallet can now be used as an argument in function parameters
     // register script
-    engine.rootContext()->setContextProperty("Script", new ScriptProxy());//qmlRegisterType<ScriptProxy>("neroshop.Script", 1, 0, "Script");
+    engine.rootContext()->setContextProperty("Script", new ScriptController());//qmlRegisterType<ScriptProxy>("neroshop.Script", 1, 0, "Script");
     // register backend
     engine.rootContext()->setContextProperty("Backend", new Backend());
+    // Register user
+    engine.rootContext()->setContextProperty("User", new UserController());
+    qRegisterMetaType<UserController*>();
     //--------------------------
     // Load main.qml from the "qml/" directory
     engine.load(QUrl(QStringLiteral("qrc:/qml/main.qml")));

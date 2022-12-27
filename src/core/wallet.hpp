@@ -22,10 +22,6 @@
 #include "process.hpp" // for monerod daemon process
 
 namespace neroshop {
-// For friend private member access
-namespace gui {
-class Wallet;
-}
 // todo: maybe place enums in an "error.hpp" file or nah?
 enum class wallet_error : int { WALLET_SUCCESS = 0, WRONG_PASSWORD, PASSWORDS_NO_MATCH, WALLET_ALREADY_EXISTS/*Wallet I/O Error*/ };
 
@@ -40,7 +36,7 @@ public:
     
     void restore_from_mnemonic(const std::string& mnemonic); // In-memory wallet
     void restore_from_keys(const std::string& primary_address, const std::string& view_key, const std::string& spend_key); // In-memory wallet
-    void open(const std::string& path, const std::string& password); // Password-protected wallet file
+    bool open(const std::string& path, const std::string& password); // Password-protected wallet file
     
     void close(bool save = false);
     
@@ -65,20 +61,26 @@ public:
     void on_output_received(const monero_output_wallet& output);
     ////void on_output_spent (const monero_output_wallet &output);
     // daemon or node-related functions
-    void daemon_open(const std::string& daemon_dir, const std::string& ip, const std::string& port, bool confirm_external_bind = false, bool restricted_rpc = true, std::string data_dir = std::string("/home/") + neroshop::device::get_user() + std::string("/.bitmonero")/*""*/, std::string network_type = "stagenet", unsigned int restore_height = 0);
-    bool daemon_connect_local(const std::string& ip, const std::string& port);
-    void daemon_connect_remote(const std::string& ip, const std::string& port);
+    void daemon_open(const std::string& daemon_dir, bool confirm_external_bind = false, bool restricted_rpc = true, std::string data_dir = std::string("/home/") + neroshop::device::get_user() + std::string("/.bitmonero")/*""*/, unsigned int restore_height = 0);
+    bool daemon_connect_local(const std::string& username = "", const std::string& password = "");
+    void daemon_connect_remote(const std::string& ip, const std::string& port, const std::string& username = "", const std::string& password = "");
     void daemon_close();
     //void explore_address(const std::string& address); //{Browser::open(this->addr_url + address);}// will detect address before opening explorer
     //void explore_tx(const std::string& tx_hash);
     void wallet_info();
+    
+    std::string sign_message(const std::string& message, monero_message_signature_type signature_type) const;//, unsigned int account_idx = 0, unsigned int subaddress_idx = 0) const;
+    bool verify_message(const std::string& message, const std::string& signature) const;
     // setters
+    void set_network_type(monero::monero_network_type network_type);
+    void set_network_type_by_string(const std::string& network_type);
+    
     void set_tx_note(const std::string& txid, const std::string& tx_note); // "set_tx_note <txid> [free note text here]" - useful for filling address information
     // getters
     double get_sync_percentage() const;
-    unsigned int get_sync_height() const;
-    unsigned int get_sync_start_height() const;
-    unsigned int get_sync_end_height() const;
+    unsigned long long get_sync_height() const;
+    unsigned long long get_sync_start_height() const;
+    unsigned long long get_sync_end_height() const;
     std::string get_sync_message() const;
     
     std::string get_primary_address() const; // returns primary address string // "address"
@@ -109,7 +111,7 @@ public:
     unsigned int get_height() const;
     unsigned int get_height_by_date(int year, int month, int day) const;
     monero::monero_network_type get_network_type() const; // "wallet_info":  Mainnet, Testnet, Stagenet
-    std::string get_network_type_str() const; // "wallet_info":  Mainnet, Testnet, Stagenet
+    std::string get_network_type_string() const; // "wallet_info":  Mainnet, Testnet, Stagenet
     std::string get_status() const; // "status" - Check current status of wallet.
     std::string get_version() const; // "version" - Check software version.
     // get wallet handles (monero, wownero, etc.)
@@ -117,9 +119,10 @@ public:
     std::vector<std::string> recent_address_list; // recently used addresses
     // boolean functions
     bool file_exists(const std::string& filename) const;
+    bool is_valid_address(const std::string& address) const;
     // friends
     friend class Seller; // seller can access wallet private members
-    friend class gui::Wallet;
+    friend class WalletController;
 private:
     void set_daemon(); // "set_daemon <host>[:<port>] [trusted|untrusted|this-is-probably-a-spy-node]" - connects to a daemon
     void refresh(); // "refresh" - Synchronize wallet with the Monero network.

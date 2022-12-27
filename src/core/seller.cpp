@@ -38,7 +38,7 @@ void neroshop::Seller::list_item(unsigned int item_id, unsigned int stock_qty, d
     ////////////////////////////////
     db::Sqlite3 */*std::unique_ptr<db::Sqlite3>*/ database = db::Sqlite3::get_database();//std::make_unique<db::Sqlite3>(NEROSHOP_DATABASE_FILE);
     // to prevent duplicating item_id that is being sold by the same seller_id (a seller cannot list the same item twice, except change the stock amount)
-    int listed_item = database->get_integer_params("SELECT item_id FROM inventory WHERE item_id = $1 AND seller_id = $2", { std::to_string(item_id), std::to_string(get_id()) });
+    int listed_item = database->get_integer_params("SELECT item_id FROM inventory WHERE item_id = $1 AND seller_id = $2", { std::to_string(item_id), get_id() });
 	if(listed_item == item_id) { 
 	    neroshop::print("\033[1;33mYou have already listed this item (id: " + std::to_string(item_id) + ")\033[0m"); 
 	    ////database->execute("ROLLBACK;");
@@ -55,7 +55,7 @@ void neroshop::Seller::list_item(unsigned int item_id, unsigned int stock_qty, d
 	// SELECT TO_CHAR(now(), 'YYYY-MM-DD HH24:MI:SS') ;
 	// insert item in inventory
 	database->execute_params("INSERT INTO inventory (item_id, seller_id, stock_qty, sales_price, currency, condition) "
-	    "VALUES ($1, $2, $3, $4, $5, $6)", { std::to_string(item_id), std::to_string(get_id()), std::to_string(stock_qty), std::to_string(sales_price), neroshop::string::lower(currency), condition });// end transaction////database->execute("COMMIT;");
+	    "VALUES ($1, $2, $3, $4, $5, $6)", { std::to_string(item_id), get_id(), std::to_string(stock_qty), std::to_string(sales_price), neroshop::string::lower(currency), condition });// end transaction////database->execute("COMMIT;");
 #ifdef DOKUN_DEBUG
 	std::string item_name = database->get_text_params("SELECT name FROM products WHERE id = $1", { std::to_string(item_id) });
 	NEROSHOP_TAG_OUT std::cout << "\033[1;37m" << item_name << " (id: " << item_id << ", stock_qty: " << stock_qty << ") has been listed by seller \033[1;34m" << get_name() << " (id: " << get_id() << ")" << "\033[0m" << std::endl;
@@ -619,33 +619,27 @@ bool neroshop::Seller::has_wallet_synced() const {
 // callbacks
 ////////////////////
 neroshop::User * neroshop::Seller::on_login(const std::string& username) { // assumes user data already exists in database
-    //db::Postgres::get_singleton()->connect("host=127.0.0.1 port=5432 user=postgres password=postgres dbname=neroshoptest");//db::Postgres::get_singleton()->connect;//db::Postgres::get_singleton()->connect("host=127.0.0.1 port=5432 user=postgres password=postgres dbname=neroshoptest");
+    neroshop::db::Sqlite3 * database = neroshop::db::Sqlite3::get_database();
+    if(!database) throw std::runtime_error("database is NULL");
     // create a new user (seller)
     neroshop::User * user = new Seller(username);
     // set user properties retrieved from database
-    dynamic_cast<Seller *>(user)->set_logged(true); // protected, so can only be accessed by child class obj   // if validator::login(user, pw) returns true, then set neroshop::User::logged to true    
-#if defined(NEROSHOP_USE_POSTGRESQL)    
-    int user_id = db::Postgres::get_singleton()->get_integer_params("SELECT id FROM users WHERE name = $1", { username });
+    dynamic_cast<Seller *>(user)->set_logged(true); // protected, so can only be accessed by child class obj
+    std::string user_id = database->get_text_params("SELECT monero_address FROM users WHERE name = $1", { username });
     dynamic_cast<Seller *>(user)->set_id(user_id);
-#endif    
     dynamic_cast<Seller *>(user)->set_account_type(user_account_type::seller);
-    //
-    // save user to global static object for easy access
-    //User::set_singleton(*user);
     //-------------------------------
-    // load orders
+    /*// load orders
     dynamic_cast<Seller *>(user)->load_orders();
     // load wishlists
     dynamic_cast<Seller *>(user)->load_favorites();    
     // load customer_orders
-    static_cast<Seller *>(user)->load_customer_orders();
+    static_cast<Seller *>(user)->load_customer_orders();*/
     // load cart (into memory)
     ////if(user->is_registered()) {
         ////user->get_cart()->load_cart(user->get_id());
     ////}        
-#ifdef NEROSHOP_DEBUG
     std::cout << "\033[1;34m(account_type: " << neroshop::string::lower(user->get_account_type_string()) << ", id: " << user->get_id() << ", reputation: " << static_cast<Seller *>(user)->get_reputation() << ")\033[0m" << std::endl; // get_reputation() also opens the database hence the warning
-#endif    
     return user;          
 }
 ////////////////////
