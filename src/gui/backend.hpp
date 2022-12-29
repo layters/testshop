@@ -46,9 +46,9 @@ public:
     
     Q_INVOKABLE QVariantList registerUser(WalletController* wallet_controller, const QString& display_name, UserController * user_controller);
     Q_INVOKABLE bool loginWithWalletFile(WalletController* wallet_controller, const QString& path, const QString& password = "");
-    Q_INVOKABLE void loginWithMnemonic(WalletController* wallet_controller, const QString& mnemonic);
-    Q_INVOKABLE void loginWithKeys(WalletController* wallet_controller);
-    Q_INVOKABLE void loginWithHW(WalletController* wallet_controller);
+    Q_INVOKABLE bool loginWithMnemonic(WalletController* wallet_controller, const QString& mnemonic);
+    Q_INVOKABLE bool loginWithKeys(WalletController* wallet_controller);
+    Q_INVOKABLE bool loginWithHW(WalletController* wallet_controller);
     // Todo: Move the avatar functions to UserController
     static bool exportAvatarImage(const QString& user_id);//(UserController * user_controller);
     static unsigned char * getAvatarImage();//(UserController * user_controller);
@@ -63,6 +63,8 @@ public:
     //Q_INVOKABLE void ();
     // Test function
     static void startServerDaemon();
+    static void waitForServerDaemon();
+    static void connectToServerDaemon();
 private:
 };
 }

@@ -99,6 +99,26 @@ ApplicationWindow {
             NumberAnimation { property: "opacity"; from: 1.0; to: 0.0 }
         }
     }    
+
+    NeroshopComponents.MessageBox {////MessageDialog {
+        id: messageBox
+        title: "message"
+        x: mainWindow.x + (mainWindow.width - this.width) / 2
+        y: mainWindow.y + (mainWindow.height - this.height) / 2
+    }
+
+    NeroshopComponents.MessageBox {////MessageDialog {
+        id: monerodMessageBox
+        title: "prompt"
+        x: mainWindow.x + (mainWindow.width - this.width) / 2
+        y: mainWindow.y + (mainWindow.height - this.height) / 2
+        acceptButton.visible: true
+        acceptButton.onClicked: {
+            console.log("Now connecting to a local node ...")
+            Wallet.daemonConnect();//(moneroDaemonRpcLoginUser.text, moneroDaemonRpcLoginPwd.text)
+            monerodMessageBox.close();
+        }        
+    }        
     // navigating between different pages: https://stackoverflow.com/a/15655043
     // The footer item is positioned to the bottom, and resized to the width of the window
     // Custom ToolBar

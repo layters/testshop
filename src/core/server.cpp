@@ -25,6 +25,22 @@ neroshop::Server::Server()
         std::cerr << "Could not set socket options" << std::endl;
     }
 	#endif    
+	// Create a new raft server
+	/*int server_count = 1;
+	void * connection_user_data = nullptr; // pointer to userdata
+	// Generate random number to be used for node_id
+	std::random_device rd;
+    std::mt19937 mt(rd());
+    std::uniform_real_distribution<double> dist(0, 100);
+	int node_id = static_cast<int>(dist(mt)); // SHOULD be random
+	bool peer_is_self = true;
+    
+    raft = raft_new();
+
+	for(int i = 0; i < server_count; ++i) {
+	    raft_add_node(static_cast<raft_server_t*>(raft), connection_user_data, node_id, peer_is_self);
+	    std::cout << "raft node has been added\n";
+	}*/
 }
 ////////////////////
 neroshop::Server::~Server() {

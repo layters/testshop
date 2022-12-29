@@ -3,6 +3,7 @@
 
 #include <uv.h>
 #include <raft.h>
+
 #include <unordered_map> // std::unordered_map
 #include <functional> // std::function
 //#if defined(__cplusplus) && (__cplusplus >= 201703L)
@@ -10,6 +11,8 @@
 //#endif
 #include <stdexcept> // std::runtime_error
 #include <cstring> // memset
+#include <random> // std::random_device
+
 #if defined(__gnu_linux__)
 #include <unistd.h> // ::close
 #endif
@@ -77,6 +80,7 @@ public:
     char buffer[256];
     int client_socket;
     #endif    
+    void * raft;
     // functors
     //#if defined(__cplusplus) && (__cplusplus < 201703L)
     //std::unordered_map<std::string, std::function<void()>/*adaptor_type*/> function_list;

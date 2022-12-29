@@ -59,9 +59,7 @@ void neroshop::Backend::initializeDatabase() {
     // Todo: Make monero_address the primary key and remove id. Also, replace all foreign key references from id to monero_address
     // table users
     if(!database->table_exists("users")) { 
-        database->execute("CREATE TABLE users("//id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,"
-            "name TEXT, "
-            "monero_address TEXT PRIMARY KEY"//, UNIQUE"
+        database->execute("CREATE TABLE users(name TEXT, monero_address TEXT PRIMARY KEY"//, UNIQUE"
         ");");
         //database->execute("ALTER TABLE users ADD COLUMN monero_address TEXT;"); // verify_key - public_key used for logins and for verification of signatures
         database->execute("ALTER TABLE users ADD COLUMN public_key TEXT DEFAULT NULL;"); // encrypt_key - public_key used for encryption of messages
@@ -85,7 +83,7 @@ void neroshop::Backend::initializeDatabase() {
         database->execute("CREATE UNIQUE INDEX index_product_codes ON products (code);"); // product codes must be unique
         // the seller determines the final product price, the product condition and whether the product will have a discount or not
     }
-    // inventory (listings)
+    // inventory // Todo: rename this to "listings"
     if(!database->table_exists("inventory")) {
         database->execute("CREATE TABLE inventory(id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT);");
         database->execute("ALTER TABLE inventory ADD COLUMN product_id INTEGER REFERENCES products(id);");
@@ -441,7 +439,6 @@ bool neroshop::Backend::loginWithWalletFile(WalletController* wallet_controller,
     }
     // Get the primary address
     std::string primary_address = wallet->get_monero_wallet()->get_primary_address();
-    neroshop::print("Primary address: \033[1;33m" + primary_address + "\033[1;37m");
     // Check database to see if user key (hash of primary address) exists
     bool user_found = database->get_integer_params("SELECT EXISTS(SELECT * FROM users WHERE monero_address = $1)", { primary_address });
     // If user key is not found in the database, then create one. This is like registering for an account
@@ -458,32 +455,21 @@ bool neroshop::Backend::loginWithWalletFile(WalletController* wallet_controller,
     }*/
     // Display message
     std::string display_name = database->get_text_params("SELECT name FROM users WHERE monero_address = $1", { primary_address });
-    neroshop::print("Welcome back, user " + ((!display_name.empty()) ? display_name : primary_address), 4);
-    // Set user_id
-    // ...    
+    neroshop::print("Welcome back, user " + ((!display_name.empty()) ? (display_name + " (id: " + primary_address + ")") : primary_address), 4);
     return true;
 }
 
-void neroshop::Backend::loginWithMnemonic(WalletController* wallet_controller, const QString& mnemonic) {
-/*
+bool neroshop::Backend::loginWithMnemonic(WalletController* wallet_controller, const QString& mnemonic) {
     neroshop::db::Sqlite3 * database = neroshop::db::Sqlite3::get_database();
     if(!database) throw std::runtime_error("database is NULL");
     // Get the wallet from the wallet controller
     neroshop::Wallet * wallet = wallet_controller->getWallet();
     // Initialize monero wallet with existing wallet mnemonic
-    std::string wallet_mnemonic;// = "hefty value later extra artistic firm radar yodel talent future fungal nutshell because sanity awesome nail unjustly rage unafraid cedar delayed thumbs comb custom sanity";
-    std::cout << "Please enter your wallet mnemonic:\n";
-    std::getline(std::cin, wallet_mnemonic);
-    // todo: allow user to specify a custom location for the wallet keyfile or use a default location
-    wallet->restore_from_mnemonic(wallet_mnemonic);
-    // Get the hash of the primary address
+    wallet->restore_from_mnemonic(mnemonic.toStdString());
+    // Get the primary address
     std::string primary_address = wallet->get_monero_wallet()->get_primary_address();
-    std::string user_auth_key;// = neroshop::algo::sha256(primary_address);
-    Validator::generate_sha256_hash(primary_address, user_auth_key); // temp
-    neroshop::print("Primary address: \033[1;33m" + primary_address + "\033[1;37m\nSHA256 hash: " + user_auth_key);
-    //$ echo -n "528qdm2pXnYYesCy5VdmBneWeaSZutEijFVAKjpVHeVd4unsCSM55CjgViQsK9WFNHK1eZgcCuZ3fRqYpzKDokqSKp4yp38" | sha256sum
     // Check database to see if user key (hash of primary address) exists
-    bool user_key_found = database->get_integer_params("SELECT EXISTS(SELECT * FROM users WHERE key = $1)", { user_auth_key });
+    bool user_key_found = database->get_integer_params("SELECT EXISTS(SELECT * FROM users WHERE monero_address = $1)", { primary_address });
     // If user key is not found in the database, then create one. This is like registering for an account
     if(!user_key_found) {
         // In reality, this function will return false if user key is not registered in the database
@@ -491,19 +477,14 @@ void neroshop::Backend::loginWithMnemonic(WalletController* wallet_controller, c
         return false;
     }
     // Save user information in memory
-    int user_id = database->get_integer_params("SELECT id FROM users WHERE key = $1", { user_auth_key });
-    // This number will scale as the user count grows
-    int min_digits = 15; // 15 digits = 100 trillionth place (000,000,000,000,000)
-    int precision = min_digits - std::min<int>(min_digits, std::to_string(user_id).size());
-    std::string formatted_user_id = std::string(precision, '0').append(std::to_string(user_id));
-    neroshop::print("Welcome back, user " + formatted_user_id, 4);
-    // Set user_id
-    // ...    
+    int user_id = database->get_integer_params("SELECT id FROM users WHERE monero_address = $1", { primary_address });
+    // Display message
+    std::string display_name = database->get_text_params("SELECT name FROM users WHERE monero_address = $1", { primary_address });
+    neroshop::print("Welcome back, user " + ((!display_name.empty()) ? (display_name + " (id: " + primary_address + ")") : primary_address), 4);
     return true;
-*/
 }
 
-void neroshop::Backend::loginWithKeys(WalletController* wallet_controller) {
+bool neroshop::Backend::loginWithKeys(WalletController* wallet_controller) {
 /*
     neroshop::db::Sqlite3 * database = neroshop::db::Sqlite3::get_database();
     if(!database) throw std::runtime_error("database is NULL");
@@ -536,19 +517,16 @@ void neroshop::Backend::loginWithKeys(WalletController* wallet_controller) {
     }
     // Save user information in memory
     int user_id = database->get_integer_params("SELECT id FROM users WHERE key = $1", { user_auth_key });
-    // This number will scale as the user count grows
-    int min_digits = 15; // 15 digits = 100 trillionth place (000,000,000,000,000)
-    int precision = min_digits - std::min<int>(min_digits, std::to_string(user_id).size());
-    std::string formatted_user_id = std::string(precision, '0').append(std::to_string(user_id));
-    neroshop::print("Welcome back, user " + formatted_user_id, 4);
-    // Set user_id
-    // ...
+    // Display message
+    std::string display_name = database->get_text_params("SELECT name FROM users WHERE monero_address = $1", { primary_address });
+    neroshop::print("Welcome back, user " + ((!display_name.empty()) ? (display_name + " (id: " + primary_address + ")") : primary_address), 4);
     return true;
 */
+    return false;
 }
 
-void neroshop::Backend::loginWithHW(WalletController* wallet_controller) {
-
+bool neroshop::Backend::loginWithHW(WalletController* wallet_controller) {
+    return false;
 }
 
 bool neroshop::Backend::exportAvatarImage(const QString& user_id) { // This function is called after login or registration
@@ -654,10 +632,29 @@ void neroshop::Backend::startServerDaemon() {
     QString folder = "";
     process->start(program, QStringList() << folder);    */
     
-    int exit_code = QProcess::execute(program, {});//, const QStringList &arguments = {});
-    if(exit_code < 0) { throw std::runtime_error("program either cannot be started or has crashed"); }
+    /*int exit_code = QProcess::execute(program, {});
+    if(exit_code < 0) { throw std::runtime_error("program either cannot be started or has crashed"); }*/
+    
     // Note: If the calling process exits, the detached process will continue to run unaffected.
-    //bool success = QProcess::startDetached(program, const QStringList &arguments = {}, const QString &workingDirectory = QString(), qint64 *pid = nullptr);
+    qint64 pid = -1;
+    bool success = QProcess::startDetached(program, {}, QString(), &pid);
     //if(!success) { throw std::runtime_error("neromon could not be started") }
-    std::cout << "\033[35mneromon started\033[0m\n";// (pid: " << pid << std::endl;
+    std::cout << "\033[35mneromon started (pid: " << pid << ")\033[0m\n";
+}
+
+void neroshop::Backend::waitForServerDaemon() {
+    ::sleep(2);
+}
+
+void neroshop::Backend::connectToServerDaemon() {
+    neroshop::Client * client = neroshop::Client::get_main_client();
+	int client_port = 1234;
+	std::string client_ip = "0.0.0.0";//"localhost";//0.0.0.0 means anyone can connect to your server
+	if(!client->connect(client_port, client_ip)) {
+	    // free process
+	    ////delete server_process; // kills process
+	    ////server_process = nullptr;
+	    // exit application
+	    exit(0);
+	} else std::cout << client->read() << std::endl;
 }

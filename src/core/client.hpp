@@ -61,7 +61,6 @@ private:
 	int socket;
 	char buffer[256];    
 	#endif
-    static std::unique_ptr<Client> singleton;
 };
 }
 #endif

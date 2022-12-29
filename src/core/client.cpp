@@ -8,8 +8,6 @@ neroshop::Client::~Client() {
 	close();
 }
 ////////////////////
-std::unique_ptr<neroshop::Client> neroshop::Client::singleton (nullptr);
-////////////////////
 void neroshop::Client::create() {
     #if defined(__gnu_linux__)
     if(socket) return; // socket must be null before a new one can be created (if socket is not null then it means it was never closed)
@@ -90,10 +88,8 @@ bool neroshop::Client::reconnect(unsigned int port, std::string address) { // ki
 }
 ////////////////////
 neroshop::Client * neroshop::Client::get_main_client() {
-    if(!singleton.get()) { 
-        singleton = std::make_unique<Client>();
-    }
-    return singleton.get();
+    static neroshop::Client client_obj {};
+    return &client_obj;
 }
 ////////////////////
 ////////////////////

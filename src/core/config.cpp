@@ -71,9 +71,23 @@ neroshop = {
             },
             stagenet = {
                 "stagenet.community.rino.io:38081",
+                "xmr-lux.boldsuck.org:38081",
+                "node2.monerodevs.org:38089",
+                --"plowsof3t5hogddwabaeiyrno25efmzfxyro2vligremt7sxpsclfaid.onion:38089",
+                "stagenet.xmr-tw.org:38081",
+                --"stagenet.xmr.ditatompel.com",
+                "xmr-lux.boldsuck.org:38081",
+                --"plowsoffjexmxalw73tkjmf422gq6575fc7vicuu4javzn2ynnte6tyd.onion:38089",
+                "node.monerodevs.org:38089",
             },
             testnet = {
-                "testnet.community.rino.io:28081"
+                "testnet.community.rino.io:28081",
+                "node2.monerodevs.org:28089",
+                --"plowsof3t5hogddwabaeiyrno25efmzfxyro2vligremt7sxpsclfaid.onion:28089",
+                "testnet.xmr-tw.org:28081",
+                --"plowsoffjexmxalw73tkjmf422gq6575fc7vicuu4javzn2ynnte6tyd.onion:28089",
+                --"testnet.xmr.ditatompel.com",
+                "node.monerodevs.org:28089",
             }
         }
     }

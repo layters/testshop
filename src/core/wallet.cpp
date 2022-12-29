@@ -495,7 +495,7 @@ bool neroshop::Wallet::daemon_connect_local(const std::string& username, const s
 ////////////////////
 void neroshop::Wallet::daemon_connect_remote(const std::string& ip, const std::string& port, const std::string& username, const std::string& password) {
     if(!monero_wallet_obj.get()) throw std::runtime_error("monero_wallet_full is not opened");
-    monero_wallet_obj->set_daemon_connection(monero_rpc_connection(std::string("http://" + ip + ":" + port), username, password));
+    monero_wallet_obj->set_daemon_connection(monero_rpc_connection(std::string("http://" + ip + ":" + port)));//, username, password));
     if(monero_wallet_obj.get()->is_connected_to_daemon()) {
         std::cout << "\033[1;90;49m" << "connected to daemon" << "\033[0m" << std::endl;
             std::packaged_task<void(void)> sync_job([this]() {
@@ -777,7 +777,7 @@ std::string neroshop::Wallet::get_network_type_string() const {
         case monero_network_type::TESTNET: return "testnet"; break; // 1
         case monero_network_type::STAGENET: return "stagenet"; break; // 2
     }
-    return "";
+    return "mainnet";
 }
 ////////////////////
 std::string neroshop::Wallet::get_status() const {

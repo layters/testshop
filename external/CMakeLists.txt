@@ -36,7 +36,7 @@ add_library(${sqlite3} STATIC ${sqlite_srcs})
 target_include_directories(${sqlite3} PUBLIC sqlite/)
 
 set(raft "raft")
-set(raft_srcs raft/src/raft_log.c raft/src/raft_node.c raft/src/raft_server.c raft/src/raft_server_properties.c)
+set(raft_srcs raft/src/raft_server.c raft/src/raft_server_properties.c raft/src/raft_log.c raft/src/raft_node.c)
 add_library(${raft} STATIC ${raft_srcs})
 target_include_directories(${raft} PUBLIC raft/include/)
 

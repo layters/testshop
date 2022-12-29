@@ -31,6 +31,7 @@ Popup {
     property string moneroDaemonUsername: moneroDaemonRpcLoginUser.text
     property string moneroDaemonPassword: moneroDaemonRpcLoginPwd.text
     property bool moneroDaemonAutoSync: (nodeTypeStackLayout.currentIndex == remoteNodeButton.stackLayoutIndex) ? autoNodeSyncSwitch.checked : autoDaemonSyncSwitch.checked
+    property Button moneroDaemonConnectButton: (nodeTypeStackLayout.currentIndex == remoteNodeButton.stackLayoutIndex) ? remoteNodeConnectButton : localNodeConnectButton
   
     function resetScrollBar() {
         scrollView.ScrollBar.vertical.position = 0.0
@@ -570,6 +571,41 @@ Item {
                 RowLayout {
                     Layout.alignment: Qt.AlignHCenter
                     Layout.preferredWidth: 500
+                    
+                    Button {
+                        id: remoteNodeConnectButton
+                        Layout.preferredWidth: parent.width////contentItem.contentWidth + 30
+                        Layout.preferredHeight: contentItem.contentHeight + 30
+                        text: qsTr("Connect")
+                        property bool disabled: autoNodeSyncSwitch.checked//settingsDialog.moneroDaemonAutoSync
+                        /*{
+                            if(!Wallet.isOpened()) return true;
+                            return Wallet.isDaemonSynced()//Wallet.isConnectedToDaemon()
+                        }*/
+                        background: Rectangle {
+                            color: remoteNodeConnectButton.disabled ? NeroshopComponents.Style.moneroGrayColor : NeroshopComponents.Style.moneroOrangeColor
+                            radius: 3//6
+                        }
+                        contentItem: Text {
+                            text: parent.text
+                            color: "#ffffff"
+                            horizontalAlignment: Text.AlignHCenter
+                            verticalAlignment: Text.AlignVCenter
+                        }
+                        onClicked: {
+                            if(remoteNodeConnectButton.disabled) return;
+                            if(!Wallet.isOpened()) {messageBox.text="Wallet must be opened first before connecting to a node";messageBox.open();return;}
+                            let remote_node_ip = moneroRemoteNodeList.selectedNode.split(":")[0]
+                            let remote_node_port = moneroRemoteNodeList.selectedNode.split(":")[1]
+                            Wallet.nodeConnect(remote_node_ip, remote_node_port)
+                            console.log("connecting to remote node:",moneroRemoteNodeList.selectedNode)
+                        }
+                    }
+                }                
+                
+                RowLayout {
+                    Layout.alignment: Qt.AlignHCenter
+                    Layout.preferredWidth: 500
 
                     Label {
                         Layout.alignment: Qt.AlignLeft
@@ -815,12 +851,12 @@ Item {
                     Layout.preferredWidth: 500
                     
                     Button {
-                        width: parent.width / visibleChildren.length//children.length
-                        height: contentHeight + 20
-                        text: qsTr("Launch daemon")
+                        Layout.preferredWidth: 250 - parent.spacing////parent.width////contentItem.contentWidth + 30
+                        Layout.preferredHeight: contentItem.contentHeight + 30
+                        text: qsTr("Launch")////("Launch and connect")
                         background: Rectangle {
                             color: NeroshopComponents.Style.moneroOrangeColor
-                            radius: 6
+                            radius: 3
                         }
                         contentItem: Text {
                             text: parent.text
@@ -829,17 +865,40 @@ Item {
                             verticalAlignment: Text.AlignVCenter
                         }
                         onClicked: {
-                            Wallet.daemonExecute(Backend.urlToLocalFile(monerodPathField.text),
-                                confirmExternalBindSwitch.checked, 
-                                restrictedRpcSwitch.checked, 
-                                (moneroDataDirField.text.length < 1) ? Backend.urlToLocalFile(moneroDataDirField.placeholderText) : Backend.urlToLocalFile(moneroDataDirField.text),
-                                "stagenet", // change this later
-                                0, // placeholder restore_height
-                                );
-                           if(!Wallet.isOpened()) return; // no need for this if we are only launching the monerod executable
-                           Wallet.daemonConnect()//(moneroDaemonRpcLoginUser.text, moneroDaemonRpcLoginPwd.text)     
+                            Wallet.daemonExecute(Backend.urlToLocalFile(monerodPathField.text), confirmExternalBindSwitch.checked, restrictedRpcSwitch.checked, (moneroDataDirField.text.length < 1) ? Backend.urlToLocalFile(moneroDataDirField.placeholderText) : Backend.urlToLocalFile(moneroDataDirField.text),
+                                Wallet.getNetworkTypeString(), 0); // 0 = placeholder restore_height
+                           // Connect to local node
+                           /*if(!Wallet.isOpened()) return; // no need for this if we are only launching the monerod executable
+                           Wallet.daemonConnect()//(moneroDaemonRpcLoginUser.text, moneroDaemonRpcLoginPwd.text)*/
                         }
                     }
+                    
+                    Button {
+                        id: localNodeConnectButton
+                        Layout.preferredWidth: 250////contentItem.contentWidth + 30
+                        Layout.preferredHeight: contentItem.contentHeight + 30
+                        text: qsTr("Connect")
+                        property bool disabled: autoDaemonSyncSwitch.checked/*{
+                            return (!Backend.isWalletDaemonRunning() || !Wallet.isOpened()) // doesn't work :(
+                        }*/
+                        background: Rectangle {
+                            color: localNodeConnectButton.disabled ? NeroshopComponents.Style.moneroGrayColor : NeroshopComponents.Style.moneroOrangeColor
+                            radius: 3
+                        }
+                        contentItem: Text {
+                            text: parent.text
+                            color: "#ffffff"
+                            horizontalAlignment: Text.AlignHCenter
+                            verticalAlignment: Text.AlignVCenter
+                        }
+                        onClicked: {
+                            //localNodeConnectButton.disabled = (!Backend.isWalletDaemonRunning() || !Wallet.isOpened()) // doesn't work :(
+                            if(localNodeConnectButton.disabled) return; // button is disabled, exit function
+                            if(!Wallet.isOpened()) return; // make sure wallet is opened beforehand
+                            if(Wallet.isDaemonSynced()) return; // local node is already synced so there's no need to connect to it again
+                            Wallet.daemonConnect()//(moneroDaemonRpcLoginUser.text, moneroDaemonRpcLoginPwd.text)     
+                        }
+                    }                    
                 }
                 
                 RowLayout {

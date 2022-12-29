@@ -52,7 +52,11 @@ int main(int argc, char *argv[]) {
     //--------------------------
     // Configuration file must be loaded right after Qt Application object has been created so that we can get the correct config location
     // start server daemon
-    Backend::startServerDaemon();
+    //Backend::startServerDaemon();
+    // wait for daemon server to open
+    //Backend::waitForServerDaemon();
+    // connect to server daemon
+    //Backend::connectToServerDaemon();
     // open configuration script
     neroshop::open_configuration_file();
     std::string network_type = Script::get_string(lua_state, "neroshop.monero.daemon.network_type");
