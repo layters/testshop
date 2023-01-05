@@ -36,6 +36,7 @@ public:
     //Q_INVOKABLE void setWallet(neroshop::WalletController * wallet); // get the actual wallet from the controller then set it as the wallet
     
     Q_INVOKABLE void uploadAvatar(const QString& filename);
+    Q_INVOKABLE bool exportAvatar();
         
     Q_INVOKABLE QString getID() const;
     //Q_INVOKABLE neroshop::WalletController * getWallet() const;

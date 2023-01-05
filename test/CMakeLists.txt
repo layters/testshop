@@ -406,6 +406,11 @@ include_directories(#[[${test_gui_qt} ]] /usr/include/x86_64-linux-gnu/qt5/ /usr
 #target_compile_definitions(${test_gui_qt} PRIVATE )
 target_link_libraries(${test_gui_qt} ${monero_cpp_src} ${sqlite_src} ${qr_code_generator_src} ${raft_src} ${libuv_src} ${curl_src} ${monero_src} ${lua_src} ${png_src})
 
+# escrow_test
+set(test_escrow "escrow_test")
+add_executable(${test_escrow} escrow.cpp ${neroshop_srcs})
+target_link_libraries(${test_escrow} ${monero_cpp_src} ${sqlite_src} ${qr_code_generator_src} ${raft_src} ${libuv_src} ${curl_src} ${monero_src} ${lua_src} ${png_src})
+
 #[[
 set(test_ "")
 add_executable(${test_} .cpp ${neroshop_srcs})

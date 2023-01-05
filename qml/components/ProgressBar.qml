@@ -14,16 +14,17 @@ ProgressBar {
     property string foregroundColor: "#17a81a"
     property string backgroundColor: "#e6e6e6" // Platinum
     property alias textObject: progressBarText
+    property real barWidth: 300
     // static bar (background)
     background: Rectangle {
-        implicitWidth: 300//200 // Implicit = the default if no width or height is supplied
+        implicitWidth: parent.barWidth // Implicit = the default if no width or height is supplied
         implicitHeight: 20//6
         color: progressBar.backgroundColor
         radius: progressBar.radius
     }
     // moving bar (foreground)
     contentItem: Item {
-        implicitWidth: 300//200
+        implicitWidth: parent.barWidth
         implicitHeight: 20//4
 
         Rectangle {

@@ -7,6 +7,7 @@
 #endif
 
 #if !defined(NEROSHOP_USE_QT)
+#include "util.hpp"
 #if defined(__linux__) && !defined(__ANDROID__)
 #define NEROSHOP_DEFAULT_DATABASE_PATH "/home/" + neroshop::device::get_user() + "/.config/neroshop" //"/home/" + neroshop::device::get_user() + "/.local/share/neroshop"
 #endif

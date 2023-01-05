@@ -103,9 +103,10 @@ Popup {
             anchors.top: parent.top
             anchors.topMargin: titleBar.height
             anchors.horizontalCenter: parent.horizontalCenter
-            property string buttonColor: "#030380"
+            property string buttonOnColor: "#030380"
+            property string buttonOffColor: "transparent"//"#ffffff"
             background: Rectangle { color: "transparent" } // hide white corners when tabButton radius is set
-            property real buttonRadius: 5
+            property real buttonRadius: 3
             
             TabButton { 
                 id: generalSettingsButton
@@ -120,8 +121,8 @@ Popup {
                 checkable: true
                 checked: (settingsStack.currentIndex == 0)                
                 background: Rectangle {
-                    color: (parent.checked) ? settingsBar.buttonColor : "#ffffff"
-                    radius: settingsBar.buttonRadius
+                    color: (parent.checked) ? settingsBar.buttonOnColor : settingsBar.buttonOffColor
+                    radius: settingsBar.buttonRadius//;border.color: parent.hovered ? settingsBar.buttonOnColor : settingsBar.buttonOffColor
                 }
                 // This will remove the icon :(
                 contentItem: Text {
@@ -129,7 +130,7 @@ Popup {
                     color: (parent.checked) ? "#e0e0e0" : "#353637"//"#000000" : "#ffffff"
                     horizontalAlignment: Text.AlignHCenter//anchors.horizontalCenter: parent.horizontalCenter
                     verticalAlignment: Text.AlignVCenter                    
-                    font.bold: (parent.checked) ? true : false
+                    font.bold: true//(parent.checked) ? true : false
                     //font.family: FontAwesome.fontFamily
                 }                
             }
@@ -145,7 +146,7 @@ Popup {
                 checkable: true
                 checked: (settingsStack.currentIndex == 1)
                 background: Rectangle {
-                    color: (parent.checked) ? settingsBar.buttonColor : "#ffffff"
+                    color: (parent.checked) ? settingsBar.buttonOnColor : settingsBar.buttonOffColor
                     radius: settingsBar.buttonRadius
                 }
                 contentItem: Text {
@@ -153,7 +154,7 @@ Popup {
                     color: (parent.checked) ? "#e0e0e0" : "#353637"
                     horizontalAlignment: Text.AlignHCenter
                     verticalAlignment: Text.AlignVCenter                    
-                    font.bold: (parent.checked) ? true : false
+                    font.bold: true
                     //font.family: FontAwesome.fontFamily
                 }
             }            
@@ -577,11 +578,7 @@ Item {
                         Layout.preferredWidth: parent.width////contentItem.contentWidth + 30
                         Layout.preferredHeight: contentItem.contentHeight + 30
                         text: qsTr("Connect")
-                        property bool disabled: autoNodeSyncSwitch.checked//settingsDialog.moneroDaemonAutoSync
-                        /*{
-                            if(!Wallet.isOpened()) return true;
-                            return Wallet.isDaemonSynced()//Wallet.isConnectedToDaemon()
-                        }*/
+                        property bool disabled: !Wallet.opened//{ if(!Wallet.isOpened()) return true; return Wallet.isDaemonSynced() }
                         background: Rectangle {
                             color: remoteNodeConnectButton.disabled ? NeroshopComponents.Style.moneroGrayColor : NeroshopComponents.Style.moneroOrangeColor
                             radius: 3//6
@@ -595,10 +592,10 @@ Item {
                         onClicked: {
                             if(remoteNodeConnectButton.disabled) return;
                             if(!Wallet.isOpened()) {messageBox.text="Wallet must be opened first before connecting to a node";messageBox.open();return;}
-                            let remote_node_ip = moneroRemoteNodeList.selectedNode.split(":")[0]
-                            let remote_node_port = moneroRemoteNodeList.selectedNode.split(":")[1]
+                            let remote_node_ip = (moneroNodeIPField.length > 0) ? moneroNodeIPField.text : moneroRemoteNodeList.selectedNode.split(":")[0]
+                            let remote_node_port = (moneroNodePortField.length > 0) ? moneroNodePortField.text : moneroRemoteNodeList.selectedNode.split(":")[1]
+                            console.log("connecting to remote node:", (remote_node_ip + ":" + remote_node_port))
                             Wallet.nodeConnect(remote_node_ip, remote_node_port)
-                            console.log("connecting to remote node:",moneroRemoteNodeList.selectedNode)
                         }
                     }
                 }                
@@ -865,6 +862,8 @@ Item {
                             verticalAlignment: Text.AlignVCenter
                         }
                         onClicked: {
+                            if(Backend.isWalletDaemonRunning()) { messageBox.text = "monerod is already running in the background"; messageBox.open(); return; }
+                            if(monerodPathField.text.length < 1) {messageBox.text="monerod not found. Please set the path to monerod or use a remote node instead";messageBox.open();return;}
                             Wallet.daemonExecute(Backend.urlToLocalFile(monerodPathField.text), confirmExternalBindSwitch.checked, restrictedRpcSwitch.checked, (moneroDataDirField.text.length < 1) ? Backend.urlToLocalFile(moneroDataDirField.placeholderText) : Backend.urlToLocalFile(moneroDataDirField.text),
                                 Wallet.getNetworkTypeString(), 0); // 0 = placeholder restore_height
                            // Connect to local node
@@ -878,7 +877,7 @@ Item {
                         Layout.preferredWidth: 250////contentItem.contentWidth + 30
                         Layout.preferredHeight: contentItem.contentHeight + 30
                         text: qsTr("Connect")
-                        property bool disabled: autoDaemonSyncSwitch.checked/*{
+                        property bool disabled: !Wallet.opened/*{
                             return (!Backend.isWalletDaemonRunning() || !Wallet.isOpened()) // doesn't work :(
                         }*/
                         background: Rectangle {
@@ -894,8 +893,9 @@ Item {
                         onClicked: {
                             //localNodeConnectButton.disabled = (!Backend.isWalletDaemonRunning() || !Wallet.isOpened()) // doesn't work :(
                             if(localNodeConnectButton.disabled) return; // button is disabled, exit function
-                            if(!Wallet.isOpened()) return; // make sure wallet is opened beforehand
+                            if(!Wallet.opened) {messageBox.text="Wallet must be opened first before connecting to a node";messageBox.open();return;} // make sure wallet is opened beforehand
                             if(Wallet.isDaemonSynced()) return; // local node is already synced so there's no need to connect to it again
+                            ////if(!Backend.isWalletDaemonRunning()) {messageBox.text="monerod must be launched first before connecting to it";messageBox.open();return;}
                             Wallet.daemonConnect()//(moneroDaemonRpcLoginUser.text, moneroDaemonRpcLoginPwd.text)     
                         }
                     }                    

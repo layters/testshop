@@ -185,20 +185,31 @@ std::string neroshop::Wallet::upload(bool open, std::string password) { // opens
 ////////////////////
 void neroshop::Wallet::transfer(const std::string& address, double amount) {
     if(!monero_wallet_obj.get()) throw std::runtime_error("monero_wallet_full is not opened");
+    // Convert monero to piconero
+    double piconero = 0.000000000001;
+    uint64_t monero_to_piconero = amount / piconero; //std::cout << neroshop::string::precision(amount, 12) << " xmr to piconero: " << monero_to_piconero << "\n";
+    // TODO: for the escrow system, take 0.1% of order total in piconeros
+    // Check if balance is sufficient
+    std::cout << "Wallet balance (spendable): " << monero_wallet_obj->get_unlocked_balance() << " (picos)\n";
+    std::cout << "Amount to send: " << monero_to_piconero << " (picos)\n";
+    if(monero_to_piconero == 0) return;
+    if(monero_wallet_obj->get_unlocked_balance() < monero_to_piconero) {
+        neroshop::print("Wallet balance is insufficient", 1); return;
+    }
     //Configures a transaction to send, sweep, or create a payment URI.
-    // send funds from the restored wallet to the random wallet
-    /*monero_tx_config config;
+    // send funds from this wallet to the specified address
+    monero_tx_config config;
     config.m_account_index = 0; // withdraw funds from account at index 0
-    config.m_address = address; // wallet_random // boost::optional< std::string > 	m_address
-    config.m_amount = amount; // boost::optional< uint64_t > 	m_amount
+    config.m_address = address; // address that will be receiving the funds
+    config.m_amount = monero_to_piconero;
     config.m_relay = true;
     std::shared_ptr<monero_tx_wallet> sent_tx = monero_wallet_obj->create_tx(config);
     bool in_pool = sent_tx->m_in_tx_pool.get();  // true
-    */
+        
     //uint64_t fee = sent_tx->m_fee.get(); // "Are you sure you want to send ...?"
     //monero_wallet_obj->relay_tx(*sent_tx); // recipient receives notification within 5 seconds    
     // prove that you've sent the payment using "get_tx_proof"
-} // "transfer"
+}
 ////////////////////
 std::string neroshop::Wallet::sign_message(const std::string& message, monero_message_signature_type signature_type) const {
     if(!monero_wallet_obj.get()) throw std::runtime_error("monero_wallet_full is not opened");
@@ -787,7 +798,7 @@ std::string neroshop::Wallet::get_status() const {
 ////////////////////
 std::string neroshop::Wallet::get_version() const {
     if(!monero_wallet_obj.get()) throw std::runtime_error("monero_wallet_full is not opened");
-    //monero_version monero::monero_wallet_full::get_version	(		)	const
+    //monero_version monero::monero_wallet_full::get_version();
     return "";
 } // "version" - Check software version.
 ////////////////////

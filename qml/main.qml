@@ -190,11 +190,12 @@ ApplicationWindow {
                     hoverEnabled: true
                     anchors.verticalCenter: parent.verticalCenter//anchors.top: parent.top; anchors.topMargin: (parent.height - this.height) / 2 // center vertically on footer (height)
                     value: 0.5 // placeholder value
+                    barWidth: 200
 
                     NeroshopComponents.Hint {
                         visible: parent.hovered
                         x: parent.x + (parent.width - this.width) / 2 // Popups don't have anchors :(
-                        height: contentHeight + 20; width: parent.width
+                        height: contentHeight + 20; width: (contentWidth > parent.width) ? 300 : parent.width
                         bottomMargin : footer.height + 5
                         text: qsTr("neromon\n%1 %2").arg((parent.value < 1.0) ? "Synchronizing" : "Connected").arg((parent.value > 0.0 && parent.value < 1.0) ? ("(" + (parent.value * 100).toString() + "%)") : "")
                         pointer.visible: false
@@ -217,22 +218,23 @@ ApplicationWindow {
                     //textObject.color: "#ffffff"
                     hoverEnabled: true
                     anchors.verticalCenter: parent.verticalCenter//anchors.top: parent.top; anchors.topMargin: (parent.height - this.height) / 2
-                    ////value: Wallet.isOpened() ? Wallet.getSyncPercentage() : 0.0 // this does not work (fails to update value so we use Timer instead)
+                    ////value: Wallet.opened ? Wallet.getSyncPercentage() : 0.0 // this does not work (fails to update value so we use Timer instead)
+                    barWidth: daemonSyncBar.barWidth
                     Timer {
                         interval: 1 // trigger every x miliseconds
                         running: true
                         repeat: true // If repeat is true the timer is triggered repeatedly at the specified interval
                         onTriggered: {
-                            moneroDaemonSyncBar.value = Wallet.getSyncPercentage()//Math.floor(Math.random() * (moneroDaemonSyncBar.to - moneroDaemonSyncBar.from + 1) + moneroDaemonSyncBar.from);
+                            moneroDaemonSyncBar.value = Wallet.getSyncPercentage()
                         }
                     }                    
                 
                     NeroshopComponents.Hint {
                         visible: parent.hovered
                         x: parent.x + (parent.width - this.width) / 2
-                        height: contentHeight + 20; width: parent.width
+                        height: contentHeight + 20; width: (contentWidth > parent.width) ? 300 : parent.width
                         bottomMargin : footer.height + 5
-                        text: qsTr("%1\n%2 %3\n Blocks remaining: %4 / %5").arg("monerod").arg(!Wallet.isOpened() ? "Disconnected" : ((parent.value < 1.0) ? Wallet.getSyncMessage() : "Connected")).arg((parent.value > 0.0 && parent.value != 1.0) ? ("(" + (parent.value * 100).toFixed(2) + "%)") : "").arg(!Wallet.isOpened() ? 0 : Wallet.getSyncHeight()).arg(!Wallet.isOpened() ? 0 : Wallet.getSyncEndHeight()) // If connected to a remote node, "monerod" will be replaced by the <ip>:<port> of the remote node
+                        text: qsTr("%1\n%2 %3\n Blocks remaining: %4 / %5").arg("monerod").arg(!Wallet.opened ? "Disconnected" : ((parent.value < 1.0) ? Wallet.getSyncMessage() : "Connected")).arg((parent.value > 0.0 && parent.value != 1.0) ? ("(" + (parent.value * 100).toFixed(2) + "%)") : "").arg(!Wallet.opened ? 0 : Wallet.getSyncHeight()).arg(!Wallet.opened ? 0 : Wallet.getSyncEndHeight()) // If connected to a remote node, "monerod" will be replaced by the <ip>:<port> of the remote node
                         pointer.visible: false
                     }                
                 }

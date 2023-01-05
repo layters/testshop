@@ -16,6 +16,11 @@ void neroshop::UserController::uploadAvatar(const QString& filename) {
     if(!user.get()) throw std::runtime_error("neroshop::User is not initialized");
     user->upload_avatar(filename.toStdString());
 }
+
+bool neroshop::UserController::exportAvatar() {
+    if(!user.get()) throw std::runtime_error("neroshop::User is not initialized");
+    return user->export_avatar();
+}
     
 neroshop::User * neroshop::UserController::getUser() const {
     return user.get();

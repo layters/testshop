@@ -49,9 +49,6 @@ public:
     Q_INVOKABLE bool loginWithMnemonic(WalletController* wallet_controller, const QString& mnemonic);
     Q_INVOKABLE bool loginWithKeys(WalletController* wallet_controller);
     Q_INVOKABLE bool loginWithHW(WalletController* wallet_controller);
-    // Todo: Move the avatar functions to UserController
-    static bool exportAvatarImage(const QString& user_id);//(UserController * user_controller);
-    static unsigned char * getAvatarImage();//(UserController * user_controller);
     
     //Q_INVOKABLE QVariantList getListings(); // Products listed by sellers
     //Q_INVOKABLE QVariantList getListingsByMostRecent();

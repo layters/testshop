@@ -54,7 +54,7 @@ Page {
             if(settingsDialog.monerodPath.length < 1) { // Will not show when redirecting to HomePage
                 messageBox.text = "You've selected Local node, but the path to monerod has not been specified"
                 messageBox.open()
-                //return; // exit function and do not proceed any further
+                return; // exit function and do not proceed any further
             }
             
             Wallet.daemonExecute(settingsDialog.monerodPath, settingsDialog.confirmExternalBind, settingsDialog.restrictedRpc, settingsDialog.moneroDataDir, 0/*Script.getNumber("neroshop.monero.wallet.restore_height")*/);
@@ -126,8 +126,8 @@ Page {
         // Switch to HomePage
         pageLoader.source = "HomePage.qml"//stack.push(home_page)
         console.log("Primary address: ", Wallet.getPrimaryAddress())
-        console.log("Balance: ", Wallet.getBalanceLocked(0).toFixed(12))
-        console.log("Unlocked balance: ", Wallet.getBalanceUnlocked(0).toFixed(12))
+        console.log("Balance: ", Wallet.getBalanceLocked().toFixed(12))
+        console.log("Unlocked balance: ", Wallet.getBalanceUnlocked().toFixed(12))
         // start synching the monero node as soon we hit the register button (this confirms that we are satified with the wallet key that we've generated and won't turn back to re-generate a new one)
         // Todo: Add an auto-connect on login/registration button and only sync automatically if that option is turned on (will be turned on by default)
         onAutoSync()
@@ -543,8 +543,8 @@ Page {
                             // Switch to HomePage
                             pageLoader.source = "HomePage.qml"
                             console.log("Primary address:", Wallet.getPrimaryAddress())
-                            console.log("Balance:", Wallet.getBalanceLocked(0).toFixed(12))
-                            console.log("Unlocked balance:", Wallet.getBalanceUnlocked(0).toFixed(12))
+                            console.log("Balance:", Wallet.getBalanceLocked().toFixed(12))
+                            console.log("Unlocked balance:", Wallet.getBalanceUnlocked().toFixed(12))
                             //console.log("Mnemonic:", Wallet.getMnemonic())
                 	    }
                 	    // restore from seed

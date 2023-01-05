@@ -36,6 +36,7 @@ public:
     void clear_favorites();
     // avatar-related stuff (10% complete)
     void upload_avatar(const std::string& filename);
+    bool export_avatar();
     void delete_avatar();
     // setters
     // getters
@@ -61,6 +62,7 @@ public:
     static bool is_registered(const std::string& name);
     bool is_logged() const; // the same for every derived class // user has entered their login information
     bool has_email() const;
+    bool has_avatar() const;
     // item-related stuff - boolean
     bool has_purchased(unsigned int item_id); // checks if an item was previously purchased or not
     bool has_purchased(const neroshop::Item& item); // checks if an item was previously purchased or not
