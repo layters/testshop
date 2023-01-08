@@ -71,8 +71,8 @@ void neroshop::Escrow::test_create_multisig_wallet(int M, int N) {
 
 // Temporary
 int main() {
-    //neroshop::Escrow::test_create_multisig_wallet(2, 3);
-    neroshop::Escrow::test_create_multisig_wallet(2, 2);
+    //neroshop::Escrow::test_create_multisig_wallet(2, 3); // can be disputed if both buyer and seller do not come to an agreement (for a fee of 0.5% of order total)
+    neroshop::Escrow::test_create_multisig_wallet(2, 2); // funds are gone forever if both buyer and seller do not come to an agreement
     //neroshop::Escrow::test_multisig_participants({nullptr, nullptr}, 2, 3, false);
     
     /*neroshop::Wallet * wallet = new neroshop::Wallet();

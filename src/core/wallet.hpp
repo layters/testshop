@@ -22,7 +22,7 @@
 #include "process.hpp" // for monerod daemon process
 
 namespace neroshop {
-// todo: maybe place enums in an "error.hpp" file or nah?
+// TODO: maybe place enums in an "error.hpp" file or nah?
 enum class wallet_error : int { WALLET_SUCCESS = 0, WRONG_PASSWORD, PASSWORDS_NO_MATCH, WALLET_ALREADY_EXISTS/*Wallet I/O Error*/ };
 
 class Wallet : public monero_wallet_listener {
@@ -30,12 +30,12 @@ public:
     Wallet();
     ~Wallet();
 
-    /*void*/wallet_error create_random(const std::string& password, const std::string& confirm_pwd, const std::string& path);
-    void create_from_mnemonic(const std::string& mnemonic, const std::string& password, const std::string& confirm_pwd, const std::string& path);
-    void create_from_keys(const std::string& address, const std::string& view_key, const std::string& spend_key, const std::string& password, const std::string &confirm_pwd, const std::string& path);
+    /*bool*/wallet_error create_random(const std::string& password, const std::string& confirm_pwd, const std::string& path);
+    bool create_from_mnemonic(const std::string& mnemonic, const std::string& password, const std::string& confirm_pwd, const std::string& path);
+    bool create_from_keys(const std::string& address, const std::string& view_key, const std::string& spend_key, const std::string& password, const std::string &confirm_pwd, const std::string& path);
     
-    void restore_from_mnemonic(const std::string& mnemonic); // In-memory wallet
-    void restore_from_keys(const std::string& primary_address, const std::string& view_key, const std::string& spend_key); // In-memory wallet
+    bool restore_from_mnemonic(const std::string& mnemonic); // In-memory wallet
+    bool restore_from_keys(const std::string& primary_address, const std::string& view_key, const std::string& spend_key); // In-memory wallet
     bool open(const std::string& path, const std::string& password); // Password-protected wallet file
     
     void close(bool save = false);

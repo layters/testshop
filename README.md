@@ -46,7 +46,7 @@ Neroshop aims to be simple for a beginner to use and easy for sellers to onboard
 * No censorship (censorship-resistant)
 * Pseudonymous identities (sellers and buyers are identified by their unique ids and/or optional display names)
 * No KYC nor AML
-* No listing fees, sales tax, or any other fees (except for miner transaction fees and shipping costs and a 0.1% fee for using the optional built-in escrow system)
+* No listing fees, sales tax, or any other fees (except for miner transaction fees and shipping costs and a 0.5% fee for using the optional built-in 2-of-3 escrow system)
 * End-to-end encrypted messaging system for communications between sellers and buyers
 * Subaddress generator (a unique subaddresses will be generated from a seller's synced wallet account for each order placed by a customer)
 * Option to run a local Monero node or connect to remote Monero nodes (so that sellers will not have to sync the entire blockchain)
@@ -224,8 +224,9 @@ You may support the neroshop project directly by donating Monero (XMR) to the ad
 
 
 ## Credits
-Official neroshop logo design — [u/EchoingCat](https://www.reddit.com/u/EchoingCat)
-
+u/EchoingCat — for the revision of the official neroshop logo
+woodser — for his guidance and for his work on the monero-cpp library which has made this app possible
+yuriio147 — for his work on several QML components(Triangle, Banner, NodeList, etc.), the currency converter, fixing a major bug in the RSA encryption code, the RSA signing and verifying functions, and for teaching me some Qt/Quick techniques
 
 [//]: # (./clean.sh)
 [//]: # (git checkout -b main)

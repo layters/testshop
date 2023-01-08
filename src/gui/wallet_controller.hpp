@@ -34,8 +34,8 @@ public:
     // functions (for use in QML)
     ////explicit Wallet(QObject* parent = 0);
     Q_INVOKABLE int createRandomWallet(const QString& password, const QString& confirm_pwd, const QString& path);
-    Q_INVOKABLE void restoreFromMnemonic(const QString& mnemonic);
-    //Q_INVOKABLE void restoreFromKeys(const QString& primary_address, const QString& private_view_key, const QString& private_spend_key());
+    Q_INVOKABLE bool restoreFromMnemonic(const QString& mnemonic);
+    Q_INVOKABLE bool restoreFromKeys(const QString& primary_address, const QString& private_view_key, const QString& private_spend_key);
     Q_INVOKABLE bool open(const QString& path, const QString& password);
     Q_INVOKABLE void close(bool save = false);
     Q_INVOKABLE QVariantMap/*QMap<QString, QVariant>*/ createUniqueSubaddressObject(unsigned int account_idx, const QString & label = "");

@@ -54,15 +54,15 @@ neroshop::wallet_error neroshop::Wallet::create_random(const std::string& passwo
     return neroshop::wallet_error::WALLET_SUCCESS;
 }
 ////////////////////
-void neroshop::Wallet::create_from_mnemonic(const std::string& mnemonic, const std::string& password, const std::string& confirm_pwd, const std::string& path) {
+bool neroshop::Wallet::create_from_mnemonic(const std::string& mnemonic, const std::string& password, const std::string& confirm_pwd, const std::string& path) {
     if(confirm_pwd != password) {
         neroshop::print("Wallet passwords do not match", 1);
-        return;
+        return false;
     }    
 
     if(monero::monero_wallet_full::wallet_exists(path + ".keys")) {
         neroshop::print("Wallet file with the same name already exists", 1);
-        return;
+        return false;
     }
     // This is deprecated :(    
     ////monero_wallet_obj = std::unique_ptr<monero_wallet_full>(monero_wallet_full::create_wallet_from_mnemonic (path, password, network_type, mnemonic));
@@ -74,19 +74,21 @@ void neroshop::Wallet::create_from_mnemonic(const std::string& mnemonic, const s
     wallet_config_obj.m_mnemonic = mnemonic;
     
     monero_wallet_obj = std::unique_ptr<monero_wallet_full>(monero_wallet_full::create_wallet (wallet_config_obj, nullptr));
-    if(monero_wallet_obj.get()) std::cout << "\033[1;35;49m" << "created wallet \"" << path << ".keys\" (from mnemonic)" << "\033[0m" << std::endl;
+    if(!monero_wallet_obj.get()) return false;
+    std::cout << "\033[1;35;49m" << "created wallet \"" << path << ".keys\" (from mnemonic)" << "\033[0m" << std::endl;
+    return true;
 }
 ////////////////////
 // To restore a view-only wallet, leave the spend key blank
-void neroshop::Wallet::create_from_keys(const std::string& primary_address, const std::string& view_key, const std::string& spend_key, const std::string& password, const std::string &confirm_pwd, const std::string& path) {
+bool neroshop::Wallet::create_from_keys(const std::string& primary_address, const std::string& view_key, const std::string& spend_key, const std::string& password, const std::string &confirm_pwd, const std::string& path) {
     if(confirm_pwd != password) {
         neroshop::print("Wallet passwords do not match", 1);
-        return;
+        return false;
     }  
     
     if(monero::monero_wallet_full::wallet_exists(path + ".keys")) {
         neroshop::print("Wallet file with the same name already exists", 1);
-        return;
+        return false;
     }
     // This is deprecated :(    
     ////monero_wallet_obj = std::unique_ptr<monero_wallet_full>(monero_wallet_full::create_wallet_from_keys(path, password, network_type, primary_address, view_key, spend_key));
@@ -100,10 +102,12 @@ void neroshop::Wallet::create_from_keys(const std::string& primary_address, cons
     wallet_config_obj.m_private_spend_key = spend_key;
     
     monero_wallet_obj = std::unique_ptr<monero_wallet_full>(monero_wallet_full::create_wallet (wallet_config_obj, nullptr));
-    if(monero_wallet_obj.get()) std::cout << "\033[1;35;49m" << "created wallet \"" << path << ".keys\" (from keys)" << "\033[0m" << std::endl;
+    if(!monero_wallet_obj.get()) return false;
+    std::cout << "\033[1;35;49m" << "created wallet \"" << path << ".keys\" (from keys)" << "\033[0m" << std::endl;
+    return true;
 }
 ////////////////////
-void neroshop::Wallet::restore_from_mnemonic(const std::string& mnemonic) 
+bool neroshop::Wallet::restore_from_mnemonic(const std::string& mnemonic) 
 {
     // This is deprecated :(
     //monero_wallet_obj = std::unique_ptr<monero_wallet_full>(monero_wallet_full::create_wallet_from_mnemonic("", "", network_type, mnemonic)); // set path to "" for an in-memory wallet
@@ -116,15 +120,17 @@ void neroshop::Wallet::restore_from_mnemonic(const std::string& mnemonic)
     wallet_config_obj.m_restore_height = 0;
     
     monero_wallet_obj = std::unique_ptr<monero_wallet_full>(monero_wallet_full::create_wallet (wallet_config_obj, nullptr));
-    if(monero_wallet_obj.get()) std::cout << "\033[1;35;49m" << "restored in-memory wallet (from mnemonic)" << "\033[0m" << std::endl;    
+    if(!monero_wallet_obj.get()) return false;
+    std::cout << "\033[1;35;49m" << "restored in-memory wallet (from mnemonic)" << "\033[0m" << std::endl;    
+    return true;
 }
 ////////////////////
-void neroshop::Wallet::restore_from_keys(const std::string& primary_address, const std::string& view_key, const std::string& spend_key)
+bool neroshop::Wallet::restore_from_keys(const std::string& primary_address, const std::string& view_key, const std::string& spend_key)
 {
     // Check validity of primary address
     if(!monero_utils::is_valid_address(primary_address, this->network_type)) {
         neroshop::print("Invalid Monero address", 1);
-        return;
+        return false;
     }
     // This is deprecated :(
     //monero_wallet_obj = std::unique_ptr<monero_wallet_full>(monero_wallet_full::create_wallet_from_keys ("", "", network_type, primary_address, view_key, spend_key)); // set path to "" for an in-memory wallet
@@ -138,7 +144,9 @@ void neroshop::Wallet::restore_from_keys(const std::string& primary_address, con
     wallet_config_obj.m_private_spend_key = spend_key;
     
     monero_wallet_obj = std::unique_ptr<monero_wallet_full>(monero_wallet_full::create_wallet (wallet_config_obj, nullptr));    
-    if(monero_wallet_obj.get()) std::cout << "\033[1;35;49m" << "restored in-memory wallet (from keys)" << "\033[0m" << std::endl;
+    if(!monero_wallet_obj.get()) return false;
+    std::cout << "\033[1;35;49m" << "restored in-memory wallet (from keys)" << "\033[0m" << std::endl;
+    return true;
 }
 ////////////////////
 bool neroshop::Wallet::open(const std::string& path, const std::string& password) { 
@@ -182,13 +190,14 @@ std::string neroshop::Wallet::upload(bool open, std::string password) { // opens
     return std::string(filename + ".keys");
 }
 ////////////////////
+// refer to https://moneroecosystem.org/monero-cpp/structmonero_1_1monero__tx__config.html
 ////////////////////
 void neroshop::Wallet::transfer(const std::string& address, double amount) {
     if(!monero_wallet_obj.get()) throw std::runtime_error("monero_wallet_full is not opened");
     // Convert monero to piconero
     double piconero = 0.000000000001;
     uint64_t monero_to_piconero = amount / piconero; //std::cout << neroshop::string::precision(amount, 12) << " xmr to piconero: " << monero_to_piconero << "\n";
-    // TODO: for the escrow system, take 0.1% of order total in piconeros
+    // TODO: for the 2-of-3 escrow system, take 0.5% of order total in piconeros
     // Check if balance is sufficient
     std::cout << "Wallet balance (spendable): " << monero_wallet_obj->get_unlocked_balance() << " (picos)\n";
     std::cout << "Amount to send: " << monero_to_piconero << " (picos)\n";

@@ -24,33 +24,34 @@ neroshop::Wallet * neroshop::WalletController::getWallet() const {
 int neroshop::WalletController::createRandomWallet(const QString& password, const QString& confirm_pwd, const QString& path) {
     if(!wallet.get()) throw std::runtime_error("neroshop::Wallet is not initialized");
     auto error = wallet->create_random(password.toStdString(), confirm_pwd.toStdString(), path.toStdString());
-    if(error == neroshop::wallet_error::WALLET_SUCCESS) {
-        emit walletChanged();
-        emit isOpenedChanged();
-    }
+    emit walletChanged();
+    if(error == neroshop::wallet_error::WALLET_SUCCESS) emit isOpenedChanged();
     return static_cast<int>(error);
 }
 
-void neroshop::WalletController::restoreFromMnemonic(const QString& mnemonic) {
+bool neroshop::WalletController::restoreFromMnemonic(const QString& mnemonic) {
     if(!wallet.get()) throw std::runtime_error("neroshop::Wallet is not initialized");
-    wallet->restore_from_mnemonic(mnemonic.toStdString());
+    bool restored = wallet->restore_from_mnemonic(mnemonic.toStdString());
     emit walletChanged();
-    emit isOpenedChanged();
+    if(restored) emit isOpenedChanged();
+    return restored;
 }
 
-//void restoreFromKeys(const QString& primary_address, const QString& private_view_key, const QString& private_spend_key()) {}
+bool neroshop::WalletController::restoreFromKeys(const QString& primary_address, const QString& private_view_key, const QString& private_spend_key) {
+    if(!wallet.get()) throw std::runtime_error("neroshop::Wallet is not initialized");
+    bool restored = wallet->restore_from_keys(primary_address.toStdString(), private_view_key.toStdString(), private_spend_key.toStdString());
+    emit walletChanged();
+    if(restored) emit isOpenedChanged();
+    return restored;
+}
 
 bool neroshop::WalletController::open(const QString& path, const QString& password) {
     if(!wallet.get()) throw std::runtime_error("neroshop::Wallet is not initialized");
     bool opened = wallet->open(path.toStdString(), password.toStdString());
-    if(opened) {
-        emit walletChanged();
-        emit isOpenedChanged();
-    }
+    emit walletChanged();
+    if(opened) emit isOpenedChanged();
     return opened;
 }
-
-//void neroshop::WalletController::walletOpened() { std::cout << "Wallet open notified\n"; }//opened = isOpened()
 
 void neroshop::WalletController::close(bool save) {
     if(!wallet.get()) throw std::runtime_error("neroshop::Wallet is not initialized");

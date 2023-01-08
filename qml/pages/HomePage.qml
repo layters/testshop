@@ -90,6 +90,7 @@ Page {
                         HoverHandler {
                             id: categoryHoverHandler
                         }                        
+                        // TODO: replace catalog tooltip with normal text
                         NeroshopComponents.Hint {/*TextArea {
                             id: categoryNameText
                             text: modelData.name

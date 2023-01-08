@@ -24,19 +24,19 @@ RowLayout {
             console.log("Selected", button.text, "button")
             button.checked = true
             if(button.text == walletButton.text) {
-                pageLoader.source = "../pages/settings/SettingsWallet.qml"//_stackview.currentIndex = 0
+                pageLoader.source = "../pages/subpages/WalletPage.qml"//_stackview.currentIndex = 0
             }
             if(button.text == sellersHubButton.text) {
-                pageLoader.source = "../pages/settings/SettingsSellersHub.qml"
+                pageLoader.source = "../pages/subpages/SellerHubPage.qml"
             }
             if(button.text == messagesButton.text) {
-                pageLoader.source = "../pages/settings/SettingsMessages.qml"
+                pageLoader.source = "../pages/subpages/MessagesPage.qml"
             }
             if(button.text == ordersButton.text) {
-                pageLoader.source = "../pages/settings/SettingsOrders.qml"
+                pageLoader.source = "../pages/subpages/OrdersPage.qml"
             }
             if(button.text == accountSettingsButton.text) {
-                pageLoader.source = "../pages/settings/SettingsAccount.qml"
+                pageLoader.source = "../pages/subpages/AccountSettingsPage.qml"
             }                                                        
         }
     }
@@ -72,7 +72,7 @@ RowLayout {
                             
     Button {
         id: sellersHubButton
-        text: qsTr("Sellers' Hub")
+        text: qsTr("Seller Hub")
         ButtonGroup.group: navBarButtonGroup
         display: AbstractButton.IconOnly//AbstractButton.TextBesideIcon
         hoverEnabled: true
