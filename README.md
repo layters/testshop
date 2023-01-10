@@ -34,12 +34,14 @@ A decentralized P2P (peer-to-peer) marketplace for [**Monero**](https://getmoner
 
 </details>
 
+<!--
 ## About
 *neroshop* is a decentralized P2P (peer-to-peer) marketplace that uses [**Monero**](https://getmonero.org/) as its default cryptocurrency and 
 caters not only to darknet market users, but also those who want to partake in a parallel economy free from censorship and government invervention.
 Neroshop aims to be simple for a beginner to use and easy for sellers to onboard their shop with just a few clicks.
 
-The name _neroshop_ is a combination of the words _nero_, which is Italian for black and the English word _shop_. And of course, _nero_ is also in the name _Monero_.
+The name _neroshop_ is a combination of the words _nero_, which is Italian for _black_ and the English word _shop_. And of course, _nero_ is also in the name _Monero_.
+-->
 
 ## Feature Status
 - [ ] Distributed P2P network
@@ -57,7 +59,7 @@ The name _neroshop_ is a combination of the words _nero_, which is Italian for b
 - [ ] Seller reputation system
 - [ ] Product rating system
 - [ ] Wishlists
-
+- [ ] Search engine that can find any products or sellers
 
 ## Building neroshop
 
@@ -214,22 +216,22 @@ You may support the neroshop project directly by donating Monero (XMR) to the ad
 
 
 ## Resources
-> Website: [neroshop.org](https://neroshop.org/)
+* Website: [neroshop.org](https://neroshop.org/)
 
-> Git (Unofficial): [github.com/larteyoh/testshop](https://github.com/larteyoh/testshop)
+* Git (Unofficial): [github.com/larteyoh/testshop](https://github.com/larteyoh/testshop)
 
-> Git (Official): [github.com/larteyoh/neroshop](https://github.com/larteyoh/neroshop)
+* Git (Official): [github.com/larteyoh/neroshop](https://github.com/larteyoh/neroshop)
 
-> Mail: neroshop@protonmail.com
+* Mail: neroshop@protonmail.com
 
-> Matrix: [#neroshop:matrix.org](https://matrix.to/#/#neroshop:matrix.org)
+* Matrix: [#neroshop:matrix.org](https://matrix.to/#/#neroshop:matrix.org)
 
 
 ## Credits
 ```
 u/EchoingCat — for the revision of the official neroshop logo
 woodser — for his guidance and for his work on the monero-cpp library which has made this app possible
-yuriio147 — for his work on several QML components(Triangle, Banner, NodeList, etc.), the currency converter, fixing a major bug in the RSA encryption code, the RSA signing and verifying functions, and for teaching me some Qt/Quick techniques
+yuriio147 — for his work on various QML components (Triangle, Banner, NodeList, etc.), the currency converter, fixing a major bug in the RSA encryption code, the RSA signing and verifying functions, and for teaching me some Qt/Quick techniques
 ```
 
 [//]: # (./clean.sh)
