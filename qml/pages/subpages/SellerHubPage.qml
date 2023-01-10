@@ -107,7 +107,7 @@ Page {
                             }
                         }
                     }
-                    // Sales
+                    // Sales (the total of completed orders)
                     Rectangle {
                         Layout.preferredWidth: stats.boxWidth
                         Layout.preferredHeight: stats.boxHeight
@@ -153,7 +153,7 @@ Page {
                                 }
                     
                                 Text {
-                                    text: "Sales" // Total of completed orders
+                                    text: "Sales"
                                     //font.bold: true
                                     color: stats.textColor
                                     anchors.left: parent.children[0].left//anchors.horizontalCenter: parent.horizontalCenter//

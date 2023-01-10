@@ -52,14 +52,14 @@ The name _neroshop_ is a combination of the words _nero_, which is Italian for _
 - [ ] No KYC nor AML
 - [ ] No listing fees, sales tax, or any other fees (except for miner transaction fees and shipping costs and a 0.5% fee for using the optional built-in 2-of-3 escrow system)
 - [ ] End-to-end encrypted messaging system for communications between sellers and buyers
-- [ ] Subaddress generator (a unique subaddresses will be generated from a seller's synced wallet account for each order placed by a customer)
+- [ ] Subaddress generator (a unique subaddress will be generated from a seller's synced wallet account for each order placed by a customer)
 - [x] Option to run a local Monero node or connect to remote Monero nodes (so that sellers will not have to sync the entire blockchain)
-- [ ] Option to choose between sending funds directly to a seller or using a multisignature escrow.
+- [ ] Option to choose between sending funds directly to a seller or by using a multisignature escrow.
 - [ ] Tor and I2P integration (Internet traffic can be optionally routed through tor for more added privacy)
 - [ ] Seller reputation system
 - [ ] Product rating system
 - [ ] Wishlists
-- [ ] Search engine that can find any products or sellers
+- [ ] Built-in SQLite-powered search engine that can find any products or sellers
 
 ## Building neroshop
 
