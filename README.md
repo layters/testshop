@@ -39,7 +39,7 @@ A decentralized P2P (peer-to-peer) marketplace for [**Monero**](https://getmoner
 caters not only to darknet market users, but also those who want to partake in a parallel economy free from censorship and government invervention.
 Neroshop aims to be simple for a beginner to use and easy for sellers to onboard their shop with just a few clicks.
 
-**The name _neroshop_ is a combination of the words _nero_, which is Italian for black and the English word _shop_. And of course, _nero_ is also in the name _Monero_.**
+The name _neroshop_ is a combination of the words _nero_, which is Italian for black and the English word _shop_. And of course, _nero_ is also in the name _Monero_.
 
 ## Feature Status
 - [ ] Distributed P2P network
