@@ -50,17 +50,21 @@ int main(int argc, char *argv[]) {
     
     QQmlApplicationEngine engine;
     //--------------------------
-    // Configuration file must be loaded right after Qt Application object has been created so that we can get the correct config location
     // start server daemon
     //Backend::startServerDaemon();
     // wait for daemon server to open
     //Backend::waitForServerDaemon();
     // connect to server daemon
     //Backend::connectToServerDaemon();
+    // Configuration file must be loaded right after Qt Application object has been created so that we can get the correct config location
     // open configuration script
     neroshop::open_configuration_file();
+    std::vector<std::string> networks = { "mainnet", "testnet", "stagenet" };
     std::string network_type = Script::get_string(lua_state, "neroshop.monero.daemon.network_type");
-    std::cout << "network_type: " << network_type << std::endl;
+    if (std::find(networks.begin(), networks.end(), network_type) == networks.end()) {
+        neroshop::print("\033[1;91mnetwork_type \"" + network_type + "\" is not valid");
+        return 1;
+    }
     // start database
     Backend::initializeDatabase();
     // import paths
@@ -87,8 +91,9 @@ int main(int argc, char *argv[]) {
         }
     }    
     // we can also register an instance of a class instead of the class itself
-    //WalletController wallet;
-    engine.rootContext()->setContextProperty("Wallet", new WalletController());//qmlRegisterUncreatableType<WalletProxy>("neroshop.Wallet", 1, 0, "Wallet", "Wallet cannot be instantiated directly.");//qmlRegisterType<WalletProxy>("neroshop.Wallet", 1, 0, "Wallet"); // Usage: import neroshop.Wallet  ...  Wallet { id: wallet }
+    WalletController * wallet = new WalletController();
+    wallet->setNetworkTypeByString(QString::fromStdString(network_type));
+    engine.rootContext()->setContextProperty("Wallet", wallet);//new WalletController());//qmlRegisterUncreatableType<WalletProxy>("neroshop.Wallet", 1, 0, "Wallet", "Wallet cannot be instantiated directly.");//qmlRegisterType<WalletProxy>("neroshop.Wallet", 1, 0, "Wallet"); // Usage: import neroshop.Wallet  ...  Wallet { id: wallet }
     qRegisterMetaType<WalletController*>(); // Wallet can now be used as an argument in function parameters
     // register script
     engine.rootContext()->setContextProperty("Script", new ScriptController());//qmlRegisterType<ScriptProxy>("neroshop.Script", 1, 0, "Script");

@@ -37,6 +37,14 @@ Popup {
         scrollView.ScrollBar.vertical.position = 0.0
     }
     
+    function getPortByNetworkType() {
+        let network_type = Wallet.getNetworkTypeString()
+        if(network_type == "mainnet") return "18081";
+        if(network_type == "testnet") return "28081";
+        if(network_type == "stagenet") return "38081";
+        return "18081"//qsTr(Script.getString("neroshop.monero.daemon.port"))
+    }
+    
     background: Rectangle {
         implicitWidth: 700
         implicitHeight: 500
@@ -468,57 +476,6 @@ Item {
     ColumnLayout {
         anchors.fill: parent
 
-                // This will not be necessary once we switch to mainnet (permanently)
-                // Todo: remove this on release with mainnet
-                Rectangle {
-                    Layout.alignment: Qt.AlignHCenter
-                    Layout.preferredWidth: 500////Layout.fillWidth: true
-                    Layout.preferredHeight: 50 + children[0].anchors.margins
-                    radius: 3
-                    color: "transparent"
-                    border.color: (NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000"
-                    
-                    RowLayout {
-                        anchors.fill: parent
-                        anchors.margins: 10               
-                        /*Label {
-                            id: networkTypeLabel
-                            text: qsTr("Network Type")
-                            color: (NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000"
-                            Layout.alignment: Qt.AlignLeft
-                            Layout.leftMargin: 5//25
-                        }*/
-                        
-                        ComboBox {
-                            id: moneroNetworkTypeBox
-                            model: ["Mainnet", "Testnet", "Stagenet"]
-                            currentIndex: {
-                                let network_type = Wallet.getNetworkTypeString()
-                                let network_type_cap = (network_type.length < 1) ? "Mainnet" : (network_type.charAt(0).toUpperCase() + network_type.slice(1))
-                                return model.indexOf(network_type_cap)
-                            }
-                            displayText: currentText
-                            Layout.fillWidth: true////Layout.alignment: Qt.AlignRight; Layout.rightMargin: 5
-                        
-                            onActivated: {    
-                                if(currentIndex == 0) {
-                                    moneroNodePortField.placeholderText = "18081"
-                                    Wallet.setNetworkTypeByString(currentText)
-                                }
-                                if(currentIndex == 1) {
-                                    moneroNodePortField.placeholderText = "28081"
-                                    Wallet.setNetworkTypeByString(currentText)
-                                }
-                                if(currentIndex == 2) {
-                                    moneroNodePortField.placeholderText = "38081"
-                                    Wallet.setNetworkTypeByString(currentText)
-                                }                                
-                                displayText = currentText
-                            }
-                        }
-                    }
-                }
-
             Frame {
                     Layout.alignment: Qt.AlignHCenter
                     Layout.preferredWidth: 500
@@ -557,7 +514,8 @@ Item {
                         id: moneroNodePortField
                         Layout.preferredWidth: (500 / 4)
                         Layout.preferredHeight: 50
-                        placeholderText: qsTr(Script.getString("neroshop.monero.daemon.port")); placeholderTextColor: (NeroshopComponents.Style.darkTheme) ? "#a9a9a9" : "#696969"
+                        placeholderText: getPortByNetworkType()
+                        placeholderTextColor: (NeroshopComponents.Style.darkTheme) ? "#a9a9a9" : "#696969"
                         color: (NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000"
                         selectByMouse: true
                 
@@ -733,7 +691,8 @@ Item {
                         id: moneroDaemonPortField
                         Layout.preferredWidth: (500 / 4)
                         Layout.preferredHeight: 50
-                        placeholderText: qsTr(Script.getString("neroshop.monero.daemon.port")); placeholderTextColor: (NeroshopComponents.Style.darkTheme) ? "#a9a9a9" : "#696969"
+                        placeholderText: getPortByNetworkType()
+                        placeholderTextColor: (NeroshopComponents.Style.darkTheme) ? "#a9a9a9" : "#696969"
                         color: (NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000"
                         selectByMouse: true
                         readOnly: localNodeButton.checked

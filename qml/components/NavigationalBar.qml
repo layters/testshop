@@ -72,7 +72,7 @@ RowLayout {
                             
     Button {
         id: sellersHubButton
-        text: qsTr("Seller Hub")
+        text: qsTr("Seller Hub")//qsTr("Dashboard")
         ButtonGroup.group: navBarButtonGroup
         display: AbstractButton.IconOnly//AbstractButton.TextBesideIcon
         hoverEnabled: true

@@ -8,7 +8,7 @@ A decentralized P2P (peer-to-peer) marketplace for [**Monero**](https://getmoner
 ## Table of contents
 <!-- - [The history behind neroshop](#about)-->
 - [Demo](#demo)
-- [Planned Features](#planned-features) <!-- - [Documentation](#documentation)-->
+- [Feature Status](#feature-status) <!-- - [Documentation](#documentation)-->
 - [Building neroshop](#building-neroshop)
   - [Dependencies](#dependencies)
   - [Compiling neroshop from source](#compiling-neroshop-from-source)
@@ -30,31 +30,33 @@ A decentralized P2P (peer-to-peer) marketplace for [**Monero**](https://getmoner
 ![CatalogGrid_Bottom](https://github.com/larteyoh/testshop/blob/main/images/screenshots/CatalogGrid_Bottom.png)
 ![SettingsDialog_Monero](https://github.com/larteyoh/testshop/blob/main/images/screenshots/SettingsDialog_Monero.png)
 ![HomePage](https://github.com/larteyoh/testshop/blob/main/images/screenshots/HomePage.png)
+![Dashboard](https://github.com/larteyoh/testshop/blob/main/images/screenshots/Dashboard_Overview.png)
 
 </details>
 
-<!--## About
+## About
 *neroshop* is a decentralized P2P (peer-to-peer) marketplace that uses [**Monero**](https://getmonero.org/) as its default cryptocurrency and 
-caters not only to darknet market users, but also those who believe in a **truly** free market that is uncensorable, unseizable, and unregulatable.
+caters not only to darknet market users, but also those who want to partake in a parallel economy free from censorship and government invervention.
 Neroshop aims to be simple for a beginner to use and easy for sellers to onboard their shop with just a few clicks.
--->
 
-## Planned Features
-* Distributed P2P network
-* Buy and sell products with Monero
-* Anonymous payments
-* No censorship (censorship-resistant)
-* Pseudonymous identities (sellers and buyers are identified by their unique ids and/or optional display names)
-* No KYC nor AML
-* No listing fees, sales tax, or any other fees (except for miner transaction fees and shipping costs and a 0.5% fee for using the optional built-in 2-of-3 escrow system)
-* End-to-end encrypted messaging system for communications between sellers and buyers
-* Subaddress generator (a unique subaddresses will be generated from a seller's synced wallet account for each order placed by a customer)
-* Option to run a local Monero node or connect to remote Monero nodes (so that sellers will not have to sync the entire blockchain)
-* Option to choose between sending funds directly to a seller or using a multisignature escrow.
-* Tor and I2P integration (Internet traffic can be optionally routed through tor for more added privacy)
-* Seller reputation system
-* Product rating system
-* Wishlists
+**The name _neroshop_ is a combination of the words _nero_, which is Italian for black and the English word _shop_. And of course, _nero_ is also in the name _Monero_.**
+
+## Feature Status
+- [ ] Distributed P2P network
+- [ ] Buy and sell products with Monero
+- [ ] Anonymous payments
+- [ ] No censorship (censorship-resistant)
+- [ ] Pseudonymous identities (sellers and buyers are identified by their unique ids and/or optional display names)
+- [ ] No KYC nor AML
+- [ ] No listing fees, sales tax, or any other fees (except for miner transaction fees and shipping costs and a 0.5% fee for using the optional built-in 2-of-3 escrow system)
+- [ ] End-to-end encrypted messaging system for communications between sellers and buyers
+- [ ] Subaddress generator (a unique subaddresses will be generated from a seller's synced wallet account for each order placed by a customer)
+- [x] Option to run a local Monero node or connect to remote Monero nodes (so that sellers will not have to sync the entire blockchain)
+- [ ] Option to choose between sending funds directly to a seller or using a multisignature escrow.
+- [ ] Tor and I2P integration (Internet traffic can be optionally routed through tor for more added privacy)
+- [ ] Seller reputation system
+- [ ] Product rating system
+- [ ] Wishlists
 
 
 ## Building neroshop

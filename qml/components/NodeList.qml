@@ -59,7 +59,7 @@ Item {
             Layout.fillHeight: true
             ScrollBar.vertical: ScrollBar { }
             model: {
-                let network_type = moneroNetworkTypeBox.displayText.toLowerCase()
+                let network_type = Wallet.getNetworkTypeString()
                 return Script.getTableStrings("neroshop.monero.nodes." + network_type)
                 //Todo: replace Script.getTableStrings() with Backend.getNodeList() when app is released with mainnet
                 //return Backend.getNodeList() // <- This will only work for mainnet nodes

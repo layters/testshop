@@ -38,6 +38,7 @@ Page {
             GridLayout {
                 id: overviewTab
                 Layout.preferredWidth: parent.width
+                Layout.preferredHeight: parent.height
                 ////columnSpacing: 20
                 
                 RowLayout {
@@ -223,6 +224,17 @@ Page {
             
             GridLayout {
                 id: inventoryTab
+                
+                ColumnLayout {
+                // RegisterItem
+                //SKU or UPC
+                //Product title
+                //Product description and bullet points
+                //Product images
+                //Search terms and relevant keywords (categories)
+                // Subcategories
+                // ListItem
+                }
             }
             
             GridLayout {
