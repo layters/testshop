@@ -437,6 +437,7 @@ bool neroshop::Backend::loginWithWalletFile(WalletController* wallet_controller,
     if(!user_found) {
         // In reality, this function will return false if user key is not registered in the database
         neroshop::print("user not found in database. Please try again or register", 1);
+        wallet_controller->close();
         return false;
     }
     // Save user information in memory
@@ -455,7 +456,10 @@ bool neroshop::Backend::loginWithMnemonic(WalletController* wallet_controller, c
     neroshop::db::Sqlite3 * database = neroshop::db::Sqlite3::get_database();
     if(!database) throw std::runtime_error("database is NULL");
     // Initialize monero wallet with existing wallet mnemonic
-    wallet_controller->restoreFromMnemonic(mnemonic);
+    if(!wallet_controller->restoreFromMnemonic(mnemonic)) {
+        throw std::runtime_error("Invalid mnemonic or wallet network type");
+        return false;    
+    }
     // Get the primary address
     std::string primary_address = wallet_controller->getPrimaryAddress().toStdString();
     // Check database to see if user key (hash of primary address) exists
@@ -464,6 +468,7 @@ bool neroshop::Backend::loginWithMnemonic(WalletController* wallet_controller, c
     if(!user_key_found) {
         // In reality, this function will return false if user key is not registered in the database
         neroshop::print("user key not found in database. Please try again or register", 1);
+        wallet_controller->close();
         return false;
     }
     // Save user information in memory
@@ -503,6 +508,7 @@ bool neroshop::Backend::loginWithKeys(WalletController* wallet_controller) {
     if(!user_key_found) {
         // In reality, this function will return false if user key is not registered in the database
         neroshop::print("user key not found in database. Please try again or register", 1);
+        wallet_controller->close();
         return false;
     }
     // Save user information in memory

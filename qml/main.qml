@@ -72,8 +72,8 @@ ApplicationWindow {
     Loader {
         id: pageLoader
         anchors.fill: parent
-        //source: "qrc:/qml/pages/MainPage.qml"
-        source: "qrc:/qml/pages/HomePage.qml"
+        source: "qrc:/qml/pages/MainPage.qml"
+        //source: "qrc:/qml/pages/HomePage.qml"
         //source: "qrc:/qml/pages/CartPage.qml"
         //source: "qrc:/qml/pages/CatalogPage.qml"
         //source: "qrc:/qml/pages/ProductPage.qml"
@@ -197,7 +197,7 @@ ApplicationWindow {
                         x: parent.x + (parent.width - this.width) / 2 // Popups don't have anchors :(
                         height: contentHeight + 20; width: (contentWidth > parent.width) ? 300 : parent.width
                         bottomMargin : footer.height + 5
-                        text: qsTr("neromon\n%1 %2").arg((parent.value < 1.0) ? "Synchronizing" : "Connected").arg((parent.value > 0.0 && parent.value < 1.0) ? ("(" + (parent.value * 100).toString() + "%)") : "")
+                        text: qsTr("neromon\n%1 %2").arg((parent.value <= 0.0) ? "Disconnected" : ((parent.value > 0.0 && parent.value < 1.0) ? "Synchronizing" : "Connected")).arg((parent.value > 0.0 && parent.value < 1.0) ? ("(" + (parent.value * 100).toString() + "%)") : "")
                         pointer.visible: false
                     }
                 }      
@@ -234,7 +234,7 @@ ApplicationWindow {
                         x: parent.x + (parent.width - this.width) / 2
                         height: contentHeight + 20; width: (contentWidth > parent.width) ? 300 : parent.width
                         bottomMargin : footer.height + 5
-                        text: qsTr("%1\n%2 %3\n Blocks remaining: %4 / %5").arg("monerod").arg(!Wallet.opened ? "Disconnected" : ((parent.value < 1.0) ? Wallet.getSyncMessage() : "Connected")).arg((parent.value > 0.0 && parent.value != 1.0) ? ("(" + (parent.value * 100).toFixed(2) + "%)") : "").arg(!Wallet.opened ? 0 : Wallet.getSyncHeight()).arg(!Wallet.opened ? 0 : Wallet.getSyncEndHeight()) // If connected to a remote node, "monerod" will be replaced by the <ip>:<port> of the remote node
+                        text: qsTr("%1\n%2 %3%4").arg("monerod").arg((!Wallet.opened || parent.value <= 0.0) ? "Disconnected" : ((parent.value > 0.0 && parent.value < 1.0) ? Wallet.getSyncMessage() : "Connected")).arg((parent.value > 0.0 && parent.value != 1.0) ? ("(" + (parent.value * 100).toFixed(2) + "%)") : "").arg((!Wallet.opened || parent.value <= 0.0) ? "" : ((parent.value > 0.0 && parent.value != 1.0) ? ("\nBlocks remaining: " + Wallet.getSyncHeight() + " / " + Wallet.getSyncEndHeight()) : "")) // If connected to a remote node, "monerod" will be replaced by the <ip>:<port> of the remote node
                         pointer.visible: false
                     }                
                 }
