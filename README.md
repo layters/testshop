@@ -171,7 +171,7 @@ In some cases, you may need to add this line under the "find_package(Boost .." i
 
 **5. Build monero-project to create .a libraries**
 ```bash
-make release-static
+make release-static -j$(nproc)
 ```
 ```bash
 cd ../../../../
