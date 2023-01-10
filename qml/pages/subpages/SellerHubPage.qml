@@ -153,7 +153,7 @@ Page {
                                 }
                     
                                 Text {
-                                    text: "Sales"
+                                    text: "Sales" // Total of completed orders
                                     //font.bold: true
                                     color: stats.textColor
                                     anchors.left: parent.children[0].left//anchors.horizontalCenter: parent.horizontalCenter//
