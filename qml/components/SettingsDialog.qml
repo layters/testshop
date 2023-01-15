@@ -42,7 +42,7 @@ Popup {
         if(network_type == "mainnet") return "18081";
         if(network_type == "testnet") return "28081";
         if(network_type == "stagenet") return "38081";
-        return "18081"//qsTr(Script.getString("neroshop.monero.daemon.port"))
+        return "18081"
     }
     
     background: Rectangle {
@@ -352,7 +352,7 @@ Popup {
                     id: languageComboBox
                     Layout.alignment: Qt.AlignRight
                     Layout.rightMargin: 0
-                    currentIndex: model.indexOf("English"/*Script.getString("neroshop.generalsettings.currency").toUpperCase()*/)
+                    currentIndex: model.indexOf("English")
                     model: ["English"] // TODO logic from controller
                 }
             }                
@@ -675,7 +675,7 @@ Item {
                         id: moneroDaemonIPField
                         Layout.preferredWidth: (moneroDaemonPortField.width * 3) - parent.spacing // Default row spacing is 5 so the width is reduced by 5
                         Layout.preferredHeight: 50
-                        placeholderText: qsTr((confirmExternalBindSwitch.checked) ? "0.0.0.0" : Script.getString("neroshop.monero.daemon.ip")); placeholderTextColor: (NeroshopComponents.Style.darkTheme) ? "#a9a9a9" : "#696969"
+                        placeholderText: qsTr((confirmExternalBindSwitch.checked) ? "0.0.0.0" : "localhost"); placeholderTextColor: (NeroshopComponents.Style.darkTheme) ? "#a9a9a9" : "#696969"
                         color: (NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000"
                         selectByMouse: true
                         readOnly: localNodeButton.checked
