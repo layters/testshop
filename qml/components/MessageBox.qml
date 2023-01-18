@@ -58,6 +58,7 @@ Window {
                 color: "#ffffff"
                 font.bold: true
             }
+            // TODO: use a Row containing a Button Repeater for adding custom Buttons (model)
             // title bar close button
             Button {
                 id: titleBarCloseButton

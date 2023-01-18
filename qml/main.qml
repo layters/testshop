@@ -30,7 +30,7 @@ ApplicationWindow {
         visible: (!pageLoader.source.toString().match("qml/pages/MainPage.qml")) ? true : false;
         
         Button {//Image { 
-            id: neroshopLogoImage
+            id: neroshopLogoImageButton
             visible: false
             property real iconSize: 30
             icon.source: (NeroshopComponents.Style.darkTheme) ? "qrc:/images/appicons/Vector_Illustrator Files/LogoLight.svg" : "qrc:/images/appicons/Vector_Illustrator Files/LogoDark.svg"
@@ -55,7 +55,7 @@ ApplicationWindow {
         
         NeroshopComponents.SearchBar {
             id: searchBar
-            anchors.left: (neroshopLogoImage.visible) ? neroshopLogoImage.right : parent.left
+            anchors.left: (neroshopLogoImageButton.visible) ? neroshopLogoImageButton.right : parent.left
             anchors.leftMargin: 20
             anchors.top: parent.top; anchors.topMargin: 20        
         }    
@@ -220,6 +220,7 @@ ApplicationWindow {
                     anchors.verticalCenter: parent.verticalCenter//anchors.top: parent.top; anchors.topMargin: (parent.height - this.height) / 2
                     ////value: Wallet.opened ? Wallet.getSyncPercentage() : 0.0 // this does not work (fails to update value so we use Timer instead)
                     barWidth: daemonSyncBar.barWidth
+                    property string daemonAddress: (Wallet.opened) ? settingsDialog.moneroNodeAddress : "monerod"
                     Timer {
                         interval: 1 // trigger every x miliseconds
                         running: true
@@ -234,7 +235,7 @@ ApplicationWindow {
                         x: parent.x + (parent.width - this.width) / 2
                         height: contentHeight + 20; width: (contentWidth > parent.width) ? 300 : parent.width
                         bottomMargin : footer.height + 5
-                        text: qsTr("%1\n%2 %3%4").arg("monerod").arg((!Wallet.opened || parent.value <= 0.0) ? "Disconnected" : ((parent.value > 0.0 && parent.value < 1.0) ? Wallet.getSyncMessage() : "Connected")).arg((parent.value > 0.0 && parent.value != 1.0) ? ("(" + (parent.value * 100).toFixed(2) + "%)") : "").arg((!Wallet.opened || parent.value <= 0.0) ? "" : ((parent.value > 0.0 && parent.value != 1.0) ? ("\nBlocks remaining: " + Wallet.getSyncHeight() + " / " + Wallet.getSyncEndHeight()) : "")) // If connected to a remote node, "monerod" will be replaced by the <ip>:<port> of the remote node
+                        text: qsTr("%1\n%2 %3%4").arg(moneroDaemonSyncBar.daemonAddress).arg((!Wallet.opened || parent.value <= 0.0) ? "Disconnected" : ((parent.value > 0.0 && parent.value < 1.0) ? Wallet.getSyncMessage() : "Connected")).arg((parent.value > 0.0 && parent.value != 1.0) ? ("(" + (parent.value * 100).toFixed(2) + "%)") : "").arg((!Wallet.opened || parent.value <= 0.0) ? "" : ((parent.value > 0.0 && parent.value != 1.0) ? ("\nBlocks remaining: " + Wallet.getSyncHeight() + " / " + Wallet.getSyncEndHeight()) : ""))
                         pointer.visible: false
                     }                
                 }
@@ -252,7 +253,7 @@ ApplicationWindow {
             Rectangle {
                 anchors.left: footer.left
                 anchors.leftMargin: 20
-                width: (priceChangePercentageText.visible) ? priceDisplayText.contentWidth + priceChangePercentageText.contentWidth + 10 : priceDisplayText.contentWidth // 10 is the spacing between the price and the price change percentage
+                width: childrenRect.width////(priceChangePercentageText.visible) ? priceDisplayText.contentWidth + priceChangePercentageText.contentWidth + 10 : priceDisplayText.contentWidth // 10 is the spacing between the price and the price change percentage
                 height: footer.height
                 color: "transparent"
                 //border.color: NeroshopComponents.Style.moneroOrangeColor

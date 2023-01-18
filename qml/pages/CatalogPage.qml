@@ -106,7 +106,7 @@ ScrollView {//Flickable {
             // todo: use a Loader to switch between grid view and list view // https://forum.qt.io/topic/80826/dynamic-delegate-in-repeater/4 //// (viewToggle.checkedButton.text.match("List view")) ? 
             delegate: Loader {////NeroshopComponents.CatalogGrid {
                 id: catalogViewLoader
-                source: (viewToggle.checkedButton.text == "Grid view") ? "qrc:/qml/components/CatalogGrid.qml" : "qrc:/qml/components/CatalogList.qml"        
+                source: (viewToggle.currentIndex == 0) ? "qrc:/qml/components/CatalogGrid.qml" : "qrc:/qml/components/CatalogList.qml"        
                 // displaying the catalog grid's properties
                 //onLoaded: {
                     /*console.log("Full width of Grid (actual):", catalogViewLoader.item.width)

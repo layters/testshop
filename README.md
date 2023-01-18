@@ -46,15 +46,15 @@ The name _neroshop_ is a combination of the words _nero_, which is Italian for _
 ## Feature Status
 - [ ] Distributed P2P network
 - [ ] Buy and sell products and services with Monero
-- [ ] No censorship (censorship-resistant)
-- [x] Pseudonymous identities (sellers and buyers are identified by their unique ids and/or optional display names)
 - [x] No KYC
+- [ ] No censorship (censorship-resistant)
 - [ ] No listing fees, sales tax, or any other fees (except for miner transaction fees and shipping costs and a 0.5% fee for using the optional built-in 2-of-3 escrow system)
+- [x] Pseudonymous identities (sellers and buyers are identified by their unique ids and/or optional display names)
 - [ ] End-to-end encrypted messaging system for communications between sellers and buyers
-- [ ] Subaddress generator (a unique subaddress will be generated from a seller's synced wallet account for each order placed by a customer)
+- [ ] Subaddress generator for direct payments without an escrow (a unique subaddress will be generated from a seller's synced wallet account for each order placed by a customer)
 - [x] Option to run a local Monero node or connect to remote Monero nodes
 - [ ] Option to choose between sending funds directly to a seller or by using a multisignature escrow.
-- [ ] Tor and I2P integration
+- [ ] Native Tor and I2P support (both tor daemon and i2pd will be bundled with each release)
 - [ ] Seller reputation system
 - [ ] Product rating system
 - [ ] Wishlists

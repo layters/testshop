@@ -7,7 +7,8 @@ import "." as NeroshopComponents
 Item {
     id: viewToggle
     property real radius: 3;
-    property alias checkedButton: viewButtonGroup.checkedButton
+    property alias currentButton: viewButtonGroup.checkedButton
+    property int currentIndex: viewButtonGroup.checkedButton.buttonIndex
 
 ButtonGroup {
     id: viewButtonGroup
@@ -27,6 +28,7 @@ Row {
         checked: true
         text: qsTr("Grid view")
         ButtonGroup.group: viewButtonGroup // attaches a button to a button group
+        property int buttonIndex: 0
         display: AbstractButton.IconOnly
         icon.source: "qrc:/images/grid.png"
         icon.color: !this.checked ? "#39304f" : "#ffffff"// icon color is set automatically unless we set it ourselves, which we do here
@@ -39,6 +41,7 @@ Row {
     Button {
         text: qsTr("List view")
         ButtonGroup.group: viewButtonGroup
+        property int buttonIndex: 1
         display: AbstractButton.IconOnly
         icon.source: "qrc:/images/list.png"
         icon.color: !this.checked ? "#39304f" : "#ffffff"

@@ -98,7 +98,9 @@ void neroshop::Backend::initializeDatabase() {
         //database->execute("ALTER TABLE listings ADD COLUMN ?col ?datatype;");        
         database->execute("ALTER TABLE listings ADD COLUMN condition TEXT;"); // item condition
         //database->execute("ALTER TABLE listings ADD COLUMN last_updated ?datatype;");
+        database->execute("ALTER TABLE listings ADD COLUMN date TEXT;"); // date when first listed // will use ISO8601 string format as follows: YYYY-MM-DD HH:MM:SS.SSS
         //database->execute("");
+        // For most recent listings: "SELECT * FROM listings ORDER BY date DESC;"
     }
     // cart
     if(!database->table_exists("cart")) {

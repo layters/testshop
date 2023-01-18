@@ -17,6 +17,7 @@ Popup {
     modal: true//clip: true
     closePolicy: Popup.CloseOnEscape    
     property bool hideTabText: false
+    property alias currentIndex: settingsStack.currentIndex
     // General tab properties
     property alias theme: themeBox
     property alias currency: currencyBox
