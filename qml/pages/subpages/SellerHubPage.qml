@@ -3,16 +3,14 @@ import QtQuick.Controls 2.12
 import QtQuick.Layouts 1.12
 import QtGraphicalEffects 1.12 // ColorOverlay
 
+import FontAwesome 1.0
+
 import "../../components" as NeroshopComponents
 // TODO: rename this file to Dashboard.qml?
 Page {
     id: sellerHub
     background: Rectangle {
         color: "transparent"
-    }
-    
-    function resetScrollBar() {
-        scrollView.ScrollBar.vertical.position = 0.0
     }
         
     NeroshopComponents.TabBar {
@@ -224,7 +222,7 @@ Page {
             // StackLayout child Items' Layout.fillWidth and Layout.fillHeight properties default to true
 
             ScrollView {
-                id: inventoryScrollable
+                id: inventoryTabScrollable
                 anchors.fill: parent//anchors.margins: 20
                 contentWidth: parent.childrenRect.width//parent.width
                 contentHeight: parent.childrenRect.height * 3//parent.height
@@ -298,6 +296,7 @@ Page {
                                     placeholderText: qsTr("Enter price")
                                     color: productDetails.textColor
                                     selectByMouse: true
+                                    validator: RegExpValidator{ regExp: new RegExp("^-?[0-9]+(\\.[0-9]{1," + Backend.getCurrencyDecimals(settingsDialog.currency.currentText) + "})?$") }
                                     background: Rectangle { 
                                         color: productDetails.baseColor
                                         border.color: productDetails.borderColor
@@ -307,14 +306,14 @@ Page {
                                     rightPadding: 25 + selectedCurrencyText.width
                                     
                                     Text {
-                                       id: selectedCurrencyText
-                                       text: settingsDialog.currency.displayText
-                                       color: productDetails.textColor
-                                       anchors.right: parent.right
-                                       anchors.rightMargin: 15
-                                       anchors.verticalCenter: parent.verticalCenter
-                                       font.bold: true
-                                       font.pointSize: 10
+                                        id: selectedCurrencyText
+                                        text: settingsDialog.currency.currentText
+                                        color: productDetails.textColor
+                                        anchors.right: parent.right
+                                        anchors.rightMargin: 15
+                                        anchors.verticalCenter: parent.verticalCenter
+                                        font.bold: true
+                                        font.pointSize: 10
                                         MouseArea { 
                                             anchors.fill: parent
                                             onClicked: {
@@ -362,7 +361,41 @@ Page {
                                     border.color: productDetails.borderColor
                                     border.width: parent.activeFocus ? 2 : 1
                                     radius: productDetails.radius
-                                }                            
+                                }     
+                                rightPadding: 25 + quantityIncreaseText.contentWidth
+                                
+                                Text {
+                                    id: quantityIncreaseText
+                                    text: qsTr("\uf0d8")
+                                    color: productDetails.textColor
+                                    font.bold: true////; font.family: FontAwesome.fontFamily//fontFamilySolid
+                                    anchors.right: parent.right
+                                    anchors.rightMargin: 15
+                                    anchors.top: parent.top; anchors.topMargin: 5
+                                    MouseArea { 
+                                        anchors.fill: parent
+                                        onClicked: {
+                                            if(Number(productQuantityField.text) >= 10) return;
+                                            productQuantityField.text = Number(productQuantityField.text) + 1
+                                        }
+                                    }
+                                }    
+                                Text {
+                                    id: quantityDecreaseText
+                                    text: qsTr("\uf0d7")
+                                    color: productDetails.textColor
+                                    font.bold: true////; font.family: FontAwesome.fontFamily//fontFamilySolid
+                                    anchors.right: parent.right
+                                    anchors.rightMargin: 15
+                                    anchors.bottom: parent.bottom; anchors.bottomMargin: 5
+                                    MouseArea { 
+                                        anchors.fill: parent
+                                        onClicked: {
+                                            if(Number(productQuantityField.text) <= 1) return;
+                                            productQuantityField.text = Number(productQuantityField.text) - 1
+                                        }
+                                    }
+                                }
                             }
                         }
                     }                    
@@ -381,11 +414,12 @@ Page {
                                 font.bold: true
                                 //visible: false
                             }
-                            ComboBox {
+                            NeroshopComponents.ComboBox {
                                 id: productConditionBox
-                                width: 500                     
+                                width: 500; height: 50
                                 model: ["New", "Used", "Refurbished (Renewed)"] // default is New
                                 Component.onCompleted: currentIndex = find("New")
+                                radius: productDetails.radius
                             }
                         }
                     }                    
@@ -398,12 +432,23 @@ Page {
                         
                         Column {
                             spacing: productDetails.spaceFromTitle
-                            Text {
-                                text: "Product code (optional)"
-                                color: productDetails.titleTextColor
-                                font.bold: true
-                                //visible: false
+                            
+                            Row {
+                                spacing: 10
+                                Text {
+                                    text: "Product code"
+                                    color: productDetails.titleTextColor
+                                    font.bold: true
+                                }
+                                Text {
+                                    text: "OPTIONAL"
+                                    color: "green"
+                                    font.bold: true
+                                    font.pointSize: 8
+                                    anchors.verticalCenter: parent.children[0].verticalCenter
+                                }
                             }
+                            
                             Row {
                                 spacing: 5
                                 TextField {
@@ -419,12 +464,13 @@ Page {
                                         radius: productDetails.radius
                                     }                            
                                 }
-                                ComboBox {
+                                NeroshopComponents.ComboBox {
                                     id: productCodeType
-                                    width: 100; height: parent.children[0].height//Layout.preferredWidth: 100; Layout.preferredHeight: parent.children[0].height
+                                    height: parent.children[0].height//Layout.preferredWidth: 100; Layout.preferredHeight: parent.children[0].height
                                     //radius: parent.children[0].radius // <- oops ... ComboBoxes don't have a radius
                                     model: ["EAN", "ISBN", "JAN", "SKU", "UPC"] // default is UPC
                                     Component.onCompleted: currentIndex = find("UPC")
+                                    radius: productDetails.radius
                                 }
                             }
                         }
@@ -454,13 +500,14 @@ Page {
                             
                             Row {
                                 spacing: 5
-                                ComboBox {
+                                NeroshopComponents.ComboBox {
                                     id: categoriesBox
                                     width: 500; height: 50
                                     model: parent.parent.parent.getCategoryStringList()
                                     Component.onCompleted: {
                                         currentIndex = find("Miscellaneous")
                                     }
+                                    radius: productDetails.radius
                                 }
                             }
                         }
@@ -475,10 +522,20 @@ Page {
                         
                         Column {
                             spacing: productDetails.spaceFromTitle
-                            Text {
-                                text: "Weight (optional)"
-                                color: productDetails.titleTextColor
-                                font.bold: true
+                            Row {
+                                spacing: 10
+                                Text {
+                                    text: "Weight"
+                                    color: productDetails.titleTextColor
+                                    font.bold: true
+                                }
+                                Text {
+                                    text: "OPTIONAL"
+                                    color: "green"
+                                    font.bold: true
+                                    font.pointSize: 8
+                                    anchors.verticalCenter: parent.children[0].verticalCenter
+                                }                            
                             }
                             
                             Row {
@@ -489,6 +546,7 @@ Page {
                                     placeholderText: qsTr("Enter weight")
                                     color: productDetails.textColor
                                     selectByMouse: true
+                                    validator: RegExpValidator{ regExp: new RegExp("^-?[0-9]+(\\.[0-9]{1," + 8 + "})?$") }
                                     background: Rectangle { 
                                         color: productDetails.baseColor
                                         border.color: productDetails.borderColor
@@ -496,43 +554,60 @@ Page {
                                         radius: productDetails.radius
                                     }
                                 }
-                                ComboBox {
+                                NeroshopComponents.ComboBox {
                                     id: weightMeasurementUnit
-                                    width: 100; height: parent.children[0].height
-                                    model: ["kg", "lb",] // default is kg
+                                    height: parent.children[0].height
+                                    model: ["kg",] // default is kg
                                     Component.onCompleted: currentIndex = find("kg")
+                                    radius: productDetails.radius
                                 }
                             }
                         }
                     }                    
                     // Size
-                    Item {
+                    /*Item {
                         //Layout.row: 
                         Layout.alignment: Qt.AlignHCenter
                         Layout.preferredWidth: childrenRect.width
                         Layout.preferredHeight: childrenRect.height
-                        Text {
-                            text: "Size (optional)"
-                            color: productDetails.titleTextColor
-                            font.bold: true
+                        
+                        Column {
+                            spacing: productDetails.spaceFromTitle
+                            Row {
+                                spacing: 10
+                                Text {
+                                    text: "Size"
+                                    color: productDetails.titleTextColor
+                                    font.bold: true
+                                }
+                                Text {
+                                    text: "OPTIONAL"
+                                    color: "green"
+                                    font.bold: true
+                                    font.pointSize: 8
+                                    anchors.verticalCenter: parent.children[0].verticalCenter
+                                }
+                            }
+                         
+                            Row {
+                                spacing: 5
+                                TextField {
+                                    id: productSizeField
+                                    width: 500; height: 50
+                                    placeholderText: qsTr("Enter size")
+                                    color: productDetails.textColor
+                                    selectByMouse: true
+                                    background: Rectangle { 
+                                        color: productDetails.baseColor
+                                        border.color: productDetails.borderColor
+                                        border.width: parent.activeFocus ? 2 : 1
+                                        radius: productDetails.radius
+                                    }                            
+                                }
+                            //ComboBox
+                            }
                         }
-                        TextField {
-                            id: productSizeField
-                            width: 500; height: 50
-                            anchors.top: parent.children[0].bottom
-                            anchors.topMargin: productDetails.spaceFromTitle
-                            placeholderText: qsTr("Enter size")
-                            color: productDetails.textColor
-                            selectByMouse: true
-                            background: Rectangle { 
-                                color: productDetails.baseColor
-                                border.color: productDetails.borderColor
-                                border.width: parent.activeFocus ? 2 : 1
-                                radius: productDetails.radius
-                            }                            
-                        }
-                        //ComboBox
-                    }                    
+                    }*/                    
                     // Variations (i.e. Color, Size options to choose from - optional)
                     // Product location (ship to and ship from)
                     Item {
@@ -557,7 +632,7 @@ Page {
                                     color: productDetails.titleTextColor
                                     anchors.verticalCenter: countriesToShipFrom.verticalCenter//verticalAlignment: TextEdit.AlignVCenter
                                 }
-                                ComboBox {
+                                NeroshopComponents.ComboBox {
                                     id: countriesToShipFrom
                                     width: 500 - parent.children[0].contentWidth - parent.spacing; height: 50
                                     model: parent.parent.parent.countriesModel
@@ -581,7 +656,7 @@ Page {
                                     color: productDetails.titleTextColor
                                     anchors.verticalCenter: countriesToShipTo.verticalCenter
                                 }
-                                ComboBox {
+                                NeroshopComponents.ComboBox {
                                     id: countriesToShipTo
                                     width: 500 - parent.children[0].contentWidth - parent.spacing; height: 50
                                     model: parent.parent.parent.countriesModel
@@ -610,6 +685,7 @@ Page {
                             anchors.top: parent.children[0].bottom
                             anchors.topMargin: productDetails.spaceFromTitle                            
                             width: 500; height: 250
+                            placeholderText: qsTr("Enter description")
                             wrapMode: Text.Wrap //Text.Wrap moves text to the newline when it reaches the width//Text.WordWrap does not move text to the newline but instead it only shows the scrollbar
                             selectByMouse: true
                             color: productDetails.textColor
@@ -623,35 +699,16 @@ Page {
                         }           
                     }         
                     //Product images
-                    // This is not necessary!
-                    //Search terms and relevant keywords (tags)                    // tags must be separated with a colon
-                    /*Item {
-                        //Layout.row: 
-                        Layout.alignment: Qt.AlignHCenter
-                        Layout.preferredWidth: childrenRect.width
+                    Item {
+                        Layout.alignment: Qt.AlignHCenter//Qt.AlignRight
+                        Layout.preferredWidth: childrenRect.width//Layout.fillWidth: true
                         Layout.preferredHeight: childrenRect.height
                         Text {
-                            text: "Search terms and relevant keywords"
+                            text: "Upload image(s)"
                             color: productDetails.titleTextColor
                             font.bold: true
-                            //visible: false
                         }
-                        TextField {
-                            id: productKeywordsField
-                            width: 500; height: 50
-                            anchors.top: parent.children[0].bottom
-                            anchors.topMargin: productDetails.spaceFromTitle
-                            placeholderText: qsTr("Enter keywords or search term")
-                            color: productDetails.textColor
-                            selectByMouse: true
-                            background: Rectangle { 
-                                color: productDetails.baseColor
-                                border.color: productDetails.borderColor
-                                border.width: parent.activeFocus ? 2 : 1
-                                radius: productDetails.radius
-                            }                            
-                        }
-                    }*/                    
+                    }
                     // ListItem to "listings" table
                     Item {
                         Layout.alignment: Qt.AlignHCenter//Qt.AlignRight
@@ -664,7 +721,7 @@ Page {
                             text: qsTr("List Product")
                             background: Rectangle {
                                 color: parent.hovered ? "#4d426c" : "#443a5f"
-                                radius: 3
+                                radius: productDetails.radius
                             }
                             contentItem: Text {
                                 text: parent.text

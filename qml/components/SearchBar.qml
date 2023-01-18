@@ -39,6 +39,9 @@ Item {
 
         onClicked: {
             console.log("Searching for " + searchBar.text)
+            pageLoader.setSource("qrc:/qml/pages/CatalogPage.qml")//, {"model", [""]})
+            //console.log("page Loader Item (CatalogPage):", pageLoader.item)
+            //console.log("page Loader Item (CatalogPage.catalog):", pageLoader.catalog)//.item)
         }
     }
 }
