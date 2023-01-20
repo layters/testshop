@@ -6,10 +6,10 @@ import "." as NeroshopComponents // Triangle (in Triangle.qml)
 ComboBox {
     id: control
     rightPadding: indicatorWidth
-    property string baseColor: "#d3d3d3" // lightgrey
+    property string color: "#d3d3d3" // lightgrey
     property real radius: 5//2
     property real indicatorWidth: 50//30
-    property string popupBorderColor: baseColor
+    property string popupBorderColor: color
     property string textColor: control.pressed ? "#101010" : "#383838"//"#17a81a" : "#21be2b"
     //property string ?Color: ""
     property bool indicatorDoNotPassBorder: false//(control.background.border.width == 0) ? false : true // This conditional statement makes no difference as it always defaults to true
@@ -82,7 +82,7 @@ ComboBox {
         verticalAlignment: Text.AlignVCenter
         //elide: Text.ElideRight
         background: Rectangle {
-            color: control.baseColor
+            color: control.color
             radius: control.background.radius
         }
     }
@@ -90,7 +90,7 @@ ComboBox {
     background: Rectangle {
         implicitWidth: 120
         implicitHeight: 40
-        color: control.baseColor
+        color: control.color
         //border.width: control.visualFocus ? 2 : 1; border.color: color//control.pressed ? "yellow" : "orange"//"#17a81a" : "#21be2b"
         radius: control.radius
     }

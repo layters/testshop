@@ -2,6 +2,7 @@ import QtQuick 2.12
 import QtQuick.Controls 2.12
 import QtQuick.Layouts 1.12
 import QtGraphicalEffects 1.12 // ColorOverlay
+import Qt.labs.platform 1.1 // FileDialog
 
 import FontAwesome 1.0
 
@@ -237,8 +238,9 @@ Page {
                     property real radius: 10//3
                     property real spaceFromTitle: 10
                     property string textColor: (NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000"
-                    property string baseColor: (NeroshopComponents.Style.darkTheme) ? "#101010"/*"#262626"*/ : "#ffffff"
-                    property string borderColor: (NeroshopComponents.Style.darkTheme) ? "#404040" : "#000000"
+                    property string baseColor: (NeroshopComponents.Style.darkTheme) ? "#101010" : "#f0f0f0"
+                    property string borderColor: (NeroshopComponents.Style.darkTheme) ? "#404040" : "#4d4d4d"
+                    property string optTextColor: "#708090"
                     // RegisterItem to "products" table
                     //Product title (TODO: place both text and textfield in an item)
                     // If item fields are related then place them side-by-side in separate columns
@@ -304,6 +306,10 @@ Page {
                                         radius: productDetails.radius
                                     }
                                     rightPadding: 25 + selectedCurrencyText.width
+                                    function adjustPriceDecimals() {
+                                        productPriceField.text = Number(productPriceField.text).toFixed(Backend.getCurrencyDecimals(settingsDialog.currency.currentText))
+                                    }
+                                    onEditingFinished: adjustPriceDecimals() // does not update when switching from crypto to fiat :(
                                     
                                     Text {
                                         id: selectedCurrencyText
@@ -363,6 +369,17 @@ Page {
                                     radius: productDetails.radius
                                 }     
                                 rightPadding: 25 + quantityIncreaseText.contentWidth
+                                function adjustQuantity() {
+                                    if(Number(productQuantityField.text) >= quantityIncreaseText.maximumQuantity) {
+                                        productQuantityField.text = quantityIncreaseText.maximumQuantity
+                                        //return;
+                                    }
+                                    if(Number(productQuantityField.text) <= parent.minimumQuantity) {
+                                        productQuantityField.text = parent.minimumQuantity
+                                        //return;
+                                    }
+                                }
+                                onEditingFinished: adjustQuantity()
                                 
                                 Text {
                                     id: quantityIncreaseText
@@ -372,10 +389,14 @@ Page {
                                     anchors.right: parent.right
                                     anchors.rightMargin: 15
                                     anchors.top: parent.top; anchors.topMargin: 5
+                                    property real maximumQuantity: 1000000000
                                     MouseArea { 
                                         anchors.fill: parent
                                         onClicked: {
-                                            if(Number(productQuantityField.text) >= 10) return;
+                                            if(Number(productQuantityField.text) >= parent.maximumQuantity) {
+                                                productQuantityField.text = parent.maximumQuantity
+                                                return;
+                                            }
                                             productQuantityField.text = Number(productQuantityField.text) + 1
                                         }
                                     }
@@ -388,10 +409,14 @@ Page {
                                     anchors.right: parent.right
                                     anchors.rightMargin: 15
                                     anchors.bottom: parent.bottom; anchors.bottomMargin: 5
+                                    property real minimumQuantity: 1
                                     MouseArea { 
                                         anchors.fill: parent
                                         onClicked: {
-                                            if(Number(productQuantityField.text) <= 1) return;
+                                            if(Number(productQuantityField.text) <= parent.minimumQuantity) {
+                                                productQuantityField.text = parent.minimumQuantity
+                                                return;
+                                            }
                                             productQuantityField.text = Number(productQuantityField.text) - 1
                                         }
                                     }
@@ -420,6 +445,8 @@ Page {
                                 model: ["New", "Used", "Refurbished (Renewed)"] // default is New
                                 Component.onCompleted: currentIndex = find("New")
                                 radius: productDetails.radius
+                                color: productDetails.baseColor
+                                textColor: productDetails.textColor
                             }
                         }
                     }                    
@@ -441,8 +468,8 @@ Page {
                                     font.bold: true
                                 }
                                 Text {
-                                    text: "OPTIONAL"
-                                    color: "green"
+                                    text: "(OPTIONAL)"
+                                    color: productDetails.optTextColor
                                     font.bold: true
                                     font.pointSize: 8
                                     anchors.verticalCenter: parent.children[0].verticalCenter
@@ -471,6 +498,8 @@ Page {
                                     model: ["EAN", "ISBN", "JAN", "SKU", "UPC"] // default is UPC
                                     Component.onCompleted: currentIndex = find("UPC")
                                     radius: productDetails.radius
+                                    color: productDetails.baseColor
+                                    textColor: productDetails.textColor
                                 }
                             }
                         }
@@ -493,7 +522,7 @@ Page {
                         Column {
                             spacing: productDetails.spaceFromTitle
                             Text {
-                                text: "Categories"
+                                text: "Category"
                                 color: productDetails.titleTextColor
                                 font.bold: true
                             }
@@ -508,6 +537,8 @@ Page {
                                         currentIndex = find("Miscellaneous")
                                     }
                                     radius: productDetails.radius
+                                    color: productDetails.baseColor
+                                    textColor: productDetails.textColor
                                 }
                             }
                         }
@@ -530,8 +561,8 @@ Page {
                                     font.bold: true
                                 }
                                 Text {
-                                    text: "OPTIONAL"
-                                    color: "green"
+                                    text: "(OPTIONAL)"
+                                    color: productDetails.optTextColor
                                     font.bold: true
                                     font.pointSize: 8
                                     anchors.verticalCenter: parent.children[0].verticalCenter
@@ -560,6 +591,8 @@ Page {
                                     model: ["kg",] // default is kg
                                     Component.onCompleted: currentIndex = find("kg")
                                     radius: productDetails.radius
+                                    color: productDetails.baseColor
+                                    textColor: productDetails.textColor
                                 }
                             }
                         }
@@ -581,8 +614,8 @@ Page {
                                     font.bold: true
                                 }
                                 Text {
-                                    text: "OPTIONAL"
-                                    color: "green"
+                                    text: "(OPTIONAL)"
+                                    color: productDetails.optTextColor
                                     font.bold: true
                                     font.pointSize: 8
                                     anchors.verticalCenter: parent.children[0].verticalCenter
@@ -645,6 +678,8 @@ Page {
                                         if(find(editText) === -1)
                                             model.append({text: editText})
                                     }
+                                    color: productDetails.baseColor
+                                    textColor: productDetails.textColor
                                 }
                             }
                             
@@ -665,6 +700,8 @@ Page {
                                         currentIndex = find("Worldwide")
                                     }
                                     editable: true
+                                    color: productDetails.baseColor
+                                    textColor: productDetails.textColor
                                 }
                             }
                         }
@@ -675,38 +712,127 @@ Page {
                         Layout.alignment: Qt.AlignHCenter
                         Layout.preferredWidth: childrenRect.width
                         Layout.preferredHeight: childrenRect.height
-                        Text {
-                            text: "Description"
-                            color: productDetails.titleTextColor
-                            font.bold: true
-                        }
-                        TextArea {
-                            id: productDescArea
-                            anchors.top: parent.children[0].bottom
-                            anchors.topMargin: productDetails.spaceFromTitle                            
-                            width: 500; height: 250
-                            placeholderText: qsTr("Enter description")
-                            wrapMode: Text.Wrap //Text.Wrap moves text to the newline when it reaches the width//Text.WordWrap does not move text to the newline but instead it only shows the scrollbar
-                            selectByMouse: true
-                            color: productDetails.textColor
-                            
-                            background: Rectangle {
-                                color: productDetails.baseColor
-                                border.color: productDetails.borderColor
-                                border.width: parent.activeFocus ? 2 : 1
-                                radius: productDetails.radius
+                        
+                        Column {
+                            spacing: productDetails.spaceFromTitle
+                            Text {
+                                text: "Description"
+                                color: productDetails.titleTextColor
+                                font.bold: true
                             }
-                        }           
+                            
+                            TextArea {
+                                id: productDescArea
+                                width: 500; height: 250
+                                placeholderText: qsTr("Enter description")
+                                wrapMode: Text.Wrap //Text.Wrap moves text to the newline when it reaches the width//Text.WordWrap does not move text to the newline but instead it only shows the scrollbar
+                                selectByMouse: true
+                                color: productDetails.textColor
+                            
+                                background: Rectangle {
+                                    color: productDetails.baseColor
+                                    border.color: productDetails.borderColor
+                                    border.width: parent.activeFocus ? 2 : 1
+                                    radius: productDetails.radius
+                                }
+                            }
+                        }
                     }         
                     //Product images
                     Item {
                         Layout.alignment: Qt.AlignHCenter//Qt.AlignRight
                         Layout.preferredWidth: childrenRect.width//Layout.fillWidth: true
                         Layout.preferredHeight: childrenRect.height
-                        Text {
-                            text: "Upload image(s)"
-                            color: productDetails.titleTextColor
-                            font.bold: true
+                        
+                        Column {
+                            spacing: productDetails.spaceFromTitle
+                            Text {
+                                text: "Upload image(s)"
+                                color: productDetails.titleTextColor
+                                font.bold: true
+                            }
+                            
+                            Flickable {
+                                width: 500; height: 210 + ScrollBar.horizontal.height// same height as delegateRect + scrollbar height
+                                contentWidth: (210 * productImageRepeater.count) + 50//; contentHeight: 210//<- contentHeight is not needed unless a newline is supported
+                                clip: true
+                                ScrollBar.horizontal: ScrollBar {
+                                    policy: ScrollBar.AsNeeded
+                                }
+                                Flow {
+                                    width: parent.contentWidth; height: parent.height//anchors.fill: parent// Note: Flow width must be large enough to fit all items horizontally so that there won't be a need to move an item to a newline
+                                    spacing: 5
+                                    Repeater {
+                                        id: productImageRepeater
+                                        model: 6
+                                        delegate: Rectangle {//Item { 
+                                            width: 210; height: 210
+                                            color: "transparent"
+                                            //border.color: "blue"
+                                        
+                                            Rectangle {
+                                                border.color: productDetails.titleTextColor//""
+                                                anchors.top: parent.top
+                                                anchors.topMargin: 5
+                                                anchors.horizontalCenter: parent.horizontalCenter
+                                                width: parent.width; height: parent.height - 50
+                                                color: "transparent"//"#d3d3d3"//
+                                                Image {
+                                                    anchors.centerIn: parent // This is not necessary since the image is the same size as its parent rect but I'll keep it there just to be sure the image is centered
+                                                    width: parent.width; height: parent.height
+                                                    fillMode: Image.PreserveAspectFit // scale to fit
+                                                    source: productImageFileDialog.file
+                                                    mipmap: true // produces better image quality that is not pixely but smooth :D
+                                                    //asynchronous: true // won't block the app
+                                                    onStatusChanged: {
+                                                        if(this.status == Image.Ready) {
+                                                            console.log(source + ' has been loaded')
+                                                            // TODO: Upload image to the database
+                                                        }
+                                                        if(this.status == Image.Loading) console.log("Loading image " + source + " (" + (progress * 100) + "%)")
+                                                        if(this.status == Image.Error) console.log("An error occurred while loading the image")
+                                                        if(this.status == Image.Null) console.log("No image has been set" + parent.parent.index)
+                                                    }
+                                                }
+                                            }
+                                        
+                                            Button {
+                                                id: chooseFileButton
+                                                width: 150; height: contentItem.contentHeight + 12
+                                                text: qsTr("Choose File")// %1%").arg(parent.children[0].children[0].progress * 100)
+                                                anchors.bottom: parent.bottom
+                                                anchors.bottomMargin: 5
+                                                anchors.horizontalCenter: parent.children[0].horizontalCenter
+                                                background: Rectangle {
+                                                    color: parent.hovered ? "lightslategray" : "slategray"
+                                                    radius: productDetails.radius
+                                                }
+                                                contentItem: Text {
+                                                    text: parent.text
+                                                    color: parent.hovered ? "#d9d9d9" : "#262626"
+                                                    verticalAlignment: Text.AlignVCenter
+                                                    horizontalAlignment: Text.AlignHCenter
+                                                }
+                                                onClicked: {
+                                                    if(index != 0) {
+                                                        let productImage = productImageRepeater.itemAt(index - 1).children[0].children[0]
+                                                        // If Image at the previous index has not been loaded then exit this function
+                                                        if(productImage.status == Image.Null) { messageBox.text = "Images must be loaded in order from left to right"; messageBox.open(); return; }
+                                                    }
+                                                    productImageFileDialog.open()
+                                                }
+                                            }
+                                            FileDialog {
+                                                id: productImageFileDialog
+                                                fileMode: FileDialog.OpenFile
+                                                ////currentFile: monerodPathField.text // currentFile is deprecated since Qt 6.3. Use selectedFile instead
+                                                folder: (isWindows) ? StandardPaths.writableLocation(StandardPaths.DocumentsLocation) + "/neroshop" : StandardPaths.writableLocation(StandardPaths.HomeLocation) + "/neroshop"
+                                                nameFilters: ["Image files (*.bmp *.gif *.jpeg *.jpg *.png)"]
+                                            }
+                                        }         
+                                    }                       
+                                } // flow
+                            }
                         }
                     }
                     // ListItem to "listings" table
@@ -730,6 +856,16 @@ Page {
                                 verticalAlignment: Text.AlignVCenter
                             }
                             onClicked: {
+                                // Register product to database
+                                // ...
+                                // Upload product images to database
+                                for(let i = 0; i < productImageRepeater.count; i++) {
+                                    let productImage = productImageRepeater.itemAt(i).children[0].children[0]
+                                    if(productImage.status == Image.Ready) { // If image loaded
+                                        console.log("uploading " + productImage.source + " to the database")
+                                    }
+                                }
+                                // List product
                                 ////User.listProduct()//TODO:
                             }
                         }
