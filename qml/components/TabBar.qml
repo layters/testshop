@@ -7,8 +7,8 @@ import "." as NeroshopComponents
 Item {
     id: tabBar
     property real radius: 3;
-    property alias checkedButton: tabButtonGroup.checkedButton
-    property int checkedButtonIndex: tabButtonGroup.checkedButton.buttonIndex
+    property alias currentButton: tabButtonGroup.checkedButton
+    property int currentIndex: tabButtonGroup.checkedButton.buttonIndex
     property real buttonWidth: 200
     property real buttonHeight: 50
     property string color0: "royalblue"

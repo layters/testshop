@@ -86,7 +86,7 @@ Page {
                         implicitHeight: 90//implicitWidth / 2
                         color: NeroshopComponents.Style.getColorsFromTheme()[1]
                         radius: 5//3
-                        border.color: categoryHoverHandler.hovered ? "white" : "transparent"
+                        border.color: (categoryHoverHandler.hovered && !settingsDialog.visible) ? "white" : "transparent"
                         HoverHandler {
                             id: categoryHoverHandler
                         }                        
@@ -101,7 +101,7 @@ Page {
                             verticalAlignment: TextEdit.AlignVCenter
                             anchors.top: parent.top
                             anchors.topMargin: 10*/
-                            visible: categoryHoverHandler.hovered // <- uncomment this to make the tooltip visible on hover
+                            visible: categoryHoverHandler.hovered && !settingsDialog.visible // <- uncomment this to make the tooltip visible on hover
                             height: contentHeight + 20; width: contentWidth + 20
                             text: qsTr(modelData.name)
                             pointer.visible: false; delay: 0

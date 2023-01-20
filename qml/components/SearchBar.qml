@@ -6,7 +6,7 @@ import "." as NeroshopComponents
 
 Item {
     TextField {
-        id: search_bar
+        id: searchBar
         color: "#ffffff" // textColor
         width: 400; height: 40
         selectByMouse: true
@@ -19,32 +19,29 @@ Item {
     }
 
     Button {
-        id: search_button
+        id: searchButton
         text: qsTr("Search")
         //onClicked: 
         display: AbstractButton.IconOnly//AbstractButton.TextBesideIcon
-        anchors.left: search_bar.right
+        hoverEnabled: true
+        anchors.left: searchBar.right
         anchors.leftMargin: 5//1
-        anchors.top: search_bar.top
-        width: 50; height: search_bar.height
+        anchors.top: searchBar.top
+        width: 50; height: searchBar.height
         
         icon.source: "qrc:/images/search.png"//neroshopResourceDir + "/search.png"
         icon.color: "#ffffff"
                         
         background: Rectangle {
-            color: "#8071a8"//"#40404f"
-            radius: search_bar.background.radius
+            color: parent.hovered ? "#66578e" : "#8071a8"//"#40404f"
+            radius: searchBar.background.radius
         }     
-        
-        MouseArea {
-            anchors.fill: parent
-            hoverEnabled: true
-            onEntered: {
-                parent.background.color = "#66578e"
-            }
-            onExited: {
-                parent.background.color = "#8071a8"
-            }
-        } 
+
+        onClicked: {
+            console.log("Searching for " + searchBar.text)
+            pageLoader.setSource("qrc:/qml/pages/CatalogPage.qml")//, {"model", [""]})
+            //console.log("page Loader Item (CatalogPage):", pageLoader.item)
+            //console.log("page Loader Item (CatalogPage.catalog):", pageLoader.catalog)//.item)
+        }
     }
 }

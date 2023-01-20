@@ -9,7 +9,7 @@ import "." as NeroshopComponents
 Pane {
     width: 250; height: (parent.height - 100)//1000
     background: Rectangle { 
-        color: (NeroshopComponents.Style.darkTheme) ? "#2e2e2e"/*"#121212"*/ : "#a0a0a0"
+        color: "transparent"////(NeroshopComponents.Style.darkTheme) ? "#2e2e2e"/*"#121212"*/ : "#a0a0a0"
         radius: 3
     }
     // conditionGroup

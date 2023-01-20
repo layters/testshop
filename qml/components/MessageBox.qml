@@ -106,6 +106,7 @@ Window {
                 horizontalAlignment: TextEdit.AlignHCenter
             }    
         }
+        // TODO: use a Row containing a Button Repeater for adding custom Buttons (model)
         // buttons row    
         RowLayout {
             id: messageBoxButtonRow

@@ -15,6 +15,7 @@ Item {
         anchors.fill: parent
         interactive: true
         orientation: Qt.Horizontal
+        currentIndex: indicator.currentIndex
     }
 
     PageIndicator {
