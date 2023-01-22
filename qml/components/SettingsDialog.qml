@@ -136,7 +136,7 @@ Popup {
                 // This will remove the icon :(
                 contentItem: Text {
                     text: parent.text
-                    color: (parent.checked) ? "#e0e0e0" : "#353637"//"#000000" : "#ffffff"
+                    color: (parent.checked) ? "#ffffff" : ((NeroshopComponents.Style.darkTheme) ? "#e0e0e0" : "#353637")//"#000000" : "#ffffff"
                     horizontalAlignment: Text.AlignHCenter//anchors.horizontalCenter: parent.horizontalCenter
                     verticalAlignment: Text.AlignVCenter                    
                     font.bold: true//(parent.checked) ? true : false
@@ -160,7 +160,7 @@ Popup {
                 }
                 contentItem: Text {
                     text: parent.text
-                    color: (parent.checked) ? "#e0e0e0" : "#353637"
+                    color: (parent.checked) ? "#ffffff" : ((NeroshopComponents.Style.darkTheme) ? "#e0e0e0" : "#353637")
                     horizontalAlignment: Text.AlignHCenter
                     verticalAlignment: Text.AlignVCenter                    
                     font.bold: true
@@ -232,7 +232,7 @@ Popup {
                         Layout.alignment: Qt.AlignLeft
                         Layout.leftMargin: 0
                     }
-                    ComboBox {
+                    NeroshopComponents.ComboBox {
                         id: currencyBox
                         Layout.alignment: Qt.AlignRight
                         Layout.rightMargin: 0
@@ -254,6 +254,9 @@ Popup {
                             priceDisplayText.text = qsTr(FontAwesome.monero + "  %1%2").arg(Backend.getCurrencySign(priceDisplayText.currency)).arg(priceDisplayText.price.toFixed(Backend.getCurrencyDecimals(priceDisplayText.currency)))
                             ////lastCurrencySet = currentText
                         }
+                        indicatorWidth: 30
+                        color: "#f2f2f2"//(NeroshopComponents.Style.darkTheme) ? "#101010" : "#f0f0f0"
+                        //textColor: (NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000"
 }
                 }          
             }
@@ -288,7 +291,7 @@ Popup {
                         Layout.alignment: Qt.AlignLeft
                         Layout.leftMargin: 0
                     }
-                    ComboBox {
+                    NeroshopComponents.ComboBox {
                         id: themeBox
                         Layout.alignment: Qt.AlignRight
                         Layout.rightMargin: 0
@@ -317,6 +320,8 @@ Popup {
                             //todo: change theme in configuration file too
                             console.log("Theme set to", currentText)
                         }
+                        indicatorWidth: 30
+                        color: "#f2f2f2"
                     } // ComboBox       
                     // Window                
                 } // RowLayout2
@@ -349,12 +354,14 @@ Popup {
                     color: NeroshopComponents.Style.darkTheme ? "#ffffff" : "#000000"
                 }
 
-                ComboBox {
+                NeroshopComponents.ComboBox {
                     id: languageComboBox
                     Layout.alignment: Qt.AlignRight
                     Layout.rightMargin: 0
                     currentIndex: model.indexOf("English")
                     model: ["English"] // TODO logic from controller
+                    indicatorWidth: 30
+                    color: "#f2f2f2"
                 }
             }                
             } // GroupBox3    

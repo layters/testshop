@@ -533,7 +533,7 @@ Page {
                 	        }
                 	        // Process login credentials
                 	        //if(!Wallet.isOpened()) {
-                	        if(!Backend.loginWithWalletFile(Wallet, Backend.urlToLocalFile(walletFileField.text), walletPasswordRestoreField.text)) {
+                	        if(!Backend.loginWithWalletFile(Wallet, Backend.urlToLocalFile(walletFileField.text), walletPasswordRestoreField.text, User)) {
                 	                messageBox.text = qsTr("Invalid password or wallet network type")
                 	                messageBox.open()
                 	                return;                	        
@@ -554,7 +554,7 @@ Page {
                 	            messageBox.open()
                 	            return;                	        
                 	        }
-                	        Wallet.restoreFromMnemonic(mnemonicSeedInput.text)
+                	        Wallet.restoreFromMnemonic(mnemonicSeedInput.text, User)
                 	        // Process login credentials
                 	        // ...
                 	        onAutoSync();

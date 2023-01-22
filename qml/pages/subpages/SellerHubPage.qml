@@ -361,7 +361,8 @@ Page {
                                 color: productDetails.textColor
                                 selectByMouse: true
                                 inputMethodHints: Qt.ImhDigitsOnly // for Android and iOS - typically used for input of languages such as Chinese or Japanese
-                                validator: RegExpValidator{ regExp: /[0-9]*/ }                            
+                                validator: RegExpValidator{ regExp: /[0-9]*/ }
+                                text: "1"
                                 background: Rectangle { 
                                     color: productDetails.baseColor
                                     border.color: productDetails.borderColor
@@ -372,11 +373,9 @@ Page {
                                 function adjustQuantity() {
                                     if(Number(productQuantityField.text) >= quantityIncreaseText.maximumQuantity) {
                                         productQuantityField.text = quantityIncreaseText.maximumQuantity
-                                        //return;
                                     }
-                                    if(Number(productQuantityField.text) <= parent.minimumQuantity) {
-                                        productQuantityField.text = parent.minimumQuantity
-                                        //return;
+                                    if(Number(productQuantityField.text) <= quantityDecreaseText.minimumQuantity) {
+                                        productQuantityField.text = quantityDecreaseText.minimumQuantity
                                     }
                                 }
                                 onEditingFinished: adjustQuantity()
@@ -389,7 +388,7 @@ Page {
                                     anchors.right: parent.right
                                     anchors.rightMargin: 15
                                     anchors.top: parent.top; anchors.topMargin: 5
-                                    property real maximumQuantity: 1000000000
+                                    property real maximumQuantity: 999999999
                                     MouseArea { 
                                         anchors.fill: parent
                                         onClicked: {
@@ -495,7 +494,7 @@ Page {
                                     id: productCodeType
                                     height: parent.children[0].height//Layout.preferredWidth: 100; Layout.preferredHeight: parent.children[0].height
                                     //radius: parent.children[0].radius // <- oops ... ComboBoxes don't have a radius
-                                    model: ["EAN", "ISBN", "JAN", "SKU", "UPC"] // default is UPC
+                                    model: ["EAN", "ISBN", "JAN", "SKU", "UPC"] // default is UPC (each code will be validated before product is listed)
                                     Component.onCompleted: currentIndex = find("UPC")
                                     radius: productDetails.radius
                                     color: productDetails.baseColor
@@ -512,7 +511,7 @@ Page {
                         Layout.preferredHeight: childrenRect.height
                         function getCategoryStringList() {
                             let categoryStringList = []
-                            let categories = Backend.getCategoryList()
+                            let categories = Backend.getCategoryList(true)
                             for(let i = 0; i < categories.length; i++) {
                                 categoryStringList[i] = categories[i].name//console.log(parent.parent.parent.categoryStringList[i])//console.log(categories[i].name)
                             }       
@@ -530,7 +529,7 @@ Page {
                             Row {
                                 spacing: 5
                                 NeroshopComponents.ComboBox {
-                                    id: categoriesBox
+                                    id: productCategoryBox
                                     width: 500; height: 50
                                     model: parent.parent.parent.getCategoryStringList()
                                     Component.onCompleted: {
@@ -588,7 +587,7 @@ Page {
                                 NeroshopComponents.ComboBox {
                                     id: weightMeasurementUnit
                                     height: parent.children[0].height
-                                    model: ["kg",] // default is kg
+                                    model: ["kg", "lb"] // default is kg (every unit of measurement will be converted to kg)
                                     Component.onCompleted: currentIndex = find("kg")
                                     radius: productDetails.radius
                                     color: productDetails.baseColor
@@ -641,13 +640,13 @@ Page {
                             }
                         }
                     }*/                    
-                    // Variations (i.e. Color, Size options to choose from - optional)
+                    // Variations/Attributes (i.e. Color, Size, Type, Model, etc. options to choose from - optional)
                     // Product location (ship to and ship from)
                     Item {
                         Layout.alignment: Qt.AlignHCenter
                         Layout.preferredWidth: childrenRect.width
                         Layout.preferredHeight: childrenRect.height
-                        property var countriesModel: ["Afghanistan", "Albania", "Algeria", "Andorra", "Angola", "Antigua & Deps", "Argentina", "Armenia", "Australia", "Austria", "Azerbaijan", "Bahamas", "Bahrain", "Bangladesh", "Barbados", "Belarus", "Belgium", "Belize", "Benin", "Bermuda", "Bhutan", "Bolivia", "Bosnia Herzegovina", "Botswana", "Brazil", "Brunei", "Bulgaria", "Burkina", "Burundi", "Cambodia", "Cameroon", "Canada", "Cape Verde", "Central African Rep", "Chad", "Chile", "China", "Colombia", "Comoros", "Congo", "Congo (Democratic Rep)", "Costa Rica", "Croatia", "Cuba", "Cyprus", "Czech Republic", "Denmark", "Djibouti", "Dominica", "Dominican Republic", "East Timor", "Ecuador", "Egypt", "El Salvador", "Equatorial Guinea", "Eritrea", "Estonia", "Eswatini", "Ethiopia", "Fiji", "Finland", "France", "Gabon", "Gambia", "Georgia", "Germany", "Ghana", "Greece", "Grenada", "Guatemala", "Guinea", "Guinea-Bissau", "Guyana", "Haiti", "Honduras", "Hungary", "Iceland", "India", "Indonesia", "Iran", "Iraq", "Ireland (Republic)", "Israel", "Italy", "Ivory Coast", "Jamaica", "Japan", "Jordan", "Kazakhstan", "Kenya", "Kiribati", "Korea North", "Korea South", "Kosovo", "Kuwait", "Kyrgyzstan", "Laos", "Latvia", "Lebanon", "Lesotho", "Liberia", "Libya", "Liechtenstein", "Lithuania", "Luxembourg", "Macedonia", "Madagascar", "Malawi", "Malaysia", "Maldives", "Mali", "Malta", "Marshall Islands", "Mauritania", "Mauritius", "Mexico", "Micronesia", "Moldova", "Monaco", "Mongolia", "Montenegro", "Morocco", "Mozambique", "Myanmar", "Namibia", "Nauru", "Nepal", "Netherlands", "New Zealand", "Nicaragua", "Niger", "Nigeria", "Norway", "Oman", "Pakistan", "Palau", "Palestine", "Panama", "Papua New Guinea", "Paraguay", "Peru", "Philippines", "Poland", "Portugal", "Qatar", "Romania", "Russian Federation", "Rwanda", "St Kitts & Nevis", "St Lucia", "Saint Vincent & the Grenadines", "Samoa", "San Marino", "Sao Tome & Principe", "Saudi Arabia", "Senegal", "Serbia", "Seychelles", "Sierra Leone", "Singapore", "Slovakia", "Slovenia", "Solomon Islands", "Somalia", "South Africa", "South Sudan", "Spain", "Sri Lanka", "Sudan", "Suriname", "Sweden", "Switzerland", "Syria", "Taiwan", "Tajikistan", "Tanzania", "Thailand", "Togo", "Tonga", "Trinidad & Tobago", "Tunisia", "Turkey", "Turkmenistan", "Tuvalu", "Uganda", "Ukraine", "United Arab Emirates", "United Kingdom", "United States", "Uruguay", "Uzbekistan", "Vanuatu", "Vatican City", "Venezuela", "Vietnam", "Yemen", "Zambia", "Zimbabwe", "Worldwide",]
+                        property var countriesModel: ["Afghanistan", "Albania", "Algeria", "Andorra", "Angola", "Antigua & Deps", "Argentina", "Armenia", "Australia", "Austria", "Azerbaijan", "Bahamas", "Bahrain", "Bangladesh", "Barbados", "Belarus", "Belgium", "Belize", "Benin", "Bermuda", "Bhutan", "Bolivia", "Bosnia Herzegovina", "Botswana", "Brazil", "Brunei", "Bulgaria", "Burkina", "Burundi", "Cambodia", "Cameroon", "Canada", "Cape Verde", "Central African Rep", "Chad", "Chile", "China", "Colombia", "Comoros", "Congo", "Congo (Democratic Rep)", "Costa Rica", "Croatia", "Cuba", "Cyprus", "Czech Republic", "Denmark", "Djibouti", "Dominica", "Dominican Republic", "East Timor", "Ecuador", "Egypt", "El Salvador", "Equatorial Guinea", "Eritrea", "Estonia", "Eswatini", "Ethiopia", "Fiji", "Finland", "France", "Gabon", "Gambia", "Georgia", "Germany", "Ghana", "Greece", "Grenada", "Guatemala", "Guinea", "Guinea-Bissau", "Guyana", "Haiti", "Honduras", "Hungary", "Iceland", "India", "Indonesia", "Iran", "Iraq", "Ireland (Republic)", "Israel", "Italy", "Ivory Coast", "Jamaica", "Japan", "Jordan", "Kazakhstan", "Kenya", "Kiribati", "Korea North", "Korea South", "Kosovo", "Kuwait", "Kyrgyzstan", "Laos", "Latvia", "Lebanon", "Lesotho", "Liberia", "Libya", "Liechtenstein", "Lithuania", "Luxembourg", "Macedonia", "Madagascar", "Malawi", "Malaysia", "Maldives", "Mali", "Malta", "Marshall Islands", "Mauritania", "Mauritius", "Mexico", "Micronesia", "Moldova", "Monaco", "Mongolia", "Montenegro", "Morocco", "Mozambique", "Myanmar", "Namibia", "Nauru", "Nepal", "Netherlands", "New Zealand", "Nicaragua", "Niger", "Nigeria", "Norway", "Oman", "Pakistan", "Palau", "Palestine", "Panama", "Papua New Guinea", "Paraguay", "Peru", "Philippines", "Poland", "Portugal", "Qatar", "Romania", "Russian Federation", "Rwanda", "St Kitts & Nevis", "St Lucia", "Saint Vincent & the Grenadines", "Samoa", "San Marino", "Sao Tome & Principe", "Saudi Arabia", "Senegal", "Serbia", "Seychelles", "Sierra Leone", "Singapore", "Slovakia", "Slovenia", "Solomon Islands", "Somalia", "South Africa", "South Sudan", "Spain", "Sri Lanka", "Sudan", "Suriname", "Sweden", "Switzerland", "Syria", "Taiwan", "Tajikistan", "Tanzania", "Thailand", "Togo", "Tonga", "Trinidad & Tobago", "Tunisia", "Turkey", "Turkmenistan", "Tuvalu", "Uganda", "Ukraine", "United Arab Emirates", "United Kingdom", "United States", "Unspecified", "Uruguay", "Uzbekistan", "Vanuatu", "Vatican City", "Venezuela", "Vietnam", "Yemen", "Zambia", "Zimbabwe", "Worldwide",]
                         
                         Column {
                             spacing: productDetails.spaceFromTitle
@@ -657,52 +656,21 @@ Page {
                                 font.bold: true
                             }
                             
-                            Row {
-                                spacing: 5
-                                Text {
-                                    id: locationFromText
-                                    text: "Ships From"
-                                    color: productDetails.titleTextColor
-                                    anchors.verticalCenter: countriesToShipFrom.verticalCenter//verticalAlignment: TextEdit.AlignVCenter
+                            NeroshopComponents.ComboBox {
+                                id: productLocationBox
+                                width: 500; height: 50
+                                model: parent.parent.countriesModel
+                                Component.onCompleted: {
+                                    contentItem.selectByMouse = true
+                                    currentIndex = find("Unspecified")//find("Worldwide")
                                 }
-                                NeroshopComponents.ComboBox {
-                                    id: countriesToShipFrom
-                                    width: 500 - parent.children[0].contentWidth - parent.spacing; height: 50
-                                    model: parent.parent.parent.countriesModel
-                                    Component.onCompleted: {
-                                        contentItem.selectByMouse = true
-                                        currentIndex = find("Worldwide")
-                                    }
-                                    editable: true
-                                    onAccepted: {
-                                        if(find(editText) === -1)
-                                            model.append({text: editText})
-                                    }
-                                    color: productDetails.baseColor
-                                    textColor: productDetails.textColor
+                                editable: true
+                                onAccepted: {
+                                    if(find(editText) === -1)
+                                        model.append({text: editText})
                                 }
-                            }
-                            
-                            Row {
-                                spacing: 5
-                                Text {
-                                    id: locationToField
-                                    text: "Ships To  "
-                                    color: productDetails.titleTextColor
-                                    anchors.verticalCenter: countriesToShipTo.verticalCenter
-                                }
-                                NeroshopComponents.ComboBox {
-                                    id: countriesToShipTo
-                                    width: 500 - parent.children[0].contentWidth - parent.spacing; height: 50
-                                    model: parent.parent.parent.countriesModel
-                                    Component.onCompleted: {
-                                        contentItem.selectByMouse = true
-                                        currentIndex = find("Worldwide")
-                                    }
-                                    editable: true
-                                    color: productDetails.baseColor
-                                    textColor: productDetails.textColor
-                                }
+                                color: productDetails.baseColor
+                                textColor: productDetails.textColor
                             }
                         }
                     }                    
@@ -721,19 +689,21 @@ Page {
                                 font.bold: true
                             }
                             
-                            TextArea {
-                                id: productDescArea
+                            ScrollView {
                                 width: 500; height: 250
-                                placeholderText: qsTr("Enter description")
-                                wrapMode: Text.Wrap //Text.Wrap moves text to the newline when it reaches the width//Text.WordWrap does not move text to the newline but instead it only shows the scrollbar
-                                selectByMouse: true
-                                color: productDetails.textColor
+                                TextArea {
+                                    id: productDescriptionEdit
+                                    placeholderText: qsTr("Enter description")
+                                    wrapMode: Text.Wrap //Text.Wrap moves text to the newline when it reaches the width//Text.WordWrap does not move text to the newline but instead it only shows the scrollbar
+                                    selectByMouse: true
+                                    color: productDetails.textColor
                             
-                                background: Rectangle {
-                                    color: productDetails.baseColor
-                                    border.color: productDetails.borderColor
-                                    border.width: parent.activeFocus ? 2 : 1
-                                    radius: productDetails.radius
+                                    background: Rectangle {
+                                        color: productDetails.baseColor
+                                        border.color: productDetails.borderColor
+                                        border.width: parent.activeFocus ? 2 : 1
+                                        radius: productDetails.radius
+                                    }
                                 }
                             }
                         }
@@ -754,7 +724,7 @@ Page {
                             
                             Flickable {
                                 width: 500; height: 210 + ScrollBar.horizontal.height// same height as delegateRect + scrollbar height
-                                contentWidth: (210 * productImageRepeater.count) + 50//; contentHeight: 210//<- contentHeight is not needed unless a newline is supported
+                                contentWidth: (210 * productImageRepeater.count) + (5 * (productImageRepeater.count - 1))//<- 5 is the Flow.spacing//; contentHeight: 210//<- contentHeight is not needed unless a newline is supported
                                 clip: true
                                 ScrollBar.horizontal: ScrollBar {
                                     policy: ScrollBar.AsNeeded
@@ -771,7 +741,7 @@ Page {
                                             //border.color: "blue"
                                         
                                             Rectangle {
-                                                border.color: productDetails.titleTextColor//""
+                                                border.color: productDetails.titleTextColor
                                                 anchors.top: parent.top
                                                 anchors.topMargin: 5
                                                 anchors.horizontalCenter: parent.horizontalCenter
@@ -791,7 +761,7 @@ Page {
                                                         }
                                                         if(this.status == Image.Loading) console.log("Loading image " + source + " (" + (progress * 100) + "%)")
                                                         if(this.status == Image.Error) console.log("An error occurred while loading the image")
-                                                        if(this.status == Image.Null) console.log("No image has been set" + parent.parent.index)
+                                                        //if(this.status == Image.Null) console.log("No image has been set" + parent.parent.index)
                                                     }
                                                 }
                                             }
@@ -815,9 +785,8 @@ Page {
                                                 }
                                                 onClicked: {
                                                     if(index != 0) {
-                                                        let productImage = productImageRepeater.itemAt(index - 1).children[0].children[0]
-                                                        // If Image at the previous index has not been loaded then exit this function
-                                                        if(productImage.status == Image.Null) { messageBox.text = "Images must be loaded in order from left to right"; messageBox.open(); return; }
+                                                        let prevProductImage = productImageRepeater.itemAt(index - 1).children[0].children[0] // get image at previous index
+                                                        if(prevProductImage.status == Image.Null) { console.log("Images must be loaded in order from left to right"); return; } // If image at the previous index has not been loaded then exit this function
                                                     }
                                                     productImageFileDialog.open()
                                                 }
@@ -825,9 +794,8 @@ Page {
                                             FileDialog {
                                                 id: productImageFileDialog
                                                 fileMode: FileDialog.OpenFile
-                                                ////currentFile: monerodPathField.text // currentFile is deprecated since Qt 6.3. Use selectedFile instead
                                                 folder: (isWindows) ? StandardPaths.writableLocation(StandardPaths.DocumentsLocation) + "/neroshop" : StandardPaths.writableLocation(StandardPaths.HomeLocation) + "/neroshop"
-                                                nameFilters: ["Image files (*.bmp *.gif *.jpeg *.jpg *.png)"]
+                                                nameFilters: ["Image files (*.bmp *.gif *.jpeg *.jpg *.png *.tif *.tiff)"]
                                             }
                                         }         
                                     }                       
@@ -856,17 +824,52 @@ Page {
                                 verticalAlignment: Text.AlignVCenter
                             }
                             onClicked: {
-                                // Register product to database
+                                // Check input fields to see if entered info is valid
                                 // ...
+                                // TODO: product must have a minimum of 1 image
+                                let productThumbnail = productImageRepeater.itemAt(0).children[0].children[0]
+                                if(productThumbnail.status == Image.Null) {
+                                    messageBox.text = "Product must have at least 1 image"
+                                    messageBox.open()
+                                    return; // exit function
+                                }
+                                ////User.listProduct()//TODO:
+                                // TODO: add weight and product_code to attributes list instead
+                                // Attributes will be in JSON format
+                                // Todo: check whether its a product or service
+                                // Register product to database
+                                let register_result = Backend.registerProduct(productNameField.text, productDescriptionEdit.text,
+                                    productPriceField.text, productWeightField.text, 
+                                    ""/*attributes*/, productCodeField.text,
+                                    Backend.getCategoryIdByName(productCategoryBox.currentText), productLocationBox.currentText)
                                 // Upload product images to database
-                                for(let i = 0; i < productImageRepeater.count; i++) {
-                                    let productImage = productImageRepeater.itemAt(i).children[0].children[0]
-                                    if(productImage.status == Image.Ready) { // If image loaded
-                                        console.log("uploading " + productImage.source + " to the database")
+                                let product_uuid = register_result[1]                                
+                                if(register_result[0] == true) {
+                                    for(let i = 0; i < productImageRepeater.count; i++) {
+                                        let productImage = productImageRepeater.itemAt(i).children[0].children[0]
+                                        if(productImage.status == Image.Ready) { // If image loaded
+                                            //console.log("uploading " + Backend.urlToLocalFile(productImage.source) + " to the database")
+                                            Backend.uploadProductImage(product_uuid, Backend.urlToLocalFile(productImage.source))
+                                        }
                                     }
                                 }
                                 // List product
-                                ////User.listProduct()//TODO:
+                                User.listProduct(product_uuid, productQuantityField.text, productPriceField.text, selectedCurrencyText.text, productConditionBox.currentText)                       
+                                // Clear input fields after listing product
+                                productNameField.text = ""
+                                productPriceField.text = ""
+                                productQuantityField.text = "1"
+                                productConditionBox.currentIndex = productConditionBox.find("New")
+                                productCodeField.text = ""
+                                productCategoryBox.currentIndex = productCategoryBox.find("Miscellaneous")
+                                productWeightField.text = ""
+                                productLocationBox.currentIndex = productLocationBox.find("Unspecified")//find("Worldwide")
+                                productDescriptionEdit.text = ""
+                                // Clear upload images as well
+                                for(let i = 0; i < productImageRepeater.count; i++) {
+                                    let productImage = productImageRepeater.itemAt(i).children[0].children[0]
+                                    productImage.source = ""
+                                }
                             }
                         }
                     }

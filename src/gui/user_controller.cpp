@@ -12,6 +12,11 @@ neroshop::UserController::~UserController() {
     std::cout << "user controller deleted\n";
 }
 
+void neroshop::UserController::listProduct(const QString& product_id, int quantity, double price, const QString& currency, const QString& condition) {
+    if(!user.get()) throw std::runtime_error("neroshop::User is not initialized");
+    static_cast<neroshop::Seller *>(user.get())->list_item(product_id.toStdString(), quantity, price, currency.toStdString(), condition.toStdString());
+}
+
 void neroshop::UserController::uploadAvatar(const QString& filename) {
     if(!user.get()) throw std::runtime_error("neroshop::User is not initialized");
     user->upload_avatar(filename.toStdString());

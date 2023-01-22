@@ -125,7 +125,7 @@ Page {
                             radius: 5
                             border.color: "#ffffff"
                             Text {
-                                text: modelData.id//index//index.toString() + ", " + modelData//"10" // Number of products that fall under this particular category
+                                text: Backend.getCategoryProductCount(modelData.id) // Number of products that fall under this particular category
                                 color: "#ffffff"
                                 anchors.horizontalCenter: parent.horizontalCenter
                                 anchors.verticalCenter: parent.verticalCenter

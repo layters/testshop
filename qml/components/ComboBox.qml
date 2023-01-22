@@ -13,6 +13,8 @@ ComboBox {
     property string textColor: control.pressed ? "#101010" : "#383838"//"#17a81a" : "#21be2b"
     //property string ?Color: ""
     property bool indicatorDoNotPassBorder: false//(control.background.border.width == 0) ? false : true // This conditional statement makes no difference as it always defaults to true
+    implicitWidth: 150
+    implicitHeight: 40
 
     delegate: ItemDelegate {
         width: control.width
@@ -88,8 +90,8 @@ ComboBox {
     }
 
     background: Rectangle {
-        implicitWidth: 120
-        implicitHeight: 40
+        implicitWidth: control.width
+        implicitHeight: control.height
         color: control.color
         //border.width: control.visualFocus ? 2 : 1; border.color: color//control.pressed ? "yellow" : "orange"//"#17a81a" : "#21be2b"
         radius: control.radius

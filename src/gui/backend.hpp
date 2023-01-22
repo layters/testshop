@@ -10,6 +10,7 @@
 #include <QClipboard>
 #include <QGuiApplication>
 #include <QProcess> // Note: QProcess is not supported on VxWorks, iOS, tvOS, or watchOS.
+#include <QUuid>
 
 #include "../core/currency_converter.hpp"
 #include "../core/validator.hpp"
@@ -35,8 +36,11 @@ public:
     
     /*Q_INVOKABLE */static void initializeDatabase(); // Cannot be a Q_INVOKABLE since it will only be used in C++
     static std::string getDatabaseHash();
-    Q_INVOKABLE QVariantList getCategoryList() const;
+    // TODO: Use Q_ENUM for sorting in order by a specific column (e.e Sort.Name, Sort.Id)
+    Q_INVOKABLE QVariantList getCategoryList(bool sort_alphabetically = false) const;
     //Q_INVOKABLE QStringList getSubCategoryList(int category_id);
+    Q_INVOKABLE int getCategoryIdByName(const QString& category_name) const;
+    Q_INVOKABLE int getCategoryProductCount(int category_id) const; // returns number of products that fall under a specific category
     
     Q_INVOKABLE QVariantList getWalletNodeList() const;
     Q_INVOKABLE bool isWalletDaemonRunning() const;
@@ -45,10 +49,10 @@ public:
     QVariantList checkDisplayName(const QString& display_name) const; // Checks database for display name availability
     
     Q_INVOKABLE QVariantList registerUser(WalletController* wallet_controller, const QString& display_name, UserController * user_controller);
-    Q_INVOKABLE bool loginWithWalletFile(WalletController* wallet_controller, const QString& path, const QString& password = "");
-    Q_INVOKABLE bool loginWithMnemonic(WalletController* wallet_controller, const QString& mnemonic);
-    Q_INVOKABLE bool loginWithKeys(WalletController* wallet_controller);
-    Q_INVOKABLE bool loginWithHW(WalletController* wallet_controller);
+    Q_INVOKABLE bool loginWithWalletFile(WalletController* wallet_controller, const QString& path, const QString& password, UserController * user_controller);
+    Q_INVOKABLE bool loginWithMnemonic(WalletController* wallet_controller, const QString& mnemonic, UserController * user_controller);
+    Q_INVOKABLE bool loginWithKeys(WalletController* wallet_controller, UserController * user_controller);
+    Q_INVOKABLE bool loginWithHW(WalletController* wallet_controller, UserController * user_controller);
     
     //Q_INVOKABLE QVariantList getListings(); // Products listed by sellers
     //Q_INVOKABLE QVariantList getListingsByMostRecent();
@@ -57,6 +61,10 @@ public:
     //Q_INVOKABLE QVariantList getProducts(); // Registered products
     //Q_INVOKABLE QVariantList get();
     
+    Q_INVOKABLE QVariantList registerProduct(const QString& name, const QString& description,
+        double price, double weight, const QString& attributes, const QString& product_code,
+        int category_id, const QString& location) const;
+    Q_INVOKABLE void uploadProductImage(const QString& product_id, const QString& filename);
     //Q_INVOKABLE void ();
     // Test function
     static void startServerDaemon();

@@ -1,5 +1,10 @@
 #include "item.hpp"
 
+#if defined(NEROSHOP_USE_QT)
+#include <QUuid>
+#else
+#include <uuid.h>
+#endif
 ////////////////////
 neroshop::Item::Item() : id(0)//, quantity(0), price(0.00), weight(1.0), size(std::make_tuple<double, double, double>(0.0, 0.0, 0.0)), discount(0.0), category("unspecified")/* or none */, condition("new") {}// name and desc and empty strings by default
 {}

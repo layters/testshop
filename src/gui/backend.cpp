@@ -59,9 +59,8 @@ void neroshop::Backend::initializeDatabase() {
     // Todo: Make monero_address the primary key and remove id. Also, replace all foreign key references from id to monero_address
     // table users
     if(!database->table_exists("users")) { 
-        database->execute("CREATE TABLE users(name TEXT, monero_address TEXT PRIMARY KEY"//, UNIQUE"
+        database->execute("CREATE TABLE users(name TEXT, monero_address TEXT NOT NULL PRIMARY KEY"//, UNIQUE"
         ");");
-        //database->execute("ALTER TABLE users ADD COLUMN monero_address TEXT;"); // verify_key - public_key used for logins and for verification of signatures
         database->execute("ALTER TABLE users ADD COLUMN public_key TEXT DEFAULT NULL;"); // encrypt_key - public_key used for encryption of messages
         database->execute("ALTER TABLE users ADD COLUMN avatar BLOB DEFAULT NULL;"); // encrypt_key - public_key used for encryption of messages
         
@@ -70,26 +69,28 @@ void neroshop::Backend::initializeDatabase() {
     }    
     // products (represents both items and services)
     if(!database->table_exists("products")) {
-        database->execute("CREATE TABLE products(id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT);");
+        database->execute("CREATE TABLE products(uuid TEXT NOT NULL PRIMARY KEY);");
         database->execute("ALTER TABLE products ADD COLUMN name TEXT;");
         database->execute("ALTER TABLE products ADD COLUMN description TEXT;");
-        database->execute("ALTER TABLE products ADD COLUMN price REAL");//INTEGER;");//numeric(20, 12);"); // unit_price or price_per_unit // 64-bit integer (uint64_t) that will be multipled by a piconero to get the actual monero price
-        database->execute("ALTER TABLE products ADD COLUMN weight REAL;"); // kg
-        //database->execute("ALTER TABLE products ADD COLUMN size ?datatype;"); // Can be a number(e.g 16) or a text(l x w x h)
+        database->execute("ALTER TABLE products ADD COLUMN price REAL");// This should be the manufacturer's original price (won't be used though) // unit_price or price_per_unit
+        database->execute("ALTER TABLE products ADD COLUMN weight REAL;"); // kg // TODO: add weight to attributes
+        database->execute("ALTER TABLE products ADD COLUMN attributes TEXT;"); // attribute options format: "Color:Red,Green,Blue;Size:XS,S,M,L,XL"// Can be a number(e.g 16) or a text(l x w x h)
         database->execute("ALTER TABLE products ADD COLUMN code TEXT;"); // product_code can be either upc (universal product code) or a custom sku
         database->execute("ALTER TABLE products ADD COLUMN category_id INTEGER REFERENCES categories(id);");
         //database->execute("ALTER TABLE products ADD COLUMN subcategory_id INTEGER REFERENCES categories(id);");
+        database->execute("ALTER TABLE products ADD COLUMN location TEXT;");
         //database->execute("ALTER TABLE products ADD COLUMN ?col ?datatype;");
-        database->execute("CREATE UNIQUE INDEX index_product_codes ON products (code);"); // product codes must be unique
+        //database->execute("CREATE UNIQUE INDEX ?index ON products (?col);");
         // the seller determines the final product price, the product condition and whether the product will have a discount or not
+        // Note: UPC codes can be totally different for the different variations(color, etc.) of the same product
     }
     // inventory // Todo: rename this to "listings"
     if(!database->table_exists("listings")) {
-        database->execute("CREATE TABLE listings(id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT);");
-        database->execute("ALTER TABLE listings ADD COLUMN product_id INTEGER REFERENCES products(id);");
+        database->execute("CREATE TABLE listings(id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT);");//(uuid TEXT NOT NULL PRIMARY KEY);");
+        database->execute("ALTER TABLE listings ADD COLUMN product_id TEXT REFERENCES products(uuid);");
         database->execute("ALTER TABLE listings ADD COLUMN seller_id TEXT REFERENCES users(monero_address);"); // alternative names: "store_id"
-        database->execute("ALTER TABLE listings ADD COLUMN stock_qty INTEGER;"); // alternative names: "stock" or "stock_available"
-        database->execute("ALTER TABLE listings ADD COLUMN sales_price REAL;");//numeric(20,12);"); // alternative names: "seller_price" or "list_price" // this is the final price of a product
+        database->execute("ALTER TABLE listings ADD COLUMN quantity INTEGER;"); // stock available
+        database->execute("ALTER TABLE listings ADD COLUMN price REAL;"); // this is the final price of a product or list/sales price decided by the seller
         database->execute("ALTER TABLE listings ADD COLUMN currency TEXT;"); // the fiat currency the seller is selling the item in
         //database->execute("ALTER TABLE listings ADD COLUMN discount numeric(20,12);"); // alternative names: "seller_discount", or "discount_price"
         //database->execute("ALTER TABLE listings ADD COLUMN ?col ?datatype;"); // discount_times_can_use - number of times the discount can be used
@@ -105,21 +106,20 @@ void neroshop::Backend::initializeDatabase() {
     // cart
     if(!database->table_exists("cart")) {
         // local cart - for a single cart containing a list of product_ids
-        //database->execute("CREATE TABLE cart(id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT, product_id INTEGER REFERENCES products(id));");
         // public cart - copied to all peers' databases
-        database->execute("CREATE TABLE cart(id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT);");
+        database->execute("CREATE TABLE cart(uuid TEXT NOT NULL PRIMARY KEY);");
         database->execute("ALTER TABLE cart ADD COLUMN user_id TEXT REFERENCES users(monero_address);");//database->execute("CREATE TABLE cart(id INTEGER NOT NULL PRIMARY KEY, user_id TEXT REFERENCES users(monero_address));");
         // cart_items (public cart)
         database->execute("CREATE TABLE cart_item(id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT);");
-        database->execute("ALTER TABLE cart_item ADD COLUMN cart_id INTEGER REFERENCES cart(id);");
-        database->execute("ALTER TABLE cart_item ADD COLUMN product_id INTEGER REFERENCES products(id);");
+        database->execute("ALTER TABLE cart_item ADD COLUMN cart_id TEXT REFERENCES cart(uuid);");
+        database->execute("ALTER TABLE cart_item ADD COLUMN product_id TEXT REFERENCES products(uuid);");
         database->execute("ALTER TABLE cart_item ADD COLUMN item_qty INTEGER;");
         //database->execute("ALTER TABLE cart_item ADD COLUMN item_price numeric;"); // sales_price will be used for the final pricing rather than the unit_price
-        //database->execute("ALTER TABLE cart_item ADD COLUMN item_weight REAL;");//database->execute("CREATE TABLE cart_item(id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT, cart_id INTEGER REFERENCES cart(id), product_id INTEGER REFERENCES products(id), item_qty INTEGER, item_price NUMERIC, item_weight REAL);");
+        //database->execute("ALTER TABLE cart_item ADD COLUMN item_weight REAL;");//database->execute("CREATE TABLE cart_item(id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT, cart_id TEXT REFERENCES cart(id), product_id TEXT REFERENCES products(id), item_qty INTEGER, item_price NUMERIC, item_weight REAL);");
     }
     // orders (purchase_orders)
     if(!database->table_exists("orders")) {
-        database->execute("CREATE TABLE orders(id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT);");//database->execute("ALTER TABLE orders ADD COLUMN ?col ?datatype;");
+        database->execute("CREATE TABLE orders(uuid TEXT NOT NULL PRIMARY KEY);");//database->execute("ALTER TABLE orders ADD COLUMN ?col ?datatype;");
         database->execute("ALTER TABLE orders ADD COLUMN timestamp TEXT DEFAULT CURRENT_TIMESTAMP;"); // creation_date // to get UTC time: set to datetime('now');
         database->execute("ALTER TABLE orders ADD COLUMN number TEXT;"); // uuid
         database->execute("ALTER TABLE orders ADD COLUMN status TEXT;");
@@ -133,8 +133,8 @@ void neroshop::Backend::initializeDatabase() {
         //database->execute("ALTER TABLE orders ADD COLUMN notes TEXT;"); // will contain sensative such as shipping address and tracking numbers that will be encrypted and can only be decrypted by the seller - this may not be necessary since buyer can contact seller privately
         // order_item
         database->execute("CREATE TABLE order_item(id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT);");
-        database->execute("ALTER TABLE order_item ADD COLUMN order_id INTEGER REFERENCES orders(id);");
-        database->execute("ALTER TABLE order_item ADD COLUMN product_id INTEGER REFERENCES products(id);");
+        database->execute("ALTER TABLE order_item ADD COLUMN order_id TEXT REFERENCES orders(uuid);");
+        database->execute("ALTER TABLE order_item ADD COLUMN product_id TEXT REFERENCES products(uuid);");
         database->execute("ALTER TABLE order_item ADD COLUMN seller_id TEXT REFERENCES users(monero_address);");
         database->execute("ALTER TABLE order_item ADD COLUMN item_qty INTEGER;");
         //database->execute("ALTER TABLE order_item ADD COLUMN item_price ?datatype;");
@@ -152,7 +152,7 @@ void neroshop::Backend::initializeDatabase() {
     }
     if(!database->table_exists("product_ratings")) {
         database->execute("CREATE TABLE product_ratings(id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT);");
-        database->execute("ALTER TABLE product_ratings ADD COLUMN product_id INTEGER REFERENCES products(id);");
+        database->execute("ALTER TABLE product_ratings ADD COLUMN product_id TEXT REFERENCES products(uuid);");
         database->execute("ALTER TABLE product_ratings ADD COLUMN stars INTEGER;");
         database->execute("ALTER TABLE product_ratings ADD COLUMN user_id TEXT REFERENCES users(monero_address);");
         database->execute("ALTER TABLE product_ratings ADD COLUMN comments TEXT;");
@@ -160,11 +160,10 @@ void neroshop::Backend::initializeDatabase() {
     }
     // images
     if(!database->table_exists("images")) { // TODO: rename to product_images?
-        //database->execute("CREATE TABLE images(id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT);");
-        //database->execute("ALTER TABLE images ADD COLUMN product_id INTEGER REFERENCES products(id);");
-        //database->execute("ALTER TABLE images ADD COLUMN name TEXT[];");
-        //database->execute("ALTER TABLE images ADD COLUMN data BLOB[];");
-        //database->execute("ALTER TABLE images ADD COLUMN ?col ?datatype;");
+        database->execute("CREATE TABLE images(id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT);");
+        database->execute("ALTER TABLE images ADD COLUMN product_id TEXT;");// REFERENCES products(uuid);");
+        database->execute("ALTER TABLE images ADD COLUMN name TEXT;");
+        database->execute("ALTER TABLE images ADD COLUMN data BLOB;");
         //database->execute("ALTER TABLE images ADD COLUMN ?col ?datatype;");
     }    
     // avatars - each user will have a single avatar
@@ -243,13 +242,13 @@ std::string neroshop::Backend::getDatabaseHash() {
     return sha256sum; // database may have to be closed first in order to get the accurate hash
 }
 
-QVariantList neroshop::Backend::getCategoryList() const {
+QVariantList neroshop::Backend::getCategoryList(bool sort_alphabetically) const {
     // Do some database reading to fetch each category row (database reads do not require consensus)
     neroshop::db::Sqlite3 * database = neroshop::db::Sqlite3::get_database();
     if(!database) throw std::runtime_error("database is NULL");
     sqlite3_stmt * stmt = nullptr;
     // Prepare (compile) statement
-    if(sqlite3_prepare_v2(database->get_handle(), "SELECT * FROM categories;", -1, &stmt, nullptr) != SQLITE_OK) {
+    if(sqlite3_prepare_v2(database->get_handle(), (sort_alphabetically) ? "SELECT * FROM categories ORDER BY name ASC;" : "SELECT * FROM categories ORDER BY id ASC;", -1, &stmt, nullptr) != SQLITE_OK) {
         neroshop::print("sqlite3_prepare_v2: " + std::string(sqlite3_errmsg(database->get_handle())), 1);
         return {};
     }
@@ -279,6 +278,115 @@ QVariantList neroshop::Backend::getCategoryList() const {
 
     return category_list;
 }
+
+
+int neroshop::Backend::getCategoryIdByName(const QString& category_name) const {
+    neroshop::db::Sqlite3 * database = neroshop::db::Sqlite3::get_database();
+    if(!database) throw std::runtime_error("database is NULL");
+    // Execute sqlite3 statement
+    int category_id = database->get_integer_params("SELECT id FROM categories WHERE name = $1;", { category_name.toStdString() });
+    return category_id;
+}
+
+int neroshop::Backend::getCategoryProductCount(int category_id) const {
+    neroshop::db::Sqlite3 * database = neroshop::db::Sqlite3::get_database();
+    if(!database) throw std::runtime_error("database is NULL");
+    // Execute sqlite3 statement
+    int category_product_count = database->get_integer_params("SELECT COUNT(*) FROM products WHERE category_id = $1;", { std::to_string(category_id) });
+    return category_product_count;
+}
+
+
+QVariantList neroshop::Backend::registerProduct(const QString& name, const QString& description,
+        double price, double weight, const QString& attributes, 
+        const QString& product_code,
+        int category_id, const QString& location) const 
+{
+    neroshop::db::Sqlite3 * database = neroshop::db::Sqlite3::get_database();
+    if(!database) throw std::runtime_error("database is NULL");
+    
+    QString product_uuid = QUuid::createUuid().toString();
+    product_uuid = product_uuid.remove("{").remove("}"); // remove brackets
+    
+    std::string product_id = database->get_text_params("INSERT INTO products (uuid, name, description, price, weight, attributes, code, category_id, location) "
+	    "VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) "
+	    "RETURNING uuid", { product_uuid.toStdString(), name.toStdString(), description.toStdString(), std::to_string(price), std::to_string(weight), attributes.toStdString(), product_code.toStdString(), std::to_string(category_id), location.toStdString() });
+    if(product_id.empty()) return { false, "" };
+    return { true, QString::fromStdString(product_id) };
+}
+
+void neroshop::Backend::uploadProductImage(const QString& product_id, const QString& filename) {
+    neroshop::db::Sqlite3 * database = neroshop::db::Sqlite3::get_database();
+    if(!database) throw std::runtime_error("database is NULL");
+    
+    database->execute("BEGIN;");
+    // Read image from file and retrieve its contents
+    std::ifstream product_image_file(filename.toStdString(), std::ios::binary); // std::ios::binary is the same as std::ifstream::binary
+    if(!product_image_file.good()) {
+        std::cout << NEROSHOP_TAG "failed to load " << filename.toStdString() << std::endl; 
+        database->execute("ROLLBACK;"); return;
+    }
+    product_image_file.seekg(0, std::ios::end);
+    size_t size = static_cast<int>(product_image_file.tellg()); // in bytes
+    // Limit avatar image size to 12582912 bytes (12 megabyte)
+    // Todo: Database cannot scale to billions of users if I am storing blobs so I'll have to switch to text later
+    if(size >= 12582912) {
+        neroshop::print("Product upload image cannot exceed 12 MB (twelve megabyte)", 1);
+        database->execute("ROLLBACK;"); return;
+    }
+    product_image_file.seekg(0);
+    std::vector<unsigned char> buffer(size);
+    if(!product_image_file.read(reinterpret_cast<char *>(&buffer[0]), size)) {
+        std::cout << NEROSHOP_TAG "error: only " << product_image_file.gcount() << " could be read";
+        database->execute("ROLLBACK;"); // abort transaction
+        return; // exit function
+    }
+    product_image_file.close();
+    // Store image in database as BLOB
+    std::string command = "INSERT INTO images (product_id, name, data) VALUES ($1, $2, $3);";
+    sqlite3_stmt * statement = nullptr;
+    int result = sqlite3_prepare_v2(database->get_handle(), command.c_str(), -1, &statement, nullptr);
+    if(result != SQLITE_OK) {
+        neroshop::print("sqlite3_prepare_v2: " + std::string(sqlite3_errmsg(database->get_handle())), 1);
+        database->execute("ROLLBACK;"); return;
+    }
+    
+    std::string product_uuid = product_id.toStdString();
+    result = sqlite3_bind_text(statement, 1, product_uuid.c_str(), product_uuid.length(), SQLITE_STATIC);
+    if(result != SQLITE_OK) {
+        neroshop::print("sqlite3_bind_text (arg: 1): " + std::string(sqlite3_errmsg(database->get_handle())), 1);
+        sqlite3_finalize(statement);
+        database->execute("ROLLBACK;"); return;
+    }    
+    std::string product_image_filename = filename.toStdString();
+    result = sqlite3_bind_text(statement, 2, product_image_filename.c_str(), product_image_filename.length(), SQLITE_STATIC);
+    if(result != SQLITE_OK) {
+        neroshop::print("sqlite3_bind_text (arg: 2): " + std::string(sqlite3_errmsg(database->get_handle())), 1);
+        sqlite3_finalize(statement);
+        database->execute("ROLLBACK;"); return;
+    }        
+    result = sqlite3_bind_blob(statement, 3, buffer.data(), size, SQLITE_STATIC);
+    if(result != SQLITE_OK) {
+        neroshop::print("sqlite3_bind_blob (arg: 3): " + std::string(sqlite3_errmsg(database->get_handle())), 1);
+        sqlite3_finalize(statement);
+        database->execute("ROLLBACK;"); return;// nullptr;
+    }    
+    
+    result = sqlite3_step(statement);
+    if (result != SQLITE_DONE) {
+        neroshop::print("sqlite3_step: " + std::string(sqlite3_errmsg(database->get_handle())), 1);
+    }
+    sqlite3_finalize(statement);
+    
+    database->execute("COMMIT;");
+}
+
+
+
+
+
+
+
 
 // Todo: fetch monero nodes from monero.fail // Each node will represent a QML object (QVariantMap) with properties: address, height, and status
 Q_INVOKABLE QVariantList neroshop::Backend::getWalletNodeList() const {
@@ -423,7 +531,7 @@ QVariantList neroshop::Backend::registerUser(WalletController* wallet_controller
     return { true, "" };
 }
 
-bool neroshop::Backend::loginWithWalletFile(WalletController* wallet_controller, const QString& path, const QString& password) {
+bool neroshop::Backend::loginWithWalletFile(WalletController* wallet_controller, const QString& path, const QString& password, UserController * user_controller) {
     neroshop::db::Sqlite3 * database = neroshop::db::Sqlite3::get_database();
     if(!database) throw std::runtime_error("database is NULL");
     // Open wallet file
@@ -443,18 +551,18 @@ bool neroshop::Backend::loginWithWalletFile(WalletController* wallet_controller,
         return false;
     }
     // Save user information in memory
-    /*std::unique_ptr<neroshop::User> seller(neroshop::Seller::on_login(display_name.toStdString()));
+    std::string display_name = database->get_text_params("SELECT name FROM users WHERE monero_address = $1", { primary_address });
+    std::unique_ptr<neroshop::User> seller(neroshop::Seller::on_login(display_name));
     user_controller->user = std::move(seller);
     if(user_controller->getUser() == nullptr) {
         return false;//{false, "user is NULL"};
-    }*/
+    }
     // Display message
-    std::string display_name = database->get_text_params("SELECT name FROM users WHERE monero_address = $1", { primary_address });
     neroshop::print("Welcome back, user " + ((!display_name.empty()) ? (display_name + " (id: " + primary_address + ")") : primary_address), 4);
     return true;
 }
 
-bool neroshop::Backend::loginWithMnemonic(WalletController* wallet_controller, const QString& mnemonic) {
+bool neroshop::Backend::loginWithMnemonic(WalletController* wallet_controller, const QString& mnemonic, UserController * user_controller) {
     neroshop::db::Sqlite3 * database = neroshop::db::Sqlite3::get_database();
     if(!database) throw std::runtime_error("database is NULL");
     // Initialize monero wallet with existing wallet mnemonic
@@ -481,7 +589,7 @@ bool neroshop::Backend::loginWithMnemonic(WalletController* wallet_controller, c
     return true;
 }
 
-bool neroshop::Backend::loginWithKeys(WalletController* wallet_controller) {
+bool neroshop::Backend::loginWithKeys(WalletController* wallet_controller, UserController * user_controller) {
 /*
     neroshop::db::Sqlite3 * database = neroshop::db::Sqlite3::get_database();
     if(!database) throw std::runtime_error("database is NULL");
@@ -523,9 +631,14 @@ bool neroshop::Backend::loginWithKeys(WalletController* wallet_controller) {
     return false;
 }
 
-bool neroshop::Backend::loginWithHW(WalletController* wallet_controller) {
+bool neroshop::Backend::loginWithHW(WalletController* wallet_controller, UserController * user_controller) {
     return false;
 }
+
+
+
+
+
 
 
 void neroshop::Backend::startServerDaemon() {
