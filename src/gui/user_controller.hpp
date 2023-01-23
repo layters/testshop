@@ -24,7 +24,7 @@ public:
     
     Q_PROPERTY(neroshop::User* user READ getUser);// NOTIFY ?);
 
-    Q_INVOKABLE void listProduct(const QString& product_id, int quantity, double price, const QString& currency, const QString& condition);
+    Q_INVOKABLE void listProduct(const QString& product_id, int quantity, double price, const QString& currency, const QString& condition, const QString& location);
     //Q_INVOKABLE void addToCart();
     //Q_INVOKABLE void createOrder();
     //Q_INVOKABLE void rateItem();

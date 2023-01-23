@@ -24,7 +24,7 @@ public:
 	Seller();
 	Seller(const std::string& name);
 	~Seller();
-	void list_item(const std::string& product_id, unsigned int quantity, double sales_price, const std::string& currency, /*double discount = 0.00, unsigned int discounted_items = 1, unsigned int discount_times = 1, std::string discount_expiry = "0000-00-00 00:00:00", */const std::string& condition); // adds an item to the inventory
+	void list_item(const std::string& product_id, unsigned int quantity, double sales_price, const std::string& currency, /*double discount = 0.00, unsigned int discounted_items = 1, unsigned int discount_times = 1, std::string discount_expiry = "0000-00-00 00:00:00", */const std::string& condition, const std::string& location); // adds an item to the inventory
 	void list_item(const neroshop::Item& item, unsigned int stock_qty, double sales_price = 0.00, std::string currency = "usd", double discount = 0.00, unsigned int discounted_items = 1, unsigned int discount_times = 1, std::string discount_expiry = ""/*"0000-00-00 00:00:00"*/, std::string condition = "new");
 	void delist_item(unsigned int product_id); // deletes an item from the inventory
 	void delist_item(const neroshop::Item& item);

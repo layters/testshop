@@ -72,13 +72,12 @@ void neroshop::Backend::initializeDatabase() {
         database->execute("CREATE TABLE products(uuid TEXT NOT NULL PRIMARY KEY);");
         database->execute("ALTER TABLE products ADD COLUMN name TEXT;");
         database->execute("ALTER TABLE products ADD COLUMN description TEXT;");
-        database->execute("ALTER TABLE products ADD COLUMN price REAL");// This should be the manufacturer's original price (won't be used though) // unit_price or price_per_unit
+        //database->execute("ALTER TABLE products ADD COLUMN price REAL");// This should be the manufacturer's original price (won't be used though) // unit_price or price_per_unit
         database->execute("ALTER TABLE products ADD COLUMN weight REAL;"); // kg // TODO: add weight to attributes
         database->execute("ALTER TABLE products ADD COLUMN attributes TEXT;"); // attribute options format: "Color:Red,Green,Blue;Size:XS,S,M,L,XL"// Can be a number(e.g 16) or a text(l x w x h)
         database->execute("ALTER TABLE products ADD COLUMN code TEXT;"); // product_code can be either upc (universal product code) or a custom sku
         database->execute("ALTER TABLE products ADD COLUMN category_id INTEGER REFERENCES categories(id);");
         //database->execute("ALTER TABLE products ADD COLUMN subcategory_id INTEGER REFERENCES categories(id);");
-        database->execute("ALTER TABLE products ADD COLUMN location TEXT;");
         //database->execute("ALTER TABLE products ADD COLUMN ?col ?datatype;");
         //database->execute("CREATE UNIQUE INDEX ?index ON products (?col);");
         // the seller determines the final product price, the product condition and whether the product will have a discount or not
@@ -86,7 +85,7 @@ void neroshop::Backend::initializeDatabase() {
     }
     // inventory // Todo: rename this to "listings"
     if(!database->table_exists("listings")) {
-        database->execute("CREATE TABLE listings(id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT);");//(uuid TEXT NOT NULL PRIMARY KEY);");
+        database->execute("CREATE TABLE listings(uuid TEXT NOT NULL PRIMARY KEY);");
         database->execute("ALTER TABLE listings ADD COLUMN product_id TEXT REFERENCES products(uuid);");
         database->execute("ALTER TABLE listings ADD COLUMN seller_id TEXT REFERENCES users(monero_address);"); // alternative names: "store_id"
         database->execute("ALTER TABLE listings ADD COLUMN quantity INTEGER;"); // stock available
@@ -98,6 +97,7 @@ void neroshop::Backend::initializeDatabase() {
         //database->execute("ALTER TABLE listings ADD COLUMN ?col ?datatype;"); // discount_expiry -  date and time that the discount expires (will be in UTC format)
         //database->execute("ALTER TABLE listings ADD COLUMN ?col ?datatype;");        
         database->execute("ALTER TABLE listings ADD COLUMN condition TEXT;"); // item condition
+        database->execute("ALTER TABLE listings ADD COLUMN location TEXT;");
         //database->execute("ALTER TABLE listings ADD COLUMN last_updated ?datatype;");
         database->execute("ALTER TABLE listings ADD COLUMN date TEXT;"); // date when first listed // will use ISO8601 string format as follows: YYYY-MM-DD HH:MM:SS.SSS
         //database->execute("");
@@ -298,9 +298,9 @@ int neroshop::Backend::getCategoryProductCount(int category_id) const {
 
 
 QVariantList neroshop::Backend::registerProduct(const QString& name, const QString& description,
-        double price, double weight, const QString& attributes, 
+        double weight, const QString& attributes, 
         const QString& product_code,
-        int category_id, const QString& location) const 
+        int category_id) const 
 {
     neroshop::db::Sqlite3 * database = neroshop::db::Sqlite3::get_database();
     if(!database) throw std::runtime_error("database is NULL");
@@ -308,9 +308,10 @@ QVariantList neroshop::Backend::registerProduct(const QString& name, const QStri
     QString product_uuid = QUuid::createUuid().toString();
     product_uuid = product_uuid.remove("{").remove("}"); // remove brackets
     
-    std::string product_id = database->get_text_params("INSERT INTO products (uuid, name, description, price, weight, attributes, code, category_id, location) "
-	    "VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) "
-	    "RETURNING uuid", { product_uuid.toStdString(), name.toStdString(), description.toStdString(), std::to_string(price), std::to_string(weight), attributes.toStdString(), product_code.toStdString(), std::to_string(category_id), location.toStdString() });
+    std::string product_id = database->get_text_params("INSERT INTO products (uuid, name, description, weight, attributes, code, category_id) "
+	    "VALUES ($1, $2, $3, $4, $5, $6, $7) "
+	    "RETURNING uuid", { product_uuid.toStdString(), name.toStdString(), description.toStdString(), std::to_string(weight), attributes.toStdString(), product_code.toStdString(), std::to_string(category_id) });
+
     if(product_id.empty()) return { false, "" };
     return { true, QString::fromStdString(product_id) };
 }
@@ -328,7 +329,7 @@ void neroshop::Backend::uploadProductImage(const QString& product_id, const QStr
     }
     product_image_file.seekg(0, std::ios::end);
     size_t size = static_cast<int>(product_image_file.tellg()); // in bytes
-    // Limit avatar image size to 12582912 bytes (12 megabyte)
+    // Limit product image size to 12582912 bytes (12 megabyte)
     // Todo: Database cannot scale to billions of users if I am storing blobs so I'll have to switch to text later
     if(size >= 12582912) {
         neroshop::print("Product upload image cannot exceed 12 MB (twelve megabyte)", 1);
@@ -381,6 +382,47 @@ void neroshop::Backend::uploadProductImage(const QString& product_id, const QStr
     database->execute("COMMIT;");
 }
 
+
+QVariantList neroshop::Backend::getListings() {
+    std::string command = "SELECT DISTINCT * FROM listings ORDER BY product_id ASC LIMIT $1;";//WHERE stock_qty > 0;";
+/*
+    // Do some database reading to fetch each category row (database reads do not require consensus)
+    neroshop::db::Sqlite3 * database = neroshop::db::Sqlite3::get_database();
+    if(!database) throw std::runtime_error("database is NULL");
+    sqlite3_stmt * stmt = nullptr;
+    // Prepare (compile) statement
+    if(sqlite3_prepare_v2(database->get_handle(), (sort_alphabetically) ? "SELECT * FROM categories ORDER BY name ASC;" : "SELECT * FROM categories ORDER BY id ASC;", -1, &stmt, nullptr) != SQLITE_OK) {
+        neroshop::print("sqlite3_prepare_v2: " + std::string(sqlite3_errmsg(database->get_handle())), 1);
+        return {};
+    }
+    // Check whether the prepared statement returns no data (for example an UPDATE)
+    if(sqlite3_column_count(stmt) == 0) {
+        neroshop::print("No data found. Be sure to use an appropriate SELECT statement", 1);
+        return {};
+    }
+    
+    QVariantList category_list;
+    // Get all table values row by row
+    while(sqlite3_step(stmt) == SQLITE_ROW) {
+        QVariantMap category_object; // Create an object for each row
+        for(int i = 0; i < sqlite3_column_count(stmt); i++) {
+            std::string column_value = (sqlite3_column_text(stmt, i) == nullptr) ? "NULL" : reinterpret_cast<const char *>(sqlite3_column_text(stmt, i));////if(sqlite3_column_text(stmt, i) == nullptr) {throw std::runtime_error("column is NULL");}
+            //std::cout << column_value << std::endl;//std::cout << sqlite3_column_name(stmt, i) << std::endl;
+            if(i == 0) category_object.insert("id", QString::fromStdString(column_value));
+            if(i == 1) category_object.insert("name", QString::fromStdString(column_value));
+            if(i == 2) category_object.insert("description", QString::fromStdString(column_value));
+            if(i == 3) category_object.insert("thumbnail", QString::fromStdString(column_value));      
+            //if(i == ) category_object.insert("", QString::fromStdString(column_value)); 
+        }
+        category_list.append(category_object);
+    }
+    
+    sqlite3_finalize(stmt);
+
+    return category_list;
+*/    
+    return {};
+}
 
 
 
