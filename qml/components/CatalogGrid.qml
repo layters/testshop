@@ -5,8 +5,6 @@ import QtQuick.Layouts 1.12 // GridLayout
 import QtQuick.Shapes 1.3 // (since Qt 5.10) // Shape
 import QtGraphicalEffects 1.12//Qt5Compat.GraphicalEffects 1.15//= Qt6// ColorOverlay
 
-import FontAwesome 1.0
-
 import "." as NeroshopComponents
     // todo: place grid in scrollview (infinite scroll mode) but in a separate file called CatalogGridViewInfiniteScroll.qml or CatalogGridViewLimitlessScroll.qml
     // todo: create a CatalogList.qml for the Catalog List View
@@ -26,7 +24,7 @@ import "." as NeroshopComponents
         }
         property bool hideProductDetails: false // hides product name, price, and star ratings if set to true
         property real boxWidth: (hideProductDetails) ? 250 : 300//220 : 250//300
-        property real boxHeight: (hideProductDetails) ? 300 : 400//220 : 250//220
+        property real boxHeight: 300//(hideProductDetails) ? 300 : 400
         property real fullWidth: (this.boxWidth * columns) + (spacing * (columns - 1)) // Full width of the entire grid
         property alias count: catalogGridRepeater.count
         
@@ -51,7 +49,7 @@ import "." as NeroshopComponents
                     anchors.left: parent.left // so that margins will also apply to left and right sides
                     anchors.margins: parent.border.width
                     anchors.horizontalCenter: parent.horizontalCenter
-                    width: parent.width; height: (parent.height / 3) + 20
+                    width: parent.width; height: (parent.height / 3) + 30//=130
                     color: "#ffffff"//"transparent"//(NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000"
                     radius: parent.radius
                              

@@ -3,13 +3,14 @@
 QString neroshop::Backend::urlToLocalFile(const QUrl& url) const {
     return url.toLocalFile();
 }
-
+//----------------------------------------------------------------
 void neroshop::Backend::copyTextToClipboard(const QString& text) {
     QClipboard * clipboard = QGuiApplication::clipboard();
     clipboard->setText(text);
     std::cout << "Copied text to clipboard\n";
 }
-
+//----------------------------------------------------------------
+//----------------------------------------------------------------
 double neroshop::Backend::convertToXmr(double amount, const QString& currency) const {
     std::string map_key = currency.toUpper().toStdString();
     
@@ -22,7 +23,7 @@ double neroshop::Backend::convertToXmr(double amount, const QString& currency) c
     neroshop::print(currency.toUpper().toStdString() + " is not supported", 1);
     return 0.0;
 }
-
+//----------------------------------------------------------------
 QStringList neroshop::Backend::getCurrencyList() const {
     QStringList currency_list;
     for (const auto& [key, value] : neroshop::CurrencyMap) {
@@ -30,7 +31,7 @@ QStringList neroshop::Backend::getCurrencyList() const {
     }
     return currency_list;
 }
-
+//----------------------------------------------------------------
 int neroshop::Backend::getCurrencyDecimals(const QString& currency) const {
     auto map_key = currency.toUpper().toStdString();
     // Check if key exists in std::map
@@ -41,7 +42,7 @@ int neroshop::Backend::getCurrencyDecimals(const QString& currency) const {
     }
     return 2;
 }
-
+//----------------------------------------------------------------
 double neroshop::Backend::getXmrPrice(const QString& currency) const {
     auto map_key = currency.toUpper().toStdString();
     // Check if key exists in std::map
@@ -53,16 +54,16 @@ double neroshop::Backend::getXmrPrice(const QString& currency) const {
     neroshop::print(currency.toUpper().toStdString() + " is not supported", 1);
     return 0.0;
 }
-
+//----------------------------------------------------------------
 QString neroshop::Backend::getCurrencySign(const QString& currency) const {
     return QString::fromStdString(neroshop::Converter::get_currency_sign(currency.toStdString()));
 }
-
+//----------------------------------------------------------------
 bool neroshop::Backend::isSupportedCurrency(const QString& currency) const {
     return neroshop::Converter::is_supported_currency(currency.toStdString());
 }
-
-
+//----------------------------------------------------------------
+//----------------------------------------------------------------
 void neroshop::Backend::initializeDatabase() {
     std::cout << "sqlite3 v" << db::Sqlite3::get_sqlite_version() << std::endl;
     
@@ -241,7 +242,7 @@ void neroshop::Backend::initializeDatabase() {
     //-------------------------
     database->execute("COMMIT;");
 }
-
+//----------------------------------------------------------------
 std::string neroshop::Backend::getDatabaseHash() {
     // Get contents from data.sqlite3 file
     std::ifstream rfile (std::string("data.sqlite3").c_str(), std::ios::binary);
@@ -254,7 +255,8 @@ std::string neroshop::Backend::getDatabaseHash() {
     std::cout << "sha256sum (data.sqlite3): " << sha256sum << std::endl;
     return sha256sum; // database may have to be closed first in order to get the accurate hash
 }
-
+//----------------------------------------------------------------
+//----------------------------------------------------------------
 QVariantList neroshop::Backend::getCategoryList(bool sort_alphabetically) const {
     // Do some database reading to fetch each category row (database reads do not require consensus)
     neroshop::db::Sqlite3 * database = neroshop::db::Sqlite3::get_database();
@@ -292,7 +294,7 @@ QVariantList neroshop::Backend::getCategoryList(bool sort_alphabetically) const 
     return category_list;
 }
 
-
+//----------------------------------------------------------------
 int neroshop::Backend::getCategoryIdByName(const QString& category_name) const {
     neroshop::db::Sqlite3 * database = neroshop::db::Sqlite3::get_database();
     if(!database) throw std::runtime_error("database is NULL");
@@ -300,7 +302,7 @@ int neroshop::Backend::getCategoryIdByName(const QString& category_name) const {
     int category_id = database->get_integer_params("SELECT id FROM categories WHERE name = $1;", { category_name.toStdString() });
     return category_id;
 }
-
+//----------------------------------------------------------------
 int neroshop::Backend::getCategoryProductCount(int category_id) const {
     neroshop::db::Sqlite3 * database = neroshop::db::Sqlite3::get_database();
     if(!database) throw std::runtime_error("database is NULL");
@@ -308,8 +310,8 @@ int neroshop::Backend::getCategoryProductCount(int category_id) const {
     int category_product_count = database->get_integer_params("SELECT COUNT(*) FROM products WHERE category_id = $1;", { std::to_string(category_id) });
     return category_product_count;
 }
-
-
+//----------------------------------------------------------------
+//----------------------------------------------------------------
 QVariantList neroshop::Backend::registerProduct(const QString& name, const QString& description,
         double weight, const QString& attributes, 
         const QString& product_code,
@@ -330,7 +332,7 @@ QVariantList neroshop::Backend::registerProduct(const QString& name, const QStri
     if(attributes.isEmpty()) database->execute_params("UPDATE products SET attributes = NULL WHERE uuid = $1", { product_uuid.toStdString() });
     return { true, QString::fromStdString(product_id) };
 }
-
+//----------------------------------------------------------------
 void neroshop::Backend::uploadProductImage(const QString& product_id, const QString& filename) {
     neroshop::db::Sqlite3 * database = neroshop::db::Sqlite3::get_database();
     if(!database) throw std::runtime_error("database is NULL");
@@ -397,13 +399,13 @@ void neroshop::Backend::uploadProductImage(const QString& product_id, const QStr
     database->execute("COMMIT;");
 }
 
-
+//----------------------------------------------------------------
 QVariantList neroshop::Backend::getListings() {
     neroshop::db::Sqlite3 * database = neroshop::db::Sqlite3::get_database();
     if(!database) throw std::runtime_error("database is NULL");
     
     //std::string command = "SELECT DISTINCT * FROM listings ORDER BY date ASC;";// LIMIT $1;";//WHERE stock_qty > 0;";
-    std::string command = "SELECT DISTINCT * FROM listings JOIN products ON products.uuid = listings.product_id JOIN images ON images.product_id = listings.product_id ORDER BY date ASC;";
+    std::string command = "SELECT DISTINCT * FROM listings JOIN products ON products.uuid = listings.product_id JOIN images ON images.product_id = listings.product_id;";
     sqlite3_stmt * stmt = nullptr;
     // Prepare (compile) statement
     if(sqlite3_prepare_v2(database->get_handle(), command.c_str(), -1, &stmt, nullptr) != SQLITE_OK) {
@@ -454,18 +456,77 @@ QVariantList neroshop::Backend::getListings() {
 
     return catalog_array;
 }
+//----------------------------------------------------------------
+QVariantList neroshop::Backend::getListingsByMostRecent() {
+    neroshop::db::Sqlite3 * database = neroshop::db::Sqlite3::get_database();
+    if(!database) throw std::runtime_error("database is NULL");
+    
+    //std::string command = "SELECT DISTINCT * FROM listings ORDER BY date ASC;";// LIMIT $1;";//WHERE stock_qty > 0;";
+    std::string command = "SELECT DISTINCT * FROM listings JOIN products ON products.uuid = listings.product_id JOIN images ON images.product_id = listings.product_id ORDER BY date DESC LIMIT $1;";
+    sqlite3_stmt * stmt = nullptr;
+    // Prepare (compile) statement
+    if(sqlite3_prepare_v2(database->get_handle(), command.c_str(), -1, &stmt, nullptr) != SQLITE_OK) {
+        neroshop::print("sqlite3_prepare_v2: " + std::string(sqlite3_errmsg(database->get_handle())), 1);
+        return {};
+    }
+    int limit = 6; // Limit the number of item results (rows)
+    if(sqlite3_bind_int(stmt, 1, limit) != SQLITE_OK) {
+        neroshop::print("sqlite3_bind_int: " + std::string(sqlite3_errmsg(database->get_handle())), 1);
+        sqlite3_finalize(stmt);
+        return {};//database->execute("ROLLBACK;"); return {};
+    }
+    // Check whether the prepared statement returns no data (for example an UPDATE)
+    if(sqlite3_column_count(stmt) == 0) {
+        neroshop::print("No data found. Be sure to use an appropriate SELECT statement", 1);
+        return {};
+    }
+    
+    QVariantList catalog_array;
+    // Get all table values row by row
+    while(sqlite3_step(stmt) == SQLITE_ROW) {
+        QVariantMap listing; // Create an object for each row
+        for(int i = 0; i < sqlite3_column_count(stmt); i++) {
+            std::string column_value = (sqlite3_column_text(stmt, i) == nullptr) ? "NULL" : reinterpret_cast<const char *>(sqlite3_column_text(stmt, i));////if(sqlite3_column_text(stmt, i) == nullptr) {throw std::runtime_error("column is NULL");}
+            ////std::cout << column_value  << " (" << i << ")" << std::endl;//std::cout << sqlite3_column_name(stmt, i) << std::endl;
+            // listings table
+            if(i == 0) listing.insert("listing_uuid", QString::fromStdString(column_value));
+            if(i == 1) listing.insert("product_id", QString::fromStdString(column_value));
+            if(i == 2) listing.insert("seller_id", QString::fromStdString(column_value));
+            if(i == 3) listing.insert("quantity", QString::fromStdString(column_value).toInt());
+            if(i == 4) listing.insert("price", QString::fromStdString(column_value).toDouble());
+            if(i == 5) listing.insert("currency", QString::fromStdString(column_value));
+            if(i == 6) listing.insert("condition", QString::fromStdString(column_value));
+            if(i == 7) listing.insert("location", QString::fromStdString(column_value));
+            if(i == 8) listing.insert("date", QString::fromStdString(column_value));
+            // products table
+            if(i == 9) listing.insert("product_uuid", QString::fromStdString(column_value)); 
+            if(i == 10) listing.insert("product_name", QString::fromStdString(column_value)); 
+            if(i == 11) listing.insert("product_description", QString::fromStdString(column_value)); 
+            if(i == 12) listing.insert("weight", QString::fromStdString(column_value).toDouble()); 
+            if(i == 13) listing.insert("product_attributes", QString::fromStdString(column_value)); 
+            if(i == 14) listing.insert("product_code", QString::fromStdString(column_value)); 
+            if(i == 15) listing.insert("product_category_id", QString::fromStdString(column_value).toInt()); 
+            // images table
+            //if(i == 16) listing.insert("image_id", QString::fromStdString(column_value)); 
+            //if(i == 17) listing.insert("product_uuid", QString::fromStdString(column_value)); 
+            if(i == 18) listing.insert("product_image_file", QString::fromStdString(column_value)); 
+            //if(i == 19) listing.insert("product_image_data", QString::fromStdString(column_value));
+        }
+        catalog_array.append(listing);
+    }
+    
+    sqlite3_finalize(stmt);
 
-
-
-
-
-
-
+    return catalog_array;
+}
+//----------------------------------------------------------------
+//----------------------------------------------------------------
 // Todo: fetch monero nodes from monero.fail // Each node will represent a QML object (QVariantMap) with properties: address, height, and status
 Q_INVOKABLE QVariantList neroshop::Backend::getWalletNodeList() const {
     QVariantList node_list;
     return node_list;
 }
+//----------------------------------------------------------------
 // Todo: use QProcess to check if monero daemon is running
 bool neroshop::Backend::isWalletDaemonRunning() const {
     int monerod = Process::get_process_by_name("monerod");
@@ -473,8 +534,8 @@ bool neroshop::Backend::isWalletDaemonRunning() const {
     std::cout << "\033[1;90;49m" << "monerod is running (ID:" << monerod << ")\033[0m" << std::endl; 
     return true;
 }
-
-
+//----------------------------------------------------------------
+//----------------------------------------------------------------
 QVariantList neroshop::Backend::validateDisplayName(const QString& display_name) const {
     // username (will appear only in lower-case letters within the app)
     std::string username = display_name.toStdString();
@@ -537,7 +598,7 @@ QVariantList neroshop::Backend::validateDisplayName(const QString& display_name)
     }    
     return { true, "" };
 }
-
+//----------------------------------------------------------------
 QVariantList neroshop::Backend::checkDisplayName(const QString& display_name) const {    
     neroshop::db::Sqlite3 * database = neroshop::db::Sqlite3::get_database();
     if(!database->table_exists("users")) { return {true, ""}; } 
@@ -554,7 +615,7 @@ QVariantList neroshop::Backend::checkDisplayName(const QString& display_name) co
 	}   
 	return { true, "" };
 }
-
+//----------------------------------------------------------------
 // TODO: replace function return type with enum
 QVariantList neroshop::Backend::registerUser(WalletController* wallet_controller, const QString& display_name, UserController * user_controller) {
     neroshop::db::Sqlite3 * database = neroshop::db::Sqlite3::get_database();
@@ -603,7 +664,7 @@ QVariantList neroshop::Backend::registerUser(WalletController* wallet_controller
     neroshop::print(((!display_name.isEmpty()) ? "Welcome to neroshop, " : "Welcome to neroshop") + display_name.toStdString(), 4);
     return { true, "" };
 }
-
+//----------------------------------------------------------------
 bool neroshop::Backend::loginWithWalletFile(WalletController* wallet_controller, const QString& path, const QString& password, UserController * user_controller) {
     neroshop::db::Sqlite3 * database = neroshop::db::Sqlite3::get_database();
     if(!database) throw std::runtime_error("database is NULL");
@@ -634,7 +695,7 @@ bool neroshop::Backend::loginWithWalletFile(WalletController* wallet_controller,
     neroshop::print("Welcome back, user " + ((!display_name.empty()) ? (display_name + " (id: " + primary_address + ")") : primary_address), 4);
     return true;
 }
-
+//----------------------------------------------------------------
 bool neroshop::Backend::loginWithMnemonic(WalletController* wallet_controller, const QString& mnemonic, UserController * user_controller) {
     neroshop::db::Sqlite3 * database = neroshop::db::Sqlite3::get_database();
     if(!database) throw std::runtime_error("database is NULL");
@@ -661,7 +722,7 @@ bool neroshop::Backend::loginWithMnemonic(WalletController* wallet_controller, c
     neroshop::print("Welcome back, user " + ((!display_name.empty()) ? (display_name + " (id: " + primary_address + ")") : primary_address), 4);
     return true;
 }
-
+//----------------------------------------------------------------
 bool neroshop::Backend::loginWithKeys(WalletController* wallet_controller, UserController * user_controller) {
 /*
     neroshop::db::Sqlite3 * database = neroshop::db::Sqlite3::get_database();
@@ -703,17 +764,12 @@ bool neroshop::Backend::loginWithKeys(WalletController* wallet_controller, UserC
 */
     return false;
 }
-
+//----------------------------------------------------------------
 bool neroshop::Backend::loginWithHW(WalletController* wallet_controller, UserController * user_controller) {
     return false;
 }
-
-
-
-
-
-
-
+//----------------------------------------------------------------
+//----------------------------------------------------------------
 void neroshop::Backend::startServerDaemon() {
     // on launching neroshop, start the neromon process, if it has not yet been started    
     int neromon = Process::get_process_by_name("neromon");
@@ -745,11 +801,11 @@ void neroshop::Backend::startServerDaemon() {
     //if(!success) { throw std::runtime_error("neromon could not be started") }
     std::cout << "\033[35mneromon started (pid: " << pid << ")\033[0m\n";
 }
-
+//----------------------------------------------------------------
 void neroshop::Backend::waitForServerDaemon() {
     ::sleep(2);
 }
-
+//----------------------------------------------------------------
 void neroshop::Backend::connectToServerDaemon() {
     neroshop::Client * client = neroshop::Client::get_main_client();
 	int client_port = 1234;
@@ -762,3 +818,5 @@ void neroshop::Backend::connectToServerDaemon() {
 	    exit(0);
 	} else std::cout << client->read() << std::endl;
 }
+//----------------------------------------------------------------
+//----------------------------------------------------------------

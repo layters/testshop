@@ -220,7 +220,7 @@ ApplicationWindow {
                     anchors.verticalCenter: parent.verticalCenter//anchors.top: parent.top; anchors.topMargin: (parent.height - this.height) / 2
                     ////value: Wallet.opened ? Wallet.getSyncPercentage() : 0.0 // this does not work (fails to update value so we use Timer instead)
                     barWidth: daemonSyncBar.barWidth
-                    property string daemonAddress: (Wallet.opened) ? settingsDialog.moneroNodeAddress : "monerod"
+                    property string daemonAddress: "monerod"//(Wallet.opened) ? settingsDialog.moneroNodeAddress : "monerod"
                     Timer {
                         interval: 1 // trigger every x miliseconds
                         running: true

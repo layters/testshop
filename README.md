@@ -235,7 +235,7 @@ You may support the neroshop project directly by donating Monero (XMR) to the ad
 ## Credits
 ```
 u/EchoingCat — for the revision of the official neroshop logo
-woodser — for his guidance and for his work on the monero-cpp library which has made this app possible
+woodser — for his guidance and for his work on the monero-cpp library which has made the development of this app possible
 yuriio147 — for his work on various QML components (Triangle, Banner, NodeList, etc.), the currency converter, fixing a major bug in the RSA encryption code, the RSA signing and verifying functions, and for teaching me some Qt/Quick techniques
 ```
 

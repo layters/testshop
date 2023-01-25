@@ -60,7 +60,7 @@ Column {
                         onClicked: { 
                             navBar.uncheckAllButtons() // Uncheck all navigational buttons
                             console.log("Loading product page ...");
-                            ////pageLoader.source = "../pages/ProductPage.qml"
+                            pageLoader.setSource("qrc:/qml/pages/ProductPage.qml")////, { "listingId": modelData.listing_uuid })
                         }
                     }                    
                 }

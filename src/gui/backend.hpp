@@ -56,7 +56,7 @@ public:
     Q_INVOKABLE bool loginWithHW(WalletController* wallet_controller, UserController * user_controller);
     
     Q_INVOKABLE QVariantList getListings(); // Products listed by sellers
-    //Q_INVOKABLE QVariantList getListingsByMostRecent();
+    Q_INVOKABLE QVariantList getListingsByMostRecent();
     //Q_INVOKABLE QVariantList getListingsByMostFavorited();
     //Q_INVOKABLE QVariantList getListingsByMostSales();
     //Q_INVOKABLE QVariantList getProducts(); // Registered products
