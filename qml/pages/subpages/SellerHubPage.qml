@@ -266,6 +266,7 @@ Page {
                                 placeholderText: qsTr("Product title")
                                 color: productDetails.textColor
                                 selectByMouse: true
+                                maximumLength: 200
                                 background: Rectangle { 
                                     color: productDetails.baseColor
                                     border.color: productDetails.borderColor
@@ -669,6 +670,7 @@ Page {
                                     if(find(editText) === -1)
                                         model.append({text: editText})
                                 }
+                                radius: productDetails.radius
                                 color: productDetails.baseColor
                                 textColor: productDetails.textColor
                             }
@@ -751,7 +753,7 @@ Page {
                                                     anchors.centerIn: parent // This is not necessary since the image is the same size as its parent rect but I'll keep it there just to be sure the image is centered
                                                     width: parent.width; height: parent.height
                                                     fillMode: Image.PreserveAspectFit // scale to fit
-                                                    source: productImageFileDialog.file
+                                                    ////source: productImageFileDialog.file
                                                     mipmap: true // produces better image quality that is not pixely but smooth :D
                                                     //asynchronous: true // won't block the app
                                                     onStatusChanged: {
@@ -796,6 +798,7 @@ Page {
                                                 fileMode: FileDialog.OpenFile
                                                 folder: (isWindows) ? StandardPaths.writableLocation(StandardPaths.DocumentsLocation) + "/neroshop" : StandardPaths.writableLocation(StandardPaths.HomeLocation) + "/neroshop"
                                                 nameFilters: ["Image files (*.bmp *.gif *.jpeg *.jpg *.png *.tif *.tiff)"]
+                                                onAccepted: productImageRepeater.itemAt(index).children[0].children[0].source = currentFile
                                             }
                                         }         
                                     }                       

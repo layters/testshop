@@ -260,11 +260,10 @@ ApplicationWindow {
                 
                 Text {
                     id: priceDisplayText
-                    property real amount: 1
                     property string scriptCurrency: Script.getString("neroshop.generalsettings.currency")
                     property string currency: Backend.isSupportedCurrency(scriptCurrency) ? scriptCurrency : "usd"
-                    property double price: Backend.getPrice(amount, currency)
-                    text: qsTr(/*amount.toString() + " " + */FontAwesome.monero + "  %1%2").arg(Backend.getCurrencySign(currency)).arg(price.toFixed(Backend.getCurrencyDecimals(currency)))////.arg(currency.toUpperCase())
+                    property double price: Backend.getXmrPrice(currency)
+                    text: qsTr(/*1.toString() + " " + */FontAwesome.monero + "  %1%2").arg(Backend.getCurrencySign(currency)).arg(price.toFixed(Backend.getCurrencyDecimals(currency)))////.arg(currency.toUpperCase())
                     color: (NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000"
                     font.bold: true
                     anchors.verticalCenter: parent.verticalCenter

@@ -250,7 +250,7 @@ Popup {
                         onActivated: {    
                             displayText = currentText
                             priceDisplayText.currency = displayText
-                            priceDisplayText.price = Backend.getPrice(priceDisplayText.amount, priceDisplayText.currency)
+                            priceDisplayText.price = Backend.getXmrPrice(priceDisplayText.currency)
                             priceDisplayText.text = qsTr(FontAwesome.monero + "  %1%2").arg(Backend.getCurrencySign(priceDisplayText.currency)).arg(priceDisplayText.price.toFixed(Backend.getCurrencyDecimals(priceDisplayText.currency)))
                             ////lastCurrencySet = currentText
                         }
