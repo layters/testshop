@@ -17,6 +17,7 @@ Popup {
     modal: true//clip: true
     closePolicy: Popup.CloseOnEscape    
     property bool hideTabText: false
+    property alias currentIndex: settingsStack.currentIndex
     // General tab properties
     property alias theme: themeBox
     property alias currency: currencyBox
@@ -42,7 +43,7 @@ Popup {
         if(network_type == "mainnet") return "18081";
         if(network_type == "testnet") return "28081";
         if(network_type == "stagenet") return "38081";
-        return "18081"//qsTr(Script.getString("neroshop.monero.daemon.port"))
+        return "18081"
     }
     
     background: Rectangle {
@@ -135,7 +136,7 @@ Popup {
                 // This will remove the icon :(
                 contentItem: Text {
                     text: parent.text
-                    color: (parent.checked) ? "#e0e0e0" : "#353637"//"#000000" : "#ffffff"
+                    color: (parent.checked) ? "#ffffff" : ((NeroshopComponents.Style.darkTheme) ? "#e0e0e0" : "#353637")//"#000000" : "#ffffff"
                     horizontalAlignment: Text.AlignHCenter//anchors.horizontalCenter: parent.horizontalCenter
                     verticalAlignment: Text.AlignVCenter                    
                     font.bold: true//(parent.checked) ? true : false
@@ -159,7 +160,7 @@ Popup {
                 }
                 contentItem: Text {
                     text: parent.text
-                    color: (parent.checked) ? "#e0e0e0" : "#353637"
+                    color: (parent.checked) ? "#ffffff" : ((NeroshopComponents.Style.darkTheme) ? "#e0e0e0" : "#353637")
                     horizontalAlignment: Text.AlignHCenter
                     verticalAlignment: Text.AlignVCenter                    
                     font.bold: true
@@ -231,7 +232,7 @@ Popup {
                         Layout.alignment: Qt.AlignLeft
                         Layout.leftMargin: 0
                     }
-                    ComboBox {
+                    NeroshopComponents.ComboBox {
                         id: currencyBox
                         Layout.alignment: Qt.AlignRight
                         Layout.rightMargin: 0
@@ -249,10 +250,13 @@ Popup {
                         onActivated: {    
                             displayText = currentText
                             priceDisplayText.currency = displayText
-                            priceDisplayText.price = Backend.getPrice(priceDisplayText.amount, priceDisplayText.currency)
+                            priceDisplayText.price = Backend.getXmrPrice(priceDisplayText.currency)
                             priceDisplayText.text = qsTr(FontAwesome.monero + "  %1%2").arg(Backend.getCurrencySign(priceDisplayText.currency)).arg(priceDisplayText.price.toFixed(Backend.getCurrencyDecimals(priceDisplayText.currency)))
                             ////lastCurrencySet = currentText
                         }
+                        indicatorWidth: 30
+                        color: "#f2f2f2"//(NeroshopComponents.Style.darkTheme) ? "#101010" : "#f0f0f0"
+                        //textColor: (NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000"
 }
                 }          
             }
@@ -287,7 +291,7 @@ Popup {
                         Layout.alignment: Qt.AlignLeft
                         Layout.leftMargin: 0
                     }
-                    ComboBox {
+                    NeroshopComponents.ComboBox {
                         id: themeBox
                         Layout.alignment: Qt.AlignRight
                         Layout.rightMargin: 0
@@ -316,6 +320,8 @@ Popup {
                             //todo: change theme in configuration file too
                             console.log("Theme set to", currentText)
                         }
+                        indicatorWidth: 30
+                        color: "#f2f2f2"
                     } // ComboBox       
                     // Window                
                 } // RowLayout2
@@ -348,12 +354,14 @@ Popup {
                     color: NeroshopComponents.Style.darkTheme ? "#ffffff" : "#000000"
                 }
 
-                ComboBox {
+                NeroshopComponents.ComboBox {
                     id: languageComboBox
                     Layout.alignment: Qt.AlignRight
                     Layout.rightMargin: 0
-                    currentIndex: model.indexOf("English"/*Script.getString("neroshop.generalsettings.currency").toUpperCase()*/)
+                    currentIndex: model.indexOf("English")
                     model: ["English"] // TODO logic from controller
+                    indicatorWidth: 30
+                    color: "#f2f2f2"
                 }
             }                
             } // GroupBox3    
@@ -675,7 +683,7 @@ Item {
                         id: moneroDaemonIPField
                         Layout.preferredWidth: (moneroDaemonPortField.width * 3) - parent.spacing // Default row spacing is 5 so the width is reduced by 5
                         Layout.preferredHeight: 50
-                        placeholderText: qsTr((confirmExternalBindSwitch.checked) ? "0.0.0.0" : Script.getString("neroshop.monero.daemon.ip")); placeholderTextColor: (NeroshopComponents.Style.darkTheme) ? "#a9a9a9" : "#696969"
+                        placeholderText: qsTr((confirmExternalBindSwitch.checked) ? "0.0.0.0" : "localhost"); placeholderTextColor: (NeroshopComponents.Style.darkTheme) ? "#a9a9a9" : "#696969"
                         color: (NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000"
                         selectByMouse: true
                         readOnly: localNodeButton.checked
