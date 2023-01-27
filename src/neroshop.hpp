@@ -36,8 +36,9 @@
 #if defined(NEROSHOP_BUILD_GUI)
 #include "gui/backend.hpp"
 #include "gui/script_controller.hpp"
-#include "gui/wallet_controller.hpp"
 #include "gui/user_controller.hpp"
+#include "gui/wallet_controller.hpp"
+#include "gui/wallet_qr_provider.h"
 #endif
 
 #endif

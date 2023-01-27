@@ -23,6 +23,14 @@ Page {
         ColumnLayout {
             id: walletSettings
             anchors.fill: parent
+
+            Image {
+                source: "image://wallet_qr/%1".arg(Wallet.getPrimaryAddress())
+                sourceSize {
+                    width: 200
+                    height: 200
+                }
+            }
         
             RowLayout {
                 Rectangle {
