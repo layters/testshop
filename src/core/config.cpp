@@ -44,12 +44,9 @@ neroshop = {
         },
         daemon = {
             network_type = "stagenet",
-            ip = "localhost", -- set to "0.0.0.0" to allow other wallets to connect to your node
-            port = "38081", --"18081" (mainnet), "38081" (stagenet), or "28081" (testnet)
             confirm_external_bind = false, -- if true then it confirms that you want to allow connections from other wallets outside of this system, but only when ip is set to "0.0.0.0"
             restricted_rpc = true,
             data_dir = "/home/<user>/.bitmonero",
-            remote = false -- set to true if the node that you want to connect to is a remote node
         },
         nodes = {
             mainnet = {

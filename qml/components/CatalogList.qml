@@ -8,16 +8,17 @@ import "." as NeroshopComponents
 
 Column {
     id: catalogList
-    width: parent.width; height: (boxHeight * catalogListRepeater.count) // The height is the height of all the models in the listview combined
+    width: boxWidth; height: (boxHeight * count) + (spacing * (count - 1))//(boxHeight * catalogListRepeater.count) // The height is the height of all the models in the listview combined
     spacing: 5
-    property bool hideProductDetails: true//false // hides product name, price, and star ratings if set to true
-    property real boxWidth: this.width
-    property real boxHeight: 300//NeroshopComponents.CatalogGrid.boxWidth
+    property bool hideProductDetails: false // hides product name, price, and star ratings if set to true
+    property real boxWidth: 600
+    property real boxHeight: 300
     property alias count: catalogListRepeater.count
+    //Component.onCompleted: {console.log("catalogList children height",childrenRect.height)}
              
     Repeater {
         id: catalogListRepeater
-        model: 10
+        model: Backend.getListings()//10
         delegate: Rectangle {
             id: productBox
             width: catalogList.boxWidth; height: catalogList.boxHeight // The height of each individual model item/ list element
@@ -26,11 +27,44 @@ Column {
             border.width: 0
             radius: 5
             //clip: true
-        
-            Text {
-                text: "I'm item " + index + ", model count: " + catalogListRepeater.count//text: //name + ": " + number
-                color: (NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000"
-            }
+
+            Rectangle {
+                id: productImageRect
+                anchors.top: parent.top
+                anchors.left: parent.left // so that margins will also apply to left and right sides
+                anchors.margins: parent.border.width
+                anchors.verticalCenter: parent.verticalCenter
+                width: (parent.width / 3) + 20; height: parent.height
+                color: "#ffffff"//"transparent"
+                radius: parent.radius
+                             
+                Image {
+                    id: productImage
+                    source: "file:///" + modelData.product_image_file//"qrc:/images/image_gallery.png"
+                    anchors.centerIn: parent
+                    width: 128; height: 128
+                    fillMode: Image.PreserveAspectFit
+                    mipmap: true
+                    asynchronous: true
+                    
+                    MouseArea {
+                        anchors.fill: parent
+                        hoverEnabled: true
+                        acceptedButtons: Qt.LeftButton
+                        onEntered: {
+                            catalogListRepeater.itemAt(index).border.width = 1
+                        }
+                        onExited: {
+                            catalogListRepeater.itemAt(index).border.width = 0
+                        }
+                        onClicked: { 
+                            navBar.uncheckAllButtons() // Uncheck all navigational buttons
+                            console.log("Loading product page ...");
+                            pageLoader.setSource("qrc:/qml/pages/ProductPage.qml")////, { "listingId": modelData.listing_uuid })
+                        }
+                    }                    
+                }
+            } // ProductImageRect
         }     
     }
 }

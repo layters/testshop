@@ -7,6 +7,7 @@
         <file>qml/components/CartTable.qml</file>
         <file>qml/components/CatalogGrid.qml</file>
         <file>qml/components/CatalogList.qml</file>
+        <file>qml/components/ComboBox.qml</file>
         <file>qml/components/FilterBox.qml</file>
         <file>qml/components/Hint.qml</file>
         <file>qml/components/MessageBox.qml</file>
