@@ -9,6 +9,7 @@ Item {
     property real radius: 3;
     property alias currentButton: viewButtonGroup.checkedButton
     property int currentIndex: viewButtonGroup.checkedButton.buttonIndex
+    width: childrenRect.width; height: childrenRect.height
 
 ButtonGroup {
     id: viewButtonGroup

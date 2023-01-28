@@ -13,7 +13,7 @@
 #include "../neroshop.hpp"
 using namespace neroshop;
 
-static const QString WALLET_QR_PROVIER{"wallet_qr"};
+static const QString WALLET_QR_PROVIDER{"wallet_qr"};
 
 bool isIOS = false;
 bool isAndroid = false;
@@ -69,6 +69,8 @@ int main(int argc, char *argv[]) {
     }
     // start database
     Backend::initializeDatabase();
+    // testing
+    //Backend::testWriteJson();
     // import paths
     engine.addImportPath(":/fonts"); // import FontAwesome 1.0
     // platform macros
@@ -105,7 +107,7 @@ int main(int argc, char *argv[]) {
     engine.rootContext()->setContextProperty("User", new UserController());
     qRegisterMetaType<UserController *>();
 
-    engine.addImageProvider(WALLET_QR_PROVIER, new WalletQrProvider(WALLET_QR_PROVIER));
+    engine.addImageProvider(WALLET_QR_PROVIDER, new WalletQrProvider(WALLET_QR_PROVIDER));
     //--------------------------
     // Load main.qml from the "qml/" directory
     engine.load(QUrl(QStringLiteral("qrc:/qml/main.qml")));

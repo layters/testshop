@@ -8,10 +8,10 @@ import "." as NeroshopComponents
 
 Column {
     id: catalogList
-    width: childrenRect.width/*boxWidth*/; height: (childrenRect.height * catalogListRepeater.count)//(boxHeight * catalogListRepeater.count) // The height is the height of all the models in the listview combined
+    width: boxWidth; height: (boxHeight * count) + (spacing * (count - 1))//(boxHeight * catalogListRepeater.count) // The height is the height of all the models in the listview combined
     spacing: 5
     property bool hideProductDetails: false // hides product name, price, and star ratings if set to true
-    property real boxWidth: 600//parent.width
+    property real boxWidth: 600
     property real boxHeight: 300
     property alias count: catalogListRepeater.count
     //Component.onCompleted: {console.log("catalogList children height",childrenRect.height)}

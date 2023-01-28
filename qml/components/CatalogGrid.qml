@@ -12,6 +12,7 @@ import "." as NeroshopComponents
     // catalog view (Grid)
     Grid {
         id: catalogGrid
+        width: (boxWidth * count) + (spacing * (count - 1)); height: (boxHeight * count) + (spacing * (count - 1))
         rows: 10//20
         columns: 3
         spacing: 5//rowSpacing: 5; columnSpacing: 5
@@ -25,7 +26,7 @@ import "." as NeroshopComponents
         property bool hideProductDetails: false // hides product name, price, and star ratings if set to true
         property real boxWidth: (hideProductDetails) ? 250 : 300//220 : 250//300
         property real boxHeight: 300//(hideProductDetails) ? 300 : 400
-        property real fullWidth: (this.boxWidth * columns) + (spacing * (columns - 1)) // Full width of the entire grid
+        property real fullWidth: (this.boxWidth * columns) + (spacing * (columns - 1)) // Full width of the entire grid - tested
         property alias count: catalogGridRepeater.count
         
         Repeater { // owns all items it instantiates

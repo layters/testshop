@@ -135,7 +135,7 @@ void neroshop::Backend::initializeDatabase() {
     if(!database->table_exists("orders")) {
         database->execute("CREATE TABLE orders(uuid TEXT NOT NULL PRIMARY KEY);");//database->execute("ALTER TABLE orders ADD COLUMN ?col ?datatype;");
         database->execute("ALTER TABLE orders ADD COLUMN timestamp TEXT DEFAULT CURRENT_TIMESTAMP;"); // creation_date // to get UTC time: set to datetime('now');
-        database->execute("ALTER TABLE orders ADD COLUMN number TEXT;"); // uuid
+        //database->execute("ALTER TABLE orders ADD COLUMN number TEXT;"); // uuid
         database->execute("ALTER TABLE orders ADD COLUMN status TEXT;");
         database->execute("ALTER TABLE orders ADD COLUMN user_id TEXT REFERENCES users(monero_address);"); // the user that placed the order
         //database->execute("ALTER TABLE orders ADD COLUMN weight REAL;"); // weight of all order items combined - not essential
@@ -145,6 +145,7 @@ void neroshop::Backend::initializeDatabase() {
         database->execute("ALTER TABLE orders ADD COLUMN shipping_cost numeric(20, 12);");
         database->execute("ALTER TABLE orders ADD COLUMN total numeric(20, 12);");
         //database->execute("ALTER TABLE orders ADD COLUMN notes TEXT;"); // will contain sensative such as shipping address and tracking numbers that will be encrypted and can only be decrypted by the seller - this may not be necessary since buyer can contact seller privately
+        //database->execute("ALTER TABLE orders ADD COLUMN order_data TEXT;"); // encrypted JSON
         // order_item
         database->execute("CREATE TABLE order_item(id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT);");
         database->execute("ALTER TABLE order_item ADD COLUMN order_id TEXT REFERENCES orders(uuid);");
@@ -820,3 +821,34 @@ void neroshop::Backend::connectToServerDaemon() {
 }
 //----------------------------------------------------------------
 //----------------------------------------------------------------
+void neroshop::Backend::testWriteJson() {
+    QJsonObject jsonObject; // base Object (required)
+    
+    //QJsonObject json_attributes_object; // subObject (optional)
+    
+    QJsonArray json_color_array; // An array of colors
+    json_color_array.insert(json_color_array.size(), QJsonValue("red"));
+    json_color_array.insert(json_color_array.size(), QJsonValue("green"));
+    json_color_array.insert(json_color_array.size(), QJsonValue("blue"));
+    
+    QJsonArray json_size_array; // An array of sizes
+    json_size_array.insert(json_size_array.size(), QJsonValue("XS"));
+    json_size_array.insert(json_size_array.size(), QJsonValue("S"));
+    json_size_array.insert(json_size_array.size(), QJsonValue("M"));
+    json_size_array.insert(json_size_array.size(), QJsonValue("L"));
+    json_size_array.insert(json_size_array.size(), QJsonValue("XL"));
+    
+    /*jsonObject.insert*/jsonObject.insert(QString("weight"), QJsonValue(12.5));
+    /*jsonObject.insert*/jsonObject.insert(QString("color"), json_color_array);
+    /*jsonObject.insert*/jsonObject.insert(QString("size"), json_size_array);
+    
+    //jsonObject.insert("attributes", json_attributes_object);
+    
+    // Convert JSON to QString
+    QJsonDocument doc(jsonObject);
+    QString strJson = doc.toJson(QJsonDocument::Compact); // https://doc.qt.io/qt-6/qjsondocument.html#JsonFormat-enum
+    // Display JSON as string
+    std::cout << strJson.toStdString() << std::endl;
+}
+//----------------------------------------------------------------
+

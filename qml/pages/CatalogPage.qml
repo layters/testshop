@@ -46,25 +46,38 @@ Page {
     function getItemsCount() {
         // ... boxesPerGrid * pageCount
     }    
+    property alias catalogIndex: catalogStack.currentIndex
+    
+    NeroshopComponents.ViewToggle {
+        id: viewToggle
+        anchors.horizontalCenter: parent.horizontalCenter
+        anchors.top: parent.top; anchors.topMargin: 20
+        //Layout.alignment: Qt.AlignHCenter | Qt.AlignTop
+        //Layout.topMargin: 20
+    }    
     
     ScrollView {
-        id: catalogScrollView
-        /*background: Rectangle {
-            color: "transparent" // fixes white edges on borders when grid box radius is set
-        }*/
-        anchors.fill: parent
+        id: catalogScrollView//anchors.margins: 20
+        ////anchors.fill: parent
+        anchors.top: viewToggle.bottom; anchors.topMargin: 15
+        width: parent.width; height: parent.height
         ScrollBar.vertical.policy: ScrollBar.AlwaysOn//ScrollBar.AsNeeded
         clip: true // The area in which the contents of the filterBox will be bounded to (set width and height) // If clip is false then the contents will go beyond/outside of the filterBox's bounds
-        //contentWidth: mainWindow.width//catalogStack.width
-        contentHeight: childrenRect.height + 200////catalogStack.height + 200//100 for viewToggle space and 100 for pagination space //mainWindow.height
+        contentWidth: this.width//childrenRect.width////mainWindow.width//parent.width
+        contentHeight: catalogStack.height + 200//100 for viewToggle space and 100 for pagination space //mainWindow.height
+        //ColumnLayout {
+        //    anchors.fill: parent
 
-        NeroshopComponents.FilterBox {
+        /*NeroshopComponents.FilterBox {
             id: productFilterBox
-            anchors.left: parent.left
-            anchors.leftMargin: 20
-            anchors.top: parent.top
-            anchors.topMargin: 20
-        }    
+            ////anchors.left: parent.left
+            ////anchors.leftMargin: 20
+            ////anchors.top: parent.top
+            ////anchors.topMargin: 20
+            Layout.alignment: Qt.AlignLeft | Qt.AlignTop
+            Layout.leftMargin: 20
+            Layout.topMargin: 20
+        }*/    
 
         // Text that displays current page results information
         /*Text {
@@ -74,37 +87,33 @@ Page {
             anchors.left: catalogStack.left
             anchors.top: viewToggle.top//0
             color: (NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000"
-        }*/
-                
-        
-        NeroshopComponents.ViewToggle {
-            id: viewToggle
-            anchors.horizontalCenter: parent.horizontalCenter
-            anchors.top: parent.top
-            anchors.topMargin: 20
-        }             
+        }*/             
 
         // Pagination mode (Infinite Scroll mode replaces the StackLayout with a ScrollView)
         StackLayout {
             id: catalogStack
-            width: parent.width; height: childrenRect.height
-            anchors.horizontalCenter: viewToggle.horizontalCenter
-            anchors.left: (productFilterBox.visible) ? productFilterBox.right : parent.left
-            anchors.leftMargin: (productFilterBox.visible) ? 10 : 20
-            anchors.top: viewToggle.bottom
-            anchors.topMargin: 50
+            ////anchors.fill: parent
+            width: currentItem.childrenRect.width; height: currentItem.childrenRect.height
+            anchors.horizontalCenter: parent.horizontalCenter////viewToggle.horizontalCenter
+            ////anchors.left: (productFilterBox.visible) ? productFilterBox.right : parent.left
+            ////anchors.leftMargin: (productFilterBox.visible) ? 10 : 20
+            ////anchors.top: viewToggle.bottom
+            ////anchors.topMargin: 50
+            ////Layout.alignment: Qt.AlignHCenter | Qt.AlignTop
+            ////Layout.maximumWidth: catalogScrollView.width
             currentIndex: viewToggle.currentIndex
-            property int pagesCount: 1//10////pages.count
+            property int pagesCount: 1//10////pages.count// Number of page results from search
             property var currentItem: this.itemAt(this.currentIndex)
             property var pages: currentItem.children[0]
             property int currentPageIndex: 0
             property var pageItem: pages.children[0] // can be either a CatalogGrid or CatalogList
+            clip: true
             // Infinite Scroll Mode (without pages)
             Item {
                 id: gridItem
                 // StackLayout child Items' Layout.fillWidth and Layout.fillHeight properties default to true
+                Layout.preferredWidth: childrenRect.width; Layout.preferredHeight: childrenRect.height//width: childrenRect.width; height: childrenRect.height
                 StackLayout {
-                    anchors.fill: parent
                     currentIndex: catalogStack.currentPageIndex
                     Repeater {
                         model: catalogStack.pagesCount//1
@@ -117,8 +126,8 @@ Page {
             Item {
                 id: listItem
                 // StackLayout child Items' Layout.fillWidth and Layout.fillHeight properties default to true
+                Layout.preferredWidth: childrenRect.width; Layout.preferredHeight: childrenRect.height//width: childrenRect.width; height: childrenRect.height
                 StackLayout {
-                    anchors.fill: parent
                     currentIndex: catalogStack.currentPageIndex
                     Repeater {
                         model: catalogStack.pagesCount//1
@@ -127,29 +136,6 @@ Page {
                     }
                 }
             }
-            // Pagination Mode (with pages)
-        /*Repeater {
-            id: pages
-            model: 1//10 // Number of page results from search
-            // todo: use a Loader to switch between grid view and list view // https://forum.qt.io/topic/80826/dynamic-delegate-in-repeater/4 //// (viewToggle.checkedButton.text.match("List view")) ? 
-            delegate: Loader {////NeroshopComponents.CatalogGrid {
-                id: catalogViewLoader
-                source: (viewToggle.currentIndex == 0) ? "qrc:/qml/components/CatalogGrid.qml" : "qrc:/qml/components/CatalogList.qml"*/
-                //asynchronous: true // causes Segfault
-                // displaying the catalog grid's properties
-                //onLoaded: {
-                    /*console.log("Full width of Grid (actual):", catalogViewLoader.item.width)
-                    console.log("catalogGrid.fullWidth:", catalogViewLoader.item.fullWidth)*/
-                    //console.log(catalogViewLoader.item.rows)
-                    //console.log("model count:", catalogViewLoader.item.count)
-                //}
-                // Changing the catalog grid's properties
-                /*Component.onCompleted: {
-                    catalogViewLoader.setSource(catalogViewLoader.source,
-                             { "rows": "2" });
-                }*/
-            /*}
-        }*/
         } // StackLayout
         // Custom pagination bar
         NeroshopComponents.PaginationBar {
@@ -161,7 +147,10 @@ Page {
             count: catalogStack.pages.count//catalogStack.count
             // For Row ONLY, NOT RowLayout (use Layout.alignment for RowLayout instead)
             anchors.horizontalCenter: parent.horizontalCenter//anchors.horizontalCenter: catalogStack.horizontalCenter
-            anchors.bottom: parent.bottom; anchors.bottomMargin: 20
-        }         
+            anchors.top: catalogStack.bottom; anchors.topMargin: 20//anchors.bottom: parent.bottom; anchors.bottomMargin: 20
+            ////Layout.alignment: Qt.AlignHCenter | Qt.AlignBottom
+            ////Layout.bottomMargin: 20
+        }                        
+        //}
     } // ScrollView or Flickable
 } // Page

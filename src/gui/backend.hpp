@@ -11,6 +11,10 @@
 #include <QGuiApplication>
 #include <QProcess> // Note: QProcess is not supported on VxWorks, iOS, tvOS, or watchOS.
 #include <QUuid>
+#include <QJsonArray>
+#include <QJsonDocument>
+#include <QJsonObject>
+#include <QJsonParseError>
 
 #include "../core/currency_converter.hpp"
 #include "../core/validator.hpp"
@@ -66,6 +70,7 @@ public:
         double weight, const QString& attributes, const QString& product_code, int category_id) const;
     Q_INVOKABLE void uploadProductImage(const QString& product_id, const QString& filename);
     //Q_INVOKABLE void ();
+    static void testWriteJson();
     // Test function
     static void startServerDaemon();
     static void waitForServerDaemon();

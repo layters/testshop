@@ -16,6 +16,9 @@ Item {
             color: "#050506"
             radius: 5
         }
+        onTextChanged: {//https://stackoverflow.com/questions/70284407/detect-changes-on-every-character-typed-in-a-textfield-qml
+            //console.log("Show search suggestions popup list")
+        }
     }
 
     Button {
@@ -39,7 +42,7 @@ Item {
 
         onClicked: {
             console.log("Searching for " + searchBar.text)
-            pageLoader.setSource("qrc:/qml/pages/CatalogPage.qml")//, {"model", [""]})
+            pageLoader.setSource("qrc:/qml/pages/CatalogPage.qml")//, {"catalogIndex": 0})//, {"model": [""]})
             //console.log("page Loader Item (CatalogPage):", pageLoader.item)
             //console.log("page Loader Item (CatalogPage.catalog):", pageLoader.catalog)//.item)
         }

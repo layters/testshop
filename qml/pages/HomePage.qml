@@ -135,7 +135,7 @@ Page {
                 }
             }            
             // Recent listings
-            Item { // Column is also an Item so this may not be necessary?
+            Item { 
                 Layout.row: 4
                 Layout.alignment: Qt.AlignTop
                 Layout.topMargin: 10
@@ -177,7 +177,7 @@ Page {
                 }    
             }        
 /*            Item {
-                Layout.row: 4
+                Layout.row: 5
                 Layout.alignment: Qt.AlignTop
                 Layout.topMargin: 10
                 Layout.preferredWidth: childrenRect.width
