@@ -28,6 +28,7 @@ import "." as NeroshopComponents
         property real boxHeight: 300//(hideProductDetails) ? 300 : 400
         property real fullWidth: (this.boxWidth * columns) + (spacing * (columns - 1)) // Full width of the entire grid - tested
         property alias count: catalogGridRepeater.count
+        property alias model: catalogGridRepeater.model
         
         Repeater { // owns all items it instantiates
             id: catalogGridRepeater

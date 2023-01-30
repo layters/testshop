@@ -518,12 +518,12 @@ bool neroshop::Wallet::daemon_connect_local(const std::string& username, const s
     return synced;
 }
 ////////////////////
-void neroshop::Wallet::daemon_connect_remote(const std::string& ip, const std::string& port, const std::string& username, const std::string& password) {
+void neroshop::Wallet::daemon_connect_remote(const std::string& ip, const std::string& port, const std::string& username, const std::string& password, const monero_wallet_listener* listener) {
     if(!monero_wallet_obj.get()) throw std::runtime_error("monero_wallet_full is not opened");
     monero_wallet_obj->set_daemon_connection(monero_rpc_connection(std::string("http://" + ip + ":" + port)));//, username, password));
     if(monero_wallet_obj.get()->is_connected_to_daemon()) {
         std::cout << "\033[1;90;49m" << "connected to daemon" << "\033[0m" << std::endl;
-            std::packaged_task<void(void)> sync_job([this]() {
+            std::packaged_task<void(void)> sync_job([this, listener]() {
                 std::cout << "\033[1;90;49m" << "sync in progress ..." << "\033[0m" << std::endl;
                 monero_wallet_obj->sync(monero_wallet_obj->get_sync_height(), *this); // a start_height of 0 is ignored // get_sync_height() is the height of the first block that the wallet scans// get_daemon_height() is the height that the wallet's daemon is currently synced to (will sync instantly but will not guarantee unique subaddress generation)
                 // begin syncing the wallet constantly in the background (every 5 seconds) in order to receive tx notifications
@@ -532,7 +532,7 @@ void neroshop::Wallet::daemon_connect_remote(const std::string& ip, const std::s
                 if(monero_wallet_obj.get()->is_daemon_synced()) {////if(monero_wallet_obj->get_daemon_height() == monero_wallet_obj->get_daemon_max_peer_height()) {
                     std::cout << "\033[1;90;49m" << "daemon is now fully synced with the network" << "\033[0m" << std::endl;
                     // add new wallet_listener when done syncing
-                    monero_wallet_obj->add_listener(*this);
+                    monero_wallet_obj->add_listener((listener != nullptr) ? *const_cast<monero_wallet_listener*>(listener) : *this);//(*this);
                 }   
             });
             std::future<void> job_value = sync_job.get_future();

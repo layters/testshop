@@ -199,7 +199,7 @@ double neroshop::WalletController::getBalanceUnlocked(unsigned int account_index
 
 
 void neroshop::WalletController::nodeConnect(const QString& ip, const QString& port, const QString& username, const QString& password) {
-    wallet->daemon_connect_remote(ip.toStdString(), port.toStdString(), username.toStdString(), password.toStdString());
+    wallet->daemon_connect_remote(ip.toStdString(), port.toStdString(), username.toStdString(), password.toStdString(), this);
 }
 
 void neroshop::WalletController::daemonConnect(const QString& username, const QString& password) {
@@ -265,6 +265,27 @@ bool neroshop::WalletController::isOpened() const {
 
 bool neroshop::WalletController::fileExists(const QString& filename) const {
     return wallet->file_exists(filename.toStdString());
+}
+
+// Callbacks
+void neroshop::WalletController::on_sync_progress(uint64_t height, uint64_t start_height, uint64_t end_height, double percent_done, const std::string& message) {
+    if(percent_done >= 1.0) emit balanceChanged();
+}
+
+void neroshop::WalletController::on_new_block (uint64_t height) {
+}
+
+void neroshop::WalletController::on_balances_changed(uint64_t new_balance, uint64_t new_unlocked_balance) {
+    emit balanceChanged();
+    if(new_unlocked_balance == new_balance) std::cout << "\033[1;35;49m" << "Balance is now fully unlocked" << "\033[0m" << std::endl;    
+}
+
+void neroshop::WalletController::on_output_received(const monero_output_wallet& output) {
+    emit balanceChanged();
+}
+
+void neroshop::WalletController::on_output_spent (const monero_output_wallet &output) {
+    emit balanceChanged();
 }
 
 #endif

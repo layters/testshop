@@ -86,10 +86,8 @@ Page {
                         implicitHeight: 90//implicitWidth / 2
                         color: NeroshopComponents.Style.getColorsFromTheme()[1]
                         radius: 5//3
-                        border.color: (categoryHoverHandler.hovered && !settingsDialog.visible) ? "white" : "transparent"
-                        HoverHandler {
-                            id: categoryHoverHandler
-                        }                        
+                        border.color: hovered ? "white" : "transparent"
+                        property bool hovered: false
                         // TODO: replace catalog tooltip with normal text
                         NeroshopComponents.Hint {/*TextArea {
                             id: categoryNameText
@@ -101,7 +99,7 @@ Page {
                             verticalAlignment: TextEdit.AlignVCenter
                             anchors.top: parent.top
                             anchors.topMargin: 10*/
-                            visible: categoryHoverHandler.hovered && !settingsDialog.visible // <- uncomment this to make the tooltip visible on hover
+                            visible: parent.hovered
                             height: contentHeight + 20; width: contentWidth + 20
                             text: qsTr(modelData.name)
                             pointer.visible: false; delay: 0
@@ -129,6 +127,16 @@ Page {
                                 color: "#ffffff"
                                 anchors.horizontalCenter: parent.horizontalCenter
                                 anchors.verticalCenter: parent.verticalCenter
+                            }
+                        }
+                        MouseArea { 
+                            anchors.fill: parent
+                            hoverEnabled: true
+                            onEntered: parent.hovered = true
+                            onExited: parent.hovered = false
+                            onClicked: {
+                                navBar.uncheckAllButtons()
+                                pageLoader.setSource("qrc:/qml/pages/CatalogPage.qml", { "model": Backend.getListingsByCategory(modelData.id) })
                             }
                         }
                     }

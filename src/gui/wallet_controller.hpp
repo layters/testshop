@@ -21,6 +21,8 @@ class WalletController : public QObject, public neroshop::Wallet {
     // properties (for use in QML)
     Q_PROPERTY(neroshop::Wallet* wallet READ getWallet NOTIFY walletChanged);
     Q_PROPERTY(bool opened READ isOpened NOTIFY isOpenedChanged);
+    Q_PROPERTY(double balanceLocked READ getBalanceLocked NOTIFY balanceChanged);
+    Q_PROPERTY(double balanceUnlocked READ getBalanceUnlocked NOTIFY balanceChanged);
     //Q_PROPERTY(<type> <variable_name> READ <get_function_name>)
 public:    
     // I don't know how to use or compare enums in QML. It never works, but oh well :|
@@ -77,10 +79,17 @@ public:
     Q_INVOKABLE bool isSynced() const;
     Q_INVOKABLE bool isDaemonSynced() const;
     Q_INVOKABLE bool fileExists(const QString& filename) const;
+    // Callbacks
+    void on_sync_progress(uint64_t height, uint64_t start_height, uint64_t end_height, double percent_done, const std::string& message);
+    void on_new_block (uint64_t height);
+    void on_balances_changed(uint64_t new_balance, uint64_t new_unlocked_balance);
+    void on_output_received(const monero_output_wallet& output);
+    void on_output_spent (const monero_output_wallet &output);
 public slots:
 signals:
     void walletChanged();
     void isOpenedChanged();
+    void balanceChanged();
 #else
 class WalletController { 
 #endif

@@ -46,7 +46,8 @@ Page {
     function getItemsCount() {
         // ... boxesPerGrid * pageCount
     }    
-    property alias catalogIndex: catalogStack.currentIndex
+    //property alias catalogIndex: catalogStack.currentIndex
+    property var model: null
     
     NeroshopComponents.ViewToggle {
         id: viewToggle
@@ -118,6 +119,8 @@ Page {
                     Repeater {
                         model: catalogStack.pagesCount//1
                         delegate: NeroshopComponents.CatalogGrid { // has index property
+                            model: (catalogPage.model != null) ? catalogPage.model : this.model
+                            Component.onCompleted: console.log("model",this.model)
                         }
                     }
                 }
@@ -132,6 +135,8 @@ Page {
                     Repeater {
                         model: catalogStack.pagesCount//1
                         delegate: NeroshopComponents.CatalogList {
+                            model: (catalogPage.model != null) ? catalogPage.model : this.model
+                            Component.onCompleted: console.log("model",this.model)
                         }
                     }
                 }

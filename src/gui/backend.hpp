@@ -60,6 +60,7 @@ public:
     Q_INVOKABLE bool loginWithHW(WalletController* wallet_controller, UserController * user_controller);
     
     Q_INVOKABLE QVariantList getListings(); // Products listed by sellers
+    Q_INVOKABLE QVariantList getListingsByCategory(int category_id);
     Q_INVOKABLE QVariantList getListingsByMostRecent();
     //Q_INVOKABLE QVariantList getListingsByMostFavorited();
     //Q_INVOKABLE QVariantList getListingsByMostSales();
@@ -71,6 +72,7 @@ public:
     Q_INVOKABLE void uploadProductImage(const QString& product_id, const QString& filename);
     //Q_INVOKABLE void ();
     static void testWriteJson();
+    static void testfts5();
     // Test function
     static void startServerDaemon();
     static void waitForServerDaemon();

@@ -34,6 +34,7 @@ set(sqlite3 "sqlite3")
 set(sqlite_srcs sqlite/sqlite3.c)
 add_library(${sqlite3} STATIC ${sqlite_srcs})
 target_include_directories(${sqlite3} PUBLIC sqlite/)
+target_compile_definitions(${sqlite3} PUBLIC SQLITE_ENABLE_FTS5)
 
 set(raft "raft")
 set(raft_srcs raft/src/raft_server.c raft/src/raft_server_properties.c raft/src/raft_log.c raft/src/raft_node.c)
