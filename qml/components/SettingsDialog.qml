@@ -7,7 +7,7 @@ import Qt.labs.platform 1.1 // FileDialog (since Qt 5.8) // change to "import Qt
 import FontAwesome 1.0
 import "." as NeroshopComponents
 // This page provides an interface for modifying the configuration file, "settings.lua"
-// Stuff like themes, preffered currency, language, etc. will go here and will not be associated with an account but with the application config itself. This is to preserve privacy and reduce the size of the database
+// Stuff like themes, preferred currency, language, etc. will go here and will not be associated with an account but with the application config itself. This is to preserve privacy and reduce the size of the database
 // todo: use previous settings as placeholderText and rewrite settings.lua
 // default monero nodes cannot be modified but user may add addtional nodes to the nodelist
 
@@ -227,7 +227,7 @@ Popup {
                     //spacing: 200 // spacing between Row items
                     anchors.fill: parent
                     Text {
-                        text: qsTr("Preffered local currency:")
+                        text: qsTr("Preferred local currency:")
                         color: (NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000"
                         Layout.alignment: Qt.AlignLeft
                         Layout.leftMargin: 0

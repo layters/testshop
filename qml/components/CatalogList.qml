@@ -14,6 +14,7 @@ Column {
     property real boxWidth: 600
     property real boxHeight: 300
     property alias count: catalogListRepeater.count
+    property alias model: catalogListRepeater.model
     //Component.onCompleted: {console.log("catalogList children height",childrenRect.height)}
              
     Repeater {

@@ -63,7 +63,7 @@ public:
     // daemon or node-related functions
     void daemon_open(const std::string& daemon_dir, bool confirm_external_bind = false, bool restricted_rpc = true, std::string data_dir = std::string("/home/") + neroshop::device::get_user() + std::string("/.bitmonero")/*""*/, unsigned int restore_height = 0);
     bool daemon_connect_local(const std::string& username = "", const std::string& password = "");
-    void daemon_connect_remote(const std::string& ip, const std::string& port, const std::string& username = "", const std::string& password = "");
+    void daemon_connect_remote(const std::string& ip, const std::string& port, const std::string& username = "", const std::string& password = "", const monero_wallet_listener* listener = nullptr);
     void daemon_close();
     //void explore_address(const std::string& address); //{Browser::open(this->addr_url + address);}// will detect address before opening explorer
     //void explore_tx(const std::string& tx_hash);

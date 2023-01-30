@@ -28,7 +28,7 @@ Page {
     StackLayout { // TODO: stackview (dashboard) with sections: overview (stats and analytics), inventory management (listing and delisting products), customer order management, reports, etc.
         id: dashboard
         width: parent.width; height: parent.height//2000//anchors.fill: parent
-        anchors.top: tabBar.bottom; anchors.topMargin: tabBar.buttonHeight + 10//anchors.margins: 20
+        anchors.top: tabBar.bottom; anchors.topMargin: 20//anchors.margins: 20
         currentIndex: tabBar.currentIndex
             
         Item {
@@ -238,7 +238,7 @@ Page {
                     property real radius: 10//3
                     property real spaceFromTitle: 10
                     property string textColor: (NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000"
-                    property string baseColor: (NeroshopComponents.Style.darkTheme) ? "#101010" : "#f0f0f0"
+                    property string baseColor: (NeroshopComponents.Style.darkTheme) ? (NeroshopComponents.Style.themeName == "PurpleDust" ? "#0e0e11" : "#101010") : "#f0f0f0"
                     property string borderColor: (NeroshopComponents.Style.darkTheme) ? "#404040" : "#4d4d4d"
                     property string optTextColor: "#708090"
                     // RegisterItem to "products" table
@@ -388,7 +388,7 @@ Page {
                                     font.bold: true////; font.family: FontAwesome.fontFamily//fontFamilySolid
                                     anchors.right: parent.right
                                     anchors.rightMargin: 15
-                                    anchors.top: parent.top; anchors.topMargin: 5
+                                    anchors.top: parent.top; anchors.topMargin: 10
                                     property real maximumQuantity: 999999999
                                     MouseArea { 
                                         anchors.fill: parent
@@ -408,7 +408,7 @@ Page {
                                     font.bold: true////; font.family: FontAwesome.fontFamily//fontFamilySolid
                                     anchors.right: parent.right
                                     anchors.rightMargin: 15
-                                    anchors.bottom: parent.bottom; anchors.bottomMargin: 5
+                                    anchors.bottom: parent.bottom; anchors.bottomMargin: 10
                                     property real minimumQuantity: 1
                                     MouseArea { 
                                         anchors.fill: parent

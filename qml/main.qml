@@ -78,7 +78,8 @@ ApplicationWindow {
         //source: "qrc:/qml/pages/CatalogPage.qml"
         //source: "qrc:/qml/pages/ProductPage.qml"
         //source: "qrc:/qml/pages/OrderCheckoutPage.qml"
-        ////source: "qrc:/qml/pages/ProfilePage.qml"
+        //source: "qrc:/qml/pages/ProfilePage.qml"
+        //source: "qrc:/qml/pages/subpages/WalletPage.qml"
         ////source: "qrc:/qml/pages/Page.qml"
 
         onSourceChanged: {
@@ -235,7 +236,7 @@ ApplicationWindow {
                         x: parent.x + (parent.width - this.width) / 2
                         height: contentHeight + 20; width: (contentWidth > parent.width) ? 300 : parent.width
                         bottomMargin : footer.height + 5
-                        text: qsTr("%1\n%2 %3%4").arg(moneroDaemonSyncBar.daemonAddress).arg((!Wallet.opened || parent.value <= 0.0) ? "Disconnected" : ((parent.value > 0.0 && parent.value < 1.0) ? Wallet.getSyncMessage() : "Connected")).arg((parent.value > 0.0 && parent.value != 1.0) ? ("(" + (parent.value * 100).toFixed(2) + "%)") : "").arg((!Wallet.opened || parent.value <= 0.0) ? "" : ((parent.value > 0.0 && parent.value != 1.0) ? ("\nBlocks remaining: " + Wallet.getSyncHeight() + " / " + Wallet.getSyncEndHeight()) : ""))
+                        text: qsTr("%1\n%2 %3%4").arg(moneroDaemonSyncBar.daemonAddress).arg((!Wallet.opened || parent.value <= 0.0) ? ((moneroDaemonSyncBar.daemonAddress != "monerod") ? "Waiting" : "Disconnected") : ((parent.value > 0.0 && parent.value < 1.0) ? Wallet.getSyncMessage() : "Connected")).arg((parent.value > 0.0 && parent.value != 1.0) ? ("(" + (parent.value * 100).toFixed(2) + "%)") : "").arg((!Wallet.opened || parent.value <= 0.0) ? "" : ((parent.value > 0.0 && parent.value != 1.0) ? ("\nBlocks remaining: " + Wallet.getSyncHeight() + " / " + Wallet.getSyncEndHeight()) : ""))
                         pointer.visible: false
                     }                
                 }
@@ -253,7 +254,7 @@ ApplicationWindow {
             Rectangle {
                 anchors.left: footer.left
                 anchors.leftMargin: 20
-                width: childrenRect.width////(priceChangePercentageText.visible) ? priceDisplayText.contentWidth + priceChangePercentageText.contentWidth + 10 : priceDisplayText.contentWidth // 10 is the spacing between the price and the price change percentage
+                width: (priceChangePercentageText.visible) ? priceDisplayText.contentWidth + priceChangePercentageText.contentWidth + 10 : priceDisplayText.contentWidth // 10 is the spacing between the price and the price change percentage
                 height: footer.height
                 color: "transparent"
                 //border.color: NeroshopComponents.Style.moneroOrangeColor
@@ -287,7 +288,7 @@ ApplicationWindow {
                 }
                                         
                 NeroshopComponents.Hint {
-                    visible: false////priceDisplayHoverHandler.hovered // <- uncomment this to make the tooltip visible on hover
+                    visible: priceDisplayHoverHandler.hovered // <- uncomment this to make the tooltip visible on hover
                     height: contentHeight + 20; width: contentWidth + 20
                     bottomMargin : footer.height + 5
                     text: qsTr("XMR / %1").arg(priceDisplayText.currency.toUpperCase())

@@ -5,8 +5,9 @@ import QtQuick.Controls 2.12
 import "." as NeroshopComponents
 
 Item {
+    id: searchBar
     TextField {
-        id: searchBar
+        id: searchField
         color: "#ffffff" // textColor
         width: 400; height: 40
         selectByMouse: true
@@ -27,22 +28,24 @@ Item {
         //onClicked: 
         display: AbstractButton.IconOnly//AbstractButton.TextBesideIcon
         hoverEnabled: true
-        anchors.left: searchBar.right
+        anchors.left: searchField.right
         anchors.leftMargin: 5//1
-        anchors.top: searchBar.top
-        width: 50; height: searchBar.height
+        anchors.top: searchField.top
+        width: 50; height: searchField.height
         
         icon.source: "qrc:/images/search.png"//neroshopResourceDir + "/search.png"
         icon.color: "#ffffff"
                         
         background: Rectangle {
             color: parent.hovered ? "#66578e" : "#8071a8"//"#40404f"
-            radius: searchBar.background.radius
+            radius: searchField.background.radius
         }     
 
-        onClicked: {
-            console.log("Searching for " + searchBar.text)
-            pageLoader.setSource("qrc:/qml/pages/CatalogPage.qml")//, {"catalogIndex": 0})//, {"model": [""]})
+        onClicked: { // causes crash if pressed multiple times at a fast pace (this is probably due to the while loop in Backend.getListings())
+            ////if(searchField.length < 1) return;
+            console.log("Searching for " + searchField.text)
+            navBar.uncheckAllButtons()
+            pageLoader.setSource("qrc:/qml/pages/CatalogPage.qml", {"model": Backend.getListings()})//, {"model": [""]})
             //console.log("page Loader Item (CatalogPage):", pageLoader.item)
             //console.log("page Loader Item (CatalogPage.catalog):", pageLoader.catalog)//.item)
         }
