@@ -179,9 +179,93 @@ Page {
                 }
             }
             // Send
-            Item {}
+            Item {
+                id: sendTab
+                // StackLayout child Items' Layout.fillWidth and Layout.fillHeight properties default to true
+                Column {
+                    anchors.fill: parent
+                    spacing: 20 // spacing between each item inside the column
+                    // addressField
+                    TextField {
+                        id: addressField
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        width: 500/*parent.width*/; height: 50
+                        placeholderText: qsTr("Receiver address")
+                        color: balanceTxColumn.textColor
+                        selectByMouse: true
+                        maximumLength: 95//200 // TODO: set to 200 when Seraphis goes live
+                        background: Rectangle { 
+                            color: balanceTxColumn.baseColor
+                            border.color: balanceTxColumn.borderColor
+                            border.width: parent.activeFocus ? 2 : 1
+                            radius: balanceTxColumn.radius
+                        }
+                    }
+                    // amountField
+                    TextField {
+                        id: amountField
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        width: 500/*parent.width*/; height: 50
+                        placeholderText: qsTr("Amount")
+                        color: balanceTxColumn.textColor
+                        selectByMouse: true
+                        validator: RegExpValidator{ regExp: new RegExp("^-?[0-9]+(\\.[0-9]{1," + Number(12) + "})?$") }
+                        background: Rectangle { 
+                            color: balanceTxColumn.baseColor
+                            border.color: balanceTxColumn.borderColor
+                            border.width: parent.activeFocus ? 2 : 1
+                            radius: balanceTxColumn.radius
+                        }
+                        rightPadding: 15 + allButton.width
+                        Button {
+                            id: allButton
+                            text: qsTr("\uf534")
+                            anchors.right: parent.right
+                            anchors.rightMargin: 10
+                            anchors.verticalCenter: parent.verticalCenter
+                            implicitWidth: 32; implicitHeight: 24
+                            hoverEnabled: true
+                            onClicked: amountField.text = Wallet.getBalanceUnlocked().toFixed(12)
+                            background: Rectangle {
+                                color: NeroshopComponents.Style.moneroGrayColor
+                                radius: 10//amountField.background.radius//5
+                            }
+                            contentItem: Text {
+                                text: parent.text
+                                color: "#ffffff"
+                                verticalAlignment: Text.AlignVCenter
+                                horizontalAlignment: Text.AlignHCenter
+                                font.bold: true
+                                font.family: FontAwesome.fontFamily
+                            }
+                        }
+                    }
+                    // sendButton
+                    Button {
+                        id: sendButton
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        width: 500; height: contentItem.contentHeight + 30
+                        text: qsTr("Send")
+                            background: Rectangle {
+                                color: parent.hovered ? "#ff7214" : NeroshopComponents.Style.moneroOrangeColor
+                                radius: balanceTxColumn.radius
+                            }
+                            contentItem: Text {
+                                text: parent.text
+                                color: "#ffffff"
+                                horizontalAlignment: Text.AlignHCenter
+                                verticalAlignment: Text.AlignVCenter
+                            }
+                            onClicked: {
+                                Wallet.transfer(addressField.text, amountField.text)
+                            }
+                    }
+                }
+            }
             // Receive
             Item {
+                id: receiveTab
+                // StackLayout child Items' Layout.fillWidth and Layout.fillHeight properties default to true
                     Image {
                         source: "image://wallet_qr/%1".arg((!Wallet.opened) ? "" : Wallet.getPrimaryAddress())////"image://wallet_qr/%1".arg(Wallet.getPrimaryAddress())
                         sourceSize {
