@@ -27,7 +27,7 @@ Page {
         id: balanceTxColumn
         anchors.margins: 20
         anchors.fill: parent
-        spacing: 10
+        spacing: 30
         //property real numberTextFontSize: 48//24
         property string textColor: (NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000"
         property string baseColor: (NeroshopComponents.Style.darkTheme) ? (NeroshopComponents.Style.themeName == "PurpleDust" ? "#0e0e11" : "#101010") : "#f0f0f0"
@@ -50,7 +50,7 @@ Page {
                     spacing: 5
                     TextField {
                         id: balanceUnlockedText
-                        property double balance: !Wallet.opened ? 0.000000000000 : Wallet.balanceUnlocked//Wallet.getBalanceUnlocked()
+                        property double balance: !Wallet.opened ? 0.000000000000 : Wallet.balanceUnlocked
                         text: balance.toFixed(12)
                         font.bold: true
                         font.pointSize: 48
@@ -99,7 +99,7 @@ Page {
                     }*/
                     TextField {
                         id: balanceLockedText
-                        property double balance: !Wallet.opened ? 0.000000000000 : Wallet.balanceLocked//Wallet.getBalanceLocked()
+                        property double balance: !Wallet.opened ? 0.000000000000 : Wallet.balanceLocked
                         text: balance.toFixed(12)
                         //font.bold: true
                         font.pointSize: 24
@@ -126,7 +126,7 @@ Page {
                     
         NeroshopComponents.TabBar {
             id: tabBar
-            Layout.alignment: Qt.AlignHCenter | Qt.AlignTop//; Layout.topMargin: 10
+            Layout.alignment: Qt.AlignHCenter
             model: ["Transactions", "Send", "Receive"]
             color0: NeroshopComponents.Style.moneroOrangeColor
             Component.onCompleted: {
@@ -134,45 +134,36 @@ Page {
             }
         }               
         
-        StackLayout { // TODO: add send, receive sections or maybe just place everything in a single page instead of dividing them into stacklayout item sections
+        StackLayout { 
             id: walletStack
             Layout.fillWidth: true
-            Layout.preferredHeight: 500//Layout.fillHeight: true
+            Layout.preferredHeight: 300//500//Layout.fillHeight: true
             currentIndex: tabBar.currentIndex
             // Transactions
             Item {
                 id: txsDisplay
                 // StackLayout child Items' Layout.fillWidth and Layout.fillHeight properties default to true
-
-                Column {               
-                    width: parent.width; height: parent.height
-                    spacing: 10
-                    /*Text {
-                        text: qsTr("Transactions")
-                        color: balanceTxColumn.textColor
-                        font.bold: true
-                        font.pointSize: 16
-                    }*/
                             
-                    Flickable {
-                        width: parent.width; height: 500
-                        contentWidth: parent.width; contentHeight: (150 * txRepeater.count) + (txFlow.spacing * (txRepeater.count - 1))
-                        clip: true
-                        ScrollBar.vertical: ScrollBar {
-                            policy: ScrollBar.AlwaysOff//AsNeeded
-                        }
-                        Column {//Flow {
-                            id: txFlow
-                            anchors.fill: parent//width: childrenRect.width * txRepeater.count; height: childrenRect.height * txRepeater.count//width: parent.contentWidth//; height: parent.height
-                            spacing: 7
-                            Repeater {
-                                id: txRepeater
-                                model: 10//3
-                                delegate: Rectangle {
-                                    color: balanceTxColumn.baseColor
-                                    width: parent.width; height: 150
-                                    radius: 5
-                                }
+                Flickable {
+                    anchors.fill: parent
+                    contentWidth: parent.width/*950*/; contentHeight: (75 * txRepeater.count) + (txFlow.spacing * (txRepeater.count - 1))
+                    clip: true
+                    ScrollBar.vertical: ScrollBar {
+                        policy: ScrollBar.AlwaysOff//AsNeeded
+                    }
+                    Column {//Flow {
+                        id: txFlow
+                        anchors.fill: parent//
+                        //width: parent.contentWidth/*parent.width*/; height: parent.contentHeight//childrenRect.height * txRepeater.count//width: parent.contentWidth//; height: parent.height
+                        //anchors.centerIn: parent//anchors.horizontalCenter: parent.horizontalCenter
+                        spacing: 7
+                        Repeater {
+                            id: txRepeater
+                            model: 10//3
+                            delegate: Rectangle {
+                                color: balanceTxColumn.baseColor
+                                width: /*950*/parent.width; height: 75//150
+                                radius: 5
                             }
                         }
                     }
@@ -245,7 +236,7 @@ Page {
                         id: sendButton
                         anchors.horizontalCenter: parent.horizontalCenter
                         width: 500; height: contentItem.contentHeight + 30
-                        text: qsTr("Send")
+                        text: qsTr("Transfer")
                             background: Rectangle {
                                 color: parent.hovered ? "#ff7214" : NeroshopComponents.Style.moneroOrangeColor
                                 radius: balanceTxColumn.radius
@@ -266,13 +257,71 @@ Page {
             Item {
                 id: receiveTab
                 // StackLayout child Items' Layout.fillWidth and Layout.fillHeight properties default to true
-                    Image {
-                        source: "image://wallet_qr/%1".arg((!Wallet.opened) ? "" : Wallet.getPrimaryAddress())////"image://wallet_qr/%1".arg(Wallet.getPrimaryAddress())
-                        sourceSize {
-                            width: 200
-                            height: 200
+                Flickable {
+                    anchors.fill: parent
+                    contentWidth: width; contentHeight: receiveTabColumn.childrenRect.height
+                    clip: true
+                    ScrollBar.vertical: ScrollBar {
+                        policy: ScrollBar.AsNeeded
+                    }
+                    Column {
+                        id: receiveTabColumn
+                        anchors.fill: parent
+                        spacing: 20
+                        Row {
+                            anchors.horizontalCenter: parent.horizontalCenter
+                            spacing: 5
+                            // Primary address
+                            TextField {
+                                id: primaryAddressField
+                                /*width: contentWidth; */height: 50
+                                text: !Wallet.opened ? "" : Wallet.getPrimaryAddress()
+                                color: balanceTxColumn.textColor
+                                readOnly: true
+                                selectByMouse: true
+                                background: Rectangle { 
+                                    color: balanceTxColumn.baseColor
+                                    border.color: balanceTxColumn.borderColor
+                                    border.width: parent.activeFocus ? 2 : 1
+                                    radius: balanceTxColumn.radius
+                                }
+                                rightPadding: leftPadding
+                            }
+                            Button {
+                                id: copyButton
+                                width: 50; height: primaryAddressField.height
+                                text: qsTr("Copy")
+                                display: AbstractButton.IconOnly
+                                icon.source: "qrc:/images/copy.png"
+                                icon.color: (NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000"
+                                background: Rectangle {
+                                    color: "transparent"//"#808080"
+                                    border.color: parent.hovered ? balanceTxColumn.borderColor : "transparent"
+                                    radius: 15
+                                }
+                                onClicked: {
+                                    primaryAddressField.selectAll()
+                                    primaryAddressField.copy()////Backend.copyTextToClipboard(primaryAddressField.text)
+                                }
+                            }
+                        }
+                        // Wallet QR
+                        Rectangle {
+                            anchors.horizontalCenter: parent.horizontalCenter
+                            width: imageSize + 50; height: this.width
+                            radius: 5
+                            property real imageSize: 200
+                            Image {
+                                anchors.centerIn: parent
+                                source: "image://wallet_qr/%1".arg(!Wallet.opened ? "" : Wallet.getPrimaryAddress())////"image://wallet_qr/%1".arg(Wallet.getPrimaryAddress())
+                                sourceSize {
+                                    width: parent.imageSize
+                                    height: parent.imageSize
+                                }
+                            }
                         }
                     }
+                }
             }
         }    
     } // root Layout

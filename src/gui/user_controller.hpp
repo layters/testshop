@@ -23,6 +23,7 @@ public:
     ~UserController();
     
     Q_PROPERTY(neroshop::User* user READ getUser);// NOTIFY ?);
+    Q_PROPERTY(int productsCount READ getProductsCount NOTIFY productsCountChanged);
 
     Q_INVOKABLE void listProduct(const QString& product_id, int quantity, double price, const QString& currency, const QString& condition, const QString& location);
     //Q_INVOKABLE void addToCart();
@@ -40,6 +41,7 @@ public:
         
     Q_INVOKABLE QString getID() const;
     //Q_INVOKABLE neroshop::WalletController * getWallet() const;
+    Q_INVOKABLE int getProductsCount() const;
     //Q_INVOKABLE <type> <function_name>() const;
 
     Q_INVOKABLE neroshop::User * getUser() const;
@@ -47,6 +49,8 @@ public:
     
     //Q_INVOKABLE void onLogin();
     friend class Backend;
+signals:
+    void productsCountChanged();
 private:    
     std::unique_ptr<neroshop::User> user;
     //std::unique_ptr<neroshop::WalletController> wallet_controller;
