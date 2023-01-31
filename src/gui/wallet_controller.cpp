@@ -212,23 +212,28 @@ void neroshop::WalletController::daemonExecute(const QString& daemon_dir, bool c
 
 
 double neroshop::WalletController::getSyncPercentage() const {
-    return wallet->get_sync_percentage();
+    std::lock_guard<std::mutex> lock(this->wallet_data_mutex);
+    return this->percentage;//wallet->get_sync_percentage();
 }
 
 unsigned int neroshop::WalletController::getSyncHeight() const {
-    return wallet->get_sync_height();
+    std::lock_guard<std::mutex> lock(this->wallet_data_mutex);
+    return this->height;//wallet->get_sync_height();
 }
 
 unsigned int neroshop::WalletController::getSyncStartHeight() const {
-    return wallet->get_sync_start_height();
+    std::lock_guard<std::mutex> lock(this->wallet_data_mutex);
+    return this->start_height;//wallet->get_sync_start_height();
 }
 
 unsigned int neroshop::WalletController::getSyncEndHeight() const {
-    return wallet->get_sync_end_height();
+    std::lock_guard<std::mutex> lock(this->wallet_data_mutex);
+    return this->end_height;//wallet->get_sync_end_height();
 }
 
 QString neroshop::WalletController::getSyncMessage() const {
-    return QString::fromStdString(wallet->get_sync_message());
+    std::lock_guard<std::mutex> lock(this->wallet_data_mutex);
+    return QString::fromStdString(this->message);//QString::fromStdString(wallet->get_sync_message());
 }
 
 
@@ -269,7 +274,15 @@ bool neroshop::WalletController::fileExists(const QString& filename) const {
 
 // Callbacks
 void neroshop::WalletController::on_sync_progress(uint64_t height, uint64_t start_height, uint64_t end_height, double percent_done, const std::string& message) {
-    if(percent_done >= 1.0) emit balanceChanged();
+    std::lock_guard<std::mutex> lock(this->wallet_data_mutex);
+        
+    this->percentage = percent_done;
+    this->height = height;
+    this->start_height = start_height;
+    this->end_height = end_height;
+    this->message = message;
+    
+    //if(percent_done >= 1.0) emit daemonSynced();
 }
 
 void neroshop::WalletController::on_new_block (uint64_t height) {
@@ -277,7 +290,6 @@ void neroshop::WalletController::on_new_block (uint64_t height) {
 
 void neroshop::WalletController::on_balances_changed(uint64_t new_balance, uint64_t new_unlocked_balance) {
     emit balanceChanged();
-    if(new_unlocked_balance == new_balance) std::cout << "\033[1;35;49m" << "Balance is now fully unlocked" << "\033[0m" << std::endl;    
 }
 
 void neroshop::WalletController::on_output_received(const monero_output_wallet& output) {

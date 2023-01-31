@@ -47,6 +47,7 @@ public:
     unsigned int get_customer_order_count() const;
     std::vector<int> get_pending_customer_orders();
     // getters - sales and statistics-related stuff
+    unsigned int get_products_count() const; // returns number of products listed by this seller
     unsigned int get_sales_count() const; // returns the total number of items sold by this seller
     unsigned int get_units_sold(unsigned int product_id) const; // returns the total number of a specific item sold by this seller
     unsigned int get_units_sold(const neroshop::Item& item) const;

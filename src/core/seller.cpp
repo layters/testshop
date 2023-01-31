@@ -485,6 +485,14 @@ std::vector<int> neroshop::Seller::get_pending_customer_orders() {
 ////////////////////
 // getters - sales and statistics-related stuff
 ////////////////////
+unsigned int neroshop::Seller::get_products_count() const {
+    neroshop::db::Sqlite3 * database = neroshop::db::Sqlite3::get_database();
+    if(!database) throw std::runtime_error("database is NULL");
+    
+    int products_listed = database->get_integer_params("SELECT COUNT(product_id) FROM listings WHERE seller_id = $1;", { get_id() });
+    return products_listed;
+}
+////////////////////
 unsigned int neroshop::Seller::get_sales_count() const {
 #if defined(NEROSHOP_USE_POSTGRESQL)
     // should item not be considered sold until the order is done processing or nah ?

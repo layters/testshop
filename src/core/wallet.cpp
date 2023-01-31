@@ -206,6 +206,9 @@ void neroshop::Wallet::transfer(const std::string& address, double amount) {
     if(monero_wallet_obj->get_unlocked_balance() < monero_to_piconero) {
         neroshop::print("Wallet balance is insufficient", 1); return;
     }
+    if(monero_wallet_obj->get_unlocked_balance() == monero_to_piconero) {
+        neroshop::print("Not enough unlocked balance for tx fees. Sweep balance?");// Sweep balance?
+    }
     // Check if address is valid
     if(!monero_utils::is_valid_address(address, monero_wallet_obj->get_network_type())) {
         neroshop::print("Monero address is invalid", 1); return;
@@ -525,7 +528,7 @@ void neroshop::Wallet::daemon_connect_remote(const std::string& ip, const std::s
         std::cout << "\033[1;90;49m" << "connected to daemon" << "\033[0m" << std::endl;
             std::packaged_task<void(void)> sync_job([this, listener]() {
                 std::cout << "\033[1;90;49m" << "sync in progress ..." << "\033[0m" << std::endl;
-                monero_wallet_obj->sync(monero_wallet_obj->get_sync_height(), *this); // a start_height of 0 is ignored // get_sync_height() is the height of the first block that the wallet scans// get_daemon_height() is the height that the wallet's daemon is currently synced to (will sync instantly but will not guarantee unique subaddress generation)
+                monero_wallet_obj->sync(monero_wallet_obj->get_sync_height(), (listener != nullptr) ? *const_cast<monero_wallet_listener*>(listener) : *this);//*this); // a start_height of 0 is ignored // get_sync_height() is the height of the first block that the wallet scans// get_daemon_height() is the height that the wallet's daemon is currently synced to (will sync instantly but will not guarantee unique subaddress generation)
                 // begin syncing the wallet constantly in the background (every 5 seconds) in order to receive tx notifications
                 monero_wallet_obj->start_syncing(5000);
                 // check if wallet's daemon is synced with the network
