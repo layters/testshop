@@ -90,7 +90,7 @@ Page {
                                 anchors.top: parent.children[0].top
                             
                                 Text {
-                                    text: "0"//"5430"
+                                    text: User.productsCount//"0"//"5430"
                                     font.bold: true
                                     font.pointSize: stats.numberTextFontSize
                                     color: stats.textColor

@@ -206,9 +206,6 @@ void neroshop::Wallet::transfer(const std::string& address, double amount) {
     if(monero_wallet_obj->get_unlocked_balance() < monero_to_piconero) {
         neroshop::print("Wallet balance is insufficient", 1); return;
     }
-    if(monero_wallet_obj->get_unlocked_balance() == monero_to_piconero) {
-        neroshop::print("Not enough unlocked balance for tx fees. Sweep balance?");// Sweep balance?
-    }
     // Check if address is valid
     if(!monero_utils::is_valid_address(address, monero_wallet_obj->get_network_type())) {
         neroshop::print("Monero address is invalid", 1); return;
@@ -220,11 +217,20 @@ void neroshop::Wallet::transfer(const std::string& address, double amount) {
     config.m_address = address; // address that will be receiving the funds
     config.m_amount = monero_to_piconero;
     config.m_relay = true;
+    // Sweep unlocked balance?
+    if(monero_wallet_obj->get_unlocked_balance() == monero_to_piconero) {
+        neroshop::print("Not enough unlocked balance for tx fees. Sweep balance?");// Sweep balance?
+        config.m_sweep_each_subaddress = true;////monero_wallet_obj->sweep_unlocked(config);return;
+    }    
+    // Create the transaction
     std::shared_ptr<monero_tx_wallet> sent_tx = monero_wallet_obj->create_tx(config);
     bool in_pool = sent_tx->m_in_tx_pool.get();  // true
         
-    //uint64_t fee = sent_tx->m_fee.get(); // "Are you sure you want to send ...?"
-    //monero_wallet_obj->relay_tx(*sent_tx); // recipient receives notification within 5 seconds    
+    uint64_t fee = sent_tx->m_fee.get(); // "Are you sure you want to send ...?"
+    std::cout << "Estimated fee: " << (fee * piconero) << "\n";
+    //uint64_t deducted_amount = (monero_to_piconero + fee);
+    std::string tx_hash = monero_wallet_obj->relay_tx(*sent_tx); // recipient receives notification within 5 seconds    
+    std::cout << "Tx hash: " << tx_hash << "\n";
     // prove that you've sent the payment using "get_tx_proof"
 }
 ////////////////////
