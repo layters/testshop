@@ -1,6 +1,10 @@
 #include "backend.hpp"
 
-QString neroshop::Backend::urlToLocalFile(const QUrl& url) const {
+#include <future>
+#include <thread>
+
+QString neroshop::Backend::urlToLocalFile(const QUrl &url) const
+{
     return url.toLocalFile();
 }
 //----------------------------------------------------------------
@@ -16,9 +20,16 @@ double neroshop::Backend::convertToXmr(double amount, const QString& currency) c
     
     if(neroshop::CurrencyMap.count(map_key) > 0) {
         auto map_value = neroshop::CurrencyMap[map_key];
-        neroshop::Currency from_currency = std::get<0>(map_value);        
-        double rate = neroshop::Converter::get_price(neroshop::Currency::XMR, from_currency); // 1 xmr = ? currency//std::cout << amount << " " << map_key << " is equal to " << neroshop::string::precision((amount / rate), 12) << " XMR\n";
-        return (amount / rate);
+        neroshop::Currency from_currency = std::get<0>(map_value);
+        auto rateFuture = std::async(neroshop::Converter::get_price,
+                                     neroshop::Currency::XMR,
+                                     from_currency);
+        rateFuture.wait();
+        double rate = rateFuture.get();
+        if (rate > 0.0) {
+            return (amount / rate);
+        }
+        return 0.0;
     }
     neroshop::print(currency.toUpper().toStdString() + " is not supported", 1);
     return 0.0;
@@ -49,7 +60,11 @@ double neroshop::Backend::getXmrPrice(const QString& currency) const {
     if(neroshop::CurrencyMap.count(map_key) > 0) {////if(neroshop::CurrencyMap.find(map_key) != neroshop::CurrencyMap.end()) {
         auto map_value = neroshop::CurrencyMap[map_key];
         neroshop::Currency preferred_currency = std::get<0>(map_value);
-        return neroshop::Converter::get_price(neroshop::Currency::XMR, preferred_currency);
+        auto rateFuture = std::async(neroshop::Converter::get_price,
+                                     neroshop::Currency::XMR,
+                                     preferred_currency);
+        rateFuture.wait();
+        return rateFuture.get();
     }
     neroshop::print(currency.toUpper().toStdString() + " is not supported", 1);
     return 0.0;
