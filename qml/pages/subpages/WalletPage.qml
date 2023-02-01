@@ -272,20 +272,23 @@ Page {
                             anchors.horizontalCenter: parent.horizontalCenter
                             spacing: 5
                             // Primary address
-                            TextField {
+                            TextArea {
                                 id: primaryAddressField
-                                /*width: contentWidth; */height: 50
+                                width: 750; height: 50
                                 text: !Wallet.opened ? "" : Wallet.getPrimaryAddress()
                                 color: balanceTxColumn.textColor
                                 readOnly: true
                                 selectByMouse: true
+                                wrapMode: Text.Wrap
                                 background: Rectangle { 
                                     color: balanceTxColumn.baseColor
                                     border.color: balanceTxColumn.borderColor
                                     border.width: parent.activeFocus ? 2 : 1
-                                    radius: balanceTxColumn.radius
+                                    radius: 5//balanceTxColumn.radius
                                 }
                                 rightPadding: leftPadding
+                                verticalAlignment: TextEdit.AlignVCenter // align the text within the center of TextArea item's height
+                                horizontalAlignment: TextEdit.AlignHCenter
                             }
                             Button {
                                 id: copyButton

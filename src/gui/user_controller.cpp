@@ -42,6 +42,7 @@ QString neroshop::UserController::getID() const {
 }
 
 int neroshop::UserController::getProductsCount() const {
+    if(!user.get()) throw std::runtime_error("neroshop::User is not initialized");
     return static_cast<neroshop::Seller *>(user.get())->get_products_count();
 }
 
