@@ -220,7 +220,7 @@ void neroshop::Wallet::transfer(const std::string& address, double amount) {
     // Sweep unlocked balance?
     if(monero_wallet_obj->get_unlocked_balance() == monero_to_piconero) {
         neroshop::print("Not enough unlocked balance for tx fees. Sweep balance?");// Sweep balance?
-        config.m_sweep_each_subaddress = true;////monero_wallet_obj->sweep_unlocked(config);return;
+        monero_wallet_obj->sweep_unlocked(config);return;
     }    
     // Create the transaction
     std::shared_ptr<monero_tx_wallet> sent_tx = monero_wallet_obj->create_tx(config);
