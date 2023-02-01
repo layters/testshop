@@ -198,6 +198,35 @@ double neroshop::WalletController::getBalanceUnlocked(unsigned int account_index
 }
 
 
+QVariantList neroshop::WalletController::getTransfers() const {
+    // TODO: make this function async or put in a separate thread
+    if(!wallet.get()) throw std::runtime_error("neroshop::Wallet is not initialized");
+    if(!wallet->get_monero_wallet()) throw std::runtime_error("monero_wallet_full is not opened");
+    double piconero = 0.000000000001;
+    monero_transfer_query transfer_query; // optional
+    auto transfers = wallet->get_monero_wallet()->get_transfers(transfer_query);
+    
+    QVariantList transfers_list;
+    
+    for(auto transfer : transfers) {/*for(int i = 0; i < transfers.size(); i++) {
+        monero_transfer * transfer = transfers[i].get();*/
+        
+        QVariantMap transfer_object;
+        ////transfer_object.insert("tx", monero_transfer.);
+        transfer_object.insert("amount", (transfer->m_amount.get() * piconero));//qulonglong()
+        transfer_object.insert("account_index", transfer->m_account_index.get()); // obviously account index 0
+        transfer_object.insert("is_incoming", transfer->is_incoming().get());
+        transfer_object.insert("is_outgoing", transfer->is_outgoing().get());
+        ////transfer_object.insert("", );
+        monero_tx_wallet * tx_wallet = transfer->m_tx.get();
+        //std::cout << ": " << tx_wallet-> << "\n";
+        
+        transfers_list.append(transfer_object); // Append transfer_object to the transfer_list
+    }
+    return transfers_list;
+}
+
+
 void neroshop::WalletController::nodeConnect(const QString& ip, const QString& port, const QString& username, const QString& password) {
     wallet->daemon_connect_remote(ip.toStdString(), port.toStdString(), username.toStdString(), password.toStdString(), this);
 }
@@ -293,11 +322,13 @@ void neroshop::WalletController::on_balances_changed(uint64_t new_balance, uint6
 }
 
 void neroshop::WalletController::on_output_received(const monero_output_wallet& output) {
-    emit balanceChanged();
+    //emit balanceChanged();
+    emit transfersChanged();
 }
 
 void neroshop::WalletController::on_output_spent (const monero_output_wallet &output) {
-    emit balanceChanged();
+    //emit balanceChanged();
+    emit transfersChanged();
 }
 
 #endif

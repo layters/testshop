@@ -23,7 +23,8 @@ class WalletController : public QObject, public neroshop::Wallet {
     Q_PROPERTY(bool opened READ isOpened NOTIFY isOpenedChanged);
     Q_PROPERTY(double balanceLocked READ getBalanceLocked NOTIFY balanceChanged);
     Q_PROPERTY(double balanceUnlocked READ getBalanceUnlocked NOTIFY balanceChanged);
-    //Q_PROPERTY(<type> <variable_name> READ <get_function_name>)
+    Q_PROPERTY(QVariantList transfers READ getTransfers NOTIFY transfersChanged);
+    //Q_PROPERTY(<type> <variable_name> READ <get_function_name> NOTIFY)
 public:    
     // I don't know how to use or compare enums in QML. It never works, but oh well :|
     enum KeyfileStatus {
@@ -65,6 +66,7 @@ public:
     Q_INVOKABLE double getBalanceUnlocked() const;
     Q_INVOKABLE double getBalanceUnlocked(unsigned int account_index) const;
     Q_INVOKABLE double getBalanceUnlocked(unsigned int account_index, unsigned int subaddress_index) const;
+    Q_INVOKABLE QVariantList getTransfers() const;
     Q_INVOKABLE neroshop::Wallet * getWallet() const;
     
     Q_INVOKABLE void setNetworkTypeByString(const QString& network_type);
@@ -90,6 +92,7 @@ signals:
     void walletChanged();
     void isOpenedChanged();
     void balanceChanged();
+    void transfersChanged();
 #else
 class WalletController { 
 #endif
