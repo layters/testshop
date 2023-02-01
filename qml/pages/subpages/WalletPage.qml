@@ -149,7 +149,7 @@ Page {
                     contentWidth: parent.width/*950*/; contentHeight: (75 * txRepeater.count) + (txFlow.spacing * (txRepeater.count - 1))
                     clip: true
                     ScrollBar.vertical: ScrollBar {
-                        policy: ScrollBar.AlwaysOff//AsNeeded
+                        policy: ScrollBar.AsNeeded//AlwaysOff
                     }
                     Column {//Flow {
                         id: txFlow
@@ -157,13 +157,21 @@ Page {
                         //width: parent.contentWidth/*parent.width*/; height: parent.contentHeight//childrenRect.height * txRepeater.count//width: parent.contentWidth//; height: parent.height
                         //anchors.centerIn: parent//anchors.horizontalCenter: parent.horizontalCenter
                         spacing: 7
+                        Component.onCompleted: console.log("tx count", txRepeater.count)
                         Repeater {
                             id: txRepeater
-                            model: 10//3
+                            model: Wallet.transfers
                             delegate: Rectangle {
                                 color: balanceTxColumn.baseColor
                                 width: /*950*/parent.width; height: 75//150
                                 radius: 5
+                                Text {
+                                    anchors.horizontalCenter: parent.horizontalCenter
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    text: (!Wallet.opened) ? 0 : qsTr("%1 %2").arg(modelData.is_incoming ? "+" : "-").arg(modelData.amount.toFixed(12))
+                                    color: (!Wallet.opened) ? "#ffffff" : (modelData.is_incoming ? "#2cba78" : "#c32235")
+                                    font.bold: true
+                                }
                             }
                         }
                     }
@@ -173,70 +181,78 @@ Page {
             Item {
                 id: sendTab
                 // StackLayout child Items' Layout.fillWidth and Layout.fillHeight properties default to true
-                Column {
+                Flickable {
                     anchors.fill: parent
-                    spacing: 20 // spacing between each item inside the column
-                    // addressField
-                    TextField {
-                        id: addressField
-                        anchors.horizontalCenter: parent.horizontalCenter
-                        width: 500/*parent.width*/; height: 50
-                        placeholderText: qsTr("Receiver address")
-                        color: balanceTxColumn.textColor
-                        selectByMouse: true
-                        maximumLength: 95//200 // TODO: set to 200 when Seraphis goes live
-                        background: Rectangle { 
-                            color: balanceTxColumn.baseColor
-                            border.color: balanceTxColumn.borderColor
-                            border.width: parent.activeFocus ? 2 : 1
-                            radius: balanceTxColumn.radius
-                        }
+                    contentWidth: width; contentHeight: sendTabColumn.childrenRect.height
+                    clip: true
+                    ScrollBar.vertical: ScrollBar {
+                        policy: ScrollBar.AsNeeded
                     }
-                    // amountField
-                    TextField {
-                        id: amountField
-                        anchors.horizontalCenter: parent.horizontalCenter
-                        width: 500/*parent.width*/; height: 50
-                        placeholderText: qsTr("Amount")
-                        color: balanceTxColumn.textColor
-                        selectByMouse: true
-                        validator: RegExpValidator{ regExp: new RegExp("^-?[0-9]+(\\.[0-9]{1," + Number(12) + "})?$") }
-                        background: Rectangle { 
-                            color: balanceTxColumn.baseColor
-                            border.color: balanceTxColumn.borderColor
-                            border.width: parent.activeFocus ? 2 : 1
-                            radius: balanceTxColumn.radius
+                    Column {
+                        id: sendTabColumn
+                        anchors.fill: parent
+                        spacing: 20 // spacing between each item inside the column
+                        // addressField
+                        TextField {
+                            id: addressField
+                            anchors.horizontalCenter: parent.horizontalCenter
+                            width: 500/*parent.width*/; height: 50
+                            placeholderText: qsTr("Receiver address")
+                            color: balanceTxColumn.textColor
+                            selectByMouse: true
+                            maximumLength: 95//200 // TODO: set to 200 when Seraphis goes live
+                            background: Rectangle { 
+                                color: balanceTxColumn.baseColor
+                                border.color: balanceTxColumn.borderColor
+                                border.width: parent.activeFocus ? 2 : 1
+                                radius: balanceTxColumn.radius
+                            }
                         }
-                        rightPadding: 15 + allButton.width
+                        // amountField
+                        TextField {
+                            id: amountField
+                            anchors.horizontalCenter: parent.horizontalCenter
+                            width: 500/*parent.width*/; height: 50
+                            placeholderText: qsTr("Amount")
+                            color: balanceTxColumn.textColor
+                            selectByMouse: true
+                            validator: RegExpValidator{ regExp: new RegExp("^-?[0-9]+(\\.[0-9]{1," + Number(12) + "})?$") }
+                            background: Rectangle { 
+                                color: balanceTxColumn.baseColor
+                                border.color: balanceTxColumn.borderColor
+                                border.width: parent.activeFocus ? 2 : 1
+                                radius: balanceTxColumn.radius
+                            }
+                            rightPadding: 15 + allButton.width
+                            Button {
+                                id: allButton
+                                text: qsTr("\uf534")
+                                anchors.right: parent.right
+                                anchors.rightMargin: 10
+                                anchors.verticalCenter: parent.verticalCenter
+                                implicitWidth: 32; implicitHeight: 24
+                                hoverEnabled: true
+                                onClicked: amountField.text = Wallet.getBalanceUnlocked().toFixed(12)
+                                background: Rectangle {
+                                    color: NeroshopComponents.Style.moneroGrayColor
+                                    radius: 10//amountField.background.radius//5
+                                }
+                                contentItem: Text {
+                                    text: parent.text
+                                    color: "#ffffff"
+                                    verticalAlignment: Text.AlignVCenter
+                                    horizontalAlignment: Text.AlignHCenter
+                                    font.bold: true
+                                    font.family: FontAwesome.fontFamily
+                                }
+                            }
+                        }
+                        // sendButton
                         Button {
-                            id: allButton
-                            text: qsTr("\uf534")
-                            anchors.right: parent.right
-                            anchors.rightMargin: 10
-                            anchors.verticalCenter: parent.verticalCenter
-                            implicitWidth: 32; implicitHeight: 24
-                            hoverEnabled: true
-                            onClicked: amountField.text = Wallet.getBalanceUnlocked().toFixed(12)
-                            background: Rectangle {
-                                color: NeroshopComponents.Style.moneroGrayColor
-                                radius: 10//amountField.background.radius//5
-                            }
-                            contentItem: Text {
-                                text: parent.text
-                                color: "#ffffff"
-                                verticalAlignment: Text.AlignVCenter
-                                horizontalAlignment: Text.AlignHCenter
-                                font.bold: true
-                                font.family: FontAwesome.fontFamily
-                            }
-                        }
-                    }
-                    // sendButton
-                    Button {
-                        id: sendButton
-                        anchors.horizontalCenter: parent.horizontalCenter
-                        width: 500; height: contentItem.contentHeight + 30
-                        text: qsTr("Transfer")
+                            id: sendButton
+                            anchors.horizontalCenter: parent.horizontalCenter
+                            width: 500; height: contentItem.contentHeight + 30
+                            text: qsTr("Transfer")
                             background: Rectangle {
                                 color: parent.hovered ? "#ff7214" : NeroshopComponents.Style.moneroOrangeColor
                                 radius: balanceTxColumn.radius
@@ -250,6 +266,7 @@ Page {
                             onClicked: {
                                 Wallet.transfer(addressField.text, amountField.text)
                             }
+                        }
                     }
                 }
             }

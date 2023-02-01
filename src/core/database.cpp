@@ -33,8 +33,6 @@ bool neroshop::db::Sqlite3::open(const std::string& filename)
 	if(get_integer("PRAGMA foreign_keys;") != 1) {
 	    execute("PRAGMA foreign_keys = ON;"); // requires version 3.6.19 (2009-10-14)
 	}
-	// Initialize the neroshop database
-	//initialize();
 	opened = true;
 	return true;
 }
