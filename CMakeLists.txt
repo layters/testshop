@@ -26,7 +26,7 @@ if(NEROSHOP_BUILD_GUI AND NEROSHOP_USE_QT)
     if(CMAKE_VERSION VERSION_LESS "3.7.0")
         set(CMAKE_INCLUDE_CURRENT_DIR ON)
     endif()
-    find_package(Qt5 COMPONENTS Qml Quick Gui #[[QuickControls2]])# REQUIRED) # v5.12.8
+    find_package(Qt5 COMPONENTS Qml Quick Gui Concurrent #[[QuickControls2]])# REQUIRED) # v5.12.8
     # add the qml.qrc file
     qt5_add_resources(neroshop_res qml.qrc)#qt_add_resources# <= introduced in Qt 5.15 and higher
 endif()
@@ -434,7 +434,7 @@ if(NEROSHOP_BUILD_GUI)
     set(neroshop_executable "neroshop")
     set(neroshop_core_src ${neroshop_core_src} src/core/price_api/price_api_factory.cpp src/core/price_api/coincodex.cpp src/core/price_api/coingecko.cpp src/core/price_api/coinmarketcap.cpp src/core/price_api/cointelegraph.cpp src/core/price_api/cryptorank.cpp src/core/price_api/cryptowatch.cpp)
     add_executable(${neroshop_executable})
-    target_sources(${neroshop_executable} PRIVATE ${neroshop_res} src/gui/main.cpp src/gui/script_controller.cpp src/gui/wallet_controller.cpp src/gui/user_controller.cpp src/gui/image_loader.cpp src/gui/image_provider.cpp src/gui/wallet_qr_provider.cpp src/gui/backend.cpp ${neroshop_core_src})
+    target_sources(${neroshop_executable} PRIVATE ${neroshop_res} src/gui/main.cpp src/gui/script_controller.cpp src/gui/wallet_controller.cpp src/gui/user_controller.cpp src/gui/image_loader.cpp src/gui/image_provider.cpp src/gui/wallet_qr_provider.cpp src/gui/currencyexchangeratesprovider.cpp src/gui/backend.cpp ${neroshop_core_src})
     target_compile_definitions(${neroshop_executable} PRIVATE NEROSHOP_DEBUG)#set_target_properties(${neroshop_executable} PROPERTIES COMPILE_DEFINITIONS "NEROSHOP_DEBUG")
     target_include_directories(${neroshop_executable} PRIVATE #[[${CMAKE_CURRENT_SOURCE_DIR}/src/]])
     target_link_libraries(${neroshop_executable} ${monero_cpp_src} ${sqlite_src} ${qr_code_generator_src} ${raft_src} ${libuv_src} ${monero_src} ${lua_src} ${png_src})
@@ -528,11 +528,11 @@ if(Qt5_FOUND)
             target_link_libraries(${neroshop_executable} Qt5::Widgets)
         endif()
     
-        message(STATUS "Using Qt5::Qml Qt5::Quick Qt5::Gui")
+        message(STATUS "Using Qt5::Qml Qt5::Quick Qt5::Gui Qt5::Concurrent")
         target_compile_definitions(${neroshop_executable} PRIVATE NEROSHOP_USE_QT)
         #add_compile_definitions(QT_DISABLE_DEPRECATED_BEFORE=0x050F00) # Disable any API deprecated in 5.15 or older Qt versions
         #target_include_directories(${neroshop_executable} PRIVATE /usr/include/x86_64-linux-gnu/qt5/)
-        target_link_libraries(${neroshop_executable} Qt5::Qml Qt5::Quick Qt5::Gui #[[Qt5::QuickControls2]])
+        target_link_libraries(${neroshop_executable} Qt5::Qml Qt5::Quick Qt5::Gui Qt5::Concurrent #[[Qt5::QuickControls2]])
     endif()
 endif()
 
