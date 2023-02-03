@@ -442,7 +442,7 @@ Page {
                             NeroshopComponents.ComboBox {
                                 id: productConditionBox
                                 width: 500; height: 50
-                                model: ["New", "Used", "Refurbished (Renewed)"] // default is New
+                                model: ["New", "Used", "Refurbished (Renewed)", "Not applicable"] // default is New
                                 Component.onCompleted: currentIndex = find("New")
                                 radius: productDetails.radius
                                 color: productDetails.baseColor

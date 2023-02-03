@@ -212,16 +212,15 @@ QVariantList neroshop::WalletController::getTransfers() const {
         monero_transfer * transfer = transfers[i].get();*/
         
         QVariantMap transfer_object;
-        ////transfer_object.insert("tx", monero_transfer.);
-        transfer_object.insert("amount", (transfer->m_amount.get() * piconero));//qulonglong()
+        transfer_object.insert("amount", (transfer->m_amount.get() * piconero));
         transfer_object.insert("account_index", transfer->m_account_index.get()); // obviously account index 0
         transfer_object.insert("is_incoming", transfer->is_incoming().get());
         transfer_object.insert("is_outgoing", transfer->is_outgoing().get());
-        ////transfer_object.insert("", );
         monero_tx_wallet * tx_wallet = transfer->m_tx.get();
+        ////transfer_object.insert("", tx_wallet->);
         //std::cout << ": " << tx_wallet-> << "\n";
         
-        transfers_list.append(transfer_object); // Append transfer_object to the transfer_list
+        transfers_list.append(transfer_object);
     }
     return transfers_list;
 }
