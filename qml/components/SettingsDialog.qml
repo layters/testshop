@@ -4,6 +4,7 @@ import QtQuick.Layouts 1.12
 //import QtGraphicalEffects 1.12
 import Qt.labs.platform 1.1 // FileDialog (since Qt 5.8) // change to "import QtQuick.Dialogs" if using Qt 6.2
 
+import neroshop.CurrencyExchangeRates 1.0
 import FontAwesome 1.0
 import "." as NeroshopComponents
 // This page provides an interface for modifying the configuration file, "settings.lua"
@@ -250,8 +251,6 @@ Popup {
                         onActivated: {    
                             displayText = currentText
                             priceDisplayText.currency = displayText
-                            priceDisplayText.price = Backend.getXmrPrice(priceDisplayText.currency)
-                            priceDisplayText.text = qsTr(FontAwesome.monero + "  %1%2").arg(Backend.getCurrencySign(priceDisplayText.currency)).arg(priceDisplayText.price.toFixed(Backend.getCurrencyDecimals(priceDisplayText.currency)))
                             ////lastCurrencySet = currentText
                         }
                         indicatorWidth: 30

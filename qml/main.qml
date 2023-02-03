@@ -5,6 +5,7 @@ import QtQuick.Layouts 1.12//1.15 // The module is new in Qt 5.1 and requires Qt
 import QtGraphicalEffects 1.12 // LinearGradient
 import Qt.labs.platform 1.1 // FileDialog (since Qt 5.8) // change to "import QtQuick.Dialogs" if using Qt 6.2
 
+import neroshop.CurrencyExchangeRates 1.0
 import FontAwesome 1.0
 
 //import neroshop.Wallet 1.0
@@ -263,8 +264,8 @@ ApplicationWindow {
                     id: priceDisplayText
                     property string scriptCurrency: Script.getString("neroshop.generalsettings.currency")
                     property string currency: Backend.isSupportedCurrency(scriptCurrency) ? scriptCurrency : "usd"
-                    property double price: Backend.getXmrPrice(currency)
-                    text: qsTr(/*1.toString() + " " + */FontAwesome.monero + "  %1%2").arg(Backend.getCurrencySign(currency)).arg(price.toFixed(Backend.getCurrencyDecimals(currency)))////.arg(currency.toUpperCase())
+                    readonly property double price: CurrencyExchangeRates.getXmrPrice(priceDisplayText.currency)
+                    text: qsTr(FontAwesome.monero + "  %1%2").arg(Backend.getCurrencySign(currency)).arg(price.toFixed(Backend.getCurrencyDecimals(currency)))
                     color: (NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000"
                     font.bold: true
                     anchors.verticalCenter: parent.verticalCenter

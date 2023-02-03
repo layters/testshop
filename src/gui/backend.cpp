@@ -17,27 +17,8 @@ void neroshop::Backend::copyTextToClipboard(const QString& text) {
 }
 //----------------------------------------------------------------
 //----------------------------------------------------------------
-double neroshop::Backend::convertToXmr(double amount, const QString& currency) const {
-    std::string map_key = currency.toUpper().toStdString();
-    
-    if(neroshop::CurrencyMap.count(map_key) > 0) {
-        auto map_value = neroshop::CurrencyMap[map_key];
-        neroshop::Currency from_currency = std::get<0>(map_value);
-        auto rateFuture = std::async(neroshop::Converter::get_price,
-                                     neroshop::Currency::XMR,
-                                     from_currency);
-        rateFuture.wait();
-        double rate = rateFuture.get();
-        if (rate > 0.0) {
-            return (amount / rate);
-        }
-        return 0.0;
-    }
-    neroshop::print(currency.toUpper().toStdString() + " is not supported", 1);
-    return 0.0;
-}
-//----------------------------------------------------------------
-QStringList neroshop::Backend::getCurrencyList() const {
+QStringList neroshop::Backend::getCurrencyList() const
+{
     QStringList currency_list;
     for (const auto& [key, value] : neroshop::CurrencyMap) {
         currency_list << QString::fromStdString(key);
@@ -54,22 +35,6 @@ int neroshop::Backend::getCurrencyDecimals(const QString& currency) const {
         return decimal_places;
     }
     return 2;
-}
-//----------------------------------------------------------------
-double neroshop::Backend::getXmrPrice(const QString& currency) const {
-    auto map_key = currency.toUpper().toStdString();
-    // Check if key exists in std::map
-    if(neroshop::CurrencyMap.count(map_key) > 0) {////if(neroshop::CurrencyMap.find(map_key) != neroshop::CurrencyMap.end()) {
-        auto map_value = neroshop::CurrencyMap[map_key];
-        neroshop::Currency preferred_currency = std::get<0>(map_value);
-        auto rateFuture = std::async(neroshop::Converter::get_price,
-                                     neroshop::Currency::XMR,
-                                     preferred_currency);
-        rateFuture.wait();
-        return rateFuture.get();
-    }
-    neroshop::print(currency.toUpper().toStdString() + " is not supported", 1);
-    return 0.0;
 }
 //----------------------------------------------------------------
 QString neroshop::Backend::getCurrencySign(const QString& currency) const {
