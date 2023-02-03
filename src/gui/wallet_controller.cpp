@@ -272,7 +272,7 @@ void neroshop::WalletController::nodeConnect(const QString& ip, const QString& p
                                    port.toStdString(),
                                    username.toStdString(),
                                    password.toStdString(),
-                                   _wallet.get());
+                                   this);//_wallet.get());
 }
 
 void neroshop::WalletController::daemonConnect(const QString& username, const QString& password) {
