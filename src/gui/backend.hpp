@@ -29,6 +29,8 @@ namespace neroshop {
 class Backend : public QObject { // This class was created for storing utility functions and backend implementations // Maybe I should rename this to BackendTools?
     Q_OBJECT 
 public:
+    Backend(QObject *parent = nullptr);
+
     Q_INVOKABLE QString urlToLocalFile(const QUrl& url) const;
     Q_INVOKABLE void copyTextToClipboard(const QString& text);
     

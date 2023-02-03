@@ -3,6 +3,8 @@
 #include <future>
 #include <thread>
 
+neroshop::Backend::Backend(QObject *parent) : QObject(parent) {}
+
 QString neroshop::Backend::urlToLocalFile(const QUrl &url) const
 {
     return url.toLocalFile();
@@ -717,10 +719,10 @@ QVariantList neroshop::Backend::registerUser(WalletController* wallet_controller
     if(user_id.empty()) { return { false, "Account registration failed (due to database error)" }; }//if(user_id == 0) { return { false, "Account registration failed (due to database error)" }; }
     // initialize user obj (Todo: make a seperate class headers + source files for User)
     std::unique_ptr<neroshop::User> seller(neroshop::Seller::on_login(display_name.toStdString()));
-    user_controller->user = std::move(seller);
-        if(user_controller->getUser() == nullptr) {
-            return {false, "user is NULL"};
-        }
+    user_controller->_user = std::move(seller);
+    if (user_controller->getUser() == nullptr) {
+        return {false, "user is NULL"};
+    }
         // Set user properties
         //user_controller->getUser()->set_id(user_id);
     ////if(user_controller->getUser()->get_id().empty()) {
@@ -765,7 +767,7 @@ bool neroshop::Backend::loginWithWalletFile(WalletController* wallet_controller,
     // Save user information in memory
     std::string display_name = database->get_text_params("SELECT name FROM users WHERE monero_address = $1", { primary_address });
     std::unique_ptr<neroshop::User> seller(neroshop::Seller::on_login(display_name));
-    user_controller->user = std::move(seller);
+    user_controller->_user = std::move(seller);
     if(user_controller->getUser() == nullptr) {
         return false;//{false, "user is NULL"};
     }
