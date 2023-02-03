@@ -62,10 +62,14 @@ public:
     Q_INVOKABLE QVariantList getListings(); // Products listed by sellers
     Q_INVOKABLE QVariantList getListingsByCategory(int category_id);
     Q_INVOKABLE QVariantList getListingsByMostRecent();
+    Q_INVOKABLE QVariantList getListingsByOldest();
+    Q_INVOKABLE QVariantList getListingsByPriceLowest();
+    Q_INVOKABLE QVariantList getListingsByPriceHighest();
     //Q_INVOKABLE QVariantList getListingsByMostFavorited();
     //Q_INVOKABLE QVariantList getListingsByMostSales();
     //Q_INVOKABLE QVariantList getProducts(); // Registered products
     //Q_INVOKABLE QVariantList get();
+    Q_INVOKABLE QVariantList getListingsByMostRecentLimit(int limit);    
     // Products should be registered so that sellers can list pre-existing products without the need to duplicate a product which is unnecessary and can make the database bloated
     Q_INVOKABLE QVariantList registerProduct(const QString& name, const QString& description,
         double weight, const QString& attributes, const QString& product_code, int category_id) const;

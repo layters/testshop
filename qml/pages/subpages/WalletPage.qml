@@ -168,7 +168,7 @@ Page {
                                 Text {
                                     anchors.horizontalCenter: parent.horizontalCenter
                                     anchors.verticalCenter: parent.verticalCenter
-                                    text: (!Wallet.opened) ? 0 : qsTr("%1 %2").arg(modelData.is_incoming ? "+" : "-").arg(modelData.amount.toFixed(12))
+                                    text: (!Wallet.opened) ? "" : qsTr("%1 %2").arg(modelData.is_incoming ? "+" : "-").arg(modelData.amount.toFixed(12))
                                     color: (!Wallet.opened) ? "#ffffff" : (modelData.is_incoming ? "#2cba78" : "#c32235")
                                     font.bold: true
                                 }

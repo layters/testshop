@@ -48,19 +48,10 @@ Page {
     }    
     //property alias catalogIndex: catalogStack.currentIndex
     property var model: null
-    
-    NeroshopComponents.ViewToggle {
-        id: viewToggle
-        anchors.horizontalCenter: parent.horizontalCenter
-        anchors.top: parent.top; anchors.topMargin: 20
-        //Layout.alignment: Qt.AlignHCenter | Qt.AlignTop
-        //Layout.topMargin: 20
-    }    
-    
+
     ScrollView {
         id: catalogScrollView//anchors.margins: 20
-        ////anchors.fill: parent
-        anchors.top: viewToggle.bottom; anchors.topMargin: 15
+        anchors.fill: parent////anchors.top: viewToggle.bottom; anchors.topMargin: 15
         width: parent.width; height: parent.height
         ScrollBar.vertical.policy: ScrollBar.AlwaysOn//ScrollBar.AsNeeded
         clip: true // The area in which the contents of the filterBox will be bounded to (set width and height) // If clip is false then the contents will go beyond/outside of the filterBox's bounds
@@ -81,14 +72,55 @@ Page {
         }*/    
 
         // Text that displays current page results information
-        /*Text {
+        Text {
             id: pageResultsDisplay
             text: "Page " + (catalogStack.pages.currentIndex + 1) + " of " + catalogStack.pages.count//text: "Page " + (catalogStack.currentIndex + 1) + " of " + catalogStack.count
             font.bold: true
             anchors.left: catalogStack.left
-            anchors.top: viewToggle.top//0
+            anchors.verticalCenter: viewToggle.verticalCenter//anchors.top: viewToggle.top
             color: (NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000"
-        }*/             
+        }
+        // ViewToggle
+        NeroshopComponents.ViewToggle {
+            id: viewToggle
+            anchors.horizontalCenter: parent.horizontalCenter
+            anchors.top: parent.top; anchors.topMargin: 20
+            //Layout.alignment: Qt.AlignHCenter | Qt.AlignTop
+            //Layout.topMargin: 20
+        }    
+        //GroupBox {
+        //        title: qsTr("Sort")
+        // SortComboBox
+        NeroshopComponents.ComboBox {
+            id: sortByBox
+            anchors.right: catalogStack.right
+            anchors.verticalCenter: viewToggle.verticalCenter
+            width: 200
+            model: ["None", "Oldest", "Latest", "Lowest price", "Highest price"]
+            Component.onCompleted: currentIndex = find("None")
+            //displayText: "Sort by " + currentText
+            onActivated: {
+                if(currentIndex == find("None")) {
+                    catalogPage.model = Backend.getListings()
+                }
+                if(currentIndex == find("Oldest")) {
+                    catalogPage.model = Backend.getListingsByOldest()
+                }
+                if(currentIndex == find("Latest")) {
+                    console.log("Showing most recent items")
+                    catalogPage.model = Backend.getListingsByMostRecent()
+                }
+                if(currentIndex == find("Lowest price")) {
+                    catalogPage.model = Backend.getListingsByPriceLowest()
+                }
+                if(currentIndex == find("Highest price")) {
+                    catalogPage.model = Backend.getListingsByPriceHighest()
+                }
+                /*if(currentIndex == find("")) {
+                    catalogPage.model = Backend.
+                }*/
+            }
+        }    
 
         // Pagination mode (Infinite Scroll mode replaces the StackLayout with a ScrollView)
         StackLayout {
@@ -96,10 +128,9 @@ Page {
             ////anchors.fill: parent
             width: currentItem.childrenRect.width; height: currentItem.childrenRect.height
             anchors.horizontalCenter: parent.horizontalCenter////viewToggle.horizontalCenter
+            anchors.top: viewToggle.bottom; anchors.topMargin: 15
             ////anchors.left: (productFilterBox.visible) ? productFilterBox.right : parent.left
-            ////anchors.leftMargin: (productFilterBox.visible) ? 10 : 20
-            ////anchors.top: viewToggle.bottom
-            ////anchors.topMargin: 50
+            ////anchors.leftMargin: (productFilterBox.visible) ? 10 : 20            
             ////Layout.alignment: Qt.AlignHCenter | Qt.AlignTop
             ////Layout.maximumWidth: catalogScrollView.width
             currentIndex: viewToggle.currentIndex

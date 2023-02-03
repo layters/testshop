@@ -165,7 +165,7 @@ Page {
                         spacing: 5
                         Repeater {
                             id: itemsRepeater
-                            model: Backend.getListingsByMostRecent()
+                            model: Backend.getListingsByMostRecentLimit(6)
                             delegate: Rectangle {
                                 implicitWidth: 200
                                 implicitHeight: implicitWidth
