@@ -31,11 +31,9 @@ class Backend : public QObject { // This class was created for storing utility f
 public:
     Q_INVOKABLE QString urlToLocalFile(const QUrl& url) const;
     Q_INVOKABLE void copyTextToClipboard(const QString& text);
-    
-    Q_INVOKABLE double convertToXmr(double amount, const QString& currency) const;
+
     Q_INVOKABLE QStringList getCurrencyList() const;
     Q_INVOKABLE int getCurrencyDecimals(const QString& currency) const;
-    Q_INVOKABLE double getXmrPrice(const QString& currency) const;
     Q_INVOKABLE QString getCurrencySign(const QString& currency) const;
     Q_INVOKABLE bool isSupportedCurrency(const QString& currency) const;
     

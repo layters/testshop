@@ -25,6 +25,7 @@
         <file>qml/components/ThemeSwitch.qml</file>
         <file>qml/components/Triangle.qml</file>
         <file>qml/components/ViewToggle.qml</file>
+        <file>qml/components/CurrencyExchangeRates.qml</file>
         <!-- qml sources: pages -->
         <file>qml/pages/CartPage.qml</file>
         <file>qml/pages/CatalogPage.qml</file>

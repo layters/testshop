@@ -49,7 +49,19 @@ int main(int argc, char *argv[]) {
     QGuiApplication app(argc, argv);
     #endif
     app.setApplicationName("neroshop");
-    
+
+    qmlRegisterSingletonType<CurrencyExchangeRatesProvider>(
+        "neroshop",
+        1,
+        0,
+        "CurrencyExchangeRatesProvider",
+        &CurrencyExchangeRatesProvider::qmlInstance);
+    qmlRegisterSingletonType(QUrl("qrc:/qml/components/CurrencyExchangeRates.qml"),
+                             "neroshop.CurrencyExchangeRates",
+                             1,
+                             0,
+                             "CurrencyExchangeRates");
+
     QQmlApplicationEngine engine;
     //--------------------------
     // start server daemon
