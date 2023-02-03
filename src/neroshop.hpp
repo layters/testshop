@@ -35,6 +35,7 @@
 // neroshop (gui)
 #if defined(NEROSHOP_BUILD_GUI)
 #include "gui/backend.hpp"
+#include "gui/currencyexchangeratesprovider.h"
 #include "gui/script_controller.hpp"
 #include "gui/user_controller.hpp"
 #include "gui/wallet_controller.hpp"

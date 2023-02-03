@@ -5,6 +5,8 @@ import QtQuick.Layouts 1.12 // GridLayout
 import QtQuick.Shapes 1.3 // (since Qt 5.10) // Shape
 import QtGraphicalEffects 1.12//Qt5Compat.GraphicalEffects 1.15//= Qt6// ColorOverlay
 
+import neroshop.CurrencyExchangeRates 1.0
+
 import "." as NeroshopComponents
     // todo: place grid in scrollview (infinite scroll mode) but in a separate file called CatalogGridViewInfiniteScroll.qml or CatalogGridViewLimitlessScroll.qml
     // todo: create a CatalogList.qml for the Catalog List View
@@ -197,7 +199,7 @@ import "." as NeroshopComponents
                                 
                             TextField { // Allows us to copy the string unlike Text
                                 id: priceMonero
-                                text: qsTr("%1").arg(Backend.convertToXmr(Number(modelData.price), modelData.currency).toFixed(Backend.getCurrencyDecimals("XMR")))//.arg("XMR") // TODO: allow users to specificy their preferred number of digits
+                                text: qsTr("%1").arg(CurrencyExchangeRates.convertToXmr(Number(modelData.price), modelData.currency).toFixed(Backend.getCurrencyDecimals("XMR")))//.arg("XMR") // TODO: allow users to specificy their preferred number of digits
                                 color: (NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000"
                                 visible: !catalogGrid.hideProductDetails
                                 anchors.verticalCenter: moneroSymbolRect.verticalCenter
