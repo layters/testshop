@@ -16,7 +16,8 @@
 namespace neroshop {
 
 #if defined(NEROSHOP_USE_QT)
-class WalletController : public QObject, public neroshop::Wallet {
+class WalletController : public QObject
+{
     Q_OBJECT 
     // properties (for use in QML)
     Q_PROPERTY(neroshop::Wallet* wallet READ getWallet NOTIFY walletChanged);
@@ -97,9 +98,10 @@ signals:
 class WalletController { 
 #endif
 public://private:
-    std::unique_ptr<neroshop::Wallet> wallet;
+    std::unique_ptr<neroshop::Wallet> _wallet;
+
 public:
-    WalletController();
+    WalletController(QObject *parent = nullptr);
     ~WalletController();
 };
 

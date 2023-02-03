@@ -23,8 +23,9 @@ bool isLinux = false;
 bool isTails = false;
 bool isDesktop = false;
 
-int main(int argc, char *argv[]) {
-    #if defined(NEROSHOP_USE_QT)
+int main(int argc, char *argv[])
+{
+#if defined(NEROSHOP_USE_QT)
     std::cout << "Using Qt version: " << qVersion() << "\n";
     // platform dependant settings
     #if !defined(Q_OS_ANDROID) && !defined(Q_OS_IOS)
@@ -107,16 +108,16 @@ int main(int argc, char *argv[]) {
         }
     }    
     // we can also register an instance of a class instead of the class itself
-    WalletController * wallet = new WalletController();
+    WalletController *wallet = new WalletController(&engine);
     wallet->setNetworkTypeByString(QString::fromStdString(network_type));
     engine.rootContext()->setContextProperty("Wallet", wallet);//new WalletController());//qmlRegisterUncreatableType<WalletProxy>("neroshop.Wallet", 1, 0, "Wallet", "Wallet cannot be instantiated directly.");//qmlRegisterType<WalletProxy>("neroshop.Wallet", 1, 0, "Wallet"); // Usage: import neroshop.Wallet  ...  Wallet { id: wallet }
     qRegisterMetaType<WalletController*>(); // Wallet can now be used as an argument in function parameters
     // register script
-    engine.rootContext()->setContextProperty("Script", new ScriptController());//qmlRegisterType<ScriptProxy>("neroshop.Script", 1, 0, "Script");
+    engine.rootContext()->setContextProperty("Script", new ScriptController(&engine));
     // register backend
-    engine.rootContext()->setContextProperty("Backend", new Backend());
+    engine.rootContext()->setContextProperty("Backend", new Backend(&engine));
     // Register user
-    engine.rootContext()->setContextProperty("User", new UserController());
+    engine.rootContext()->setContextProperty("User", new UserController(&engine));
     qRegisterMetaType<UserController *>();
 
     engine.addImageProvider(WALLET_QR_PROVIDER, new WalletQrProvider(WALLET_QR_PROVIDER));

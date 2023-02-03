@@ -3,8 +3,10 @@
 //neroshop::ScriptController::Script() {}
 
 //neroshop::ScriptController::~Script() {}
-    
+
 #if defined(NEROSHOP_USE_QT)
+neroshop::ScriptController::ScriptController(QObject *parent) : QObject(parent) {}
+
 QString neroshop::ScriptController::getString(const QString& key) const {
     return QString::fromStdString(neroshop::Script::get_string(neroshop::lua_state, key.toStdString()));
 }

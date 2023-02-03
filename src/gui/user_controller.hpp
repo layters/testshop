@@ -19,7 +19,7 @@ namespace neroshop {
 class UserController : public QObject, public neroshop::Seller/*User*/ {
     Q_OBJECT
 public:
-    UserController();
+    UserController(QObject *parent = nullptr);
     ~UserController();
     
     Q_PROPERTY(neroshop::User* user READ getUser);// NOTIFY ?);
@@ -51,8 +51,8 @@ public:
     friend class Backend;
 signals:
     void productsCountChanged();
-private:    
-    std::unique_ptr<neroshop::User> user;
+private:
+    std::unique_ptr<neroshop::User> _user;
     //std::unique_ptr<neroshop::WalletController> wallet_controller;
 };
 
