@@ -16,7 +16,7 @@
 namespace neroshop {
 
 #if defined(NEROSHOP_USE_QT)
-class WalletController : public QObject
+class WalletController : public QObject, public monero_wallet_listener
 {
     Q_OBJECT 
     // properties (for use in QML)
