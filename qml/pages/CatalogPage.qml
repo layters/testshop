@@ -98,7 +98,7 @@ Page {
             width: 200
             model: ["None", "Oldest", "Latest", "Lowest price", "Highest price"]
             Component.onCompleted: currentIndex = find("None")
-            //displayText: "Sort by " + currentText
+            displayText: "Sort: " + currentText
             onActivated: {
                 if(currentIndex == find("None")) {
                     catalogPage.model = Backend.getListings()
@@ -151,7 +151,7 @@ Page {
                         model: catalogStack.pagesCount//1
                         delegate: NeroshopComponents.CatalogGrid { // has index property
                             model: (catalogPage.model != null) ? catalogPage.model : this.model
-                            Component.onCompleted: console.log("model",this.model)
+                            //Component.onCompleted: console.log("model",this.model)
                         }
                     }
                 }
@@ -167,7 +167,7 @@ Page {
                         model: catalogStack.pagesCount//1
                         delegate: NeroshopComponents.CatalogList {
                             model: (catalogPage.model != null) ? catalogPage.model : this.model
-                            Component.onCompleted: console.log("model",this.model)
+                            //Component.onCompleted: console.log("model",this.model)
                         }
                     }
                 }

@@ -13,15 +13,6 @@ Page {
     background: Rectangle {
         color: "transparent"//"#0a0a0a"
     }
-
-    /*ScrollView {
-                id: balanceTxScrollView
-                anchors.fill: parent
-                anchors.margins: 20        
-                ScrollBar.vertical.policy: ScrollBar.AsNeeded//ScrollBar.AlwaysOn
-                clip: true    
-                contentWidth: parent.childrenRect.width//parent.width
-                contentHeight: parent.childrenRect.height * 3*/
     
     ColumnLayout {
         id: balanceTxColumn
@@ -50,8 +41,9 @@ Page {
                     spacing: 5
                     TextField {
                         id: balanceUnlockedText
+                        visible: (settingsDialog.balanceDisplay == 1) ? false : true
                         property double balance: !Wallet.opened ? 0.000000000000 : Wallet.balanceUnlocked
-                        text: balance.toFixed(12)
+                        text: balance.toFixed(settingsDialog.balanceAmountPrecision)
                         font.bold: true
                         font.pointSize: 48
                         color: balanceTxColumn.textColor
@@ -69,19 +61,20 @@ Page {
                         font.bold: balanceUnlockedText.font.bold
                         font.pointSize: balanceUnlockedText.font.pointSize
                         color: "#404040"
-                        visible: false
+                        visible: settingsDialog.showCurrencySign && balanceUnlockedText.visible
                     }
                 }
                             
                 Row {
-                    anchors.horizontalCenter: parent.children[0].horizontalCenter
+                    anchors.horizontalCenter: !balanceUnlockedText.visible ? parent.horizontalCenter: parent.children[0].horizontalCenter
                     spacing: 5
                     Text {
+                        visible: balanceLockedText.visible
                         anchors.verticalCenter: parent.children[1].verticalCenter
                         text: qsTr("\uf023 ")
                         font.bold: true
                         font.family: FontAwesome.fontFamily
-                        font.pixelSize: 24
+                        font.pixelSize: balanceLockedText.font.pointSize
                         color: (NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000"
                     }
                     /*Image {
@@ -99,10 +92,11 @@ Page {
                     }*/
                     TextField {
                         id: balanceLockedText
+                        visible: (settingsDialog.balanceDisplay == 2) ? false : true
                         property double balance: !Wallet.opened ? 0.000000000000 : Wallet.balanceLocked
-                        text: balance.toFixed(12)
-                        //font.bold: true
-                        font.pointSize: 24
+                        text: balance.toFixed(settingsDialog.balanceAmountPrecision)
+                        font.bold: !balanceUnlockedText.visible ? true : false
+                        font.pointSize: !balanceUnlockedText.visible ? 48 : 24
                         color: balanceTxColumn.textColor
                         readOnly: true
                         selectByMouse: true
@@ -118,7 +112,7 @@ Page {
                         font.bold: balanceLockedText.font.bold
                         font.pointSize: balanceLockedText.font.pointSize
                         color: "#404040"
-                        visible: balanceUnlockedCurrencySign.visible
+                        visible: settingsDialog.showCurrencySign && balanceLockedText.visible
                     } 
                 }                               
             }
@@ -165,12 +159,52 @@ Page {
                                 color: balanceTxColumn.baseColor
                                 width: /*950*/parent.width; height: 75//150
                                 radius: 5
+                                Rectangle {
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    anchors.left: parent.left; anchors.leftMargin: 5
+                                    width: parent.height - 10; height: width
+                                    color: "transparent"
+                                    border.color: balanceTxColumn.borderColor
+                                    
+                                    Text {
+                                        anchors.centerIn: parent
+                                        text: modelData.is_incoming ? "\uf063" : "\uf062"
+                                        color: (!Wallet.opened) ? "#ffffff" : (modelData.is_incoming ? "#2cba78" : "#c32235")
+                                        font.bold: true//; font.family: FontAwesome.fontFamily
+                                        font.pixelSize: 32
+                                    }
+                                }
+                                Text {
+                                    anchors.left: parent.children[0].right; anchors.leftMargin: 20
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    text: modelData.is_incoming ? qsTr("Received") : qsTr("Sent")
+                                    color: balanceTxColumn.textColor
+                                }
                                 Text {
                                     anchors.horizontalCenter: parent.horizontalCenter
                                     anchors.verticalCenter: parent.verticalCenter
                                     text: (!Wallet.opened) ? "" : qsTr("%1 %2").arg(modelData.is_incoming ? "+" : "-").arg(modelData.amount.toFixed(12))
                                     color: (!Wallet.opened) ? "#ffffff" : (modelData.is_incoming ? "#2cba78" : "#c32235")
                                     font.bold: true
+                                }
+                                Button {
+                                    anchors.right: parent.right; anchors.rightMargin: 20
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    width: contentItem.contentWidth + 20; height: contentItem.contentHeight + 20
+                                    text: qsTr("View")
+                                    background: Rectangle {
+                                        color: "dimgray"
+                                        radius: 3
+                                    }
+                                    contentItem: Text {
+                                        text: parent.text
+                                        color: "#ffffff"
+                                        horizontalAlignment: Text.AlignHCenter
+                                        verticalAlignment: Text.AlignVCenter
+                                    }
+                                    onClicked: {
+                                        Qt.openUrlExternally("https://" + "stagenet." + settingsDialog.blockExplorer)
+                                    }
                                 }
                             }
                         }
@@ -340,6 +374,7 @@ Page {
                                 }
                             }
                         }
+                        // TODO: add subaddress list
                     }
                 }
             }

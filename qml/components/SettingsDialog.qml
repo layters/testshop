@@ -22,6 +22,10 @@ Popup {
     // General tab properties
     property alias theme: themeBox
     property alias currency: currencyBox
+    property alias balanceDisplay: balanceDisplayBox.currentIndex//property alias balanceDisplay: balanceDisplayBox.currentText
+    property alias balanceAmountPrecision: balancePrecisionBox.currentText
+    property alias showCurrencySign: showCurrencySignSwitch.checked
+    property alias blockExplorer: blockExplorerBox.currentText
     // Monero tab properties
     property alias moneroNodeType: nodeTypeStackLayout.currentIndex//nodeTypeGroup.checkedButton.stackLayoutIndex
     property string moneroNodeAddress: (nodeTypeStackLayout.currentIndex == remoteNodeButton.stackLayoutIndex) ? moneroRemoteNodeList.selectedNode : (moneroDaemonIPField.placeholderText + ":" + moneroDaemonPortField.placeholderText)
@@ -146,7 +150,7 @@ Popup {
             }
             
             TabButton { 
-                text: (hideTabText) ? qsTr(FontAwesome.monero) : qsTr("Monero")//.arg(FontAwesome.monero)
+                text: (hideTabText) ? qsTr(FontAwesome.monero) : qsTr("Node")//.arg(FontAwesome.monero)
                 width: implicitWidth + 20
                 onClicked: {
                     settingsStack.currentIndex = 1
@@ -182,7 +186,7 @@ Popup {
                 running: decorator.x != decorator.targetX
             }
         }*/        
-    /*contentItem: */ScrollView {    
+    ScrollView {    
         id: scrollView
         width: parent.width; height: 385//anchors.fill: parent
         anchors.top: settingsBar.bottom
@@ -197,23 +201,29 @@ Popup {
         StackLayout {
             id: settingsStack
             anchors.fill: parent//anchors.top: parent.top//settingsBar.bottom
-        GridLayout {
+            
+            property real contentBoxWidth: 500
+            property string contentBoxColor: "transparent"
+            property string contentBoxBorderColor: (NeroshopComponents.Style.darkTheme) ? "#f0f0f0" : "#4d4d4d"//"#030380"
+            property real comboBoxWidth: 300
+            
+        ColumnLayout {
             id: generalSettings
             Layout.preferredWidth: parent.width//Layout.minimumWidth: parent.width - 10 // 10 is the scrollView's right margin
             //Layout.topMargin: 20 //Layout.fillWidth: true//Layout.alignment//anchors.fill: parent
-            //spacing: 10
+            spacing: 30
             GroupBox {
-                Layout.row: 0
+                //Layout.row: 0
                 Layout.alignment: Qt.AlignHCenter
-                Layout.preferredWidth: 500
+                Layout.preferredWidth: settingsStack.contentBoxWidth
                 title: qsTr("Currency")
                 
                 background: Rectangle {
                     y: parent.topPadding - parent.bottomPadding
                     width: parent.width
                     height: parent.height - parent.topPadding + parent.bottomPadding
-                    color: "transparent"
-                    border.color: "#030380"
+                    color: settingsStack.contentBoxColor
+                    border.color: settingsStack.contentBoxBorderColor
                     radius: 2
                 }
                 label: Label {
@@ -237,6 +247,7 @@ Popup {
                         id: currencyBox
                         Layout.alignment: Qt.AlignRight
                         Layout.rightMargin: 0
+                        width: settingsStack.comboBoxWidth
                         currentIndex: model.indexOf(Script.getString("neroshop.generalsettings.currency").toUpperCase())
                         displayText: currentText
                         ////property string lastCurrencySet: (Script.getString("neroshop.generalsettings.currency")) ? Script.getString("neroshop.generalsettings.currency") : "USD"
@@ -261,17 +272,17 @@ Popup {
             }
 
             GroupBox {
-                Layout.row: 1
+                //Layout.row: 1
                 Layout.alignment: Qt.AlignHCenter
-                Layout.preferredWidth: 500
+                Layout.preferredWidth: settingsStack.contentBoxWidth
                 title: qsTr("Application")
                 //width: scrollView.width//contentWidth // does nothing
                 background: Rectangle {
                     y: parent.topPadding - parent.bottomPadding
                     width: parent.width
                     height: parent.height - parent.topPadding + parent.bottomPadding
-                    color: "transparent"
-                    border.color: "#030380"
+                    color: settingsStack.contentBoxColor
+                    border.color: settingsStack.contentBoxBorderColor
                     radius: 2
                 }
                 label: Label {
@@ -294,6 +305,7 @@ Popup {
                         id: themeBox
                         Layout.alignment: Qt.AlignRight
                         Layout.rightMargin: 0
+                        width: settingsStack.comboBoxWidth
                         currentIndex: model.indexOf(NeroshopComponents.Style.themeName)//Component.onCompleted: currentIndex = model.indexOf(NeroshopComponents.Style.themeName) // Set the initial currentIndex to the index in the array containing themeName string
                         displayText: currentText
                         property string lastUsedDarkTheme: (Script.getBoolean("neroshop.generalsettings.application.theme.dark")) ? Script.getString("neroshop.generalsettings.application.theme.name") : "DefaultDark"
@@ -326,17 +338,17 @@ Popup {
                 } // RowLayout2
            } // GroupBox2        
                        GroupBox {
-                       Layout.row: 2
+                       //Layout.row: 2
                        Layout.alignment: Qt.AlignHCenter
-                       Layout.preferredWidth: 500
+                       Layout.preferredWidth: settingsStack.contentBoxWidth
                 title: qsTr("Localization")
                 
                 background: Rectangle {
                     y: parent.topPadding - parent.bottomPadding
                     width: parent.width
                     height: parent.height - parent.topPadding + parent.bottomPadding
-                    color: "transparent"
-                    border.color: "#030380"
+                    color: settingsStack.contentBoxColor
+                    border.color: settingsStack.contentBoxBorderColor
                     radius: 2
                 }
                 label: Label {
@@ -357,43 +369,134 @@ Popup {
                     id: languageComboBox
                     Layout.alignment: Qt.AlignRight
                     Layout.rightMargin: 0
+                    width: settingsStack.comboBoxWidth
                     currentIndex: model.indexOf("English")
                     model: ["English"] // TODO logic from controller
                     indicatorWidth: 30
                     color: "#f2f2f2"
                 }
             }                
-            } // GroupBox3    
+            } // GroupBox3  
+            // Balance GroupBox
+            GroupBox {
+                title: qsTr("Wallet")
+                //Layout.row: 3
+                Layout.alignment: Qt.AlignHCenter
+                Layout.preferredWidth: settingsStack.contentBoxWidth
+                background: Rectangle {
+                    y: parent.topPadding - parent.bottomPadding
+                    width: parent.width
+                    height: parent.height - parent.topPadding + parent.bottomPadding
+                    color: settingsStack.contentBoxColor
+                    border.color: settingsStack.contentBoxBorderColor
+                    radius: 2
+                }
+                label: Label {
+                    x: parent.leftPadding
+                    width: parent.availableWidth
+                    text: parent.title
+                    color: parent.background.border.color//"#030380"
+                    elide: Text.ElideRight
+                }
+                // TODO: balance display (show total balance, show unlocked, show all), decimals (3, 6, 12, etc.)  
+                ColumnLayout {
+                    id: walletSetColumn
+                    width: parent.width; height: childrenRect.height
+                    // Balance display
+                    Item {
+                        Layout.fillWidth: true
+                        Layout.preferredHeight: childrenRect.height                        
+                        Text {
+                            anchors.verticalCenter: balanceDisplayBox.verticalCenter
+                            text: qsTr("Balance display:")
+                            color: NeroshopComponents.Style.darkTheme ? "#ffffff" : "#000000"
+                        }
+
+                        NeroshopComponents.ComboBox {
+                            id: balanceDisplayBox
+                            anchors.right: parent.right//; anchors.rightMargin: 0
+                            width: settingsStack.comboBoxWidth; indicatorWidth: 30
+                            model: ["All balances", "Locked balance only", "Unlocked balance only"]
+                            Component.onCompleted: currentIndex = find("All balances")
+                            color: "#f2f2f2"
+                        }
+                    }
+                    // Precision/Decimal places
+                    Item {
+                        Layout.fillWidth: true
+                        Layout.preferredHeight: childrenRect.height
+                        Text {
+                            anchors.verticalCenter: balancePrecisionBox.verticalCenter
+                            text: qsTr("Decimals:")
+                            color: NeroshopComponents.Style.darkTheme ? "#ffffff" : "#000000"
+                        }
+
+                        NeroshopComponents.ComboBox {
+                            id: balancePrecisionBox
+                            anchors.right: parent.right
+                            width: settingsStack.comboBoxWidth; indicatorWidth: 30
+                            model: ["3", "6", "9", "12"]
+                            Component.onCompleted: currentIndex = find("12")
+                            color: "#f2f2f2"
+                        }
+                    }
+                    // Currency sign
+                    Item {
+                        Layout.fillWidth: true
+                        Layout.preferredHeight: childrenRect.height
+                        Text {
+                            anchors.verticalCenter: showCurrencySignSwitch.verticalCenter
+                            text: qsTr("Show currency code:")
+                            color: NeroshopComponents.Style.darkTheme ? "#ffffff" : "#000000"
+                        }
+                        
+                        NeroshopComponents.Switch {
+                            id: showCurrencySignSwitch
+                            anchors.right: parent.right; anchors.rightMargin: 5
+                            width: settingsStack.comboBoxWidth
+                            checked: false
+                            radius: 13
+                            backgroundCheckedColor: "#605185"
+                        }
+                    }                    
+                    // Block explorer
+                    Item {
+                        Layout.fillWidth: true
+                        Layout.preferredHeight: childrenRect.height
+                        Text {
+                            anchors.verticalCenter: blockExplorerBox.verticalCenter
+                            text: qsTr("Block explorer:")
+                            color: NeroshopComponents.Style.darkTheme ? "#ffffff" : "#000000"
+                        }
+                        
+                        NeroshopComponents.ComboBox {
+                            id: blockExplorerBox
+                            anchors.right: parent.right
+                            width: settingsStack.comboBoxWidth; indicatorWidth: 30
+                            model: ["xmrchain.net"]
+                            Component.onCompleted: currentIndex = find("xmrchain.net")
+                            color: "#f2f2f2"
+                        }
+                    }
+                }
+            } // Balance GroupBox
+            // Hide or Show price display
+            // TODO: Privacy tab: Tor, I2P settings
+            // TODO: Paths selection
+            // TODO: Lock on inactivity
             
-        } // ColumnLayout (positions items vertically (up-and-down) I think, while RowLayout items are side-by-side)
+        } // generalSettings ColumnLayout
         
         // Monero settings
-            GridLayout {
+            ColumnLayout {
                 id: moneroSettings
                 Layout.minimumWidth: parent.width - 10 // 10 is the scrollView's right margin
                 Layout.minimumHeight: 500 // Increase this value whenever more items are added inside the scrollview
                 //rowSpacing:  // The default value is 5 but we'll set this later
-                            
-                    
-                /*Frame { //GroupBox {
-                    //title: qsTr("Select a node type")
-                    Layout.row: 0
-                    Layout.alignment: Qt.AlignHCenter
-                    Layout.preferredWidth: 500//250////Layout.fillWidth: true
-                    Layout.preferredHeight: contentHeight + (contentHeight / 2)//implicitContentHeight*/
-                    /*label: Label {
-                        text: parent.title
-                        color: (NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000"
-                        font.bold: true
-                    }*/
-                    /*background: Rectangle {
-                        radius: 3
-                        color: "transparent"
-                        border.color: (NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000"
-                    }*/
+
                     
                     RowLayout {
-                        Layout.row: 0
+                        //Layout.row: 0
                         Layout.alignment: Qt.AlignHCenter
                         Layout.preferredWidth: 500
                         //spacing: 5
@@ -475,7 +578,7 @@ Popup {
                 
                 StackLayout {
                     id: nodeTypeStackLayout
-                    Layout.row: 1
+                    //Layout.row: 1
                     Layout.fillWidth: true
                     Layout.fillHeight: true
                     

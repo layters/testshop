@@ -6,6 +6,7 @@ import "." as NeroshopComponents
 
 Item {
     id: searchBar
+    width: childrenRect.width; height: childrenRect.height
     TextField {
         id: searchField
         color: "#ffffff" // textColor

@@ -135,6 +135,7 @@ Page {
                             onEntered: parent.hovered = true
                             onExited: parent.hovered = false
                             onClicked: {
+                                if(Backend.getCategoryProductCount(modelData.id) <= 0) return;
                                 navBar.uncheckAllButtons()
                                 pageLoader.setSource("qrc:/qml/pages/CatalogPage.qml", { "model": Backend.getListingsByCategory(modelData.id) })
                             }

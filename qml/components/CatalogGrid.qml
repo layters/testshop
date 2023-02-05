@@ -41,8 +41,8 @@ import "." as NeroshopComponents
                 visible: true
                 width: catalogGrid.boxWidth
                 height: catalogGrid.boxHeight
-                color: (NeroshopComponents.Style.darkTheme) ? "#2e2e2e"/*"#121212"*/ : "#a0a0a0"//"#ffffff"// #a0a0a0 = 160,160,160
-                border.color: (NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000"
+                color: (NeroshopComponents.Style.darkTheme) ? (NeroshopComponents.Style.themeName == "PurpleDust" ? "#0e0e11" : "#101010") : "#f0f0f0"////(NeroshopComponents.Style.darkTheme) ? "#2e2e2e"/*"#121212"*/ : "#a0a0a0"//"#ffffff"// #a0a0a0 = 160,160,160
+                border.color: (NeroshopComponents.Style.darkTheme) ? "#404040" : "#4d4d4d"////(NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000"
                 border.width: 0
                 radius: 5
                 clip: true // So that productNameText will be clipped to the Rectangle's bounding rectangle and will not go past it

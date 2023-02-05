@@ -23,8 +23,8 @@ Column {
         delegate: Rectangle {
             id: productBox
             width: catalogList.boxWidth; height: catalogList.boxHeight // The height of each individual model item/ list element
-            color: (NeroshopComponents.Style.darkTheme) ? "#2e2e2e" : "#a0a0a0"
-            border.color: (NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000"
+            color: (NeroshopComponents.Style.darkTheme) ? (NeroshopComponents.Style.themeName == "PurpleDust" ? "#0e0e11" : "#101010") : "#f0f0f0"////(NeroshopComponents.Style.darkTheme) ? "#2e2e2e" : "#a0a0a0"
+            border.color: (NeroshopComponents.Style.darkTheme) ? "#404040" : "#4d4d4d"////(NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000"
             border.width: 0
             radius: 5
             //clip: true

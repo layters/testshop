@@ -35,6 +35,7 @@ A decentralized P2P (peer-to-peer) marketplace for [**Monero**](https://getmoner
 ![Product_Listing_Bottom](https://github.com/larteyoh/testshop/blob/main/images/screenshots/Product_Listing_Bottom.png)
 ![WalletPage_Send](https://github.com/larteyoh/testshop/blob/main/images/screenshots/WalletPage_BalanceSend.png)
 ![WalletPage_Receive](https://github.com/larteyoh/testshop/blob/main/images/screenshots/WalletPage_BalanceReceive.png)
+![WalletPage_Transactions](https://github.com/larteyoh/testshop/blob/main/images/screenshots/WalletPage_BalanceTxs.png)
 
 </details>
 
