@@ -5,6 +5,7 @@ import QtQuick.Layouts 1.12 // GridLayout
 import QtQuick.Shapes 1.3 // (since Qt 5.10) // Shape
 import QtGraphicalEffects 1.12//Qt5Compat.GraphicalEffects 1.15//= Qt6// ColorOverlay
 
+import FontAwesome 1.0
 import neroshop.CurrencyExchangeRates 1.0
 
 import "." as NeroshopComponents
@@ -12,13 +13,15 @@ import "." as NeroshopComponents
     // todo: create a CatalogList.qml for the Catalog List View
     // Grid should have two modes: Pagination mode and Infinite scroll mode
     // catalog view (Grid)
-    Grid {
+    GridView {
         id: catalogGrid
-        width: (boxWidth * count) + (spacing * (count - 1)); height: (boxHeight * count) + (spacing * (count - 1))
-        rows: 10//20
-        columns: 3
-        spacing: 5//rowSpacing: 5; columnSpacing: 5
-        //flow: Grid.TopToBottom
+        // Bug detected: binding the catalogGrid's height to a variable will not work
+        width: 910; height: 910//width//300//(cellHeight * count)//(boxWidth * count) + (spacing * (count - 1)); height: (boxHeight * count) + (spacing * (count - 1))
+        cellWidth: (hideProductDetails) ? 250 : 300//220 : 250//300
+        cellHeight: 400//300
+        property int spacing: 5//rowSpacing: 5; columnSpacing: 5
+        property int columns: count / 3 // 3= number of rows in each line (determined by width of grid)
+        
         function getBox(index) { // or get_item(index)?
             return catalogGridRepeater.itemAt(index);
         }
@@ -26,34 +29,40 @@ import "." as NeroshopComponents
             return catalogGridRepeater.count; // count is really just the number of items in the model :O
         }
         property bool hideProductDetails: false // hides product name, price, and star ratings if set to true
-        property real boxWidth: (hideProductDetails) ? 250 : 300//220 : 250//300
-        property real boxHeight: 300//(hideProductDetails) ? 300 : 400
-        property real fullWidth: (this.boxWidth * columns) + (spacing * (columns - 1)) // Full width of the entire grid - tested
-        property alias count: catalogGridRepeater.count
-        property alias model: catalogGridRepeater.model
-        
-        Repeater { // owns all items it instantiates
-            id: catalogGridRepeater
-            model: Backend.getListings()//(rows * columns)//// rows and columns already set so this is useless (I think)
+        property real fullWidth: (this.boxWidth * count) + (spacing * (count - 1))//property real fullWidth: (this.boxWidth * columns) + (spacing * (columns - 1)) // Full width of the entire grid - tested
+        /*property alias count: catalogGridRepeater.count
+        property alias model: catalogGridRepeater.model*/
+        model: Backend.getListings()//(rows * columns)//// rows and columns already set so this is useless (I think)
             // product box (GridBox)
             delegate: Rectangle { // delegates have a readonly "index" property that indicates the index of the delegate within the repeater
                 id: productBox
                 visible: true
-                width: catalogGrid.boxWidth
-                height: catalogGrid.boxHeight
-                color: (NeroshopComponents.Style.darkTheme) ? (NeroshopComponents.Style.themeName == "PurpleDust" ? "#0e0e11" : "#101010") : "#f0f0f0"////(NeroshopComponents.Style.darkTheme) ? "#2e2e2e"/*"#121212"*/ : "#a0a0a0"//"#ffffff"// #a0a0a0 = 160,160,160
+                width: catalogGrid.cellWidth-catalogGrid.spacing
+                height: catalogGrid.cellHeight-catalogGrid.spacing
+                color: (NeroshopComponents.Style.darkTheme) ? (NeroshopComponents.Style.themeName == "PurpleDust" ? "#17171c" : "#1d1d1d") : "#c9c9cd"//"#e6e6e6"//"#f0f0f0"
                 border.color: (NeroshopComponents.Style.darkTheme) ? "#404040" : "#4d4d4d"////(NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000"
                 border.width: 0
                 radius: 5
                 clip: true // So that productNameText will be clipped to the Rectangle's bounding rectangle and will not go past it
-                            
+                //anchors.right: this.right; anchors.rightMargin: 5
+                // Hide radius at bottom border
+                Rectangle {
+                    width: productImageRect.width - (parent.border.width * 2); height: productImageRect.height / 2
+                    anchors.left: parent.left; anchors.leftMargin: parent.border.width
+                    anchors.right: parent.right; anchors.rightMargin: parent.border.width
+                    anchors.bottom: productImageRect.bottom; anchors.bottomMargin: -2
+                    color: productImageRect.color//"blue"
+                    border.width: parent.border.width; border.color: productImageRect.color
+                    radius: 0
+                }
+                                                
                 Rectangle {
                     id: productImageRect
-                    anchors.top: parent.top//; anchors.topMargin: parent.border.width//0//5
+                    anchors.top: parent.top
                     anchors.left: parent.left // so that margins will also apply to left and right sides
+                    anchors.right: parent.right
                     anchors.margins: parent.border.width
-                    anchors.horizontalCenter: parent.horizontalCenter
-                    width: parent.width; height: (parent.height / 3) + 30//=130
+                    width: parent.width; height: (parent.height / 2)// + 30//=130
                     color: "#ffffff"//"transparent"//(NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000"
                     radius: parent.radius
                              
@@ -61,7 +70,7 @@ import "." as NeroshopComponents
                         id: productImage
                         source: "file:///" + modelData.product_image_file//"qrc:/images/image_gallery.png"
                         anchors.centerIn: parent
-                        width: 128; height: 128
+                        width: 192; height: 192
                         fillMode: Image.PreserveAspectFit//Image.Stretch
                         mipmap: true
                         asynchronous: true
@@ -71,10 +80,10 @@ import "." as NeroshopComponents
                             hoverEnabled: true
                             acceptedButtons: Qt.LeftButton
                             onEntered: {
-                                catalogGridRepeater.itemAt(index).border.width = 1
+                                productBox.border.width = 1
                             }
                             onExited: {
-                                catalogGridRepeater.itemAt(index).border.width = 0
+                                productBox.border.width = 0
                             }
                             onClicked: { 
                                 navBar.uncheckAllButtons() // Uncheck all navigational buttons
@@ -149,86 +158,99 @@ import "." as NeroshopComponents
                         }
                     }
                 }
-                // todo: maybe use a Flow for text wrapping? // Reminder: Flow children cannot have anchors or positions set!!
-                TextArea {
-                    id: productNameText
-                    anchors.left: parent.left
-                    anchors.top: productImageRect.bottom
-                    anchors.right: parent.right
-                    anchors.margins: 10
-                    text: qsTr(modelData.product_name)//qsTr("Product name")
+        // Product details
+        ColumnLayout {
+            id: productDetailsColumn
+            anchors.left: parent.left
+            anchors.top: productImageRect.bottom
+            anchors.right: parent.right
+            anchors.margins: 10
+            width: parent.width// Layout should automatically set the height based on its children's height
+            spacing: 5
+                
+            TextArea {
+                id: productNameText
+                text: qsTr(modelData.product_name)//qsTr("Product name")
+                color: (NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000"
+                visible: !catalogGrid.hideProductDetails
+                readOnly: true
+                wrapMode: Text.Wrap //Text.Wrap moves text to the newline when it reaches the width
+                selectByMouse: true
+                //font.bold: true
+                font.pointSize: 13
+                background: Rectangle { color: "transparent" }
+                padding: 0; leftPadding: 0
+                //onClicked://onFocusChanged: {
+                    //if(activeFocus) pageLoader.setSource("qrc:/qml/pages/ProductPage.qml")
+                //}
+            }
+                                
+            Column {
+                Layout.fillWidth: true
+                spacing: 5//10
+                Row {
+                    spacing: 5
+                                
+                    Image {
+                        id: moneroSymbol
+                        source: "qrc:/images/monero_symbol.png"
+                        visible: !catalogGrid.hideProductDetails
+                        width: 24; height: 24
+                        fillMode:Image.PreserveAspectFit
+                        mipmap: true
+                    }
+                                
+                    TextField { // Allows us to copy the string unlike Text
+                        id: priceMonero
+                        text: qsTr("%1").arg(CurrencyExchangeRates.convertToXmr(Number(modelData.price), modelData.currency).toFixed(Backend.getCurrencyDecimals("XMR")))//.arg("XMR") // TODO: allow users to specificy their preferred number of digits
+                        color: (NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000"
+                        visible: !catalogGrid.hideProductDetails
+                        anchors.verticalCenter: moneroSymbol.verticalCenter
+                        font.bold: true
+                        font.pointSize: 16
+                        readOnly: true
+                        selectByMouse: true
+                        background: Rectangle {
+                            color: "transparent"
+                        }
+                        padding: 0; leftPadding: 0 // With the padding at zero, we can freely set the Row spacing
+                    }
+                }
+                        
+                TextField {
+                    id: priceFiat
+                    text: qsTr("%1%2 %3").arg(Backend.getCurrencySign(modelData.currency)).arg(Number(modelData.price).toFixed(Backend.getCurrencyDecimals(modelData.currency))).arg(modelData.currency)
                     color: (NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000"
                     visible: !catalogGrid.hideProductDetails
                     readOnly: true
-                    wrapMode: Text.Wrap //Text.Wrap moves text to the newline when it reaches the width
                     selectByMouse: true
-                    //font.bold: true
-                    font.pointSize: 13
-                    background: Rectangle { color: "transparent" }
-                    padding: 0; leftPadding: 0
-                }
-                                
-                Item {
-                    anchors.left: parent.left
-                    anchors.leftMargin: 10
-                    anchors.top: productNameText.bottom//priceFiat.bottom
-                    anchors.topMargin: 5////10
-                    
-                    Column {
-                        spacing: 5//10
-                        Row {
-                            spacing: 5
-                        
-                            Rectangle {
-                                id: moneroSymbolRect
-                                radius: 50
-                                color: "transparent"
-                                border.color: NeroshopComponents.Style.moneroOrangeColor
-                                width: moneroSymbol.width + 2; height: moneroSymbol.height + 2
-                                
-                                Image {
-                                    id: moneroSymbol
-                                    source: "qrc:/images/monero_symbol.png"
-                                    visible: !catalogGrid.hideProductDetails
-                                    width: 24; height: 24
-                                    fillMode:Image.PreserveAspectFit
-                                    mipmap: true
-                                    anchors.verticalCenter: parent.verticalCenter; anchors.horizontalCenter: parent.horizontalCenter//anchors.centerIn: parent//verticalAlignment: Image.AlignVCenter; horizontalAlignment: Image.AlignHCenter
-                                }
-                            }
-                                
-                            TextField { // Allows us to copy the string unlike Text
-                                id: priceMonero
-                                text: qsTr("%1").arg(CurrencyExchangeRates.convertToXmr(Number(modelData.price), modelData.currency).toFixed(Backend.getCurrencyDecimals("XMR")))//.arg("XMR") // TODO: allow users to specificy their preferred number of digits
-                                color: (NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000"
-                                visible: !catalogGrid.hideProductDetails
-                                anchors.verticalCenter: moneroSymbolRect.verticalCenter
-                                font.bold: true
-                                font.pointSize: 16
-                                readOnly: true
-                                selectByMouse: true
-                                background: Rectangle {
-                                    color: "transparent"
-                                }
-                                padding: 0; leftPadding: 0 // With the padding at zero, we can freely set the Row spacing
-                            }
-                        }
-                        
-                        TextField {
-                            id: priceFiat
-                            text: qsTr("%1%2 %3").arg(Backend.getCurrencySign(modelData.currency)).arg(Number(modelData.price).toFixed(Backend.getCurrencyDecimals(modelData.currency))).arg(modelData.currency)
-                            color: (NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000"
-                            visible: !catalogGrid.hideProductDetails
-                            readOnly: true
-                            selectByMouse: true
-                            background: Rectangle {
-                                color: "transparent"
-                            }
-                            padding: 0; leftPadding: 0 // With the padding at zero, we can freely set the Row spacing
-                        } 
+                    background: Rectangle {
+                        color: "transparent"
                     }
+                    padding: 0; leftPadding: 0 // With the padding at zero, we can freely set the Row spacing
+                } 
+            }
+            // TODO: Ratings stars and ratings count
+            Row {
+                id: starsRow
+                //spacing: 5
+                property real avg_stars: Backend.getProductAverageStars(modelData.product_id)
+                property int star_ratings_count: Backend.getProductStarCount(modelData.product_id)
+                Component.onCompleted: console.log("avg stars", starsRow.avg_stars)
+                Repeater {
+                    model: 5//Math.round(starsRow.avg_stars)
+                    delegate: Text {
+                        text: (starsRow.star_ratings_count <= 0) ? qsTr(FontAwesome.star) : ((starsRow.avg_stars > index && starsRow.avg_stars < (index + 1)) ? qsTr(FontAwesome.starHalfStroke) : qsTr(FontAwesome.star)) // not sure?
+                        color: ((index + 1) > Math.round(starsRow.avg_stars) || (starsRow.star_ratings_count <= 0)) ? "#777" : "#ffb344" // good!
+                        font.bold: true
+                        font.family: FontAwesome.fontFamily                            
+                    }       
                 }
-                // TODO: Ratings stars and ratings count
-            } // Catalog View Box (grid box)
-        } // Repeater
-    } // Catalog View (grid)
+                Text {
+                    text: qsTr(" (%1 ratings)").arg(starsRow.star_ratings_count)
+                    color: (NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000"
+                } 
+            } 
+        } // ColumnLayout    
+    } // delegate
+} // Catalog View (grid)

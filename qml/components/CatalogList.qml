@@ -11,7 +11,7 @@ Column {
     width: boxWidth; height: (boxHeight * count) + (spacing * (count - 1))//(boxHeight * catalogListRepeater.count) // The height is the height of all the models in the listview combined
     spacing: 5
     property bool hideProductDetails: false // hides product name, price, and star ratings if set to true
-    property real boxWidth: 600
+    property real boxWidth: 910
     property real boxHeight: 300
     property alias count: catalogListRepeater.count
     property alias model: catalogListRepeater.model
@@ -23,19 +23,29 @@ Column {
         delegate: Rectangle {
             id: productBox
             width: catalogList.boxWidth; height: catalogList.boxHeight // The height of each individual model item/ list element
-            color: (NeroshopComponents.Style.darkTheme) ? (NeroshopComponents.Style.themeName == "PurpleDust" ? "#0e0e11" : "#101010") : "#f0f0f0"////(NeroshopComponents.Style.darkTheme) ? "#2e2e2e" : "#a0a0a0"
+            color: (NeroshopComponents.Style.darkTheme) ? (NeroshopComponents.Style.themeName == "PurpleDust" ? "#17171c" : "#1d1d1d") : "#c9c9cd"//"#f0f0f0"
             border.color: (NeroshopComponents.Style.darkTheme) ? "#404040" : "#4d4d4d"////(NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000"
             border.width: 0
             radius: 5
             //clip: true
+            // Hide radius at right border
+            Rectangle {
+                width: productImageRect.width / 2; height: productImageRect.height - (parent.border.width * 2)
+                anchors.top: parent.top; anchors.topMargin: parent.border.width
+                anchors.bottom: parent.bottom; anchors.bottomMargin: parent.border.width
+                anchors.right: productImageRect.right; anchors.rightMargin: -2
+                color: productImageRect.color//"blue"
+                border.width: parent.border.width; border.color: productImageRect.color
+                radius: 0
+            }
 
             Rectangle {
                 id: productImageRect
                 anchors.top: parent.top
                 anchors.left: parent.left // so that margins will also apply to left and right sides
+                anchors.bottom: parent.bottom
                 anchors.margins: parent.border.width
-                anchors.verticalCenter: parent.verticalCenter
-                width: (parent.width / 3) + 20; height: parent.height
+                width: (parent.width / 3); height: parent.height
                 color: "#ffffff"//"transparent"
                 radius: parent.radius
                              
@@ -43,7 +53,7 @@ Column {
                     id: productImage
                     source: "file:///" + modelData.product_image_file//"qrc:/images/image_gallery.png"
                     anchors.centerIn: parent
-                    width: 128; height: 128
+                    width: 192; height: 192
                     fillMode: Image.PreserveAspectFit
                     mipmap: true
                     asynchronous: true

@@ -4,6 +4,7 @@ import QtQuick.Layouts 1.12
 import QtGraphicalEffects 1.12
 
 import FontAwesome 1.0
+import neroshop.CurrencyExchangeRates 1.0
 
 // Wallet and Wallet Daemon settings page
 import "../../components" as NeroshopComponents
@@ -180,12 +181,19 @@ Page {
                                     text: modelData.is_incoming ? qsTr("Received") : qsTr("Sent")
                                     color: balanceTxColumn.textColor
                                 }
-                                Text {
+                                Column {
                                     anchors.horizontalCenter: parent.horizontalCenter
                                     anchors.verticalCenter: parent.verticalCenter
-                                    text: (!Wallet.opened) ? "" : qsTr("%1 %2").arg(modelData.is_incoming ? "+" : "-").arg(modelData.amount.toFixed(12))
-                                    color: (!Wallet.opened) ? "#ffffff" : (modelData.is_incoming ? "#2cba78" : "#c32235")
-                                    font.bold: true
+                                    Text {
+                                        text: (!Wallet.opened) ? "" : qsTr("%1 %2").arg(modelData.is_incoming ? "+" : "-").arg(modelData.amount.toFixed(12))
+                                        color: (!Wallet.opened) ? "#ffffff" : (modelData.is_incoming ? "#2cba78" : "#c32235")
+                                        font.bold: true
+                                    }
+                                    Text {
+                                        text: (!Wallet.opened) ? "" : qsTr("%1 %2%3 %4").arg(modelData.is_incoming ? "+" : "-").arg(Backend.getCurrencySign(priceDisplayText.currency)).arg(CurrencyExchangeRates.getXmrPrice(priceDisplayText.currency) * modelData.amount.toFixed(12)).arg(priceDisplayText.currency.toUpperCase())
+                                        color: "#777"
+                                        //font.bold: true
+                                    }
                                 }
                                 Button {
                                     anchors.right: parent.right; anchors.rightMargin: 20

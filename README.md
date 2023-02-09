@@ -13,6 +13,7 @@ A decentralized P2P (peer-to-peer) marketplace for [**Monero**](https://getmoner
   - [Dependencies](#dependencies)
   - [Compiling neroshop from source](#compiling-neroshop-from-source)
 - [Contributing](#contributing) <!-- - [Bug Bounty Program]-->
+- [License](#license)
 - [Donations](#donations)
 - [Resources](#resources)
 - [Credits](#credits)
@@ -28,8 +29,10 @@ A decentralized P2P (peer-to-peer) marketplace for [**Monero**](https://getmoner
 ![Registration](https://github.com/larteyoh/testshop/blob/main/images/screenshots/Registration.png)
 ![CatalogGrid_Top](https://github.com/larteyoh/testshop/blob/main/images/screenshots/CatalogGrid_Top.png)
 ![CatalogGrid_Bottom](https://github.com/larteyoh/testshop/blob/main/images/screenshots/CatalogGrid_Bottom.png)
+![CatalogGrid](https://github.com/larteyoh/testshop/blob/main/images/screenshots/CatalogGrid.png)
 ![SettingsDialog_Monero](https://github.com/larteyoh/testshop/blob/main/images/screenshots/SettingsDialog_Monero.png)
 ![HomePage](https://github.com/larteyoh/testshop/blob/main/images/screenshots/HomePage.png)
+![HomePage_Recent_Listings](https://github.com/larteyoh/testshop/blob/main/images/screenshots/HomePage_Recent_Listings.png)
 ![Dashboard](https://github.com/larteyoh/testshop/blob/main/images/screenshots/Dashboard_Overview.png)
 ![Product_Listing_Top](https://github.com/larteyoh/testshop/blob/main/images/screenshots/Product_Listing_Top.png)
 ![Product_Listing_Bottom](https://github.com/larteyoh/testshop/blob/main/images/screenshots/Product_Listing_Bottom.png)
@@ -211,6 +214,10 @@ make
 
 ## Contributing
 See [CONTRIBUTING.md](CONTRIBUTING.md)
+
+
+## License
+This project is licensed under the GNU General Public License ([GPLv3](LICENSE))
 
 
 ## Donations

@@ -67,7 +67,7 @@ public:
 	bool has_wallet() const; // returns true if seller's wallet is opened
 	bool has_wallet_synced() const; // returns true if seller's wallet is synced to a node
 	// callbacks
-	static neroshop::User * on_login(const std::string& username);
+	static neroshop::User * on_login(const neroshop::Wallet& wallet);
 	void on_order_received(std::string& subaddress);
 	// listening to orders
 	void update_customer_orders(); // called multiple times	// listens to and update customer orders

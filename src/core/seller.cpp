@@ -609,16 +609,22 @@ bool neroshop::Seller::has_wallet_synced() const {
 ////////////////////
 // callbacks
 ////////////////////
-neroshop::User * neroshop::Seller::on_login(const std::string& username) { // assumes user data already exists in database
+neroshop::User * neroshop::Seller::on_login(const neroshop::Wallet& wallet) { // assumes user data already exists in database
     neroshop::db::Sqlite3 * database = neroshop::db::Sqlite3::get_database();
     if(!database) throw std::runtime_error("database is NULL");
+    //std::string user_id = database->get_text_params("SELECT monero_address FROM users WHERE name = $1", { username });
+    std::string monero_address = wallet.get_monero_wallet()->get_primary_address();
+    if(!monero_utils::is_valid_address(monero_address, wallet.get_network_type())) {
+        neroshop::print("Invalid monero address");
+        return nullptr;
+    }
     // create a new user (seller)
-    neroshop::User * user = new Seller(username);
+    neroshop::User * user = new Seller();
     // set user properties retrieved from database
-    dynamic_cast<Seller *>(user)->set_logged(true); // protected, so can only be accessed by child class obj
-    std::string user_id = database->get_text_params("SELECT monero_address FROM users WHERE name = $1", { username });
-    dynamic_cast<Seller *>(user)->set_id(user_id);
-    dynamic_cast<Seller *>(user)->set_account_type(user_account_type::seller);
+    dynamic_cast<Seller *>(user)->set_logged(true); // protected, so can only be accessed by child class obj    
+    dynamic_cast<Seller *>(user)->set_id(monero_address);
+    dynamic_cast<Seller *>(user)->set_wallet(wallet);
+    dynamic_cast<Seller *>(user)->set_account_type(user_account_type::seller);    
     //-------------------------------
     /*// load orders
     dynamic_cast<Seller *>(user)->load_orders();
@@ -629,8 +635,7 @@ neroshop::User * neroshop::Seller::on_login(const std::string& username) { // as
     // load cart (into memory)
     ////if(user->is_registered()) {
         ////user->get_cart()->load_cart(user->get_id());
-    ////}        
-    std::cout << "\033[1;34m(account_type: " << neroshop::string::lower(user->get_account_type_string()) << ", id: " << user->get_id() << ", reputation: " << static_cast<Seller *>(user)->get_reputation() << ")\033[0m" << std::endl; // get_reputation() also opens the database hence the warning
+    ////}
     return user;          
 }
 ////////////////////

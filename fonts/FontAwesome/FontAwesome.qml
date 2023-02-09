@@ -49,7 +49,7 @@ Object {
     property string seedling: "\uf4d8"
     property string heart: "\uf004"
     property string star: "\uf005"
-    property string starHalf: "\uf089"//; property string starHalfStroke: "\uf5c0"    
+    property string starHalf: "\uf089"; property string starHalfStroke: "\uf5c0"
     property string square: "\uf0c8"
     property string circle: "\uf111"
     property string cloud: "\uf0c2"

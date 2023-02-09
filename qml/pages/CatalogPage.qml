@@ -74,7 +74,7 @@ Page {
         // Text that displays current page results information
         Text {
             id: pageResultsDisplay
-            text: "Page " + (catalogStack.pages.currentIndex + 1) + " of " + catalogStack.pages.count//text: "Page " + (catalogStack.currentIndex + 1) + " of " + catalogStack.count
+            text: qsTr("Page %1 of %2 (Results: %3)").arg(catalogStack.pages.currentIndex + 1).arg(catalogStack.pages.count).arg(catalogPage.model.length)
             font.bold: true
             anchors.left: catalogStack.left
             anchors.verticalCenter: viewToggle.verticalCenter//anchors.top: viewToggle.top

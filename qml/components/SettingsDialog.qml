@@ -234,19 +234,23 @@ Popup {
                     elide: Text.ElideRight
                 }
                 // GroupBox content goes here
-                RowLayout {
+                ColumnLayout {
+                    id: currencyColumn
+                    width: parent.width; height: childrenRect.height
                     //spacing: 200 // spacing between Row items
-                    anchors.fill: parent
-                    Text {
-                        text: qsTr("Preferred local currency:")
-                        color: (NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000"
-                        Layout.alignment: Qt.AlignLeft
-                        Layout.leftMargin: 0
-                    }
+                    Item {
+                        Layout.fillWidth: true
+                        Layout.preferredHeight: childrenRect.height
+                        Text {
+                            anchors.verticalCenter: currencyBox.verticalCenter
+                            text: qsTr("Preferred local currency:")
+                            color: (NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000"
+                            //Layout.alignment: Qt.AlignLeft; Layout.leftMargin: 0
+                        }
+                      
                     NeroshopComponents.ComboBox {
                         id: currencyBox
-                        Layout.alignment: Qt.AlignRight
-                        Layout.rightMargin: 0
+                        anchors.right: parent.right//Layout.alignment: Qt.AlignRight; Layout.rightMargin: 0
                         width: settingsStack.comboBoxWidth
                         currentIndex: model.indexOf(Script.getString("neroshop.generalsettings.currency").toUpperCase())
                         displayText: currentText
@@ -267,7 +271,8 @@ Popup {
                         indicatorWidth: 30
                         color: "#f2f2f2"//(NeroshopComponents.Style.darkTheme) ? "#101010" : "#f0f0f0"
                         //textColor: (NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000"
-}
+                    }
+                    }
                 }          
             }
 
@@ -293,18 +298,21 @@ Popup {
                     elide: Text.ElideRight
                 }
                 
-                RowLayout {
-                    anchors.fill: parent
+                ColumnLayout {
+                    id: themeColumn
+                    width: parent.width; height: childrenRect.height
+                    //spacing: 200 // spacing between Row items
+                    Item {
+                        Layout.fillWidth: true
+                        Layout.preferredHeight: childrenRect.height
                     Text {
                         text: qsTr("Theme:")
                         color: (NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000"
-                        Layout.alignment: Qt.AlignLeft
-                        Layout.leftMargin: 0
+                        anchors.verticalCenter: themeBox.verticalCenter//Layout.alignment: Qt.AlignLeft; Layout.leftMargin: 0
                     }
                     NeroshopComponents.ComboBox {
                         id: themeBox
-                        Layout.alignment: Qt.AlignRight
-                        Layout.rightMargin: 0
+                        anchors.right: parent.right//Layout.alignment: Qt.AlignRight; Layout.rightMargin: 0
                         width: settingsStack.comboBoxWidth
                         currentIndex: model.indexOf(NeroshopComponents.Style.themeName)//Component.onCompleted: currentIndex = model.indexOf(NeroshopComponents.Style.themeName) // Set the initial currentIndex to the index in the array containing themeName string
                         displayText: currentText
@@ -333,7 +341,8 @@ Popup {
                         }
                         indicatorWidth: 30
                         color: "#f2f2f2"
-                    } // ComboBox       
+                    } // ComboBox   
+                    }    
                     // Window                
                 } // RowLayout2
            } // GroupBox2        
@@ -358,22 +367,28 @@ Popup {
                     color: parent.background.border.color//"#030380"
                     elide: Text.ElideRight
                 }
-            RowLayout {
-                anchors.fill: parent
+            ColumnLayout {
+                    id: languageColumn
+                    width: parent.width; height: childrenRect.height
+                    //spacing: 200 // spacing between Row items
+                    Item {
+                        Layout.fillWidth: true
+                        Layout.preferredHeight: childrenRect.height
                 Label {
                     text: qsTr("Language:")
                     color: NeroshopComponents.Style.darkTheme ? "#ffffff" : "#000000"
+                    anchors.verticalCenter: languageBox.verticalCenter
                 }
 
                 NeroshopComponents.ComboBox {
-                    id: languageComboBox
-                    Layout.alignment: Qt.AlignRight
-                    Layout.rightMargin: 0
+                    id: languageBox
+                    anchors.right: parent.right//Layout.alignment: Qt.AlignRight; Layout.rightMargin: 0
                     width: settingsStack.comboBoxWidth
                     currentIndex: model.indexOf("English")
                     model: ["English"] // TODO logic from controller
                     indicatorWidth: 30
                     color: "#f2f2f2"
+                }
                 }
             }                
             } // GroupBox3  

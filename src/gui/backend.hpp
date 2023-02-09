@@ -74,6 +74,10 @@ public:
     Q_INVOKABLE QVariantList registerProduct(const QString& name, const QString& description,
         double weight, const QString& attributes, const QString& product_code, int category_id) const;
     Q_INVOKABLE void uploadProductImage(const QString& product_id, const QString& filename);
+    
+    Q_INVOKABLE int getProductStarCount(const QString& product_id);
+    Q_INVOKABLE int getProductStarCount(const QString& product_id, int star_number);
+    Q_INVOKABLE float getProductAverageStars(const QString& product_id);
     //Q_INVOKABLE void ();
     static void testWriteJson();
     static void testfts5();

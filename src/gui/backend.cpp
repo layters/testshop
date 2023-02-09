@@ -383,6 +383,48 @@ void neroshop::Backend::uploadProductImage(const QString& product_id, const QStr
 }
 
 //----------------------------------------------------------------
+int neroshop::Backend::getProductStarCount(const QString& product_id) {
+    neroshop::db::Sqlite3 * database = neroshop::db::Sqlite3::get_database();
+    if(!database) throw std::runtime_error("database is NULL");
+    // Get total number of star ratings for a specific product
+    unsigned int ratings_count = database->get_integer_params("SELECT COUNT(*) FROM product_ratings WHERE product_id = $1", { product_id.toStdString() });
+    return ratings_count;
+}
+//----------------------------------------------------------------
+int neroshop::Backend::getProductStarCount(const QString& product_id, int star_number) {
+    neroshop::db::Sqlite3 * database = neroshop::db::Sqlite3::get_database();
+    if(!database) throw std::runtime_error("database is NULL");
+    // Get total number of N star ratings for a specific product
+    if(star_number > 5) star_number = 5;
+    if(star_number < 1) star_number = 1;
+    unsigned int star_count = database->get_integer_params("SELECT COUNT(stars) FROM product_ratings WHERE product_id = $1 AND stars = $2", { product_id.toStdString(), std::to_string(star_number) });
+    return star_count;
+}
+//----------------------------------------------------------------
+float neroshop::Backend::getProductAverageStars(const QString& product_id) {
+    neroshop::db::Sqlite3 * database = neroshop::db::Sqlite3::get_database();
+    if(!database) throw std::runtime_error("database is NULL");
+    // Get number of star ratings for a specific product
+    unsigned int total_star_ratings = database->get_integer_params("SELECT COUNT(*) FROM product_ratings WHERE product_id = $1", { product_id.toStdString() });
+    if(total_star_ratings == 0) { neroshop::print("This item has no star ratings", 2); return 0.0f; }
+    // Get number of 1, 2, 3, 4, and 5 star_ratings
+    int one_star_count = database->get_integer_params("SELECT COUNT(stars) FROM product_ratings WHERE product_id = $1 AND stars = $2", { product_id.toStdString(), std::to_string(1) });
+    int two_star_count = database->get_integer_params("SELECT COUNT(stars) FROM product_ratings WHERE product_id = $1 AND stars = $2", { product_id.toStdString(), std::to_string(2) });
+    int three_star_count = database->get_integer_params("SELECT COUNT(stars) FROM product_ratings WHERE product_id = $1 AND stars = $2", { product_id.toStdString(), std::to_string(3) });
+    int four_star_count = database->get_integer_params("SELECT COUNT(stars) FROM product_ratings WHERE product_id = $1 AND stars = $2", { product_id.toStdString(), std::to_string(4) });
+    int five_star_count = database->get_integer_params("SELECT COUNT(stars) FROM product_ratings WHERE product_id = $1 AND stars = $2", { product_id.toStdString(), std::to_string(5) });
+    // Now calculate the average stars 
+    float average_stars = (
+        (1 * static_cast<float>(one_star_count)) + 
+        (2 * static_cast<float>(two_star_count)) + 
+        (3 * static_cast<float>(three_star_count)) + 
+        (4 * static_cast<float>(four_star_count)) + 
+        (5 * static_cast<float>(five_star_count))) / total_star_ratings;
+    return average_stars;
+}
+    
+//----------------------------------------------------------------
+//----------------------------------------------------------------
 QVariantList neroshop::Backend::getListings() {
     neroshop::db::Sqlite3 * database = neroshop::db::Sqlite3::get_database();
     if(!database) throw std::runtime_error("database is NULL");
@@ -911,28 +953,12 @@ QVariantList neroshop::Backend::registerUser(WalletController* wallet_controller
     std::string user_id = database->get_text_params("INSERT INTO users(name, monero_address) VALUES($1, $2) RETURNING monero_address;", { display_name.toStdString(), primary_address });//int user_id = database->get_integer_params("INSERT INTO users(name, monero_address) VALUES($1, $2) RETURNING id;", { display_name.toStdString(), primary_address.toStdString() });
     if(user_id.empty()) { return { false, "Account registration failed (due to database error)" }; }//if(user_id == 0) { return { false, "Account registration failed (due to database error)" }; }
     // initialize user obj (Todo: make a seperate class headers + source files for User)
-    std::unique_ptr<neroshop::User> seller(neroshop::Seller::on_login(display_name.toStdString()));
+    std::unique_ptr<neroshop::User> seller(neroshop::Seller::on_login(*wallet_controller->getWallet()));
     user_controller->_user = std::move(seller);
     if (user_controller->getUser() == nullptr) {
         return {false, "user is NULL"};
     }
-        // Set user properties
-        //user_controller->getUser()->set_id(user_id);
-    ////if(user_controller->getUser()->get_id().empty()) {
-        //user_controller->user = std::make_unique<neroshop::Seller>();
-        ////user_controller->getUser()->set_id(user_id);
-        
-        /*user_controller->getSeller()->set_wallet(*wallet_controller->getWallet());
-        std::cout << "Seller wallet set: " << user_controller->getSeller()->get_wallet()->get_primary_address() << std::endl;*/
-        
-        /*std::string signature = wallet_controller->signMessage("Turtles are cool", monero_message_signature_type::SIGN_WITH_SPEND_KEY);
-        std::cout << "\033[34mSignature: " << signature << std::endl;
-        std::string verified = (wallet_controller->verifyMessage("Turtles are cool", signature)) ? "true" : "false";
-        std::cout << "\033[34mIs verified: " << verified << "\033[0m" << std::endl;*/
-        
-        /*user_controller->getUser()->upload_avatar("../images/wownero_logo.png");//("../images/appicons/LogoLight250x250.png");
-        user_controller->getUser()->export_avatar();*/ // export_avatar function causes app to freeze
-    ////}
+    //user_controller->rateItem("3c20978b-a543-4c58-bc68-5f900027796f", 3, "This product is aiight");
     // Display registration message
     neroshop::print(((!display_name.isEmpty()) ? "Welcome to neroshop, " : "Welcome to neroshop") + display_name.toStdString(), 4);
     return { true, "" };
@@ -959,7 +985,7 @@ bool neroshop::Backend::loginWithWalletFile(WalletController* wallet_controller,
     }
     // Save user information in memory
     std::string display_name = database->get_text_params("SELECT name FROM users WHERE monero_address = $1", { primary_address });
-    std::unique_ptr<neroshop::User> seller(neroshop::Seller::on_login(display_name));
+    std::unique_ptr<neroshop::User> seller(neroshop::Seller::on_login(*wallet_controller->getWallet()));
     user_controller->_user = std::move(seller);
     if(user_controller->getUser() == nullptr) {
         return false;//{false, "user is NULL"};

@@ -15,23 +15,23 @@ public:
     User();
     virtual ~User(); // by making this virtual both base and derived class destructors will be called instead of just the base destructor alone
     // account-related stuff (will continue adding more account features)
-    void rate_seller(unsigned int seller_id, int score, std::string comments = ""); // seller score (0-1) // use int and NOT unsigned int 'cause unsigned int assumes the arg will never be negative number, but when arg is negative, it converts it to some random positive number
-    void rate_item(unsigned int item_id, int stars, std::string comments = ""); // star ratings (1-5)    
+    void rate_seller(const std::string& seller_id, int score, const std::string& comments, const std::string& signature); // seller score (0-1) // use int and NOT unsigned int 'cause unsigned int assumes the arg will never be negative number, but when arg is negative, it converts it to some random positive number
+    void rate_item(const std::string& item_id, int stars, const std::string& comments, const std::string& signature); // star ratings (1-5)    
     void convert(); // converts buyer to seller //void revert(); // I don't see the reason for degrading your account after an upgrade hehe ... //void report_user(const User& user, const std::string& reason); // report a user
     void delete_account();
     void logout();
     // cart-related stuff (50% complete - cart class still needs some more work)
-    void add_to_cart(unsigned int item_id, int quantity = 1);
+    void add_to_cart(const std::string& product_id, int quantity = 1);
     void add_to_cart(const neroshop::Item& item, int quantity = 1); // use int and NOT unsigned int 'cause unsigned int assumes the arg will never be negative number, but when arg is negative, it converts it to some random positive number
-    void remove_from_cart(unsigned int item_id, int quantity = 1);
+    void remove_from_cart(const std::string& product_id, int quantity = 1);
     void remove_from_cart(const neroshop::Item& item, int quantity = 1);
     void clear_cart();
     // order-related stuff (50% complete - order class still needs some more work)
     void create_order(const std::string& shipping_address, std::string contact = "");// const;//void create_order();
     // favorite-or-wishlist-related stuff (100% complete)
-    void add_to_favorites(unsigned int item_id);
+    void add_to_favorites(const std::string& product_id);
     void add_to_favorites(const neroshop::Item& item);
-    void remove_from_favorites(unsigned int item_id);
+    void remove_from_favorites(const std::string& product_id);
     void remove_from_favorites(const neroshop::Item& item);
     void clear_favorites();
     // avatar-related stuff (10% complete)
@@ -64,9 +64,9 @@ public:
     bool has_email() const;
     bool has_avatar() const;
     // item-related stuff - boolean
-    bool has_purchased(unsigned int item_id); // checks if an item was previously purchased or not
+    bool has_purchased(const std::string& product_id); // checks if an item was previously purchased or not
     bool has_purchased(const neroshop::Item& item); // checks if an item was previously purchased or not
-    bool has_favorited(unsigned int item_id); // checks if an item is in a user's favorites or wishlist
+    bool has_favorited(const std::string& product_id); // checks if an item is in a user's favorites or wishlist
     bool has_favorited(const neroshop::Item& item); // checks if an item is in a user's favorites or wishlist
     // callbacks
     void on_registration(const std::string& name); // on registering an account
