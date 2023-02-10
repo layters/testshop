@@ -22,10 +22,15 @@ Popup {
     // General tab properties
     property alias theme: themeBox
     property alias currency: currencyBox
+    // Wallet settings
     property alias balanceDisplay: balanceDisplayBox.currentIndex//property alias balanceDisplay: balanceDisplayBox.currentText
     property alias balanceAmountPrecision: balancePrecisionBox.currentText
     property alias showCurrencySign: showCurrencySignSwitch.checked
     property alias blockExplorer: blockExplorerBox.currentText
+    // Catalog settings
+    property alias catalogPriceBox: priceDisplayBox
+    property alias hideProductDetails: hideProductDetailsSwitch.checked
+    property alias gridDetailsAlignCenter: gridDetailsAlignCenterSwitch.checked
     // Monero tab properties
     property alias moneroNodeType: nodeTypeStackLayout.currentIndex//nodeTypeGroup.checkedButton.stackLayoutIndex
     property string moneroNodeAddress: (nodeTypeStackLayout.currentIndex == remoteNodeButton.stackLayoutIndex) ? moneroRemoteNodeList.selectedNode : (moneroDaemonIPField.placeholderText + ":" + moneroDaemonPortField.placeholderText)
@@ -202,7 +207,7 @@ Popup {
             id: settingsStack
             anchors.fill: parent//anchors.top: parent.top//settingsBar.bottom
             
-            property real contentBoxWidth: 500
+            property real contentBoxWidth: 600
             property string contentBoxColor: "transparent"
             property string contentBoxBorderColor: (NeroshopComponents.Style.darkTheme) ? "#f0f0f0" : "#4d4d4d"//"#030380"
             property real comboBoxWidth: 300
@@ -273,6 +278,25 @@ Popup {
                         //textColor: (NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000"
                     }
                     }
+                    // Price API
+                    /*Item {
+                        Layout.fillWidth: true
+                        Layout.preferredHeight: childrenRect.height
+                        Text {
+                            anchors.verticalCenter: priceApiBox.verticalCenter
+                            text: qsTr("Price API:")
+                            color: NeroshopComponents.Style.darkTheme ? "#ffffff" : "#000000"
+                        }
+                        
+                        NeroshopComponents.ComboBox {
+                            id: priceApiBox
+                            anchors.right: parent.right
+                            width: settingsStack.comboBoxWidth; indicatorWidth: 30
+                            model: ["CoinGecko", "CoinMarketCap"]
+                            Component.onCompleted: currentIndex = find("CoinGecko")
+                            color: "#f2f2f2"
+                        }
+                    }*/
                 }          
             }
 
@@ -392,7 +416,7 @@ Popup {
                 }
             }                
             } // GroupBox3  
-            // Balance GroupBox
+            // Wallet settings
             GroupBox {
                 title: qsTr("Wallet")
                 //Layout.row: 3
@@ -499,6 +523,91 @@ Popup {
             // TODO: Privacy tab: Tor, I2P settings
             // TODO: Paths selection
             // TODO: Lock on inactivity
+            // Catalog settings
+            GroupBox {
+                title: qsTr("Catalog")
+                //Layout.row: 3
+                Layout.alignment: Qt.AlignHCenter
+                Layout.preferredWidth: settingsStack.contentBoxWidth
+                background: Rectangle {
+                    y: parent.topPadding - parent.bottomPadding
+                    width: parent.width
+                    height: parent.height - parent.topPadding + parent.bottomPadding
+                    color: settingsStack.contentBoxColor
+                    border.color: settingsStack.contentBoxBorderColor
+                    radius: 2
+                }
+                label: Label {
+                    x: parent.leftPadding
+                    width: parent.availableWidth
+                    text: parent.title
+                    color: parent.background.border.color//"#030380"
+                    elide: Text.ElideRight
+                }
+                // TODO: catalog display (show xmr price, show fiat price, show all)
+                ColumnLayout {
+                    id: catalogSetColumn
+                    width: parent.width; height: childrenRect.height
+                    // Product details
+                    Item {
+                        Layout.fillWidth: true
+                        Layout.preferredHeight: childrenRect.height
+                        Text {
+                            anchors.verticalCenter: hideProductDetailsSwitch.verticalCenter
+                            text: qsTr("Hide product details:")
+                            color: NeroshopComponents.Style.darkTheme ? "#ffffff" : "#000000"
+                        }
+                        
+                        NeroshopComponents.Switch {
+                            id: hideProductDetailsSwitch
+                            anchors.right: parent.right; anchors.rightMargin: 5
+                            width: settingsStack.comboBoxWidth
+                            checked: false
+                            radius: 13
+                            backgroundCheckedColor: "#605185"
+                        }
+                    }
+                    // Catalog price display
+                    Item {
+                        Layout.fillWidth: true
+                        Layout.preferredHeight: childrenRect.height
+                        Text {
+                            anchors.verticalCenter: priceDisplayBox.verticalCenter
+                            text: qsTr("Price display:")
+                            color: NeroshopComponents.Style.darkTheme ? "#ffffff" : "#000000"
+                        }
+                        
+                        NeroshopComponents.ComboBox {
+                            id: priceDisplayBox
+                            anchors.right: parent.right
+                            width: settingsStack.comboBoxWidth; indicatorWidth: 30
+                            model: ["All prices", "Fiat price only", "Monero price only"]
+                            Component.onCompleted: currentIndex = find("All prices")
+                            color: "#f2f2f2"
+                        }
+                    }
+                    // Grid Product Details Aligned Center
+                    Item {
+                        Layout.fillWidth: true
+                        Layout.preferredHeight: childrenRect.height
+                        visible: false // hide this option as it is not necessary
+                        Text {
+                            anchors.verticalCenter: gridDetailsAlignCenterSwitch.verticalCenter
+                            text: qsTr("Align product details at center (Grid):")
+                            color: NeroshopComponents.Style.darkTheme ? "#ffffff" : "#000000"
+                        }
+                        
+                        NeroshopComponents.Switch {
+                            id: gridDetailsAlignCenterSwitch
+                            anchors.right: parent.right; anchors.rightMargin: 5
+                            width: settingsStack.comboBoxWidth
+                            checked: false
+                            radius: 13
+                            backgroundCheckedColor: "#605185"
+                        }
+                    }
+                }
+            }            
             
         } // generalSettings ColumnLayout
         

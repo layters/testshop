@@ -406,7 +406,7 @@ float neroshop::Backend::getProductAverageStars(const QString& product_id) {
     if(!database) throw std::runtime_error("database is NULL");
     // Get number of star ratings for a specific product
     unsigned int total_star_ratings = database->get_integer_params("SELECT COUNT(*) FROM product_ratings WHERE product_id = $1", { product_id.toStdString() });
-    if(total_star_ratings == 0) { neroshop::print("This item has no star ratings", 2); return 0.0f; }
+    if(total_star_ratings == 0) { /*neroshop::print("This item has no star ratings", 2);*/ return 0.0f; }
     // Get number of 1, 2, 3, 4, and 5 star_ratings
     int one_star_count = database->get_integer_params("SELECT COUNT(stars) FROM product_ratings WHERE product_id = $1 AND stars = $2", { product_id.toStdString(), std::to_string(1) });
     int two_star_count = database->get_integer_params("SELECT COUNT(stars) FROM product_ratings WHERE product_id = $1 AND stars = $2", { product_id.toStdString(), std::to_string(2) });

@@ -17,8 +17,8 @@ import "." as NeroshopComponents
         id: catalogGrid
         // Bug detected: binding the catalogGrid's height to a variable will not work
         width: 910; height: 910//width//300//(cellHeight * count)//(boxWidth * count) + (spacing * (count - 1)); height: (boxHeight * count) + (spacing * (count - 1))
-        cellWidth: (hideProductDetails) ? 250 : 300//220 : 250//300
-        cellHeight: 400//300
+        cellWidth: 300//250
+        cellHeight: (settingsDialog.hideProductDetails) ? 300 : 400
         property int spacing: 5//rowSpacing: 5; columnSpacing: 5
         property int columns: count / 3 // 3= number of rows in each line (determined by width of grid)
         
@@ -28,7 +28,6 @@ import "." as NeroshopComponents
         function getBoxCount() {
             return catalogGridRepeater.count; // count is really just the number of items in the model :O
         }
-        property bool hideProductDetails: false // hides product name, price, and star ratings if set to true
         property real fullWidth: (this.boxWidth * count) + (spacing * (count - 1))//property real fullWidth: (this.boxWidth * columns) + (spacing * (columns - 1)) // Full width of the entire grid - tested
         /*property alias count: catalogGridRepeater.count
         property alias model: catalogGridRepeater.model*/
@@ -62,7 +61,7 @@ import "." as NeroshopComponents
                     anchors.left: parent.left // so that margins will also apply to left and right sides
                     anchors.right: parent.right
                     anchors.margins: parent.border.width
-                    width: parent.width; height: (parent.height / 2)// + 30//=130
+                    width: parent.width; height: (settingsDialog.hideProductDetails) ? 197.5 : (parent.height / 2)// + 30//=130
                     color: "#ffffff"//"transparent"//(NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000"
                     radius: parent.radius
                              
@@ -70,7 +69,7 @@ import "." as NeroshopComponents
                         id: productImage
                         source: "file:///" + modelData.product_image_file//"qrc:/images/image_gallery.png"
                         anchors.centerIn: parent
-                        width: 192; height: 192
+                        width: 192; height: width
                         fillMode: Image.PreserveAspectFit//Image.Stretch
                         mipmap: true
                         asynchronous: true
@@ -170,9 +169,10 @@ import "." as NeroshopComponents
                 
             TextArea {
                 id: productNameText
+                Layout.alignment: (!settingsDialog.gridDetailsAlignCenter) ? 0 : Qt.AlignHCenter
                 text: qsTr(modelData.product_name)//qsTr("Product name")
                 color: (NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000"
-                visible: !catalogGrid.hideProductDetails
+                visible: !settingsDialog.hideProductDetails
                 readOnly: true
                 wrapMode: Text.Wrap //Text.Wrap moves text to the newline when it reaches the width
                 selectByMouse: true
@@ -186,15 +186,15 @@ import "." as NeroshopComponents
             }
                                 
             Column {
-                Layout.fillWidth: true
+                Layout.alignment: (!settingsDialog.gridDetailsAlignCenter) ? 0 : Qt.AlignHCenter////Layout.fillWidth: true
                 spacing: 5//10
                 Row {
                     spacing: 5
                                 
                     Image {
                         id: moneroSymbol
-                        source: "qrc:/images/monero_symbol.png"
-                        visible: !catalogGrid.hideProductDetails
+                        source: "qrc:/images/monero_symbol_white.png"
+                        visible: priceMonero.visible
                         width: 24; height: 24
                         fillMode:Image.PreserveAspectFit
                         mipmap: true
@@ -204,7 +204,7 @@ import "." as NeroshopComponents
                         id: priceMonero
                         text: qsTr("%1").arg(CurrencyExchangeRates.convertToXmr(Number(modelData.price), modelData.currency).toFixed(Backend.getCurrencyDecimals("XMR")))//.arg("XMR") // TODO: allow users to specificy their preferred number of digits
                         color: (NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000"
-                        visible: !catalogGrid.hideProductDetails
+                        visible: (settingsDialog.catalogPriceBox.currentIndex == 1) ? false : true//!settingsDialog.hideProductDetails
                         anchors.verticalCenter: moneroSymbol.verticalCenter
                         font.bold: true
                         font.pointSize: 16
@@ -219,9 +219,28 @@ import "." as NeroshopComponents
                         
                 TextField {
                     id: priceFiat
+                    states: [
+                        State {
+                            name: "left"
+                            AnchorChanges {
+                                target: priceFiat
+                                anchors.left: parent.left
+                            }
+                        },
+                        State {
+                            name: "centered"
+                            AnchorChanges {
+                                target: priceFiat
+                                anchors.horizontalCenter: parent.horizontalCenter
+                            }
+                        }                        
+                    ]
+                    state: (!settingsDialog.gridDetailsAlignCenter) ? "left" : "centered"
                     text: qsTr("%1%2 %3").arg(Backend.getCurrencySign(modelData.currency)).arg(Number(modelData.price).toFixed(Backend.getCurrencyDecimals(modelData.currency))).arg(modelData.currency)
                     color: (NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000"
-                    visible: !catalogGrid.hideProductDetails
+                    font.bold: !priceMonero.visible ? true : false
+                    font.pointSize: !priceMonero.visible ? 16 : Qt.application.font.pointSize
+                    visible: (settingsDialog.catalogPriceBox.currentIndex == 2) ? false : true//!settingsDialog.hideProductDetails
                     readOnly: true
                     selectByMouse: true
                     background: Rectangle {
@@ -231,26 +250,28 @@ import "." as NeroshopComponents
                 } 
             }
             // TODO: Ratings stars and ratings count
-            Row {
+            Row { 
                 id: starsRow
+                Layout.alignment: (!settingsDialog.gridDetailsAlignCenter) ? 0 : Qt.AlignHCenter
                 //spacing: 5
                 property real avg_stars: Backend.getProductAverageStars(modelData.product_id)
                 property int star_ratings_count: Backend.getProductStarCount(modelData.product_id)
-                Component.onCompleted: console.log("avg stars", starsRow.avg_stars)
+                //Component.onCompleted: console.log("avg stars", starsRow.avg_stars)
                 Repeater {
-                    model: 5//Math.round(starsRow.avg_stars)
+                    model: 5
                     delegate: Text {
                         text: (starsRow.star_ratings_count <= 0) ? qsTr(FontAwesome.star) : ((starsRow.avg_stars > index && starsRow.avg_stars < (index + 1)) ? qsTr(FontAwesome.starHalfStroke) : qsTr(FontAwesome.star)) // not sure?
-                        color: ((index + 1) > Math.round(starsRow.avg_stars) || (starsRow.star_ratings_count <= 0)) ? "#777" : "#ffb344" // good!
+                        color: ((index + 1) > Math.ceil(starsRow.avg_stars) || (starsRow.star_ratings_count <= 0)) ? "#777" : "#ffb344" // good!
                         font.bold: true
                         font.family: FontAwesome.fontFamily                            
                     }       
                 }
                 Text {
-                    text: qsTr(" (%1 ratings)").arg(starsRow.star_ratings_count)
+                    visible: !settingsDialog.hideProductDetails
+                    text: qsTr(" %1"/* ratings"*/).arg((starsRow.star_ratings_count <= 0) ? "" : "(" + starsRow.star_ratings_count + ")")
                     color: (NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000"
-                } 
-            } 
-        } // ColumnLayout    
+                }
+            }
+        } // ColumnLayout
     } // delegate
 } // Catalog View (grid)

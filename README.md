@@ -217,7 +217,7 @@ See [CONTRIBUTING.md](CONTRIBUTING.md)
 
 
 ## License
-This project is licensed under the GNU General Public License ([GPLv3](LICENSE))
+This project is licensed under the [GNU General Public License (GPLv3)](LICENSE)
 
 
 ## Donations
@@ -240,6 +240,8 @@ You may support the neroshop project directly by donating Monero (XMR) to the ad
 * Mail: neroshop@protonmail.com
 
 * Matrix: [#neroshop:matrix.org](https://matrix.to/#/#neroshop:matrix.org)
+
+* Matrix 2: [#neroshop-dev:matrix.org](https://matrix.to/#/#neroshop-dev:matrix.org)
 
 
 ## Credits

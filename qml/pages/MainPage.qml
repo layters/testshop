@@ -132,9 +132,9 @@ Page {
         //User.uploadAvatar("../images/appicons/LogoLight250x250.png");
         // Switch to HomePage
         pageLoader.source = "HomePage.qml"//stack.push(home_page)
-        console.log("Primary address: ", Wallet.getPrimaryAddress())
-        console.log("Balance: ", Wallet.getBalanceLocked().toFixed(12))
-        console.log("Unlocked balance: ", Wallet.getBalanceUnlocked().toFixed(12))
+        //console.log("Primary address: ", Wallet.getPrimaryAddress())
+        //console.log("Balance: ", Wallet.getBalanceLocked().toFixed(12))
+        //console.log("Unlocked balance: ", Wallet.getBalanceUnlocked().toFixed(12))
         // start synching the monero node as soon we hit the register button (this confirms that we are satified with the wallet key that we've generated and won't turn back to re-generate a new one)
         // Todo: Add an auto-connect on login/registration button and only sync automatically if that option is turned on (will be turned on by default)
         onAutoSync()
@@ -556,9 +556,6 @@ Page {
                             onAutoSync();
                             // Switch to HomePage
                             pageLoader.source = "HomePage.qml"
-                            console.log("Primary address:", Wallet.getPrimaryAddress())
-                            console.log("Balance:", Wallet.getBalanceLocked().toFixed(12))
-                            console.log("Unlocked balance:", Wallet.getBalanceUnlocked().toFixed(12))
                             //console.log("Mnemonic:", Wallet.getMnemonic())
                 	    }
                 	    // restore from seed
