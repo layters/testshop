@@ -21,7 +21,7 @@ Page {
         anchors.horizontalCenter: parent.horizontalCenter
         model: ["Overview", "Inventory", "Customers"]
         Component.onCompleted: {
-            buttonAt(1).checked = true //TODO: make "Inventory" default tab for quicker access to listing products
+            buttonAt(0).checked = true //TODO: make "Inventory" default tab for quicker access to listing products
         }
     }
             
@@ -196,7 +196,7 @@ Page {
                                 anchors.top: parent.children[0].top
                             
                                 Text {
-                                    text: qsTr("%1%2").arg("0").arg("%")
+                                    text: qsTr("%1%2").arg(User.getReputation()).arg("%")
                                     font.bold: true
                                     font.pointSize: stats.numberTextFontSize
                                     color: stats.textColor
@@ -815,6 +815,7 @@ Page {
                         Button {
                             id: listProductButton
                             width: 500; height: contentItem.contentHeight + 30
+                            hoverEnabled: true
                             text: qsTr("List Product")
                             background: Rectangle {
                                 color: parent.hovered ? "#4d426c" : "#443a5f"

@@ -211,14 +211,14 @@ void neroshop::User::delete_account() {
     
     ////////////////////////////////    
 #endif    
-} // username of deleted accounts can be reused or nah?? :O
+} // username of deleted accounts should be reused or nah?
 ////////////////////
 ////////////////////
 ////////////////////
 // cart-related stuff here
 ////////////////////
 void neroshop::User::add_to_cart(const std::string& product_id, int quantity) {
-    ////cart->add(product_id, quantity);
+    cart->add(product_id, quantity);
 }
 ////////////////////
 void neroshop::User::add_to_cart(const neroshop::Item& item, int quantity) {
@@ -226,7 +226,7 @@ void neroshop::User::add_to_cart(const neroshop::Item& item, int quantity) {
 }
 ////////////////////
 void neroshop::User::remove_from_cart(const std::string& product_id, int quantity) {
-    ////cart->remove(product_id, quantity);
+    cart->remove(product_id, quantity);
 }
 ////////////////////
 void neroshop::User::remove_from_cart(const neroshop::Item& item, int quantity) {

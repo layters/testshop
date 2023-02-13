@@ -6,7 +6,7 @@ import QtGraphicalEffects 1.12
 import FontAwesome 1.0
 import neroshop.CurrencyExchangeRates 1.0
 
-// Wallet and Wallet Daemon settings page
+// Wallet page
 import "../../components" as NeroshopComponents
 
 Page {
@@ -141,78 +141,75 @@ Page {
                             
                 Flickable {
                     anchors.fill: parent
-                    contentWidth: parent.width/*950*/; contentHeight: (75 * txRepeater.count) + (txFlow.spacing * (txRepeater.count - 1))
+                    contentWidth: parent.width/*950*/; contentHeight: (75 * txList.count) + (txList.spacing * (txList.count - 1))
                     clip: true
                     ScrollBar.vertical: ScrollBar {
                         policy: ScrollBar.AsNeeded//AlwaysOff
                     }
-                    Column {//Flow {
-                        id: txFlow
-                        anchors.fill: parent//
+                    ListView {
+                        id: txList
+                        anchors.fill: parent
                         //width: parent.contentWidth/*parent.width*/; height: parent.contentHeight//childrenRect.height * txRepeater.count//width: parent.contentWidth//; height: parent.height
                         //anchors.centerIn: parent//anchors.horizontalCenter: parent.horizontalCenter
                         spacing: 7
-                        Component.onCompleted: console.log("tx count", txRepeater.count)
-                        Repeater {
-                            id: txRepeater
-                            model: Wallet.transfers
-                            delegate: Rectangle {
-                                color: balanceTxColumn.baseColor
-                                width: /*950*/parent.width; height: 75//150
-                                radius: 5
-                                Rectangle {
-                                    anchors.verticalCenter: parent.verticalCenter
-                                    anchors.left: parent.left; anchors.leftMargin: 5
-                                    width: parent.height - 10; height: width
-                                    color: "transparent"
-                                    border.color: balanceTxColumn.borderColor
+                        Component.onCompleted: console.log("tx count", /*txRepeater.*/count)
+                        model: Wallet.transfers
+                        delegate: Rectangle {
+                            color: balanceTxColumn.baseColor
+                            width: /*950*/parent.width; height: 75//150
+                            radius: 5
+                            Rectangle {
+                                anchors.verticalCenter: parent.verticalCenter
+                                anchors.left: parent.left; anchors.leftMargin: 5
+                                width: parent.height - 10; height: width
+                                color: "transparent"
+                                border.color: balanceTxColumn.borderColor
                                     
-                                    Text {
-                                        anchors.centerIn: parent
-                                        text: modelData.is_incoming ? "\uf063" : "\uf062"
-                                        color: (!Wallet.opened) ? "#ffffff" : (modelData.is_incoming ? "#2cba78" : "#c32235")
-                                        font.bold: true//; font.family: FontAwesome.fontFamily
-                                        font.pixelSize: 32
-                                    }
+                                Text {
+                                    anchors.centerIn: parent
+                                    text: modelData.is_incoming ? "\uf063" : "\uf062"
+                                    color: (!Wallet.opened) ? "#ffffff" : (modelData.is_incoming ? "#2cba78" : "#c32235")
+                                    font.bold: true//; font.family: FontAwesome.fontFamily
+                                    font.pixelSize: 32
+                                }
+                            }
+                            Text {
+                                anchors.left: parent.children[0].right; anchors.leftMargin: 20
+                                anchors.verticalCenter: parent.verticalCenter
+                                text: modelData.is_incoming ? qsTr("Received") : qsTr("Sent")
+                                color: balanceTxColumn.textColor
+                            }
+                            Column {
+                                anchors.horizontalCenter: parent.horizontalCenter
+                                anchors.verticalCenter: parent.verticalCenter
+                                Text {
+                                    text: (!Wallet.opened) ? "" : qsTr("%1 %2").arg(modelData.is_incoming ? "+" : "-").arg(modelData.amount.toFixed(12))
+                                    color: (!Wallet.opened) ? "#ffffff" : (modelData.is_incoming ? "#2cba78" : "#c32235")
+                                    font.bold: true
                                 }
                                 Text {
-                                    anchors.left: parent.children[0].right; anchors.leftMargin: 20
-                                    anchors.verticalCenter: parent.verticalCenter
-                                    text: modelData.is_incoming ? qsTr("Received") : qsTr("Sent")
-                                    color: balanceTxColumn.textColor
+                                    text: (!Wallet.opened) ? "" : qsTr("%1 %2%3 %4").arg(modelData.is_incoming ? "+" : "-").arg(Backend.getCurrencySign(priceDisplayText.currency)).arg(CurrencyExchangeRates.getXmrPrice(priceDisplayText.currency) * modelData.amount.toFixed(12)).arg(priceDisplayText.currency.toUpperCase())
+                                    color: "#777"
+                                    //font.bold: true
                                 }
-                                Column {
-                                    anchors.horizontalCenter: parent.horizontalCenter
-                                    anchors.verticalCenter: parent.verticalCenter
-                                    Text {
-                                        text: (!Wallet.opened) ? "" : qsTr("%1 %2").arg(modelData.is_incoming ? "+" : "-").arg(modelData.amount.toFixed(12))
-                                        color: (!Wallet.opened) ? "#ffffff" : (modelData.is_incoming ? "#2cba78" : "#c32235")
-                                        font.bold: true
-                                    }
-                                    Text {
-                                        text: (!Wallet.opened) ? "" : qsTr("%1 %2%3 %4").arg(modelData.is_incoming ? "+" : "-").arg(Backend.getCurrencySign(priceDisplayText.currency)).arg(CurrencyExchangeRates.getXmrPrice(priceDisplayText.currency) * modelData.amount.toFixed(12)).arg(priceDisplayText.currency.toUpperCase())
-                                        color: "#777"
-                                        //font.bold: true
-                                    }
+                            }
+                            Button {
+                                anchors.right: parent.right; anchors.rightMargin: 20
+                                anchors.verticalCenter: parent.verticalCenter
+                                width: contentItem.contentWidth + 20; height: contentItem.contentHeight + 20
+                                text: qsTr("View")
+                                background: Rectangle {
+                                    color: "dimgray"
+                                    radius: 3
                                 }
-                                Button {
-                                    anchors.right: parent.right; anchors.rightMargin: 20
-                                    anchors.verticalCenter: parent.verticalCenter
-                                    width: contentItem.contentWidth + 20; height: contentItem.contentHeight + 20
-                                    text: qsTr("View")
-                                    background: Rectangle {
-                                        color: "dimgray"
-                                        radius: 3
-                                    }
-                                    contentItem: Text {
-                                        text: parent.text
-                                        color: "#ffffff"
-                                        horizontalAlignment: Text.AlignHCenter
-                                        verticalAlignment: Text.AlignVCenter
-                                    }
-                                    onClicked: {
-                                        Qt.openUrlExternally("https://" + "stagenet." + settingsDialog.blockExplorer)
-                                    }
+                                contentItem: Text {
+                                    text: parent.text
+                                    color: "#ffffff"
+                                    horizontalAlignment: Text.AlignHCenter
+                                    verticalAlignment: Text.AlignVCenter
+                                }
+                                onClicked: {
+                                    Qt.openUrlExternally("https://" + "stagenet." + settingsDialog.blockExplorer)
                                 }
                             }
                         }

@@ -95,8 +95,8 @@ Page {
             id: sortByBox
             anchors.right: catalogStack.right
             anchors.verticalCenter: viewToggle.verticalCenter
-            width: 200
-            model: ["None", "Oldest", "Latest", "Lowest price", "Highest price"]
+            width: 300
+            model: ["None", "Latest", "Oldest", "Alphabetical order", "Price - Lowest", "Price - Highest"]
             Component.onCompleted: currentIndex = find("None")
             displayText: "Sort: " + currentText
             onActivated: {
@@ -110,10 +110,13 @@ Page {
                     console.log("Showing most recent items")
                     catalogPage.model = Backend.getListingsByMostRecent()
                 }
-                if(currentIndex == find("Lowest price")) {
+                if(currentIndex == find("Alphabetical order")) {
+                    catalogPage.model = Backend.getListingsByAlphabeticalOrder()
+                }
+                if(currentIndex == find("Price - Lowest")) {
                     catalogPage.model = Backend.getListingsByPriceLowest()
                 }
-                if(currentIndex == find("Highest price")) {
+                if(currentIndex == find("Price - Highest")) {
                     catalogPage.model = Backend.getListingsByPriceHighest()
                 }
                 /*if(currentIndex == find("")) {

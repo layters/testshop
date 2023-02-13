@@ -63,6 +63,7 @@ public:
     Q_INVOKABLE QVariantList getListingsByCategory(int category_id);
     Q_INVOKABLE QVariantList getListingsByMostRecent();
     Q_INVOKABLE QVariantList getListingsByOldest();
+    Q_INVOKABLE QVariantList getListingsByAlphabeticalOrder();
     Q_INVOKABLE QVariantList getListingsByPriceLowest();
     Q_INVOKABLE QVariantList getListingsByPriceHighest();
     //Q_INVOKABLE QVariantList getListingsByMostFavorited();
@@ -78,6 +79,8 @@ public:
     Q_INVOKABLE int getProductStarCount(const QString& product_id);
     Q_INVOKABLE int getProductStarCount(const QString& product_id, int star_number);
     Q_INVOKABLE float getProductAverageStars(const QString& product_id);
+    
+    Q_INVOKABLE QString getDisplayNameById(const QString& user_id);
     //Q_INVOKABLE void ();
     static void testWriteJson();
     static void testfts5();

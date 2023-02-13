@@ -1,5 +1,5 @@
-#ifndef CURRENCYEXCHANGERATESPROVIDER_H
-#define CURRENCYEXCHANGERATESPROVIDER_H
+#ifndef CURRENCY_EXCHANGE_RATES_PROVIDER_H
+#define CURRENCY_EXCHANGE_RATES_PROVIDER_H
 
 #include <QFutureWatcher>
 #include <QHash>
@@ -37,4 +37,4 @@ private:
     QFutureWatcher<QHash<QPair<int, int>, double>> mUpdateFutureWatcher;
 };
 
-#endif // CURRENCYEXCHANGERATESPROVIDER_H
+#endif // CURRENCY_EXCHANGE_RATES_PROVIDER_H

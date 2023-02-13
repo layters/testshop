@@ -3,7 +3,7 @@
 
 #define NEROSHOP_APPLICATION_NAME  "neroshop"
 #define NEROSHOP_AUTHOR    "larteyoh"
-#define NEROSHOP_LICENSE   "3-Clause BSD License"
+#define NEROSHOP_LICENSE   "GNU General Public License v3.0"
 #define NEROSHOP_COPYRIGHT "Copyright (C) 2021-present larteyoh@protonmail.com"
 #define NEROSHOP_VERSION_MAJOR "0"
 #define NEROSHOP_VERSION_MINOR "1"
@@ -38,6 +38,7 @@
 #include "gui/currency_exchange_rates_provider.h"
 #include "gui/script_controller.hpp"
 #include "gui/user_controller.hpp"
+#include "gui/image_provider.h"
 #include "gui/wallet_controller.hpp"
 #include "gui/wallet_qr_provider.h"
 #endif

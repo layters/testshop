@@ -9,124 +9,125 @@ import FontAwesome 1.0
 import neroshop.CurrencyExchangeRates 1.0
 
 import "." as NeroshopComponents
-    // todo: place grid in scrollview (infinite scroll mode) but in a separate file called CatalogGridViewInfiniteScroll.qml or CatalogGridViewLimitlessScroll.qml
-    // todo: create a CatalogList.qml for the Catalog List View
-    // Grid should have two modes: Pagination mode and Infinite scroll mode
-    // catalog view (Grid)
-    GridView {
-        id: catalogGrid
-        // Bug detected: binding the catalogGrid's height to a variable will not work
-        width: 910; height: 910//width//300//(cellHeight * count)//(boxWidth * count) + (spacing * (count - 1)); height: (boxHeight * count) + (spacing * (count - 1))
-        cellWidth: 300//250
-        cellHeight: (settingsDialog.hideProductDetails) ? 300 : 400
-        property int spacing: 5//rowSpacing: 5; columnSpacing: 5
-        property int columns: count / 3 // 3= number of rows in each line (determined by width of grid)
-        
-        function getBox(index) { // or get_item(index)?
-            return catalogGridRepeater.itemAt(index);
-        }
-        function getBoxCount() {
-            return catalogGridRepeater.count; // count is really just the number of items in the model :O
-        }
-        property real fullWidth: (this.boxWidth * count) + (spacing * (count - 1))//property real fullWidth: (this.boxWidth * columns) + (spacing * (columns - 1)) // Full width of the entire grid - tested
-        /*property alias count: catalogGridRepeater.count
-        property alias model: catalogGridRepeater.model*/
-        model: Backend.getListings()//(rows * columns)//// rows and columns already set so this is useless (I think)
-            // product box (GridBox)
-            delegate: Rectangle { // delegates have a readonly "index" property that indicates the index of the delegate within the repeater
-                id: productBox
-                visible: true
-                width: catalogGrid.cellWidth-catalogGrid.spacing
-                height: catalogGrid.cellHeight-catalogGrid.spacing
-                color: (NeroshopComponents.Style.darkTheme) ? (NeroshopComponents.Style.themeName == "PurpleDust" ? "#17171c" : "#1d1d1d") : "#c9c9cd"//"#e6e6e6"//"#f0f0f0"
-                border.color: (NeroshopComponents.Style.darkTheme) ? "#404040" : "#4d4d4d"////(NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000"
-                border.width: 0
-                radius: 5
-                clip: true // So that productNameText will be clipped to the Rectangle's bounding rectangle and will not go past it
-                //anchors.right: this.right; anchors.rightMargin: 5
-                // Hide radius at bottom border
-                Rectangle {
-                    width: productImageRect.width - (parent.border.width * 2); height: productImageRect.height / 2
-                    anchors.left: parent.left; anchors.leftMargin: parent.border.width
-                    anchors.right: parent.right; anchors.rightMargin: parent.border.width
-                    anchors.bottom: productImageRect.bottom; anchors.bottomMargin: -2
-                    color: productImageRect.color//"blue"
-                    border.width: parent.border.width; border.color: productImageRect.color
-                    radius: 0
-                }
-                                                
-                Rectangle {
-                    id: productImageRect
-                    anchors.top: parent.top
-                    anchors.left: parent.left // so that margins will also apply to left and right sides
-                    anchors.right: parent.right
-                    anchors.margins: parent.border.width
-                    width: parent.width; height: (settingsDialog.hideProductDetails) ? 197.5 : (parent.height / 2)// + 30//=130
-                    color: "#ffffff"//"transparent"//(NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000"
-                    radius: parent.radius
-                             
-                    Image {
-                        id: productImage
-                        source: "file:///" + modelData.product_image_file//"qrc:/images/image_gallery.png"
-                        anchors.centerIn: parent
-                        width: 192; height: width
-                        fillMode: Image.PreserveAspectFit//Image.Stretch
-                        mipmap: true
-                        asynchronous: true
-                    
-                        MouseArea {
-                            anchors.fill: parent
-                            hoverEnabled: true
-                            acceptedButtons: Qt.LeftButton
-                            onEntered: {
-                                productBox.border.width = 1
-                            }
-                            onExited: {
-                                productBox.border.width = 0
-                            }
-                            onClicked: { 
-                                navBar.uncheckAllButtons() // Uncheck all navigational buttons
-                                console.log("Loading product page ...");
-                                pageLoader.setSource("qrc:/qml/pages/ProductPage.qml")////, { "listingId": modelData.listing_uuid })
-                            }
-                        }                    
-                    }
-                }
-            
-                Image {
-                    id: verifiedPurchaseIcon
-                    source: "qrc:/images/paid.png"//neroshopResourceDir + "/paid.png"
-                    visible: false // TODO: only show this icon if item has been purchased previously (since orders are encrypted, only the user can see this)
-                    anchors.left: parent.left
-                    anchors.leftMargin: 10
-                    anchors.top: parent.top
-                    anchors.topMargin: 10
-                
-                    height: 24; width: 24 // has no effect since image is scaled
-                    fillMode:Image.PreserveAspectFit; // the image is scaled uniformly to fit button without cropping            
-                    mipmap: true
 
-                    NeroshopComponents.Hint {
-                        id: verifiedPurchaseIconHint
-                        visible: verifiedPurchaseIconMouse.hovered ? true : false
-                        text: qsTr("You've previously purchased this item")
-                        pointer.visible: false
-                        delay: 500; timeout: 3000 // hide after 3 seconds
-                    }        
+GridView {
+    id: catalogGrid
+    // Bug detected: binding the catalogGrid's height to a variable will not work
+    width: 910; height: 910//width: (cellWidth * columns) + (spacing * (columns - 1)); height: (cellHeight * rows) + (spacing * (rows - 1))
+    cellWidth: 300//250
+    cellHeight: (settingsDialog.hideProductDetails) ? 300 : 400
+    property int spacing: 5//rowSpacing: 5; columnSpacing: 5
+    property int columns: Math.round(width / cellWidth)
+    property int rows: Math.round(height / cellHeight)
+    Component.onCompleted: {
+        width = contentItem.childrenRect.width
+        height = contentItem.childrenRect.height
+        console.log("grid size", width, height)
+        console.log("grid columns", columns)
+        console.log("grid rows", rows)
+    }
+    function getBox(index) { // or get_item(index)?
+        return catalogGridRepeater.itemAt(index);
+    }
+    function getBoxCount() {
+        return catalogGridRepeater.count; // count is really just the number of items in the model :O
+    }
+    model: Backend.getListings()//(rows * columns)//// rows and columns already set so this is useless (I think)
+    // product box (GridBox)
+    delegate: Rectangle { // delegates have a readonly "index" property that indicates the index of the delegate within the repeater
+        id: productBox
+        visible: true
+        width: catalogGrid.cellWidth-catalogGrid.spacing
+        height: catalogGrid.cellHeight-catalogGrid.spacing
+        color: (NeroshopComponents.Style.darkTheme) ? (NeroshopComponents.Style.themeName == "PurpleDust" ? "#17171c" : "#1d1d1d") : "#c9c9cd"//"#e6e6e6"//"#f0f0f0"
+        border.color: (NeroshopComponents.Style.darkTheme) ? "#404040" : "#4d4d4d"////(NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000"
+        border.width: 0
+        radius: 5
+        clip: true // So that productNameText will be clipped to the Rectangle's bounding rectangle and will not go past it
+        //anchors.right: this.right; anchors.rightMargin: 5
+        // Hide radius at bottom border
+        Rectangle {
+            width: productImageRect.width - (parent.border.width * 2); height: productImageRect.height / 2
+            anchors.left: parent.left; anchors.leftMargin: parent.border.width
+            anchors.right: parent.right; anchors.rightMargin: parent.border.width
+            anchors.bottom: productImageRect.bottom; anchors.bottomMargin: -2
+            color: productImageRect.color//"blue"
+            border.width: parent.border.width; border.color: productImageRect.color
+            radius: 0
+        }
+                                                
+        Rectangle {
+            id: productImageRect
+            anchors.top: parent.top
+            anchors.left: parent.left // so that margins will also apply to left and right sides
+            anchors.right: parent.right
+            anchors.margins: parent.border.width
+            width: parent.width; height: (settingsDialog.hideProductDetails) ? 197.5 : (parent.height / 2)// + 30//=130
+            color: "#ffffff"//"transparent"//(NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000"
+            radius: parent.radius
+                             
+            Image {
+                id: productImage
+                source: "file:///" + modelData.product_image_file//"qrc:/images/image_gallery.png"
+                anchors.centerIn: parent
+                width: 192; height: width
+                fillMode: Image.PreserveAspectFit//Image.Stretch
+                mipmap: true
+                asynchronous: true
                     
-                    HoverHandler {
-                        id: verifiedPurchaseIconMouse
-                        acceptedDevices: PointerDevice.Mouse
+                MouseArea {
+                    anchors.fill: parent
+                    hoverEnabled: true
+                    acceptedButtons: Qt.LeftButton
+                    onEntered: {
+                        productBox.border.width = 1
                     }
-                }
-                ColorOverlay {
-                    anchors.fill: verifiedPurchaseIcon
-                    source: verifiedPurchaseIcon
-                    color: "#1e509b"//"#336699"// // activeColor
-                    visible: verifiedPurchaseIcon.visible
-                }            
+                    onExited: {
+                        productBox.border.width = 0
+                    }
+                    onClicked: { 
+                        navBar.uncheckAllButtons() // Uncheck all navigational buttons
+                        console.log("Loading product page ...");
+                        pageLoader.setSource("qrc:/qml/pages/ProductPage.qml", { "model": modelData })
+                    }
+                }                    
+            }
+        }
+            
+        Image {
+            id: verifiedPurchaseIcon
+            source: "qrc:/images/paid.png"//neroshopResourceDir + "/paid.png"
+            visible: false // TODO: only show this icon if item has been purchased previously (since orders are encrypted, only the user can see this)
+            anchors.left: parent.left
+            anchors.leftMargin: 10
+            anchors.top: parent.top
+            anchors.topMargin: 10
+                
+            height: 24; width: 24 // has no effect since image is scaled
+            fillMode:Image.PreserveAspectFit; // the image is scaled uniformly to fit button without cropping            
+            mipmap: true
+
+            NeroshopComponents.Hint {
+                id: verifiedPurchaseIconHint
+                visible: verifiedPurchaseIconMouse.hovered ? true : false
+                text: qsTr("You've previously purchased this item")
+                pointer.visible: false
+                delay: 500; timeout: 3000 // hide after 3 seconds
+            }        
+                    
+            HoverHandler {
+                id: verifiedPurchaseIconMouse
+                acceptedDevices: PointerDevice.Mouse
+            }
+        }
+        ColorOverlay {
+            anchors.fill: verifiedPurchaseIcon
+            source: verifiedPurchaseIcon
+            color: "#1e509b"//"#336699"// // activeColor
+            visible: verifiedPurchaseIcon.visible
+        }            
                                 
-                Button { // heartIconButton must be drawn over the productImage
+        Button { // heartIconButton must be drawn over the productImage
                     id: heartIconButton
                     text: (disabled) ? qsTr("Add to favorites") : qsTr("Remove from favorites")
                     display: AbstractButton.IconOnly // will only show the icon and not the text
@@ -156,7 +157,7 @@ import "." as NeroshopComponents
                             icon.color = NeroshopComponents.Style.disabledColor
                         }
                     }
-                }
+        }
         // Product details
         ColumnLayout {
             id: productDetailsColumn

@@ -85,7 +85,7 @@ The name _neroshop_ is a combination of the words _nero_, which is Italian for _
 | [Qt](https://www.qt.io/)                                           | 5.12.8             | graphical user interface                                               | :heavy_check_mark:                       |
 | [libuv](https://github.com/libuv/libuv)                            | ?                  | networking and child process                                           | :heavy_check_mark:                       |
 | [raft](https://github.com/willemt/raft)                            | ?                  | consensus mechanism                                                    | :heavy_check_mark:                       |
-| [stduuid](https://github.com/mariusbancila/stduuid)                | ?                  | order number generation                                                | :o:                                      |
+| [stduuid](https://github.com/mariusbancila/stduuid)                | ?                  | unique id generation                                                   | :o:                                      |
 | [linenoise](https://github.com/antirez/linenoise)                  | ?                  | command line interface                                                 | :heavy_check_mark: :white_square_button: |
 | [lua](https://www.lua.org/)                                        | 5.1.5              | configuration script                                                   | :heavy_check_mark:                       |
 | [libpng](http://www.libpng.org/pub/png/)                           | 1.6.37             | image exportation                                                      | :heavy_check_mark:                       |

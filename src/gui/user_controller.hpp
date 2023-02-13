@@ -39,9 +39,9 @@ public:
     Q_INVOKABLE void uploadAvatar(const QString& filename);
     Q_INVOKABLE bool exportAvatar();
         
-    Q_INVOKABLE QString getID() const;
-    //Q_INVOKABLE neroshop::WalletController * getWallet() const;
+    Q_INVOKABLE QString getID() const;//Q_INVOKABLE neroshop::WalletController * getWallet() const;
     Q_INVOKABLE int getProductsCount() const;
+    Q_INVOKABLE int getReputation() const;
     //Q_INVOKABLE <type> <function_name>() const;
 
     Q_INVOKABLE neroshop::User * getUser() const;

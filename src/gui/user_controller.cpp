@@ -79,7 +79,14 @@ QString neroshop::UserController::getID() const {
 int neroshop::UserController::getProductsCount() const {
     if (!_user)
         throw std::runtime_error("neroshop::User is not initialized");
-    return dynamic_cast<neroshop::Seller *>(_user.get())->get_products_count();
+    auto seller = dynamic_cast<neroshop::Seller *>(_user.get());
+    return seller->get_products_count();
+}
+
+int neroshop::UserController::getReputation() const {
+    if (!_user) throw std::runtime_error("neroshop::User is not initialized");
+    auto seller = dynamic_cast<neroshop::Seller *>(_user.get());
+    return seller->get_reputation();
 }
 
 // to allow seller to use user functions: dynamic_cast<Seller *>(user)

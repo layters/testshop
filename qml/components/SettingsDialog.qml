@@ -586,7 +586,7 @@ Popup {
                             color: "#f2f2f2"
                         }
                     }
-                    // Grid Product Details Aligned Center
+                    // Grid product details aligned center
                     Item {
                         Layout.fillWidth: true
                         Layout.preferredHeight: childrenRect.height
