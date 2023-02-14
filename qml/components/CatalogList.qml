@@ -70,7 +70,7 @@ ListView {
                     onClicked: { 
                         navBar.uncheckAllButtons() // Uncheck all navigational buttons
                         console.log("Loading product page ...");
-                        pageLoader.setSource("qrc:/qml/pages/ProductPage.qml")////, { "listingId": modelData.listing_uuid })
+                        pageLoader.setSource("qrc:/qml/pages/ProductPage.qml", { "model": modelData })////, { "listingId": modelData.listing_uuid })
                     }
                 }                    
             }

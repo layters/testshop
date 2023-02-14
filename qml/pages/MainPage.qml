@@ -67,8 +67,10 @@ Page {
         }
         // connect to a remote monero node (default)
         if(settingsDialog.moneroNodeType == 0) {
-            let remote_node_ip = settingsDialog.moneroNodeAddress.split(":")[0]
-            let remote_node_port = settingsDialog.moneroNodeAddress.split(":")[1]
+            // settingsDialog.moneroNodeAddress removes http:// from url
+            let remote_node = settingsDialog.moneroNodeAddress//console.log("remote_node", remote_node)
+            let remote_node_ip = remote_node.split(":")[0]
+            let remote_node_port = remote_node.split(":")[1]
             console.log("connecting to remote node " + remote_node_ip + ":" + remote_node_port)
             // TODO: add option to use custom remote node
             Wallet.nodeConnect(remote_node_ip, remote_node_port)//, moneroDaemonRpcLoginUser.text, moneroDaemonRpcLoginPwd.text);//Wallet.nodeConnect(Script.getString("neroshop.monero.daemon.ip"), Script.getString("neroshop.monero.daemon.port"), moneroDaemonRpcLoginUser.text, moneroDaemonRpcLoginPwd.text);

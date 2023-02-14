@@ -47,7 +47,7 @@ public:
     Q_INVOKABLE int getCategoryIdByName(const QString& category_name) const;
     Q_INVOKABLE int getCategoryProductCount(int category_id) const; // returns number of products that fall under a specific category
     
-    Q_INVOKABLE QVariantList getWalletNodeList() const;
+    Q_INVOKABLE QVariantList getMoneroNodeList() const;
     Q_INVOKABLE bool isWalletDaemonRunning() const;
 
     QVariantList validateDisplayName(const QString& display_name) const; // Validates display name based on regex requirements

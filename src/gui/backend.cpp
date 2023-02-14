@@ -1,5 +1,9 @@
 #include "backend.hpp"
 
+#include <QNetworkAccessManager>
+#include <QNetworkReply>
+#include <QNetworkRequest>
+
 #include <future>
 #include <thread>
 
@@ -901,9 +905,45 @@ QVariantList neroshop::Backend::getListingsByPriceHighest() {
 }
 //----------------------------------------------------------------
 //----------------------------------------------------------------
-// Todo: fetch monero nodes from monero.fail // Each node will represent a QML object (QVariantMap) with properties: address, height, and status
-Q_INVOKABLE QVariantList neroshop::Backend::getWalletNodeList() const {
+QVariantList neroshop::Backend::getMoneroNodeList() const {
+    const QUrl url(QStringLiteral("https://monero.fail/health.json"));
     QVariantList node_list;
+    
+    QNetworkAccessManager manager;
+    QEventLoop loop;
+    QObject::connect(&manager, &QNetworkAccessManager::finished, &loop, &QEventLoop::quit);
+
+    auto reply = manager.get(QNetworkRequest(url));
+    loop.exec();
+    QJsonParseError error;
+    const auto json_doc = QJsonDocument::fromJson(reply->readAll(), &error);
+    if (error.error != QJsonParseError::NoError) {
+        neroshop::print("Error reading json", 1);
+        return {};//std::nullopt;
+    }
+    // Display JSON as string
+    QString json_str = json_doc.toJson();//(QJsonDocument::Compact); // https://doc.qt.io/qt-6/qjsondocument.html#JsonFormat-enum
+    ////std::cout << json_str.toStdString() << "\n";
+    // Check if the json_doc is an object or an array
+    ////if(json_doc.isArray()) std::cout << "Is an array\n";
+    ////if(json_doc.isObject()) std::cout << "Is an object\n"; // <- most likely an object
+    // Play around with the JSON
+    QJsonObject root_obj = json_doc.object(); // {}
+    QJsonObject monero_obj = root_obj.value("monero").toObject(); // "monero": {} // "wownero": {}
+    QJsonObject clearnet_obj = monero_obj.value("clear").toObject(); // "clear": {} // "onion": {}, "web_compatible": {}
+    // Loop through monero nodes (clear)
+    foreach(const QString& key, clearnet_obj.keys()) {//for (const auto monero_nodes : clearnet_obj) {
+        QJsonObject monero_node_obj = clearnet_obj.value(key).toObject();//QJsonObject monero_node_obj = monero_nodes.toObject();
+        QVariantMap node_object; // Create an object for each row
+        node_object.insert("address", key);
+        node_object.insert("available", monero_node_obj.value("available").toBool());//std::cout << "available: " << monero_node_obj.value("available").toBool() << "\n";
+        ////node_object.insert("", );//////std::cout << ": " << monero_node_obj.value("checks").toArray() << "\n";
+        node_object.insert("datetime_checked", monero_node_obj.value("datetime_checked").toString());//std::cout << "datetime_checked: " << monero_node_obj.value("datetime_checked").toString().toStdString() << "\n";
+        node_object.insert("datetime_entered", monero_node_obj.value("datetime_entered").toString());//std::cout << "datetime_entered: " << monero_node_obj.value("datetime_entered").toString().toStdString() << "\n";
+        node_object.insert("datetime_failed", monero_node_obj.value("datetime_failed").toString());//std::cout << "datetime_failed: " << monero_node_obj.value("datetime_failed").toString().toStdString() << "\n";
+        node_object.insert("last_height", monero_node_obj.value("last_height").toInt());//std::cout << "last_height: " << monero_node_obj.value("last_height").toInt() << "\n";
+        node_list.append(node_object); // Add node object to the node list
+    }
     return node_list;
 }
 //----------------------------------------------------------------
@@ -916,6 +956,7 @@ bool neroshop::Backend::isWalletDaemonRunning() const {
 }
 //----------------------------------------------------------------
 //----------------------------------------------------------------
+// TODO: replace function return type with enum
 QVariantList neroshop::Backend::validateDisplayName(const QString& display_name) const {
     // username (will appear only in lower-case letters within the app)
     std::string username = display_name.toStdString();
@@ -979,6 +1020,7 @@ QVariantList neroshop::Backend::validateDisplayName(const QString& display_name)
     return { true, "" };
 }
 //----------------------------------------------------------------
+// TODO: replace function return type with enum
 QVariantList neroshop::Backend::checkDisplayName(const QString& display_name) const {    
     neroshop::db::Sqlite3 * database = neroshop::db::Sqlite3::get_database();
     if(!database->table_exists("users")) { return {true, ""}; } 
@@ -1017,6 +1059,10 @@ QVariantList neroshop::Backend::registerUser(WalletController* wallet_controller
     // Note: Multiple users cannot have the same display_name. Each display_name must be unique!
     std::string user_id = database->get_text_params("INSERT INTO users(name, monero_address) VALUES($1, $2) RETURNING monero_address;", { display_name.toStdString(), primary_address });//int user_id = database->get_integer_params("INSERT INTO users(name, monero_address) VALUES($1, $2) RETURNING id;", { display_name.toStdString(), primary_address.toStdString() });
     if(user_id.empty()) { return { false, "Account registration failed (due to database error)" }; }//if(user_id == 0) { return { false, "Account registration failed (due to database error)" }; }
+    // Create cart for user
+    QString cart_uuid = QUuid::createUuid().toString();
+    cart_uuid = cart_uuid.remove("{").remove("}"); // remove brackets
+    database->execute_params("INSERT INTO cart (uuid, user_id) VALUES ($1, $2)", { cart_uuid.toStdString(), user_id });
     // initialize user obj (Todo: make a seperate class headers + source files for User)
     std::unique_ptr<neroshop::User> seller(neroshop::Seller::on_login(*wallet_controller->getWallet()));
     user_controller->_user = std::move(seller);

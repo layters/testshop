@@ -59,11 +59,21 @@ Item {
             Layout.fillHeight: true
             ScrollBar.vertical: ScrollBar { }
             model: {
-                let network_type = Wallet.getNetworkTypeString()
-                return Script.getTableStrings("neroshop.monero.nodes." + network_type)
-                //Todo: replace Script.getTableStrings() with Backend.getNodeList() when app is released with mainnet
-                //return Backend.getNodeList() // <- This will only work for mainnet nodes
-            }//50
+                // Get monero nodes from settings.lua
+                /*let network_type = Wallet.getNetworkTypeString()
+                return Script.getTableStrings("neroshop.monero.nodes." + network_type)*/
+                // Get monero nodes from https://monero.fail/health.json
+                ////return Backend.getMoneroNodeList()
+                // Get only stagenet nodes (for now)
+                let stagenet_nodes = []
+                const monero_node_list = Backend.getMoneroNodeList()
+                for(let i = 0; i < monero_node_list.length; i++) {
+                    if(monero_node_list[i].address.includes("38081") || monero_node_list[i].address.includes("38089")) {
+                        stagenet_nodes.push(monero_node_list[i])
+                    }
+                }
+                return stagenet_nodes;
+            }
             delegate: Item {
                 width: listView.width
                 height: 25
@@ -88,15 +98,15 @@ Item {
 
                     Label {
                         id: nodeStatusLabel
-                        text: index % 3 === 0 ? "✅" : "❌" // TODO create normal model
+                        text: status ? "✅" : "❌"
                         Layout.maximumWidth: 25
-                        property bool status: index % 3 === 0//false // todo: use data from model to determine the status
+                        property bool status: modelData.available
                     }
 
                     Label {
                         id: nodeAddressLabel
                         Layout.fillWidth: true
-                        text: modelData//"node.neroshop.org:38081"//:18081"
+                        text: modelData.address//"node.neroshop.org:38081"//:18081"
                         color: delegateRow.parent.ListView.isCurrentItem ? "#471d00" : ((NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000")
                         font.bold: delegateRow.parent.ListView.isCurrentItem ? true : false
                         elide: Label.ElideRight
@@ -106,7 +116,7 @@ Item {
                         id: nodeHeightLabel
                         Layout.minimumWidth: heightTitle.width//50
                         Layout.maximumWidth: heightTitle.width//50
-                        text: "1243821" // TODO create normal model
+                        text: modelData.last_height
                         color: nodeAddressLabel.color
                         font.bold: nodeAddressLabel.font.bold
                         elide: Label.ElideRight

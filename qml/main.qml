@@ -87,6 +87,8 @@ ApplicationWindow {
             console.log(source);
             if (pageLoader.status == Loader.Ready) console.log('Loaded') 
             else console.log('Not Loaded')
+            
+            Backend.getMoneroNodeList()
         }
     }
     
