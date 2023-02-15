@@ -81,6 +81,11 @@ public:
     Q_INVOKABLE float getProductAverageStars(const QString& product_id);
     
     Q_INVOKABLE QString getDisplayNameById(const QString& user_id);
+    
+    Q_INVOKABLE int getCartMaximumItems();
+    Q_INVOKABLE int getCartMaximumQuantity();
+    
+    Q_INVOKABLE int getStockAvailable(const QString& product_id);
     //Q_INVOKABLE void ();
     static void testWriteJson();
     static void testfts5();

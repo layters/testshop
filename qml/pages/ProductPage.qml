@@ -164,7 +164,8 @@ Page {
                     // Stock status
                     Text {
                         id: stockStatusText
-                        property bool status: true
+                        property bool status: (stock_available > 0)
+                        property int stock_available: Backend.getStockAvailable(productPage.model.product_id)
                         text: qsTr(status ? "In stock." : "Out of stock.")
                         color: status ? "#31652c" : "#d61f1f"
                         font.bold: true
@@ -246,7 +247,7 @@ Page {
                         SpinBox {
                             id: quantityBox
                             anchors.horizontalCenter: parent.horizontalCenter//Layout.alignment: Qt.AlignHCenter//anchors.horizontalCenter: parent.horizontalCenter
-                            from: 1
+                            from: 1; to: Math.max(1, stockStatusText.stock_available)//10////(Backend.getCartMaximumQuantity() - User.cartQuantity)
                         }
                         // Buttons row?
                         Column {
@@ -268,7 +269,7 @@ Page {
                                     verticalAlignment: Text.AlignVCenter
                                 }
                                 onClicked: {
-                                    ////User.addToCart(quantityBox.value)
+                                    User.addToCart(productPage.model.product_id, quantityBox.value)
                                 }
                             }
                             // Message seller button

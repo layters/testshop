@@ -113,9 +113,10 @@ void neroshop::Backend::initializeDatabase() {
         database->execute("CREATE TABLE cart_item(id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT);");
         database->execute("ALTER TABLE cart_item ADD COLUMN cart_id TEXT REFERENCES cart(uuid);");
         database->execute("ALTER TABLE cart_item ADD COLUMN product_id TEXT REFERENCES products(uuid);");
-        database->execute("ALTER TABLE cart_item ADD COLUMN item_qty INTEGER;");
+        database->execute("ALTER TABLE cart_item ADD COLUMN quantity INTEGER;");
         //database->execute("ALTER TABLE cart_item ADD COLUMN item_price numeric;"); // sales_price will be used for the final pricing rather than the unit_price
         //database->execute("ALTER TABLE cart_item ADD COLUMN item_weight REAL;");//database->execute("CREATE TABLE cart_item(id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT, cart_id TEXT REFERENCES cart(id), product_id TEXT REFERENCES products(id), item_qty INTEGER, item_price NUMERIC, item_weight REAL);");
+        database->execute("CREATE UNIQUE INDEX index_cart_item ON cart_item (cart_id, product_id);"); // cart_id and product_id duo must be unqiue for each row
     }
     // orders (purchase_orders)
     if(!database->table_exists("orders")) {
@@ -137,7 +138,7 @@ void neroshop::Backend::initializeDatabase() {
         database->execute("ALTER TABLE order_item ADD COLUMN order_id TEXT REFERENCES orders(uuid);");
         database->execute("ALTER TABLE order_item ADD COLUMN product_id TEXT REFERENCES products(uuid);");
         database->execute("ALTER TABLE order_item ADD COLUMN seller_id TEXT REFERENCES users(monero_address);");
-        database->execute("ALTER TABLE order_item ADD COLUMN item_qty INTEGER;");
+        database->execute("ALTER TABLE order_item ADD COLUMN quantity INTEGER;");
         //database->execute("ALTER TABLE order_item ADD COLUMN item_price ?datatype;");
         //database->execute("ALTER TABLE order_item ADD COLUMN ?col ?datatype;");
     }
@@ -434,6 +435,22 @@ QString neroshop::Backend::getDisplayNameById(const QString& user_id) {
     if(!database) throw std::runtime_error("database is NULL");
     std::string display_name = database->get_text_params("SELECT name FROM users WHERE monero_address = $1", { user_id.toStdString() });
     return QString::fromStdString(display_name);
+}
+//----------------------------------------------------------------
+//----------------------------------------------------------------
+int neroshop::Backend::getCartMaximumItems() {
+    return neroshop::Cart::get_max_items();
+}
+//----------------------------------------------------------------
+int neroshop::Backend::getCartMaximumQuantity() {
+    return neroshop::Cart::get_max_quantity();
+}
+//----------------------------------------------------------------
+int neroshop::Backend::getStockAvailable(const QString& product_id) {
+    neroshop::db::Sqlite3 * database = neroshop::db::Sqlite3::get_database();
+    if(!database) throw std::runtime_error("database is NULL");
+    int quantity = database->get_integer_params("SELECT quantity FROM listings WHERE product_id = $1 AND quantity > 0", { product_id.toStdString() });
+    return quantity;
 }
 //----------------------------------------------------------------
 //----------------------------------------------------------------
@@ -919,15 +936,9 @@ QVariantList neroshop::Backend::getMoneroNodeList() const {
     const auto json_doc = QJsonDocument::fromJson(reply->readAll(), &error);
     if (error.error != QJsonParseError::NoError) {
         neroshop::print("Error reading json", 1);
-        return {};//std::nullopt;
+        return {};
     }
-    // Display JSON as string
-    QString json_str = json_doc.toJson();//(QJsonDocument::Compact); // https://doc.qt.io/qt-6/qjsondocument.html#JsonFormat-enum
-    ////std::cout << json_str.toStdString() << "\n";
-    // Check if the json_doc is an object or an array
-    ////if(json_doc.isArray()) std::cout << "Is an array\n";
-    ////if(json_doc.isObject()) std::cout << "Is an object\n"; // <- most likely an object
-    // Play around with the JSON
+    // Get monero nodes from the JSON
     QJsonObject root_obj = json_doc.object(); // {}
     QJsonObject monero_obj = root_obj.value("monero").toObject(); // "monero": {} // "wownero": {}
     QJsonObject clearnet_obj = monero_obj.value("clear").toObject(); // "clear": {} // "onion": {}, "web_compatible": {}
@@ -1069,6 +1080,8 @@ QVariantList neroshop::Backend::registerUser(WalletController* wallet_controller
     if (user_controller->getUser() == nullptr) {
         return {false, "user is NULL"};
     }
+    emit user_controller->userChanged();
+    emit user_controller->userLogged();
     //user_controller->rateItem("3c20978b-a543-4c58-bc68-5f900027796f", 3, "This product is aiight");
     // Display registration message
     neroshop::print(((!display_name.isEmpty()) ? "Welcome to neroshop, " : "Welcome to neroshop") + display_name.toStdString(), 4);
@@ -1101,6 +1114,8 @@ bool neroshop::Backend::loginWithWalletFile(WalletController* wallet_controller,
     if(user_controller->getUser() == nullptr) {
         return false;//{false, "user is NULL"};
     }
+    emit user_controller->userChanged();
+    emit user_controller->userLogged();
     // Display message
     neroshop::print("Welcome back, user " + ((!display_name.empty()) ? (display_name + " (id: " + primary_address + ")") : primary_address), 4);
     return true;

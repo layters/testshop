@@ -126,8 +126,12 @@ void * neroshop::db::Sqlite3::get_blob(const std::string& command) {
         return nullptr;
     }
     int column_type = sqlite3_column_type(statement, 0);
-    if(column_type != SQLITE_BLOB) {
-        neroshop::print("sqlite3_column_type: invalid column type", 1);
+    if(column_type == SQLITE_NULL) {
+        sqlite3_finalize(statement);
+        return nullptr;
+    }    
+    if(column_type != SQLITE_BLOB) { // NULL is the only other acceptable return type
+        neroshop::print("sqlite3_column_type: invalid column return type\ncommand: " + command, 1);
         sqlite3_finalize(statement);
         return nullptr;
     }
@@ -155,8 +159,12 @@ void * neroshop::db::Sqlite3::get_blob_params(const std::string& command, const 
     }    
     sqlite3_step(statement); // Don't check for error or it'll keep saying: "another row available" or "no more rows available"
     int column_type = sqlite3_column_type(statement, 0);
+    if(column_type == SQLITE_NULL) {
+        sqlite3_finalize(statement);
+        return nullptr;
+    }    
     if(column_type != SQLITE_BLOB) {
-        neroshop::print("sqlite3_column_type: invalid column type", 1);
+        neroshop::print("sqlite3_column_type: invalid column return type\ncommand: " + command, 1);
         sqlite3_finalize(statement);
         return nullptr;
     }
@@ -180,8 +188,12 @@ std::string neroshop::db::Sqlite3::get_text(const std::string& command) {//const
         return "";
     }
     int column_type = sqlite3_column_type(stmt, 0);
+    if(column_type == SQLITE_NULL) {
+        sqlite3_finalize(stmt);
+        return "";
+    }    
     if(column_type != SQLITE_TEXT) {
-        neroshop::print("sqlite3_column_type: invalid column type", 1);
+        neroshop::print("sqlite3_column_type: invalid column return type\ncommand: " + command, 1);
         sqlite3_finalize(stmt);
         return "";
     }
@@ -212,8 +224,12 @@ std::string neroshop::db::Sqlite3::get_text_params(const std::string& command, c
     sqlite3_step(statement); // Don't check for error or it'll keep saying: "another row available" or "no more rows available"
     // Check the type of the statement's return value
     int column_type = sqlite3_column_type(statement, 0);
+    if(column_type == SQLITE_NULL) {
+        sqlite3_finalize(statement);
+        return "";
+    }    
     if(column_type != SQLITE_TEXT) {
-        ////neroshop::print("sqlite3_column_type: invalid column type", 1);
+        neroshop::print("sqlite3_column_type: invalid column return type\ncommand: " + command, 1);
         sqlite3_finalize(statement);
         return "";
     }
@@ -238,8 +254,12 @@ int neroshop::db::Sqlite3::get_integer(const std::string& command) {
         return 0;
     }
     int column_type = sqlite3_column_type(statement, 0);
+    if(column_type == SQLITE_NULL) {
+        sqlite3_finalize(statement);
+        return 0;
+    }    
     if(column_type != SQLITE_INTEGER) {
-        neroshop::print("sqlite3_column_type: invalid column type", 1);
+        neroshop::print("sqlite3_column_type: invalid column return type\ncommand: " + command, 1);
         sqlite3_finalize(statement);
         return 0;
     }
@@ -270,8 +290,12 @@ int neroshop::db::Sqlite3::get_integer_params(const std::string& command, const 
     sqlite3_step(statement); // Don't check for error or it'll keep saying: "another row available" or "no more rows available"
     // Check the type of the statement's return value
     int column_type = sqlite3_column_type(statement, 0);
+    if(column_type == SQLITE_NULL) {
+        sqlite3_finalize(statement);
+        return 0;
+    }    
     if(column_type != SQLITE_INTEGER) {
-        neroshop::print("sqlite3_column_type: invalid column type", 2);
+        neroshop::print("sqlite3_column_type: invalid column return type\ncommand: " + command, 1);
         sqlite3_finalize(statement);
         return 0;
     }
@@ -296,8 +320,12 @@ double neroshop::db::Sqlite3::get_real(const std::string& command) {
         return 0.0;
     }
     int column_type = sqlite3_column_type(stmt, 0);
+    if(column_type == SQLITE_NULL) {
+        sqlite3_finalize(stmt);
+        return 0.0;
+    }    
     if(column_type != SQLITE_FLOAT) {
-        neroshop::print("sqlite3_column_type: invalid column type", 1);
+        neroshop::print("sqlite3_column_type: invalid column return type\ncommand: " + command, 1);
         sqlite3_finalize(stmt);
         return 0.0;
     }
@@ -313,7 +341,7 @@ double neroshop::db::Sqlite3::get_real_params(const std::string& command, const 
     int result = sqlite3_prepare_v2(handle, command.c_str(), -1, &statement, nullptr);
     if(result != SQLITE_OK) {
         neroshop::print("sqlite3_prepare_v2: " + std::string(sqlite3_errmsg(handle)), 1);
-        return 0;
+        return 0.0;
     }
     // Bind user-defined parameter arguments
     for(int i = 0; i < args.size()/*sqlite3_bind_parameter_count(statement)*/; i++) {
@@ -321,17 +349,21 @@ double neroshop::db::Sqlite3::get_real_params(const std::string& command, const 
         if(result != SQLITE_OK) {
             neroshop::print("sqlite3_bind_*: " + std::string(sqlite3_errmsg(handle)), 1);
             sqlite3_finalize(statement);
-            return 0;
+            return 0.0;
         }
     }
     // Evaluate statement
     sqlite3_step(statement); // Don't check for error or it'll keep saying: "another row available" or "no more rows available"
     // Check the type of the statement's return value
     int column_type = sqlite3_column_type(statement, 0);
-    if(column_type != SQLITE_FLOAT) {
-        neroshop::print("sqlite3_column_type: invalid column type", 2);
+    if(column_type == SQLITE_NULL) {
         sqlite3_finalize(statement);
-        return 0;
+        return 0.0;
+    }    
+    if(column_type != SQLITE_FLOAT) {
+        neroshop::print("sqlite3_column_type: invalid column return type\ncommand: " + command, 1);
+        sqlite3_finalize(statement);
+        return 0.0;
     }
     // Finalize (destroy) the prepared statement
     double number = sqlite3_column_double(statement, 0);

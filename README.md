@@ -60,6 +60,7 @@ The name _neroshop_ is a combination of the words _nero_, which is Italian for _
 - [x] Pseudonymous identities (sellers and buyers are identified by their unique ids and/or optional display names)
 - [ ] End-to-end encrypted messaging system for communications between sellers and buyers
 - [ ] Subaddress generator for direct payments without an escrow (a unique subaddress will be generated from a seller's synced wallet account for each order placed by a customer)
+- [x] Built-in Monero wallet with basic functionalities (transaction history, send, and receive)
 - [x] Option to run a local Monero node or connect to remote Monero nodes
 - [ ] Option to choose between sending funds directly to a seller or by using a multisignature escrow.
 - [ ] Native Tor and I2P support (both tor daemon and i2pd will be bundled with each release)

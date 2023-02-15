@@ -201,7 +201,7 @@ RowLayout {
 
         Text {
             id: cartButtonText
-            text: "0"
+            text: !User.logged ? "0" : User.cartQuantity
             color: "#ffffff"
             font.bold: true
             anchors.left: cartButton.background.left

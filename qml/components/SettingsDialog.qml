@@ -709,11 +709,11 @@ Popup {
 Item {
     ColumnLayout {
         anchors.fill: parent
-
+        spacing: 0
             Frame {
-                    Layout.alignment: Qt.AlignHCenter
+                    Layout.alignment: Qt.AlignHCenter | Qt.AlignTop
                     Layout.preferredWidth: 500
-                    Layout.fillHeight: true////Layout.preferredHeight: 200//300
+                    Layout.preferredHeight: 300//200//Layout.fillHeight: true
                     background: Rectangle {
                         radius: 3
                         color: "transparent"
@@ -727,7 +727,7 @@ Item {
                 }
             }
                 RowLayout {
-                    Layout.alignment: Qt.AlignHCenter
+                    Layout.alignment: Qt.AlignHCenter | Qt.AlignTop
                     
                     TextField {
                         id: moneroNodeIPField
@@ -784,8 +784,9 @@ Item {
                         onClicked: {
                             if(remoteNodeConnectButton.disabled) return;
                             if(!Wallet.isOpened()) {messageBox.text="Wallet must be opened first before connecting to a node";messageBox.open();return;}
-                            let remote_node_ip = (moneroNodeIPField.length > 0) ? moneroNodeIPField.text : moneroRemoteNodeList.selectedNode.split(":")[0]
-                            let remote_node_port = (moneroNodePortField.length > 0) ? moneroNodePortField.text : moneroRemoteNodeList.selectedNode.split(":")[1]
+                            let remote_node = (moneroNodeIPField.length > 0) ? (moneroNodePortField.length > 0 ? (moneroNodeIPField.text + ":" + moneroNodePortField.text) : (moneroNodeIPField.text + ":" + moneroNodePortField.placeholderText)) : moneroRemoteNodeList.selectedNode.replace(/^(https?:|)\/\//, '')//console.log("remote_node", remote_node)
+                            let remote_node_ip = remote_node.split(":")[0]
+                            let remote_node_port = remote_node.split(":")[1]
                             console.log("connecting to remote node:", (remote_node_ip + ":" + remote_node_port))
                             Wallet.nodeConnect(remote_node_ip, remote_node_port)
                         }

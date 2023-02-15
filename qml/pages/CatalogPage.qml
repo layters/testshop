@@ -56,7 +56,7 @@ Page {
         ScrollBar.vertical.policy: ScrollBar.AlwaysOn//ScrollBar.AsNeeded
         clip: true // The area in which the contents of the filterBox will be bounded to (set width and height) // If clip is false then the contents will go beyond/outside of the filterBox's bounds
         contentWidth: this.width//childrenRect.width////mainWindow.width//parent.width
-        contentHeight: catalogStack.height + 200//100 for viewToggle space and 100 for pagination space //mainWindow.height
+        contentHeight: catalogStack.height//// + 200//100 for viewToggle space and 100 for pagination space //mainWindow.height
         //ColumnLayout {
         //    anchors.fill: parent
 
@@ -155,6 +155,19 @@ Page {
                         delegate: NeroshopComponents.CatalogGrid { // has index property
                             model: (catalogPage.model != null) ? catalogPage.model : this.model
                             //Component.onCompleted: console.log("model",this.model)
+                            footer: Item {
+                                width: parent.width; height: pagination.height////childrenRect.height
+                                NeroshopComponents.PaginationBar {
+                                    id: pagination
+                                    firstButton.onClicked: { if(!firstButton.disabled) goToPrevPage() }
+                                    secondButton.onClicked: { if(!secondButton.disabled) goToNextPage() }
+                                    numberField.onEditingFinished: { setCurrentPageIndex(numberField.text - 1) }
+                                    currentIndex: catalogStack.pages.currentIndex//catalogStack.currentIndex
+                                    count: catalogStack.pages.count//catalogStack.count
+                                    anchors.horizontalCenter: parent.horizontalCenter//anchors.horizontalCenter: catalogStack.horizontalCenter
+                                    anchors.top: parent.top; anchors.topMargin: 20//anchors.bottom: parent.bottom; anchors.bottomMargin: 20
+                                }
+                            }
                         }
                     }
                 }
@@ -177,7 +190,7 @@ Page {
             }
         } // StackLayout
         // Custom pagination bar
-        NeroshopComponents.PaginationBar {
+        /*NeroshopComponents.PaginationBar {
             id: pagination
             firstButton.onClicked: { if(!firstButton.disabled) goToPrevPage() }
             secondButton.onClicked: { if(!secondButton.disabled) goToNextPage() }
@@ -189,7 +202,7 @@ Page {
             anchors.top: catalogStack.bottom; anchors.topMargin: 20//anchors.bottom: parent.bottom; anchors.bottomMargin: 20
             ////Layout.alignment: Qt.AlignHCenter | Qt.AlignBottom
             ////Layout.bottomMargin: 20
-        }                        
+        }*/                        
         //}
     } // ScrollView or Flickable
 } // Page

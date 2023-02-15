@@ -613,11 +613,9 @@ neroshop::User * neroshop::Seller::on_login(const neroshop::Wallet& wallet) { //
     dynamic_cast<Seller *>(user)->load_favorites();    
     // load customer_orders
     static_cast<Seller *>(user)->load_customer_orders();*/
-    // load cart (into memory)
-    ////if(user->is_registered()) {
-        ////user->get_cart()->load_cart(user->get_id());
-    ////}
-    return user;          
+    // Load cart (into memory)
+    user->get_cart()->load(user->get_id());
+    return user;
 }
 ////////////////////
 void neroshop::Seller::on_order_received(std::string& subaddress) {

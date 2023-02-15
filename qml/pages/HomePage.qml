@@ -179,6 +179,15 @@ Page {
                                     fillMode: Image.PreserveAspectFit
                                     mipmap: true
                                     //asynchronous: true
+                                    MouseArea {
+                                        anchors.fill: parent
+                                        //hoverEnabled: true
+                                        acceptedButtons: Qt.LeftButton
+                                        onClicked: { 
+                                            //navBar.uncheckAllButtons()
+                                            pageLoader.setSource("qrc:/qml/pages/ProductPage.qml", { "model": modelData })
+                                        }
+                                    }
                                 }
                             }
                         }

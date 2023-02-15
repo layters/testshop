@@ -8,6 +8,7 @@ import "." as NeroshopComponents
 Item {
     id: root
     property string selectedNode: (listView.currentItem == null) ? "" : listView.currentItem.children[2].selectedNode
+    property bool selectedNodeStatus: (listView.currentItem == null) ? "" : listView.currentItem.children[2].selectedNodeStatus
     
     ColumnLayout {
         anchors.fill: parent
@@ -95,10 +96,12 @@ Item {
                     id: delegateRow
                     anchors.fill: parent
                     property string selectedNode: delegateRow.parent.ListView.isCurrentItem ? nodeAddressLabel.text : ""
+                    property bool selectedNodeStatus: delegateRow.parent.ListView.isCurrentItem ? nodeStatusLabel.status : false
 
                     Label {
                         id: nodeStatusLabel
                         text: status ? "✅" : "❌"
+                        color: status ? "#698b22" : "#dd4b4b"
                         Layout.maximumWidth: 25
                         property bool status: modelData.available
                     }
