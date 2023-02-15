@@ -49,40 +49,35 @@ void neroshop::Cart::load(const std::string& user_id) {
             if(i == 1) cart_item.second = std::stoi(column_value); // quantity
         }
         contents.insert(cart_item);
-        neroshop::print("loaded cart item (id: " + cart_item.first + ", qty: " + std::to_string(cart_item.second) + ")", 3);
+        ////neroshop::print("loaded cart item (id: " + cart_item.first + ", qty: " + std::to_string(cart_item.second) + ")", 3);
     }
-    _print();
     /////////////////////////////
-    // create items based on product_ids stored in table: cart
-    /*for(int i = 0; i < rows; i++) {
-        int product_id = std::stoi(PQgetvalue(result, i, 2));
-        int item_qty = std::stoi(PQgetvalue(result, i, 3));
-        //if(product_id == 0) continue; // skip any invalid items - prolly not necessary        
-        // make sure that the item is in stock
-        bool in_stock = (database->get_text_params("SELECT EXISTS (SELECT stock_qty FROM inventory WHERE product_id = $1 AND stock_qty > 0)", { std::to_string(product_id) }) == "t") ? true : false;//std::cout << "item (id: " << product_id << ") in stock: " << ((in_stock) ? "true" : "false") << std::endl;
-        if(!in_stock) { // An item that was in your cart is now out of stock
-            std::string item_name = database->get_text_params("SELECT name FROM item WHERE id = $1", { std::to_string(product_id) });
+    // Update item quantities based on stock available
+    for (auto const& [key, value] : contents) {
+        std::string product_id = key; 
+        int quantity = value;
+        std::string item_name = database->get_text_params("SELECT name FROM products WHERE uuid = $1", { product_id });
+        int stock_available = database->get_integer_params("SELECT quantity FROM listings WHERE product_id = $1 AND quantity > 0", { product_id });
+        if(stock_available == 0) {
             neroshop::print(item_name + " is out of stock", 1);
-            // set item quantity to zero
-            database->execute_params("UPDATE cart_item SET item_qty = $1 WHERE cart_id = $2 AND product_id = $3", { std::to_string(0), std::to_string(cart_id), std::to_string(product_id) });
-            // remove the item from the user's cart
-            database->execute_params("DELETE FROM cart_item WHERE cart_id = $1 AND product_id = $2", { std::to_string(cart_id), std::to_string(product_id) });
-            neroshop::print(item_name + " (x" + std::to_string(item_qty) + ") removed from cart", 1);
-            continue; // skip this item since it is no longer in stock, and so we do not store it in the cart
+            // Set item quantity to zero
+            database->execute_params("UPDATE cart_item SET quantity = $1 WHERE cart_id = $2 AND product_id = $3", { std::to_string(0), this->id, product_id });
+            // Remove the item from the user's cart
+            database->execute_params("DELETE FROM cart_item WHERE cart_id = $1 AND product_id = $2", { this->id, product_id });
+            neroshop::print(item_name + " (x" + std::to_string(quantity) + ") removed from cart", 1);
+            // Remove the item from std::map
+            contents.erase(contents.find(product_id));
+            continue; // skip this item since it is no longer in stock, and so we do not store it in the cart            
         }
-        // get the item's stock amount
-        int stock_qty = database->get_integer_params("SELECT stock_qty FROM inventory WHERE product_id = $1 AND stock_qty > 0", { std::to_string(product_id) });//std::cout << "stock quantity: " << stock_qty << std::endl;
-        // item quantity cannot be more than what's in stock
-        if(item_qty >= stock_qty) item_qty = stock_qty;
-        // update the item's quantity (just to be sure it is not more than whats in stock)
-        database->execute_params("UPDATE cart_item SET item_qty = $1 WHERE cart_id = $2 AND product_id = $3", { std::to_string(item_qty), std::to_string(cart_id), std::to_string(product_id) });        
-        // create the item (object) then store it in the cart(for later use) - it would be better to store the product_ids rather than the item object
-        std::shared_ptr<neroshop::Item> item = std::make_shared<neroshop::Item>(product_id);//neroshop::Item * item = new Item(product_id);
-        //if(std::find(contents.begin(), contents.end(), item) == contents.end()) {
-            contents.push_back(item);
-            neroshop::print("loaded cart item (id: " + std::to_string(product_id) + ", qty: " + std::to_string(item_qty) + ")");//NEROSHOP_TAG_OUT std::cout << "\033[1;32m" << item.get_name() << " (id: " << item.get_id() << ", qty: " << quantity << ") has been loaded into cart" << "\033[0m" << std::endl;
-        //}
-    }*/   
+        // Adjust item quantity to match the stock available
+        if(quantity >= stock_available) quantity = stock_available;
+        // Update the item's quantity (just to be sure it does not surpass the stock available)
+        database->execute_params("UPDATE cart_item SET quantity = $1 WHERE cart_id = $2 AND product_id = $3", { std::to_string(quantity), this->id, product_id });        
+        // Update item quantity in memory
+        contents[product_id] = quantity;
+        neroshop::print("loaded cart item (id: " + product_id + ", qty: " + std::to_string(quantity) + ")", 3);
+    }
+    _print();    
 }
 ////////////////////
 void neroshop::Cart::add(const std::string& user_id, const std::string& product_id, int quantity) {
