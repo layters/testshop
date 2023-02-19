@@ -64,15 +64,15 @@ The name _neroshop_ is a combination of the words _nero_, which is Italian for _
 - [x] Option to run a local Monero node or connect to remote Monero nodes
 - [ ] Option to choose between sending funds directly to a seller or by using a multisignature escrow.
 - [ ] Native Tor and I2P support (both tor daemon and i2pd will be bundled with each release)
-- [ ] Seller reputation system
-- [ ] Product rating system
+- [x] Seller reputation system
+- [x] Product rating system
 - [ ] Wishlists
 - [ ] Built-in SQLite-powered search engine that can find any products or sellers
 
 ## Building neroshop
 
 ### Dependencies
-:heavy_check_mark: = Currently in use; :o: = Optional; :x: = Not currently in use or removed; :grey_question: = Not yet in use, but up for consideration; :white_square_button: = Exclusive to CLI
+:heavy_check_mark: = Currently in use; :o: = Optional; :x: = Not currently in use or deprecated; :grey_question: = Not yet in use, but up for consideration; :white_square_button: = Exclusive to CLI
 
 |      Library                                                       | Minimum Ver.       |         Purpose                                                        | Status                                   |
 |--------------------------------------------------------------------|--------------------|------------------------------------------------------------------------|------------------------------------------|

@@ -32,7 +32,7 @@ ApplicationWindow {
         
         Button {//Image { 
             id: neroshopLogoImageButton
-            visible: false
+            visible: true
             property real iconSize: 30
             icon.source: (NeroshopComponents.Style.darkTheme) ? "qrc:/images/appicons/Vector_Illustrator Files/LogoLight.svg" : "qrc:/images/appicons/Vector_Illustrator Files/LogoDark.svg"
             icon.color: icon.color
@@ -51,6 +51,11 @@ ApplicationWindow {
             onClicked: { 
                 navBar.uncheckAllButtons()
                 pageLoader.source = "qrc:/qml/pages/HomePage.qml" 
+            }
+            MouseArea {
+                anchors.fill: parent
+                onPressed: mouse.accepted = false
+                cursorShape: Qt.PointingHandCursor
             }
         }
         

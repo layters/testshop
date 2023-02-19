@@ -1,8 +1,12 @@
 #ifndef SERVER_HPP_NEROSHOP
 #define SERVER_HPP_NEROSHOP
 
+//#if defined(NEROSHOP_USE_LIBUV)
 #include <uv.h>
+//#endif
+extern "C" {
 #include <raft.h>
+}
 
 #include <unordered_map> // std::unordered_map
 #include <functional> // std::function
