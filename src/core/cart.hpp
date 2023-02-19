@@ -16,11 +16,10 @@ class Cart {
 public:
     Cart();
     ~Cart();
-    void load(const std::string& user_id); // TODO: make private
     void add(const std::string& user_id, const std::string& product_id, int quantity = 1);
-    void add(const std::string& user_id, const neroshop::Item& item, int quantity = 1);//static void add(unsigned int cart_id, const std::string& product_id, int quantity = 1);
+    void add(const std::string& user_id, const neroshop::Item& item, int quantity = 1);
     void remove(const std::string& user_id, const std::string& product_id, int quantity = 1);
-    void remove(const std::string& user_id, const neroshop::Item& item, int quantity = 1);//static void remove(unsigned int cart_id, const std::string& product_id, int quantity = 1);
+    void remove(const std::string& user_id, const neroshop::Item& item, int quantity = 1);
 
     void empty(const std::string& user_id); // remove all items from cart
     void change_quantity(const std::string& user_id, const neroshop::Item& item, int quantity); // set_quantity is private so you can only change item quantity from this function
@@ -59,15 +58,17 @@ public:
 	bool in_cart(const std::string& product_id) const;
 	bool in_cart(const neroshop::Item& item) const;
 	//bool validate_item(const neroshop::Item& item) const;
-	// friends
-	friend class User;//Buyer; // buyer can access cart's private members
+	// friends - can access cart's private members
+	friend class User;
+	friend class Buyer;
+	friend class Seller;
 	friend class Order;
 private:
     std::string id;
-    std::map<std::string, int> contents;//protected: // cannot be accessed outside of class but by a derived class (subclass)
-    static unsigned int max_items; // cart can only hold up to 10 items
-    static unsigned int max_quantity; // the max quantity each item can add up to is 100, so 10 items can have 10 quantity each, making the total number of items 100
-    void load(const neroshop::Item& item, unsigned int quantity); // loads cart.db on app start
+    std::map<std::string, int> contents;
+    static unsigned int max_items; // cart can only hold up to 10 unique items
+    static unsigned int max_quantity; // the max quantity each item can add up to is 100, so 10 items can each have a quantity of 10, making the total number of items 100
+    void load(const std::string& user_id); // loads cart data in-memory (called on user login)
 };
 }
 #endif

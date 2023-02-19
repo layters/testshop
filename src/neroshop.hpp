@@ -15,7 +15,6 @@
 #include "core/wallet.hpp" // causes error depending on where you place this header
 #include "core/config.hpp"
 #include "core/database.hpp"
-#include "core/qr.hpp"
 #include "core/validator.hpp"
 #include "core/currency_converter.hpp"
 #include "core/user.hpp"

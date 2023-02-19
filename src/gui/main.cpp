@@ -13,7 +13,9 @@
 #include "../neroshop.hpp"
 using namespace neroshop;
 
-static const QString WALLET_QR_PROVIDER{"wallet_qr"};
+static const QString WALLET_QR_PROVIDER {"wallet_qr"};
+static const QString AVATAR_IMAGE_PROVIER {"avatar"};
+static const QString CATALOG_IMAGE_PROVIER {"catalog"};
 
 bool isIOS = false;
 bool isAndroid = false;
@@ -121,6 +123,8 @@ int main(int argc, char *argv[])
     qRegisterMetaType<UserController *>();
 
     engine.addImageProvider(WALLET_QR_PROVIDER, new WalletQrProvider(WALLET_QR_PROVIDER));
+    engine.addImageProvider(AVATAR_IMAGE_PROVIER, new ImageProvider(AVATAR_IMAGE_PROVIER));
+    engine.addImageProvider(CATALOG_IMAGE_PROVIER, new ImageProvider(CATALOG_IMAGE_PROVIER));    
     //--------------------------
     // Load main.qml from the "qml/" directory
     engine.load(QUrl(QStringLiteral("qrc:/qml/main.qml")));

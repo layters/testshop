@@ -385,22 +385,12 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR}/external/lua/src/) # v5.4.4
 set(lua_src ${CMAKE_CURRENT_SOURCE_DIR}/build/liblua.a)
 
 ######################################
-# png (needs zlib)
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/external/png/) # v1.6.37
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/external/zlib/) #v1.2.12
-if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
-    set(png_src ${CMAKE_CURRENT_SOURCE_DIR}/build/libpng.so ${CMAKE_CURRENT_SOURCE_DIR}/build/libz.a) # Linux requires libpng to be built dynamically to prevent the Gtk:ERROR: ... "Failed to load /usr/share/icons/Yaru/16x16/status/image-missing.png: Fatal error reading PNG image file: Invalid IHDR data (gdk-pixbuf-error-quark, 0)" when opening the QML FileDialog
-else()
-    set(png_src ${CMAKE_CURRENT_SOURCE_DIR}/build/libpng.a ${CMAKE_CURRENT_SOURCE_DIR}/build/libz.a)
-endif()
-
-######################################
 # neroshop link directories
 link_directories(${CMAKE_CURRENT_SOURCE_DIR}/build) # target_link_directories only available in CMake version 3.13 :(
 
 ######################################
 # neroshop core source files
-set(neroshop_core_src src/core/buyer.cpp src/core/cart.cpp src/core/catalog.cpp src/core/client.cpp src/core/config.cpp src/core/currency_converter.cpp src/core/database.cpp src/core/encryptor.cpp src/core/item.cpp src/core/order.cpp src/core/process.cpp src/core/qr.cpp src/core/script.cpp src/core/seller.cpp src/core/server.cpp src/core/user.cpp src/core/validator.cpp src/core/wallet.cpp)
+set(neroshop_core_src src/core/buyer.cpp src/core/cart.cpp src/core/catalog.cpp src/core/client.cpp src/core/config.cpp src/core/currency_converter.cpp src/core/database.cpp src/core/encryptor.cpp src/core/item.cpp src/core/order.cpp src/core/process.cpp src/core/script.cpp src/core/seller.cpp src/core/server.cpp src/core/user.cpp src/core/validator.cpp src/core/wallet.cpp)
 
 ######################################
 # neroshop tests
@@ -424,7 +414,7 @@ if(NEROSHOP_BUILD_CLI)
     add_executable(${neroshop_console} src/console/main.cpp ${neroshop_core_src})
     target_compile_definitions(${neroshop_console} PRIVATE NEROSHOP_DEBUG)
     target_include_directories(${neroshop_console} PRIVATE #[[${CMAKE_CURRENT_SOURCE_DIR}/src/]])
-    target_link_libraries(${neroshop_console} ${monero_cpp_src} ${sqlite_src} ${qr_code_generator_src} ${raft_src} ${libuv_src} ${curl_src} ${monero_src} ${lua_src} ${png_src} ${linenoise_src})
+    target_link_libraries(${neroshop_console} ${monero_cpp_src} ${sqlite_src} ${qr_code_generator_src} ${raft_src} ${libuv_src} ${curl_src} ${monero_src} ${lua_src} ${linenoise_src})
     message(STATUS "${BoldMagenta}NEROSHOP_BUILD_CLI option set to ON${ColourReset}")
 endif()
 
@@ -437,7 +427,7 @@ if(NEROSHOP_BUILD_GUI)
     target_sources(${neroshop_executable} PRIVATE ${neroshop_res} src/gui/main.cpp src/gui/script_controller.cpp src/gui/wallet_controller.cpp src/gui/user_controller.cpp src/gui/image_loader.cpp src/gui/image_provider.cpp src/gui/wallet_qr_provider.cpp src/gui/currency_exchange_rates_provider.cpp src/gui/backend.cpp ${neroshop_core_src})
     target_compile_definitions(${neroshop_executable} PRIVATE NEROSHOP_DEBUG)#set_target_properties(${neroshop_executable} PROPERTIES COMPILE_DEFINITIONS "NEROSHOP_DEBUG")
     target_include_directories(${neroshop_executable} PRIVATE #[[${CMAKE_CURRENT_SOURCE_DIR}/src/]])
-    target_link_libraries(${neroshop_executable} ${monero_cpp_src} ${sqlite_src} ${qr_code_generator_src} ${raft_src} ${libuv_src} ${monero_src} ${lua_src} ${png_src})
+    target_link_libraries(${neroshop_executable} ${monero_cpp_src} ${sqlite_src} ${qr_code_generator_src} ${raft_src} ${libuv_src} ${monero_src} ${lua_src})
     message(STATUS "${BoldMagenta}NEROSHOP_BUILD_GUI option set to ON${ColourReset}")
     target_compile_definitions(${neroshop_executable} PRIVATE NEROSHOP_BUILD_GUI)
 endif()

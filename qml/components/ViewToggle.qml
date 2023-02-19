@@ -36,7 +36,12 @@ Row {
         background: Rectangle {
             radius: viewToggle.radius
             color: parent.checked ? "#39304f" : "#e0e0e0"//"#353637" : "#e0e0e0"// rgb(53, 54, 55), rgb(224, 224, 224);
-        }              
+        }        
+        MouseArea {
+            anchors.fill: parent
+            onPressed: mouse.accepted = false
+            cursorShape: !parent.checked ? Qt.PointingHandCursor : Qt.ArrowCursor
+        }      
     }
 
     Button {
@@ -49,6 +54,11 @@ Row {
         background: Rectangle {
             radius: viewToggle.radius
             color: parent.checked ? "#39304f" : "#e0e0e0"//"#353637" : "#e0e0e0"
+        }
+        MouseArea {
+            anchors.fill: parent
+            onPressed: mouse.accepted = false
+            cursorShape: !parent.checked ? Qt.PointingHandCursor : Qt.ArrowCursor
         }
     }
 }

@@ -89,8 +89,6 @@ The name _neroshop_ is a combination of the words _nero_, which is Italian for _
 | [stduuid](https://github.com/mariusbancila/stduuid)                | ?                  | unique id generation                                                   | :o:                                      |
 | [linenoise](https://github.com/antirez/linenoise)                  | ?                  | command line interface                                                 | :heavy_check_mark: :white_square_button: |
 | [lua](https://www.lua.org/)                                        | 5.1.5              | configuration script                                                   | :heavy_check_mark:                       |
-| [libpng](http://www.libpng.org/pub/png/)                           | 1.6.37             | image exportation                                                      | :heavy_check_mark:                       |
-| [zlib](https://www.zlib.net/)                                      | 1.2.12             | for libpng                                                             | :heavy_check_mark:                       |
 | [openpgp](external/openpgp)                                        | ?                  | public-key encryption and digital signatures                           | :grey_question:                          |
 
 ### Compiling neroshop from source
@@ -222,13 +220,20 @@ This project is licensed under the [GNU General Public License (GPLv3)](LICENSE)
 
 
 ## Donations
-You may support the neroshop project directly by donating Monero (XMR) to the address below. Received payments will be used to reward developers for their contributions to the project (mostly by completing bounties) and will also be used to fund our official website domain name.
+You may support the neroshop project directly by donating to any of the addresses below. Received payments will be used to reward developers for their contributions to the project (mostly by completing bounties) and will also be used to fund our official website domain name.
+
+**Monero [XMR]**
 ```
 83QbQvnnyo7515rEnW8XwF1hbP5qMab6sHXFzP6pg3EKGscgXCbVjbt1FX5SF7AV9p4Ur1tiommuQSzrQQRHkZicVYu6j8Y
 ```
 <p align="center">
     <a href="monero:83QbQvnnyo7515rEnW8XwF1hbP5qMab6sHXFzP6pg3EKGscgXCbVjbt1FX5SF7AV9p4Ur1tiommuQSzrQQRHkZicVYu6j8Y" target="_blank"><img src="images/donate_xmr.png" width="128" height="128"></img></a>
 </p>
+
+**Wownero [WOW]**
+```
+WW2pQTQWHpyJf2CHrCmZG7Tn3zBnYRZTH8g4U3pSZf5s6xsTXrZc9odDWmrWzjRc9MMQWrKXxjHsRdzH5JpJ7kzx1jZuSVSfi
+```
 
 
 ## Resources
@@ -250,6 +255,7 @@ You may support the neroshop project directly by donating Monero (XMR) to the ad
 u/EchoingCat — for the revision of the official neroshop logo
 woodser — for his guidance and for his work on the monero-cpp library which has made the development of this app possible
 yuriio147 — for his work on various QML components (Triangle, Banner, NodeList, etc.), the currency converter, fixing a major bug in the RSA encryption code, the RSA signing and verifying functions, and for teaching me some Qt/Quick techniques
+lza_menace — for his work on the new monero.fail JSON API endpoint
 ```
 
 [//]: # (./clean.sh)

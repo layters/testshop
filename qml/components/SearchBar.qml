@@ -33,6 +33,7 @@ Item {
         anchors.leftMargin: 5//1
         anchors.top: searchField.top
         width: 50; height: searchField.height
+        property alias cursorShape: mouseArea.cursorShape
         
         icon.source: "qrc:/images/search.png"//neroshopResourceDir + "/search.png"
         icon.color: "#ffffff"
@@ -49,6 +50,13 @@ Item {
             pageLoader.setSource("qrc:/qml/pages/CatalogPage.qml", {"model": Backend.getListings()})//, {"model": [""]})
             //console.log("page Loader Item (CatalogPage):", pageLoader.item)
             //console.log("page Loader Item (CatalogPage.catalog):", pageLoader.catalog)//.item)
+        }
+        
+        MouseArea {
+            id: mouseArea
+            anchors.fill: parent
+            onPressed: mouse.accepted = false
+            cursorShape: Qt.PointingHandCursor
         }
     }
 }

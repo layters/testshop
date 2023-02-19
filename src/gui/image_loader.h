@@ -12,6 +12,9 @@ public:
     static ImageLoader *instance();
 
     QImage load(const QString &id) const;
+    
+    QPair<unsigned char*, int> getProductImage(const QString &product_id) const;
+    QImage loadAvatar(const QString &user_id) const;
 };
 
 #endif // IMAGELOADER_H

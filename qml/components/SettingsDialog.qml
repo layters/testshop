@@ -211,6 +211,8 @@ Popup {
             property string contentBoxColor: "transparent"
             property string contentBoxBorderColor: (NeroshopComponents.Style.darkTheme) ? "#f0f0f0" : "#4d4d4d"//"#030380"
             property real comboBoxWidth: 300
+            property real comboBoxButtonWidth: 50
+            property bool comboBoxNestedButton: true
             
         ColumnLayout {
             id: generalSettings
@@ -273,7 +275,8 @@ Popup {
                             priceDisplayText.currency = displayText
                             ////lastCurrencySet = currentText
                         }
-                        indicatorWidth: 30
+                        indicatorWidth: settingsStack.comboBoxButtonWidth
+                        indicatorDoNotPassBorder: settingsStack.comboBoxNestedButton
                         color: "#f2f2f2"//(NeroshopComponents.Style.darkTheme) ? "#101010" : "#f0f0f0"
                         //textColor: (NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000"
                     }
@@ -291,9 +294,10 @@ Popup {
                         NeroshopComponents.ComboBox {
                             id: priceApiBox
                             anchors.right: parent.right
-                            width: settingsStack.comboBoxWidth; indicatorWidth: 30
+                            width: settingsStack.comboBoxWidth; indicatorWidth: settingsStack.comboBoxButtonWidth
                             model: ["CoinGecko", "CoinMarketCap"]
                             Component.onCompleted: currentIndex = find("CoinGecko")
+                            indicatorDoNotPassBorder: settingsStack.comboBoxNestedButton
                             color: "#f2f2f2"
                         }
                     }*/
@@ -363,7 +367,8 @@ Popup {
                             //todo: change theme in configuration file too
                             console.log("Theme set to", currentText)
                         }
-                        indicatorWidth: 30
+                        indicatorWidth: settingsStack.comboBoxButtonWidth
+                        indicatorDoNotPassBorder: settingsStack.comboBoxNestedButton
                         color: "#f2f2f2"
                     } // ComboBox   
                     }    
@@ -410,7 +415,8 @@ Popup {
                     width: settingsStack.comboBoxWidth
                     currentIndex: model.indexOf("English")
                     model: ["English"] // TODO logic from controller
-                    indicatorWidth: 30
+                    indicatorWidth: settingsStack.comboBoxButtonWidth
+                    indicatorDoNotPassBorder: settingsStack.comboBoxNestedButton
                     color: "#f2f2f2"
                 }
                 }
@@ -454,10 +460,11 @@ Popup {
                         NeroshopComponents.ComboBox {
                             id: balanceDisplayBox
                             anchors.right: parent.right//; anchors.rightMargin: 0
-                            width: settingsStack.comboBoxWidth; indicatorWidth: 30
+                            width: settingsStack.comboBoxWidth; indicatorWidth: settingsStack.comboBoxButtonWidth
                             model: ["All balances", "Locked balance only", "Unlocked balance only"]
                             Component.onCompleted: currentIndex = find("All balances")
                             color: "#f2f2f2"
+                            indicatorDoNotPassBorder: settingsStack.comboBoxNestedButton
                         }
                     }
                     // Precision/Decimal places
@@ -473,10 +480,11 @@ Popup {
                         NeroshopComponents.ComboBox {
                             id: balancePrecisionBox
                             anchors.right: parent.right
-                            width: settingsStack.comboBoxWidth; indicatorWidth: 30
+                            width: settingsStack.comboBoxWidth; indicatorWidth: settingsStack.comboBoxButtonWidth
                             model: ["3", "6", "9", "12"]
                             Component.onCompleted: currentIndex = find("12")
                             color: "#f2f2f2"
+                            indicatorDoNotPassBorder: settingsStack.comboBoxNestedButton
                         }
                     }
                     // Currency sign
@@ -511,10 +519,11 @@ Popup {
                         NeroshopComponents.ComboBox {
                             id: blockExplorerBox
                             anchors.right: parent.right
-                            width: settingsStack.comboBoxWidth; indicatorWidth: 30
+                            width: settingsStack.comboBoxWidth; indicatorWidth: settingsStack.comboBoxButtonWidth
                             model: ["xmrchain.net"]
                             Component.onCompleted: currentIndex = find("xmrchain.net")
                             color: "#f2f2f2"
+                            indicatorDoNotPassBorder: settingsStack.comboBoxNestedButton
                         }
                     }
                 }
@@ -580,10 +589,11 @@ Popup {
                         NeroshopComponents.ComboBox {
                             id: priceDisplayBox
                             anchors.right: parent.right
-                            width: settingsStack.comboBoxWidth; indicatorWidth: 30
+                            width: settingsStack.comboBoxWidth; indicatorWidth: settingsStack.comboBoxButtonWidth
                             model: ["All prices", "Fiat price only", "Monero price only"]
                             Component.onCompleted: currentIndex = find("All prices")
                             color: "#f2f2f2"
+                            indicatorDoNotPassBorder: settingsStack.comboBoxNestedButton
                         }
                     }
                     // Grid product details aligned center
@@ -707,9 +717,12 @@ Popup {
                     Layout.fillHeight: true
                     
 Item {
+    Layout.preferredWidth: localNodeColumn.childrenRect.width
+    Layout.preferredHeight: remoteNodeColumn.childrenRect.height
     ColumnLayout {
-        anchors.fill: parent
-        spacing: 0
+        id: remoteNodeColumn
+        anchors.horizontalCenter: parent.horizontalCenter//anchors.fill: parent
+        spacing: 5
             Frame {
                     Layout.alignment: Qt.AlignHCenter | Qt.AlignTop
                     Layout.preferredWidth: 500
@@ -717,7 +730,7 @@ Item {
                     background: Rectangle {
                         radius: 3
                         color: "transparent"
-                        border.color: (NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000"
+                        border.color: (NeroshopComponents.Style.darkTheme) ? (NeroshopComponents.Style.themeName == "PurpleDust" ? "#7d7d97" : "#a8a8a8") : "#989999"
                         //border.width: 1
                     }
 
@@ -818,9 +831,12 @@ Item {
 } // Item 0                    
                     
                     Item {
+                        Layout.preferredWidth: localNodeColumn.childrenRect.width
+                        Layout.preferredHeight: localNodeColumn.childrenRect.height
             ColumnLayout {
-                anchors.fill: parent//Layout.fillWidth: true
-                //Layout.fillHeight: true
+                id: localNodeColumn
+                anchors.horizontalCenter: parent.horizontalCenter////anchors.fill: parent//Layout.fillWidth: true
+                spacing: 5
                 
                 TextField {
                     id: monerodPathField

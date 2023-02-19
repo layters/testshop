@@ -388,6 +388,46 @@ void neroshop::Backend::uploadProductImage(const QString& product_id, const QStr
 }
 
 //----------------------------------------------------------------
+QVariantList neroshop::Backend::getProductImages(const QString& product_id) {
+    // Do some database reading to fetch each category row (database reads do not require consensus)
+    neroshop::db::Sqlite3 * database = neroshop::db::Sqlite3::get_database();
+    if(!database) throw std::runtime_error("database is NULL");
+    std::string command = "SELECT id, name FROM images WHERE product_id = $1";////std::string command = "SELECT id, name, data FROM images WHERE product_id = $1";
+    sqlite3_stmt * stmt = nullptr;
+    // Prepare (compile) statement
+    if(sqlite3_prepare_v2(database->get_handle(), command.c_str(), -1, &stmt, nullptr) != SQLITE_OK) {
+        neroshop::print("sqlite3_prepare_v2: " + std::string(sqlite3_errmsg(database->get_handle())), 1);
+        return {};
+    }
+    // Bind product_id to TEXT
+    std::string product_uuid = product_id.toStdString();
+    if(sqlite3_bind_text(stmt, 1, product_uuid.c_str(), product_uuid.length(), SQLITE_STATIC) != SQLITE_OK) {
+        neroshop::print("sqlite3_bind_text (arg: 1): " + std::string(sqlite3_errmsg(database->get_handle())), 1);
+        sqlite3_finalize(stmt);
+        return {};//database->execute("ROLLBACK;"); return {};
+    }        
+    // Check whether the prepared statement returns no data (for example an UPDATE)
+    if(sqlite3_column_count(stmt) == 0) {
+        neroshop::print("No data found. Be sure to use an appropriate SELECT statement", 1);
+        return {};
+    }
+    
+    QVariantList product_image_list;
+    // Get all table values row by row
+    while(sqlite3_step(stmt) == SQLITE_ROW) {
+        QVariantMap product_image_object; // Create an object for each row
+        for(int i = 0; i < sqlite3_column_count(stmt); i++) {
+            std::string column_value = (sqlite3_column_text(stmt, i) == nullptr) ? "NULL" : reinterpret_cast<const char *>(sqlite3_column_text(stmt, i));////if(sqlite3_column_text(stmt, i) == nullptr) {throw std::runtime_error("column is NULL");}
+            if(i == 0) product_image_object.insert("image_id", QString::fromStdString(column_value).toInt());
+            if(i == 1) product_image_object.insert("name", QString::fromStdString(column_value));
+            ////if(i == 2) product_image_object.insert("data", QString::fromStdString(column_value));
+        }
+        product_image_list.append(product_image_object);
+    }
+    return product_image_list;
+}
+//----------------------------------------------------------------
+//----------------------------------------------------------------
 int neroshop::Backend::getProductStarCount(const QString& product_id) {
     neroshop::db::Sqlite3 * database = neroshop::db::Sqlite3::get_database();
     if(!database) throw std::runtime_error("database is NULL");

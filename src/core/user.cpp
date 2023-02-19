@@ -169,30 +169,11 @@ void neroshop::User::convert() {
 ////////////////////
 void neroshop::User::delete_account() {
     if(!is_logged()) {neroshop::print("You are not logged in", 2);return;} // must be logged in to delete your account
-    /*DB::Sqlite3 db("neroshop.db");
-    db.drop("users", "id = " + get_id() + " AND name = " + DB::Sqlite3::to_sql_string(get_name()));
-    neroshop::print("Your account has been permanently deleted", 1);
-    // send account to graveyard
-    if(!db.table_exists("deleted_users")) {
-        db.table("deleted_users");
-        db.column("deleted_users", "ADD", "name", "TEXT");
-        db.index("idx_deleted_users", "deleted_users", "name"); // graveyard names must be unique
-    }
-    db.insert("deleted_users", "name", DB::Sqlite3::to_sql_string(name)); // graveyard only stores deleted usernames and no other information
-    // reset user info and then logout user
-    set_id(0);
-    name.clear();
-    set_account_type(user_account_type::guest);
-    set_logged(false); // logout here (will call on_logout callback, if logged is false)
-    db.close();*/
-    ////////////////////////////////
-    // postgresql
-    ////////////////////////////////
-#if defined(NEROSHOP_USE_POSTGRESQL)    
-    //database->connect("host=127.0.0.1 port=5432 user=postgres password=postgres dbname=neroshoptest");
+    neroshop::db::Sqlite3 * database = neroshop::db::Sqlite3::get_database();
+    if(!database) throw std::runtime_error("database is NULL");
     ////database->execute("BEGIN;"); // not necessary unless doing multiple operations
     ////database->execute("SAVEPOINT before_account_deletion_savepoint;");//ROLLBACK TO before_account_deletion_savepoint;
-    database->execute_params("DELETE FROM users WHERE id = $1 AND name = $2", { std::to_string(this->id), this->name });
+    database->execute_params("DELETE FROM users WHERE id = $1", { this->id });
     neroshop::print("your account has been permanently deleted", 1);
     // send account to deleted accounts table (or graveyard >:})
     //if(!database->table_exists("deleted_users")) {
@@ -208,9 +189,6 @@ void neroshop::User::delete_account() {
     set_logged(false); // logout here (will call on_logout callback, if logged is false)    
     // end transaction
     ////database->execute("COMMIT;");
-    
-    ////////////////////////////////    
-#endif    
 } // username of deleted accounts should be reused or nah?
 ////////////////////
 ////////////////////

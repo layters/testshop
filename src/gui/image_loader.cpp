@@ -2,6 +2,8 @@
 #include <QCoreApplication>
 #include <QFile>
 
+#include "../core/database.hpp"
+
 namespace {
 const QByteArray dummyBase64Image{
     "/9j/4AAQSkZJRgABAQAAAQABAAD/"
@@ -1566,7 +1568,9 @@ ImageLoader *ImageLoader::instance()
 
     return instance;
 }
-
+#include <iostream>
+#include <QDebug>
+#include <QUrlQuery>
 QImage ImageLoader::load(const QString &id) const
 {
     // TODO: load from real file/base64/DB/...
@@ -1577,8 +1581,8 @@ QImage ImageLoader::load(const QString &id) const
     // You can use https://doc.qt.io/qt-5/qurlquery.html for parsing id
 
     QImage result;
-
-    if (id == QStringLiteral("users/avatar/404")) {
+    // Sample test - delete soon
+    if (id == QStringLiteral("avatar/404")) {
         result.loadFromData(QByteArray::fromBase64(dummyBase64Image));
     } else if (id == QStringLiteral("catalog/item/200/0")) {
         result.load(":/200.jpg");
@@ -1588,8 +1592,88 @@ QImage ImageLoader::load(const QString &id) const
             result.loadFromData(file.readAll());
         }
     }
+    /////////////////////////////////////////////
+    if(id.contains(QStringLiteral("catalog"))) {
+        // Copy id text to a url (image://catalog?id=%1&index=%2)
+        QUrl url(QString(id).replace('/', '?'));
+        // Construct query object and parse the query string found in the url, using the default query delimiters (=, &)
+        QUrlQuery query(url);////query.setQueryDelimiters('=', '&'); // Default delimiters
+        /*QString queryString = query.query();
+        std::cout << "queryString: " << queryString.toStdString() << std::endl;*/        
+        if(query.isEmpty()) {
+            std::cout << "query contains no key-value pairs\n";
+        }
+        if(!query.hasQueryItem(QString("id"))) {
+            std::cout << "key 'id' not found in query\n";
+        }
+        if(!query.hasQueryItem(QString("image_id"))) {
+            std::cout << "key 'image_id' not found in query. Using default image\n";
+        }        
+        // Get key-value pair
+        QString product_id = query.queryItemValue("id");
+        std::cout << "id: " << product_id.toStdString() << std::endl;
+        QString image_id = query.queryItemValue(QString("image_id"));
+        std::cout << "image_id: " << image_id.toStdString() << std::endl;
+        // Load product image from BLOB - causes segfault :(
+        /*QPair<uchar*, int> image_pair = getProductImage(product_id);
+        ////if(!result.loadFromData(QByteArray(image_pair.first, image_pair.second))) {
+        if(!result.loadFromData(image_pair.first, image_pair.second)) {
+            std::cout << "failed to load image sorry\n";
+        }*/
+        // Load product image from file (TEXT) - crashes on certain images
+        neroshop::db::Sqlite3 * database = neroshop::db::Sqlite3::get_database();
+        if(!database) throw std::runtime_error("database is NULL");
+        std::string command = (!query.hasQueryItem(QString("image_id"))) ? 
+            "SELECT name FROM images WHERE product_id = $1" : // use default image if key 'image_id' not found in query
+            "SELECT name FROM images WHERE id = $1"; // image id or uuid
+        std::string filename = database->get_text_params(command, { (!query.hasQueryItem(QString("image_id"))) ? 
+            product_id.toStdString() : image_id.toStdString() });
+        QFile file(QString::fromStdString(filename));
+        if(file.open(QFile::ReadOnly)) {
+            result.loadFromData(file.readAll());
+        }
+    }
 
     return result;
+}
+
+QPair<unsigned char*, int> ImageLoader::getProductImage(const QString &product_id) const {
+    neroshop::db::Sqlite3 * database = neroshop::db::Sqlite3::get_database();
+    if(!database) throw std::runtime_error("database is NULL");
+    std::string command = "SELECT data FROM images WHERE product_id = $1";
+    sqlite3_stmt * statement = nullptr;
+    int bytes = 0;
+    std::string product_uuid = product_id.toStdString();
+    // Prepare (compile) the statement
+    if(sqlite3_prepare_v2(database->get_handle(), command.c_str(), -1, &statement, nullptr) != SQLITE_OK) {
+        neroshop::print("sqlite3_prepare_v2: " + std::string(sqlite3_errmsg(database->get_handle())), 1);
+        return qMakePair(nullptr, 0);
+    }
+    // Bind text to user id (1st arg)
+    if(sqlite3_bind_text(statement, 1, product_uuid.c_str(), product_uuid.length(), SQLITE_STATIC) != SQLITE_OK) {
+        neroshop::print("sqlite3_bind_text: " + std::string(sqlite3_errmsg(database->get_handle())), 1);
+        sqlite3_finalize(statement);
+        return qMakePair(nullptr, 0);
+    }      
+    // Execute the statement
+    int result = sqlite3_step(statement);
+    // Get image size in bytes
+    if(result == SQLITE_ROW) {
+        bytes = sqlite3_column_bytes(statement, 0);
+        std::cout << "bytes: " << bytes << std::endl;
+    }
+    // Finalize the statement    
+    sqlite3_finalize(statement);
+    // The code below causes a segfault :/
+    unsigned char * data = const_cast<unsigned char *>(static_cast<const unsigned char *>(sqlite3_column_blob(statement, 0)));
+    return qMakePair(data, bytes);//product_image;
+}
+
+QImage ImageLoader::loadAvatar(const QString &user_id) const {
+    QImage image;
+    
+    
+    return image;
 }
 
 static void preload()

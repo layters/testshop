@@ -32,7 +32,7 @@ ComboBox {
 
     indicator: Rectangle {
         id: indicatorRect
-        width: indicatorWidth - Math.abs(children[0].anchors.leftMargin)
+        width: (control.indicatorDoNotPassBorder) ? indicatorWidth - Math.abs(children[0].anchors.leftMargin) - 5 : indicatorWidth - Math.abs(children[0].anchors.leftMargin)
         height: (control.indicatorDoNotPassBorder) ? control.background.height - (control.background.border.width * 2) : control.background.height//8
         x: (control.indicatorDoNotPassBorder) ? control.width - this.width - control.background.border.width : control.width - this.width//control.width - width - control.rightPadding
         y: control.topPadding + (control.availableHeight - height) / 2
@@ -86,6 +86,13 @@ ComboBox {
         background: Rectangle {
             color: control.color
             radius: control.background.radius
+        }
+        onPressed: {
+            control.down = true // control.pressed is readonly in qt6 so don't use it
+            popup.visible = true // or control.popup.open()
+        }
+        onReleased: {
+            control.down = false
         }
     }
 

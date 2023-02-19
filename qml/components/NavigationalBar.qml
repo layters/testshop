@@ -59,6 +59,12 @@ RowLayout {
             border.width: (!parent.checked && parent.hovered) ? 1 : 0
             radius: 5
         }
+        
+        MouseArea {
+            anchors.fill: parent
+            onPressed: mouse.accepted = false
+            cursorShape: !parent.checked ? Qt.PointingHandCursor : Qt.ArrowCursor
+        }
            
         NeroshopComponents.Hint {
             id: walletButtonHint
@@ -86,6 +92,12 @@ RowLayout {
             border.color: parent.reservedColor
             border.width: (!parent.checked && parent.hovered) ? 1 : 0
             radius: 5
+        }
+        
+        MouseArea {
+            anchors.fill: parent
+            onPressed: mouse.accepted = false
+            cursorShape: !parent.checked ? Qt.PointingHandCursor : Qt.ArrowCursor
         }
            
         NeroshopComponents.Hint {
@@ -115,6 +127,12 @@ RowLayout {
             border.width: (!parent.checked && parent.hovered) ? 1 : 0
             radius: 5
         }
+        
+        MouseArea {
+            anchors.fill: parent
+            onPressed: mouse.accepted = false
+            cursorShape: !parent.checked ? Qt.PointingHandCursor : Qt.ArrowCursor
+        }
            
         NeroshopComponents.Hint {
             visible: parent.hovered
@@ -142,6 +160,12 @@ RowLayout {
             border.width: (!parent.checked && parent.hovered) ? 1 : 0
             radius: 5
         }
+        
+        MouseArea {
+            anchors.fill: parent
+            onPressed: mouse.accepted = false
+            cursorShape: !parent.checked ? Qt.PointingHandCursor : Qt.ArrowCursor
+        }
            
         NeroshopComponents.Hint {
             visible: parent.hovered
@@ -168,6 +192,12 @@ RowLayout {
             border.color: parent.reservedColor
             border.width: (!parent.checked && parent.hovered) ? 1 : 0
             radius: 5
+        }
+        
+        MouseArea {
+            anchors.fill: parent
+            onPressed: mouse.accepted = false
+            cursorShape: !parent.checked ? Qt.PointingHandCursor : Qt.ArrowCursor
         }
            
         NeroshopComponents.Hint {
@@ -225,6 +255,17 @@ RowLayout {
             color: "#ffffff"//(!parent.checked && parent.hovered) ? parent.reservedColor : "#ffffff"
             visible: cartButtonIcon.visible
         }*/
+        
+        onClicked: {
+            navBar.uncheckAllButtons();
+            pageLoader.source = "../pages/CartPage.qml"
+        }
+                
+        MouseArea {
+            anchors.fill: parent
+            onPressed: mouse.accepted = false
+            cursorShape: Qt.PointingHandCursor
+        }
            
         NeroshopComponents.Hint {
             visible: parent.hovered
@@ -233,10 +274,5 @@ RowLayout {
             delay: 0
             //textObject.font.bold: true
         }        
-        
-        onClicked: {
-            navBar.uncheckAllButtons();
-            pageLoader.source = "../pages/CartPage.qml"
-        }
     }
 }

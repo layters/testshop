@@ -56,7 +56,7 @@ Page {
         ScrollBar.vertical.policy: ScrollBar.AlwaysOn//ScrollBar.AsNeeded
         clip: true // The area in which the contents of the filterBox will be bounded to (set width and height) // If clip is false then the contents will go beyond/outside of the filterBox's bounds
         contentWidth: this.width//childrenRect.width////mainWindow.width//parent.width
-        contentHeight: catalogStack.height//// + 200//100 for viewToggle space and 100 for pagination space //mainWindow.height
+        contentHeight: catalogStack.height + 100//// + 200//100 for viewToggle space and 100 for pagination space //mainWindow.height
         //ColumnLayout {
         //    anchors.fill: parent
 
@@ -70,60 +70,65 @@ Page {
             Layout.leftMargin: 20
             Layout.topMargin: 20
         }*/    
-
-        // Text that displays current page results information
-        Text {
-            id: pageResultsDisplay
-            text: qsTr("Page %1 of %2 (Results: %3)").arg(catalogStack.pages.currentIndex + 1).arg(catalogStack.pages.count).arg(catalogPage.model.length)
-            font.bold: true
-            anchors.left: catalogStack.left
-            anchors.verticalCenter: viewToggle.verticalCenter//anchors.top: viewToggle.top
-            color: (NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000"
-        }
-        // ViewToggle
-        NeroshopComponents.ViewToggle {
-            id: viewToggle
-            anchors.horizontalCenter: parent.horizontalCenter
+        Rectangle {
+            id: topPanel
             anchors.top: parent.top; anchors.topMargin: 20
-            //Layout.alignment: Qt.AlignHCenter | Qt.AlignTop
-            //Layout.topMargin: 20
-        }    
-        //GroupBox {
-        //        title: qsTr("Sort")
-        // SortComboBox
-        NeroshopComponents.ComboBox {
-            id: sortByBox
-            anchors.right: catalogStack.right
-            anchors.verticalCenter: viewToggle.verticalCenter
-            width: 300
-            model: ["None", "Latest", "Oldest", "Alphabetical order", "Price - Lowest", "Price - Highest"]
-            Component.onCompleted: currentIndex = find("None")
-            displayText: "Sort: " + currentText
-            onActivated: {
-                if(currentIndex == find("None")) {
-                    catalogPage.model = Backend.getListings()
-                }
-                if(currentIndex == find("Oldest")) {
-                    catalogPage.model = Backend.getListingsByOldest()
-                }
-                if(currentIndex == find("Latest")) {
-                    console.log("Showing most recent items")
-                    catalogPage.model = Backend.getListingsByMostRecent()
-                }
-                if(currentIndex == find("Alphabetical order")) {
-                    catalogPage.model = Backend.getListingsByAlphabeticalOrder()
-                }
-                if(currentIndex == find("Price - Lowest")) {
-                    catalogPage.model = Backend.getListingsByPriceLowest()
-                }
-                if(currentIndex == find("Price - Highest")) {
-                    catalogPage.model = Backend.getListingsByPriceHighest()
-                }
-                /*if(currentIndex == find("")) {
-                    catalogPage.model = Backend.
-                }*/
+            anchors.horizontalCenter: parent.horizontalCenter
+            width: catalogStack.width; height: childrenRect.height
+            color: "transparent"
+            //border.color: "#ffffff"
+            // Text that displays current page results information
+            Text {
+                id: pageResultsDisplay
+                text: qsTr("Page %1 of %2 (Results: %3)").arg(catalogStack.pages.currentIndex + 1).arg(catalogStack.pages.count).arg(catalogPage.model.length)
+                font.bold: true
+                anchors.left: parent.left
+                anchors.verticalCenter: viewToggle.verticalCenter//anchors.top: viewToggle.top
+                color: (NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000"
             }
-        }    
+            // ViewToggle
+            NeroshopComponents.ViewToggle {
+                id: viewToggle
+                anchors.horizontalCenter: parent.horizontalCenter
+                //anchors.top: parent.top; anchors.topMargin: 20
+            }    
+            //GroupBox {
+            //        title: qsTr("Sort")
+            // SortComboBox
+            NeroshopComponents.ComboBox {
+                id: sortByBox
+                anchors.right: parent.right
+                anchors.verticalCenter: viewToggle.verticalCenter
+                width: 300
+                model: ["None", "Latest", "Oldest", "Alphabetical order", "Price - Lowest", "Price - Highest"]
+                Component.onCompleted: currentIndex = find("None")
+                displayText: "Sort: " + currentText
+                onActivated: {
+                    if(currentIndex == find("None")) {
+                        catalogPage.model = Backend.getListings()
+                    }
+                    if(currentIndex == find("Oldest")) {
+                        catalogPage.model = Backend.getListingsByOldest()
+                    }
+                    if(currentIndex == find("Latest")) {
+                        console.log("Showing most recent items")
+                        catalogPage.model = Backend.getListingsByMostRecent()
+                    }
+                    if(currentIndex == find("Alphabetical order")) {
+                        catalogPage.model = Backend.getListingsByAlphabeticalOrder()
+                    }
+                    if(currentIndex == find("Price - Lowest")) {
+                        catalogPage.model = Backend.getListingsByPriceLowest()
+                    }
+                    if(currentIndex == find("Price - Highest")) {
+                        catalogPage.model = Backend.getListingsByPriceHighest()
+                    }
+                    /*if(currentIndex == find("")) {
+                        catalogPage.model = Backend.
+                    }*/
+                }
+            }
+        } // Rectangle            
 
         // Pagination mode (Infinite Scroll mode replaces the StackLayout with a ScrollView)
         StackLayout {
@@ -131,7 +136,7 @@ Page {
             ////anchors.fill: parent
             width: currentItem.childrenRect.width; height: currentItem.childrenRect.height
             anchors.horizontalCenter: parent.horizontalCenter////viewToggle.horizontalCenter
-            anchors.top: viewToggle.bottom; anchors.topMargin: 15
+            anchors.top: topPanel.bottom; anchors.topMargin: 15
             ////anchors.left: (productFilterBox.visible) ? productFilterBox.right : parent.left
             ////anchors.leftMargin: (productFilterBox.visible) ? 10 : 20            
             ////Layout.alignment: Qt.AlignHCenter | Qt.AlignTop
@@ -149,6 +154,7 @@ Page {
                 // StackLayout child Items' Layout.fillWidth and Layout.fillHeight properties default to true
                 Layout.preferredWidth: childrenRect.width; Layout.preferredHeight: childrenRect.height//width: childrenRect.width; height: childrenRect.height
                 StackLayout {
+                    id: gridStack
                     currentIndex: catalogStack.currentPageIndex
                     Repeater {
                         model: catalogStack.pagesCount//1
@@ -156,9 +162,9 @@ Page {
                             model: (catalogPage.model != null) ? catalogPage.model : this.model
                             //Component.onCompleted: console.log("model",this.model)
                             footer: Item {
-                                width: parent.width; height: pagination.height////childrenRect.height
+                                width: parent.width; height: gridPagination.height////childrenRect.height
                                 NeroshopComponents.PaginationBar {
-                                    id: pagination
+                                    id: gridPagination
                                     firstButton.onClicked: { if(!firstButton.disabled) goToPrevPage() }
                                     secondButton.onClicked: { if(!secondButton.disabled) goToNextPage() }
                                     numberField.onEditingFinished: { setCurrentPageIndex(numberField.text - 1) }
@@ -178,12 +184,26 @@ Page {
                 // StackLayout child Items' Layout.fillWidth and Layout.fillHeight properties default to true
                 Layout.preferredWidth: childrenRect.width; Layout.preferredHeight: childrenRect.height//width: childrenRect.width; height: childrenRect.height
                 StackLayout {
+                    id: listStack
                     currentIndex: catalogStack.currentPageIndex
                     Repeater {
                         model: catalogStack.pagesCount//1
                         delegate: NeroshopComponents.CatalogList {
                             model: (catalogPage.model != null) ? catalogPage.model : this.model
                             //Component.onCompleted: console.log("model",this.model)
+                            footer: Item {
+                                width: parent.width; height: listPagination.height////childrenRect.height
+                                NeroshopComponents.PaginationBar {
+                                    id: listPagination
+                                    firstButton.onClicked: { if(!firstButton.disabled) goToPrevPage() }
+                                    secondButton.onClicked: { if(!secondButton.disabled) goToNextPage() }
+                                    numberField.onEditingFinished: { setCurrentPageIndex(numberField.text - 1) }
+                                    currentIndex: catalogStack.pages.currentIndex//catalogStack.currentIndex
+                                    count: catalogStack.pages.count//catalogStack.count
+                                    anchors.horizontalCenter: parent.horizontalCenter//anchors.horizontalCenter: catalogStack.horizontalCenter
+                                    anchors.top: parent.top; anchors.topMargin: 20//anchors.bottom: parent.bottom; anchors.bottomMargin: 20
+                                }
+                            }                        
                         }
                     }
                 }

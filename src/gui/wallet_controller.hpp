@@ -15,7 +15,6 @@
 
 namespace neroshop {
 
-#if defined(NEROSHOP_USE_QT)
 class WalletController : public QObject, public monero_wallet_listener
 {
     Q_OBJECT 
@@ -36,7 +35,6 @@ public:
     };
     Q_ENUM(KeyfileStatus)
     // functions (for use in QML)
-    ////explicit Wallet(QObject* parent = 0);
     Q_INVOKABLE int createRandomWallet(const QString& password, const QString& confirm_pwd, const QString& path);
     Q_INVOKABLE bool restoreFromMnemonic(const QString& mnemonic);
     Q_INVOKABLE bool restoreFromKeys(const QString& primary_address, const QString& private_view_key, const QString& private_spend_key);
@@ -94,10 +92,7 @@ signals:
     void isOpenedChanged();
     void balanceChanged();
     void transfersChanged();
-#else
-class WalletController { 
-#endif
-public://private:
+private:
     std::unique_ptr<neroshop::Wallet> _wallet;
 
 public:

@@ -166,6 +166,11 @@ ApplicationWindow {
                     onClicked: {
                         settingsDialog.open()
                     }
+                    MouseArea {
+                        anchors.fill: parent
+                        onPressed: mouse.accepted = false
+                        cursorShape: Qt.PointingHandCursor
+                    }
                     NeroshopComponents.Hint {
                         visible: parent.hovered
                         x: parent.x + (parent.width - this.width) / 2 // Popups don't have anchors :(

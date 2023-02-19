@@ -87,9 +87,9 @@ GridView {
                     }
                     onClicked: { 
                         navBar.uncheckAllButtons() // Uncheck all navigational buttons
-                        console.log("Loading product page ...");
                         pageLoader.setSource("qrc:/qml/pages/ProductPage.qml", { "model": modelData })
                     }
+                    cursorShape: Qt.PointingHandCursor
                 }                    
             }
         }
@@ -128,35 +128,40 @@ GridView {
         }            
                                 
         Button { // heartIconButton must be drawn over the productImage
-                    id: heartIconButton
-                    text: (disabled) ? qsTr("Add to favorites") : qsTr("Remove from favorites")
-                    display: AbstractButton.IconOnly // will only show the icon and not the text
-                    hoverEnabled: true
-                    ////containmentMask: this.icon // When the mouse is pointing at the icon's bounding box instead of the button's then the border will appear
-                    //width: 24; height: 24
-                    anchors.right: parent.right
-                    anchors.rightMargin: 5//10
-                    anchors.top: parent.top
-                    anchors.topMargin: 5//10
-                    property bool disabled: true
-                    icon.source: "qrc:/images/heart.png"
-                    icon.color: NeroshopComponents.Style.disabledColor//"#ffffff"
-                    icon.height: 24; icon.width: 24
-                    background: Rectangle {
-                        color: "transparent"
-                        radius: 3//0
-                        border.color: parent.hovered ? (parent.disabled ? "#808080" : "#e05d5d") : "transparent"
-                    }
-                    onClicked: { 
-                        if(disabled) {
-                            disabled = false
-                            icon.color = "#e05d5d"
-                        }
-                        else {
-                            disabled = true
-                            icon.color = NeroshopComponents.Style.disabledColor
-                        }
-                    }
+            id: heartIconButton
+            text: (disabled) ? qsTr("Add to favorites") : qsTr("Remove from favorites")
+            display: AbstractButton.IconOnly // will only show the icon and not the text
+            hoverEnabled: true
+            ////containmentMask: this.icon // When the mouse is pointing at the icon's bounding box instead of the button's then the border will appear
+            //width: 24; height: 24
+            anchors.right: parent.right
+            anchors.rightMargin: 5//10
+            anchors.top: parent.top
+            anchors.topMargin: 5//10
+            property bool disabled: true
+            icon.source: "qrc:/images/heart.png"
+            icon.color: NeroshopComponents.Style.disabledColor//"#ffffff"
+            icon.height: 24; icon.width: 24
+            background: Rectangle {
+                color: "transparent"
+                radius: 3//0
+                border.color: parent.hovered ? (parent.disabled ? "#808080" : "#e05d5d") : "transparent"
+            }
+            onClicked: { 
+                if(disabled) {
+                    disabled = false
+                    icon.color = "#e05d5d"
+                }
+                else {
+                    disabled = true
+                    icon.color = NeroshopComponents.Style.disabledColor
+                }
+            }
+            MouseArea {
+                anchors.fill: parent
+                onPressed: mouse.accepted = false
+                cursorShape: Qt.PointingHandCursor
+            }
         }
         // Product details
         ColumnLayout {

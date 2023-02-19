@@ -51,21 +51,6 @@ set(lua_srcs lua/src/lapi.c lua/src/lcode.c lua/src/lctype.c lua/src/ldebug.c lu
 add_library(${lua_target} STATIC ${lua_srcs})
 target_include_directories(${lua_target} PUBLIC lua/src/)
 
-set(png_target "png")
-set(png_srcs png/png.c png/pngerror.c png/pngget.c png/pngmem.c png/pngpread.c png/pngread.c png/pngrio.c png/pngrtran.c png/pngrutil.c png/pngset.c #[[png/pngtest.c]] png/pngtrans.c png/pngwio.c png/pngwrite.c png/pngwtran.c png/pngwutil.c)
-if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
-    add_library(${png_target} SHARED ${png_srcs}) # Linux requires libpng to be built dynamically to fix the Gtk:ERROR: ... "Failed to load /usr/share/icons/Yaru/16x16/status/image-missing.png: Fatal error reading PNG image file: Invalid IHDR data (gdk-pixbuf-error-quark, 0)" when opening the QML FileDialog
-else()
-    add_library(${png_target} STATIC ${png_srcs})
-endif()
-target_include_directories(${png_target} PUBLIC png/)
-
-set(zlib_target "zlib") # required by png
-set(zlib_srcs zlib/adler32.c zlib/compress.c zlib/crc32.c zlib/deflate.c zlib/gzclose.c zlib/gzlib.c zlib/gzread.c zlib/gzwrite.c zlib/infback.c zlib/inffast.c zlib/inflate.c zlib/inftrees.c zlib/trees.c zlib/uncompr.c zlib/zutil.c)
-add_library(${zlib_target} STATIC ${zlib_srcs})
-target_include_directories(${zlib_target} PUBLIC zlib/)
-set_target_properties(${zlib_target} PROPERTIES OUTPUT_NAME "z")
-
 #[[
 set(_target "")
 set(_srcs )

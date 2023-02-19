@@ -40,6 +40,7 @@ Page {
                             /*MouseArea { //  This does not work :(
                                 anchors.fill: parent
                                 onClicked: Qt.openUrlExternally("https://revuo-xmr.com/issue-150.html") //...handling the clicked signal of the MouseArea
+                                cursorShape: Qt.PointingHandCursor
                             }*/
                         //}
                     }
@@ -139,6 +140,7 @@ Page {
                                 navBar.uncheckAllButtons()
                                 pageLoader.setSource("qrc:/qml/pages/CatalogPage.qml", { "model": Backend.getListingsByCategory(modelData.id) })
                             }
+                            cursorShape: Qt.PointingHandCursor
                         }
                     }
                 }
@@ -187,6 +189,7 @@ Page {
                                             //navBar.uncheckAllButtons()
                                             pageLoader.setSource("qrc:/qml/pages/ProductPage.qml", { "model": modelData })
                                         }
+                                        cursorShape: Qt.PointingHandCursor
                                     }
                                 }
                             }

@@ -72,6 +72,7 @@ ListView {
                         console.log("Loading product page ...");
                         pageLoader.setSource("qrc:/qml/pages/ProductPage.qml", { "model": modelData })////, { "listingId": modelData.listing_uuid })
                     }
+                    cursorShape: Qt.PointingHandCursor
                 }                    
             }
         } // ProductImageRect

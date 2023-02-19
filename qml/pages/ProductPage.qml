@@ -31,7 +31,7 @@ Page {
                 id: productPageFlow
                 Layout.fillWidth: true//Layout.preferredWidth: parent.parent.width//Layout.fillWidth: true; Layout.fillHeight: true
                 Layout.maximumWidth: parent.parent.width
-                spacing: 0
+                spacing: 30
                 // Column 1
                 Column {
                     id: productImageColumn
@@ -40,38 +40,63 @@ Page {
                     
                     Rectangle {
                         id: productImageRect
-                        width: 549/*parent.parent.width*/; height: 524//Layout.fillWidth: true; Layout.preferredHeight: 550
+                        width: 625/*parent.parent.width*/; height: 524//600
                         color: "transparent"; border.color: "#ffffff"
                         // Product image
                         Image {
                             id: productImage
-                            source: "file:///" + productPage.model.product_image_file
+                            source: "file:///" + productPage.model.product_image_file////"image://catalog?id=%1".arg(productPage.model.product_id)
                             anchors.centerIn: parent
-                            width: 512; height: width
+                            width: productImage.minImageSize; height: width
                             fillMode: Image.PreserveAspectFit
                             mipmap: true
                             asynchronous: true
+                            property real minImageSize: 512//576
                             onStatusChanged: {
                                 if(status == Image.Ready) {
                                     console.log("original size", sourceSize)
-                                    width = (sourceSize.width < 512) ? sourceSize.width : 512
-                                    height = (sourceSize.height < 512) ? sourceSize.height : 512
+                                    width = (sourceSize.width < productImage.minImageSize) ? sourceSize.width : productImage.minImageSize
+                                    height = (sourceSize.height < productImage.minImageSize) ? sourceSize.height : productImage.minImageSize
                                 }
                             }
                         }
                     }
                     // Product gallery (up to 6 images maximum)
-                    Row {
+                    Row {////ListView {
                         id: productImageGallery
-                        Layout.fillWidth: true////Layout.alignment: Qt.AlignHCenter
+                        width: productImageRect.width; height: 100
+                        ////orientation: ListView.Horizontal
+                        spacing: 5
                         Repeater {
                             id: productImageRepeater
-                            model: 6
+                            model: Backend.getProductImages(productPage.model.product_id)//6
                             delegate: Rectangle {
                                 color: "transparent"; border.color: "#ffffff"
-                                width: 100/*product_width*/; height: 100
+                                width: 100/*Math.min((parent.width / productImageRepeater.count) - (productImageGallery.spacing * (productImageRepeater.count - 1)), 100)*/; height: parent.height
+                                Image {
+                                    source: "file:///" + modelData.name////"image://catalog?id=%1&image_id=%2".arg(productPage.model.product_id).arg(modelData.image_id)
+                                    anchors.fill: parent
+                                    fillMode: Image.PreserveAspectFit
+                                    mipmap: true
+                                    asynchronous: true
+                                    MouseArea {
+                                        anchors.fill: parent
+                                        acceptedButtons: Qt.LeftButton
+                                        onClicked: { 
+                                            productImage.source = parent.source
+                                        }
+                                    }
+                                }
+                                MouseArea {
+                                    anchors.fill: parent
+                                    onPressed: mouse.accepted = false
+                                    cursorShape: Qt.PointingHandCursor
+                                    hoverEnabled: true
+                                    onEntered: parent.border.color = "#4169e1"
+                                    onExited: parent.border.color = "#ffffff"
+                                }
                             }
-                        }
+                        } // Repeater
                     }
                 }
                 // Column 2
@@ -166,7 +191,7 @@ Page {
                         id: stockStatusText
                         property bool status: (stock_available > 0)
                         property int stock_available: Backend.getStockAvailable(productPage.model.product_id)
-                        text: qsTr(status ? "In stock." : "Out of stock.")
+                        text: qsTr(status ? "In stock" : "Out of stock")
                         color: status ? "#31652c" : "#d61f1f"
                         font.bold: true
                     }
@@ -241,7 +266,7 @@ Page {
                     }
                     // Controls
                     Column {
-                        //Layout.fillWidth: true
+                        Layout.fillHeight: true
                         spacing: 10
                         // Quantity box
                         SpinBox {
@@ -254,13 +279,19 @@ Page {
                             spacing: 5
                             // Add to cart button
                             Button {
+                                id: cartButton
                                 anchors.horizontalCenter: parent.horizontalCenter//Layout.alignment: Qt.AlignHCenter
                                 width: 500; height: 50//Layout.preferredWidth: 500; Layout.preferredHeight: 50
                                 hoverEnabled: true
                                 text: qsTr("Add to cart")
+                                property string color: "#ff6600"
+                                property string lightColor: "#ff7e29"
+                                property string darkColor: "#d65600"
                                 background: Rectangle {
-                                    color: parent.hovered ? (parent.down ? "#483d8b" : "#6c60b9") : "#53469f"
-                                    radius: 5
+                                    color: parent.hovered ? cartButton.lightColor : cartButton.color
+                                    border.color: cartButton.darkColor
+                                    border.width: 2
+                                    radius: 3
                                 }
                                 contentItem: Text {
                                     text: parent.text
@@ -271,16 +302,27 @@ Page {
                                 onClicked: {
                                     User.addToCart(productPage.model.product_id, quantityBox.value)
                                 }
+                                MouseArea {
+                                    anchors.fill: parent
+                                    onPressed: mouse.accepted = false
+                                    cursorShape: Qt.PointingHandCursor
+                                }
                             }
-                            // Message seller button
+                            // Add to favorites button
                             Button {
+                                id: favoritesButton
                                 anchors.horizontalCenter: parent.horizontalCenter//Layout.alignment: Qt.AlignHCenter
                                 width: 500; height: 50//Layout.preferredWidth: 500; Layout.preferredHeight: 50
                                 hoverEnabled: true
-                                text: qsTr("Chat")
+                                text: qsTr("Add to favorites")
+                                property string color: "#d62929"
+                                property string lightColor: "#dd4b4b"
+                                property string darkColor: "#b42222"
                                 background: Rectangle {
-                                    color: parent.hovered ? (parent.down ? "#483d8b" : "#6c60b9") : "#53469f"
-                                    radius: 5
+                                    color: parent.hovered ? favoritesButton.lightColor : favoritesButton.color////parent.hovered ? (parent.down ? favoritesButton.darkColor : favoritesButton.lightColor) : favoritesButton.color
+                                    border.color: favoritesButton.darkColor//parent.hovered ? favoritesButton.color : favoritesButton.lightColor
+                                    border.width: 2
+                                    radius: 3
                                 }
                                 contentItem: Text {
                                     text: parent.text
@@ -288,7 +330,41 @@ Page {
                                     horizontalAlignment: Text.AlignHCenter
                                     verticalAlignment: Text.AlignVCenter
                                 }
-                                onClicked: {}                        
+                                onClicked: {}
+                                MouseArea {
+                                    anchors.fill: parent
+                                    onPressed: mouse.accepted = false
+                                    cursorShape: Qt.PointingHandCursor
+                                }
+                            }                            
+                            // Message seller button
+                            Button {
+                                id: chatSellerButton
+                                anchors.horizontalCenter: parent.horizontalCenter//Layout.alignment: Qt.AlignHCenter
+                                width: 500; height: 50//Layout.preferredWidth: 500; Layout.preferredHeight: 50
+                                hoverEnabled: true
+                                text: qsTr("Chat")
+                                property string color: "#53469f"
+                                property string lightColor: "#6c60b9"
+                                property string darkColor: "#483d8b"
+                                background: Rectangle {
+                                    color: parent.hovered ? (parent.down ? chatSellerButton.darkColor : chatSellerButton.lightColor) : chatSellerButton.color
+                                    border.color: chatSellerButton.darkColor
+                                    border.width: 2
+                                    radius: 3
+                                }
+                                contentItem: Text {
+                                    text: parent.text
+                                    color: "#ffffff"
+                                    horizontalAlignment: Text.AlignHCenter
+                                    verticalAlignment: Text.AlignVCenter
+                                }
+                                onClicked: {}
+                                MouseArea {
+                                    anchors.fill: parent
+                                    onPressed: mouse.accepted = false
+                                    cursorShape: Qt.PointingHandCursor
+                                }
                             }
                         }
                     }

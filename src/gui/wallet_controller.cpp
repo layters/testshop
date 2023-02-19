@@ -11,9 +11,6 @@ neroshop::WalletController::~WalletController() {
     #endif
 }
 
-#if defined(NEROSHOP_USE_QT)
-////neroshop::WalletController::Wallet(QObject* parent) : QObject(parent) {}
-
 neroshop::Wallet * neroshop::WalletController::getWallet() const {
     return _wallet.get();
 }
@@ -388,4 +385,3 @@ void neroshop::WalletController::on_output_spent (const monero_output_wallet &ou
     emit transfersChanged();
 }
 
-#endif

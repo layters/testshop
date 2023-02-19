@@ -113,7 +113,6 @@ void neroshop::Cart::add(const std::string& user_id, const std::string& product_
     // Example: 100-10=90 (max_quantity-cart_qty=quantity)(you need at least a quantity of 90 to fit everything into the cart)
     int cart_qty = database->get_integer_params("SELECT SUM(quantity) FROM cart_item WHERE cart_id = $1", { cart_id });
     if((cart_qty + quantity) > max_quantity) quantity = max_quantity - cart_qty;////neroshop::print(std::string("\033[0;33m") + std::string("Cart is full (max_quantity (") + std::to_string(max_quantity) + ") has been reached)\033[0m"); }
-    //-------------------------------
     // If item is already in the cart, just update the quantity and exit the function
     if(in_cart(product_id) && quantity > 0) {
         int new_quantity = item_qty + quantity;
