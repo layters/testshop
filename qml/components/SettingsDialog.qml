@@ -22,6 +22,7 @@ Popup {
     // General tab properties
     property alias theme: themeBox
     property alias currency: currencyBox
+    property alias hideHomepageButton: hideHomepageButtonSwitch.checked
     // Wallet settings
     property alias balanceDisplay: balanceDisplayBox.currentIndex//property alias balanceDisplay: balanceDisplayBox.currentText
     property alias balanceAmountPrecision: balancePrecisionBox.currentText
@@ -151,7 +152,12 @@ Popup {
                     verticalAlignment: Text.AlignVCenter                    
                     font.bold: true//(parent.checked) ? true : false
                     //font.family: FontAwesome.fontFamily
-                }                
+                }         
+                MouseArea {
+                    anchors.fill: parent
+                    onPressed: mouse.accepted = false
+                    cursorShape: !parent.checked ? Qt.PointingHandCursor : Qt.ArrowCursor
+                }       
             }
             
             TabButton { 
@@ -175,6 +181,11 @@ Popup {
                     verticalAlignment: Text.AlignVCenter                    
                     font.bold: true
                     //font.family: FontAwesome.fontFamily
+                }
+                MouseArea {
+                    anchors.fill: parent
+                    onPressed: mouse.accepted = false
+                    cursorShape: !parent.checked ? Qt.PointingHandCursor : Qt.ArrowCursor
                 }
             }            
         }
@@ -255,33 +266,33 @@ Popup {
                             //Layout.alignment: Qt.AlignLeft; Layout.leftMargin: 0
                         }
                       
-                    NeroshopComponents.ComboBox {
-                        id: currencyBox
-                        anchors.right: parent.right//Layout.alignment: Qt.AlignRight; Layout.rightMargin: 0
-                        width: settingsStack.comboBoxWidth
-                        currentIndex: model.indexOf(Script.getString("neroshop.generalsettings.currency").toUpperCase())
-                        displayText: currentText
-                        ////property string lastCurrencySet: (Script.getString("neroshop.generalsettings.currency")) ? Script.getString("neroshop.generalsettings.currency") : "USD"
-                        //editable: true; selectTextByMouse: true
-                        model: Backend.getCurrencyList()
-                        //implicitContentWidthPolicy: ComboBox.WidestText//ComboBox.ContentItemImplicitWidth
-                        onAccepted: {
-                            if (find(editText) === -1)
-                                model.append({text: editText})
-                        }
+                        NeroshopComponents.ComboBox {
+                            id: currencyBox
+                            anchors.right: parent.right//Layout.alignment: Qt.AlignRight; Layout.rightMargin: 0
+                            width: settingsStack.comboBoxWidth
+                            currentIndex: model.indexOf(Script.getString("neroshop.generalsettings.currency").toUpperCase())
+                            displayText: currentText
+                            ////property string lastCurrencySet: (Script.getString("neroshop.generalsettings.currency")) ? Script.getString("neroshop.generalsettings.currency") : "USD"
+                            //editable: true; selectTextByMouse: true
+                            model: Backend.getCurrencyList()
+                            //implicitContentWidthPolicy: ComboBox.WidestText//ComboBox.ContentItemImplicitWidth
+                            onAccepted: {
+                                if (find(editText) === -1)
+                                    model.append({text: editText})
+                            }
                         
-                        onActivated: {    
-                            displayText = currentText
-                            priceDisplayText.currency = displayText
-                            ////lastCurrencySet = currentText
+                            onActivated: {    
+                                displayText = currentText
+                                priceDisplayText.currency = displayText
+                                ////lastCurrencySet = currentText
+                            }
+                            indicatorWidth: settingsStack.comboBoxButtonWidth
+                            indicatorDoNotPassBorder: settingsStack.comboBoxNestedButton
+                            color: "#f2f2f2"//(NeroshopComponents.Style.darkTheme) ? "#101010" : "#f0f0f0"
+                            //textColor: (NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000"
                         }
-                        indicatorWidth: settingsStack.comboBoxButtonWidth
-                        indicatorDoNotPassBorder: settingsStack.comboBoxNestedButton
-                        color: "#f2f2f2"//(NeroshopComponents.Style.darkTheme) ? "#101010" : "#f0f0f0"
-                        //textColor: (NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000"
                     }
-                    }
-                    // Price API
+                    // Price API - TODO
                     /*Item {
                         Layout.fillWidth: true
                         Layout.preferredHeight: childrenRect.height
@@ -295,7 +306,7 @@ Popup {
                             id: priceApiBox
                             anchors.right: parent.right
                             width: settingsStack.comboBoxWidth; indicatorWidth: settingsStack.comboBoxButtonWidth
-                            model: ["CoinGecko", "CoinMarketCap"]
+                            //model: ["CoinGecko", "CoinMarketCap"]
                             Component.onCompleted: currentIndex = find("CoinGecko")
                             indicatorDoNotPassBorder: settingsStack.comboBoxNestedButton
                             color: "#f2f2f2"
@@ -327,55 +338,73 @@ Popup {
                 }
                 
                 ColumnLayout {
-                    id: themeColumn
+                    id: appColumn
                     width: parent.width; height: childrenRect.height
                     //spacing: 200 // spacing between Row items
                     Item {
                         Layout.fillWidth: true
                         Layout.preferredHeight: childrenRect.height
-                    Text {
-                        text: qsTr("Theme:")
-                        color: (NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000"
-                        anchors.verticalCenter: themeBox.verticalCenter//Layout.alignment: Qt.AlignLeft; Layout.leftMargin: 0
-                    }
-                    NeroshopComponents.ComboBox {
-                        id: themeBox
-                        anchors.right: parent.right//Layout.alignment: Qt.AlignRight; Layout.rightMargin: 0
-                        width: settingsStack.comboBoxWidth
-                        currentIndex: model.indexOf(NeroshopComponents.Style.themeName)//Component.onCompleted: currentIndex = model.indexOf(NeroshopComponents.Style.themeName) // Set the initial currentIndex to the index in the array containing themeName string
-                        displayText: currentText
-                        property string lastUsedDarkTheme: (Script.getBoolean("neroshop.generalsettings.application.theme.dark")) ? Script.getString("neroshop.generalsettings.application.theme.name") : "DefaultDark"
-                        property string lastUsedLightTheme: (!Script.getBoolean("neroshop.generalsettings.application.theme.dark")) ? Script.getString("neroshop.generalsettings.application.theme.name") : "DefaultLight"
-                        model: ["DefaultDark", "DefaultLight", "PurpleDust"]
-                        onActivated: {
-                            if(currentText == "PurpleDust") {
-                                NeroshopComponents.Style.darkTheme = true
-                                lastUsedDarkTheme = currentText
-                            }
-                            if(currentText == "DefaultDark") {
-                                NeroshopComponents.Style.darkTheme = true
-                                lastUsedDarkTheme = currentText
-                            }
-                            if(currentText == "DefaultLight") {
-                                NeroshopComponents.Style.darkTheme = false
-                                lastUsedLightTheme = currentText
-                            }
-                            displayText = currentText
-                            NeroshopComponents.Style.themeName = displayText // update the actual theme (name)
-                            themeSwitcher.checked = !NeroshopComponents.Style.darkTheme // update the theme switch                           
-                            // NOTE:  on app launch, the theme will ALWAYS be reset back to its default unless you change the theme settings in your configuration file
-                            //todo: change theme in configuration file too
-                            console.log("Theme set to", currentText)
+                        Text {
+                            text: qsTr("Theme:")
+                            color: (NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000"
+                            anchors.verticalCenter: themeBox.verticalCenter//Layout.alignment: Qt.AlignLeft; Layout.leftMargin: 0
                         }
-                        indicatorWidth: settingsStack.comboBoxButtonWidth
-                        indicatorDoNotPassBorder: settingsStack.comboBoxNestedButton
-                        color: "#f2f2f2"
-                    } // ComboBox   
+                        NeroshopComponents.ComboBox {
+                            id: themeBox
+                            anchors.right: parent.right//Layout.alignment: Qt.AlignRight; Layout.rightMargin: 0
+                            width: settingsStack.comboBoxWidth
+                            currentIndex: model.indexOf(NeroshopComponents.Style.themeName)//Component.onCompleted: currentIndex = model.indexOf(NeroshopComponents.Style.themeName) // Set the initial currentIndex to the index in the array containing themeName string
+                            displayText: currentText
+                            property string lastUsedDarkTheme: (Script.getBoolean("neroshop.generalsettings.application.theme.dark")) ? Script.getString("neroshop.generalsettings.application.theme.name") : "DefaultDark"
+                            property string lastUsedLightTheme: (!Script.getBoolean("neroshop.generalsettings.application.theme.dark")) ? Script.getString("neroshop.generalsettings.application.theme.name") : "DefaultLight"
+                            model: ["DefaultDark", "DefaultLight", "PurpleDust"]
+                            onActivated: {
+                                if(currentText == "PurpleDust") {
+                                    NeroshopComponents.Style.darkTheme = true
+                                    lastUsedDarkTheme = currentText
+                                }
+                                if(currentText == "DefaultDark") {
+                                    NeroshopComponents.Style.darkTheme = true
+                                    lastUsedDarkTheme = currentText
+                                }
+                                if(currentText == "DefaultLight") {
+                                    NeroshopComponents.Style.darkTheme = false
+                                    lastUsedLightTheme = currentText
+                                }
+                                displayText = currentText
+                                NeroshopComponents.Style.themeName = displayText // update the actual theme (name)
+                                themeSwitcher.checked = !NeroshopComponents.Style.darkTheme // update the theme switch                           
+                                // NOTE:  on app launch, the theme will ALWAYS be reset back to its default unless you change the theme settings in your configuration file
+                                //todo: change theme in configuration file too
+                                console.log("Theme set to", currentText)
+                            }
+                            indicatorWidth: settingsStack.comboBoxButtonWidth
+                            indicatorDoNotPassBorder: settingsStack.comboBoxNestedButton
+                            color: "#f2f2f2"
+                        } // ComboBox   
                     }    
-                    // Window                
+                    // Hide homepage button
+                    Item {
+                        Layout.fillWidth: true
+                        Layout.preferredHeight: childrenRect.height
+                        Text {
+                            anchors.verticalCenter: hideHomepageButtonSwitch.verticalCenter
+                            text: qsTr("Hide homepage button:")
+                            color: NeroshopComponents.Style.darkTheme ? "#ffffff" : "#000000"
+                        }
+                        
+                        NeroshopComponents.Switch {
+                            id: hideHomepageButtonSwitch
+                            anchors.right: parent.right; anchors.rightMargin: 5
+                            //width: settingsStack.comboBoxWidth
+                            checked: true
+                            radius: 13
+                            backgroundCheckedColor: "#605185"
+                        }
+                    }                                
                 } // RowLayout2
            } // GroupBox2        
-                       GroupBox {
+           GroupBox {
                        //Layout.row: 2
                        Layout.alignment: Qt.AlignHCenter
                        Layout.preferredWidth: settingsStack.contentBoxWidth
@@ -500,7 +529,7 @@ Popup {
                         NeroshopComponents.Switch {
                             id: showCurrencySignSwitch
                             anchors.right: parent.right; anchors.rightMargin: 5
-                            width: settingsStack.comboBoxWidth
+                            //width: settingsStack.comboBoxWidth
                             checked: false
                             radius: 13
                             backgroundCheckedColor: "#605185"
@@ -570,7 +599,7 @@ Popup {
                         NeroshopComponents.Switch {
                             id: hideProductDetailsSwitch
                             anchors.right: parent.right; anchors.rightMargin: 5
-                            width: settingsStack.comboBoxWidth
+                            //width: settingsStack.comboBoxWidth
                             checked: false
                             radius: 13
                             backgroundCheckedColor: "#605185"
@@ -610,7 +639,7 @@ Popup {
                         NeroshopComponents.Switch {
                             id: gridDetailsAlignCenterSwitch
                             anchors.right: parent.right; anchors.rightMargin: 5
-                            width: settingsStack.comboBoxWidth
+                            //width: settingsStack.comboBoxWidth
                             checked: false
                             radius: 13
                             backgroundCheckedColor: "#605185"

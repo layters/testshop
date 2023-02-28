@@ -195,6 +195,7 @@ std::string neroshop::Wallet::upload(bool open, std::string password) { // opens
 void neroshop::Wallet::transfer(const std::string& address, double amount) {
     if(!monero_wallet_obj.get()) throw std::runtime_error("monero_wallet_full is not opened");
     if(!monero_wallet_obj.get()->is_synced()) throw std::runtime_error("wallet is not synced with a daemon");
+    std::packaged_task<void(void)> transfer_task([this, address, amount]() -> void {
     // Convert monero to piconero
     double piconero = 0.000000000001;
     uint64_t monero_to_piconero = amount / piconero; //std::cout << neroshop::string::precision(amount, 12) << " xmr to piconero: " << monero_to_piconero << "\n";
@@ -231,6 +232,12 @@ void neroshop::Wallet::transfer(const std::string& address, double amount) {
     //uint64_t deducted_amount = (monero_to_piconero + fee);
     std::string tx_hash = monero_wallet_obj->relay_tx(*sent_tx); // recipient receives notification within 5 seconds    
     std::cout << "Tx hash: " << tx_hash << "\n";
+    });
+    
+    std::future<void> future_result = transfer_task.get_future();
+    // move the task (function) to a separate thread to prevent blocking of the main thread
+    std::thread worker(std::move(transfer_task));
+    worker.detach(); // join may block but detach won't//void transfer_result = future_result.get();
 }
 ////////////////////
 std::string neroshop::Wallet::sign_message(const std::string& message, monero_message_signature_type signature_type) const {

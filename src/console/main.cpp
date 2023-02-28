@@ -6,8 +6,9 @@ using namespace neroshop;
 // linenoise
 #include <linenoise.h>
 
-int main() {
-    
+int main(int argc, char** argv) {
+    // todo: bind command names to functions    
+    //-------------------------
     if(!neroshop::create_config()) { 
         neroshop::load_config();
     }
@@ -26,7 +27,6 @@ int main() {
         std::cout << "failed to get nodes in the config file\nCheck your config file in ~/.config/neroshop" << std::endl;
     }
     //-------------------------
-    // todo: bind command names to functions
     char * line = NULL;
     while((line = linenoise("neroshop-console> ")) != NULL) {
         // Do something with the string
@@ -93,10 +93,10 @@ int main() {
         
     }*/        
     //-------------------------    
-    //neroshop::Server server;
-    //server.bind("exit", [](void) { ::system("exit"); });    
+    /*neroshop::Server server;
+    server.bind("exit", [](void) { ::system("exit"); });*/
     
-    //client.call("exit" /*args ...*/);
+    //neroshop::Client client;client.call(server, "exit" /*args ...*/);
     //-------------------------    
     return 0;
 }

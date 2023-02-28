@@ -18,7 +18,9 @@
 #include "../debug.hpp"
 
 namespace neroshop {
+
 namespace db {
+
 class Sqlite3 {
 public:
     Sqlite3();
@@ -50,10 +52,8 @@ private:
 	bool opened;
 	static int callback(void *not_used, int argc, char **argv, char **az_col_name);
 };
+
 }
+
 }
-/*
-	// Would it be more appropriate if the server handles the database queries instead of the client?
-	// The client would send the server a request to execute a SQLite query. This sounds good.
-*/
 #endif

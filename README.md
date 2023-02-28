@@ -84,7 +84,7 @@ The name _neroshop_ is a combination of the words _nero_, which is Italian for _
 | [curl](https://github.com/curl/curl)                               | ?                  | currency conversion                                                    | :o:                                      |
 | [openssl](https://github.com/openssl/openssl)                      | 1.1.1              | for curl, sha256 sum and message encryption                            | :heavy_check_mark:                       |
 | [Qt](https://www.qt.io/)                                           | 5.12.8             | graphical user interface                                               | :heavy_check_mark:                       |
-| [libuv](https://github.com/libuv/libuv)                            | ?                  | networking and child process                                           | :heavy_check_mark:                       |
+| [libuv](https://github.com/libuv/libuv)                            | ?                  | networking and child process                                           | :grey_question:                          |
 | [raft](https://github.com/willemt/raft)                            | ?                  | consensus mechanism                                                    | :heavy_check_mark:                       |
 | [stduuid](https://github.com/mariusbancila/stduuid)                | ?                  | unique id generation                                                   | :o:                                      |
 | [linenoise](https://github.com/antirez/linenoise)                  | ?                  | command line interface                                                 | :heavy_check_mark: :white_square_button: |
@@ -216,7 +216,7 @@ See [CONTRIBUTING.md](CONTRIBUTING.md)
 
 
 ## License
-This project is licensed under the [GNU General Public License (GPLv3)](LICENSE)
+This project is licensed under the [GNU General Public License v3.0 (GPLv3)](LICENSE)
 
 
 ## Donations

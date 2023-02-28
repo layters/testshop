@@ -1621,7 +1621,7 @@ QImage ImageLoader::load(const QString &id) const
             std::cout << "failed to load image sorry\n";
         }*/
         // Load product image from file (TEXT) - crashes on certain images
-        neroshop::db::Sqlite3 * database = neroshop::db::Sqlite3::get_database();
+        neroshop::db::Sqlite3 * database = neroshop::get_database();
         if(!database) throw std::runtime_error("database is NULL");
         std::string command = (!query.hasQueryItem(QString("image_id"))) ? 
             "SELECT name FROM images WHERE product_id = $1" : // use default image if key 'image_id' not found in query
@@ -1638,7 +1638,7 @@ QImage ImageLoader::load(const QString &id) const
 }
 
 QPair<unsigned char*, int> ImageLoader::getProductImage(const QString &product_id) const {
-    neroshop::db::Sqlite3 * database = neroshop::db::Sqlite3::get_database();
+    neroshop::db::Sqlite3 * database = neroshop::get_database();
     if(!database) throw std::runtime_error("database is NULL");
     std::string command = "SELECT data FROM images WHERE product_id = $1";
     sqlite3_stmt * statement = nullptr;

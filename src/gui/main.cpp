@@ -14,8 +14,8 @@
 using namespace neroshop;
 
 static const QString WALLET_QR_PROVIDER {"wallet_qr"};
-static const QString AVATAR_IMAGE_PROVIER {"avatar"};
-static const QString CATALOG_IMAGE_PROVIER {"catalog"};
+static const QString AVATAR_IMAGE_PROVIDER {"avatar"};
+static const QString CATALOG_IMAGE_PROVIDER {"catalog"};
 
 bool isIOS = false;
 bool isAndroid = false;
@@ -68,11 +68,11 @@ int main(int argc, char *argv[])
     QQmlApplicationEngine engine;
     //--------------------------
     // start server daemon
-    //Backend::startServerDaemon();
+    /*Backend::startServerDaemon();
     // wait for daemon server to open
-    //Backend::waitForServerDaemon();
+    Backend::waitForServerDaemon();
     // connect to server daemon
-    //Backend::connectToServerDaemon();
+    Backend::connectToServerDaemon();*/
     // Configuration file must be loaded right after Qt Application object has been created so that we can get the correct config location
     // open configuration script
     neroshop::open_configuration_file();
@@ -85,7 +85,8 @@ int main(int argc, char *argv[])
     // start database
     Backend::initializeDatabase();
     // testing
-    //Backend::testfts5();//Backend::testWriteJson();
+    //Backend::testfts5();//
+    Backend::testWriteJson({"New"});
     // import paths
     engine.addImportPath(":/fonts"); // import FontAwesome 1.0
     // platform macros
@@ -123,8 +124,8 @@ int main(int argc, char *argv[])
     qRegisterMetaType<UserController *>();
 
     engine.addImageProvider(WALLET_QR_PROVIDER, new WalletQrProvider(WALLET_QR_PROVIDER));
-    engine.addImageProvider(AVATAR_IMAGE_PROVIER, new ImageProvider(AVATAR_IMAGE_PROVIER));
-    engine.addImageProvider(CATALOG_IMAGE_PROVIER, new ImageProvider(CATALOG_IMAGE_PROVIER));    
+    engine.addImageProvider(AVATAR_IMAGE_PROVIDER, new ImageProvider(AVATAR_IMAGE_PROVIDER));
+    engine.addImageProvider(CATALOG_IMAGE_PROVIDER, new ImageProvider(CATALOG_IMAGE_PROVIDER));    
     //--------------------------
     // Load main.qml from the "qml/" directory
     engine.load(QUrl(QStringLiteral("qrc:/qml/main.qml")));

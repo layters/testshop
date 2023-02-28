@@ -235,32 +235,40 @@ double neroshop::WalletController::getBalanceUnlocked(unsigned int account_index
 
 
 QVariantList neroshop::WalletController::getTransfers() const {
+    if (!_wallet.get()) throw std::runtime_error("neroshop::Wallet is not initialized");
+    if (!_wallet->get_monero_wallet()) throw std::runtime_error("monero_wallet_full is not opened");
     // TODO: make this function async or put in a separate thread
-    if (!_wallet.get())
-        throw std::runtime_error("neroshop::Wallet is not initialized");
-    if (!_wallet->get_monero_wallet())
-        throw std::runtime_error("monero_wallet_full is not opened");
-    double piconero = 0.000000000001;
-    monero_transfer_query transfer_query; // optional
-    auto transfers = _wallet->get_monero_wallet()->get_transfers(transfer_query);
+    std::packaged_task<QVariantList(void)> get_transfers_task([this]() -> QVariantList {
+        double piconero = 0.000000000001;
+        monero_transfer_query transfer_query; // optional
+        auto transfers = _wallet->get_monero_wallet()->get_transfers(transfer_query);
 
-    QVariantList transfers_list;
+        QVariantList transfers_list;
 
-    for (auto transfer : transfers) { /*for(int i = 0; i < transfers.size(); i++) {
-        monero_transfer * transfer = transfers[i].get();*/
+        for (auto transfer : transfers) { /*for(int i = 0; i < transfers.size(); i++) {
+            monero_transfer * transfer = transfers[i].get();*/
 
-        QVariantMap transfer_object;
-        transfer_object.insert("amount", (transfer->m_amount.get() * piconero));
-        transfer_object.insert("account_index", transfer->m_account_index.get()); // obviously account index 0
-        transfer_object.insert("is_incoming", transfer->is_incoming().get());
-        transfer_object.insert("is_outgoing", transfer->is_outgoing().get());
-        monero_tx_wallet * tx_wallet = transfer->m_tx.get();
-        ////transfer_object.insert("", tx_wallet->);
-        //std::cout << ": " << tx_wallet-> << "\n";
+            QVariantMap transfer_object;
+            transfer_object.insert("amount", (transfer->m_amount.get() * piconero));
+            transfer_object.insert("account_index", transfer->m_account_index.get()); // obviously account index 0
+            transfer_object.insert("is_incoming", transfer->is_incoming().get());
+            transfer_object.insert("is_outgoing", transfer->is_outgoing().get());
+            monero_tx_wallet * tx_wallet = transfer->m_tx.get();
+            ////transfer_object.insert("", tx_wallet->);
+            //std::cout << ": " << tx_wallet-> << "\n";
         
-        transfers_list.append(transfer_object);
-    }
-    return transfers_list;
+            transfers_list.append(transfer_object);
+        }
+        return transfers_list;
+    });
+    
+    std::future<QVariantList> future_result = get_transfers_task.get_future();
+    // move the task (function) to a separate thread to prevent blocking of the main thread
+    std::thread worker(std::move(get_transfers_task));
+    worker.detach(); // join may block but detach won't
+    QVariantList transfers_result = future_result.get();
+    
+    return transfers_result;
 }
 
 

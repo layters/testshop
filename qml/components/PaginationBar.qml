@@ -18,6 +18,7 @@ Row {//RowLayout {
     property real buttonRadius: 5
     property real radius: buttonRadius
     property bool showDirectionalIcons: false
+    width: childrenRect.width; height: childrenRect.height
     
     Button {
         id: backButton
@@ -34,6 +35,11 @@ Row {//RowLayout {
             color: "#ffffff"
             horizontalAlignment: Text.AlignHCenter
             verticalAlignment: Text.AlignVCenter
+        }
+        MouseArea {
+            anchors.fill: parent
+            onPressed: mouse.accepted = false
+            cursorShape: !backButton.disabled ? Qt.PointingHandCursor : Qt.ArrowCursor
         }
     }
 
@@ -71,6 +77,11 @@ Row {//RowLayout {
             verticalAlignment: Text.AlignVCenter
             //font.family: "Font Awesome 6 Free"//FontAwesome.fontFamily//FontAwesome.fontFamilySolid
             //font.weight: Font.Bold
-        }        
+        }    
+        MouseArea {
+            anchors.fill: parent
+            onPressed: mouse.accepted = false
+            cursorShape: !forwardButton.disabled ? Qt.PointingHandCursor : Qt.ArrowCursor
+        }    
     }
 }

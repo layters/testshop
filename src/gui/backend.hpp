@@ -47,7 +47,8 @@ public:
     Q_INVOKABLE int getCategoryIdByName(const QString& category_name) const;
     Q_INVOKABLE int getCategoryProductCount(int category_id) const; // returns number of products that fall under a specific category
     
-    Q_INVOKABLE QVariantList getMoneroNodeList() const;
+    Q_INVOKABLE QVariantList getNodeList(const QString& coin) const;
+    Q_INVOKABLE QVariantList getNodeListDefault(const QString& coin) const;
     Q_INVOKABLE bool isWalletDaemonRunning() const;
 
     QVariantList validateDisplayName(const QString& display_name) const; // Validates display name based on regex requirements
@@ -86,7 +87,7 @@ public:
     
     Q_INVOKABLE int getStockAvailable(const QString& product_id);
     //Q_INVOKABLE void ();
-    static void testWriteJson();
+    static void testWriteJson(const std::vector<std::string>& args);
     static void testfts5();
     // Test function
     static void startServerDaemon();

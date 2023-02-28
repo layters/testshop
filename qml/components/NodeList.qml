@@ -2,7 +2,8 @@ import QtQuick 2.12
 import QtQuick.Controls 2.12
 import QtQuick.Layouts 1.12
 
-//import FontAwesome 1.0
+import FontAwesome 1.0
+
 import "." as NeroshopComponents
 
 Item {
@@ -60,20 +61,9 @@ Item {
             Layout.fillHeight: true
             ScrollBar.vertical: ScrollBar { }
             model: {
-                // Get monero nodes from settings.lua
-                /*let network_type = Wallet.getNetworkTypeString()
-                return Script.getTableStrings("neroshop.monero.nodes." + network_type)*/
-                // Get monero nodes from https://monero.fail/health.json
-                ////return Backend.getMoneroNodeList()
-                // Get only stagenet nodes (for now)
-                let stagenet_nodes = []
-                const monero_node_list = Backend.getMoneroNodeList()
-                for(let i = 0; i < monero_node_list.length; i++) {
-                    if(monero_node_list[i].address.includes("38081") || monero_node_list[i].address.includes("38089")) {
-                        stagenet_nodes.push(monero_node_list[i])
-                    }
-                }
-                return stagenet_nodes;
+                // Get all monero nodes from https://monero.fail/health.json
+                const monero_node_list = Backend.getNodeList("monero")
+                return monero_node_list
             }
             delegate: Item {
                 width: listView.width
@@ -100,16 +90,18 @@ Item {
 
                     Label {
                         id: nodeStatusLabel
-                        text: status ? "✅" : "❌"
-                        color: status ? "#698b22" : "#dd4b4b"
+                        text: (typeof modelData === "string") ? qsTr("\uf1ce") : (status ? qsTr("\uf14a") : qsTr("\uf00d"))//"✅" : "❌"
+                        color: (typeof modelData === "string") ? "royalblue" : (status ? "#698b22" : "#dd4b4b")
+                        font.bold: true
+                        font.family: FontAwesome.fontFamily
                         Layout.maximumWidth: 25
-                        property bool status: modelData.available
+                        property bool status: (typeof modelData === "string") ? false : modelData.available
                     }
 
                     Label {
                         id: nodeAddressLabel
                         Layout.fillWidth: true
-                        text: modelData.address//"node.neroshop.org:38081"//:18081"
+                        text: (typeof modelData === "string") ? modelData : modelData.address//"node.neroshop.org:38081"//:18081"
                         color: delegateRow.parent.ListView.isCurrentItem ? "#471d00" : ((NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000")
                         font.bold: delegateRow.parent.ListView.isCurrentItem ? true : false
                         elide: Label.ElideRight
@@ -119,7 +111,7 @@ Item {
                         id: nodeHeightLabel
                         Layout.minimumWidth: heightTitle.width//50
                         Layout.maximumWidth: heightTitle.width//50
-                        text: modelData.last_height
+                        text: (typeof modelData === "string") ? "- -" : modelData.last_height
                         color: nodeAddressLabel.color
                         font.bold: nodeAddressLabel.font.bold
                         elide: Label.ElideRight

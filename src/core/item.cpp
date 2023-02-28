@@ -32,7 +32,7 @@ neroshop::Item::~Item() {
 }
 ////////////////////
 void neroshop::Item::register_item(const std::string& name, const std::string& description, double price, double weight, double length, double width, double height, const std::string& condition, const std::string& product_code) {
-    db::Sqlite3 * database = db::Sqlite3::get_database();
+    db::Sqlite3 * database = neroshop::get_database();
     // if item is already registered, then exit function
     if(!database->table_exists("products")) {
         neroshop::print("register_item: table \"products\" is missing", 1);

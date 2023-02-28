@@ -18,7 +18,7 @@ neroshop::Cart::~Cart() {
 // normal
 ////////////////////
 void neroshop::Cart::load(const std::string& user_id) {
-    neroshop::db::Sqlite3 * database = neroshop::db::Sqlite3::get_database();
+    neroshop::db::Sqlite3 * database = neroshop::get_database();
     if(!database) throw std::runtime_error("database is NULL");
     // Set the cart's id
     this->id = database->get_text_params("SELECT uuid FROM cart WHERE user_id = $1", { user_id });
@@ -81,7 +81,7 @@ void neroshop::Cart::load(const std::string& user_id) {
 }
 ////////////////////
 void neroshop::Cart::add(const std::string& user_id, const std::string& product_id, int quantity) {
-    neroshop::db::Sqlite3 * database = neroshop::db::Sqlite3::get_database();
+    neroshop::db::Sqlite3 * database = neroshop::get_database();
     if(!database) throw std::runtime_error("database is NULL");
     if(quantity < 1) return;
     std::string item_name = database->get_text_params("SELECT name FROM products WHERE uuid = $1", { product_id }); // temporary
@@ -134,7 +134,7 @@ void neroshop::Cart::add(const std::string& user_id, const neroshop::Item& item,
 }
 ////////////////////
 void neroshop::Cart::remove(const std::string& user_id, const std::string& product_id, int quantity) {
-    neroshop::db::Sqlite3 * database = neroshop::db::Sqlite3::get_database();
+    neroshop::db::Sqlite3 * database = neroshop::get_database();
     if(!database) throw std::runtime_error("database is NULL");
     
 }
@@ -144,7 +144,7 @@ void neroshop::Cart::remove(const std::string& user_id, const neroshop::Item& it
 }
 ////////////////////
 void neroshop::Cart::empty(const std::string& user_id) {
-    neroshop::db::Sqlite3 * database = neroshop::db::Sqlite3::get_database();
+    neroshop::db::Sqlite3 * database = neroshop::get_database();
     if(!database) throw std::runtime_error("database is NULL");
     std::string cart_id = database->get_text_params("SELECT uuid FROM cart WHERE user_id = $1", { user_id });
     database->execute_params("DELETE FROM cart_item WHERE cart_id = $1;", { cart_id });

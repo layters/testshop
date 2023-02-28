@@ -39,6 +39,9 @@ enum class Currency {
     RUB,
     PHP,
     INR,
+    // Metals
+    XAG,
+    XAU,
     // Crypto
     XMR,
     BTC,
@@ -203,6 +206,8 @@ static std::map<std::string, std::tuple<neroshop::Currency, std::string, int>> C
     //{ "VUV", { neroshop::Currency::, "Vanuatu Vatu" } },
     //{ "WST", { neroshop::Currency::, "Samoa Tala" } },
     //{ "XAF", { neroshop::Currency::, "Communauté Financière Africaine (BEAC) CFA Franc BEAC" } },
+    { "XAG", { neroshop::Currency::XAG, "Silver", 2 } },
+    { "XAU", { neroshop::Currency::XAU, "Gold", 2 } },
     //{ "XCD", { neroshop::Currency::, "East Caribbean Dollar" } },
     //{ "XDR", { neroshop::Currency::, "International Monetary Fund (IMF) Special Drawing Rights" } },
     //{ "XOF", { neroshop::Currency::, "Communauté Financière Africaine (BCEAO) Franc" } },

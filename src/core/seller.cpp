@@ -26,7 +26,7 @@ neroshop::Seller::~Seller() {
 ////////////////////
 void neroshop::Seller::list_item(const std::string& product_id, unsigned int quantity, double price, const std::string& currency, const std::string& condition, const std::string& location)
 {
-    neroshop::db::Sqlite3 * database = neroshop::db::Sqlite3::get_database();
+    neroshop::db::Sqlite3 * database = neroshop::get_database();
     if(!database) throw std::runtime_error("database is NULL");
 
 	std::string listing_uuid = database->get_text_params("INSERT INTO listings (uuid, product_id, seller_id, quantity, price, currency, condition, location, date) " // date should always be last
@@ -342,7 +342,7 @@ unsigned int neroshop::Seller::get_total_ratings() const {
 }
 ////////////////////
 unsigned int neroshop::Seller::get_reputation() const {
-    neroshop::db::Sqlite3 * database = neroshop::db::Sqlite3::get_database();
+    neroshop::db::Sqlite3 * database = neroshop::get_database();
     if(!database) throw std::runtime_error("database is NULL");
     // Get seller reputation as percentage
     unsigned int ratings_count = database->get_integer_params("SELECT COUNT(*) FROM seller_ratings WHERE seller_id = $1", { get_id() });
@@ -467,7 +467,7 @@ std::vector<int> neroshop::Seller::get_pending_customer_orders() {
 // getters - sales and statistics-related stuff
 ////////////////////
 unsigned int neroshop::Seller::get_products_count() const {
-    neroshop::db::Sqlite3 * database = neroshop::db::Sqlite3::get_database();
+    neroshop::db::Sqlite3 * database = neroshop::get_database();
     if(!database) throw std::runtime_error("database is NULL");
     
     int products_listed = database->get_integer_params("SELECT COUNT(product_id) FROM listings WHERE seller_id = $1;", { get_id() });
@@ -591,7 +591,7 @@ bool neroshop::Seller::has_wallet_synced() const {
 // callbacks
 ////////////////////
 neroshop::User * neroshop::Seller::on_login(const neroshop::Wallet& wallet) { // assumes user data already exists in database
-    /*neroshop::db::Sqlite3 * database = neroshop::db::Sqlite3::get_database();
+    /*neroshop::db::Sqlite3 * database = neroshop::get_database();
     if(!database) throw std::runtime_error("database is NULL");*/
     //std::string user_id = database->get_text_params("SELECT monero_address FROM users WHERE name = $1", { username });
     std::string monero_address = wallet.get_monero_wallet()->get_primary_address();

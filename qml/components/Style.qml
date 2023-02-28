@@ -37,7 +37,7 @@ QtObject {
                 tertiaryColor = "#393947"//"#4f4f63"//<= tint
             }
             else { //"DefaultDark"
-                primaryColor = "#1a1a1a"//"#202020"////"#141414"
+                primaryColor = "#131415"//"#1a1a1a"//"#202020"////"#141414"
                 secondaryColor = "#202020"//"#2e2e2e"////"#1a1a1a"
                 tertiaryColor = "#595959"
             }

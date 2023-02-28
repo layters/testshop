@@ -153,6 +153,7 @@ Page {
                 Layout.preferredWidth: childrenRect.width
                 Layout.preferredHeight: childrenRect.height
                 Layout.maximumWidth: scrollView.width
+                visible: itemsRepeater.count > 0
                 
                 Column {
                     spacing: 10

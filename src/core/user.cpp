@@ -22,7 +22,7 @@ neroshop::User::~User()
 ////////////////////
 // buyers can only rate seller they have purchased from!!
 void neroshop::User::rate_seller(const std::string& seller_id, int score, const std::string& comments, const std::string& signature) { // perfected 99.9%!!
-    neroshop::db::Sqlite3 * database = neroshop::db::Sqlite3::get_database();
+    neroshop::db::Sqlite3 * database = neroshop::get_database();
     if(!database) throw std::runtime_error("database is NULL");    
     // seller_id cannot be 0 (0 = invalid id)
     if(seller_id.empty()) return;
@@ -73,7 +73,7 @@ void neroshop::User::rate_seller(const std::string& seller_id, int score, const 
 ////////////////////
 ////////////////////
 void neroshop::User::rate_item(const std::string& product_id, int stars, const std::string& comments, const std::string& signature) { // perfected 99%!!!
-    neroshop::db::Sqlite3 * database = neroshop::db::Sqlite3::get_database();
+    neroshop::db::Sqlite3 * database = neroshop::get_database();
     if(!database) throw std::runtime_error("database is NULL");
     // If item is not registered
     if(product_id.empty()) return; // exit function
@@ -169,7 +169,7 @@ void neroshop::User::convert() {
 ////////////////////
 void neroshop::User::delete_account() {
     if(!is_logged()) {neroshop::print("You are not logged in", 2);return;} // must be logged in to delete your account
-    neroshop::db::Sqlite3 * database = neroshop::db::Sqlite3::get_database();
+    neroshop::db::Sqlite3 * database = neroshop::get_database();
     if(!database) throw std::runtime_error("database is NULL");
     ////database->execute("BEGIN;"); // not necessary unless doing multiple operations
     ////database->execute("SAVEPOINT before_account_deletion_savepoint;");//ROLLBACK TO before_account_deletion_savepoint;
@@ -366,7 +366,7 @@ void neroshop::User::load_favorites() {
 // avatar-related stuff here
 ////////////////////
 void neroshop::User::upload_avatar(const std::string& filename) {
-    neroshop::db::Sqlite3 * database = neroshop::db::Sqlite3::get_database();
+    neroshop::db::Sqlite3 * database = neroshop::get_database();
     if(!database) throw std::runtime_error("database is NULL");
     //----------------------------
     //unsigned int user_id = 1;
@@ -450,7 +450,7 @@ void neroshop::User::upload_avatar(const std::string& filename) {
 }
 ////////////////////
 bool neroshop::User::export_avatar() {
-    neroshop::db::Sqlite3 * database = neroshop::db::Sqlite3::get_database();
+    neroshop::db::Sqlite3 * database = neroshop::get_database();
     if(!database) throw std::runtime_error("database is NULL");
     //----------------------------
     // Check if avatar column exists first and that its not null
@@ -811,7 +811,7 @@ bool neroshop::User::has_email() const {
 }
 ////////////////////
 bool neroshop::User::has_avatar() const {
-    neroshop::db::Sqlite3 * database = neroshop::db::Sqlite3::get_database();
+    neroshop::db::Sqlite3 * database = neroshop::get_database();
     if(!database) throw std::runtime_error("database is NULL");
     // If id is zero (this means the user does not exist)
     if(this->id.empty()) return false;  
