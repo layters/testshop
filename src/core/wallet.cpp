@@ -194,6 +194,8 @@ std::string neroshop::Wallet::upload(bool open, std::string password) { // opens
 ////////////////////
 void neroshop::Wallet::transfer(const std::string& address, double amount) {
     if(!monero_wallet_obj.get()) throw std::runtime_error("monero_wallet_full is not opened");
+    if(!monero_wallet_obj.get()->is_synced()) throw std::runtime_error("wallet is not synced with a daemon");
+    std::packaged_task<void(void)> transfer_task([this, address, amount]() -> void {
     // Convert monero to piconero
     double piconero = 0.000000000001;
     uint64_t monero_to_piconero = amount / piconero; //std::cout << neroshop::string::precision(amount, 12) << " xmr to piconero: " << monero_to_piconero << "\n";
@@ -205,19 +207,37 @@ void neroshop::Wallet::transfer(const std::string& address, double amount) {
     if(monero_wallet_obj->get_unlocked_balance() < monero_to_piconero) {
         neroshop::print("Wallet balance is insufficient", 1); return;
     }
-    //Configures a transaction to send, sweep, or create a payment URI.
-    // send funds from this wallet to the specified address
-    monero_tx_config config;
+    // Check if address is valid
+    if(!monero_utils::is_valid_address(address, monero_wallet_obj->get_network_type())) {
+        neroshop::print("Monero address is invalid", 1); return;
+    }
+    // Send funds from this wallet to the specified address
+    monero_tx_config config; // Configures a transaction to send, sweep, or create a payment URI.
     config.m_account_index = 0; // withdraw funds from account at index 0
     config.m_address = address; // address that will be receiving the funds
     config.m_amount = monero_to_piconero;
     config.m_relay = true;
+    // Sweep unlocked balance?
+    if(monero_wallet_obj->get_unlocked_balance() == monero_to_piconero) {
+        neroshop::print("Sweeping unlocked balance ...");
+        config.m_amount = boost::none;
+        monero_wallet_obj->sweep_unlocked(config);return;
+    }    
+    // Create the transaction
     std::shared_ptr<monero_tx_wallet> sent_tx = monero_wallet_obj->create_tx(config);
     bool in_pool = sent_tx->m_in_tx_pool.get();  // true
-        
-    //uint64_t fee = sent_tx->m_fee.get(); // "Are you sure you want to send ...?"
-    //monero_wallet_obj->relay_tx(*sent_tx); // recipient receives notification within 5 seconds    
-    // prove that you've sent the payment using "get_tx_proof"
+    // Get tx fee and hash    
+    uint64_t fee = sent_tx->m_fee.get(); // "Are you sure you want to send ...?"
+    std::cout << "Estimated fee: " << (fee * piconero) << "\n";
+    //uint64_t deducted_amount = (monero_to_piconero + fee);
+    std::string tx_hash = monero_wallet_obj->relay_tx(*sent_tx); // recipient receives notification within 5 seconds    
+    std::cout << "Tx hash: " << tx_hash << "\n";
+    });
+    
+    std::future<void> future_result = transfer_task.get_future();
+    // move the task (function) to a separate thread to prevent blocking of the main thread
+    std::thread worker(std::move(transfer_task));
+    worker.detach(); // join may block but detach won't//void transfer_result = future_result.get();
 }
 ////////////////////
 std::string neroshop::Wallet::sign_message(const std::string& message, monero_message_signature_type signature_type) const {
@@ -513,21 +533,21 @@ bool neroshop::Wallet::daemon_connect_local(const std::string& username, const s
     return synced;
 }
 ////////////////////
-void neroshop::Wallet::daemon_connect_remote(const std::string& ip, const std::string& port, const std::string& username, const std::string& password) {
+void neroshop::Wallet::daemon_connect_remote(const std::string& ip, const std::string& port, const std::string& username, const std::string& password, const monero_wallet_listener* listener) {
     if(!monero_wallet_obj.get()) throw std::runtime_error("monero_wallet_full is not opened");
     monero_wallet_obj->set_daemon_connection(monero_rpc_connection(std::string("http://" + ip + ":" + port)));//, username, password));
     if(monero_wallet_obj.get()->is_connected_to_daemon()) {
         std::cout << "\033[1;90;49m" << "connected to daemon" << "\033[0m" << std::endl;
-            std::packaged_task<void(void)> sync_job([this]() {
+            std::packaged_task<void(void)> sync_job([this, listener]() {
                 std::cout << "\033[1;90;49m" << "sync in progress ..." << "\033[0m" << std::endl;
-                monero_wallet_obj->sync(monero_wallet_obj->get_sync_height(), *this); // a start_height of 0 is ignored // get_sync_height() is the height of the first block that the wallet scans// get_daemon_height() is the height that the wallet's daemon is currently synced to (will sync instantly but will not guarantee unique subaddress generation)
+                monero_wallet_obj->sync(monero_wallet_obj->get_sync_height(), (listener != nullptr) ? *const_cast<monero_wallet_listener*>(listener) : *this);//*this); // a start_height of 0 is ignored // get_sync_height() is the height of the first block that the wallet scans// get_daemon_height() is the height that the wallet's daemon is currently synced to (will sync instantly but will not guarantee unique subaddress generation)
                 // begin syncing the wallet constantly in the background (every 5 seconds) in order to receive tx notifications
                 monero_wallet_obj->start_syncing(5000);
                 // check if wallet's daemon is synced with the network
                 if(monero_wallet_obj.get()->is_daemon_synced()) {////if(monero_wallet_obj->get_daemon_height() == monero_wallet_obj->get_daemon_max_peer_height()) {
                     std::cout << "\033[1;90;49m" << "daemon is now fully synced with the network" << "\033[0m" << std::endl;
                     // add new wallet_listener when done syncing
-                    monero_wallet_obj->add_listener(*this);
+                    monero_wallet_obj->add_listener((listener != nullptr) ? *const_cast<monero_wallet_listener*>(listener) : *this);//(*this);
                 }   
             });
             std::future<void> job_value = sync_job.get_future();

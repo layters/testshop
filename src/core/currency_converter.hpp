@@ -39,6 +39,9 @@ enum class Currency {
     RUB,
     PHP,
     INR,
+    // Metals
+    XAG,
+    XAU,
     // Crypto
     XMR,
     BTC,
@@ -203,6 +206,8 @@ static std::map<std::string, std::tuple<neroshop::Currency, std::string, int>> C
     //{ "VUV", { neroshop::Currency::, "Vanuatu Vatu" } },
     //{ "WST", { neroshop::Currency::, "Samoa Tala" } },
     //{ "XAF", { neroshop::Currency::, "Communauté Financière Africaine (BEAC) CFA Franc BEAC" } },
+    { "XAG", { neroshop::Currency::XAG, "Silver", 2 } },
+    { "XAU", { neroshop::Currency::XAU, "Gold", 2 } },
     //{ "XCD", { neroshop::Currency::, "East Caribbean Dollar" } },
     //{ "XDR", { neroshop::Currency::, "International Monetary Fund (IMF) Special Drawing Rights" } },
     //{ "XOF", { neroshop::Currency::, "Communauté Financière Africaine (BCEAO) Franc" } },
@@ -225,10 +230,6 @@ public:
     double to_kg(double amount, const std::string& unit_name) const;
     static double lb_to_kg(double lb); //static double pound_to_kilogram(double pound); // The correct way of abbreviation in expressing singular or plural pounds is “lb.” though “lbs.”, which stands for libra, is the common abbreviation used in expressing pounds
     // getters
-#if defined(NEROSHOP_USE_QT)    
-    static double get_price(Currency from, Currency to);//, PriceSourceFactory::Source source = PriceSourceFactory::Source::CoinGecko); // get price from a single source
-    static double get_price_average(Currency from, Currency to); // calculate average price from multiple sources
-#endif    
     static double convert_xmr(double quantity, std::string currency, bool to);
     static std::string get_currency_sign(const std::string& currency_code);
     // boolean

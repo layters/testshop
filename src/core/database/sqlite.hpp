@@ -7,6 +7,7 @@
 #define SQLITE3_TAG_ERR "\033[1;36m[sqlite3]:\033[0;91m "
 
 #include <sqlite3.h>
+#include <nlohmann/json.hpp>
 
 #include <iostream>
 #include <cstdarg>
@@ -18,7 +19,9 @@
 #include "../debug.hpp"
 
 namespace neroshop {
+
 namespace db {
+
 class Sqlite3 {
 public:
     Sqlite3();
@@ -26,8 +29,8 @@ public:
 	~Sqlite3();
 	bool open(const std::string& filename);
 	void close();
-	void execute(const std::string& command);
-	void execute_params(const std::string& command, const std::vector<std::string>& args);
+	int execute(const std::string& command);
+	int execute_params(const std::string& command, const std::vector<std::string>& args);
 	// getters
 	static std::string get_sqlite_version();
     sqlite3 * get_handle() const;
@@ -45,15 +48,17 @@ public:
     bool is_open() const;
     bool table_exists(const std::string& table_name);
     //bool rowid_exists(const std::string& table_name, int rowid);
+    std::pair<int, std::string> get_error() const; // returns the error result of the last query
+    static std::string get_select(); // returns the result of the last select statement 
 private:
 	sqlite3 * handle;
 	bool opened;
 	static int callback(void *not_used, int argc, char **argv, char **az_col_name);
+	std::vector<std::pair<int, std::string>> logger; // arg 1 = error code, arg 2 = error message 
+    static nlohmann::json json_object;
 };
+
 }
+
 }
-/*
-	// Would it be more appropriate if the server handles the database queries instead of the client?
-	// The client would send the server a request to execute a SQLite query. This sounds good.
-*/
 #endif

@@ -14,7 +14,7 @@ neroshop::Order::~Order() {
 }
 ////////////////////
 void neroshop::Order::create_order(const neroshop::Cart& cart, const std::string& shipping_address, std::string contact_info) {
-    if(cart.get_id() < 1) { // invalid id or zero
+    if(cart.get_id().empty()) { // invalid id or zero
         neroshop::print("creating a guest user order ...", 3);
         create_guest_order(cart, shipping_address, contact_info);
         return; // exit function
@@ -28,7 +28,7 @@ void neroshop::Order::create_guest_order(const neroshop::Cart& cart, const std::
     // check if order is not already in the database
     if(this->id > 0) { neroshop::print("This order (id: " + std::to_string(this->id) + ") already exists"); return; }
     // check if cart is empty
-    if(cart.is_empty()) {neroshop::print("You cannot place an order: (Cart is empty)", 1);return;}// if cart is empty, exit function
+    ////if(cart.is_empty()) {neroshop::print("You cannot place an order: (Cart is empty)", 1);return;}// if cart is empty, exit function
     // this is a guest cart so the user id will be zero by default
     unsigned int user_id = 0;
     // seller_id cannot buy from him or her self

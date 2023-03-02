@@ -40,6 +40,7 @@ Page {
                             /*MouseArea { //  This does not work :(
                                 anchors.fill: parent
                                 onClicked: Qt.openUrlExternally("https://revuo-xmr.com/issue-150.html") //...handling the clicked signal of the MouseArea
+                                cursorShape: Qt.PointingHandCursor
                             }*/
                         //}
                     }
@@ -86,10 +87,8 @@ Page {
                         implicitHeight: 90//implicitWidth / 2
                         color: NeroshopComponents.Style.getColorsFromTheme()[1]
                         radius: 5//3
-                        border.color: categoryHoverHandler.hovered ? "white" : "transparent"
-                        HoverHandler {
-                            id: categoryHoverHandler
-                        }                        
+                        border.color: hovered ? "white" : "transparent"
+                        property bool hovered: false
                         // TODO: replace catalog tooltip with normal text
                         NeroshopComponents.Hint {/*TextArea {
                             id: categoryNameText
@@ -101,7 +100,7 @@ Page {
                             verticalAlignment: TextEdit.AlignVCenter
                             anchors.top: parent.top
                             anchors.topMargin: 10*/
-                            visible: categoryHoverHandler.hovered // <- uncomment this to make the tooltip visible on hover
+                            visible: parent.hovered
                             height: contentHeight + 20; width: contentWidth + 20
                             text: qsTr(modelData.name)
                             pointer.visible: false; delay: 0
@@ -125,44 +124,116 @@ Page {
                             radius: 5
                             border.color: "#ffffff"
                             Text {
-                                text: modelData.id//index//index.toString() + ", " + modelData//"10" // Number of products that fall under this particular category
+                                text: Backend.getCategoryProductCount(modelData.id) // Number of products that fall under this particular category
                                 color: "#ffffff"
                                 anchors.horizontalCenter: parent.horizontalCenter
                                 anchors.verticalCenter: parent.verticalCenter
                             }
                         }
-                    }
-                }
-            }            
-            /*Text {
-                Layout.row: 2
-                Layout.topMargin: 10
-                text: "Recently added"//"Recent listings"//"Featured items"//"Best sellers"//"On Sale"//"Recommended items"//"Shop by Category"
-                color: (NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000"
-                font.bold: true
-                font.pointSize: 16
-            }
-            Flow {
-                Layout.row: 3
-                Layout.preferredWidth: parent.width////scrollView.width
-                Layout.maximumWidth: scrollView.width////mainWindow.width
-                Layout.topMargin: 10
-                spacing: 5
-                //Layout.alignment: Qt.AlignHCenter | Qt.AlignTop // does nothing
-                Repeater {
-                    id: itemsRepeater
-                    model: 16//6
-                    delegate: Rectangle {
-                        implicitWidth: 200
-                        implicitHeight: implicitWidth
-                        color: NeroshopComponents.Style.getColorsFromTheme()[1]
-                        radius: 3
-                        Image {
-                            source: "qrc:/images/image_gallery.png"
-                            anchors.centerIn: parent
+                        MouseArea { 
+                            anchors.fill: parent
+                            hoverEnabled: true
+                            onEntered: parent.hovered = true
+                            onExited: parent.hovered = false
+                            onClicked: {
+                                if(Backend.getCategoryProductCount(modelData.id) <= 0) return;
+                                navBar.uncheckAllButtons()
+                                pageLoader.setSource("qrc:/qml/pages/CatalogPage.qml", { "model": Backend.getListingsByCategory(modelData.id) })
+                            }
+                            cursorShape: Qt.PointingHandCursor
                         }
                     }
                 }
+            }            
+            // Recent listings
+            Item { 
+                Layout.row: 4
+                Layout.alignment: Qt.AlignTop
+                Layout.topMargin: 10
+                Layout.preferredWidth: childrenRect.width
+                Layout.preferredHeight: childrenRect.height
+                Layout.maximumWidth: scrollView.width
+                visible: itemsRepeater.count > 0
+                
+                Column {
+                    spacing: 10
+                    Text {
+                        text: "Recently added"//"Recent listings"
+                        color: (NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000"
+                        font.bold: true
+                        font.pointSize: 16
+                    }
+            
+                    Flow {
+                        width: parent.parent.parent.width////scrollView.width
+                        spacing: 5
+                        Repeater {
+                            id: itemsRepeater
+                            model: Backend.getListingsByMostRecentLimit(6)
+                            delegate: Rectangle {
+                                implicitWidth: 200
+                                implicitHeight: implicitWidth
+                                color: NeroshopComponents.Style.getColorsFromTheme()[1]
+                                radius: 3
+                                Image {
+                                    source: "file:///" + modelData.product_image_file//"qrc:/images/image_gallery.png"
+                                    anchors.centerIn: parent
+                                    width: parent.width - 10; height: parent.height - 10//width: 128; height: 128
+                                    fillMode: Image.PreserveAspectFit
+                                    mipmap: true
+                                    //asynchronous: true
+                                    MouseArea {
+                                        anchors.fill: parent
+                                        //hoverEnabled: true
+                                        acceptedButtons: Qt.LeftButton
+                                        onClicked: { 
+                                            //navBar.uncheckAllButtons()
+                                            pageLoader.setSource("qrc:/qml/pages/ProductPage.qml", { "model": modelData })
+                                        }
+                                        cursorShape: Qt.PointingHandCursor
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }    
+            }        
+/*            Item {
+                Layout.row: 5
+                Layout.alignment: Qt.AlignTop
+                Layout.topMargin: 10
+                Layout.preferredWidth: childrenRect.width
+                Layout.preferredHeight: childrenRect.height
+                Layout.maximumWidth: scrollView.width
+                
+                Column {
+                    spacing: 10
+                    Text {
+                        text: "Recently added"//"Recent listings"//"Featured items"//"Best sellers"//"On Sale"//"Recommended items"//"Shop by Category"
+                        color: (NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000"
+                        font.bold: true
+                        font.pointSize: 16
+                    }
+            
+                    Flow {
+                        width: parent.parent.parent.width//scrollView.width
+                        spacing: 5
+                        Repeater {
+                            id: itemsRepeater
+                            model: 16//6
+                            delegate: Rectangle {
+                                implicitWidth: 200
+                                implicitHeight: implicitWidth
+                                color: NeroshopComponents.Style.getColorsFromTheme()[1]
+                                radius: 3
+                                Image {
+                                    source: "qrc:/images/image_gallery.png"
+                                    anchors.centerIn: parent
+                                }
+                            }
+                        }
+                    }
+                }    
             }*/
         } // GridLayout
     } // ScrollView

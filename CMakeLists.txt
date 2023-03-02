@@ -16,6 +16,9 @@ include(CMakeDependentOption)
 cmake_dependent_option(NEROSHOP_USE_QT "Build neroshop with Qt" ON "NEROSHOP_BUILD_GUI" OFF)
 option(UUID_SYSTEM_GENERATOR "Enable operating system uuid generator" OFF)
 option(UUID_TIME_GENERATOR "Enable experimental time-based uuid generator" OFF)
+cmake_dependent_option(NEROSHOP_USE_SYSTEM_SOCKETS "Build neroshop with SYSTEM_SOCKETS" ON "NOT NEROSHOP_USE_LIBZMQ;NOT NEROSHOP_USE_LIBUV" OFF)
+cmake_dependent_option(NEROSHOP_USE_LIBZMQ "Build neroshop with LibZMQ" ON "NOT NEROSHOP_USE_LIBUV;NOT NEROSHOP_USE_SYSTEM_SOCKETS" OFF)
+cmake_dependent_option(NEROSHOP_USE_LIBUV "Build neroshop with LIBUV" ON "NOT NEROSHOP_USE_LIBZMQ;NOT NEROSHOP_USE_SYSTEM_SOCKETS" OFF)
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake" "${CMAKE_CURRENT_SOURCE_DIR}/external/monero-cpp/external/monero-project/cmake")
 ######################################
@@ -26,7 +29,7 @@ if(NEROSHOP_BUILD_GUI AND NEROSHOP_USE_QT)
     if(CMAKE_VERSION VERSION_LESS "3.7.0")
         set(CMAKE_INCLUDE_CURRENT_DIR ON)
     endif()
-    find_package(Qt5 COMPONENTS Qml Quick Gui #[[QuickControls2]])# REQUIRED) # v5.12.8
+    find_package(Qt5 COMPONENTS Qml Quick Gui Concurrent #[[QuickControls2]])# REQUIRED) # v5.12.8
     # add the qml.qrc file
     qt5_add_resources(neroshop_res qml.qrc)#qt_add_resources# <= introduced in Qt 5.15 and higher
 endif()
@@ -43,7 +46,7 @@ if(NOT WIN32)
     set(Magenta     "${Esc}[35m")
     set(Cyan        "${Esc}[36m")
     set(White       "${Esc}[37m")
-    set(BoldRed     "${Esc}[1;31m")
+    set(BoldRed     "${Esc}[1;91m")
     set(BoldGreen   "${Esc}[1;32m")
     set(BoldYellow  "${Esc}[1;33m")
     set(BoldBlue    "${Esc}[1;34m")
@@ -353,19 +356,6 @@ if(NOT CURL_FOUND)
 endif()
 
 ######################################
-# libuv
-find_package(LibUV)
-if(LIBUV_FOUND)
-    message(STATUS "Using LibUV: ${LibUV_LIBRARIES} (v${LibUV_VERSION})")
-    include_directories(${LibUV_INCLUDE_DIRS})
-    set(libuv_src ${LibUV_LIBRARIES})
-endif()
-if(NOT LIBUV_FOUND)
-    include_directories(${CMAKE_CURRENT_SOURCE_DIR}/external/libuv/include ${CMAKE_CURRENT_SOURCE_DIR}/external/libuv/src)
-    set(libuv_src ${CMAKE_CURRENT_SOURCE_DIR}/external/libuv/.libs/libuv.a) # In case user chooses to build libuv themselves instead of installing it on the system
-endif()
-
-######################################
 # willemt/raft
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/external/raft/include)
 set(raft_src ${CMAKE_CURRENT_SOURCE_DIR}/build/libraft.a)
@@ -385,22 +375,12 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR}/external/lua/src/) # v5.4.4
 set(lua_src ${CMAKE_CURRENT_SOURCE_DIR}/build/liblua.a)
 
 ######################################
-# png (needs zlib)
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/external/png/) # v1.6.37
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/external/zlib/) #v1.2.12
-if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
-    set(png_src ${CMAKE_CURRENT_SOURCE_DIR}/build/libpng.so ${CMAKE_CURRENT_SOURCE_DIR}/build/libz.a) # Linux requires libpng to be built dynamically to prevent the Gtk:ERROR: ... "Failed to load /usr/share/icons/Yaru/16x16/status/image-missing.png: Fatal error reading PNG image file: Invalid IHDR data (gdk-pixbuf-error-quark, 0)" when opening the QML FileDialog
-else()
-    set(png_src ${CMAKE_CURRENT_SOURCE_DIR}/build/libpng.a ${CMAKE_CURRENT_SOURCE_DIR}/build/libz.a)
-endif()
-
-######################################
 # neroshop link directories
 link_directories(${CMAKE_CURRENT_SOURCE_DIR}/build) # target_link_directories only available in CMake version 3.13 :(
 
 ######################################
 # neroshop core source files
-set(neroshop_core_src src/core/buyer.cpp src/core/cart.cpp src/core/catalog.cpp src/core/client.cpp src/core/config.cpp src/core/currency_converter.cpp src/core/database.cpp src/core/encryptor.cpp src/core/item.cpp src/core/order.cpp src/core/process.cpp src/core/qr.cpp src/core/script.cpp src/core/seller.cpp src/core/server.cpp src/core/user.cpp src/core/validator.cpp src/core/wallet.cpp)
+set(neroshop_core_src src/core/buyer.cpp src/core/cart.cpp src/core/catalog.cpp src/core/client.cpp src/core/config.cpp src/core/currency_converter.cpp src/core/database.cpp src/core/encryptor.cpp src/core/item.cpp src/core/order.cpp src/core/process.cpp src/core/rpc.cpp src/core/script.cpp src/core/seller.cpp src/core/server.cpp src/core/user.cpp src/core/validator.cpp src/core/wallet.cpp src/core/database/sqlite.cpp)
 
 ######################################
 # neroshop tests
@@ -413,9 +393,9 @@ endif()
 ######################################
 # neroshop-daemon
 set(daemon_executable "neromon")
-add_executable(${daemon_executable} src/daemon/main.cpp src/core/server.cpp)#target_link_libraries(daemon ${curl_src} ${OPENSSL_LIBRARIES}) # curl requires both openssl(used in monero) and zlib(used in dokun-ui)
+add_executable(${daemon_executable} src/daemon/main.cpp src/core/server.cpp src/core/database/sqlite.cpp src/core/database.cpp src/core/rpc.cpp)#target_link_libraries(daemon ${curl_src} ${OPENSSL_LIBRARIES}) # curl requires both openssl(used in monero) and zlib(used in dokun-ui)
 target_include_directories(${daemon_executable} PRIVATE #[[${CMAKE_CURRENT_SOURCE_DIR}/src/]])
-target_link_libraries(${daemon_executable} ${libuv_src} ${raft_src})#set(CMAKE_CXX_LINK_EXECUTABLE "${CMAKE_CXX_LINK_EXECUTABLE} -ldl") # fixes undefined reference to symbol 'dlsym@@GLIBC_2.2.5' error
+target_link_libraries(${daemon_executable} ${sqlite_src} ${raft_src})#set(CMAKE_CXX_LINK_EXECUTABLE "${CMAKE_CXX_LINK_EXECUTABLE} -ldl") # fixes undefined reference to symbol 'dlsym@@GLIBC_2.2.5' error
 
 ######################################
 # neroshop-console
@@ -424,7 +404,7 @@ if(NEROSHOP_BUILD_CLI)
     add_executable(${neroshop_console} src/console/main.cpp ${neroshop_core_src})
     target_compile_definitions(${neroshop_console} PRIVATE NEROSHOP_DEBUG)
     target_include_directories(${neroshop_console} PRIVATE #[[${CMAKE_CURRENT_SOURCE_DIR}/src/]])
-    target_link_libraries(${neroshop_console} ${monero_cpp_src} ${sqlite_src} ${qr_code_generator_src} ${raft_src} ${libuv_src} ${curl_src} ${monero_src} ${lua_src} ${png_src} ${linenoise_src})
+    target_link_libraries(${neroshop_console} ${monero_cpp_src} ${sqlite_src} ${qr_code_generator_src} ${raft_src} ${curl_src} ${monero_src} ${lua_src} ${linenoise_src})
     message(STATUS "${BoldMagenta}NEROSHOP_BUILD_CLI option set to ON${ColourReset}")
 endif()
 
@@ -434,15 +414,82 @@ if(NEROSHOP_BUILD_GUI)
     set(neroshop_executable "neroshop")
     set(neroshop_core_src ${neroshop_core_src} src/core/price_api/price_api_factory.cpp src/core/price_api/coincodex.cpp src/core/price_api/coingecko.cpp src/core/price_api/coinmarketcap.cpp src/core/price_api/cointelegraph.cpp src/core/price_api/cryptorank.cpp src/core/price_api/cryptowatch.cpp)
     add_executable(${neroshop_executable})
-    target_sources(${neroshop_executable} PRIVATE ${neroshop_res} src/gui/main.cpp src/gui/script_controller.cpp src/gui/wallet_controller.cpp src/gui/user_controller.cpp src/gui/backend.cpp ${neroshop_core_src})
+    target_sources(${neroshop_executable} PRIVATE ${neroshop_res} src/gui/main.cpp src/gui/script_controller.cpp src/gui/wallet_controller.cpp src/gui/user_controller.cpp src/gui/image_loader.cpp src/gui/image_provider.cpp src/gui/wallet_qr_provider.cpp src/gui/currency_exchange_rates_provider.cpp src/gui/backend.cpp ${neroshop_core_src})
     target_compile_definitions(${neroshop_executable} PRIVATE NEROSHOP_DEBUG)#set_target_properties(${neroshop_executable} PROPERTIES COMPILE_DEFINITIONS "NEROSHOP_DEBUG")
     target_include_directories(${neroshop_executable} PRIVATE #[[${CMAKE_CURRENT_SOURCE_DIR}/src/]])
-    target_link_libraries(${neroshop_executable} ${monero_cpp_src} ${sqlite_src} ${qr_code_generator_src} ${raft_src} ${libuv_src} ${monero_src} ${lua_src} ${png_src})
+    target_link_libraries(${neroshop_executable} ${monero_cpp_src} ${sqlite_src} ${qr_code_generator_src} ${raft_src} ${monero_src} ${lua_src})
     message(STATUS "${BoldMagenta}NEROSHOP_BUILD_GUI option set to ON${ColourReset}")
     target_compile_definitions(${neroshop_executable} PRIVATE NEROSHOP_BUILD_GUI)
 endif()
 
 ######################################
+if(NOT NEROSHOP_USE_LIBZMQ AND NOT NEROSHOP_USE_LIBUV)
+    message(STATUS "${BoldWhite}Using SYSTEM SOCKETS${ColourReset}")
+    if(NEROSHOP_BUILD_GUI)
+        target_compile_definitions(${neroshop_executable} PRIVATE NEROSHOP_USE_SYSTEM_SOCKETS)
+    endif()
+    if(NEROSHOP_BUILD_CLI)
+        target_compile_definitions(${neroshop_console} PRIVATE NEROSHOP_USE_SYSTEM_SOCKETS)
+    endif()
+    target_compile_definitions(${daemon_executable} PRIVATE NEROSHOP_USE_SYSTEM_SOCKETS)
+endif()
+
+######################################
+# libuv
+find_package(LibUV)
+if(LIBUV_FOUND)
+    if(NEROSHOP_USE_LIBUV)
+        message(STATUS "${BoldGreen}Using LibUV: ${LibUV_LIBRARIES} (v${LibUV_VERSION})${ColourReset}")
+        #include_directories(${LibUV_INCLUDE_DIRS})
+        if(NEROSHOP_BUILD_GUI)
+            target_compile_definitions(${neroshop_executable} PRIVATE NEROSHOP_USE_LIBUV)
+            target_link_libraries(${neroshop_executable} ${LibUV_LIBRARIES})
+        endif()
+        if(NEROSHOP_BUILD_CLI)
+            target_compile_definitions(${neroshop_console} PRIVATE NEROSHOP_USE_LIBUV)
+            target_link_libraries(${neroshop_console} ${LibUV_LIBRARIES})
+        endif()        
+        target_compile_definitions(${daemon_executable} PRIVATE NEROSHOP_USE_LIBUV)
+        target_link_libraries(${daemon_executable} ${LibUV_LIBRARIES})
+    endif()
+endif()
+if(NOT LIBUV_FOUND)
+    if(NEROSHOP_USE_LIBUV)
+        include_directories(${CMAKE_CURRENT_SOURCE_DIR}/external/libuv/include ${CMAKE_CURRENT_SOURCE_DIR}/external/libuv/src)
+        if(NEROSHOP_BUILD_GUI)
+            target_compile_definitions(${neroshop_executable} PRIVATE NEROSHOP_USE_LIBUV)
+            target_link_libraries(${neroshop_executable} ${CMAKE_CURRENT_SOURCE_DIR}/external/libuv/.libs/libuv.a)
+        endif()
+        if(NEROSHOP_BUILD_CLI)
+            target_compile_definitions(${neroshop_console} PRIVATE NEROSHOP_USE_LIBUV)
+            target_link_libraries(${neroshop_console} ${CMAKE_CURRENT_SOURCE_DIR}/external/libuv/.libs/libuv.a)
+        endif()
+        target_compile_definitions(${daemon_executable} PRIVATE NEROSHOP_USE_LIBUV)
+        target_link_libraries(${daemon_executable} ${CMAKE_CURRENT_SOURCE_DIR}/external/libuv/.libs/libuv.a) # In case user chooses to build libuv themselves instead of installing it on the system
+    endif()
+endif()
+
+######################################
+# libzmq
+find_package(ZeroMQ)
+if(ZeroMQ_FOUND)
+    if(NEROSHOP_USE_LIBZMQ)
+        message(STATUS "${BoldRed}Using LIBZMQ: ${ZeroMQ_LIBRARY} (v${ZeroMQ_VERSION})${ColourReset}")
+        if(NEROSHOP_BUILD_GUI)
+            target_compile_definitions(${neroshop_executable} PRIVATE NEROSHOP_USE_LIBZMQ)
+            target_link_libraries(${neroshop_executable} ${ZeroMQ_LIBRARIES})
+        endif()
+        if(NEROSHOP_BUILD_CLI)
+            target_compile_definitions(${neroshop_console} PRIVATE NEROSHOP_USE_LIBZMQ)
+            target_link_libraries(${neroshop_console} ${ZeroMQ_LIBRARIES})
+        endif()
+        target_compile_definitions(${daemon_executable} PRIVATE NEROSHOP_USE_LIBZMQ)
+        target_link_libraries(${daemon_executable} ${ZeroMQ_LIBRARIES})
+    endif()
+endif()
+
+######################################
+# libbcrypt
 if(DEFINED NEROSHOP_USE_LIBBCRYPT) # -DNEROSHOP_USE_LIBBCRYPT=1
     message(STATUS "Using libbcrypt: ${bcrypt_src}")
     if(NEROSHOP_BUILD_GUI)
@@ -455,6 +502,7 @@ if(DEFINED NEROSHOP_USE_LIBBCRYPT) # -DNEROSHOP_USE_LIBBCRYPT=1
     endif()    
 endif()
 
+######################################
 if (UUID_TIME_GENERATOR) # -DUUID_TIME_GENERATOR=1
     if(NEROSHOP_BUILD_GUI)
         target_compile_definitions(${neroshop_executable} PRIVATE UUID_TIME_GENERATOR)
@@ -464,6 +512,7 @@ if (UUID_TIME_GENERATOR) # -DUUID_TIME_GENERATOR=1
     endif()    
 endif()
 
+######################################
 if(WIN32)
     set(winsock2_src ws2_32.lib) # -lglfw3 -lgdi32 -lopengl32 -limm32
     if(NEROSHOP_BUILD_GUI)
@@ -475,6 +524,7 @@ if(WIN32)
     target_link_libraries(${daemon_executable} ${winsock2_src})
 endif()
 
+######################################
 if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
     find_package(LibUUID) # optional
     if(UUID_SYSTEM_GENERATOR) # -DUUID_SYSTEM_GENERATOR=1
@@ -489,6 +539,8 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
                 target_compile_definitions(${neroshop_console} PRIVATE UUID_SYSTEM_GENERATOR) # uuids::uuid_system_generator
                 target_link_libraries(${neroshop_console} ${LibUUID_LIBRARY})        
             endif()    
+            target_compile_definitions(${daemon_executable} PRIVATE UUID_SYSTEM_GENERATOR)
+            target_link_libraries(${daemon_executable} ${LibUUID_LIBRARY})
         endif()
     endif()
 
@@ -502,6 +554,7 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
     target_link_libraries(${daemon_executable} ${posix_src})
 endif()
 
+######################################
 if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     find_library(CFLIB CoreFoundation) # optional
     if(UUID_SYSTEM_GENERATOR) # -DUUID_SYSTEM_GENERATOR=1
@@ -518,6 +571,8 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     endif()
 endif()
 
+######################################
+# qt5
 if(Qt5_FOUND)
     if(NEROSHOP_BUILD_GUI AND NEROSHOP_USE_QT)
         # Some Linux distros require Qt::Widgets due to the lack of a native platform file dialog implementation
@@ -528,11 +583,11 @@ if(Qt5_FOUND)
             target_link_libraries(${neroshop_executable} Qt5::Widgets)
         endif()
     
-        message(STATUS "Using Qt5::Qml Qt5::Quick Qt5::Gui")
+        message(STATUS "Using Qt5::Qml Qt5::Quick Qt5::Gui Qt5::Concurrent")
         target_compile_definitions(${neroshop_executable} PRIVATE NEROSHOP_USE_QT)
         #add_compile_definitions(QT_DISABLE_DEPRECATED_BEFORE=0x050F00) # Disable any API deprecated in 5.15 or older Qt versions
         #target_include_directories(${neroshop_executable} PRIVATE /usr/include/x86_64-linux-gnu/qt5/)
-        target_link_libraries(${neroshop_executable} Qt5::Qml Qt5::Quick Qt5::Gui #[[Qt5::QuickControls2]])
+        target_link_libraries(${neroshop_executable} Qt5::Qml Qt5::Quick Qt5::Gui Qt5::Concurrent #[[Qt5::QuickControls2]])
     endif()
 endif()
 

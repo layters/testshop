@@ -15,7 +15,7 @@ namespace neroshop {
 class Item { // or Product or whatever you want to call it
 public:
     Item();
-    Item(unsigned int id); // copy an already registered item 
+    Item(const std::string& id); // copy an already registered item 
     Item(const std::string& name, const std::string& desc, 
         double price, double weight, double length, double width, double height,
         const std::string& condition, const std::string& product_code); // quantity is set by cart; discount is 0 by default
@@ -32,7 +32,7 @@ public:
     // getters
  	unsigned int get_quantity(unsigned int cart_id) const;
 	static unsigned int get_quantity(unsigned int item_id, unsigned int cart_id);
-    unsigned int get_id() const; // product id
+    std::string get_id() const; // product id
     std::string get_name() const;
     static std::string get_name(unsigned int item_id);
     std::string get_description() const;
@@ -119,12 +119,12 @@ private:
         const std::string& condition, const std::string& product_code);
     void deregister_item();
     //static void deregister_item();
-    unsigned int id; // unique id that must be obtained from the database
+    std::string id; // unique id that must be obtained from the database
     std::string category;
     std::string SKU_code; // sellers can generate an SKU for items they are selling (NSKU - neroshop stocking unit)
     std::string UPC_code; // universal product code - ONLY code required for all products
     ////std::vector<std::shared_ptr<Image>> image_list;
-    void set_id(unsigned int id);
+    void set_id(const std::string& id);
     //void set_seller_price(unsigned int seller_id, double seller_price);
     //static void set_seller_price(unsigned int item_id, unsigned int seller_id, double seller_price); // seller_price is set by the seller
     // (all setters should be private)

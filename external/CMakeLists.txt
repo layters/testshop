@@ -34,6 +34,7 @@ set(sqlite3 "sqlite3")
 set(sqlite_srcs sqlite/sqlite3.c)
 add_library(${sqlite3} STATIC ${sqlite_srcs})
 target_include_directories(${sqlite3} PUBLIC sqlite/)
+target_compile_definitions(${sqlite3} PUBLIC SQLITE_ENABLE_FTS5)
 
 set(raft "raft")
 set(raft_srcs raft/src/raft_server.c raft/src/raft_server_properties.c raft/src/raft_log.c raft/src/raft_node.c)
@@ -49,21 +50,6 @@ set(lua_target "lua")
 set(lua_srcs lua/src/lapi.c lua/src/lcode.c lua/src/lctype.c lua/src/ldebug.c lua/src/ldo.c lua/src/ldump.c lua/src/lfunc.c lua/src/lgc.c lua/src/llex.c lua/src/lmem.c lua/src/lobject.c lua/src/lopcodes.c lua/src/lparser.c lua/src/lstate.c lua/src/lstring.c lua/src/ltable.c lua/src/ltm.c lua/src/lundump.c lua/src/lvm.c lua/src/lzio.c lua/src/lauxlib.c lua/src/lbaselib.c lua/src/lcorolib.c lua/src/ldblib.c lua/src/liolib.c lua/src/lmathlib.c lua/src/loadlib.c lua/src/loslib.c lua/src/lstrlib.c lua/src/ltablib.c lua/src/lutf8lib.c lua/src/linit.c)
 add_library(${lua_target} STATIC ${lua_srcs})
 target_include_directories(${lua_target} PUBLIC lua/src/)
-
-set(png_target "png")
-set(png_srcs png/png.c png/pngerror.c png/pngget.c png/pngmem.c png/pngpread.c png/pngread.c png/pngrio.c png/pngrtran.c png/pngrutil.c png/pngset.c #[[png/pngtest.c]] png/pngtrans.c png/pngwio.c png/pngwrite.c png/pngwtran.c png/pngwutil.c)
-if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
-    add_library(${png_target} SHARED ${png_srcs}) # Linux requires libpng to be built dynamically to fix the Gtk:ERROR: ... "Failed to load /usr/share/icons/Yaru/16x16/status/image-missing.png: Fatal error reading PNG image file: Invalid IHDR data (gdk-pixbuf-error-quark, 0)" when opening the QML FileDialog
-else()
-    add_library(${png_target} STATIC ${png_srcs})
-endif()
-target_include_directories(${png_target} PUBLIC png/)
-
-set(zlib_target "zlib") # required by png
-set(zlib_srcs zlib/adler32.c zlib/compress.c zlib/crc32.c zlib/deflate.c zlib/gzclose.c zlib/gzlib.c zlib/gzread.c zlib/gzwrite.c zlib/infback.c zlib/inffast.c zlib/inflate.c zlib/inftrees.c zlib/trees.c zlib/uncompr.c zlib/zutil.c)
-add_library(${zlib_target} STATIC ${zlib_srcs})
-target_include_directories(${zlib_target} PUBLIC zlib/)
-set_target_properties(${zlib_target} PROPERTIES OUTPUT_NAME "z")
 
 #[[
 set(_target "")

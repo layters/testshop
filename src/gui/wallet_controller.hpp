@@ -15,13 +15,16 @@
 
 namespace neroshop {
 
-#if defined(NEROSHOP_USE_QT)
-class WalletController : public QObject, public neroshop::Wallet {
+class WalletController : public QObject, public monero_wallet_listener
+{
     Q_OBJECT 
     // properties (for use in QML)
     Q_PROPERTY(neroshop::Wallet* wallet READ getWallet NOTIFY walletChanged);
     Q_PROPERTY(bool opened READ isOpened NOTIFY isOpenedChanged);
-    //Q_PROPERTY(<type> <variable_name> READ <get_function_name>)
+    Q_PROPERTY(double balanceLocked READ getBalanceLocked NOTIFY balanceChanged);
+    Q_PROPERTY(double balanceUnlocked READ getBalanceUnlocked NOTIFY balanceChanged);
+    Q_PROPERTY(QVariantList transfers READ getTransfers NOTIFY transfersChanged);
+    //Q_PROPERTY(<type> <variable_name> READ <get_function_name> NOTIFY)
 public:    
     // I don't know how to use or compare enums in QML. It never works, but oh well :|
     enum KeyfileStatus {
@@ -32,7 +35,6 @@ public:
     };
     Q_ENUM(KeyfileStatus)
     // functions (for use in QML)
-    ////explicit Wallet(QObject* parent = 0);
     Q_INVOKABLE int createRandomWallet(const QString& password, const QString& confirm_pwd, const QString& path);
     Q_INVOKABLE bool restoreFromMnemonic(const QString& mnemonic);
     Q_INVOKABLE bool restoreFromKeys(const QString& primary_address, const QString& private_view_key, const QString& private_spend_key);
@@ -63,6 +65,7 @@ public:
     Q_INVOKABLE double getBalanceUnlocked() const;
     Q_INVOKABLE double getBalanceUnlocked(unsigned int account_index) const;
     Q_INVOKABLE double getBalanceUnlocked(unsigned int account_index, unsigned int subaddress_index) const;
+    Q_INVOKABLE QVariantList getTransfers() const;
     Q_INVOKABLE neroshop::Wallet * getWallet() const;
     
     Q_INVOKABLE void setNetworkTypeByString(const QString& network_type);
@@ -77,17 +80,23 @@ public:
     Q_INVOKABLE bool isSynced() const;
     Q_INVOKABLE bool isDaemonSynced() const;
     Q_INVOKABLE bool fileExists(const QString& filename) const;
+    // Callbacks
+    void on_sync_progress(uint64_t height, uint64_t start_height, uint64_t end_height, double percent_done, const std::string& message);
+    void on_new_block (uint64_t height);
+    void on_balances_changed(uint64_t new_balance, uint64_t new_unlocked_balance);
+    void on_output_received(const monero_output_wallet& output);
+    void on_output_spent (const monero_output_wallet &output);
 public slots:
 signals:
     void walletChanged();
     void isOpenedChanged();
-#else
-class WalletController { 
-#endif
-public://private:
-    std::unique_ptr<neroshop::Wallet> wallet;
+    void balanceChanged();
+    void transfersChanged();
+private:
+    std::unique_ptr<neroshop::Wallet> _wallet;
+
 public:
-    WalletController();
+    WalletController(QObject *parent = nullptr);
     ~WalletController();
 };
 

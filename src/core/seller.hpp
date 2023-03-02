@@ -2,6 +2,12 @@
 #ifndef SELLER_HPP_NEROSHOP
 #define SELLER_HPP_NEROSHOP
 
+#if defined(NEROSHOP_USE_QT)
+#include <QUuid>
+#else
+#include <uuid.h>
+#endif
+
 #include <cmath> // floor
 #include <random>
 #include <memory> // std::unique_ptr
@@ -18,12 +24,12 @@ public:
 	Seller();
 	Seller(const std::string& name);
 	~Seller();
-	void list_item(unsigned int item_id, unsigned int stock_qty, double sales_price = 0.00, std::string currency = "usd", double discount = 0.00, unsigned int discounted_items = 1, unsigned int discount_times = 1, std::string discount_expiry = ""/*"0000-00-00 00:00:00"*/, std::string condition = "new"); // adds an item to the inventory
+	void list_item(const std::string& product_id, unsigned int quantity, double sales_price, const std::string& currency, /*double discount = 0.00, unsigned int discounted_items = 1, unsigned int discount_times = 1, std::string discount_expiry = "0000-00-00 00:00:00", */const std::string& condition, const std::string& location); // adds an item to the inventory
 	void list_item(const neroshop::Item& item, unsigned int stock_qty, double sales_price = 0.00, std::string currency = "usd", double discount = 0.00, unsigned int discounted_items = 1, unsigned int discount_times = 1, std::string discount_expiry = ""/*"0000-00-00 00:00:00"*/, std::string condition = "new");
-	void delist_item(unsigned int item_id); // deletes an item from the inventory
+	void delist_item(unsigned int product_id); // deletes an item from the inventory
 	void delist_item(const neroshop::Item& item);
 	// setters - item and inventory-related stuff
-	void set_stock_quantity(unsigned int item_id, unsigned int stock_qty);
+	void set_stock_quantity(unsigned int product_id, unsigned int stock_qty);
 	void set_stock_quantity(const neroshop::Item& item, unsigned int stock_qty);
 	// setters - wallet-related stuff
 	void set_wallet(const neroshop::Wallet& wallet);// temporary - delete ASAP
@@ -41,26 +47,27 @@ public:
     unsigned int get_customer_order_count() const;
     std::vector<int> get_pending_customer_orders();
     // getters - sales and statistics-related stuff
+    unsigned int get_products_count() const; // returns number of products listed by this seller
     unsigned int get_sales_count() const; // returns the total number of items sold by this seller
-    unsigned int get_units_sold(unsigned int item_id) const; // returns the total number of a specific item sold by this seller
+    unsigned int get_units_sold(unsigned int product_id) const; // returns the total number of a specific item sold by this seller
     unsigned int get_units_sold(const neroshop::Item& item) const;
     double get_sales_profit() const; // returns the overall profit made from the sale of all items sold by this seller
-    double get_profits_made(unsigned int item_id) const; // returns the overall profit made from the sale of a specific item sold by this seller
+    double get_profits_made(unsigned int product_id) const; // returns the overall profit made from the sale of a specific item sold by this seller
     double get_profits_made(const neroshop::Item& item) const;
-    unsigned int get_item_id_with_most_sales() const; // returns the item_id with the most purchases (based on biggest sum of item_qty in "order_item")
-    unsigned int get_item_id_with_most_orders() const; // returns the item_id with the mode (most occuring) or the most ordered item in "order_item"
+    unsigned int get_product_id_with_most_sales() const; // returns the product_id with the most purchases (based on biggest sum of item_qty in "order_item")
+    unsigned int get_product_id_with_most_orders() const; // returns the product_id with the mode (most occuring) or the most ordered item in "order_item"
 	//Item * get_item_with_most_sales() const;
 	//Item * get_item_with_most_orders() const;
 	// boolean
 	//bool is_verified() const; // returns true if seller is verified brand owner (or original manufacturer)
-	bool has_listed(unsigned int item_id) const; // returns true if this seller has listed an item
+	bool has_listed(unsigned int product_id) const; // returns true if this seller has listed an item
 	bool has_listed(const neroshop::Item& item) const; // returns true if this seller has listed an item
-	bool has_stock(unsigned int item_id) const; // returns true if this seller has an item in stock
+	bool has_stock(unsigned int product_id) const; // returns true if this seller has an item in stock
 	bool has_stock(const neroshop::Item& item) const;
 	bool has_wallet() const; // returns true if seller's wallet is opened
 	bool has_wallet_synced() const; // returns true if seller's wallet is synced to a node
 	// callbacks
-	static neroshop::User * on_login(const std::string& username);
+	static neroshop::User * on_login(const neroshop::Wallet& wallet);
 	void on_order_received(std::string& subaddress);
 	// listening to orders
 	void update_customer_orders(); // called multiple times	// listens to and update customer orders

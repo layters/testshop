@@ -18,4 +18,9 @@
 
 #include "database/sqlite.hpp"
 
+namespace neroshop {
+
+extern db::Sqlite3 * get_database();
+
+}
 #endif

@@ -9,7 +9,7 @@ neroshop::Client::~Client() {
 }
 ////////////////////
 void neroshop::Client::create() {
-    #if defined(__gnu_linux__)
+    #if defined(__gnu_linux__) && defined(NEROSHOP_USE_SYSTEM_SOCKETS)
     if(socket) return; // socket must be null before a new one can be created (if socket is not null then it means it was never closed)
 	socket = ::socket(AF_INET, SOCK_STREAM, 0);
 	if(socket < 0) {
@@ -19,7 +19,7 @@ void neroshop::Client::create() {
 }
 ////////////////////
 bool neroshop::Client::connect(unsigned int port, std::string address) {
-    #if defined(__gnu_linux__)
+    #if defined(__gnu_linux__) && defined(NEROSHOP_USE_SYSTEM_SOCKETS)
 	struct hostent * host = gethostbyname(address.c_str());
 	if(host == nullptr) {
 		std::cerr << "No host to connect to" << std::endl;
@@ -42,7 +42,7 @@ bool neroshop::Client::connect(unsigned int port, std::string address) {
 }
 ////////////////////
 void neroshop::Client::write(const std::string& text) {
-    #if defined(__gnu_linux__)
+    #if defined(__gnu_linux__) && defined(NEROSHOP_USE_SYSTEM_SOCKETS)
 	ssize_t write_result = ::write(socket, text.c_str(), text.length());
 	if(write_result < 0) { // -1 = error
 		std::cerr << "Could not write to server" << std::endl;
@@ -52,7 +52,7 @@ void neroshop::Client::write(const std::string& text) {
 ////////////////////
 std::string neroshop::Client::read()
 {
-    #if defined(__gnu_linux__)
+    #if defined(__gnu_linux__) && defined(NEROSHOP_USE_SYSTEM_SOCKETS)
 	memset(buffer, 0, 256); // clear buffer (fills buffer with 0's) before reading into buffer//bzero(buffer, 256); // bzero is deprecated
 	ssize_t read_result = ::read(socket, buffer, 255);
 	if(read_result < 0) {
@@ -60,10 +60,11 @@ std::string neroshop::Client::read()
 	}
 	return static_cast<std::string>(buffer);    
     #endif
+    return "";
 }
 ////////////////////	
 void neroshop::Client::close() {
-    #if defined(__gnu_linux__)
+    #if defined(__gnu_linux__) && defined(NEROSHOP_USE_SYSTEM_SOCKETS)
     if(socket == 0) return;
 	::close(socket);
 	socket = 0;
@@ -71,7 +72,7 @@ void neroshop::Client::close() {
 }
 ////////////////////
 void neroshop::Client::shutdown() {
-    #if defined(__gnu_linux__)
+    #if defined(__gnu_linux__) && defined(NEROSHOP_USE_SYSTEM_SOCKETS)
     ::shutdown(socket, SHUT_RDWR); // SHUT_RD, SHUT_WR, SHUT_RDWR
     #endif
 }

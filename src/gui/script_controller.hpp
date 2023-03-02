@@ -19,7 +19,9 @@ class ScriptController : public QObject {
     Q_OBJECT 
     // properties (for use in QML)
     //Q_PROPERTY(<type> <variable_name> READ ...)
-public:    
+public:
+    ScriptController(QObject *parent = nullptr);
+
     // functions (for use in QML)
     //Q_INVOKABLE <type> getTable(const QString& key) const {}
     Q_INVOKABLE QString getString(const QString& key) const;// {}

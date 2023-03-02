@@ -60,14 +60,23 @@ Page {
             Wallet.daemonExecute(settingsDialog.monerodPath, settingsDialog.confirmExternalBind, settingsDialog.restrictedRpc, settingsDialog.moneroDataDir, 0/*Script.getNumber("neroshop.monero.wallet.restore_height")*/);
             Wallet.daemonConnect();//(moneroDaemonRpcLoginUser.text, moneroDaemonRpcLoginPwd.text)
             // Don't connect to daemon until we are sure that it has been launched/is ready (or else it will crash app)
+            // TODO: find a way to figure whether a node is connected/working properly
+            if(Wallet.isConnectedToDaemon()) {
+                moneroDaemonSyncBar.title = settingsDialog.moneroNodeAddress
+            }
         }
         // connect to a remote monero node (default)
         if(settingsDialog.moneroNodeType == 0) {
-            let remote_node_ip = settingsDialog.moneroNodeAddress.split(":")[0]
-            let remote_node_port = settingsDialog.moneroNodeAddress.split(":")[1]
+            // settingsDialog.moneroNodeAddress removes http:// from url
+            let remote_node = settingsDialog.moneroNodeAddress//console.log("remote_node", remote_node)
+            let remote_node_ip = remote_node.split(":")[0]
+            let remote_node_port = remote_node.split(":")[1]
             console.log("connecting to remote node " + remote_node_ip + ":" + remote_node_port)
-            // Todo: use custom remote node
+            // TODO: add option to use custom remote node
             Wallet.nodeConnect(remote_node_ip, remote_node_port)//, moneroDaemonRpcLoginUser.text, moneroDaemonRpcLoginPwd.text);//Wallet.nodeConnect(Script.getString("neroshop.monero.daemon.ip"), Script.getString("neroshop.monero.daemon.port"), moneroDaemonRpcLoginUser.text, moneroDaemonRpcLoginPwd.text);
+            if(Wallet.isConnectedToDaemon()) {
+                moneroDaemonSyncBar.title = settingsDialog.moneroNodeAddress
+            }
         }
     }
     ///////////////////////////
@@ -125,9 +134,9 @@ Page {
         //User.uploadAvatar("../images/appicons/LogoLight250x250.png");
         // Switch to HomePage
         pageLoader.source = "HomePage.qml"//stack.push(home_page)
-        console.log("Primary address: ", Wallet.getPrimaryAddress())
-        console.log("Balance: ", Wallet.getBalanceLocked().toFixed(12))
-        console.log("Unlocked balance: ", Wallet.getBalanceUnlocked().toFixed(12))
+        //console.log("Primary address: ", Wallet.getPrimaryAddress())
+        //console.log("Balance: ", Wallet.getBalanceLocked().toFixed(12))
+        //console.log("Unlocked balance: ", Wallet.getBalanceUnlocked().toFixed(12))
         // start synching the monero node as soon we hit the register button (this confirms that we are satified with the wallet key that we've generated and won't turn back to re-generate a new one)
         // Todo: Add an auto-connect on login/registration button and only sync automatically if that option is turned on (will be turned on by default)
         onAutoSync()
@@ -466,14 +475,21 @@ Page {
                     Layout.fillHeight: true
                     border.color: "blue"
                     
-                    TextArea {
-                        id: mnemonicSeedInput
-                        Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
-                        Layout.preferredWidth: 500
-                        Layout.preferredHeight: 500
-                        //verticalAlignment: TextEdit.AlignVCenter // align the text within the center of TextArea item's height
-                        wrapMode: TextEdit.Wrap
-                        selectByMouse: true                        
+                    ScrollView {
+                        //Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
+                        anchors.fill: parent//width: 500; height: 500
+                        TextArea {
+                            id: mnemonicSeedInput
+                            wrapMode: TextEdit.Wrap
+                            selectByMouse: true      
+                            color: (NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000"                  
+                            background: Rectangle {
+                                color: (NeroshopComponents.Style.darkTheme) ? "#101010" : "#f0f0f0"
+                                //border.color: (NeroshopComponents.Style.darkTheme) ? "#404040" : "#4d4d4d"
+                                border.width: parent.activeFocus ? 2 : 1
+                                //radius: 
+                            }
+                        }
                     }
                 }
                 Rectangle {
@@ -533,7 +549,7 @@ Page {
                 	        }
                 	        // Process login credentials
                 	        //if(!Wallet.isOpened()) {
-                	        if(!Backend.loginWithWalletFile(Wallet, Backend.urlToLocalFile(walletFileField.text), walletPasswordRestoreField.text)) {
+                	        if(!Backend.loginWithWalletFile(Wallet, Backend.urlToLocalFile(walletFileField.text), walletPasswordRestoreField.text, User)) {
                 	                messageBox.text = qsTr("Invalid password or wallet network type")
                 	                messageBox.open()
                 	                return;                	        
@@ -542,9 +558,6 @@ Page {
                             onAutoSync();
                             // Switch to HomePage
                             pageLoader.source = "HomePage.qml"
-                            console.log("Primary address:", Wallet.getPrimaryAddress())
-                            console.log("Balance:", Wallet.getBalanceLocked().toFixed(12))
-                            console.log("Unlocked balance:", Wallet.getBalanceUnlocked().toFixed(12))
                             //console.log("Mnemonic:", Wallet.getMnemonic())
                 	    }
                 	    // restore from seed
@@ -554,7 +567,7 @@ Page {
                 	            messageBox.open()
                 	            return;                	        
                 	        }
-                	        Wallet.restoreFromMnemonic(mnemonicSeedInput.text)
+                	        Wallet.restoreFromMnemonic(mnemonicSeedInput.text, User)
                 	        // Process login credentials
                 	        // ...
                 	        onAutoSync();

@@ -13,13 +13,14 @@ A decentralized P2P (peer-to-peer) marketplace for [**Monero**](https://getmoner
   - [Dependencies](#dependencies)
   - [Compiling neroshop from source](#compiling-neroshop-from-source)
 - [Contributing](#contributing) <!-- - [Bug Bounty Program]-->
+- [License](#license)
 - [Donations](#donations)
 - [Resources](#resources)
 - [Credits](#credits)
 
 
 ## Demo
-<!-- place link to videos here -->
+https://user-images.githubusercontent.com/58671384/219222567-f170f728-be31-43d5-b412-1f456a682bd3.mp4
 
 <details>
 <summary>Click to load images</summary>
@@ -28,41 +29,50 @@ A decentralized P2P (peer-to-peer) marketplace for [**Monero**](https://getmoner
 ![Registration](https://github.com/larteyoh/testshop/blob/main/images/screenshots/Registration.png)
 ![CatalogGrid_Top](https://github.com/larteyoh/testshop/blob/main/images/screenshots/CatalogGrid_Top.png)
 ![CatalogGrid_Bottom](https://github.com/larteyoh/testshop/blob/main/images/screenshots/CatalogGrid_Bottom.png)
+![CatalogGrid](https://github.com/larteyoh/testshop/blob/main/images/screenshots/CatalogGrid.png)
 ![SettingsDialog_Monero](https://github.com/larteyoh/testshop/blob/main/images/screenshots/SettingsDialog_Monero.png)
 ![HomePage](https://github.com/larteyoh/testshop/blob/main/images/screenshots/HomePage.png)
+![HomePage_Recent_Listings](https://github.com/larteyoh/testshop/blob/main/images/screenshots/HomePage_Recent_Listings.png)
 ![Dashboard](https://github.com/larteyoh/testshop/blob/main/images/screenshots/Dashboard_Overview.png)
+![Product_Listing_Top](https://github.com/larteyoh/testshop/blob/main/images/screenshots/Product_Listing_Top.png)
+![Product_Listing_Bottom](https://github.com/larteyoh/testshop/blob/main/images/screenshots/Product_Listing_Bottom.png)
+![WalletPage_Send](https://github.com/larteyoh/testshop/blob/main/images/screenshots/WalletPage_BalanceSend.png)
+![WalletPage_Receive](https://github.com/larteyoh/testshop/blob/main/images/screenshots/WalletPage_BalanceReceive.png)
+![WalletPage_Transactions](https://github.com/larteyoh/testshop/blob/main/images/screenshots/WalletPage_BalanceTxs.png)
 
 </details>
 
+<!--
 ## About
 *neroshop* is a decentralized P2P (peer-to-peer) marketplace that uses [**Monero**](https://getmonero.org/) as its default cryptocurrency and 
-caters not only to darknet market users, but also those who want to partake in a parallel economy free from censorship and government invervention.
+caters not only to darknet market users, but also those who want to partake in a parallel economy free from censorship and government intervention.
 Neroshop aims to be simple for a beginner to use and easy for sellers to onboard their shop with just a few clicks.
 
-**The name _neroshop_ is a combination of the words _nero_, which is Italian for black and the English word _shop_. And of course, _nero_ is also in the name _Monero_.**
+The name _neroshop_ is a combination of the words _nero_, which is Italian for _black_ and the English word _shop_. And of course, _nero_ is also in the name _Monero_.
+-->
 
 ## Feature Status
 - [ ] Distributed P2P network
-- [ ] Buy and sell products with Monero
-- [ ] Anonymous payments
+- [ ] Buy and sell products and services with Monero
+- [x] No KYC
 - [ ] No censorship (censorship-resistant)
-- [ ] Pseudonymous identities (sellers and buyers are identified by their unique ids and/or optional display names)
-- [ ] No KYC nor AML
 - [ ] No listing fees, sales tax, or any other fees (except for miner transaction fees and shipping costs and a 0.5% fee for using the optional built-in 2-of-3 escrow system)
+- [x] Pseudonymous identities (sellers and buyers are identified by their unique ids and/or optional display names)
 - [ ] End-to-end encrypted messaging system for communications between sellers and buyers
-- [ ] Subaddress generator (a unique subaddresses will be generated from a seller's synced wallet account for each order placed by a customer)
-- [x] Option to run a local Monero node or connect to remote Monero nodes (so that sellers will not have to sync the entire blockchain)
-- [ ] Option to choose between sending funds directly to a seller or using a multisignature escrow.
-- [ ] Tor and I2P integration (Internet traffic can be optionally routed through tor for more added privacy)
-- [ ] Seller reputation system
-- [ ] Product rating system
+- [ ] Subaddress generator for direct payments without an escrow (a unique subaddress will be generated from a seller's synced wallet account for each order placed by a customer)
+- [x] Built-in Monero wallet with basic functionalities (transaction history, send, and receive)
+- [x] Option to run a local Monero node or connect to remote Monero nodes
+- [ ] Option to choose between sending funds directly to a seller or by using a multisignature escrow.
+- [ ] Native Tor and I2P support (both tor daemon and i2pd will be bundled with each release)
+- [x] Seller reputation system
+- [x] Product rating system
 - [ ] Wishlists
-
+- [ ] Built-in SQLite-powered search engine that can find any products or sellers
 
 ## Building neroshop
 
 ### Dependencies
-:heavy_check_mark: = Currently in use; :o: = Optional; :x: = Not currently in use or removed; :grey_question: = Not yet in use, but up for consideration; :white_square_button: = Exclusive to CLI
+:heavy_check_mark: = Currently in use; :o: = Optional; :x: = Not currently in use or deprecated; :grey_question: = Not yet in use, but up for consideration; :white_square_button: = Exclusive to CLI
 
 |      Library                                                       | Minimum Ver.       |         Purpose                                                        | Status                                   |
 |--------------------------------------------------------------------|--------------------|------------------------------------------------------------------------|------------------------------------------|
@@ -70,17 +80,15 @@ Neroshop aims to be simple for a beginner to use and easy for sellers to onboard
 | [libbcrypt](https://github.com/rg3/libbcrypt)                      | 1.3                | password hashing                                                       | :x:                                      |
 | [sqlite3](https://sqlite.org/)                                     | 3.38.0             | database management                                                    | :heavy_check_mark:                       |
 | [QR Code generator](https://github.com/nayuki/QR-Code-generator)   | ?                  | qr code generation                                                     | :heavy_check_mark:                       |
-| [json](https://github.com/nlohmann/json/)                          | ?                  | json parsing                                                           | :o:                                      |
+| [json](https://github.com/nlohmann/json/)                          | ?                  | json parsing                                                           | :heavy_check_mark:                       |
 | [curl](https://github.com/curl/curl)                               | ?                  | currency conversion                                                    | :o:                                      |
 | [openssl](https://github.com/openssl/openssl)                      | 1.1.1              | for curl, sha256 sum and message encryption                            | :heavy_check_mark:                       |
 | [Qt](https://www.qt.io/)                                           | 5.12.8             | graphical user interface                                               | :heavy_check_mark:                       |
-| [libuv](https://github.com/libuv/libuv)                            | ?                  | networking and child process                                           | :heavy_check_mark:                       |
+| [libuv](https://github.com/libuv/libuv)                            | ?                  | networking and child process                                           | :grey_question:                          |
 | [raft](https://github.com/willemt/raft)                            | ?                  | consensus mechanism                                                    | :heavy_check_mark:                       |
-| [stduuid](https://github.com/mariusbancila/stduuid)                | ?                  | order number generation                                                | :o:                                      |
+| [stduuid](https://github.com/mariusbancila/stduuid)                | ?                  | unique id generation                                                   | :o:                                      |
 | [linenoise](https://github.com/antirez/linenoise)                  | ?                  | command line interface                                                 | :heavy_check_mark: :white_square_button: |
 | [lua](https://www.lua.org/)                                        | 5.1.5              | configuration script                                                   | :heavy_check_mark:                       |
-| [libpng](http://www.libpng.org/pub/png/)                           | 1.6.37             | image exportation                                                      | :heavy_check_mark:                       |
-| [zlib](https://www.zlib.net/)                                      | 1.2.12             | for libpng                                                             | :heavy_check_mark:                       |
 | [openpgp](external/openpgp)                                        | ?                  | public-key encryption and digital signatures                           | :grey_question:                          |
 
 ### Compiling neroshop from source
@@ -171,7 +179,7 @@ In some cases, you may need to add this line under the "find_package(Boost .." i
 
 **5. Build monero-project to create .a libraries**
 ```bash
-make release-static
+make release-static -j$(nproc)
 ```
 ```bash
 cd ../../../../
@@ -188,12 +196,16 @@ cd external/
 cmake -G"Unix Makefiles"
 make
 cd ..
+```
 
+```bash
 # Build neroshop
 cd build
-cmake ..
+cmake .. #-DNEROSHOP_BUILD_CLI=1 #-DNEROSHOP_BUILD_TESTS=1
 make
+```
 
+```bash
 # Run neroshop
 ./neroshop
 ```
@@ -203,8 +215,14 @@ make
 See [CONTRIBUTING.md](CONTRIBUTING.md)
 
 
+## License
+This project is licensed under the [GNU General Public License v3.0 (GPLv3)](LICENSE)
+
+
 ## Donations
-You may support the neroshop project directly by donating Monero (XMR) to the address below. Received payments will be used to reward developers for their contributions to the project (mostly by completing bounties) and will also be used to fund our official website domain name.
+You may support the neroshop project directly by donating to any of the addresses below. Received payments will be used to reward developers for their contributions to the project (mostly by completing bounties) and will also be used to fund our official website domain name.
+
+**Monero [XMR]**
 ```
 83QbQvnnyo7515rEnW8XwF1hbP5qMab6sHXFzP6pg3EKGscgXCbVjbt1FX5SF7AV9p4Ur1tiommuQSzrQQRHkZicVYu6j8Y
 ```
@@ -212,24 +230,32 @@ You may support the neroshop project directly by donating Monero (XMR) to the ad
     <a href="monero:83QbQvnnyo7515rEnW8XwF1hbP5qMab6sHXFzP6pg3EKGscgXCbVjbt1FX5SF7AV9p4Ur1tiommuQSzrQQRHkZicVYu6j8Y" target="_blank"><img src="images/donate_xmr.png" width="128" height="128"></img></a>
 </p>
 
+**Wownero [WOW]**
+```
+WW2pQTQWHpyJf2CHrCmZG7Tn3zBnYRZTH8g4U3pSZf5s6xsTXrZc9odDWmrWzjRc9MMQWrKXxjHsRdzH5JpJ7kzx1jZuSVSfi
+```
+
 
 ## Resources
-> Website: [neroshop.org](https://neroshop.org/)
+* Website: [neroshop.org](https://neroshop.org/)
 
-> Git (Unofficial): [github.com/larteyoh/testshop](https://github.com/larteyoh/testshop)
+* Git (Unofficial): [github.com/larteyoh/testshop](https://github.com/larteyoh/testshop)
 
-> Git (Official): [github.com/larteyoh/neroshop](https://github.com/larteyoh/neroshop)
+* Git (Official): [github.com/larteyoh/neroshop](https://github.com/larteyoh/neroshop)
 
-> Mail: neroshop@protonmail.com
+* Mail: neroshop@protonmail.com
 
-> Matrix: [#neroshop:matrix.org](https://matrix.to/#/#neroshop:matrix.org)
+* Matrix: [#neroshop:matrix.org](https://matrix.to/#/#neroshop:matrix.org)
+
+* Matrix 2: [#neroshop-dev:matrix.org](https://matrix.to/#/#neroshop-dev:matrix.org)
 
 
 ## Credits
 ```
 u/EchoingCat — for the revision of the official neroshop logo
-woodser — for his guidance and for his work on the monero-cpp library which has made this app possible
-yuriio147 — for his work on several QML components(Triangle, Banner, NodeList, etc.), the currency converter, fixing a major bug in the RSA encryption code, the RSA signing and verifying functions, and for teaching me some Qt/Quick techniques
+woodser — for his guidance and for his work on the monero-cpp library which has made the development of this app possible
+yuriio147 — for his work on various QML components (Triangle, Banner, NodeList, etc.), the currency converter, fixing a major bug in the RSA encryption code, the RSA signing and verifying functions, and for teaching me some Qt/Quick techniques
+lza_menace — for his work on the new monero.fail JSON API endpoint
 ```
 
 [//]: # (./clean.sh)

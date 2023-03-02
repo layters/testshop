@@ -5,6 +5,7 @@ import QtQuick.Layouts 1.12//1.15 // The module is new in Qt 5.1 and requires Qt
 import QtGraphicalEffects 1.12 // LinearGradient
 import Qt.labs.platform 1.1 // FileDialog (since Qt 5.8) // change to "import QtQuick.Dialogs" if using Qt 6.2
 
+import neroshop.CurrencyExchangeRates 1.0
 import FontAwesome 1.0
 
 //import neroshop.Wallet 1.0
@@ -30,8 +31,8 @@ ApplicationWindow {
         visible: (!pageLoader.source.toString().match("qml/pages/MainPage.qml")) ? true : false;
         
         Button {//Image { 
-            id: neroshopLogoImage
-            visible: false
+            id: neroshopLogoImageButton
+            visible: !settingsDialog.hideHomepageButton
             property real iconSize: 30
             icon.source: (NeroshopComponents.Style.darkTheme) ? "qrc:/images/appicons/Vector_Illustrator Files/LogoLight.svg" : "qrc:/images/appicons/Vector_Illustrator Files/LogoDark.svg"
             icon.color: icon.color
@@ -41,21 +42,25 @@ ApplicationWindow {
             background: Rectangle {
                 color: "transparent"
                 radius: 5
-                border.color: parent.hovered ? "#ffffff" : "transparent"
+                ////border.color: parent.hovered ? "#ffffff" : "transparent"
             }
             anchors.verticalCenter: parent.verticalCenter
             anchors.left: parent.left
             anchors.leftMargin: 20
-            //width: 35; height: this.width
             onClicked: { 
                 navBar.uncheckAllButtons()
                 pageLoader.source = "qrc:/qml/pages/HomePage.qml" 
+            }
+            MouseArea {
+                anchors.fill: parent
+                onPressed: mouse.accepted = false
+                cursorShape: Qt.PointingHandCursor
             }
         }
         
         NeroshopComponents.SearchBar {
             id: searchBar
-            anchors.left: (neroshopLogoImage.visible) ? neroshopLogoImage.right : parent.left
+            anchors.left: (neroshopLogoImageButton.visible) ? neroshopLogoImageButton.right : parent.left
             anchors.leftMargin: 20
             anchors.top: parent.top; anchors.topMargin: 20        
         }    
@@ -72,13 +77,14 @@ ApplicationWindow {
     Loader {
         id: pageLoader
         anchors.fill: parent
-        //source: "qrc:/qml/pages/MainPage.qml"
-        source: "qrc:/qml/pages/HomePage.qml"
+        source: "qrc:/qml/pages/MainPage.qml"
+        //source: "qrc:/qml/pages/HomePage.qml"
         //source: "qrc:/qml/pages/CartPage.qml"
         //source: "qrc:/qml/pages/CatalogPage.qml"
         //source: "qrc:/qml/pages/ProductPage.qml"
         //source: "qrc:/qml/pages/OrderCheckoutPage.qml"
-        ////source: "qrc:/qml/pages/ProfilePage.qml"
+        //source: "qrc:/qml/pages/ProfilePage.qml"
+        //source: "qrc:/qml/pages/subpages/WalletPage.qml"
         ////source: "qrc:/qml/pages/Page.qml"
 
         onSourceChanged: {
@@ -164,6 +170,11 @@ ApplicationWindow {
                     onClicked: {
                         settingsDialog.open()
                     }
+                    MouseArea {
+                        anchors.fill: parent
+                        onPressed: mouse.accepted = false
+                        cursorShape: Qt.PointingHandCursor
+                    }
                     NeroshopComponents.Hint {
                         visible: parent.hovered
                         x: parent.x + (parent.width - this.width) / 2 // Popups don't have anchors :(
@@ -197,7 +208,7 @@ ApplicationWindow {
                         x: parent.x + (parent.width - this.width) / 2 // Popups don't have anchors :(
                         height: contentHeight + 20; width: (contentWidth > parent.width) ? 300 : parent.width
                         bottomMargin : footer.height + 5
-                        text: qsTr("neromon\n%1 %2").arg((parent.value < 1.0) ? "Synchronizing" : "Connected").arg((parent.value > 0.0 && parent.value < 1.0) ? ("(" + (parent.value * 100).toString() + "%)") : "")
+                        text: qsTr("neromon\n%1 %2").arg((parent.value <= 0.0) ? "Disconnected" : ((parent.value > 0.0 && parent.value < 1.0) ? "Synchronizing" : "Connected")).arg((parent.value > 0.0 && parent.value < 1.0) ? ("(" + (parent.value * 100).toString() + "%)") : "")
                         pointer.visible: false
                     }
                 }      
@@ -220,6 +231,7 @@ ApplicationWindow {
                     anchors.verticalCenter: parent.verticalCenter//anchors.top: parent.top; anchors.topMargin: (parent.height - this.height) / 2
                     ////value: Wallet.opened ? Wallet.getSyncPercentage() : 0.0 // this does not work (fails to update value so we use Timer instead)
                     barWidth: daemonSyncBar.barWidth
+                    property string title: "monerod"
                     Timer {
                         interval: 1 // trigger every x miliseconds
                         running: true
@@ -234,7 +246,7 @@ ApplicationWindow {
                         x: parent.x + (parent.width - this.width) / 2
                         height: contentHeight + 20; width: (contentWidth > parent.width) ? 300 : parent.width
                         bottomMargin : footer.height + 5
-                        text: qsTr("%1\n%2 %3\n Blocks remaining: %4 / %5").arg("monerod").arg(!Wallet.opened ? "Disconnected" : ((parent.value < 1.0) ? Wallet.getSyncMessage() : "Connected")).arg((parent.value > 0.0 && parent.value != 1.0) ? ("(" + (parent.value * 100).toFixed(2) + "%)") : "").arg(!Wallet.opened ? 0 : Wallet.getSyncHeight()).arg(!Wallet.opened ? 0 : Wallet.getSyncEndHeight()) // If connected to a remote node, "monerod" will be replaced by the <ip>:<port> of the remote node
+                        text: qsTr("%1\n%2 %3%4").arg(moneroDaemonSyncBar.title).arg((!Wallet.opened || parent.value <= 0.0) ? ((moneroDaemonSyncBar.title != "monerod") ? "Waiting" : "Disconnected") : ((parent.value > 0.0 && parent.value < 1.0) ? Wallet.getSyncMessage() : "Connected")).arg((parent.value > 0.0 && parent.value != 1.0) ? ("(" + (parent.value * 100).toFixed(2) + "%)") : "").arg((!Wallet.opened || parent.value <= 0.0) ? "" : ((parent.value > 0.0 && parent.value != 1.0) ? ("\nBlocks remaining: " + Wallet.getSyncHeight() + " / " + Wallet.getSyncEndHeight()) : ""))
                         pointer.visible: false
                     }                
                 }
@@ -259,11 +271,10 @@ ApplicationWindow {
                 
                 Text {
                     id: priceDisplayText
-                    property real amount: 1
                     property string scriptCurrency: Script.getString("neroshop.generalsettings.currency")
                     property string currency: Backend.isSupportedCurrency(scriptCurrency) ? scriptCurrency : "usd"
-                    property double price: Backend.getPrice(amount, currency)
-                    text: qsTr(/*amount.toString() + " " + */FontAwesome.monero + "  %1%2").arg(Backend.getCurrencySign(currency)).arg(price.toFixed(Backend.getCurrencyDecimals(currency)))////.arg(currency.toUpperCase())
+                    readonly property double price: CurrencyExchangeRates.getXmrPrice(priceDisplayText.currency)
+                    text: qsTr(FontAwesome.monero + "  %1%2").arg(Backend.getCurrencySign(currency)).arg(price.toFixed(Backend.getCurrencyDecimals(currency)))
                     color: (NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000"
                     font.bold: true
                     anchors.verticalCenter: parent.verticalCenter
@@ -287,7 +298,7 @@ ApplicationWindow {
                 }
                                         
                 NeroshopComponents.Hint {
-                    visible: false////priceDisplayHoverHandler.hovered // <- uncomment this to make the tooltip visible on hover
+                    visible: priceDisplayHoverHandler.hovered // <- uncomment this to make the tooltip visible on hover
                     height: contentHeight + 20; width: contentWidth + 20
                     bottomMargin : footer.height + 5
                     text: qsTr("XMR / %1").arg(priceDisplayText.currency.toUpperCase())

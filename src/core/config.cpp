@@ -44,12 +44,9 @@ neroshop = {
         },
         daemon = {
             network_type = "stagenet",
-            ip = "localhost", -- set to "0.0.0.0" to allow other wallets to connect to your node
-            port = "38081", --"18081" (mainnet), "38081" (stagenet), or "28081" (testnet)
             confirm_external_bind = false, -- if true then it confirms that you want to allow connections from other wallets outside of this system, but only when ip is set to "0.0.0.0"
             restricted_rpc = true,
             data_dir = "/home/<user>/.bitmonero",
-            remote = false -- set to true if the node that you want to connect to is a remote node
         },
         nodes = {
             mainnet = {
@@ -70,24 +67,18 @@ neroshop = {
                 "node.xmr.ru:18081"
             },
             stagenet = {
-                "stagenet.community.rino.io:38081",
-                "xmr-lux.boldsuck.org:38081",
-                "node2.monerodevs.org:38089",
-                --"plowsof3t5hogddwabaeiyrno25efmzfxyro2vligremt7sxpsclfaid.onion:38089",
-                "stagenet.xmr-tw.org:38081",
-                --"stagenet.xmr.ditatompel.com",
-                "xmr-lux.boldsuck.org:38081",
-                --"plowsoffjexmxalw73tkjmf422gq6575fc7vicuu4javzn2ynnte6tyd.onion:38089",
-                "node.monerodevs.org:38089",
+                "http://node.monerodevs.org:38089",
+                "http://node2.monerodevs.org:38089",
+                "http://stagenet.community.rino.io:38081",
+                "http://stagenet.xmr-tw.org:38081",
+                "http://xmr-lux.boldsuck.org:38081",
+                "https://xmr-lux.boldsuck.org:38081",
             },
             testnet = {
-                "testnet.community.rino.io:28081",
-                "node2.monerodevs.org:28089",
-                --"plowsof3t5hogddwabaeiyrno25efmzfxyro2vligremt7sxpsclfaid.onion:28089",
-                "testnet.xmr-tw.org:28081",
-                --"plowsoffjexmxalw73tkjmf422gq6575fc7vicuu4javzn2ynnte6tyd.onion:28089",
-                --"testnet.xmr.ditatompel.com",
-                "node.monerodevs.org:28089",
+                "http://node.monerodevs.org:28089",
+                "http://node2.monerodevs.org:28089",
+                "http://testnet.community.rino.io:28081",
+                "http://testnet.xmr-tw.org:28081",
             }
         }
     }

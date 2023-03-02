@@ -13,7 +13,7 @@ neroshop::Server::Server()
 	    neroshop::print("uv_tcp_init error: " + std::string(uv_strerror(result)), 1);
 	}	    
     #endif	
-	#if defined(__gnu_linux__)
+	#if defined(__gnu_linux__) && defined(NEROSHOP_USE_SYSTEM_SOCKETS)
 	socket = ::socket(AF_INET, SOCK_STREAM, 0);
     if (socket < 0) {
 		std::cerr << "Could not create socket" << std::endl;
@@ -25,22 +25,6 @@ neroshop::Server::Server()
         std::cerr << "Could not set socket options" << std::endl;
     }
 	#endif    
-	// Create a new raft server
-	/*int server_count = 1;
-	void * connection_user_data = nullptr; // pointer to userdata
-	// Generate random number to be used for node_id
-	std::random_device rd;
-    std::mt19937 mt(rd());
-    std::uniform_real_distribution<double> dist(0, 100);
-	int node_id = static_cast<int>(dist(mt)); // SHOULD be random
-	bool peer_is_self = true;
-    
-    raft = raft_new();
-
-	for(int i = 0; i < server_count; ++i) {
-	    raft_add_node(static_cast<raft_server_t*>(raft), connection_user_data, node_id, peer_is_self);
-	    std::cout << "raft node has been added\n";
-	}*/
 }
 ////////////////////
 neroshop::Server::~Server() {
@@ -66,7 +50,7 @@ bool neroshop::Server::bind(unsigned int port)
 	    neroshop::print("uv_tcp_bind error: " + std::string(uv_strerror(result)), 1);
 	}
     #endif	
-    #if defined(__gnu_linux__)
+    #if defined(__gnu_linux__) && defined(NEROSHOP_USE_SYSTEM_SOCKETS)
     struct sockaddr_in server_addr;
 	memset(&server_addr, 0, sizeof(struct sockaddr_in));//bzero((char *) &server_addr, sizeof(server_addr));
 	server_addr.sin_port = htons(port);
@@ -91,7 +75,7 @@ bool neroshop::Server::listen()
 		return false;
 	}
     #endif
-    #if defined(__gnu_linux__)
+    #if defined(__gnu_linux__) && defined(NEROSHOP_USE_SYSTEM_SOCKETS)
 	if(::listen(socket, SOMAXCONN) < 0) {//SOMAXCONN=4096 // number of requests to listen to at a time
         std::cerr << "Cannot listen for a connection" << std::endl;
 		shutdown();
@@ -103,7 +87,7 @@ bool neroshop::Server::listen()
 }
 ////////////////////
 bool neroshop::Server::accept() {
-    #if defined(__gnu_linux__)
+    #if defined(__gnu_linux__) && defined(NEROSHOP_USE_SYSTEM_SOCKETS)
     struct sockaddr_in client_addr;
 	socklen_t clilen = sizeof(client_addr);
     /*int */client_socket = ::accept(socket, (struct sockaddr *) &client_addr, &clilen);
@@ -126,7 +110,7 @@ bool neroshop::Server::accept_all()
 }
 ////////////////////
 void neroshop::Server::write(const std::string& message) {
-    #if defined(__gnu_linux__)
+    #if defined(__gnu_linux__) && defined(NEROSHOP_USE_SYSTEM_SOCKETS)
 	ssize_t write_result = ::write(client_socket, message.c_str(), message.length()/*buffer, strlen(buffer)*/);
     if(write_result < 0) { // -1 = error
         std::cout << "Server unable to write to client" << std::endl;
@@ -136,7 +120,7 @@ void neroshop::Server::write(const std::string& message) {
 ////////////////////
 std::string neroshop::Server::read() // receive data
 {
-    #if defined(__gnu_linux__)
+    #if defined(__gnu_linux__) && defined(NEROSHOP_USE_SYSTEM_SOCKETS)
     memset(buffer, 0, 256); // clear buffer (fills buffer with 0's) before reading into buffer
     ssize_t read_result = ::read(client_socket, buffer, 255);//::read(client_socket, (void *)buffer_new.c_str(), buffer_new.length()); // https://stackoverflow.com/questions/10105591/is-it-possible-to-use-an-stdstring-for-read  // #include <unistd.h>
 	if(read_result < 0) { // -1 = error
@@ -159,74 +143,17 @@ std::string neroshop::Server::read() // receive data
 }
 ////////////////////
 void neroshop::Server::close() {
-    #if defined(__gnu_linux__)
+    #if defined(__gnu_linux__) && defined(NEROSHOP_USE_SYSTEM_SOCKETS)
     ::close(socket);
     #endif
 }
 ////////////////////
 void neroshop::Server::shutdown() {
-    #if defined(__gnu_linux__)
+    #if defined(__gnu_linux__) && defined(NEROSHOP_USE_SYSTEM_SOCKETS)
     ::shutdown(socket, SHUT_RDWR); // SHUT_RD, SHUT_WR, SHUT_RDWR
     #endif
 }
 ////////////////////
-////////////////////
-////////////////////
-#if defined(NEROSHOP_USE_LIBUV)
-void neroshop::Server::on_new_connection(uv_stream_t *server, int status) {
-    if (status < 0) {
-        neroshop::print("New connection error: " + std::string(uv_strerror(status)), 1);
-        ////uv_close((uv_handle_t*) client, NULL); // close tcp connection
-        // error!
-        return;
-    }
-    
-    uv_tcp_t *client = (uv_tcp_t*) malloc(sizeof(uv_tcp_t));
-    uv_tcp_init(uv_default_loop()/*loop*/, client);
-    if (uv_accept(server, (uv_stream_t*) client) == 0) { // success
-        uv_read_start((uv_stream_t*) client, alloc_buffer, echo_read);//std::cout << "Got a connection from a peer/client!\n";//neroshop::print(std::string("\033[0;37mReceived a connection from ") + "<ip>" + ":\033[0;36m" + "<port>");
-    }
-    else {
-        uv_close((uv_handle_t*) client, NULL);
-    }    
-}
-////////////////////
-void neroshop::Server::alloc_buffer(uv_handle_t *handle, size_t suggested_size, uv_buf_t *buf) {
-    buf->base = (char *)malloc(suggested_size);
-    buf->len = suggested_size;
-    //memset(buf->base, 0, buf->len);
-}
-////////////////////
-void neroshop::Server::echo_read(uv_stream_t *client, ssize_t nread, const uv_buf_t *buf) {
-    if(nread < 0) {//== -1) {
-        if(nread != UV_EOF) neroshop::print("Read error: " + std::string(uv_err_name(nread)), 1);
-        uv_close((uv_handle_t*)client, NULL);
-        return;
-    }        
-
-    std::cout << "server_read_message_from_client: " << buf->base << std::endl;
-
-    // Write what the server read from the client (works so far)
-    //if (nread > 0) {
-        uv_write_t *write_req = (uv_write_t*)malloc(sizeof(uv_write_t));
-        write_req->data = (void*)buf->base;
-        const_cast<uv_buf_t *>(buf)->len = nread;
-        uv_write(write_req, client, buf, 1, echo_write);
-        //return;
-    //}
-
-    ////free(buf->base);
-}
-////////////////////
-void neroshop::Server::echo_write(uv_write_t *req, int status) {
-    if(status == -1) {
-        neroshop::print("Write error: " + std::string(uv_strerror(status)));
-    }
-    char *buffer_base = (char*) req->data;
-    free(buffer_base);
-    free(req);
-}
-#endif
 ////////////////////
 //template<typename F> void neroshop::Server::bind(const std::string& name, F func) {//F response) {
 	// if client requests a string e.g "LOGIN" then server will respond with login()

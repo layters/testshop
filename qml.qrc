@@ -7,6 +7,7 @@
         <file>qml/components/CartTable.qml</file>
         <file>qml/components/CatalogGrid.qml</file>
         <file>qml/components/CatalogList.qml</file>
+        <file>qml/components/ComboBox.qml</file>
         <file>qml/components/FilterBox.qml</file>
         <file>qml/components/Hint.qml</file>
         <file>qml/components/MessageBox.qml</file>
@@ -24,6 +25,7 @@
         <file>qml/components/ThemeSwitch.qml</file>
         <file>qml/components/Triangle.qml</file>
         <file>qml/components/ViewToggle.qml</file>
+        <file>qml/components/CurrencyExchangeRates.qml</file>
         <!-- qml sources: pages -->
         <file>qml/pages/CartPage.qml</file>
         <file>qml/pages/CatalogPage.qml</file>
@@ -78,6 +80,7 @@
         <file>images/increase.png</file>
         <file>images/key.png</file>
         <file>images/list.png</file>
+        <file>images/lock.png</file>
         <file>images/mail.png</file> <!-- not in used -->
         <file>images/mailbox.png</file>
         <file>images/mask.png</file>

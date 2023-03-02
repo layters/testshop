@@ -16,19 +16,24 @@
 
 namespace neroshop {
 
-class UserController : public QObject, public neroshop::Seller/*User*/ {
+class UserController : public QObject, public neroshop::Seller {
     Q_OBJECT
 public:
-    UserController();
+    UserController(QObject *parent = nullptr);
     ~UserController();
     
-    Q_PROPERTY(neroshop::User* user READ getUser);// NOTIFY ?);
+    Q_PROPERTY(neroshop::User* user READ getUser NOTIFY userChanged);
+    Q_PROPERTY(bool logged READ isUserLogged NOTIFY userLogged);
+    Q_PROPERTY(int productsCount READ getProductsCount NOTIFY productsCountChanged);
+    Q_PROPERTY(int cartQuantity READ getCartQuantity NOTIFY cartQuantityChanged);
 
-    ////Q_INVOKABLE void listItem();
-    //Q_INVOKABLE void addToCart();
+    Q_INVOKABLE void listProduct(const QString& product_id, int quantity, double price, const QString& currency, const QString& condition, const QString& location);
+    //Q_INVOKABLE void delistProduct(const QString& product_id);
+    Q_INVOKABLE void addToCart(const QString& product_id, int quantity);
+    //Q_INVOKABLE void removeFromCart(const QString& product_id, int quantity);
     //Q_INVOKABLE void createOrder();
-    //Q_INVOKABLE void rateItem();
-    //Q_INVOKABLE void rateSeller();
+    Q_INVOKABLE void rateItem(const QString& product_id, int stars, const QString& comments);//, const QString& signature);
+    Q_INVOKABLE void rateSeller(const QString& seller_id, int score, const QString& comments);//, const QString& signature);
     //Q_INVOKABLE void addToFavorites();
     //Q_INVOKABLE void removeFromFavorites();
     
@@ -38,17 +43,25 @@ public:
     Q_INVOKABLE void uploadAvatar(const QString& filename);
     Q_INVOKABLE bool exportAvatar();
         
-    Q_INVOKABLE QString getID() const;
-    //Q_INVOKABLE neroshop::WalletController * getWallet() const;
+    Q_INVOKABLE QString getID() const;//Q_INVOKABLE neroshop::WalletController * getWallet() const;
+    Q_INVOKABLE int getProductsCount() const;
+    Q_INVOKABLE int getReputation() const;
     //Q_INVOKABLE <type> <function_name>() const;
+    Q_INVOKABLE int getCartQuantity() const;
 
     Q_INVOKABLE neroshop::User * getUser() const;
     neroshop::Seller * getSeller() const;    
     
+    Q_INVOKABLE bool isUserLogged() const;
     //Q_INVOKABLE void onLogin();
     friend class Backend;
-private:    
-    std::unique_ptr<neroshop::User> user;
+signals:
+    void userChanged();
+    void userLogged();
+    void productsCountChanged();
+    void cartQuantityChanged();
+private:
+    std::unique_ptr<neroshop::User> _user;
     //std::unique_ptr<neroshop::WalletController> wallet_controller;
 };
 

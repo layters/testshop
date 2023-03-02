@@ -1,18 +1,27 @@
 #ifndef CLIENT_HPP_NEROSHOP
 #define CLIENT_HPP_NEROSHOP
 
-#include <uv.h>
-//#include <raft.h>
-#include <memory> // std::unique_ptr
-#include <cstring> // memset
-#if defined(__gnu_linux__)
-#include <unistd.h> // ::close
+#if defined(__gnu_linux__) && defined(NEROSHOP_USE_SYSTEM_SOCKETS)
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+#include <netdb.h>
+#include <unistd.h>
 #endif
 
-#include "debug.hpp"
-#include "server.hpp" // not sure if server should even be included in client ┐(´•_•`)┌
+#if defined(NEROSHOP_USE_LIBZMQ)
+#include <zmq.h>
+#endif
+
+#if defined(NEROSHOP_USE_LIBUV)
+#include <uv.h>
+#endif
+
+#include <memory> // std::unique_ptr
+#include <cstring> // memset
 
 #include "debug.hpp"
+#include "server.hpp" // temporary
 
 namespace neroshop {
 class Client {
@@ -38,26 +47,23 @@ public:
     //! \param name The name of the functor.    
     // decltype (auto) detects the function's return type and allows us to return any return type 
     template <typename... Args>
-    decltype (auto) call(const Server& server/*<= temporary*/, const std::string& name, Args&&... args) {   // todo: rename to request or nah? 
+    decltype (auto) call(const Server& server, const std::string& name, Args&&... args) {   // todo: rename to request or nah? 
+        std::cout << "calling " << name << "\n"; 
         // Print the arguments
         //(std::cout << ... << args);
         // Get number of arguments
         static const size_t arg_count = sizeof...(Args);
+        std::cout << "arg count: " << arg_count << "\n";
         // Check if function is not nullptr before calling it
         // Call function (this will work even if a function has zero args :D)
-        return const_cast<Server&>(server).function_list[name](std::forward<Args>(args)...);
+        return const_cast<Server&>(server).functions[name](std::forward<Args>(args)...);
     }
     // For functions without a return value
     template <typename... Args>
     void call(const std::string& name, Args&&... args) {   // todo: rename to request or nah? 
-    }    
+    }
 private:
-    #if defined(NEROSHOP_USE_LIBUV)
-    uv_tcp_t handle;//uv_tcp_t client;
-    //uv_udp_t handle; //(for receiving)
-    //uv_udp_send_t request; //(for sending)
-    #endif
-    #if defined(__gnu_linux__)
+    #if defined(__gnu_linux__) && defined(NEROSHOP_USE_SYSTEM_SOCKETS)
 	int socket;
 	char buffer[256];    
 	#endif

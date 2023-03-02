@@ -28,6 +28,9 @@ const std::map<neroshop::Currency, QString> CURRENCY_TO_ID{
     {neroshop::Currency::MXN, "MXN"},
     {neroshop::Currency::NZD, "NZD"},
     {neroshop::Currency::SEK, "SEK"},
+    
+    {neroshop::Currency::XAG, "XAG"},
+    {neroshop::Currency::XAU, "XAU"},
 };
 
 const std::map<neroshop::Currency, QString> CRYPTO_TO_ID{

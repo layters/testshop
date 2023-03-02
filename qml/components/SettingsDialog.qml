@@ -4,10 +4,11 @@ import QtQuick.Layouts 1.12
 //import QtGraphicalEffects 1.12
 import Qt.labs.platform 1.1 // FileDialog (since Qt 5.8) // change to "import QtQuick.Dialogs" if using Qt 6.2
 
+import neroshop.CurrencyExchangeRates 1.0
 import FontAwesome 1.0
 import "." as NeroshopComponents
 // This page provides an interface for modifying the configuration file, "settings.lua"
-// Stuff like themes, preffered currency, language, etc. will go here and will not be associated with an account but with the application config itself. This is to preserve privacy and reduce the size of the database
+// Stuff like themes, preferred currency, language, etc. will go here and will not be associated with an account but with the application config itself. This is to preserve privacy and reduce the size of the database
 // todo: use previous settings as placeholderText and rewrite settings.lua
 // default monero nodes cannot be modified but user may add addtional nodes to the nodelist
 
@@ -17,12 +18,23 @@ Popup {
     modal: true//clip: true
     closePolicy: Popup.CloseOnEscape    
     property bool hideTabText: false
+    property alias currentIndex: settingsStack.currentIndex
     // General tab properties
     property alias theme: themeBox
     property alias currency: currencyBox
+    property alias hideHomepageButton: hideHomepageButtonSwitch.checked
+    // Wallet settings
+    property alias balanceDisplay: balanceDisplayBox.currentIndex//property alias balanceDisplay: balanceDisplayBox.currentText
+    property alias balanceAmountPrecision: balancePrecisionBox.currentText
+    property alias showCurrencySign: showCurrencySignSwitch.checked
+    property alias blockExplorer: blockExplorerBox.currentText
+    // Catalog settings
+    property alias catalogPriceBox: priceDisplayBox
+    property alias hideProductDetails: hideProductDetailsSwitch.checked
+    property alias gridDetailsAlignCenter: gridDetailsAlignCenterSwitch.checked
     // Monero tab properties
     property alias moneroNodeType: nodeTypeStackLayout.currentIndex//nodeTypeGroup.checkedButton.stackLayoutIndex
-    property string moneroNodeAddress: (nodeTypeStackLayout.currentIndex == remoteNodeButton.stackLayoutIndex) ? moneroRemoteNodeList.selectedNode : (moneroDaemonIPField.placeholderText + ":" + moneroDaemonPortField.placeholderText)
+    property string moneroNodeAddress: (nodeTypeStackLayout.currentIndex == remoteNodeButton.stackLayoutIndex) ? moneroRemoteNodeList.selectedNode.replace(/^(https?:|)\/\//, '') : (moneroDaemonIPField.placeholderText + ":" + moneroDaemonPortField.placeholderText)
     property string moneroNodeDefaultPort: moneroDaemonPortField.placeholderText
     property string monerodPath: Backend.urlToLocalFile(monerodPathField.text)
     property string moneroDataDir: (moneroDataDirField.text.length < 1) ? Backend.urlToLocalFile(moneroDataDirField.placeholderText) : Backend.urlToLocalFile(moneroDataDirField.text)
@@ -42,7 +54,7 @@ Popup {
         if(network_type == "mainnet") return "18081";
         if(network_type == "testnet") return "28081";
         if(network_type == "stagenet") return "38081";
-        return "18081"//qsTr(Script.getString("neroshop.monero.daemon.port"))
+        return "18081"
     }
     
     background: Rectangle {
@@ -135,16 +147,21 @@ Popup {
                 // This will remove the icon :(
                 contentItem: Text {
                     text: parent.text
-                    color: (parent.checked) ? "#e0e0e0" : "#353637"//"#000000" : "#ffffff"
+                    color: (parent.checked) ? "#ffffff" : ((NeroshopComponents.Style.darkTheme) ? "#e0e0e0" : "#353637")//"#000000" : "#ffffff"
                     horizontalAlignment: Text.AlignHCenter//anchors.horizontalCenter: parent.horizontalCenter
                     verticalAlignment: Text.AlignVCenter                    
                     font.bold: true//(parent.checked) ? true : false
                     //font.family: FontAwesome.fontFamily
-                }                
+                }         
+                MouseArea {
+                    anchors.fill: parent
+                    onPressed: mouse.accepted = false
+                    cursorShape: !parent.checked ? Qt.PointingHandCursor : Qt.ArrowCursor
+                }       
             }
             
             TabButton { 
-                text: (hideTabText) ? qsTr(FontAwesome.monero) : qsTr("Monero")//.arg(FontAwesome.monero)
+                text: (hideTabText) ? qsTr(FontAwesome.monero) : qsTr("Node")//.arg(FontAwesome.monero)
                 width: implicitWidth + 20
                 onClicked: {
                     settingsStack.currentIndex = 1
@@ -159,11 +176,16 @@ Popup {
                 }
                 contentItem: Text {
                     text: parent.text
-                    color: (parent.checked) ? "#e0e0e0" : "#353637"
+                    color: (parent.checked) ? "#ffffff" : ((NeroshopComponents.Style.darkTheme) ? "#e0e0e0" : "#353637")
                     horizontalAlignment: Text.AlignHCenter
                     verticalAlignment: Text.AlignVCenter                    
                     font.bold: true
                     //font.family: FontAwesome.fontFamily
+                }
+                MouseArea {
+                    anchors.fill: parent
+                    onPressed: mouse.accepted = false
+                    cursorShape: !parent.checked ? Qt.PointingHandCursor : Qt.ArrowCursor
                 }
             }            
         }
@@ -180,7 +202,7 @@ Popup {
                 running: decorator.x != decorator.targetX
             }
         }*/        
-    /*contentItem: */ScrollView {    
+    ScrollView {    
         id: scrollView
         width: parent.width; height: 385//anchors.fill: parent
         anchors.top: settingsBar.bottom
@@ -195,23 +217,31 @@ Popup {
         StackLayout {
             id: settingsStack
             anchors.fill: parent//anchors.top: parent.top//settingsBar.bottom
-        GridLayout {
+            
+            property real contentBoxWidth: 600
+            property string contentBoxColor: "transparent"
+            property string contentBoxBorderColor: (NeroshopComponents.Style.darkTheme) ? "#f0f0f0" : "#4d4d4d"//"#030380"
+            property real comboBoxWidth: 300
+            property real comboBoxButtonWidth: 50
+            property bool comboBoxNestedButton: true
+            
+        ColumnLayout {
             id: generalSettings
             Layout.preferredWidth: parent.width//Layout.minimumWidth: parent.width - 10 // 10 is the scrollView's right margin
             //Layout.topMargin: 20 //Layout.fillWidth: true//Layout.alignment//anchors.fill: parent
-            //spacing: 10
+            spacing: 30
             GroupBox {
-                Layout.row: 0
+                //Layout.row: 0
                 Layout.alignment: Qt.AlignHCenter
-                Layout.preferredWidth: 500
+                Layout.preferredWidth: settingsStack.contentBoxWidth
                 title: qsTr("Currency")
                 
                 background: Rectangle {
                     y: parent.topPadding - parent.bottomPadding
                     width: parent.width
                     height: parent.height - parent.topPadding + parent.bottomPadding
-                    color: "transparent"
-                    border.color: "#030380"
+                    color: settingsStack.contentBoxColor
+                    border.color: settingsStack.contentBoxBorderColor
                     radius: 2
                 }
                 label: Label {
@@ -222,53 +252,81 @@ Popup {
                     elide: Text.ElideRight
                 }
                 // GroupBox content goes here
-                RowLayout {
+                ColumnLayout {
+                    id: currencyColumn
+                    width: parent.width; height: childrenRect.height
                     //spacing: 200 // spacing between Row items
-                    anchors.fill: parent
-                    Text {
-                        text: qsTr("Preffered local currency:")
-                        color: (NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000"
-                        Layout.alignment: Qt.AlignLeft
-                        Layout.leftMargin: 0
+                    Item {
+                        Layout.fillWidth: true
+                        Layout.preferredHeight: childrenRect.height
+                        Text {
+                            anchors.verticalCenter: currencyBox.verticalCenter
+                            text: qsTr("Preferred local currency:")
+                            color: (NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000"
+                            //Layout.alignment: Qt.AlignLeft; Layout.leftMargin: 0
+                        }
+                      
+                        NeroshopComponents.ComboBox {
+                            id: currencyBox
+                            anchors.right: parent.right//Layout.alignment: Qt.AlignRight; Layout.rightMargin: 0
+                            width: settingsStack.comboBoxWidth
+                            currentIndex: model.indexOf(Script.getString("neroshop.generalsettings.currency").toUpperCase())
+                            displayText: currentText
+                            ////property string lastCurrencySet: (Script.getString("neroshop.generalsettings.currency")) ? Script.getString("neroshop.generalsettings.currency") : "USD"
+                            //editable: true; selectTextByMouse: true
+                            model: Backend.getCurrencyList()
+                            //implicitContentWidthPolicy: ComboBox.WidestText//ComboBox.ContentItemImplicitWidth
+                            onAccepted: {
+                                if (find(editText) === -1)
+                                    model.append({text: editText})
+                            }
+                        
+                            onActivated: {    
+                                displayText = currentText
+                                priceDisplayText.currency = displayText
+                                ////lastCurrencySet = currentText
+                            }
+                            indicatorWidth: settingsStack.comboBoxButtonWidth
+                            indicatorDoNotPassBorder: settingsStack.comboBoxNestedButton
+                            color: "#f2f2f2"//(NeroshopComponents.Style.darkTheme) ? "#101010" : "#f0f0f0"
+                            //textColor: (NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000"
+                        }
                     }
-                    ComboBox {
-                        id: currencyBox
-                        Layout.alignment: Qt.AlignRight
-                        Layout.rightMargin: 0
-                        currentIndex: model.indexOf(Script.getString("neroshop.generalsettings.currency").toUpperCase())
-                        displayText: currentText
-                        ////property string lastCurrencySet: (Script.getString("neroshop.generalsettings.currency")) ? Script.getString("neroshop.generalsettings.currency") : "USD"
-                        //editable: true; selectTextByMouse: true
-                        model: Backend.getCurrencyList()
-                        //implicitContentWidthPolicy: ComboBox.WidestText//ComboBox.ContentItemImplicitWidth
-                        onAccepted: {
-                            if (find(editText) === -1)
-                                model.append({text: editText})
+                    // Price API - TODO
+                    /*Item {
+                        Layout.fillWidth: true
+                        Layout.preferredHeight: childrenRect.height
+                        Text {
+                            anchors.verticalCenter: priceApiBox.verticalCenter
+                            text: qsTr("Price API:")
+                            color: NeroshopComponents.Style.darkTheme ? "#ffffff" : "#000000"
                         }
                         
-                        onActivated: {    
-                            displayText = currentText
-                            priceDisplayText.currency = displayText
-                            priceDisplayText.price = Backend.getPrice(priceDisplayText.amount, priceDisplayText.currency)
-                            priceDisplayText.text = qsTr(FontAwesome.monero + "  %1%2").arg(Backend.getCurrencySign(priceDisplayText.currency)).arg(priceDisplayText.price.toFixed(Backend.getCurrencyDecimals(priceDisplayText.currency)))
-                            ////lastCurrencySet = currentText
+                        NeroshopComponents.ComboBox {
+                            id: priceApiBox
+                            anchors.right: parent.right
+                            width: settingsStack.comboBoxWidth; indicatorWidth: settingsStack.comboBoxButtonWidth
+                            //model: ["CoinGecko", "CoinMarketCap"]
+                            Component.onCompleted: currentIndex = find("CoinGecko")
+                            indicatorDoNotPassBorder: settingsStack.comboBoxNestedButton
+                            color: "#f2f2f2"
                         }
-}
+                    }*/
                 }          
             }
 
             GroupBox {
-                Layout.row: 1
+                //Layout.row: 1
                 Layout.alignment: Qt.AlignHCenter
-                Layout.preferredWidth: 500
+                Layout.preferredWidth: settingsStack.contentBoxWidth
                 title: qsTr("Application")
                 //width: scrollView.width//contentWidth // does nothing
                 background: Rectangle {
                     y: parent.topPadding - parent.bottomPadding
                     width: parent.width
                     height: parent.height - parent.topPadding + parent.bottomPadding
-                    color: "transparent"
-                    border.color: "#030380"
+                    color: settingsStack.contentBoxColor
+                    border.color: settingsStack.contentBoxBorderColor
                     radius: 2
                 }
                 label: Label {
@@ -279,59 +337,85 @@ Popup {
                     elide: Text.ElideRight
                 }
                 
-                RowLayout {
-                    anchors.fill: parent
-                    Text {
-                        text: qsTr("Theme:")
-                        color: (NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000"
-                        Layout.alignment: Qt.AlignLeft
-                        Layout.leftMargin: 0
-                    }
-                    ComboBox {
-                        id: themeBox
-                        Layout.alignment: Qt.AlignRight
-                        Layout.rightMargin: 0
-                        currentIndex: model.indexOf(NeroshopComponents.Style.themeName)//Component.onCompleted: currentIndex = model.indexOf(NeroshopComponents.Style.themeName) // Set the initial currentIndex to the index in the array containing themeName string
-                        displayText: currentText
-                        property string lastUsedDarkTheme: (Script.getBoolean("neroshop.generalsettings.application.theme.dark")) ? Script.getString("neroshop.generalsettings.application.theme.name") : "DefaultDark"
-                        property string lastUsedLightTheme: (!Script.getBoolean("neroshop.generalsettings.application.theme.dark")) ? Script.getString("neroshop.generalsettings.application.theme.name") : "DefaultLight"
-                        model: ["DefaultDark", "DefaultLight", "PurpleDust"]
-                        onActivated: {
-                            if(currentText == "PurpleDust") {
-                                NeroshopComponents.Style.darkTheme = true
-                                lastUsedDarkTheme = currentText
-                            }
-                            if(currentText == "DefaultDark") {
-                                NeroshopComponents.Style.darkTheme = true
-                                lastUsedDarkTheme = currentText
-                            }
-                            if(currentText == "DefaultLight") {
-                                NeroshopComponents.Style.darkTheme = false
-                                lastUsedLightTheme = currentText
-                            }
-                            displayText = currentText
-                            NeroshopComponents.Style.themeName = displayText // update the actual theme (name)
-                            themeSwitcher.checked = !NeroshopComponents.Style.darkTheme // update the theme switch                           
-                            // NOTE:  on app launch, the theme will ALWAYS be reset back to its default unless you change the theme settings in your configuration file
-                            //todo: change theme in configuration file too
-                            console.log("Theme set to", currentText)
+                ColumnLayout {
+                    id: appColumn
+                    width: parent.width; height: childrenRect.height
+                    //spacing: 200 // spacing between Row items
+                    Item {
+                        Layout.fillWidth: true
+                        Layout.preferredHeight: childrenRect.height
+                        Text {
+                            text: qsTr("Theme:")
+                            color: (NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000"
+                            anchors.verticalCenter: themeBox.verticalCenter//Layout.alignment: Qt.AlignLeft; Layout.leftMargin: 0
                         }
-                    } // ComboBox       
-                    // Window                
+                        NeroshopComponents.ComboBox {
+                            id: themeBox
+                            anchors.right: parent.right//Layout.alignment: Qt.AlignRight; Layout.rightMargin: 0
+                            width: settingsStack.comboBoxWidth
+                            currentIndex: model.indexOf(NeroshopComponents.Style.themeName)//Component.onCompleted: currentIndex = model.indexOf(NeroshopComponents.Style.themeName) // Set the initial currentIndex to the index in the array containing themeName string
+                            displayText: currentText
+                            property string lastUsedDarkTheme: (Script.getBoolean("neroshop.generalsettings.application.theme.dark")) ? Script.getString("neroshop.generalsettings.application.theme.name") : "DefaultDark"
+                            property string lastUsedLightTheme: (!Script.getBoolean("neroshop.generalsettings.application.theme.dark")) ? Script.getString("neroshop.generalsettings.application.theme.name") : "DefaultLight"
+                            model: ["DefaultDark", "DefaultLight", "PurpleDust"]
+                            onActivated: {
+                                if(currentText == "PurpleDust") {
+                                    NeroshopComponents.Style.darkTheme = true
+                                    lastUsedDarkTheme = currentText
+                                }
+                                if(currentText == "DefaultDark") {
+                                    NeroshopComponents.Style.darkTheme = true
+                                    lastUsedDarkTheme = currentText
+                                }
+                                if(currentText == "DefaultLight") {
+                                    NeroshopComponents.Style.darkTheme = false
+                                    lastUsedLightTheme = currentText
+                                }
+                                displayText = currentText
+                                NeroshopComponents.Style.themeName = displayText // update the actual theme (name)
+                                themeSwitcher.checked = !NeroshopComponents.Style.darkTheme // update the theme switch                           
+                                // NOTE:  on app launch, the theme will ALWAYS be reset back to its default unless you change the theme settings in your configuration file
+                                //todo: change theme in configuration file too
+                                console.log("Theme set to", currentText)
+                            }
+                            indicatorWidth: settingsStack.comboBoxButtonWidth
+                            indicatorDoNotPassBorder: settingsStack.comboBoxNestedButton
+                            color: "#f2f2f2"
+                        } // ComboBox   
+                    }    
+                    // Hide homepage button
+                    Item {
+                        Layout.fillWidth: true
+                        Layout.preferredHeight: childrenRect.height
+                        Text {
+                            anchors.verticalCenter: hideHomepageButtonSwitch.verticalCenter
+                            text: qsTr("Hide homepage button:")
+                            color: NeroshopComponents.Style.darkTheme ? "#ffffff" : "#000000"
+                        }
+                        
+                        NeroshopComponents.Switch {
+                            id: hideHomepageButtonSwitch
+                            anchors.right: parent.right; anchors.rightMargin: 5
+                            //width: settingsStack.comboBoxWidth
+                            checked: true
+                            radius: 13
+                            backgroundCheckedColor: "#605185"
+                        }
+                    }                                
                 } // RowLayout2
            } // GroupBox2        
-                       GroupBox {
-                       Layout.row: 2
+           GroupBox {
+                       //Layout.row: 2
                        Layout.alignment: Qt.AlignHCenter
-                       Layout.preferredWidth: 500
+                       Layout.preferredWidth: settingsStack.contentBoxWidth
                 title: qsTr("Localization")
                 
                 background: Rectangle {
                     y: parent.topPadding - parent.bottomPadding
                     width: parent.width
                     height: parent.height - parent.topPadding + parent.bottomPadding
-                    color: "transparent"
-                    border.color: "#030380"
+                    color: settingsStack.contentBoxColor
+                    border.color: settingsStack.contentBoxBorderColor
                     radius: 2
                 }
                 label: Label {
@@ -341,52 +425,241 @@ Popup {
                     color: parent.background.border.color//"#030380"
                     elide: Text.ElideRight
                 }
-            RowLayout {
-                anchors.fill: parent
+            ColumnLayout {
+                    id: languageColumn
+                    width: parent.width; height: childrenRect.height
+                    //spacing: 200 // spacing between Row items
+                    Item {
+                        Layout.fillWidth: true
+                        Layout.preferredHeight: childrenRect.height
                 Label {
                     text: qsTr("Language:")
                     color: NeroshopComponents.Style.darkTheme ? "#ffffff" : "#000000"
+                    anchors.verticalCenter: languageBox.verticalCenter
                 }
 
-                ComboBox {
-                    id: languageComboBox
-                    Layout.alignment: Qt.AlignRight
-                    Layout.rightMargin: 0
-                    currentIndex: model.indexOf("English"/*Script.getString("neroshop.generalsettings.currency").toUpperCase()*/)
+                NeroshopComponents.ComboBox {
+                    id: languageBox
+                    anchors.right: parent.right//Layout.alignment: Qt.AlignRight; Layout.rightMargin: 0
+                    width: settingsStack.comboBoxWidth
+                    currentIndex: model.indexOf("English")
                     model: ["English"] // TODO logic from controller
+                    indicatorWidth: settingsStack.comboBoxButtonWidth
+                    indicatorDoNotPassBorder: settingsStack.comboBoxNestedButton
+                    color: "#f2f2f2"
+                }
                 }
             }                
-            } // GroupBox3    
+            } // GroupBox3  
+            // Wallet settings
+            GroupBox {
+                title: qsTr("Wallet")
+                //Layout.row: 3
+                Layout.alignment: Qt.AlignHCenter
+                Layout.preferredWidth: settingsStack.contentBoxWidth
+                background: Rectangle {
+                    y: parent.topPadding - parent.bottomPadding
+                    width: parent.width
+                    height: parent.height - parent.topPadding + parent.bottomPadding
+                    color: settingsStack.contentBoxColor
+                    border.color: settingsStack.contentBoxBorderColor
+                    radius: 2
+                }
+                label: Label {
+                    x: parent.leftPadding
+                    width: parent.availableWidth
+                    text: parent.title
+                    color: parent.background.border.color//"#030380"
+                    elide: Text.ElideRight
+                }
+                // TODO: balance display (show total balance, show unlocked, show all), decimals (3, 6, 12, etc.)  
+                ColumnLayout {
+                    id: walletSetColumn
+                    width: parent.width; height: childrenRect.height
+                    // Balance display
+                    Item {
+                        Layout.fillWidth: true
+                        Layout.preferredHeight: childrenRect.height                        
+                        Text {
+                            anchors.verticalCenter: balanceDisplayBox.verticalCenter
+                            text: qsTr("Balance display:")
+                            color: NeroshopComponents.Style.darkTheme ? "#ffffff" : "#000000"
+                        }
+
+                        NeroshopComponents.ComboBox {
+                            id: balanceDisplayBox
+                            anchors.right: parent.right//; anchors.rightMargin: 0
+                            width: settingsStack.comboBoxWidth; indicatorWidth: settingsStack.comboBoxButtonWidth
+                            model: ["All balances", "Locked balance only", "Unlocked balance only"]
+                            Component.onCompleted: currentIndex = find("All balances")
+                            color: "#f2f2f2"
+                            indicatorDoNotPassBorder: settingsStack.comboBoxNestedButton
+                        }
+                    }
+                    // Precision/Decimal places
+                    Item {
+                        Layout.fillWidth: true
+                        Layout.preferredHeight: childrenRect.height
+                        Text {
+                            anchors.verticalCenter: balancePrecisionBox.verticalCenter
+                            text: qsTr("Decimals:")
+                            color: NeroshopComponents.Style.darkTheme ? "#ffffff" : "#000000"
+                        }
+
+                        NeroshopComponents.ComboBox {
+                            id: balancePrecisionBox
+                            anchors.right: parent.right
+                            width: settingsStack.comboBoxWidth; indicatorWidth: settingsStack.comboBoxButtonWidth
+                            model: ["3", "6", "9", "12"]
+                            Component.onCompleted: currentIndex = find("12")
+                            color: "#f2f2f2"
+                            indicatorDoNotPassBorder: settingsStack.comboBoxNestedButton
+                        }
+                    }
+                    // Currency sign
+                    Item {
+                        Layout.fillWidth: true
+                        Layout.preferredHeight: childrenRect.height
+                        Text {
+                            anchors.verticalCenter: showCurrencySignSwitch.verticalCenter
+                            text: qsTr("Show currency code:")
+                            color: NeroshopComponents.Style.darkTheme ? "#ffffff" : "#000000"
+                        }
+                        
+                        NeroshopComponents.Switch {
+                            id: showCurrencySignSwitch
+                            anchors.right: parent.right; anchors.rightMargin: 5
+                            //width: settingsStack.comboBoxWidth
+                            checked: false
+                            radius: 13
+                            backgroundCheckedColor: "#605185"
+                        }
+                    }                    
+                    // Block explorer
+                    Item {
+                        Layout.fillWidth: true
+                        Layout.preferredHeight: childrenRect.height
+                        Text {
+                            anchors.verticalCenter: blockExplorerBox.verticalCenter
+                            text: qsTr("Block explorer:")
+                            color: NeroshopComponents.Style.darkTheme ? "#ffffff" : "#000000"
+                        }
+                        
+                        NeroshopComponents.ComboBox {
+                            id: blockExplorerBox
+                            anchors.right: parent.right
+                            width: settingsStack.comboBoxWidth; indicatorWidth: settingsStack.comboBoxButtonWidth
+                            model: ["xmrchain.net"]
+                            Component.onCompleted: currentIndex = find("xmrchain.net")
+                            color: "#f2f2f2"
+                            indicatorDoNotPassBorder: settingsStack.comboBoxNestedButton
+                        }
+                    }
+                }
+            } // Balance GroupBox
+            // Hide or Show price display
+            // TODO: Privacy tab: Tor, I2P settings
+            // TODO: Paths selection
+            // TODO: Lock on inactivity
+            // Catalog settings
+            GroupBox {
+                title: qsTr("Catalog")
+                //Layout.row: 3
+                Layout.alignment: Qt.AlignHCenter
+                Layout.preferredWidth: settingsStack.contentBoxWidth
+                background: Rectangle {
+                    y: parent.topPadding - parent.bottomPadding
+                    width: parent.width
+                    height: parent.height - parent.topPadding + parent.bottomPadding
+                    color: settingsStack.contentBoxColor
+                    border.color: settingsStack.contentBoxBorderColor
+                    radius: 2
+                }
+                label: Label {
+                    x: parent.leftPadding
+                    width: parent.availableWidth
+                    text: parent.title
+                    color: parent.background.border.color//"#030380"
+                    elide: Text.ElideRight
+                }
+                // TODO: catalog display (show xmr price, show fiat price, show all)
+                ColumnLayout {
+                    id: catalogSetColumn
+                    width: parent.width; height: childrenRect.height
+                    // Product details
+                    Item {
+                        Layout.fillWidth: true
+                        Layout.preferredHeight: childrenRect.height
+                        Text {
+                            anchors.verticalCenter: hideProductDetailsSwitch.verticalCenter
+                            text: qsTr("Hide product details:")
+                            color: NeroshopComponents.Style.darkTheme ? "#ffffff" : "#000000"
+                        }
+                        
+                        NeroshopComponents.Switch {
+                            id: hideProductDetailsSwitch
+                            anchors.right: parent.right; anchors.rightMargin: 5
+                            //width: settingsStack.comboBoxWidth
+                            checked: false
+                            radius: 13
+                            backgroundCheckedColor: "#605185"
+                        }
+                    }
+                    // Catalog price display
+                    Item {
+                        Layout.fillWidth: true
+                        Layout.preferredHeight: childrenRect.height
+                        Text {
+                            anchors.verticalCenter: priceDisplayBox.verticalCenter
+                            text: qsTr("Price display:")
+                            color: NeroshopComponents.Style.darkTheme ? "#ffffff" : "#000000"
+                        }
+                        
+                        NeroshopComponents.ComboBox {
+                            id: priceDisplayBox
+                            anchors.right: parent.right
+                            width: settingsStack.comboBoxWidth; indicatorWidth: settingsStack.comboBoxButtonWidth
+                            model: ["All prices", "Fiat price only", "Monero price only"]
+                            Component.onCompleted: currentIndex = find("All prices")
+                            color: "#f2f2f2"
+                            indicatorDoNotPassBorder: settingsStack.comboBoxNestedButton
+                        }
+                    }
+                    // Grid product details aligned center
+                    Item {
+                        Layout.fillWidth: true
+                        Layout.preferredHeight: childrenRect.height
+                        visible: false // hide this option as it is not necessary
+                        Text {
+                            anchors.verticalCenter: gridDetailsAlignCenterSwitch.verticalCenter
+                            text: qsTr("Align product details at center (Grid):")
+                            color: NeroshopComponents.Style.darkTheme ? "#ffffff" : "#000000"
+                        }
+                        
+                        NeroshopComponents.Switch {
+                            id: gridDetailsAlignCenterSwitch
+                            anchors.right: parent.right; anchors.rightMargin: 5
+                            //width: settingsStack.comboBoxWidth
+                            checked: false
+                            radius: 13
+                            backgroundCheckedColor: "#605185"
+                        }
+                    }
+                }
+            }            
             
-        } // ColumnLayout (positions items vertically (up-and-down) I think, while RowLayout items are side-by-side)
+        } // generalSettings ColumnLayout
         
         // Monero settings
-            GridLayout {
+            ColumnLayout {
                 id: moneroSettings
                 Layout.minimumWidth: parent.width - 10 // 10 is the scrollView's right margin
                 Layout.minimumHeight: 500 // Increase this value whenever more items are added inside the scrollview
                 //rowSpacing:  // The default value is 5 but we'll set this later
-                            
-                    
-                /*Frame { //GroupBox {
-                    //title: qsTr("Select a node type")
-                    Layout.row: 0
-                    Layout.alignment: Qt.AlignHCenter
-                    Layout.preferredWidth: 500//250////Layout.fillWidth: true
-                    Layout.preferredHeight: contentHeight + (contentHeight / 2)//implicitContentHeight*/
-                    /*label: Label {
-                        text: parent.title
-                        color: (NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000"
-                        font.bold: true
-                    }*/
-                    /*background: Rectangle {
-                        radius: 3
-                        color: "transparent"
-                        border.color: (NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000"
-                    }*/
+
                     
                     RowLayout {
-                        Layout.row: 0
+                        //Layout.row: 0
                         Layout.alignment: Qt.AlignHCenter
                         Layout.preferredWidth: 500
                         //spacing: 5
@@ -468,22 +741,25 @@ Popup {
                 
                 StackLayout {
                     id: nodeTypeStackLayout
-                    Layout.row: 1
+                    //Layout.row: 1
                     Layout.fillWidth: true
                     Layout.fillHeight: true
                     
 Item {
+    Layout.preferredWidth: localNodeColumn.childrenRect.width
+    Layout.preferredHeight: remoteNodeColumn.childrenRect.height
     ColumnLayout {
-        anchors.fill: parent
-
+        id: remoteNodeColumn
+        anchors.horizontalCenter: parent.horizontalCenter//anchors.fill: parent
+        spacing: 5
             Frame {
-                    Layout.alignment: Qt.AlignHCenter
+                    Layout.alignment: Qt.AlignHCenter | Qt.AlignTop
                     Layout.preferredWidth: 500
-                    Layout.fillHeight: true////Layout.preferredHeight: 200//300
+                    Layout.preferredHeight: 300//200//Layout.fillHeight: true
                     background: Rectangle {
                         radius: 3
                         color: "transparent"
-                        border.color: (NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000"
+                        border.color: (NeroshopComponents.Style.darkTheme) ? (NeroshopComponents.Style.themeName == "PurpleDust" ? "#7d7d97" : "#a8a8a8") : "#989999"
                         //border.width: 1
                     }
 
@@ -493,7 +769,7 @@ Item {
                 }
             }
                 RowLayout {
-                    Layout.alignment: Qt.AlignHCenter
+                    Layout.alignment: Qt.AlignHCenter | Qt.AlignTop
                     
                     TextField {
                         id: moneroNodeIPField
@@ -550,8 +826,9 @@ Item {
                         onClicked: {
                             if(remoteNodeConnectButton.disabled) return;
                             if(!Wallet.isOpened()) {messageBox.text="Wallet must be opened first before connecting to a node";messageBox.open();return;}
-                            let remote_node_ip = (moneroNodeIPField.length > 0) ? moneroNodeIPField.text : moneroRemoteNodeList.selectedNode.split(":")[0]
-                            let remote_node_port = (moneroNodePortField.length > 0) ? moneroNodePortField.text : moneroRemoteNodeList.selectedNode.split(":")[1]
+                            let remote_node = (moneroNodeIPField.length > 0) ? (moneroNodePortField.length > 0 ? (moneroNodeIPField.text + ":" + moneroNodePortField.text) : (moneroNodeIPField.text + ":" + moneroNodePortField.placeholderText)) : moneroRemoteNodeList.selectedNode.replace(/^(https?:|)\/\//, '')//console.log("remote_node", remote_node)
+                            let remote_node_ip = remote_node.split(":")[0]
+                            let remote_node_port = remote_node.split(":")[1]
                             console.log("connecting to remote node:", (remote_node_ip + ":" + remote_node_port))
                             Wallet.nodeConnect(remote_node_ip, remote_node_port)
                         }
@@ -583,9 +860,12 @@ Item {
 } // Item 0                    
                     
                     Item {
+                        Layout.preferredWidth: localNodeColumn.childrenRect.width
+                        Layout.preferredHeight: localNodeColumn.childrenRect.height
             ColumnLayout {
-                anchors.fill: parent//Layout.fillWidth: true
-                //Layout.fillHeight: true
+                id: localNodeColumn
+                anchors.horizontalCenter: parent.horizontalCenter////anchors.fill: parent//Layout.fillWidth: true
+                spacing: 5
                 
                 TextField {
                     id: monerodPathField
@@ -675,7 +955,7 @@ Item {
                         id: moneroDaemonIPField
                         Layout.preferredWidth: (moneroDaemonPortField.width * 3) - parent.spacing // Default row spacing is 5 so the width is reduced by 5
                         Layout.preferredHeight: 50
-                        placeholderText: qsTr((confirmExternalBindSwitch.checked) ? "0.0.0.0" : Script.getString("neroshop.monero.daemon.ip")); placeholderTextColor: (NeroshopComponents.Style.darkTheme) ? "#a9a9a9" : "#696969"
+                        placeholderText: qsTr((confirmExternalBindSwitch.checked) ? "0.0.0.0" : "localhost"); placeholderTextColor: (NeroshopComponents.Style.darkTheme) ? "#a9a9a9" : "#696969"
                         color: (NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000"
                         selectByMouse: true
                         readOnly: localNodeButton.checked

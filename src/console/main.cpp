@@ -6,8 +6,9 @@ using namespace neroshop;
 // linenoise
 #include <linenoise.h>
 
-int main() {
-    
+int main(int argc, char** argv) {
+    // todo: bind command names to functions    
+    //-------------------------
     if(!neroshop::create_config()) { 
         neroshop::load_config();
     }
@@ -26,12 +27,12 @@ int main() {
         std::cout << "failed to get nodes in the config file\nCheck your config file in ~/.config/neroshop" << std::endl;
     }
     //-------------------------
-    // todo: bind command names to functions
     char * line = NULL;
     while((line = linenoise("neroshop-console> ")) != NULL) {
         // Do something with the string
         std::string command { line };
         //std::cout << "You wrote: " << command.c_str() << " (" << command.size() << ")\n";
+        linenoiseHistoryLoad("history.txt");
         linenoiseHistoryAdd(line); // Add to the history.
         linenoiseHistorySave("history.txt"); // Save the history on disk.    
         // commands        
@@ -47,6 +48,10 @@ int main() {
         else if(command == "version") {
             std::cout << "\033[0;93m" << "neroshop v" << NEROSHOP_VERSION << "\033[0m" << std::endl;
         }         
+        else if(command == "query") {
+            const std::string request = "SELECT * FROM users;";
+            neroshop::rpc::process(neroshop::rpc::translate(request));
+        }
         else if(command == "exit") {
             break;//exit(0);
         }  
@@ -93,10 +98,10 @@ int main() {
         
     }*/        
     //-------------------------    
-    //neroshop::Server server;
-    //server.bind("exit", [](void) { ::system("exit"); });    
+    /*neroshop::Server server;
+    server.bind("exit", [](void) { ::system("exit"); });*/
     
-    //client.call("exit" /*args ...*/);
+    //neroshop::Client client;client.call(server, "exit" /*args ...*/);
     //-------------------------    
     return 0;
 }

@@ -7,18 +7,19 @@ import "." as NeroshopComponents
 Item {
     id: tabBar
     property real radius: 3;
-    property alias checkedButton: tabButtonGroup.checkedButton
-    property int checkedButtonIndex: tabButtonGroup.checkedButton.buttonIndex
+    property alias currentButton: tabButtonGroup.checkedButton
+    property int currentIndex: tabButtonGroup.checkedButton.buttonIndex
     property real buttonWidth: 200
     property real buttonHeight: 50
     property string color0: "royalblue"
     property string color1: "#e0e0e0"
     property alias model: tabButtonRepeater.model
     property var buttonAt: tabButtonRepeater.itemAt
+    width: row.childrenRect.width; height: row.childrenRect.height
 
 ButtonGroup {
     id: tabButtonGroup
-    buttons: column.children
+    buttons: row.children
     exclusive: true // only one button in the group can be checked at any given time
     onClicked: {
         console.log("Switched to", button.text + " (index: " + button.buttonIndex + ")")
@@ -27,7 +28,7 @@ ButtonGroup {
 }
 
 Row {//TODO: try using a Column too
-    id: column
+    id: row
     spacing: 2
     anchors.centerIn: parent
 

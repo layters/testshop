@@ -13,6 +13,10 @@
 #include "../neroshop.hpp"
 using namespace neroshop;
 
+static const QString WALLET_QR_PROVIDER {"wallet_qr"};
+static const QString AVATAR_IMAGE_PROVIDER {"avatar"};
+static const QString CATALOG_IMAGE_PROVIDER {"catalog"};
+
 bool isIOS = false;
 bool isAndroid = false;
 bool isWindows = false;
@@ -21,8 +25,9 @@ bool isLinux = false;
 bool isTails = false;
 bool isDesktop = false;
 
-int main(int argc, char *argv[]) {
-    #if defined(NEROSHOP_USE_QT)
+int main(int argc, char *argv[])
+{
+#if defined(NEROSHOP_USE_QT)
     std::cout << "Using Qt version: " << qVersion() << "\n";
     // platform dependant settings
     #if !defined(Q_OS_ANDROID) && !defined(Q_OS_IOS)
@@ -47,15 +52,27 @@ int main(int argc, char *argv[]) {
     QGuiApplication app(argc, argv);
     #endif
     app.setApplicationName("neroshop");
-    
+
+    qmlRegisterSingletonType<CurrencyExchangeRatesProvider>(
+        "neroshop",
+        1,
+        0,
+        "CurrencyExchangeRatesProvider",
+        &CurrencyExchangeRatesProvider::qmlInstance);
+    qmlRegisterSingletonType(QUrl("qrc:/qml/components/CurrencyExchangeRates.qml"),
+                             "neroshop.CurrencyExchangeRates",
+                             1,
+                             0,
+                             "CurrencyExchangeRates");
+
     QQmlApplicationEngine engine;
     //--------------------------
     // start server daemon
-    //Backend::startServerDaemon();
+    /*Backend::startServerDaemon();
     // wait for daemon server to open
-    //Backend::waitForServerDaemon();
+    Backend::waitForServerDaemon();
     // connect to server daemon
-    //Backend::connectToServerDaemon();
+    Backend::connectToServerDaemon();*/
     // Configuration file must be loaded right after Qt Application object has been created so that we can get the correct config location
     // open configuration script
     neroshop::open_configuration_file();
@@ -67,6 +84,8 @@ int main(int argc, char *argv[]) {
     }
     // start database
     Backend::initializeDatabase();
+    // testing
+    //Backend::testfts5();//Backend::testWriteJson();
     // import paths
     engine.addImportPath(":/fonts"); // import FontAwesome 1.0
     // platform macros
@@ -91,17 +110,21 @@ int main(int argc, char *argv[]) {
         }
     }    
     // we can also register an instance of a class instead of the class itself
-    WalletController * wallet = new WalletController();
+    WalletController *wallet = new WalletController(&engine);
     wallet->setNetworkTypeByString(QString::fromStdString(network_type));
     engine.rootContext()->setContextProperty("Wallet", wallet);//new WalletController());//qmlRegisterUncreatableType<WalletProxy>("neroshop.Wallet", 1, 0, "Wallet", "Wallet cannot be instantiated directly.");//qmlRegisterType<WalletProxy>("neroshop.Wallet", 1, 0, "Wallet"); // Usage: import neroshop.Wallet  ...  Wallet { id: wallet }
     qRegisterMetaType<WalletController*>(); // Wallet can now be used as an argument in function parameters
     // register script
-    engine.rootContext()->setContextProperty("Script", new ScriptController());//qmlRegisterType<ScriptProxy>("neroshop.Script", 1, 0, "Script");
+    engine.rootContext()->setContextProperty("Script", new ScriptController(&engine));
     // register backend
-    engine.rootContext()->setContextProperty("Backend", new Backend());
+    engine.rootContext()->setContextProperty("Backend", new Backend(&engine));
     // Register user
-    engine.rootContext()->setContextProperty("User", new UserController());
-    qRegisterMetaType<UserController*>();
+    engine.rootContext()->setContextProperty("User", new UserController(&engine));
+    qRegisterMetaType<UserController *>();
+
+    engine.addImageProvider(WALLET_QR_PROVIDER, new WalletQrProvider(WALLET_QR_PROVIDER));
+    engine.addImageProvider(AVATAR_IMAGE_PROVIDER, new ImageProvider(AVATAR_IMAGE_PROVIDER));
+    engine.addImageProvider(CATALOG_IMAGE_PROVIDER, new ImageProvider(CATALOG_IMAGE_PROVIDER));    
     //--------------------------
     // Load main.qml from the "qml/" directory
     engine.load(QUrl(QStringLiteral("qrc:/qml/main.qml")));
