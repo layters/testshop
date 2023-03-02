@@ -87,7 +87,7 @@ public:
     
     Q_INVOKABLE int getStockAvailable(const QString& product_id);
     //Q_INVOKABLE void ();
-    static void testWriteJson(const std::vector<std::string>& args);
+    static void testWriteJson();
     static void testfts5();
     // Test function
     static void startServerDaemon();

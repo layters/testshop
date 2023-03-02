@@ -80,7 +80,7 @@ The name _neroshop_ is a combination of the words _nero_, which is Italian for _
 | [libbcrypt](https://github.com/rg3/libbcrypt)                      | 1.3                | password hashing                                                       | :x:                                      |
 | [sqlite3](https://sqlite.org/)                                     | 3.38.0             | database management                                                    | :heavy_check_mark:                       |
 | [QR Code generator](https://github.com/nayuki/QR-Code-generator)   | ?                  | qr code generation                                                     | :heavy_check_mark:                       |
-| [json](https://github.com/nlohmann/json/)                          | ?                  | json parsing                                                           | :o:                                      |
+| [json](https://github.com/nlohmann/json/)                          | ?                  | json parsing                                                           | :heavy_check_mark:                       |
 | [curl](https://github.com/curl/curl)                               | ?                  | currency conversion                                                    | :o:                                      |
 | [openssl](https://github.com/openssl/openssl)                      | 1.1.1              | for curl, sha256 sum and message encryption                            | :heavy_check_mark:                       |
 | [Qt](https://www.qt.io/)                                           | 5.12.8             | graphical user interface                                               | :heavy_check_mark:                       |

@@ -29,6 +29,7 @@
 #include "core/encryptor.hpp"
 #include "core/util.hpp"
 #include "core/process.hpp"
+#include "core/rpc.hpp"
 // neroshop-daemon
 // ...
 // neroshop (gui)

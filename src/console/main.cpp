@@ -32,6 +32,7 @@ int main(int argc, char** argv) {
         // Do something with the string
         std::string command { line };
         //std::cout << "You wrote: " << command.c_str() << " (" << command.size() << ")\n";
+        linenoiseHistoryLoad("history.txt");
         linenoiseHistoryAdd(line); // Add to the history.
         linenoiseHistorySave("history.txt"); // Save the history on disk.    
         // commands        
@@ -47,6 +48,10 @@ int main(int argc, char** argv) {
         else if(command == "version") {
             std::cout << "\033[0;93m" << "neroshop v" << NEROSHOP_VERSION << "\033[0m" << std::endl;
         }         
+        else if(command == "query") {
+            const std::string request = "SELECT * FROM users;";
+            neroshop::rpc::process(neroshop::rpc::translate(request));
+        }
         else if(command == "exit") {
             break;//exit(0);
         }  

@@ -45,53 +45,62 @@ void neroshop::db::Sqlite3::close() {
 	handle = nullptr;
     opened = false;
     neroshop::print("database is now closed");
+    // TODO: dump logs
 }
 ////////////////////
-void neroshop::db::Sqlite3::execute(const std::string& command) 
+int neroshop::db::Sqlite3::execute(const std::string& command) 
 {
     if(!handle) throw std::runtime_error("database is not connected");
 	char * error_message = 0;
 	int result = sqlite3_exec(handle, command.c_str(), neroshop::db::Sqlite3::callback, 0, &error_message);
 	if (result != SQLITE_OK) {
 		neroshop::print("sqlite3_exec: " + std::string(error_message), 1);
+		logger.push_back(std::make_pair(result, std::string(error_message)));
 		sqlite3_free(error_message);
+		return result;
 	}
+	return result;
 }
 ////////////////////
-void neroshop::db::Sqlite3::execute_params(const std::string& command, const std::vector<std::string>& args) {
+int neroshop::db::Sqlite3::execute_params(const std::string& command, const std::vector<std::string>& args) {
     if(!handle) throw std::runtime_error("database is not connected");
     // Prepare statement
     sqlite3_stmt * statement = nullptr;
     int result = sqlite3_prepare_v2(handle, command.c_str(), -1, &statement, nullptr);
     if(result != SQLITE_OK) {
         neroshop::print("sqlite3_prepare_v2: " + std::string(sqlite3_errmsg(handle)), 1);
+        logger.push_back(std::make_pair(result, std::string(sqlite3_errmsg(handle))));
         // Since we don't prepare a statement here, there is no need to finalise it
-        return;
+        return result;
     }
     // Bind user-defined parameter arguments
     for(int i = 0; i < args.size()/*sqlite3_bind_parameter_count(statement)*/; i++) {
         result = sqlite3_bind_text(statement, i + 1, args[i].c_str(), args[i].length(), SQLITE_STATIC);
         if(result != SQLITE_OK) {
             neroshop::print("sqlite3_bind_*: " + std::string(sqlite3_errmsg(handle)), 1);
+            logger.push_back(std::make_pair(result, std::string(sqlite3_errmsg(handle))));
             sqlite3_finalize(statement);
-            return;
+            return result;
         }
     }
     // Evaluate the statement
     result = sqlite3_step(statement);
     if(result != SQLITE_DONE) {
         neroshop::print("sqlite3_step: " + std::string(sqlite3_errmsg(handle)), 1);
+        logger.push_back(std::make_pair(result, std::string(sqlite3_errmsg(handle))));
         sqlite3_finalize(statement);
-        return;
+        return result;
     }    
     // Finalize (destroy) the prepared statement
     result = sqlite3_finalize(statement);
     if(result != SQLITE_OK) {
         neroshop::print("sqlite3_finalize: " + std::string(sqlite3_errmsg(handle)), 1);
+        logger.push_back(std::make_pair(result, std::string(sqlite3_errmsg(handle))));
         sqlite3_finalize(statement);
-        return;
+        return result;
     }        
-    // We are not returning anything, just setting executing queries
+    // Return the result
+    return result;
 }
 ////////////////////
 ////////////////////
@@ -110,21 +119,25 @@ void * neroshop::db::Sqlite3::get_blob(const std::string& command) {
     int result = sqlite3_prepare_v2(handle, command.c_str(), -1, &statement, nullptr);
     if(result != SQLITE_OK) {
         neroshop::print("sqlite3_prepare_v2: " + std::string(sqlite3_errmsg(handle)), 1);
+        logger.push_back(std::make_pair(result, std::string(sqlite3_errmsg(handle))));
         return nullptr;
     }
     result = sqlite3_step(statement);
     if (result != SQLITE_ROW) {
         neroshop::print("sqlite3_step: " + std::string(sqlite3_errmsg(handle)), 1);
+        logger.push_back(std::make_pair(result, std::string(sqlite3_errmsg(handle))));
         sqlite3_finalize(statement);
         return nullptr;
     }
     int column_type = sqlite3_column_type(statement, 0);
     if(column_type == SQLITE_NULL) {
+        ////logger.push_back(std::make_pair(, ));
         sqlite3_finalize(statement);
         return nullptr;
     }    
     if(column_type != SQLITE_BLOB) { // NULL is the only other acceptable return type
         neroshop::print("sqlite3_column_type: invalid column return type\ncommand: " + command, 1);
+        ////logger.push_back(std::make_pair(, ));
         sqlite3_finalize(statement);
         return nullptr;
     }
@@ -139,6 +152,7 @@ void * neroshop::db::Sqlite3::get_blob_params(const std::string& command, const 
     int result = sqlite3_prepare_v2(handle, command.c_str(), -1, &statement, nullptr);
     if(result != SQLITE_OK) {
         neroshop::print("sqlite3_prepare_v2: " + std::string(sqlite3_errmsg(handle)), 1);
+        logger.push_back(std::make_pair(result, std::string(sqlite3_errmsg(handle))));
         return nullptr;
     }
     // Bind user-defined parameter arguments
@@ -146,6 +160,7 @@ void * neroshop::db::Sqlite3::get_blob_params(const std::string& command, const 
         result = sqlite3_bind_text(statement, i + 1, args[i].c_str(), args[i].length(), SQLITE_STATIC);
         if(result != SQLITE_OK) {
             neroshop::print("sqlite3_bind_*: " + std::string(sqlite3_errmsg(handle)), 1);
+            logger.push_back(std::make_pair(result, std::string(sqlite3_errmsg(handle))));
             sqlite3_finalize(statement);
             return nullptr;
         }
@@ -153,11 +168,13 @@ void * neroshop::db::Sqlite3::get_blob_params(const std::string& command, const 
     sqlite3_step(statement); // Don't check for error or it'll keep saying: "another row available" or "no more rows available"
     int column_type = sqlite3_column_type(statement, 0);
     if(column_type == SQLITE_NULL) {
+        ////logger.push_back(std::make_pair(, ));
         sqlite3_finalize(statement);
         return nullptr;
     }    
     if(column_type != SQLITE_BLOB) {
         neroshop::print("sqlite3_column_type: invalid column return type\ncommand: " + command, 1);
+        ////logger.push_back(std::make_pair(, ));
         sqlite3_finalize(statement);
         return nullptr;
     }
@@ -172,21 +189,25 @@ std::string neroshop::db::Sqlite3::get_text(const std::string& command) {//const
     int result = sqlite3_prepare_v2(handle, command.c_str(), -1, &stmt, nullptr);
     if(result != SQLITE_OK) {
         neroshop::print("sqlite3_prepare_v2: " + std::string(sqlite3_errmsg(handle)), 1);
+        logger.push_back(std::make_pair(result, std::string(sqlite3_errmsg(handle))));
         return "";
     }
     result = sqlite3_step(stmt);
     if (result != SQLITE_ROW) {
         neroshop::print("sqlite3_step: " + std::string(sqlite3_errmsg(handle)), 1);
+        logger.push_back(std::make_pair(result, std::string(sqlite3_errmsg(handle))));
         sqlite3_finalize(stmt);
         return "";
     }
     int column_type = sqlite3_column_type(stmt, 0);
     if(column_type == SQLITE_NULL) {
+        ////logger.push_back(std::make_pair(, ));
         sqlite3_finalize(stmt);
         return "";
     }    
     if(column_type != SQLITE_TEXT) {
         neroshop::print("sqlite3_column_type: invalid column return type\ncommand: " + command, 1);
+        ////logger.push_back(std::make_pair(, ));
         sqlite3_finalize(stmt);
         return "";
     }
@@ -202,6 +223,7 @@ std::string neroshop::db::Sqlite3::get_text_params(const std::string& command, c
     int result = sqlite3_prepare_v2(handle, command.c_str(), -1, &statement, nullptr);
     if(result != SQLITE_OK) {
         neroshop::print("sqlite3_prepare_v2: " + std::string(sqlite3_errmsg(handle)), 1);
+        logger.push_back(std::make_pair(result, std::string(sqlite3_errmsg(handle))));
         return "";
     }
     // Bind user-defined parameter arguments
@@ -209,6 +231,7 @@ std::string neroshop::db::Sqlite3::get_text_params(const std::string& command, c
         result = sqlite3_bind_text(statement, i + 1, args[i].c_str(), args[i].length(), SQLITE_STATIC);
         if(result != SQLITE_OK) {
             neroshop::print("sqlite3_bind_*: " + std::string(sqlite3_errmsg(handle)), 1);
+            logger.push_back(std::make_pair(result, std::string(sqlite3_errmsg(handle))));
             sqlite3_finalize(statement);
             return "";
         }
@@ -218,11 +241,13 @@ std::string neroshop::db::Sqlite3::get_text_params(const std::string& command, c
     // Check the type of the statement's return value
     int column_type = sqlite3_column_type(statement, 0);
     if(column_type == SQLITE_NULL) {
+        ////logger.push_back(std::make_pair(, ));
         sqlite3_finalize(statement);
         return "";
     }    
     if(column_type != SQLITE_TEXT) {
         neroshop::print("sqlite3_column_type: invalid column return type\ncommand: " + command, 1);
+        ////logger.push_back(std::make_pair(, ));
         sqlite3_finalize(statement);
         return "";
     }
@@ -238,21 +263,25 @@ int neroshop::db::Sqlite3::get_integer(const std::string& command) {
     int result = sqlite3_prepare_v2(handle, command.c_str(), -1, &statement, nullptr);
     if(result != SQLITE_OK) {
         neroshop::print("sqlite3_prepare_v2: " + std::string(sqlite3_errmsg(handle)), 1);
+        logger.push_back(std::make_pair(result, std::string(sqlite3_errmsg(handle))));
         return 0;
     }
     result = sqlite3_step(statement);
     if (result != SQLITE_ROW) {
         neroshop::print("sqlite3_step: " + std::string(sqlite3_errmsg(handle)), 1);
+        logger.push_back(std::make_pair(result, std::string(sqlite3_errmsg(handle))));
         sqlite3_finalize(statement);
         return 0;
     }
     int column_type = sqlite3_column_type(statement, 0);
     if(column_type == SQLITE_NULL) {
+        ////logger.push_back(std::make_pair(, ));
         sqlite3_finalize(statement);
         return 0;
     }    
     if(column_type != SQLITE_INTEGER) {
         neroshop::print("sqlite3_column_type: invalid column return type\ncommand: " + command, 1);
+        ////logger.push_back(std::make_pair(, ));
         sqlite3_finalize(statement);
         return 0;
     }
@@ -268,6 +297,7 @@ int neroshop::db::Sqlite3::get_integer_params(const std::string& command, const 
     int result = sqlite3_prepare_v2(handle, command.c_str(), -1, &statement, nullptr);
     if(result != SQLITE_OK) {
         neroshop::print("sqlite3_prepare_v2: " + std::string(sqlite3_errmsg(handle)), 1);
+        logger.push_back(std::make_pair(result, std::string(sqlite3_errmsg(handle))));
         return 0;
     }
     // Bind user-defined parameter arguments
@@ -275,6 +305,7 @@ int neroshop::db::Sqlite3::get_integer_params(const std::string& command, const 
         result = sqlite3_bind_text(statement, i + 1, args[i].c_str(), args[i].length(), SQLITE_STATIC);
         if(result != SQLITE_OK) {
             neroshop::print("sqlite3_bind_*: " + std::string(sqlite3_errmsg(handle)), 1);
+            logger.push_back(std::make_pair(result, std::string(sqlite3_errmsg(handle))));
             sqlite3_finalize(statement);
             return 0;
         }
@@ -284,11 +315,13 @@ int neroshop::db::Sqlite3::get_integer_params(const std::string& command, const 
     // Check the type of the statement's return value
     int column_type = sqlite3_column_type(statement, 0);
     if(column_type == SQLITE_NULL) {
+        ////logger.push_back(std::make_pair(, ));
         sqlite3_finalize(statement);
         return 0;
     }    
     if(column_type != SQLITE_INTEGER) {
         neroshop::print("sqlite3_column_type: invalid column return type\ncommand: " + command, 1);
+        ////logger.push_back(std::make_pair(, ));
         sqlite3_finalize(statement);
         return 0;
     }
@@ -304,21 +337,25 @@ double neroshop::db::Sqlite3::get_real(const std::string& command) {
     int result = sqlite3_prepare_v2(handle, command.c_str(), -1, &stmt, nullptr);
     if(result != SQLITE_OK) {
         neroshop::print("sqlite3_prepare_v2: " + std::string(sqlite3_errmsg(handle)), 1);
+        logger.push_back(std::make_pair(result, std::string(sqlite3_errmsg(handle))));
         return 0.0;
     }
     result = sqlite3_step(stmt);
     if (result != SQLITE_ROW) {
         neroshop::print("sqlite3_step: " + std::string(sqlite3_errmsg(handle)), 1);
+        logger.push_back(std::make_pair(result, std::string(sqlite3_errmsg(handle))));
         sqlite3_finalize(stmt);
         return 0.0;
     }
     int column_type = sqlite3_column_type(stmt, 0);
     if(column_type == SQLITE_NULL) {
+        ////logger.push_back(std::make_pair(, ));
         sqlite3_finalize(stmt);
         return 0.0;
     }    
     if(column_type != SQLITE_FLOAT) {
         neroshop::print("sqlite3_column_type: invalid column return type\ncommand: " + command, 1);
+        ////logger.push_back(std::make_pair(, ));
         sqlite3_finalize(stmt);
         return 0.0;
     }
@@ -334,6 +371,7 @@ double neroshop::db::Sqlite3::get_real_params(const std::string& command, const 
     int result = sqlite3_prepare_v2(handle, command.c_str(), -1, &statement, nullptr);
     if(result != SQLITE_OK) {
         neroshop::print("sqlite3_prepare_v2: " + std::string(sqlite3_errmsg(handle)), 1);
+        logger.push_back(std::make_pair(result, std::string(sqlite3_errmsg(handle))));
         return 0.0;
     }
     // Bind user-defined parameter arguments
@@ -341,6 +379,7 @@ double neroshop::db::Sqlite3::get_real_params(const std::string& command, const 
         result = sqlite3_bind_text(statement, i + 1, args[i].c_str(), args[i].length(), SQLITE_STATIC);
         if(result != SQLITE_OK) {
             neroshop::print("sqlite3_bind_*: " + std::string(sqlite3_errmsg(handle)), 1);
+            logger.push_back(std::make_pair(result, std::string(sqlite3_errmsg(handle))));
             sqlite3_finalize(statement);
             return 0.0;
         }
@@ -351,11 +390,13 @@ double neroshop::db::Sqlite3::get_real_params(const std::string& command, const 
     int column_type = sqlite3_column_type(statement, 0);
     if(column_type == SQLITE_NULL) {
         sqlite3_finalize(statement);
+        ////logger.push_back(std::make_pair(, ));
         return 0.0;
     }    
     if(column_type != SQLITE_FLOAT) {
         neroshop::print("sqlite3_column_type: invalid column return type\ncommand: " + command, 1);
         sqlite3_finalize(statement);
+        ////logger.push_back(std::make_pair(, ));
         return 0.0;
     }
     // Finalize (destroy) the prepared statement
@@ -402,6 +443,16 @@ std::vector<std::string> neroshop::db::Sqlite3::get_rows(const std::string& comm
 }
 ////////////////////
 ////////////////////
+std::pair<int, std::string> neroshop::db::Sqlite3::get_error() const {
+    return logger.back();
+}
+////////////////////
+std::string neroshop::db::Sqlite3::get_select() {
+    std::string json_str = json_object.dump();
+    json_object.clear();
+    return json_str;
+}
+////////////////////
 ////////////////////
 ////////////////////
 bool neroshop::db::Sqlite3::is_open() const {
@@ -419,15 +470,21 @@ bool neroshop::db::Sqlite3::table_exists(const std::string& table_name) {
 }*/
 ////////////////////
 ////////////////////
+nlohmann::json neroshop::db::Sqlite3::json_object;//({});
+////////////////////
+//std::vector<std::string> neroshop::db::Sqlite3::select_result {};//std::vector<std::pair<int, std::string>> neroshop::db::Sqlite3::logger {{}};
 ////////////////////
 int neroshop::db::Sqlite3::callback(void *not_used, int argc, char **argv, char **az_col_name)
 {
-    int i;
-    for(i = 0; i < argc; i++) {
-	    std::cout << SQLITE3_TAG << az_col_name[i] << " = " << (argv[i] ? argv[i] : "NULL") << std::endl;  // printf("%s = %s\n", azcolname[i], argv[i] ? argv[i] : "nullptr");
+    // Note: This callback is only used when sqlite3_exec / execute() is called and will NOT work with sqlite3_prepare+sqlite3_step+sqlite3_finalize / execute_params
+    nlohmann::json row;
+    for(int i = 0; i < argc; i++) {
+	    row[az_col_name[i]] = argv[i] ? argv[i] : "NULL"; // throws "std::logic_error - what():  basic_string::_M_construct null not valid" exception unless NULL is a string :/
     }
-    std::cout << std::endl;
-    return 0;	
+    
+    json_object.push_back(row);
+    ////std::cout << json_object.dump() << std::endl;
+    return 0;
 }
 ////////////////////
 ////////////////////

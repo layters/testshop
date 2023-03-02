@@ -85,8 +85,7 @@ int main(int argc, char *argv[])
     // start database
     Backend::initializeDatabase();
     // testing
-    //Backend::testfts5();//
-    Backend::testWriteJson({"New"});
+    //Backend::testfts5();//Backend::testWriteJson();
     // import paths
     engine.addImportPath(":/fonts"); // import FontAwesome 1.0
     // platform macros

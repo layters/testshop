@@ -42,12 +42,11 @@ ApplicationWindow {
             background: Rectangle {
                 color: "transparent"
                 radius: 5
-                border.color: parent.hovered ? "#ffffff" : "transparent"
+                ////border.color: parent.hovered ? "#ffffff" : "transparent"
             }
             anchors.verticalCenter: parent.verticalCenter
             anchors.left: parent.left
             anchors.leftMargin: 20
-            //width: 35; height: this.width
             onClicked: { 
                 navBar.uncheckAllButtons()
                 pageLoader.source = "qrc:/qml/pages/HomePage.qml" 

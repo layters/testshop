@@ -26,7 +26,7 @@ namespace neroshop {
 	    auto now = std::chrono::system_clock::now();
         auto in_time_t = std::chrono::system_clock::to_time_t(now); // current time
 	    std::stringstream ss;
-	    ss << std::put_time(std::localtime(&in_time_t), std::string("[%Y-%m-%d  %H:%M:%S %p]").c_str());
+	    ss << std::put_time(std::localtime(&in_time_t), std::string("[%Y-%m-%d %H:%M:%S %p]").c_str());
         
         switch (priority) {
             case trace: file << ss.str() << "[Trace]: "; break;
