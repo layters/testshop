@@ -90,7 +90,7 @@ Page {
                                 anchors.top: parent.children[0].top
                             
                                 Text {
-                                    text: "0"//User.productsCount//"0"//"5430"
+                                    text: User.productsCount//"0"//"5430"
                                     font.bold: true
                                     font.pointSize: stats.numberTextFontSize
                                     color: stats.textColor
@@ -196,7 +196,7 @@ Page {
                                 anchors.top: parent.children[0].top
                             
                                 Text {
-                                    text: "0"//qsTr("%1%2").arg(User.getReputation()).arg("%")
+                                    text: qsTr("%1%2").arg(User.getReputation()).arg("%")
                                     font.bold: true
                                     font.pointSize: stats.numberTextFontSize
                                     color: stats.textColor
@@ -904,7 +904,7 @@ Page {
                     NeroshopComponents.Table {
                         id: orderRequestTable
                         Layout.fillWidth: true
-                        ////Layout.fillHeight: true
+                        Layout.fillHeight: true
                         Layout.alignment: Qt.AlignHCenter
                     }
                 }
