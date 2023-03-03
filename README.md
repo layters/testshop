@@ -16,7 +16,7 @@ A decentralized P2P (peer-to-peer) marketplace for [**Monero**](https://getmoner
 - [License](#license)
 - [Donations](#donations)
 - [Resources](#resources)
-- [Credits](#credits)
+- [Thanks](#thanks)
 
 
 ## Demo
@@ -90,6 +90,7 @@ The name _neroshop_ is a combination of the words _nero_, which is Italian for _
 | [linenoise](https://github.com/antirez/linenoise)                  | ?                  | command line interface                                                 | :heavy_check_mark: :white_square_button: |
 | [lua](https://www.lua.org/)                                        | 5.1.5              | configuration script                                                   | :heavy_check_mark:                       |
 | [openpgp](external/openpgp)                                        | ?                  | public-key encryption and digital signatures                           | :grey_question:                          |
+| [cxxopts](https://github.com/jarro2783/cxxopts)                    | ?                  | command line option parser                                             | :heavy_check_mark:                       |
 
 ### Compiling neroshop from source
 **0. Install prerequisites**
@@ -250,12 +251,12 @@ WW2pQTQWHpyJf2CHrCmZG7Tn3zBnYRZTH8g4U3pSZf5s6xsTXrZc9odDWmrWzjRc9MMQWrKXxjHsRdzH
 * Matrix 2: [#neroshop-dev:matrix.org](https://matrix.to/#/#neroshop-dev:matrix.org)
 
 
-## Credits
+## Thanks
 ```
 u/EchoingCat — for the revision of the official neroshop logo
 woodser — for his guidance and for his work on the monero-cpp library which has made the development of this app possible
-yuriio147 — for his work on various QML components (Triangle, Banner, NodeList, etc.), the currency converter, fixing a major bug in the RSA encryption code, the RSA signing and verifying functions, and for teaching me some Qt/Quick techniques
-lza_menace — for his work on the new monero.fail JSON API endpoint
+yuriio147 — for his work on various QML components (Triangle, Banner, NodeList, etc.), the currency converter, wallet address qr provider, fixing a major bug in the RSA encryption code, the RSA signing and verifying functions, and for teaching me some Qt/Quick techniques
+lza_menace — for his help on creating the new monero.fail JSON API endpoint
 ```
 
 [//]: # (./clean.sh)

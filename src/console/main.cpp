@@ -1,14 +1,13 @@
 #include <iostream>
 #include <string>
-// neroshop
+
 #include "../neroshop.hpp"
 using namespace neroshop;
-// linenoise
+
 #include <linenoise.h>
 
 int main(int argc, char** argv) {
-    // todo: bind command names to functions    
-    //-------------------------
+    // TODO: map command names to functions
     if(!neroshop::create_config()) { 
         neroshop::load_config();
     }
@@ -20,88 +19,49 @@ int main(int argc, char** argv) {
         neroshop::print("\033[1;91mnetwork_type \"" + network_type + "\" is not valid");
         return 1;
     }
-
-    std::vector<std::string> nodes_list = Script::get_table_string(lua_state, "neroshop.monero.nodes." + network_type);
+    std::vector<std::string> monero_nodes = Script::get_table_string(lua_state, "neroshop.monero.nodes." + network_type);
     
-    if(nodes_list.empty()) {
+    if(monero_nodes.empty()) {
         std::cout << "failed to get nodes in the config file\nCheck your config file in ~/.config/neroshop" << std::endl;
     }
-    //-------------------------
+    //-------------------------------------------------------
     char * line = NULL;
     while((line = linenoise("neroshop-console> ")) != NULL) {
-        // Do something with the string
         std::string command { line };
-        //std::cout << "You wrote: " << command.c_str() << " (" << command.size() << ")\n";
+
         linenoiseHistoryLoad("history.txt");
         linenoiseHistoryAdd(line); // Add to the history.
         linenoiseHistorySave("history.txt"); // Save the history on disk.    
-        // commands        
-        // without the command == "", single letters like 'e' will call exit for some reason
-        if(command == "help") {
+
+        if(command == "help" || !strncmp(line, "\0", command.length())) { // By default, pressing "Enter" on an empty string will execute this code
             std::cout << "\033[1;37mAvailable commands:\n\n help  Display list of available commands\n\n exit  Exit CLI\n\n" << "\033[0m\n";
         }  
         else if(command == "monero_nodes") {
-            for(std::string n : nodes_list) {
-                std::cout << "\033[1;36m" << n << "\033[0m" << std::endl;
+            for(std::string nodes : monero_nodes) {
+                std::cout << "\033[1;36m" << nodes << "\033[0m" << std::endl;
             }        
         }            
         else if(command == "version") {
             std::cout << "\033[0;93m" << "neroshop v" << NEROSHOP_VERSION << "\033[0m" << std::endl;
         }         
-        else if(command == "query") {
-            const std::string request = "SELECT * FROM users;";
-            neroshop::rpc::process(neroshop::rpc::translate(request));
+        else if(neroshop::string::starts_with(command, "query")) {
+            auto arg_count = neroshop::string::split(command, " ").size();
+            if(arg_count == 1) neroshop::print("expected arguments after 'query'", 1);
+            if(arg_count > 1) { 
+                 std::size_t arg_pos = command.find_first_of(" ");
+                 std::string sql = neroshop::string::trim_left(command.substr(arg_pos + 1));////trim_left(command.substr(std::string("query").length() + 1)); // <- this works too
+                 std::string json = neroshop::rpc::translate(sql);
+                 neroshop::rpc::process(json);//neroshop::rpc::request(json);
+                 // Usage: query UPDATE users SET name = "dude" WHERE name = "jack"
+            }
         }
         else if(command == "exit") {
-            break;//exit(0);
-        }  
-        // By default, pressing "Enter" on an empty string will execute the first call to strncmp for some reason
-        else if(!strncmp(line, "\0", command.length())) { // Empty string
-            std::cout << "Available commands:\n\n help  Display list of available commands\n\n exit  Exit CLI\n\n";
+            break;
         }
         else {
-            std::cerr << std::string("\033[1;91mUnreconized command: \033[1;37m") << line << "\033[0m" << std::endl;
-        }                   
+            std::cerr << std::string("\033[1;91mUnreconized command: \033[1;37m") << line << "\033[0m" << std::endl;  
+        }
         linenoiseFree(line); // Or just free(line) if you use libc malloc.
     }
-        /*else if(!strncmp(line, "", command.size()) && command == "") {
-        
-        }*/    
-
-    //-------------------------------------
-    /*else if(shellinput == "register") { // create a new wallet
-        
-    }    
-    */  
-    /*else if(shellinput == "auth") { // auth or access = synonym for login
-       std::cout << "1. seed (mnemonic)\n2. keys\n3. open wallet file";
-       unsigned int auth_options;
-       std::cin >> auth_options;
-       if(auth_options == 1) {
-           
-       }
-       if(auth_options == 2) {
-           
-       }
-    }*/         
-    /*else if(shellinput == "auth_with_seed") { // restore wallet from seed
-        
-    }    
-    else if(shellinput == "auth_with_keys") { // restore wallet from keys
-        
-    }
-    else if(shellinput == "auth_with_hw") { // restore/create wallet from hw
-        
-    }            
-    */        
-    /*else if(shellinput == "") {
-        
-    }*/        
-    //-------------------------    
-    /*neroshop::Server server;
-    server.bind("exit", [](void) { ::system("exit"); });*/
-    
-    //neroshop::Client client;client.call(server, "exit" /*args ...*/);
-    //-------------------------    
     return 0;
 }

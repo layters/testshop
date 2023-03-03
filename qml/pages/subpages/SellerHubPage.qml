@@ -894,6 +894,20 @@ Page {
                 contentHeight: parent.childrenRect.height * 3//parent.height
                 ScrollBar.vertical.policy: ScrollBar.AlwaysOn////AsNeeded
                 clip: true
+                
+                ColumnLayout {
+                    id: orders
+                    width: parent.width//; height: childrenRect.height
+                    anchors.left: parent.left; anchors.right: parent.right
+                    anchors.margins: 20//anchors.leftMargin: 10; anchors.rightMargin: 10
+                    
+                    NeroshopComponents.Table {
+                        id: orderRequestTable
+                        Layout.fillWidth: true
+                        Layout.fillHeight: true
+                        Layout.alignment: Qt.AlignHCenter
+                    }
+                }
             }            
         } 
     } // StackLayout

@@ -85,6 +85,7 @@ ApplicationWindow {
         //source: "qrc:/qml/pages/OrderCheckoutPage.qml"
         //source: "qrc:/qml/pages/ProfilePage.qml"
         //source: "qrc:/qml/pages/subpages/WalletPage.qml"
+        //source: "qrc:/qml/pages/subpages/SellerHubPage.qml"
         ////source: "qrc:/qml/pages/Page.qml"
 
         onSourceChanged: {
