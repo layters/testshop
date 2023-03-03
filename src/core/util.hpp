@@ -99,6 +99,14 @@ namespace string {
 			string0.replace(string0.find(from), from.length(), to); // replace all occurances of 'from' (first-to-last)
 		return string0;
 	}	
+	static bool starts_with(const std::string& str, const std::string& what) {
+	    std::string first_word = str.substr(0, str.find_first_of(" "));
+	    return (first_word == what);
+	}
+	static std::string trim_left(const std::string& str) {
+        auto pos = str.find_first_not_of(" ");
+        return str.substr(pos != std::string::npos ? pos : 0);
+    }
 }
 //-------------------------
 namespace filesystem {

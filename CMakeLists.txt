@@ -375,6 +375,10 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR}/external/lua/src/) # v5.4.4
 set(lua_src ${CMAKE_CURRENT_SOURCE_DIR}/build/liblua.a)
 
 ######################################
+# cxxopts
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/external/cxxopts/include/)
+
+######################################
 # neroshop link directories
 link_directories(${CMAKE_CURRENT_SOURCE_DIR}/build) # target_link_directories only available in CMake version 3.13 :(
 

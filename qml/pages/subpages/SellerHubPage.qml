@@ -90,7 +90,7 @@ Page {
                                 anchors.top: parent.children[0].top
                             
                                 Text {
-                                    text: User.productsCount//"0"//"5430"
+                                    text: "0"//User.productsCount//"0"//"5430"
                                     font.bold: true
                                     font.pointSize: stats.numberTextFontSize
                                     color: stats.textColor
@@ -196,7 +196,7 @@ Page {
                                 anchors.top: parent.children[0].top
                             
                                 Text {
-                                    text: qsTr("%1%2").arg(User.getReputation()).arg("%")
+                                    text: "0"//qsTr("%1%2").arg(User.getReputation()).arg("%")
                                     font.bold: true
                                     font.pointSize: stats.numberTextFontSize
                                     color: stats.textColor
@@ -894,6 +894,20 @@ Page {
                 contentHeight: parent.childrenRect.height * 3//parent.height
                 ScrollBar.vertical.policy: ScrollBar.AlwaysOn////AsNeeded
                 clip: true
+                
+                ColumnLayout {
+                    id: orders
+                    width: parent.width//; height: childrenRect.height
+                    anchors.left: parent.left; anchors.right: parent.right
+                    anchors.margins: 20//anchors.leftMargin: 10; anchors.rightMargin: 10
+                    
+                    NeroshopComponents.Table {
+                        id: orderRequestTable
+                        Layout.fillWidth: true
+                        ////Layout.fillHeight: true
+                        Layout.alignment: Qt.AlignHCenter
+                    }
+                }
             }            
         } 
     } // StackLayout

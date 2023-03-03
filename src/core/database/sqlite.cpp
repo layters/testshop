@@ -448,9 +448,9 @@ std::pair<int, std::string> neroshop::db::Sqlite3::get_error() const {
 }
 ////////////////////
 std::string neroshop::db::Sqlite3::get_select() {
-    std::string json_str = json_object.dump();
+    std::string json = json_object.dump();
     json_object.clear();
-    return json_str;
+    return json;
 }
 ////////////////////
 ////////////////////
@@ -482,8 +482,7 @@ int neroshop::db::Sqlite3::callback(void *not_used, int argc, char **argv, char 
 	    row[az_col_name[i]] = argv[i] ? argv[i] : "NULL"; // throws "std::logic_error - what():  basic_string::_M_construct null not valid" exception unless NULL is a string :/
     }
     
-    json_object.push_back(row);
-    ////std::cout << json_object.dump() << std::endl;
+    json_object.push_back(row);//std::cout << json_object.dump() << std::endl;
     return 0;
 }
 ////////////////////

@@ -376,11 +376,10 @@ std::string neroshop::rpc::process(const std::string& request) {
 
 
 void neroshop::rpc::request(const std::string& json) { // TODO: this function should return a json_rpc response (string) from the server
-    // Get the json which is basically a translated sqlite query or a translate method string + args
+    // Get the json which is basically a translated sqlite query or a translated c++ function name (string) + args
     // Send the request_object to the server
-    ////zmq_send (requester, request.c_str(), request.size(), 0);  
-    // The server will then execute the data
-    // Lastly, the server will return any results
+    ////zmq_send (requester, request.c_str(), request.size(), 0);
+    // Lastly, the server will then execute the data and return any results
 } // Usage: neroshop::rpc::request(neroshop::rpc::translate("SELECT * FROM users;"));
 
 void neroshop::rpc::request_batch(const std::vector<std::string>& json_batch) {
