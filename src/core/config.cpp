@@ -1,25 +1,18 @@
 #include "config.hpp"
+#include "debug.hpp"
 
-lua_State * neroshop::lua_state(luaL_newstate());
+/*#if defined(NEROSHOP_USE_QT)
+#include <QJsonArray>
+#include <QJsonDocument>
+#include <QJsonObject>
+#include <QJsonParseError>
+#else
+#include <nlohmann/json.hpp>
+#endif*/
 
-bool neroshop::load_config() {
-        std::string user = neroshop::device::get_user();
-        // "/home/<user>/.config/neroshop"
-        std::string configuration_path = NEROSHOP_DEFAULT_CONFIGURATION_PATH;
-        std::string configuration_file = "settings.lua";
-        // "/home/<user>/.config/neroshop/settings.lua"
-        std::string neroshop_config_name = configuration_path + "/" + configuration_file;
-        Script script;
-        if(!script.load(lua_state, neroshop_config_name)) {
-            return false;
-        }
-        neroshop::print("\033[1;94mloaded script \"" + script.get_file() + "\"");
-        return true;
-	}
+#include <filesystem>
 
-bool neroshop::create_config() {
-    std::string user = neroshop::device::get_user();
-    std::string text = R"(-- settings.lua
+std::string neroshop::lua_string = R"(-- settings.lua
 localhost = "127.0.0.1"
 neroshop = {
     generalsettings = {
@@ -83,6 +76,27 @@ neroshop = {
         }
     }
 })";
+//----------------------------------------------------------------
+lua_State * neroshop::lua_state(luaL_newstate());
+//----------------------------------------------------------------
+bool neroshop::load_config() {
+        std::string user = neroshop::device::get_user();
+        // "/home/<user>/.config/neroshop"
+        std::string configuration_path = NEROSHOP_DEFAULT_CONFIGURATION_PATH;
+        std::string configuration_file = "settings.lua";
+        // "/home/<user>/.config/neroshop/settings.lua"
+        std::string neroshop_config_name = configuration_path + "/" + configuration_file;
+        Script script;
+        if(!script.load(lua_state, neroshop_config_name)) {
+            return false;
+        }
+        neroshop::print("\033[1;94mloaded script \"" + script.get_file() + "\"");
+        return true;
+	}
+//----------------------------------------------------------------
+bool neroshop::create_config() {
+    std::string user = neroshop::device::get_user();
+    std::string text(lua_string);
         // swap data_dir with user
     #if defined(__gnu_linux__) // works!    
         text = neroshop::string::swap_first_of(text, "/home/<user>/.bitmonero", ("/home/" + user + "/.bitmonero"));
@@ -118,9 +132,21 @@ neroshop = {
         }
         return true;		
 	}
-	//////////////////////////////
-	//void neroshop::edit_config(const std::string& old_str, const std::string& new_str); // not possible to edit lua files with my current knowledge
-
+//----------------------------------------------------------------
+void neroshop::edit_config(const std::string& old_str, const std::string& new_str) { // not possible to edit lua files with my current knowledge
+    std::string text(lua_string);
+    
+    std::string configuration_path = NEROSHOP_DEFAULT_CONFIGURATION_PATH;
+    std::string configuration_file = "settings.lua";
+    std::string configuration = configuration_path + "/" + configuration_file;
+    
+    if(!std::filesystem::is_regular_file(configuration)) {
+        neroshop::print("Missing " + configuration); return;
+    }   
+    // Modify file
+    // ...
+}
+//----------------------------------------------------------------
 extern bool neroshop::open_config() {
     if(!neroshop::create_config()) { 
         if(!neroshop::load_config()) {
@@ -130,19 +156,19 @@ extern bool neroshop::open_config() {
     }
     return true;
 }
-
+//----------------------------------------------------------------
 bool neroshop::create_configuration_file() {
     return neroshop::create_config();
 }
-
+//----------------------------------------------------------------
 bool neroshop::load_configuration_file() {
     return neroshop::load_config();
 }
-
+//----------------------------------------------------------------
 bool neroshop::open_configuration_file() {
     return neroshop::open_config();
 }
-
+//----------------------------------------------------------------
 lua_State * neroshop::get_lua_state() {
 	return lua_state;
 }

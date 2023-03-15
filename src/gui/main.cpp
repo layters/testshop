@@ -121,6 +121,10 @@ int main(int argc, char *argv[])
     // Register user
     engine.rootContext()->setContextProperty("User", new UserController(&engine));
     qRegisterMetaType<UserController *>();
+    // Register all enums within the "neroshop" namespace
+    ////qmlRegisterUncreatableMetaObject(neroshop::staticMetaObject, "neroshop.namespace", 1, 0, "Neroshop", "Error: only enums");
+    // TableModel
+    ////qmlRegisterType<TableModel>("neroshop.TableModel", 1, 0, "TableModel"); // Usage: import neroshop.TableModel  ...  TableModel { id: tableModel }
 
     engine.addImageProvider(WALLET_QR_PROVIDER, new WalletQrProvider(WALLET_QR_PROVIDER));
     engine.addImageProvider(AVATAR_IMAGE_PROVIDER, new ImageProvider(AVATAR_IMAGE_PROVIDER));

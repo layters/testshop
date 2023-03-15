@@ -26,8 +26,8 @@ RowLayout {
             if(button.text == walletButton.text) {
                 pageLoader.source = "../pages/subpages/WalletPage.qml"//_stackview.currentIndex = 0
             }
-            if(button.text == sellersHubButton.text) {
-                pageLoader.source = "../pages/subpages/SellerHubPage.qml"
+            if(button.text == dashboardButton.text) {
+                pageLoader.source = "../pages/subpages/DashboardPage.qml"
             }
             if(button.text == messagesButton.text) {
                 pageLoader.source = "../pages/subpages/MessagesPage.qml"
@@ -77,8 +77,8 @@ RowLayout {
     }
                             
     Button {
-        id: sellersHubButton
-        text: qsTr("Seller Hub")//qsTr("Dashboard")
+        id: dashboardButton
+        text: qsTr("Dashboard")
         ButtonGroup.group: navBarButtonGroup
         display: AbstractButton.IconOnly//AbstractButton.TextBesideIcon
         hoverEnabled: true

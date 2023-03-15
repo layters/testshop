@@ -7,13 +7,16 @@
         <file>qml/components/CartTable.qml</file>
         <file>qml/components/CatalogGrid.qml</file>
         <file>qml/components/CatalogList.qml</file>
+        <file>qml/components/CheckBox.qml</file>
         <file>qml/components/ComboBox.qml</file>
         <file>qml/components/FilterBox.qml</file>
         <file>qml/components/Hint.qml</file>
+        <file>qml/components/InventoryTable.qml</file>
         <file>qml/components/MessageBox.qml</file>
         <file>qml/components/NavigationalBar.qml</file>
         <file>qml/components/NodeList.qml</file>
         <file>qml/components/PaginationBar.qml</file>
+        <file>qml/components/ProductDialog.qml</file>
         <file>qml/components/ProgressBar.qml</file>
         <file>qml/components/qmldir</file>
         <file>qml/components/RadioButton.qml</file>
@@ -22,7 +25,6 @@
         <file>qml/components/Style.qml</file>
         <file>qml/components/Switch.qml</file>
         <file>qml/components/TabBar.qml</file>
-        <file>qml/components/Table.qml</file>
         <file>qml/components/ThemeSwitch.qml</file>
         <file>qml/components/Triangle.qml</file>
         <file>qml/components/ViewToggle.qml</file>
@@ -36,9 +38,9 @@
         <file>qml/pages/ProductPage.qml</file>
         <file>qml/pages/ProfilePage.qml</file>
         <file>qml/pages/subpages/AccountSettingsPage.qml</file>
+        <file>qml/pages/subpages/DashboardPage.qml</file>
         <file>qml/pages/subpages/MessagesPage.qml</file>
         <file>qml/pages/subpages/OrdersPage.qml</file>
-        <file>qml/pages/subpages/SellerHubPage.qml</file>
         <file>qml/pages/subpages/WalletPage.qml</file>
         <!-- fonts -->
         <file>fonts/FiraCode-Bold.ttf</file>

@@ -98,8 +98,7 @@ bool neroshop::Server::accept() {
 		return false;
 	}
 	// Daemon cannot write to stdin, so we must use the Server::write function
-	//std::cout << NEROSHOP_TAG "\033[0;37mReceived connection from " << inet_ntoa(client_addr.sin_addr) << ":\033[0;36m" << ntohs(client_addr.sin_port) << "\033[0m" << std::endl;//std::cout << "client_socket: " << client_socket << std::endl; // always prints out 5    
-    write("\033[0;37mReceived connection from " + std::string(inet_ntoa(client_addr.sin_addr)) + ":\033[0;36m" + std::to_string(ntohs(client_addr.sin_port)) + "\033[0m\n");
+    std::cout << /*NEROSHOP_TAG */"\033[0;37mReceived connection from " + std::string(inet_ntoa(client_addr.sin_addr)) + ":\033[0;36m" + std::to_string(ntohs(client_addr.sin_port)) + "\033[0m\n";
     #endif
 	return true;
 }
@@ -121,8 +120,8 @@ void neroshop::Server::write(const std::string& message) {
 std::string neroshop::Server::read() // receive data
 {
     #if defined(__gnu_linux__) && defined(NEROSHOP_USE_SYSTEM_SOCKETS)
-    memset(buffer, 0, 256); // clear buffer (fills buffer with 0's) before reading into buffer
-    ssize_t read_result = ::read(client_socket, buffer, 255);//::read(client_socket, (void *)buffer_new.c_str(), buffer_new.length()); // https://stackoverflow.com/questions/10105591/is-it-possible-to-use-an-stdstring-for-read  // #include <unistd.h>
+    memset(buffer, 0, 1024); // clear buffer (fills buffer with 0's) before reading into buffer
+    ssize_t read_result = ::read(client_socket, buffer, 1023);//::read(client_socket, (void *)buffer_new.c_str(), buffer_new.length()); // https://stackoverflow.com/questions/10105591/is-it-possible-to-use-an-stdstring-for-read  // #include <unistd.h>
 	if(read_result < 0) { // -1 = error
 		perror("socket read error: ");//std::cerr << "Client disconnected" << std::endl;
 		shutdown();

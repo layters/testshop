@@ -1,4 +1,4 @@
-#include "currency_exchange_rates_provider.h"
+#include "currency_exchange_rates_provider.hpp"
 
 #include <QFuture>
 #include <QMutexLocker>
@@ -17,6 +17,7 @@ const std::vector<PriceApiFactory::Source> SOURCES_TO_USE{
     PriceApiFactory::Source::CoinTelegraph,
     PriceApiFactory::Source::CryptoRank,
     PriceApiFactory::Source::CoinCodex,
+    PriceApiFactory::Source::Fawazahmed0,
 };
 
 QHash<QPair<int, int>, double> updateRates(const QList<QPair<int, int>> keys)

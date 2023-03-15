@@ -9,13 +9,13 @@ Item {
     width: childrenRect.width; height: childrenRect.height
     TextField {
         id: searchField
-        color: "#ffffff" // textColor
+        color: (NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000"// textColor
         width: 400; height: 40
         selectByMouse: true
         placeholderText: qsTr("Search")
         
         background: Rectangle { 
-            color: "#050506"
+            color: (NeroshopComponents.Style.darkTheme) ? "#050506" : "#f9f9fa"
             radius: 5
         }
         onTextChanged: {//https://stackoverflow.com/questions/70284407/detect-changes-on-every-character-typed-in-a-textfield-qml
