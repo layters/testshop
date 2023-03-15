@@ -91,6 +91,7 @@ The name _neroshop_ is a combination of the words _nero_, which is Italian for _
 | [lua](https://www.lua.org/)                                        | 5.1.5              | configuration script                                                   | :heavy_check_mark:                       |
 | [openpgp](external/openpgp)                                        | ?                  | public-key encryption and digital signatures                           | :grey_question:                          |
 | [cxxopts](https://github.com/jarro2783/cxxopts)                    | ?                  | command line option parser                                             | :heavy_check_mark:                       |
+| [libzmq](https://github.com/zeromq/libzmq)                         | ?                  | networking                                                             | :grey_question:                          |
 
 ### Compiling neroshop from source
 **0. Install prerequisites**
@@ -263,6 +264,6 @@ lza_menace — for his help on creating the new monero.fail JSON API endpoint
 [//]: # (git checkout -b main)
 [//]: # (git add .gitignore .gitmodules cmake/ CMakeLists.txt CONTRIBUTING.md external/ fonts/ images/ LICENSE qml/ qml.qrc README.md shaders/ src/ test/)
 [//]: # (git commit -m"...")
-[//]: # (git push -u origin main --force)
+[//]: # (git push -u origin backup --force)
 [//]: # (https://git.slipfox.xyz/larteyoh/testshop/settings => Mirror Settings => Synchronize Now)
 [//]: # (removing an external lib from submodules index: git rm --cached path/to/submodule)

@@ -1,4 +1,4 @@
-#include "wallet_qr_provider.h"
+#include "wallet_qr_provider.hpp"
 
 #include <qrcodegen.hpp>
 

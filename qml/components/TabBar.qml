@@ -55,6 +55,11 @@ Row {//TODO: try using a Column too
                 horizontalAlignment: Text.AlignHCenter
                 verticalAlignment: Text.AlignVCenter
             }
+            MouseArea {
+                anchors.fill: parent
+                onPressed: mouse.accepted = false
+                cursorShape: !parent.checked ? Qt.PointingHandCursor : Qt.ArrowCursor
+            }
         }
     }
 }

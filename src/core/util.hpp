@@ -99,8 +99,11 @@ namespace string {
 			string0.replace(string0.find(from), from.length(), to); // replace all occurances of 'from' (first-to-last)
 		return string0;
 	}	
-	static bool starts_with(const std::string& str, const std::string& what) {
+	static bool starts_with(const std::string& str, const std::string& what, bool case_sensative = true) {
 	    std::string first_word = str.substr(0, str.find_first_of(" "));
+	    if(!case_sensative) {
+	        return (lower(first_word) == lower(what));
+	    }
 	    return (first_word == what);
 	}
 	static std::string trim_left(const std::string& str) {

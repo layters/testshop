@@ -6,6 +6,7 @@
 #include "cointelegraph.hpp"
 #include "cryptorank.hpp"
 #include "cryptowatch.hpp"
+#include "fawazahmed0_currency.hpp"
 
 std::unique_ptr<PriceApi> PriceApiFactory::makePriceSouce(Source source)
 {
@@ -22,6 +23,8 @@ std::unique_ptr<PriceApi> PriceApiFactory::makePriceSouce(Source source)
         return std::make_unique<CryptoRankApi>();
     case Source::CoinCodex:
         return std::make_unique<CoinCodexApi>();
+    case Source::Fawazahmed0:
+        return std::make_unique<Fawazahmed0CurrencyApi>();    
     }
     return nullptr;
 }

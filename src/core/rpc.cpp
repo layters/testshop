@@ -23,9 +23,9 @@ std::string neroshop::rpc::translate(const std::string& sql) {
     #if defined(NEROSHOP_USE_QT)
     QJsonObject request_object; // JSON-RPC Request object
     request_object.insert(QString("jsonrpc"), QJsonValue("2.0"));
-    request_object.insert(QString("method"), QJsonValue("query"));////QJsonValue(QString::fromStdString(method_type)));
+    request_object.insert(QString("method"), QJsonValue("query"));////QJsonValue("query." + QString::fromStdString(method_type)));
     QJsonObject params_object;////QJsonArray params_array; // can be an array or object, but object is preferred as it can hold both key and value
-    params_object.insert(QString("sql"), QJsonValue(QString::fromStdString(sql)));////params_array.insert(params_array.size(), QJsonValue("arg1")); // based on the number of parameter args
+    params_object.insert(QString("sql"), QJsonValue(QString::fromStdString(sql)));
     request_object.insert(QString("params"), QJsonValue(params_object)); // "params" MAY be omitted
     request_object.insert(QString("id"), QJsonValue(QString::fromStdString(random_id))); // https://stackoverflow.com/questions/2210791/json-rpc-what-is-the-id-for
     // Convert JSON to string
@@ -46,7 +46,7 @@ std::string neroshop::rpc::translate(const std::string& sql) {
     #endif    
     return request;
 }
-
+//----------------------------------------------------------------
 std::string neroshop::rpc::translate(const std::string& sql, const std::vector<std::string>& args) {
     std::string request = "";
     assert((get_query_method(sql) != "SELECT", "SELECT statements with arguments are not supported. Please use the non-query functions (e.g. get_*() functions)")); // This is due to a lack of a callback in execute_params which uses sqlite3_prepare, sqlite3_step functions. On the other hand, execute uses sqlite_exec which does have a callback that returns the result from a SELECT statement
@@ -90,7 +90,8 @@ std::string neroshop::rpc::translate(const std::string& sql, const std::vector<s
     #endif        
     return request;
 }
-
+//----------------------------------------------------------------
+//----------------------------------------------------------------
 std::string neroshop::rpc::process(const std::string& request) {
     neroshop::db::Sqlite3 * database = neroshop::get_database();
     if(!database) throw std::runtime_error("database is NULL");
@@ -164,7 +165,9 @@ std::string neroshop::rpc::process(const std::string& request) {
         return response;
     }
     //  Retrieve keys and values from request_object
+    #ifdef NEROSHOP_DEBUG
     std::cout << "Request received:\n\033[33m" << json_doc.toJson().toStdString() << "\033[0m\n";
+    #endif
     QJsonObject request_object = json_doc.object();
     QJsonValue jsonrpc_version = request_object.value("jsonrpc");
     assert(jsonrpc_version.isString()); 
@@ -259,19 +262,21 @@ std::string neroshop::rpc::process(const std::string& request) {
     response_object.insert(QString("id"), id); // "id" MUST be the same as the request object's id
     // Print response (for debugging purposes)
     response = QJsonDocument(response_object).toJson(/*QJsonDocument::Compact*/).toStdString();
+    #ifdef NEROSHOP_DEBUG
     std::cout << "Response output:\n" << ((code != 0) ? "\033[91m" : "\033[32m") << response << "\033[0m\n";    
+    #endif
     #else
     // Process (parse) the request
     nlohmann::json response_object;
     nlohmann::json request_object;
-    try {////if(!nlohmann::json::accept(request)) {
+    try {
         request_object = nlohmann::json::parse(request);
     }
     catch(nlohmann::json::parse_error& exception) {
         neroshop::print("Error parsing client request", 1);
         response_object["jsonrpc"] = "2.0";
         response_object["error"]["code"] = -32700; // "code" MUST be an integer
-        response_object["error"]["message"] = "Parse error"; // string
+        response_object["error"]["message"] = "Parse error";
         response_object["error"]["data"] = exception.what(); // A Primitive (non-object) or Structured (array) value which may be omitted
         response_object["id"] = nullptr;
         response = response_object.dump(4);
@@ -281,7 +286,9 @@ std::string neroshop::rpc::process(const std::string& request) {
         return response;
     }
     //  Retrieve keys and values from request_object
+    #ifdef NEROSHOP_DEBUG
     std::cout << "Request received:\n\033[33m" << request_object.dump(4) << "\033[0m\n";
+    #endif
     assert(request_object.is_object());
     assert(request_object["jsonrpc"].is_string());
     std::string jsonrpc_version = request_object["jsonrpc"];
@@ -367,49 +374,51 @@ std::string neroshop::rpc::process(const std::string& request) {
     response_object["id"] = id; // "id" MUST be the same as the request object's id
     // Print response (for debugging purposes)
     response = response_object.dump(4);
+    #ifdef NEROSHOP_DEBUG
     std::cout << "Response output:\n" << ((code != 0) ? "\033[91m" : "\033[32m") << response << "\033[0m\n";    
+    #endif
     #endif
     return response;
 }
-
-
-
-
+//----------------------------------------------------------------
+//----------------------------------------------------------------
 void neroshop::rpc::request(const std::string& json) { // TODO: this function should return a json_rpc response (string) from the server
     // Get the json which is basically a translated sqlite query or a translated c++ function name (string) + args
     // Send the request_object to the server
     ////zmq_send (requester, request.c_str(), request.size(), 0);
     // Lastly, the server will then execute the data and return any results
 } // Usage: neroshop::rpc::request(neroshop::rpc::translate("SELECT * FROM users;"));
-
+//----------------------------------------------------------------
 void neroshop::rpc::request_batch(const std::vector<std::string>& json_batch) {
 }
-
+//----------------------------------------------------------------
+//----------------------------------------------------------------
 void neroshop::rpc::respond(const std::string& json) {
     std::string response = process(json);
     if(response.empty()) return;
     // Reply to client with the response object
     ////zmq_send (responder, response.c_str(), response.size(), 0);    
 }
-
+//----------------------------------------------------------------
 void neroshop::rpc::respond_batch(const std::vector<std::string>& json_batch) {
 }
-
+//----------------------------------------------------------------
+//----------------------------------------------------------------
 std::string neroshop::rpc::get_query_method(const std::string& sql) {
 	std::string first_word = sql.substr(0, sql.find_first_of(" "));
 	std::transform(first_word.begin(), first_word.end(), first_word.begin(), [](unsigned char c){ return std::toupper(c); }); // query_methods are stored in UPPER case strings so the same must be applied to the first_word
     if(is_query_method(first_word)) return first_word;
     return "";
 }
-
+//----------------------------------------------------------------
 bool neroshop::rpc::is_query_method(const std::string& query_method) {
     return (std::find(query_methods.begin(), query_methods.end(), query_method) != query_methods.end());
 }
-
+//----------------------------------------------------------------
 bool neroshop::rpc::is_method(const std::string& method) {
-    return (std::find(methods.begin(), methods.end(), method) != methods.end());
+    return (methods.count(method) > 0);
 }
-
+//----------------------------------------------------------------
 std::string neroshop::rpc::generate_random_id() {
     // Generate random number for id (id can be either a string or an integer or null which is not recommended)
     std::random_device rd; // obtain a random number from hardware

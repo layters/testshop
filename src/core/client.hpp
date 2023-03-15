@@ -40,32 +40,10 @@ public:
     static Client * get_main_client();
     bool is_connected() const;
 
-    //! \brief Requests from the server, a call to a functor binded to a name.
-    //!
-    //! This function calls already binded function from RPC Ccallable functions
-    //!
-    //! \param name The name of the functor.    
-    // decltype (auto) detects the function's return type and allows us to return any return type 
-    template <typename... Args>
-    decltype (auto) call(const Server& server, const std::string& name, Args&&... args) {   // todo: rename to request or nah? 
-        std::cout << "calling " << name << "\n"; 
-        // Print the arguments
-        //(std::cout << ... << args);
-        // Get number of arguments
-        static const size_t arg_count = sizeof...(Args);
-        std::cout << "arg count: " << arg_count << "\n";
-        // Check if function is not nullptr before calling it
-        // Call function (this will work even if a function has zero args :D)
-        return const_cast<Server&>(server).functions[name](std::forward<Args>(args)...);
-    }
-    // For functions without a return value
-    template <typename... Args>
-    void call(const std::string& name, Args&&... args) {   // todo: rename to request or nah? 
-    }
 private:
     #if defined(__gnu_linux__) && defined(NEROSHOP_USE_SYSTEM_SOCKETS)
 	int socket;
-	char buffer[256];    
+	char buffer[1024];    
 	#endif
 };
 }

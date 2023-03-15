@@ -7,7 +7,17 @@ using namespace neroshop;
 #include <linenoise.h>
 
 int main(int argc, char** argv) {
-    // TODO: map command names to functions
+    // Connect to daemon server (daemon must be launched first)
+    #ifndef NEROSHOP_DEBUG
+    neroshop::Client * client = neroshop::Client::get_main_client();
+	int port = 40441;
+	std::string ip = "0.0.0.0";//"localhost"; // 0.0.0.0 means anyone can connect to your server
+	if(!client->connect(port, ip)) {
+	    std::cout << "Please launch neromon first\n";
+	    exit(0);
+	}
+	#endif
+    //-------------------------------------------------------
     if(!neroshop::create_config()) { 
         neroshop::load_config();
     }
@@ -31,7 +41,7 @@ int main(int argc, char** argv) {
 
         linenoiseHistoryLoad("history.txt");
         linenoiseHistoryAdd(line); // Add to the history.
-        linenoiseHistorySave("history.txt"); // Save the history on disk.    
+        linenoiseHistorySave("history.txt"); // Save the history on disk.
 
         if(command == "help" || !strncmp(line, "\0", command.length())) { // By default, pressing "Enter" on an empty string will execute this code
             std::cout << "\033[1;37mAvailable commands:\n\n help  Display list of available commands\n\n exit  Exit CLI\n\n" << "\033[0m\n";
@@ -50,9 +60,16 @@ int main(int argc, char** argv) {
             if(arg_count > 1) { 
                  std::size_t arg_pos = command.find_first_of(" ");
                  std::string sql = neroshop::string::trim_left(command.substr(arg_pos + 1));////trim_left(command.substr(std::string("query").length() + 1)); // <- this works too
+                 assert(neroshop::string::starts_with(sql, "SELECT", false) && "Only SELECT queries are allowed"); // since the ability to run sql commands gives too much power to the user to alter the database anyhow, limit queries to select statements only
                  std::string json = neroshop::rpc::translate(sql);
-                 neroshop::rpc::process(json);//neroshop::rpc::request(json);
-                 // Usage: query UPDATE users SET name = "dude" WHERE name = "jack"
+                 #ifdef NEROSHOP_DEBUG
+                 neroshop::rpc::process(json);
+                 #else
+                 client->write(json); // write request to server
+                 std::string response_object = client->read(); // read response from server
+                 std::cout << "Server response: " << response_object << "\n";
+                 #endif
+                 // Usage: query SELECT * FROM users;
             }
         }
         else if(command == "exit") {

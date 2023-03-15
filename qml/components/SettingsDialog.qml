@@ -23,6 +23,7 @@ Popup {
     property alias theme: themeBox
     property alias currency: currencyBox
     property alias hideHomepageButton: hideHomepageButtonSwitch.checked
+    property alias hidePriceDisplay: priceDisplaySwitch.checked
     // Wallet settings
     property alias balanceDisplay: balanceDisplayBox.currentIndex//property alias balanceDisplay: balanceDisplayBox.currentText
     property alias balanceAmountPrecision: balancePrecisionBox.currentText
@@ -32,6 +33,7 @@ Popup {
     property alias catalogPriceBox: priceDisplayBox
     property alias hideProductDetails: hideProductDetailsSwitch.checked
     property alias gridDetailsAlignCenter: gridDetailsAlignCenterSwitch.checked
+    ////property alias hideIllegalProducts: hideIllegalProductsSwitch.checked
     // Monero tab properties
     property alias moneroNodeType: nodeTypeStackLayout.currentIndex//nodeTypeGroup.checkedButton.stackLayoutIndex
     property string moneroNodeAddress: (nodeTypeStackLayout.currentIndex == remoteNodeButton.stackLayoutIndex) ? moneroRemoteNodeList.selectedNode.replace(/^(https?:|)\/\//, '') : (moneroDaemonIPField.placeholderText + ":" + moneroDaemonPortField.placeholderText)
@@ -401,14 +403,32 @@ Popup {
                             radius: 13
                             backgroundCheckedColor: "#605185"
                         }
-                    }                                
+                    }
+                    Item {
+                        Layout.fillWidth: true
+                        Layout.preferredHeight: childrenRect.height
+                        Text {
+                            anchors.verticalCenter: priceDisplaySwitch.verticalCenter
+                            text: qsTr("Hide price display:")
+                            color: NeroshopComponents.Style.darkTheme ? "#ffffff" : "#000000"
+                        }
+                        
+                        NeroshopComponents.Switch {
+                            id: priceDisplaySwitch
+                            anchors.right: parent.right; anchors.rightMargin: 5
+                            //width: settingsStack.comboBoxWidth
+                            checked: false
+                            radius: 13
+                            backgroundCheckedColor: "#605185"
+                        }
+                    }                                                    
                 } // RowLayout2
            } // GroupBox2        
            GroupBox {
-                       //Layout.row: 2
-                       Layout.alignment: Qt.AlignHCenter
-                       Layout.preferredWidth: settingsStack.contentBoxWidth
-                title: qsTr("Localization")
+               //Layout.row: 2
+               Layout.alignment: Qt.AlignHCenter
+               Layout.preferredWidth: settingsStack.contentBoxWidth
+               title: qsTr("Localization")
                 
                 background: Rectangle {
                     y: parent.topPadding - parent.bottomPadding
@@ -645,6 +665,25 @@ Popup {
                             backgroundCheckedColor: "#605185"
                         }
                     }
+                    // Show/Hide illegal products
+                    /*Item {
+                        Layout.fillWidth: true
+                        Layout.preferredHeight: childrenRect.height
+                        Text {
+                            anchors.verticalCenter: hideIllegalProductsSwitch.verticalCenter
+                            text: qsTr("Hide illegal products:")
+                            color: NeroshopComponents.Style.darkTheme ? "#ffffff" : "#000000"
+                        }
+                        
+                        NeroshopComponents.Switch {
+                            id: hideIllegalProductsSwitch
+                            anchors.right: parent.right; anchors.rightMargin: 5
+                            //width: settingsStack.comboBoxWidth
+                            checked: true // ALWAYS hide illegal products by default!!
+                            radius: 13
+                            backgroundCheckedColor: "#605185"
+                        }
+                    }*/
                 }
             }            
             

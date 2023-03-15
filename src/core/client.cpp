@@ -53,8 +53,8 @@ void neroshop::Client::write(const std::string& text) {
 std::string neroshop::Client::read()
 {
     #if defined(__gnu_linux__) && defined(NEROSHOP_USE_SYSTEM_SOCKETS)
-	memset(buffer, 0, 256); // clear buffer (fills buffer with 0's) before reading into buffer//bzero(buffer, 256); // bzero is deprecated
-	ssize_t read_result = ::read(socket, buffer, 255);
+	memset(buffer, 0, 1024); // clear buffer (fills buffer with 0's) before reading into buffer//bzero(buffer, 1024); // bzero is deprecated
+	ssize_t read_result = ::read(socket, buffer, 1023);
 	if(read_result < 0) {
 		std::cerr << "Could not read from server" << std::endl;	
 	}

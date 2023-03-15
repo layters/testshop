@@ -16,12 +16,11 @@ Window {
     width: 500; height: 250    
     property alias title: messageBox.title
     property alias text: messageBox.text
-    property alias closeCancelButton: closeButton // close or cancel
-    property alias acceptButton: okButton
-    property Button button2: null
-    property Button button3: null
+    property alias model: buttonRepeater.model
+    property var buttonAt: buttonRepeater.itemAt
+    property int buttonCount: buttonRepeater.count
     property alias textObject: messageBoxTextArea
-    property alias buttonRow: messageBoxButtonRow
+    property alias buttonRow: buttonsRow
     visible: messageBox.visible
     modality: Qt.ApplicationModal//Qt.WindowModal // A modal window prevents other windows from receiving input events (ESC closes window when modality is set)
     flags: Qt.FramelessWindowHint | Qt.Dialog
@@ -40,7 +39,7 @@ Window {
         	implicitHeight: messageBoxWindow.height
         	color: "#a0a0a0"////NeroshopComponents.Style.getColorsFromTheme()[2]
         	border.color: "white"
-        	radius: 3
+        	radius: 10//3
     	} // background
         // title bar
         Rectangle {
@@ -106,53 +105,75 @@ Window {
                 horizontalAlignment: TextEdit.AlignHCenter
             }    
         }
-        // TODO: use a Row containing a Button Repeater for adding custom Buttons (model)
         // buttons row    
         RowLayout {
-            id: messageBoxButtonRow
-            ////layoutDirection: Qt.RightToLeft
-            spacing: 10
-            anchors.horizontalCenter: parent.horizontalCenter////anchors.right: parent.right; anchors.rightMargin: 20
+            id: buttonsRow
+            states: [
+                State {
+                    name: "left"
+                    AnchorChanges {
+                        target: buttonsRow
+                        anchors.left: parent.left
+                    }
+                },
+                State {
+                    name: "right"
+                    AnchorChanges {
+                        target: buttonsRow
+                        anchors.right: parent.right
+                    }          
+                },
+                State {
+                    name: "centered"
+                    AnchorChanges {
+                        target: buttonsRow
+                        anchors.horizontalCenter: parent.horizontalCenter
+                    }          
+                },
+                State {
+                    name: "filled"
+                    PropertyChanges {
+                        target: buttonsRow
+                        width: parent.width // = 470 = 500 - (messageBox.leftPadding + messageBox.rightPadding)
+                    }          
+                }                                                        
+            ]
+            state: "filled"//"centered"//"right"//"left"
             anchors.bottom: parent.bottom
-            // close button
-        	Button {
-            	id: closeButton
-            	text: qsTr("Close")
-            	Layout.preferredWidth: contentItem.contentWidth + (contentItem.text.length * 10)//20
-            	Layout.preferredHeight: contentItem.contentHeight + 20
-            	background: Rectangle {
-                	color: "firebrick"
-                	radius: 5      
-            	}
-            	contentItem: Text {
-                	text: parent.text
-                	color: "#ffffff"
-                	horizontalAlignment: Text.AlignHCenter
-                	verticalAlignment: Text.AlignVCenter                
-            	}
-            	onClicked: {
-                	messageBoxWindow.close()
-            	}            
-        	}      
-            // OK button
-        	Button {
-            	id: okButton
-            	text: qsTr("OK")
-            	Layout.preferredWidth: contentItem.contentWidth + (contentItem.text.length * 10)//20
-            	Layout.preferredHeight: contentItem.contentHeight + 20       
-            	visible: false     
-            	background: Rectangle {
-                	color: "#4169e1"//"#4682b4"
-                	radius: 5
-            	}            
-            	contentItem: Text {
-                	text: parent.text
-                	color: "#ffffff"
-                	horizontalAlignment: Text.AlignHCenter
-                	verticalAlignment: Text.AlignVCenter                
-            	}         
-            	////onClicked:   
-        	}               
+            spacing: 10
+
+            Repeater {
+                id: buttonRepeater
+                model: ["Close"]////null
+                delegate: Button {
+            	    Layout.fillWidth: true // If row width is set, button width will fill row width
+            	    Layout.preferredWidth: contentItem.contentWidth + (contentItem.text.length * 10)//20//30
+            	    Layout.preferredHeight: contentItem.contentHeight + 20
+                    text: modelData
+                    property int buttonIndex: index
+                    property string color: "#b22222"
+                    property string textColor: "#ffffff"
+                    property var onClickedCallback: function() { messageBoxWindow.close() }////null
+                    background: Rectangle {
+                        radius: 18//5
+                        color: parent.color
+                    }
+                    contentItem: Text {
+                        text: parent.text
+                        color: parent.textColor
+                        horizontalAlignment: Text.AlignHCenter
+                        verticalAlignment: Text.AlignVCenter
+                    }
+                    MouseArea {
+                        anchors.fill: parent
+                        onPressed: mouse.accepted = false
+                        cursorShape: Qt.PointingHandCursor
+                    }
+                    onClicked: {
+                        if(onClickedCallback != null) onClickedCallback()
+                    }
+                }
+            }
         } // RowLayout     
 	}
     ////DragHandler { target: messageBox }

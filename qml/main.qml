@@ -1,7 +1,7 @@
-// requires Qt version 5.12 (latest is 5.15 as of this writing). See https://doc.qt.io/qt-5/qt5-intro.html
-import QtQuick 2.12//2.7 //(QtQuick 2.7 is lowest version for Qt 5.7)
-import QtQuick.Controls 2.12//2.0 // (requires at least Qt 5.12 where QtQuick.Controls 1 is deprecated. See https://doc.qt.io/qt-5/qtquickcontrols-index.html#versions) // needed for built-in styles // TextField, TextArea (multi-lined TextField), TextFieldStyle//import QtQuick.Controls.Material 2.12 // Other styles: 
-import QtQuick.Layouts 1.12//1.15 // The module is new in Qt 5.1 and requires Qt Quick 2.1. // RowLayout, ColumnLayout, GridLayout, StackLayout, Layout
+// requires Qt version 5.12.8. See https://doc.qt.io/qt-5/qt5-intro.html
+import QtQuick 2.12
+import QtQuick.Controls 2.12 // (requires at least Qt 5.12 where QtQuick.Controls 1 is deprecated. See https://doc.qt.io/qt-5/qtquickcontrols-index.html#versions) // TextField, TextArea (multi-lined TextField), TextFieldStyle
+import QtQuick.Layouts 1.12 // RowLayout, ColumnLayout, GridLayout, StackLayout, Layout
 import QtGraphicalEffects 1.12 // LinearGradient
 import Qt.labs.platform 1.1 // FileDialog (since Qt 5.8) // change to "import QtQuick.Dialogs" if using Qt 6.2
 
@@ -30,7 +30,7 @@ ApplicationWindow {
         height: 80//100 // width should be set automatically to the parent's width
         visible: (!pageLoader.source.toString().match("qml/pages/MainPage.qml")) ? true : false;
         
-        Button {//Image { 
+        Button {
             id: neroshopLogoImageButton
             visible: !settingsDialog.hideHomepageButton
             property real iconSize: 30
@@ -107,24 +107,28 @@ ApplicationWindow {
         }
     }    
 
-    NeroshopComponents.MessageBox {////MessageDialog {
+    NeroshopComponents.MessageBox {
         id: messageBox
         title: "message"
         x: mainWindow.x + (mainWindow.width - this.width) / 2
         y: mainWindow.y + (mainWindow.height - this.height) / 2
     }
 
-    NeroshopComponents.MessageBox {////MessageDialog {
+    NeroshopComponents.MessageBox {
         id: monerodMessageBox
         title: "prompt"
         x: mainWindow.x + (mainWindow.width - this.width) / 2
         y: mainWindow.y + (mainWindow.height - this.height) / 2
-        acceptButton.visible: true
-        acceptButton.onClicked: {
-            console.log("Now connecting to a local node ...")
-            Wallet.daemonConnect();//(moneroDaemonRpcLoginUser.text, moneroDaemonRpcLoginPwd.text)
-            monerodMessageBox.close();
-        }        
+        model: ["Cancel", "OK"]
+        Component.onCompleted: {
+            buttonAt(0).onClickedCallback = function() { close() }
+            buttonAt(1).color = "#4169e1"//"#4682b4"
+            buttonAt(1).onClickedCallback = function() { 
+                console.log("Now connecting to a local node ...")
+                Wallet.daemonConnect();//(moneroDaemonRpcLoginUser.text, moneroDaemonRpcLoginPwd.text)
+                close();
+            }
+        }
     }        
     // navigating between different pages: https://stackoverflow.com/a/15655043
     // The footer item is positioned to the bottom, and resized to the width of the window
@@ -268,6 +272,7 @@ ApplicationWindow {
                 width: (priceChangePercentageText.visible) ? priceDisplayText.contentWidth + priceChangePercentageText.contentWidth + 10 : priceDisplayText.contentWidth // 10 is the spacing between the price and the price change percentage
                 height: footer.height
                 color: "transparent"
+                visible: !settingsDialog.hidePriceDisplay
                 //border.color: NeroshopComponents.Style.moneroOrangeColor
                 
                 Text {

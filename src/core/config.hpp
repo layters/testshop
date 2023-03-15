@@ -34,17 +34,15 @@
 
 #define LUA_TAG "\033[1;34m[lua]:\033[0m "
 
-#include "script.hpp"//<script.hpp>
-#include <filesystem>
-
-#include "debug.hpp"
+#include "script.hpp"
 
 namespace neroshop {
+    extern std::string lua_string;
     extern lua_State * lua_state;
 	extern bool create_config();
 	extern bool load_config();
 	extern bool open_config(); // create_config + load_config
-	//static void edit_config(const std::string& old_str, const std::string& new_str); // not sure how to edit lua files with my current knowledge
+	static void edit_config(const std::string& old_str, const std::string& new_str); // not sure how to edit lua files with my current knowledge
 	// alternative function names
     extern bool create_configuration_file();
 	extern bool load_configuration_file();

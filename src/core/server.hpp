@@ -46,45 +46,11 @@ public:
 	std::string read();
 	void close(); // closes socket
 	void shutdown(); // shuts down entire connection, ending receiving and sending
-	
-	//void get_local_ip();
-	// todo: figure out how to bind strings (requests) to functions (responses) with different argument types and counts
-    
-    //! \brief Binds a functor to a name so it becomes callable via RPC.
-    //!
-    //! This function template accepts a wide range of callables. The arguments
-    //! and return types of these callables should be serializable by msgpack.
-    //! `bind` effectively generates a suitable, light-weight compile-time
-    //! wrapper for the functor.
-    //!
-    //! \param name The name of the functor.
-    //! \param func The functor to bind.
-    //! \tparam F The type of the functor.
-    // bind function should work with lambdas too
-    template <typename F> void bind(std::string const &name, F functor) {
-        if(!functor) throw std::runtime_error("bind invalid function");
-        //if constexpr (std::is_same<F, std::function<void ()>>::value) {
-        //    std::cout << "F is a valid function\n";
-        //}
-        functions[name] = functor;
-    }
 
-    //! \brief Unbinds a functor binded to a name.
-    //!
-    //! This function removes already binded function from RPC Ccallable functions
-    //!
-    //! \param name The name of the functor.
-    void unbind(std::string const &name) {
-        functions.erase(functions.find(name));//functions[name] = nullptr; // todo: remove element from unordered_map c++ the proper way
-    }    
-    
-    std::unordered_map<std::string, std::any> get_functions() {
-        return functions;
-    }
-//private:
+private:
     #if defined(__gnu_linux__) && defined(NEROSHOP_USE_SYSTEM_SOCKETS)
     int socket;
-    char buffer[256];
+    char buffer[1024];
     int client_socket;
     #endif    
     raft_server_t* raft;

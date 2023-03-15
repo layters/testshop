@@ -1,4 +1,4 @@
-#include "image_provider.h"
+#include "image_provider.hpp"
 
 #include "image_loader.h"
 #include <QGuiApplication>

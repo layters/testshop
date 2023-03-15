@@ -15,7 +15,20 @@
 #include "../core/seller.hpp"////"../core/user.hpp"
 
 namespace neroshop {
-
+/*    Q_NAMESPACE // required for meta object creation
+    enum InventorySorting {
+        SortNone = 0,
+        SortByDate,
+        SortByName,
+        SortByQuantity,
+        SortByPrice,
+        SortByProductCode,
+        SortByCategory,
+        SortByCondition,
+        //TODO: productid, currency, location, color, size, weight, imagefilesize, desc
+    };
+    Q_ENUMS(InventorySorting) // register the enum in meta object data
+*/
 class UserController : public QObject, public neroshop::Seller {
     Q_OBJECT
 public:
@@ -27,8 +40,13 @@ public:
     Q_PROPERTY(int productsCount READ getProductsCount NOTIFY productsCountChanged);
     Q_PROPERTY(int cartQuantity READ getCartQuantity NOTIFY cartQuantityChanged);
 
+    Q_PROPERTY(QVariantList inventory READ getInventory NOTIFY productsCountChanged);
+    Q_PROPERTY(QVariantList inventoryDate READ getInventoryByDate NOTIFY productsCountChanged);
+    //Q_PROPERTY(QVariantList cart READ getCart NOTIFY cartQuantityChanged);
+
     Q_INVOKABLE void listProduct(const QString& product_id, int quantity, double price, const QString& currency, const QString& condition, const QString& location);
-    //Q_INVOKABLE void delistProduct(const QString& product_id);
+    Q_INVOKABLE void delistProduct(const QString& product_id);
+    Q_INVOKABLE void delistProducts(const QStringList& product_ids);
     Q_INVOKABLE void addToCart(const QString& product_id, int quantity);
     //Q_INVOKABLE void removeFromCart(const QString& product_id, int quantity);
     //Q_INVOKABLE void createOrder();
@@ -48,6 +66,10 @@ public:
     Q_INVOKABLE int getReputation() const;
     //Q_INVOKABLE <type> <function_name>() const;
     Q_INVOKABLE int getCartQuantity() const;
+    
+    Q_INVOKABLE QVariantList getInventory() const;
+    Q_INVOKABLE QVariantList getInventoryInStock() const;
+    Q_INVOKABLE QVariantList getInventoryByDate() const;
 
     Q_INVOKABLE neroshop::User * getUser() const;
     neroshop::Seller * getSeller() const;    

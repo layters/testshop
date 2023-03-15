@@ -16,6 +16,7 @@ enum class Source {
     CoinTelegraph,
     CryptoRank,
     CoinCodex,
+    Fawazahmed0,
 };
 
 std::unique_ptr<PriceApi> makePriceSouce(Source source);

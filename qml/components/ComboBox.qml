@@ -88,10 +88,12 @@ ComboBox {
             radius: control.background.radius
         }
         onPressed: {
+            if(!readOnly) return;
             control.down = true // control.pressed is readonly in qt6 so don't use it
             popup.visible = true // or control.popup.open()
         }
         onReleased: {
+            if(!readOnly) return;
             control.down = false
         }
     }

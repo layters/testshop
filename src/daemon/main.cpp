@@ -2,6 +2,7 @@
 // neroshop
 #include "../core/server.hpp"
 #include "../core/database.hpp"
+#include "../core/rpc.hpp"
 #include "../core/debug.hpp"
 
 #define NEROMON_TAG "\033[1;95m[neromon]:\033[0m "
@@ -28,9 +29,12 @@ void do_heartbeat()
 	    //std::cout << "server's client_socket: " << server->get_client_socket() << std::endl;// returns 5
 	    //std::thread new_client(client); // create a new client thread each time it accepts
 	    //new_client.join();
-	    server->write(NEROMON_TAG "\033[1;32mconnected\033[0m"); // write to client once
+	    ////std::cout << NEROMON_TAG "\033[1;32mconnected\033[0m\n";
     } //else exit(0);
-	std::cout << server->read() << std::endl;
+    // Read json-rpc request object from client
+	std::string request_object = server->read();
+	// Response to client with a json-rpc response object
+	server->write(neroshop::rpc::process(request_object));
 }
 // For security purposes, we don't allow any arguments to be passed into the daemon
 int main(void)
@@ -42,7 +46,7 @@ int main(void)
     
     int server_port = 40441;//1234;//(std::stoi(port));
 	if(server->bind(server_port)) {
-	    server->write(NEROMON_TAG "\033[1;97mbound to port " + std::to_string(server_port) + "\033[0m\n");
+	    std::cout << NEROMON_TAG "\033[1;97mbound to port " + std::to_string(server_port) + "\033[0m\n";
 	}
 	server->listen(); // listens for any incoming connection
 	
