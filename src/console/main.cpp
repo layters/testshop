@@ -6,6 +6,23 @@ using namespace neroshop;
 
 #include <linenoise.h>
 
+static void print_commands() {
+    std::map<std::string, std::string> commands { // std::map sorts command names in alphabetical order
+        {"help        ", "Display list of available commands"},
+        {"exit        ", "Exit CLI"},
+        {"version     ", "Show version"},
+        {"monero_nodes", "Display a list of monero nodes"}, 
+        {"query       ", "Execute an SQLite query"}
+        /*, 
+        {"", ""}*/
+    };
+    std::cout << "Usage: " << "[COMMAND] ...\n\n";
+    for (auto const& [key, value] : commands) {
+        std::cout << "  " << key << "  " << value << "\n";
+    }
+    std::cout << "\n";
+}
+
 int main(int argc, char** argv) {
     // Connect to daemon server (daemon must be launched first)
     #ifndef NEROSHOP_DEBUG
@@ -44,7 +61,7 @@ int main(int argc, char** argv) {
         linenoiseHistorySave("history.txt"); // Save the history on disk.
 
         if(command == "help" || !strncmp(line, "\0", command.length())) { // By default, pressing "Enter" on an empty string will execute this code
-            std::cout << "\033[1;37mAvailable commands:\n\n help  Display list of available commands\n\n exit  Exit CLI\n\n" << "\033[0m\n";
+            print_commands();
         }  
         else if(command == "monero_nodes") {
             for(std::string nodes : monero_nodes) {
@@ -76,7 +93,7 @@ int main(int argc, char** argv) {
             break;
         }
         else {
-            std::cerr << std::string("\033[1;91mUnreconized command: \033[1;37m") << line << "\033[0m" << std::endl;  
+            std::cerr << std::string("\033[0;91mUnreconized command: \033[1;37m") << line << "\033[0m" << std::endl;  
         }
         linenoiseFree(line); // Or just free(line) if you use libc malloc.
     }

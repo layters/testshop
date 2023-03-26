@@ -466,7 +466,9 @@ Page {
                         color: (NeroshopComponents.Style.darkTheme) ? "#101010" : "#ffffff"
                         border.color: (NeroshopComponents.Style.darkTheme) ? "#a9a9a9" : "#696969"
                         radius: 3
-                    }                     
+                    }
+                    Keys.onEnterPressed: loginButton.activate()
+                    Keys.onReturnPressed: loginButton.activate()
                 }                    
                 }
                Rectangle {//ColumnLayout {
@@ -530,7 +532,7 @@ Page {
                     	verticalAlignment: Text.AlignVCenter                    
                 	}               
                 	
-                	onClicked: {
+                	function activate() {
                 	    // restore from file
                 	    if(walletRestoreStack.currentIndex == 0) {
                 	    // Todo: place this in a seperate function
@@ -573,7 +575,11 @@ Page {
                 	        onAutoSync();
                             // Switch to HomePage
                             ////pageLoader.source = "HomePage.qml"//stack.push(home_page)                	        
-                	    }
+                	    }                	
+                	}
+                	
+                	onClicked: {
+                        loginButton.activate()
                 	}     
                 }            
             } // GridLayout
@@ -1064,6 +1070,8 @@ Page {
                     
                     ////Layout.topMargin: (optNameText.visible) ? 5 : 0
                     ////placeholderTextColor: (NeroshopComponents.Style.darkTheme) ? "#a9a9a9" : "#696969" 	
+            	    Keys.onEnterPressed: registerWallet()
+                    Keys.onReturnPressed: registerWallet()
             	}
             	// register button
             	Button {

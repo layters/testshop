@@ -26,6 +26,9 @@ GridView {
         console.log("grid columns", columns)
         console.log("grid rows", rows)
     }
+    ScrollBar.vertical: ScrollBar {
+        policy: ScrollBar.AsNeeded
+    }    
     function getBox(index) { // or get_item(index)?
         return catalogGridRepeater.itemAt(index);
     }

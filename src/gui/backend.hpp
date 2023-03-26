@@ -88,6 +88,10 @@ public:
     Q_INVOKABLE int getStockAvailable(const QString& product_id);
     
     Q_INVOKABLE QVariantList getInventory(const QString& user_id);
+    
+    Q_INVOKABLE void createOrder(UserController * user_controller, const QString& shipping_address);
+    
+    static int deleteExpiredOrders();
     //Q_INVOKABLE void ();
     static void testWriteJson();
     static void testfts5();

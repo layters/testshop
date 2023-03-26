@@ -7,17 +7,18 @@
 #include <QtConcurrent>
 
 #include "../core/currency_converter.hpp"
-#include "../core/price_api/price_api_factory.hpp"
 
 namespace {
-const std::vector<PriceApiFactory::Source> SOURCES_TO_USE{
-    PriceApiFactory::Source::CoinMarketCap,
-    PriceApiFactory::Source::CoinGecko,
-    PriceApiFactory::Source::CryptoWatch,
-    PriceApiFactory::Source::CoinTelegraph,
-    PriceApiFactory::Source::CryptoRank,
-    PriceApiFactory::Source::CoinCodex,
-    PriceApiFactory::Source::Fawazahmed0,
+const std::vector<neroshop::PriceSource> SOURCES_TO_USE{
+    neroshop::PriceSource::CoinMarketCap,
+    neroshop::PriceSource::CoinGecko,
+    neroshop::PriceSource::CryptoWatch,
+    neroshop::PriceSource::CoinTelegraph,
+    neroshop::PriceSource::CryptoRank,
+    neroshop::PriceSource::CoinCodex,
+    neroshop::PriceSource::Fawazahmed0,
+    // Exchanges
+    neroshop::PriceSource::Kraken,
 };
 
 QHash<QPair<int, int>, double> updateRates(const QList<QPair<int, int>> keys)
@@ -28,7 +29,7 @@ QHash<QPair<int, int>, double> updateRates(const QList<QPair<int, int>> keys)
         const auto currencyTo = static_cast<neroshop::Currency>(key.second);
 
         for (const auto &source : SOURCES_TO_USE) {
-            auto price_source = PriceApiFactory::makePriceSouce(source);
+            auto price_source = neroshop::Converter::make_price_source(source);
             auto price_opt = price_source->price(currencyFrom, currencyTo);
             if (price_opt.has_value()) {
                 newRates[key] = price_opt.value();

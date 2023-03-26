@@ -1,5 +1,6 @@
 #include "cointelegraph.hpp"
 
+#if defined(NEROSHOP_USE_QT)
 #include <QEventLoop>
 #include <QJsonArray>
 #include <QJsonDocument>
@@ -8,15 +9,19 @@
 #include <QNetworkAccessManager>
 #include <QNetworkReply>
 #include <QNetworkRequest>
+#include <QString>
+#else
+#include <curl/curl.h>
+#include <nlohmann/json.hpp>
+#endif
 
 #include <map>
-#include <QString>
+
+#include "../../core/currency_map.hpp"
 
 namespace {
 
-const QString BASE_URL{QStringLiteral("https://ticker-api.cointelegraph.com/rates/?full=true")};
-
-const std::map<neroshop::Currency, QString> CURRENCY_TO_ID{
+const std::map<neroshop::Currency, std::string> CURRENCY_TO_ID{
     {neroshop::Currency::USD, "USD"},
     {neroshop::Currency::AUD, "AUD"},
     {neroshop::Currency::CAD, "CAD"},
@@ -33,7 +38,7 @@ const std::map<neroshop::Currency, QString> CURRENCY_TO_ID{
     {neroshop::Currency::XAU, "XAU"},
 };
 
-const std::map<neroshop::Currency, QString> CRYPTO_TO_ID{
+const std::map<neroshop::Currency, std::string> CRYPTO_TO_ID{
     {neroshop::Currency::BTC, "BTC"},
     {neroshop::Currency::ETH, "ETH"},
     {neroshop::Currency::XMR, "XMR"},
@@ -57,6 +62,8 @@ std::optional<double> CoinTelegraphApi::price(neroshop::Currency from, neroshop:
         return std::nullopt;
     }
 
+    #if defined(NEROSHOP_USE_QT)
+    const QString BASE_URL{QStringLiteral("https://ticker-api.cointelegraph.com/rates/?full=true")};
     QNetworkAccessManager manager;
     QEventLoop loop;
     QObject::connect(&manager, &QNetworkAccessManager::finished, &loop, &QEventLoop::quit);
@@ -77,10 +84,10 @@ std::optional<double> CoinTelegraphApi::price(neroshop::Currency from, neroshop:
     const auto data_obj = data_val.toObject();
 
     if (is_crypto(from)) {
-        const auto crypto_obj = data_obj.value(CRYPTO_TO_ID.at(from)).toObject();
+        const auto crypto_obj = data_obj.value(QString::fromStdString(CRYPTO_TO_ID.at(from))).toObject();
 
         if (is_currency(to)) {
-            const auto currecy_obj = crypto_obj.value(CURRENCY_TO_ID.at(to)).toObject();
+            const auto currecy_obj = crypto_obj.value(QString::fromStdString(CURRENCY_TO_ID.at(to))).toObject();
             if (!currecy_obj.contains("price")) {
                 return std::nullopt;
             }
@@ -94,7 +101,7 @@ std::optional<double> CoinTelegraphApi::price(neroshop::Currency from, neroshop:
             }
             const auto from_price = usd_obj.value("price").toDouble();
 
-            const auto crypto_obj = data_obj.value(CRYPTO_TO_ID.at(to)).toObject();
+            const auto crypto_obj = data_obj.value(QString::fromStdString(CRYPTO_TO_ID.at(to))).toObject();
             const auto currecy_obj = crypto_obj.value("USD").toObject();
             if (!currecy_obj.contains("price")) {
                 return std::nullopt;
@@ -107,13 +114,15 @@ std::optional<double> CoinTelegraphApi::price(neroshop::Currency from, neroshop:
     }
 
     if (is_currency(from)) {
-        const auto crypto_obj = data_obj.value(CRYPTO_TO_ID.at(to)).toObject();
-        const auto currecy_obj = crypto_obj.value(CURRENCY_TO_ID.at(from)).toObject();
+        const auto crypto_obj = data_obj.value(QString::fromStdString(CRYPTO_TO_ID.at(to))).toObject();
+        const auto currecy_obj = crypto_obj.value(QString::fromStdString(CURRENCY_TO_ID.at(from))).toObject();
         if (!currecy_obj.contains("price")) {
             return std::nullopt;
         }
         return 1.0 / currecy_obj.value("price").toDouble();
     }
-
+    #else
+    #endif
+    
     return std::nullopt;
 }

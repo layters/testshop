@@ -41,7 +41,8 @@ public:
     Q_PROPERTY(int cartQuantity READ getCartQuantity NOTIFY cartQuantityChanged);
 
     Q_PROPERTY(QVariantList inventory READ getInventory NOTIFY productsCountChanged);
-    Q_PROPERTY(QVariantList inventoryDate READ getInventoryByDate NOTIFY productsCountChanged);
+    Q_PROPERTY(QVariantList inventoryInStock READ getInventoryInStock NOTIFY productsCountChanged);
+    //Q_PROPERTY(QVariantList inventoryDate READ getInventoryByDate NOTIFY productsCountChanged);
     //Q_PROPERTY(QVariantList cart READ getCart NOTIFY cartQuantityChanged);
 
     Q_INVOKABLE void listProduct(const QString& product_id, int quantity, double price, const QString& currency, const QString& condition, const QString& location);
@@ -49,7 +50,7 @@ public:
     Q_INVOKABLE void delistProducts(const QStringList& product_ids);
     Q_INVOKABLE void addToCart(const QString& product_id, int quantity);
     //Q_INVOKABLE void removeFromCart(const QString& product_id, int quantity);
-    //Q_INVOKABLE void createOrder();
+    Q_INVOKABLE void createOrder(const QString& shipping_address);
     Q_INVOKABLE void rateItem(const QString& product_id, int stars, const QString& comments);//, const QString& signature);
     Q_INVOKABLE void rateSeller(const QString& seller_id, int score, const QString& comments);//, const QString& signature);
     //Q_INVOKABLE void addToFavorites();

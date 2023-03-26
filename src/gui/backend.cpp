@@ -121,28 +121,32 @@ void neroshop::Backend::initializeDatabase() {
         database->execute("CREATE UNIQUE INDEX index_cart_item ON cart_item (cart_id, product_id);"); // cart_id and product_id duo MUST be unqiue for each row
     }
     // orders (purchase_orders)
-    if(!database->table_exists("orders")) {
+    if(!database->table_exists("orders")) { // TODO: rename to order_requests or nah?
         database->execute("CREATE TABLE orders(uuid TEXT NOT NULL PRIMARY KEY);");//database->execute("ALTER TABLE orders ADD COLUMN ?col ?datatype;");
-        database->execute("ALTER TABLE orders ADD COLUMN timestamp TEXT DEFAULT CURRENT_TIMESTAMP;"); // creation_date // to get UTC time: set to datetime('now');
+        database->execute("ALTER TABLE orders ADD COLUMN created_at TEXT DEFAULT CURRENT_TIMESTAMP;"); // creation_date // to get UTC time: set to datetime('now');
         //database->execute("ALTER TABLE orders ADD COLUMN number TEXT;"); // uuid
         database->execute("ALTER TABLE orders ADD COLUMN status TEXT;");
-        database->execute("ALTER TABLE orders ADD COLUMN user_id TEXT REFERENCES users(monero_address);"); // the user that placed the order
+        database->execute("ALTER TABLE orders ADD COLUMN customer_id TEXT REFERENCES users(monero_address);"); // the user that placed the order
+        // Data below this comment will be stored in order_data as JSON TEXT
         //database->execute("ALTER TABLE orders ADD COLUMN weight REAL;"); // weight of all order items combined - not essential
-        database->execute("ALTER TABLE orders ADD COLUMN subtotal numeric(20, 12);");
-        database->execute("ALTER TABLE orders ADD COLUMN discount numeric(20, 12);");
-        //database->execute("ALTER TABLE orders ADD COLUMN shipping_method TEXT;"); // comment this out
-        database->execute("ALTER TABLE orders ADD COLUMN shipping_cost numeric(20, 12);");
-        database->execute("ALTER TABLE orders ADD COLUMN total numeric(20, 12);");
-        //database->execute("ALTER TABLE orders ADD COLUMN notes TEXT;"); // will contain sensative such as shipping address and tracking numbers that will be encrypted and can only be decrypted by the seller - this may not be necessary since buyer can contact seller privately
+        database->execute("ALTER TABLE orders ADD COLUMN subtotal INTEGER;");
+        database->execute("ALTER TABLE orders ADD COLUMN discount INTEGER;");
+        //database->execute("ALTER TABLE orders ADD COLUMN shipping_method TEXT;");
+        database->execute("ALTER TABLE orders ADD COLUMN shipping_cost INTEGER;");
+        database->execute("ALTER TABLE orders ADD COLUMN total INTEGER;");
+        database->execute("ALTER TABLE orders ADD COLUMN payment_option TEXT;"); // escrow (2 of 3), multisig (2 of 2), finalize (no escrow)
+        database->execute("ALTER TABLE orders ADD COLUMN coin TEXT;"); // monero, wownero
+        database->execute("ALTER TABLE orders ADD COLUMN notes TEXT;"); // additional message for seller
         //database->execute("ALTER TABLE orders ADD COLUMN order_data TEXT;"); // encrypted JSON
         // order_item
+        // TODO: remove order_item table and replace it with order_data JSON column
         database->execute("CREATE TABLE order_item(id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT, "
         "order_id TEXT REFERENCES orders(uuid) ON DELETE CASCADE, "
         "product_id TEXT REFERENCES products(uuid), "
         "seller_id TEXT REFERENCES users(monero_address), "
         "quantity INTEGER"
         ");");
-        //database->execute("ALTER TABLE order_item ADD COLUMN item_price ?datatype;");
+        //database->execute("ALTER TABLE order_item ADD COLUMN unit_price ?datatype;");
         //database->execute("ALTER TABLE order_item ADD COLUMN ?col ?datatype;");
     }
     // ratings - product_ratings, seller_ratings
@@ -1017,6 +1021,21 @@ QVariantList neroshop::Backend::getListingsByPriceHighest() {
 
     return catalog_array;
 }
+//----------------------------------------------------------------
+void neroshop::Backend::createOrder(UserController * user_controller, const QString& shipping_address) {
+    user_controller->createOrder(shipping_address);
+}
+//----------------------------------------------------------------
+// TODO: run this function every once in a while
+int neroshop::Backend::deleteExpiredOrders() {
+    neroshop::db::Sqlite3 * database = neroshop::get_database();
+    if(!database) throw std::runtime_error("database is NULL");
+    // If order is at least 2 years old or older, then it is considered expired. Therefore it must be deleted
+    std::string modifier = "+" + std::to_string(2) + " years";//std::cout << modifier << std::endl;
+    std::string command = "DELETE FROM orders WHERE datetime(created_at, $1) <= datetime('now');";
+    return database->execute_params(command, { modifier }); // 0 = success
+}
+//----------------------------------------------------------------
 //----------------------------------------------------------------
 QVariantList neroshop::Backend::getNodeListDefault(const QString& coin) const {
     QVariantList node_list;

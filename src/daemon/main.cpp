@@ -4,6 +4,9 @@
 #include "../core/database.hpp"
 #include "../core/rpc.hpp"
 #include "../core/debug.hpp"
+#include "../core/version.hpp"
+
+#include <cxxopts.hpp>
 
 #define NEROMON_TAG "\033[1;95m[neromon]:\033[0m "
 
@@ -37,8 +40,23 @@ void do_heartbeat()
 	server->write(neroshop::rpc::process(request_object));
 }
 // For security purposes, we don't allow any arguments to be passed into the daemon
-int main(void)
+int main(int argc, char** argv)
 {
+    std::string daemon { "neromon" };
+    std::string daemon_version { daemon + " v" + std::string(NEROSHOP_VERSION) };
+    cxxopts::Options options(daemon, std::string(daemon_version + ", " + std::string(NEROSHOP_VERSION_FULL)));
+
+    options.add_options()
+        ("h,help", "Print usage")
+    ;
+    
+    auto result = options.parse(argc, argv);
+    
+    if(result.count("help")) {
+        std::cout << options.help() << std::endl;
+        exit(0);
+    }    
+    //-------------------------------------------------------
     // Start server
     std::atexit(close_server);
     

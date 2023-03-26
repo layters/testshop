@@ -33,6 +33,7 @@ Popup {
     property alias catalogPriceBox: priceDisplayBox
     property alias hideProductDetails: hideProductDetailsSwitch.checked
     property alias gridDetailsAlignCenter: gridDetailsAlignCenterSwitch.checked
+    property alias catalogViewBox: viewBox
     ////property alias hideIllegalProducts: hideIllegalProductsSwitch.checked
     // Monero tab properties
     property alias moneroNodeType: nodeTypeStackLayout.currentIndex//nodeTypeGroup.checkedButton.stackLayoutIndex
@@ -606,6 +607,26 @@ Popup {
                 ColumnLayout {
                     id: catalogSetColumn
                     width: parent.width; height: childrenRect.height
+                    // Catalog view display
+                    Item {
+                        Layout.fillWidth: true
+                        Layout.preferredHeight: childrenRect.height
+                        Text {
+                            anchors.verticalCenter: viewBox.verticalCenter
+                            text: qsTr("Display:")
+                            color: NeroshopComponents.Style.darkTheme ? "#ffffff" : "#000000"
+                        }
+                        
+                        NeroshopComponents.ComboBox {
+                            id: viewBox
+                            anchors.right: parent.right
+                            width: settingsStack.comboBoxWidth; indicatorWidth: settingsStack.comboBoxButtonWidth
+                            model: ["Grid view", "List view"]
+                            Component.onCompleted: currentIndex = find("Grid view")
+                            color: "#f2f2f2"
+                            indicatorDoNotPassBorder: settingsStack.comboBoxNestedButton
+                        }
+                    }                    
                     // Product details
                     Item {
                         Layout.fillWidth: true
@@ -644,7 +665,7 @@ Popup {
                             color: "#f2f2f2"
                             indicatorDoNotPassBorder: settingsStack.comboBoxNestedButton
                         }
-                    }
+                    }                    
                     // Grid product details aligned center
                     Item {
                         Layout.fillWidth: true
@@ -666,9 +687,10 @@ Popup {
                         }
                     }
                     // Show/Hide illegal products
-                    /*Item {
+                    Item {
                         Layout.fillWidth: true
                         Layout.preferredHeight: childrenRect.height
+                        visible: false // hide this option for now
                         Text {
                             anchors.verticalCenter: hideIllegalProductsSwitch.verticalCenter
                             text: qsTr("Hide illegal products:")
@@ -683,7 +705,7 @@ Popup {
                             radius: 13
                             backgroundCheckedColor: "#605185"
                         }
-                    }*/
+                    }
                 }
             }            
             

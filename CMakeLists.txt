@@ -19,6 +19,8 @@ option(UUID_TIME_GENERATOR "Enable experimental time-based uuid generator" OFF)
 cmake_dependent_option(NEROSHOP_USE_SYSTEM_SOCKETS "Build neroshop with SYSTEM_SOCKETS" ON "NOT NEROSHOP_USE_LIBZMQ;NOT NEROSHOP_USE_LIBUV" OFF)
 cmake_dependent_option(NEROSHOP_USE_LIBZMQ "Build neroshop with LibZMQ" ON "NOT NEROSHOP_USE_LIBUV;NOT NEROSHOP_USE_SYSTEM_SOCKETS" OFF)
 cmake_dependent_option(NEROSHOP_USE_LIBUV "Build neroshop with LIBUV" ON "NOT NEROSHOP_USE_LIBZMQ;NOT NEROSHOP_USE_SYSTEM_SOCKETS" OFF)
+option(NEROSHOP_USE_GRPC "Build neroshop with gRPC" OFF)
+cmake_dependent_option(NEROSHOP_USE_SYSTEM_GRPC "Use system installed gRPC" ON "NEROSHOP_USE_GRPC;USE_SYSTEM_GRPC" OFF)
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake" "${CMAKE_CURRENT_SOURCE_DIR}/external/monero-cpp/external/monero-project/cmake")
 ######################################
@@ -384,7 +386,9 @@ link_directories(${CMAKE_CURRENT_SOURCE_DIR}/build) # target_link_directories on
 
 ######################################
 # neroshop core source files
-set(neroshop_core_src src/core/buyer.cpp src/core/cart.cpp src/core/catalog.cpp src/core/client.cpp src/core/config.cpp src/core/currency_converter.cpp src/core/database.cpp src/core/encryptor.cpp src/core/item.cpp src/core/order.cpp src/core/process.cpp src/core/rpc.cpp src/core/script.cpp src/core/seller.cpp src/core/server.cpp src/core/user.cpp src/core/validator.cpp src/core/wallet.cpp src/core/database/sqlite.cpp)
+set(neroshop_database_srcs src/core/database/sqlite.cpp)
+set(neroshop_price_srcs src/core/price_api/coincodex.cpp src/core/price_api/coingecko.cpp src/core/price_api/coinmarketcap.cpp src/core/price_api/cointelegraph.cpp src/core/price_api/cryptorank.cpp src/core/price_api/cryptowatch.cpp src/core/price_api/fawazahmed0.cpp src/core/price_api/kraken.cpp)
+set(neroshop_core_src src/core/buyer.cpp src/core/cart.cpp src/core/catalog.cpp src/core/client.cpp src/core/config.cpp src/core/currency_converter.cpp src/core/database.cpp src/core/encryptor.cpp src/core/item.cpp src/core/order.cpp src/core/process.cpp src/core/rpc.cpp src/core/script.cpp src/core/seller.cpp src/core/server.cpp src/core/user.cpp src/core/validator.cpp src/core/wallet.cpp ${neroshop_database_srcs} ${neroshop_price_srcs})
 
 ######################################
 # neroshop tests
@@ -416,7 +420,6 @@ endif()
 # neroshop
 if(NEROSHOP_BUILD_GUI)
     set(neroshop_executable "neroshop")
-    set(neroshop_core_src ${neroshop_core_src} src/core/price_api/price_api_factory.cpp src/core/price_api/coincodex.cpp src/core/price_api/coingecko.cpp src/core/price_api/coinmarketcap.cpp src/core/price_api/cointelegraph.cpp src/core/price_api/cryptorank.cpp src/core/price_api/cryptowatch.cpp src/core/price_api/fawazahmed0_currency.cpp)
     add_executable(${neroshop_executable})
     target_sources(${neroshop_executable} PRIVATE ${neroshop_res} src/gui/main.cpp src/gui/script_controller.cpp src/gui/wallet_controller.cpp src/gui/user_controller.cpp src/gui/image_loader.cpp src/gui/image_provider.cpp src/gui/wallet_qr_provider.cpp src/gui/currency_exchange_rates_provider.cpp #[[src/gui/table_model.cpp]] src/gui/backend.cpp ${neroshop_core_src})
     target_compile_definitions(${neroshop_executable} PRIVATE NEROSHOP_DEBUG)#set_target_properties(${neroshop_executable} PROPERTIES COMPILE_DEFINITIONS "NEROSHOP_DEBUG")
@@ -426,6 +429,24 @@ if(NEROSHOP_BUILD_GUI)
     target_compile_definitions(${neroshop_executable} PRIVATE NEROSHOP_BUILD_GUI)
 endif()
 
+######################################
+# gRPC
+if(NEROSHOP_USE_GRPC)
+    message(STATUS "Using gRPC")
+    target_compile_definitions(${neroshop_executable} PRIVATE NEROSHOP_USE_GRPC)
+    target_compile_definitions(${neroshop_console} PRIVATE NEROSHOP_USE_GRPC)
+    target_compile_definitions(${daemon_executable} PRIVATE NEROSHOP_USE_GRPC)
+    if(NEROSHOP_USE_SYSTEM_GRPC)
+        # Find system-installed gRPC
+        find_package(gRPC CONFIG REQUIRED)
+        message(STATUS "USE_SYSTEM_GRPC option set to ON")
+        target_link_libraries(${neroshop_executable} gRPC::grpc++)
+        target_link_libraries(${neroshop_console} gRPC::grpc++)
+        target_link_libraries(${daemon_executable} gRPC::grpc++)
+    else()
+        # Build gRPC using FetchContent or add_subdirectory
+    endif()
+endif()
 ######################################
 if(NOT NEROSHOP_USE_LIBZMQ AND NOT NEROSHOP_USE_LIBUV)
     message(STATUS "${BoldWhite}Using SYSTEM SOCKETS${ColourReset}")

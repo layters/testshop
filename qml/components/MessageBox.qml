@@ -38,7 +38,7 @@ Window {
         	implicitWidth: messageBoxWindow.width
         	implicitHeight: messageBoxWindow.height
         	color: "#a0a0a0"////NeroshopComponents.Style.getColorsFromTheme()[2]
-        	border.color: "white"
+        	border.color: "#d9d9d9"
         	radius: 10//3
     	} // background
         // title bar

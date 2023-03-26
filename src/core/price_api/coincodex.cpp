@@ -1,5 +1,6 @@
 #include "coincodex.hpp"
 
+#if defined(NEROSHOP_USE_QT)
 #include <QEventLoop>
 #include <QJsonArray>
 #include <QJsonDocument>
@@ -8,28 +9,29 @@
 #include <QNetworkAccessManager>
 #include <QNetworkReply>
 #include <QNetworkRequest>
+#include <QString>
+#else
+#include <curl/curl.h>
+#include <nlohmann/json.hpp>
+#endif
 
 #include <map>
-#include <QString>
 
-namespace {
-
-const QString BASE_URL{QStringLiteral("https://coincodex.com/api/coincodex/get_coin/%1")};
-
-const std::map<neroshop::Currency, QString> CURRENCY_TO_ID{
-    {neroshop::Currency::BTC, "btc"},
-    {neroshop::Currency::ETH, "eth"},
-    {neroshop::Currency::XMR, "xmr"},
-};
-
-} // namespace
+#include "../../core/currency_map.hpp"
+#include "../../core/util.hpp" // neroshop::string::lower
 
 std::optional<double> CoinCodexApi::price(neroshop::Currency from, neroshop::Currency to) const
 {
     // Fill map with initial currency ids and codes
-    std::map<neroshop::Currency, QString> CURRENCY_TO_VS;
+    const std::map<neroshop::Currency, std::string> CURRENCY_TO_ID{
+        {neroshop::Currency::BTC, "btc"},
+        {neroshop::Currency::ETH, "eth"},
+        {neroshop::Currency::XMR, "xmr"},
+    };
+
+    std::map<neroshop::Currency, std::string> CURRENCY_TO_VS;
     for (const auto& [key, value] : neroshop::CurrencyMap) {
-        CURRENCY_TO_VS[std::get<0>(value)] = QString::fromStdString(key).toLower();
+        CURRENCY_TO_VS[std::get<0>(value)] = neroshop::string::lower(key);
     }
     
     auto it = CURRENCY_TO_ID.find(from);
@@ -42,12 +44,13 @@ std::optional<double> CoinCodexApi::price(neroshop::Currency from, neroshop::Cur
     if (it == CURRENCY_TO_VS.cend()) {
         return std::nullopt;
     }
-
+    #if defined(NEROSHOP_USE_QT)
+    const QString BASE_URL{QStringLiteral("https://coincodex.com/api/coincodex/get_coin/%1")};
     QNetworkAccessManager manager;
     QEventLoop loop;
     QObject::connect(&manager, &QNetworkAccessManager::finished, &loop, &QEventLoop::quit);
 
-    const QUrl url(BASE_URL.arg(idFrom));
+    const QUrl url(BASE_URL.arg(QString::fromStdString(idFrom)));
     auto reply = manager.get(QNetworkRequest(url));
     loop.exec();
     QJsonParseError error;
@@ -57,4 +60,8 @@ std::optional<double> CoinCodexApi::price(neroshop::Currency from, neroshop::Cur
     }
     const auto root_obj = json_doc.object();
     return root_obj.value("last_price_usd").toDouble();
+    #else
+    #endif
+    
+    return std::nullopt;
 }

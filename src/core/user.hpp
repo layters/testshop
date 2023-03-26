@@ -27,7 +27,7 @@ public:
     void remove_from_cart(const neroshop::Item& item, int quantity = 1);
     void clear_cart();
     // order-related stuff (50% complete - order class still needs some more work)
-    void create_order(const std::string& shipping_address, std::string contact = "");// const;//void create_order();
+    void create_order(const std::string& shipping_address);// const;//void create_order();
     // favorite-or-wishlist-related stuff (100% complete)
     void add_to_favorites(const std::string& product_id);
     void add_to_favorites(const neroshop::Item& item);

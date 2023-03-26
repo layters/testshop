@@ -17,7 +17,7 @@ Item {
         exclusive: true // only one button in the group can be checked at any given time
         onClicked: {
             console.log("Switched to", button.text)
-            button.checked = true
+            settingsDialog.catalogViewBox.currentIndex = button.buttonIndex////button.checked = true
         }
     }
 
@@ -26,7 +26,7 @@ Item {
         spacing: 2
 
         Button {
-            checked: true
+            checked: (settingsDialog.catalogViewBox.currentIndex == buttonIndex)//true
             text: qsTr("Grid view")
             ButtonGroup.group: viewButtonGroup // attaches a button to a button group
             property int buttonIndex: 0
@@ -45,6 +45,7 @@ Item {
         }
 
         Button {
+            checked: (settingsDialog.catalogViewBox.currentIndex == buttonIndex)
             text: qsTr("List view")
             ButtonGroup.group: viewButtonGroup
             property int buttonIndex: 1

@@ -45,6 +45,13 @@ void neroshop::UserController::addToCart(const QString& product_id, int quantity
 //void removeFromCart(const QString& product_id, int quantity) {}
 //----------------------------------------------------------------
 //----------------------------------------------------------------
+Q_INVOKABLE void neroshop::UserController::createOrder(const QString& shipping_address) {
+    if (!_user) throw std::runtime_error("neroshop::User is not initialized");
+    _user->create_order(shipping_address.toStdString());
+    emit cartQuantityChanged();
+}
+//----------------------------------------------------------------
+//----------------------------------------------------------------
 void neroshop::UserController::rateItem(const QString& product_id, int stars, const QString& comments)
 {
     if (!_user) throw std::runtime_error("neroshop::User is not initialized");
@@ -230,7 +237,67 @@ QVariantList neroshop::UserController::getInventory() const {
 }
 //----------------------------------------------------------------
 QVariantList neroshop::UserController::getInventoryInStock() const {
-    return {};
+    if (!_user) throw std::runtime_error("neroshop::User is not initialized");
+    neroshop::db::Sqlite3 * database = neroshop::get_database();
+    if(!database) throw std::runtime_error("database is NULL");
+    
+    std::string command = "SELECT DISTINCT * FROM listings JOIN products ON products.uuid = listings.product_id JOIN images ON images.product_id = listings.product_id WHERE seller_id = $1 AND quantity > 0 GROUP BY images.product_id;";
+    sqlite3_stmt * stmt = nullptr;
+    // Prepare (compile) statement
+    if(sqlite3_prepare_v2(database->get_handle(), command.c_str(), -1, &stmt, nullptr) != SQLITE_OK) {
+        neroshop::print("sqlite3_prepare_v2: " + std::string(sqlite3_errmsg(database->get_handle())), 1);
+        return {};
+    }
+    // Bind user_id to TEXT
+    std::string user_id = _user->get_id();
+    if(sqlite3_bind_text(stmt, 1, user_id.c_str(), user_id.length(), SQLITE_STATIC) != SQLITE_OK) {
+        neroshop::print("sqlite3_bind_text (arg: 1): " + std::string(sqlite3_errmsg(database->get_handle())), 1);
+        sqlite3_finalize(stmt);
+        return {};
+    }    
+    // Check whether the prepared statement returns no data (for example an UPDATE)
+    if(sqlite3_column_count(stmt) == 0) {
+        neroshop::print("No data found. Be sure to use an appropriate SELECT statement", 1);
+        return {};
+    }
+    
+    QVariantList inventory_array;
+    // Get all table values row by row
+    while(sqlite3_step(stmt) == SQLITE_ROW) {
+        QVariantMap inventory_object; // Create an object for each row
+        for(int i = 0; i < sqlite3_column_count(stmt); i++) {
+            std::string column_value = (sqlite3_column_text(stmt, i) == nullptr) ? "NULL" : reinterpret_cast<const char *>(sqlite3_column_text(stmt, i));////if(sqlite3_column_text(stmt, i) == nullptr) {throw std::runtime_error("column is NULL");}
+            ////std::cout << column_value  << " (" << i << ")" << std::endl;//std::cout << sqlite3_column_name(stmt, i) << std::endl;
+            // listings table
+            if(i == 0) inventory_object.insert("listing_uuid", QString::fromStdString(column_value));
+            if(i == 1) inventory_object.insert("product_id", QString::fromStdString(column_value));
+            if(i == 2) inventory_object.insert("seller_id", QString::fromStdString(column_value));
+            if(i == 3) inventory_object.insert("quantity", QString::fromStdString(column_value).toInt());
+            if(i == 4) inventory_object.insert("price", QString::fromStdString(column_value).toDouble());
+            if(i == 5) inventory_object.insert("currency", QString::fromStdString(column_value));
+            if(i == 6) inventory_object.insert("condition", QString::fromStdString(column_value));
+            if(i == 7) inventory_object.insert("location", QString::fromStdString(column_value));
+            if(i == 8) inventory_object.insert("date", QString::fromStdString(column_value));
+            // products table
+            if(i == 9) inventory_object.insert("product_uuid", QString::fromStdString(column_value)); 
+            if(i == 10) inventory_object.insert("product_name", QString::fromStdString(column_value)); 
+            if(i == 11) inventory_object.insert("product_description", QString::fromStdString(column_value)); 
+            if(i == 12) inventory_object.insert("weight", QString::fromStdString(column_value).toDouble()); 
+            if(i == 13) inventory_object.insert("product_attributes", QString::fromStdString(column_value)); 
+            if(i == 14) inventory_object.insert("product_code", QString::fromStdString(column_value)); 
+            if(i == 15) inventory_object.insert("product_category_id", QString::fromStdString(column_value).toInt()); 
+            // images table
+            //if(i == 16) inventory_object.insert("image_id", QString::fromStdString(column_value)); 
+            //if(i == 17) inventory_object.insert("product_uuid", QString::fromStdString(column_value)); 
+            if(i == 18) inventory_object.insert("product_image_file", QString::fromStdString(column_value)); 
+            //if(i == 19) inventory_object.insert("product_image_data", QString::fromStdString(column_value));        
+        }
+        inventory_array.append(inventory_object);
+    }
+    
+    sqlite3_finalize(stmt);
+
+    return inventory_array;    
 }
 //----------------------------------------------------------------
 QVariantList neroshop::UserController::getInventoryByDate() const {

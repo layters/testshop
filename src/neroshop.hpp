@@ -5,12 +5,9 @@
 #define NEROSHOP_AUTHOR    "larteyoh"
 #define NEROSHOP_LICENSE   "GNU General Public License v3.0"
 #define NEROSHOP_COPYRIGHT "Copyright (C) 2021-present larteyoh@protonmail.com"
-#define NEROSHOP_VERSION_MAJOR "0"
-#define NEROSHOP_VERSION_MINOR "1"
-#define NEROSHOP_VERSION_PATCH "0"
-#define NEROSHOP_VERSION NEROSHOP_VERSION_MAJOR "." NEROSHOP_VERSION_MINOR "." NEROSHOP_VERSION_PATCH
 // These include files constitute the main neroshop API
 // neroshop (core)
+#include "core/version.hpp"
 #include "core/debug.hpp"
 #include "core/wallet.hpp" // causes error depending on where you place this header
 #include "core/config.hpp"

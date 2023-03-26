@@ -245,7 +245,7 @@ WW2pQTQWHpyJf2CHrCmZG7Tn3zBnYRZTH8g4U3pSZf5s6xsTXrZc9odDWmrWzjRc9MMQWrKXxjHsRdzH
 
 * Git (Official): [github.com/larteyoh/neroshop](https://github.com/larteyoh/neroshop)
 
-* Mail: neroshop@protonmail.com
+* Mail: mail@neroshop.org
 
 * Matrix: [#neroshop:matrix.org](https://matrix.to/#/#neroshop:matrix.org)
 
@@ -263,7 +263,7 @@ lza_menace — for his help on creating the new monero.fail JSON API endpoint
 [//]: # (./clean.sh)
 [//]: # (git checkout -b main)
 [//]: # (git add .gitignore .gitmodules cmake/ CMakeLists.txt CONTRIBUTING.md external/ fonts/ images/ LICENSE qml/ qml.qrc README.md shaders/ src/ test/)
-[//]: # (git commit -m"...")
+[//]: # (git commit -m"..."    or    git commit -a --allow-empty-message -m "")
 [//]: # (git push -u origin backup --force)
 [//]: # (https://git.slipfox.xyz/larteyoh/testshop/settings => Mirror Settings => Synchronize Now)
 [//]: # (removing an external lib from submodules index: git rm --cached path/to/submodule)

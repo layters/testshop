@@ -1,5 +1,6 @@
 #include "cryptowatch.hpp"
 
+#if defined(NEROSHOP_USE_QT)
 #include <QEventLoop>
 #include <QJsonArray>
 #include <QJsonDocument>
@@ -8,23 +9,23 @@
 #include <QNetworkAccessManager>
 #include <QNetworkReply>
 #include <QNetworkRequest>
+#include <QString>
+#else
+#include <curl/curl.h>
+#include <nlohmann/json.hpp>
+#endif
 
 #include <map>
-#include <QString>
 
-namespace {
-
-const QString BASE_URL{QStringLiteral("https://billboard.service.cryptowat.ch/"
-                                      "markets?sort=price&onlyBaseAssets=%1&onlyQuoteAssets=%2")};
-
-} // namespace
+#include "../../core/currency_map.hpp"
+#include "../../core/util.hpp" // neroshop::string::lower
 
 std::optional<double> CryptoWatchApi::price(neroshop::Currency from, neroshop::Currency to) const
 {
     // Fill map with initial currency ids and codes
-    std::map<neroshop::Currency, QString> CURRENCY_TO_ID;
+    std::map<neroshop::Currency, std::string> CURRENCY_TO_ID;
     for (const auto& [key, value] : neroshop::CurrencyMap) {
-        CURRENCY_TO_ID[std::get<0>(value)] = QString::fromStdString(key).toLower();
+        CURRENCY_TO_ID[std::get<0>(value)] = neroshop::string::lower(key);
     }
 
     auto it = CURRENCY_TO_ID.find(from);
@@ -39,11 +40,14 @@ std::optional<double> CryptoWatchApi::price(neroshop::Currency from, neroshop::C
     }
     const auto idTo = it->second;
 
+    #if defined(NEROSHOP_USE_QT)
+    const QString BASE_URL{QStringLiteral("https://billboard.service.cryptowat.ch/"
+                                      "markets?sort=price&onlyBaseAssets=%1&onlyQuoteAssets=%2")};
     QNetworkAccessManager manager;
     QEventLoop loop;
     QObject::connect(&manager, &QNetworkAccessManager::finished, &loop, &QEventLoop::quit);
 
-    const QUrl url(BASE_URL.arg(idFrom, idTo));
+    const QUrl url(BASE_URL.arg(QString::fromStdString(idFrom), QString::fromStdString(idTo)));
     auto reply = manager.get(QNetworkRequest(url));
     loop.exec();
     QJsonParseError error;
@@ -67,13 +71,16 @@ std::optional<double> CryptoWatchApi::price(neroshop::Currency from, neroshop::C
     for (const auto &row_val : rows_arr) {
         const auto row_obj = row_val.toObject();
         const auto last_price_obj = row_obj.value("lastPriceByAsset").toObject();
-        if (last_price_obj.contains(idTo)) {
-            sum_price += last_price_obj.value(idTo).toDouble();
+        if (last_price_obj.contains(QString::fromStdString(idTo))) {
+            sum_price += last_price_obj.value(QString::fromStdString(idTo)).toDouble();
             ++valid_prices;
         }
     }
     if (valid_prices > 0) {
         return sum_price / valid_prices;
     }
+    #else
+    #endif
+    
     return std::nullopt;
 }
