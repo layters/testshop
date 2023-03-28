@@ -85,7 +85,7 @@ int main(int argc, char *argv[])
     // start database
     Backend::initializeDatabase();
     // testing
-    //Backend::testfts5();//Backend::testWriteJson();
+    //Backend::testfts5();//Backend::testWriteJson();//std::cout << neroshop::Wallet::generate_uri("83Qb...6j8Y", 0.000000000001, "donation to my friend", "Jack Kinnof") << "\n";
     // import paths
     engine.addImportPath(":/fonts"); // import FontAwesome 1.0
     // platform macros

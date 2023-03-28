@@ -407,7 +407,8 @@ Page {
                         y: mainWindow.y + (mainWindow.height - this.height) / 2
                         title: qsTr("Remove product")
                         text: qsTr("Are you sure you want to permanently remove the selected product(s)?")
-                        model: ["No", "Yes"]
+                        buttonModel: ["No", "Yes"]
+                        buttonRow.state: "centered"; buttonRow.width: 300 // buttons should fill the row width
                         Component.onCompleted: {
                             buttonAt(0).onClickedCallback = function() { close() }
                             buttonAt(1).color = "#4169e1"//"#4682b4"

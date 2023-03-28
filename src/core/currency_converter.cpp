@@ -8,6 +8,10 @@
 #include "price_api/cryptowatch.hpp"
 #include "price_api/fawazahmed0.hpp"
 #include "price_api/kraken.hpp"
+
+#include "debug.hpp"
+#include "util.hpp"
+#include "currency_map.hpp" // neroshop::CurrencyMap
 //-------------------------------------------------------
 //-------------------------------------------------------
 std::string neroshop::Converter::json_string ("");

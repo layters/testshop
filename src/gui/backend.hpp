@@ -7,18 +7,6 @@
 #include <QUrl>
 #include <QString>
 #include <QStringList>
-#include <QClipboard>
-#include <QGuiApplication>
-#include <QProcess> // Note: QProcess is not supported on VxWorks, iOS, tvOS, or watchOS.
-#include <QUuid>
-#include <QJsonArray>
-#include <QJsonDocument>
-#include <QJsonObject>
-#include <QJsonParseError>
-
-#include "../core/currency_converter.hpp"
-#include "../core/validator.hpp"
-#include "../core/seller.hpp"
 
 #include "wallet_controller.hpp"
 #include "user_controller.hpp"

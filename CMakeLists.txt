@@ -324,11 +324,6 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR}/external/monero-cpp/src/)
 set(monero_cpp_src ${CMAKE_CURRENT_SOURCE_DIR}/build/libmonero-cpp.a)
 
 ######################################
-# libbcrypt (optional)
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/external/libbcrypt)
-set(bcrypt_src ${CMAKE_CURRENT_SOURCE_DIR}/build/libbcrypt.a)
-
-######################################
 # sqlite3
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/external/sqlite) # v3.39.1 (amalgamation - said to run a bit faster)
 set(sqlite_src ${CMAKE_CURRENT_SOURCE_DIR}/build/libsqlite3.a)
@@ -387,8 +382,8 @@ link_directories(${CMAKE_CURRENT_SOURCE_DIR}/build) # target_link_directories on
 ######################################
 # neroshop core source files
 set(neroshop_database_srcs src/core/database/sqlite.cpp)
-set(neroshop_price_srcs src/core/price_api/coincodex.cpp src/core/price_api/coingecko.cpp src/core/price_api/coinmarketcap.cpp src/core/price_api/cointelegraph.cpp src/core/price_api/cryptorank.cpp src/core/price_api/cryptowatch.cpp src/core/price_api/fawazahmed0.cpp src/core/price_api/kraken.cpp)
-set(neroshop_core_src src/core/buyer.cpp src/core/cart.cpp src/core/catalog.cpp src/core/client.cpp src/core/config.cpp src/core/currency_converter.cpp src/core/database.cpp src/core/encryptor.cpp src/core/item.cpp src/core/order.cpp src/core/process.cpp src/core/rpc.cpp src/core/script.cpp src/core/seller.cpp src/core/server.cpp src/core/user.cpp src/core/validator.cpp src/core/wallet.cpp ${neroshop_database_srcs} ${neroshop_price_srcs})
+set(neroshop_price_api_srcs src/core/price_api/coincodex.cpp src/core/price_api/coingecko.cpp src/core/price_api/coinmarketcap.cpp src/core/price_api/cointelegraph.cpp src/core/price_api/cryptorank.cpp src/core/price_api/cryptowatch.cpp src/core/price_api/fawazahmed0.cpp src/core/price_api/kraken.cpp)
+set(neroshop_core_src src/core/buyer.cpp src/core/cart.cpp src/core/catalog.cpp src/core/client.cpp src/core/config.cpp src/core/currency_converter.cpp src/core/database.cpp src/core/encryptor.cpp src/core/item.cpp src/core/order.cpp src/core/process.cpp src/core/rpc.cpp src/core/script.cpp src/core/seller.cpp src/core/server.cpp src/core/user.cpp src/core/validator.cpp src/core/wallet.cpp ${neroshop_database_srcs} ${neroshop_price_api_srcs})
 
 ######################################
 # neroshop tests
@@ -511,20 +506,6 @@ if(ZeroMQ_FOUND)
         target_compile_definitions(${daemon_executable} PRIVATE NEROSHOP_USE_LIBZMQ)
         target_link_libraries(${daemon_executable} ${ZeroMQ_LIBRARIES})
     endif()
-endif()
-
-######################################
-# libbcrypt
-if(DEFINED NEROSHOP_USE_LIBBCRYPT) # -DNEROSHOP_USE_LIBBCRYPT=1
-    message(STATUS "Using libbcrypt: ${bcrypt_src}")
-    if(NEROSHOP_BUILD_GUI)
-        target_compile_definitions(${neroshop_executable} PRIVATE NEROSHOP_USE_LIBBCRYPT)
-        target_link_libraries(${neroshop_executable} ${bcrypt_src})
-    endif()
-    if(NEROSHOP_BUILD_CLI)
-        target_compile_definitions(${neroshop_console} PRIVATE NEROSHOP_USE_LIBBCRYPT)
-        target_link_libraries(${neroshop_console} ${bcrypt_src})
-    endif()    
 endif()
 
 ######################################

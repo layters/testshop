@@ -6,6 +6,7 @@
 #include <QTimer>
 #include <QtConcurrent>
 
+#include "../core/currency_map.hpp"
 #include "../core/currency_converter.hpp"
 
 namespace {

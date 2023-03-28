@@ -40,6 +40,7 @@ public:
     Q_INVOKABLE bool restoreFromKeys(const QString& primary_address, const QString& private_view_key, const QString& private_spend_key);
     Q_INVOKABLE bool open(const QString& path, const QString& password);
     Q_INVOKABLE void close(bool save = false);
+    Q_INVOKABLE bool verifyPassword(const QString& password);
     Q_INVOKABLE QVariantMap/*QMap<QString, QVariant>*/ createUniqueSubaddressObject(unsigned int account_idx, const QString & label = "");
     Q_INVOKABLE void transfer(const QString& address, double amount);
     Q_INVOKABLE QString signMessage(const QString& message) const;

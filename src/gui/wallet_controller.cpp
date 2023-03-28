@@ -1,5 +1,7 @@
 #include "wallet_controller.hpp"
 
+#include "../core/enums.hpp"
+
 neroshop::WalletController::WalletController(QObject *parent) : QObject(parent)
 {
     _wallet = std::make_unique<neroshop::Wallet>();
@@ -23,7 +25,7 @@ int neroshop::WalletController::createRandomWallet(const QString& password, cons
                                         confirm_pwd.toStdString(),
                                         path.toStdString());
     emit walletChanged();
-    if(error == neroshop::wallet_error::WALLET_SUCCESS) emit isOpenedChanged();
+    if(error == static_cast<int>(WalletResult::Wallet_Ok)) emit isOpenedChanged();
     return static_cast<int>(error);
 }
 
@@ -65,6 +67,12 @@ void neroshop::WalletController::close(bool save) {
     emit walletChanged();
     emit isOpenedChanged();
 }
+
+bool neroshop::WalletController::verifyPassword(const QString& password) {
+    if(!_wallet) throw std::runtime_error("neroshop::Wallet is not initialized");
+    return _wallet->verify_password(password.toStdString());
+}
+
 
 QVariantMap neroshop::WalletController::createUniqueSubaddressObject(unsigned int account_idx, const QString & label) {
     if (!_wallet)

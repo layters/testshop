@@ -119,7 +119,7 @@ ApplicationWindow {
         title: "prompt"
         x: mainWindow.x + (mainWindow.width - this.width) / 2
         y: mainWindow.y + (mainWindow.height - this.height) / 2
-        model: ["Cancel", "OK"]
+        buttonModel: ["Cancel", "OK"]
         Component.onCompleted: {
             buttonAt(0).onClickedCallback = function() { close() }
             buttonAt(1).color = "#4169e1"//"#4682b4"

@@ -19,10 +19,6 @@
 #include <memory> // std::unique_ptr
 #include "price_api/price_api.hpp"
 
-#include "debug.hpp"
-#include "util.hpp"
-#include "currency_map.hpp" // neroshop::CurrencyMap
-
 namespace neroshop {
 
 class Converter {

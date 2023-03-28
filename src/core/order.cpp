@@ -103,23 +103,33 @@ void neroshop::Order::create_order(const neroshop::Cart& cart, const std::string
     set_status(order_status::failed); // Update order status to "failed"
     database->execute_params("UPDATE orders SET status = $1 WHERE uuid = $2", { get_status_string(), order_id });
     // TODO: Store price in database as piconeros
-    // Update order details - converts seller's currency of choice to xmr, the moment you create an order
-    database->execute_params("UPDATE orders SET subtotal = $1 WHERE uuid = $2", { std::to_string(neroshop::Converter::convert_to_xmr(subtotal, seller_currency)), order_id });
-    database->execute_params("UPDATE orders SET discount = $1 WHERE uuid = $2", { std::to_string(neroshop::Converter::convert_to_xmr(discount, seller_currency)), order_id });
-    database->execute_params("UPDATE orders SET shipping_cost = $1 WHERE uuid = $2", { std::to_string(neroshop::Converter::convert_to_xmr(shipping_cost, seller_currency)), order_id });
+    // Convert price to Monero (XMR)
+    double subtotal_monero = neroshop::Converter::convert_to_xmr(subtotal, seller_currency);
+    double discount_monero = neroshop::Converter::convert_to_xmr(discount, seller_currency);
+    double shipping_cost_monero = neroshop::Converter::convert_to_xmr(shipping_cost, seller_currency);
     total = (subtotal - discount) + shipping_cost;
-    database->execute_params("UPDATE orders SET total = $1 WHERE uuid = $2", { std::to_string(neroshop::Converter::convert_to_xmr(total, seller_currency)), order_id });
+    double total_monero = neroshop::Converter::convert_to_xmr(total, seller_currency);
+    // Convert monero to piconero (for storing in database)
+    double piconero = 0.000000000001;
+    uint64_t subtotal_piconero = subtotal_monero / piconero;
+    uint64_t discount_piconero = discount_monero / piconero;
+    uint64_t shipping_cost_piconero = shipping_cost_monero / piconero;
+    uint64_t total_piconero = total_monero / piconero;
+    // Update order details - converts seller's currency of choice to xmr, the moment you create an order
+    database->execute_params("UPDATE orders SET subtotal = $1 WHERE uuid = $2", { std::to_string(subtotal_piconero), order_id });
+    database->execute_params("UPDATE orders SET discount = $1 WHERE uuid = $2", { std::to_string(discount_piconero), order_id });
+    database->execute_params("UPDATE orders SET shipping_cost = $1 WHERE uuid = $2", { std::to_string(shipping_cost_piconero), order_id });
+    database->execute_params("UPDATE orders SET total = $1 WHERE uuid = $2", { std::to_string(total_piconero), order_id });
     // Display order details
     std::string your_currency = Script::get_string(neroshop::get_lua_state(), "neroshop.generalsettings.currency");
     if(your_currency.empty() || !neroshop::Converter::is_supported_currency(your_currency)) your_currency = "USD"; // default //neroshop::Converter::from_xmr(neroshop::Converter::to_xmr(, seller_currency), your_currency);
     neroshop::print("Sit tight as we notify the seller(s) about your order.");
     auto from = Converter::get_currency_enum(seller_currency);
     auto to = Converter::get_currency_enum(your_currency);
-    double subtotal_xmr = neroshop::Converter::convert_to_xmr(subtotal, seller_currency);
-    std::cout << "Subtotal: " << std::fixed << std::setprecision(12) << subtotal_xmr << " xmr" << std::fixed << std::setprecision(2) << " (" << neroshop::Converter::get_currency_sign(your_currency) << (neroshop::Converter::get_price(from, to) * subtotal) << " " << neroshop::string::upper(your_currency) << ")" <<  std::endl; // (() ? : "")
-    if(discount > 0) std::cout << "Discount: -" << std::fixed << std::setprecision(12) << neroshop::Converter::convert_to_xmr(discount, seller_currency) << " xmr" << std::fixed << std::setprecision(2) << " (-" << neroshop::Converter::get_currency_sign(your_currency) << (neroshop::Converter::get_price(from, to) * discount) << " " << neroshop::string::upper(your_currency) << ")" <<  std::endl;
-    std::cout << "Shipping: " << std::fixed << std::setprecision(12) << neroshop::Converter::convert_to_xmr(shipping_cost, seller_currency) << " xmr" << std::fixed << std::setprecision(2) << " (" << neroshop::Converter::get_currency_sign(your_currency) << (neroshop::Converter::get_price(from, to) * shipping_cost) << " " << neroshop::string::upper(your_currency) << ")" <<  std::endl;
-    std::cout << "Order total: " << std::fixed << std::setprecision(12) << neroshop::Converter::convert_to_xmr(total, seller_currency) << " xmr" << std::fixed << std::setprecision(2) << " (" << neroshop::Converter::get_currency_sign(your_currency) << (neroshop::Converter::get_price(from, to) * total) << " " << neroshop::string::upper(your_currency) << ")" <<  std::endl;
+    std::cout << "Subtotal: " << std::fixed << std::setprecision(12) << subtotal_monero << " xmr" << std::fixed << std::setprecision(2) << " (" << neroshop::Converter::get_currency_sign(your_currency) << (neroshop::Converter::get_price(from, to) * subtotal) << " " << neroshop::string::upper(your_currency) << ")" <<  std::endl; // (() ? : "")
+    if(discount > 0) std::cout << "Discount: -" << std::fixed << std::setprecision(12) << discount_monero << " xmr" << std::fixed << std::setprecision(2) << " (-" << neroshop::Converter::get_currency_sign(your_currency) << (neroshop::Converter::get_price(from, to) * discount) << " " << neroshop::string::upper(your_currency) << ")" <<  std::endl;
+    std::cout << "Shipping: " << std::fixed << std::setprecision(12) << shipping_cost_monero << " xmr" << std::fixed << std::setprecision(2) << " (" << neroshop::Converter::get_currency_sign(your_currency) << (neroshop::Converter::get_price(from, to) * shipping_cost) << " " << neroshop::string::upper(your_currency) << ")" <<  std::endl;
+    std::cout << "Order total: " << std::fixed << std::setprecision(12) << total_monero << " xmr" << std::fixed << std::setprecision(2) << " (" << neroshop::Converter::get_currency_sign(your_currency) << (neroshop::Converter::get_price(from, to) * total) << " " << neroshop::string::upper(your_currency) << ")" <<  std::endl;
     //std::cout << "Estimated delivery date: " << delivery_date_est << std::endl;
     // set order status => pending
     set_status(order_status::pending); // if everything went well then order will be set to pending

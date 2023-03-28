@@ -22,15 +22,13 @@
 #include "process.hpp" // for monerod daemon process
 
 namespace neroshop {
-// TODO: maybe place enums in an "error.hpp" file or nah?
-enum class wallet_error : int { WALLET_SUCCESS = 0, WRONG_PASSWORD, PASSWORDS_NO_MATCH, WALLET_ALREADY_EXISTS/*Wallet I/O Error*/ };
 
 class Wallet : public monero_wallet_listener {
 public:
     Wallet();
     ~Wallet();
 
-    /*bool*/wallet_error create_random(const std::string& password, const std::string& confirm_pwd, const std::string& path);
+    int create_random(const std::string& password, const std::string& confirm_pwd, const std::string& path);
     bool create_from_mnemonic(const std::string& mnemonic, const std::string& password, const std::string& confirm_pwd, const std::string& path);
     bool create_from_keys(const std::string& address, const std::string& view_key, const std::string& spend_key, const std::string& password, const std::string &confirm_pwd, const std::string& path);
     
@@ -42,6 +40,8 @@ public:
     
     std::string upload(bool open = true, std::string password = ""); // change to mainnet later    
     
+    bool verify_password(const std::string& password);
+    
     // todo: create a function that connects a hardware wallet
     monero::monero_subaddress create_subaddress(unsigned int account_idx, const std::string & label = "") const; // generates a new subaddress from main account // monero addresses start with 4 or 8
     
@@ -50,6 +50,8 @@ public:
     std::string address_new() const; // this function has been replaced by create_subaddress() and is deprecated. Will be removed soon
     unsigned int address_book_add(const std::string& address, std::string description = ""); // "address_book add <address> <description>"
     void address_book_delete(unsigned int index); // "address_book delete 0"  
+    
+    static std::string generate_uri(const std::string& payment_address, double amount = 0.000000000000, const std::string& description = "", const std::string& recipient = ""); // Generates a monero uri for qr code with the amount embedded into it
     
     std::vector<monero::monero_subaddress> get_addresses_all(unsigned int account_idx);
     std::vector<monero::monero_subaddress> get_addresses_used(unsigned int account_idx);
@@ -138,6 +140,7 @@ private:
     volatile unsigned int height, start_height, end_height;
     /*volatile */std::string message;
     uint64_t/*unsigned long long*/ restore_height;
+    std::string password_hash; // bcrypt pw hash that is only stored in memory
 };
 
 }

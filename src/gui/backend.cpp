@@ -1,9 +1,21 @@
 #include "backend.hpp"
 
+#include <QClipboard>
+#include <QFile>
+#include <QGuiApplication>
+#include <QJsonArray>
+#include <QJsonDocument>
+#include <QJsonObject>
+#include <QJsonParseError>
 #include <QNetworkAccessManager>
 #include <QNetworkReply>
 #include <QNetworkRequest>
-#include <QFile>
+#include <QProcess> // Note: QProcess is not supported on VxWorks, iOS, tvOS, or watchOS.
+#include <QUuid>
+
+#include "../core/currency_map.hpp"
+//#include "../core/currency_converter.hpp"
+//#include "../core/validator.hpp"
 
 #include <future>
 #include <thread>
@@ -1026,7 +1038,7 @@ void neroshop::Backend::createOrder(UserController * user_controller, const QStr
     user_controller->createOrder(shipping_address);
 }
 //----------------------------------------------------------------
-// TODO: run this function every once in a while
+// TODO: run this function periodically
 int neroshop::Backend::deleteExpiredOrders() {
     neroshop::db::Sqlite3 * database = neroshop::get_database();
     if(!database) throw std::runtime_error("database is NULL");

@@ -6,6 +6,9 @@ import QtQuick.Layouts 1.12
 import "../components" as NeroshopComponents
 
 Page {
+    background: Rectangle {
+        color: "transparent"
+    }
     RowLayout {
 	    width: parent.width
 		Button {
