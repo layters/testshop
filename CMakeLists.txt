@@ -384,7 +384,7 @@ link_directories(${CMAKE_CURRENT_SOURCE_DIR}/build) # target_link_directories on
 
 ######################################
 # neroshop core source files
-set(neroshop_core_src src/core/buyer.cpp src/core/cart.cpp src/core/catalog.cpp src/core/client.cpp src/core/config.cpp src/core/currency_converter.cpp src/core/database.cpp src/core/encryptor.cpp src/core/item.cpp src/core/order.cpp src/core/process.cpp src/core/rpc.cpp src/core/script.cpp src/core/seller.cpp src/core/server.cpp src/core/user.cpp src/core/validator.cpp src/core/wallet.cpp src/core/database/sqlite.cpp)
+set(neroshop_core_src src/core/buyer.cpp src/core/cart.cpp src/core/catalog.cpp src/core/client.cpp src/core/config.cpp src/core/currency_converter.cpp src/core/database.cpp src/core/encryptor.cpp src/core/item.cpp src/core/order.cpp src/core/process.cpp src/core/rpc.cpp src/core/script.cpp src/core/seller.cpp src/core/server.cpp src/core/user.cpp src/core/validator.cpp src/core/wallet.cpp src/core/database/sqlite.cpp src/core/row.cpp src/core/listing_seller.cpp src/core/product.cpp src/core/listing.cpp src/core/search_params.cpp src/core/query_builder.cpp src/core/searcher.cpp)
 
 ######################################
 # neroshop tests

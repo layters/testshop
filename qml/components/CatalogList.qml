@@ -19,7 +19,7 @@ ListView {
         /*console.log("catalogList size", width, height)
         console.log("catalogList children size", childrenRect.width, childrenRect.height)*/
     }
-    model: Backend.getListings()//10
+    model: null//10
     delegate: Rectangle {
         id: productBox
         width: catalogList.boxWidth; height: catalogList.boxHeight // The height of each individual model item/ list element
@@ -50,12 +50,17 @@ ListView {
                              
             Image {
                 id: productImage
-                source: "file:///" + modelData.product_image_file//"qrc:/images/image_gallery.png"
+                source: { sourceFileLocation() }
                 anchors.centerIn: parent
                 width: 192; height: 192
                 fillMode: Image.PreserveAspectFit
                 mipmap: true
                 asynchronous: true
+                function sourceFileLocation() {
+                    var fileName = Backend.getProductImages(modelData.product_id)
+                    //TODO: check if the file exists too?
+                    return (fileName && fileName[0] && fileName[0].name) ? "file:///" + fileName[0].name : "qrc:/images/image_gallery.png"
+                }
                     
                 MouseArea {
                     anchors.fill: parent

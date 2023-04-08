@@ -121,6 +121,8 @@ int main(int argc, char *argv[])
     // Register user
     engine.rootContext()->setContextProperty("User", new UserController(&engine));
     qRegisterMetaType<UserController *>();
+    QListingSearchParamsWrapper currentSearchParams;
+    engine.rootContext()->setContextProperty("currentSearchParams", &currentSearchParams);
     // Register all enums within the "neroshop" namespace
     ////qmlRegisterUncreatableMetaObject(neroshop::staticMetaObject, "neroshop.namespace", 1, 0, "Neroshop", "Error: only enums");
     // TableModel

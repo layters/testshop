@@ -7,6 +7,14 @@ import "." as NeroshopComponents
 Item {
     id: searchBar
     width: childrenRect.width; height: childrenRect.height
+    function startNewSearch() {
+        currentSearchParams.reset()
+        currentSearchParams.set_terms(searchField.text);
+        currentSearchParams.set_page(1);
+        console.log("Searching for " + currentSearchParams.get_terms())
+        navBar.uncheckAllButtons()
+        pageLoader.setSource("qrc:/qml/pages/CatalogPage.qml", {"page": currentSearchParams.get_page(), "totalResults": Backend.getListingsTotalResults(currentSearchParams), "model": Backend.getListings(currentSearchParams)})
+    }
     TextField {
         id: searchField
         color: (NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000"// textColor
@@ -20,6 +28,14 @@ Item {
         }
         onTextChanged: {//https://stackoverflow.com/questions/70284407/detect-changes-on-every-character-typed-in-a-textfield-qml
             //console.log("Show search suggestions popup list")
+        }
+
+        Keys.onEnterPressed: {
+            startNewSearch()
+        }
+
+        Keys.onReturnPressed: {
+            startNewSearch()
         }
     }
 
@@ -45,9 +61,7 @@ Item {
 
         onClicked: { // causes crash if pressed multiple times at a fast pace (this is probably due to the while loop in Backend.getListings())
             ////if(searchField.length < 1) return;
-            console.log("Searching for " + searchField.text)
-            navBar.uncheckAllButtons()
-            pageLoader.setSource("qrc:/qml/pages/CatalogPage.qml", {"model": Backend.getListings()})//, {"model": [""]})
+            startNewSearch()
             //console.log("page Loader Item (CatalogPage):", pageLoader.item)
             //console.log("page Loader Item (CatalogPage.catalog):", pageLoader.catalog)//.item)
         }

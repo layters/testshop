@@ -1,4 +1,5 @@
 #include "backend.hpp"
+#include "../core/searcher.hpp"
 
 #include <QNetworkAccessManager>
 #include <QNetworkReply>
@@ -549,6 +550,25 @@ QVariantList neroshop::Backend::getInventory(const QString& user_id) {
 
     return inventory_array;
 }
+int neroshop::Backend::getListingsTotalResults(neroshop::QListingSearchParamsWrapper* wrapper) {
+    if(!wrapper) {
+        neroshop::print("Invalid QListingSearchParamsWrapper passed to getListingsTotalResults.", 1);
+        return 0;
+    }
+    return neroshop::Searcher::listing_search_total_results(wrapper->getParams());
+}
+QVariantList neroshop::Backend::getListings(neroshop::QListingSearchParamsWrapper* wrapper) {
+    QVariantList catalog_array;
+    if(!wrapper) {
+        neroshop::print("Invalid QListingSearchParamsWrapper passed to getListings.", 1);
+        return catalog_array;
+    }
+    std::vector<Listing> listings = neroshop::Searcher::listing_search(wrapper->getParams());
+    for(Listing listing : listings){
+        catalog_array.append(listing.as_q_map());
+    }
+    return catalog_array;
+}
 //----------------------------------------------------------------
 //----------------------------------------------------------------
 QVariantList neroshop::Backend::getListings() {
@@ -605,6 +625,9 @@ QVariantList neroshop::Backend::getListings() {
     sqlite3_finalize(stmt);
 
     return catalog_array;
+}
+int neroshop::Backend::getCategoryListingCount(int category_id) {
+    return neroshop::Searcher::listing_search_by_category_id_total_results(category_id);
 }
 //----------------------------------------------------------------
 QVariantList neroshop::Backend::getListingsByCategory(int category_id) {

@@ -110,6 +110,13 @@ namespace string {
         auto pos = str.find_first_not_of(" ");
         return str.substr(pos != std::string::npos ? pos : 0);
     }
+    static std::string trim_right(const std::string& str) {
+        auto pos = str.find_last_not_of(" ");
+        return str.substr(0, pos != std::string::npos ? pos+1 : 0);
+    }
+    static std::string trim(const std::string& str) {
+        return trim_right(trim_left(str));
+    }
 }
 //-------------------------
 namespace filesystem {

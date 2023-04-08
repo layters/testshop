@@ -19,6 +19,7 @@
 #include "../core/currency_converter.hpp"
 #include "../core/validator.hpp"
 #include "../core/seller.hpp"
+#include "../core/search_params.hpp"
 
 #include "wallet_controller.hpp"
 #include "user_controller.hpp"
@@ -59,8 +60,11 @@ public:
     Q_INVOKABLE bool loginWithMnemonic(WalletController* wallet_controller, const QString& mnemonic, UserController * user_controller);
     Q_INVOKABLE bool loginWithKeys(WalletController* wallet_controller, UserController * user_controller);
     Q_INVOKABLE bool loginWithHW(WalletController* wallet_controller, UserController * user_controller);
-    
+
+    Q_INVOKABLE int getListingsTotalResults(QListingSearchParamsWrapper* params);
+    Q_INVOKABLE QVariantList getListings(QListingSearchParamsWrapper* params);
     Q_INVOKABLE QVariantList getListings(); // Products listed by sellers
+    Q_INVOKABLE int getCategoryListingCount(int category_id);
     Q_INVOKABLE QVariantList getListingsByCategory(int category_id);
     Q_INVOKABLE QVariantList getListingsByMostRecent();
     Q_INVOKABLE QVariantList getListingsByOldest();

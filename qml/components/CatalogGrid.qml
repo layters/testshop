@@ -32,7 +32,7 @@ GridView {
     function getBoxCount() {
         return catalogGridRepeater.count; // count is really just the number of items in the model :O
     }
-    model: Backend.getListings()//(rows * columns)//// rows and columns already set so this is useless (I think)
+    model: null//(rows * columns)//// rows and columns already set so this is useless (I think)
     // product box (GridBox)
     delegate: Rectangle { // delegates have a readonly "index" property that indicates the index of the delegate within the repeater
         id: productBox
@@ -68,12 +68,17 @@ GridView {
                              
             Image {
                 id: productImage
-                source: "file:///" + modelData.product_image_file//"qrc:/images/image_gallery.png"
+                source: { return sourceFileLocation() }
                 anchors.centerIn: parent
                 width: 192; height: width
                 fillMode: Image.PreserveAspectFit//Image.Stretch
                 mipmap: true
                 asynchronous: true
+                function sourceFileLocation() {
+                    var fileName = Backend.getProductImages(modelData.product_id)
+                    //TODO: check if the file exists too?
+                    return (fileName && fileName[0] && fileName[0].name) ? "file:///" + fileName[0].name : "qrc:/images/image_gallery.png"
+                }
                     
                 MouseArea {
                     anchors.fill: parent
@@ -260,8 +265,8 @@ GridView {
                 id: starsRow
                 Layout.alignment: (!settingsDialog.gridDetailsAlignCenter) ? 0 : Qt.AlignHCenter
                 //spacing: 5
-                property real avg_stars: Backend.getProductAverageStars(modelData.product_id)
-                property int star_ratings_count: Backend.getProductStarCount(modelData.product_id)
+                property real avg_stars: modelData.product_rating
+                property int star_ratings_count: modelData.product_rating_count
                 //Component.onCompleted: console.log("avg stars", starsRow.avg_stars)
                 Repeater {
                     model: 5

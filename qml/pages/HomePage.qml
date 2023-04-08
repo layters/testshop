@@ -124,7 +124,7 @@ Page {
                             radius: 5
                             border.color: "#ffffff"
                             Text {
-                                text: Backend.getCategoryProductCount(modelData.id) // Number of products that fall under this particular category
+                                text: Backend.getCategoryListingCount(modelData.id).toString()+"/"+ Backend.getCategoryProductCount(modelData.id).toString() // Number of products and listings that fall under this particular category
                                 color: "#ffffff"
                                 anchors.horizontalCenter: parent.horizontalCenter
                                 anchors.verticalCenter: parent.verticalCenter
@@ -138,7 +138,9 @@ Page {
                             onClicked: {
                                 if(Backend.getCategoryProductCount(modelData.id) <= 0) return;
                                 navBar.uncheckAllButtons()
-                                pageLoader.setSource("qrc:/qml/pages/CatalogPage.qml", { "model": Backend.getListingsByCategory(modelData.id) })
+                                currentSearchParams.reset()
+                                currentSearchParams.set_category_id(modelData.id)
+                                pageLoader.setSource("qrc:/qml/pages/CatalogPage.qml", {"page": currentSearchParams.get_page(), "totalResults": Backend.getListingsTotalResults(currentSearchParams), "model": Backend.getListings(currentSearchParams)})
                             }
                             cursorShape: Qt.PointingHandCursor
                         }

@@ -15,39 +15,40 @@ Page {
     function resetScrollBar() {
         catalogScrollView.ScrollBar.vertical.position = 0.0//console.log("Scrollbar reset")
     }
+    function isValidPageNumber(pageNumber) {
+        return Number.isInteger(pageNumber) && pageNumber >= 1 && pageNumber <= getTotalPages()
+    }
+    function setPage(newPage) {
+        if(isValidPageNumber(newPage)) {
+            currentSearchParams.set_page(newPage)
+            reloadSearch()
+        }
+    }
     function goToNextPage() {
-        catalogStack.currentPageIndex = catalogStack.currentPageIndex + 1
-        if(catalogStack.currentPageIndex >= (catalogStack.pages.count - 1)) catalogStack.currentPageIndex = (catalogStack.pages.count - 1)
-        resetScrollBar()
+        setPage(currentSearchParams.get_page()+1)
     }
     function goToPrevPage() {
-        catalogStack.currentPageIndex = catalogStack.currentPageIndex - 1
-        if(catalogStack.currentPageIndex <= 0) catalogStack.currentPageIndex = 0
-        resetScrollBar()
+        setPage(currentSearchParams.get_page()-1)
     }
-    function setCurrentPageIndex(numberInput) {
-         // if numberInput is greater than (count - 1) then equal it to (count - 1)
-         if(Number(numberInput) >= (catalogStack.pages.count - 1)) {
-             numberInput = (catalogStack.pages.count - 1)
-         }
-         // if numberInput is less than 0 then equal it to 0
-         if(Number(numberInput) <= 0) {
-             numberInput = 0
-         }
-         catalogStack.currentPageIndex = numberInput
-         ////resetScrollBar()
+    function reloadSearch() {
+        page = currentSearchParams.page
+        totalResults = Backend.getListingsTotalResults(currentSearchParams)
+        totalPages = getTotalPages()
+        model = Backend.getListings(currentSearchParams)
     }
-    function getPageCount() { // Returns total number of grid pages belonging to the catalog StackLayout
-        return catalogStack.pages.count;
-    }
-    function getCurrentPageIndex() {
-        return catalogStack.pages.currentIndex;
+    function getTotalPages() {
+        return Math.ceil(catalogPage.totalResults/currentSearchParams.count);
     }
     function getItemsCount() {
         // ... boxesPerGrid * pageCount
     }    
     //property alias catalogIndex: catalogStack.currentIndex
+    property int totalResults: 0
+    property int page: 1
+    property int totalPages: 0
     property var model: null
+
+    onTotalResultsChanged: { catalogPage.totalPages = catalogPage.getTotalPages() }
 
     ScrollView {
         id: catalogScrollView//anchors.margins: 20
@@ -80,11 +81,28 @@ Page {
             // Text that displays current page results information
             Text {
                 id: pageResultsDisplay
-                text: qsTr("Page %1 of %2 (Results: %3)").arg(catalogStack.pages.currentIndex + 1).arg(catalogStack.pages.count).arg(catalogPage.model.length)
+                text: qsTr("Page %1 of %2 (Results: %3)").arg(page).arg(totalPages).arg(totalResults)
                 font.bold: true
                 anchors.left: parent.left
                 anchors.verticalCenter: viewToggle.verticalCenter//anchors.top: viewToggle.top
                 color: (NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000"
+            }
+            NeroshopComponents.ComboBox {
+                id: resultsPerPageBox
+                anchors.left: pageResultsDisplay.right
+                anchors.leftMargin: 10
+                anchors.verticalCenter: viewToggle.verticalCenter
+                width: 150
+                model: ["5", "10", "15", "25", "50"]
+                Component.onCompleted: currentIndex = find(currentSearchParams.get_count().toString())
+                displayText: "Show: " + currentText
+                onActivated: {
+                    if(Number(model[currentIndex]) != currentSearchParams.get_count()) {
+                        currentSearchParams.set_page(((currentSearchParams.get_page()-1)*currentSearchParams.get_count()/Number(model[currentIndex]))+1)
+                        currentSearchParams.set_count(Number(model[currentIndex]))
+                        reloadSearch()
+                    }
+                }
             }
             // ViewToggle
             NeroshopComponents.ViewToggle {
@@ -100,28 +118,57 @@ Page {
                 anchors.right: parent.right
                 anchors.verticalCenter: viewToggle.verticalCenter
                 width: 300
-                model: ["None", "Latest", "Oldest", "Alphabetical order", "Price - Lowest", "Price - Highest"]
+                model: ["None", "Latest", "Oldest", "Alphabetical order", "Price - Lowest", "Price - Highest", "Rating - Highest", "Rating Count - Highest"]
                 Component.onCompleted: currentIndex = find("None")
                 displayText: "Sort: " + currentText
                 onActivated: {
                     if(currentIndex == find("None")) {
-                        catalogPage.model = Backend.getListings()
+                        currentSearchParams.set_order_by_column("")
+                        currentSearchParams.set_order_by_ascending(true)
+                        currentSearchParams.set_page(1)
+                        reloadSearch()
                     }
                     if(currentIndex == find("Oldest")) {
-                        catalogPage.model = Backend.getListingsByOldest()
+                        currentSearchParams.set_order_by_column("date")
+                        currentSearchParams.set_order_by_ascending(true)
+                        currentSearchParams.set_page(1)
+                        reloadSearch()
                     }
                     if(currentIndex == find("Latest")) {
-                        console.log("Showing most recent items")
-                        catalogPage.model = Backend.getListingsByMostRecent()
+                        currentSearchParams.set_order_by_column("date")
+                        currentSearchParams.set_order_by_ascending(false)
+                        currentSearchParams.set_page(1)
+                        reloadSearch()
                     }
                     if(currentIndex == find("Alphabetical order")) {
-                        catalogPage.model = Backend.getListingsByAlphabeticalOrder()
+                        currentSearchParams.set_order_by_column("products.name")
+                        currentSearchParams.set_order_by_ascending(true)
+                        currentSearchParams.set_page(1)
+                        reloadSearch()
                     }
                     if(currentIndex == find("Price - Lowest")) {
-                        catalogPage.model = Backend.getListingsByPriceLowest()
+                        currentSearchParams.set_order_by_column("price")
+                        currentSearchParams.set_order_by_ascending(true)
+                        currentSearchParams.set_page(1)
+                        reloadSearch()
                     }
                     if(currentIndex == find("Price - Highest")) {
-                        catalogPage.model = Backend.getListingsByPriceHighest()
+                        currentSearchParams.set_order_by_column("price")
+                        currentSearchParams.set_order_by_ascending(false)
+                        currentSearchParams.set_page(1)
+                        reloadSearch()
+                    }
+                    if(currentIndex == find("Rating - Highest")) {
+                        currentSearchParams.set_order_by_column("rating")
+                        currentSearchParams.set_order_by_ascending(false)
+                        currentSearchParams.set_page(1)
+                        reloadSearch()
+                    }
+                    if(currentIndex == find("Rating Count - Highest")) {
+                        currentSearchParams.set_order_by_column("rating_count")
+                        currentSearchParams.set_order_by_ascending(false)
+                        currentSearchParams.set_page(1)
+                        reloadSearch()
                     }
                     /*if(currentIndex == find("")) {
                         catalogPage.model = Backend.
@@ -142,10 +189,8 @@ Page {
             ////Layout.alignment: Qt.AlignHCenter | Qt.AlignTop
             ////Layout.maximumWidth: catalogScrollView.width
             currentIndex: viewToggle.currentIndex
-            property int pagesCount: 1//10////pages.count// Number of page results from search
             property var currentItem: this.itemAt(this.currentIndex)
             property var pages: currentItem.children[0]
-            property int currentPageIndex: 0
             property var pageItem: pages.children[0] // can be either a CatalogGrid or CatalogList
             clip: true
             // Infinite Scroll Mode (without pages)
@@ -155,9 +200,9 @@ Page {
                 Layout.preferredWidth: childrenRect.width; Layout.preferredHeight: childrenRect.height//width: childrenRect.width; height: childrenRect.height
                 StackLayout {
                     id: gridStack
-                    currentIndex: catalogStack.currentPageIndex
+                    currentIndex: 0
                     Repeater {
-                        model: catalogStack.pagesCount//1
+                        model: currentSearchParams.count
                         delegate: NeroshopComponents.CatalogGrid { // has index property
                             model: (catalogPage.model != null) ? catalogPage.model : this.model
                             //Component.onCompleted: console.log("model",this.model)
@@ -167,9 +212,15 @@ Page {
                                     id: gridPagination
                                     firstButton.onClicked: { if(!firstButton.disabled) goToPrevPage() }
                                     secondButton.onClicked: { if(!secondButton.disabled) goToNextPage() }
-                                    numberField.onEditingFinished: { setCurrentPageIndex(numberField.text - 1) }
-                                    currentIndex: catalogStack.pages.currentIndex//catalogStack.currentIndex
-                                    count: catalogStack.pages.count//catalogStack.count
+                                    numberField.onEditingFinished: {
+                                        if(isValidPageNumber(Number(numberField.text))) {
+                                            setPage((Number(numberField.text)))
+                                        } else {
+                                            numberField.text = page.toString()
+                                        }
+                                    }
+                                    page: catalogPage.page
+                                    totalPages: catalogPage.totalPages
                                     anchors.horizontalCenter: parent.horizontalCenter//anchors.horizontalCenter: catalogStack.horizontalCenter
                                     anchors.top: parent.top; anchors.topMargin: 20//anchors.bottom: parent.bottom; anchors.bottomMargin: 20
                                 }
@@ -185,9 +236,9 @@ Page {
                 Layout.preferredWidth: childrenRect.width; Layout.preferredHeight: childrenRect.height//width: childrenRect.width; height: childrenRect.height
                 StackLayout {
                     id: listStack
-                    currentIndex: catalogStack.currentPageIndex
+                    currentIndex: 0
                     Repeater {
-                        model: catalogStack.pagesCount//1
+                        model: currentSearchParams.count
                         delegate: NeroshopComponents.CatalogList {
                             model: (catalogPage.model != null) ? catalogPage.model : this.model
                             //Component.onCompleted: console.log("model",this.model)
@@ -197,9 +248,15 @@ Page {
                                     id: listPagination
                                     firstButton.onClicked: { if(!firstButton.disabled) goToPrevPage() }
                                     secondButton.onClicked: { if(!secondButton.disabled) goToNextPage() }
-                                    numberField.onEditingFinished: { setCurrentPageIndex(numberField.text - 1) }
-                                    currentIndex: catalogStack.pages.currentIndex//catalogStack.currentIndex
-                                    count: catalogStack.pages.count//catalogStack.count
+                                    numberField.onEditingFinished: {
+                                        if(isValidPageNumber(Number(numberField.text))) {
+                                            setPage((Number(numberField.text)))
+                                        } else {
+                                            numberField.text = page.toString()
+                                        }
+                                    }
+                                    page: catalogPage.page
+                                    totalPages: catalogPage.totalPages
                                     anchors.horizontalCenter: parent.horizontalCenter//anchors.horizontalCenter: catalogStack.horizontalCenter
                                     anchors.top: parent.top; anchors.topMargin: 20//anchors.bottom: parent.bottom; anchors.bottomMargin: 20
                                 }

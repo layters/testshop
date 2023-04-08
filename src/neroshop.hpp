@@ -30,6 +30,7 @@
 #include "core/util.hpp"
 #include "core/process.hpp"
 #include "core/rpc.hpp"
+#include "core/search_params.hpp"
 // neroshop-daemon
 // ...
 // neroshop (gui)
