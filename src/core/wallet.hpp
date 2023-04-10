@@ -14,10 +14,9 @@
 
 #include <iostream>
 #include <string>
+#include <variant>
 #include <vector>
 #include <utility> // std::pair
-#include <cmath>
-#include <filesystem>
 
 #include "process.hpp" // for monerod daemon process
 
@@ -57,13 +56,15 @@ public:
     std::vector<monero::monero_subaddress> get_addresses_used(unsigned int account_idx);
     std::vector<monero::monero_subaddress> get_addresses_unused(unsigned int account_idx);
 
+    std::vector<std::shared_ptr<monero_transfer>> get_transfers();
+
     void on_sync_progress(uint64_t height, uint64_t start_height, uint64_t end_height, double percent_done, const std::string& message);
     ////void on_new_block (uint64_t height);
     void on_balances_changed(uint64_t new_balance, uint64_t new_unlocked_balance);
     void on_output_received(const monero_output_wallet& output);
     ////void on_output_spent (const monero_output_wallet &output);
     // daemon or node-related functions
-    void daemon_open(const std::string& daemon_dir, bool confirm_external_bind = false, bool restricted_rpc = true, std::string data_dir = std::string("/home/") + neroshop::device::get_user() + std::string("/.bitmonero")/*""*/, unsigned int restore_height = 0);
+    void daemon_open(const std::string& daemon_dir, bool confirm_external_bind = false, bool restricted_rpc = true, std::string data_dir = "", unsigned int restore_height = 0);
     bool daemon_connect_local(const std::string& username = "", const std::string& password = "");
     void daemon_connect_remote(const std::string& ip, const std::string& port, const std::string& username = "", const std::string& password = "", const monero_wallet_listener* listener = nullptr);
     void daemon_close();

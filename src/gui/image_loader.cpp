@@ -3,6 +3,7 @@
 #include <QFile>
 
 #include "../core/database.hpp"
+#include "../core/util/logger.hpp"
 
 namespace {
 const QByteArray dummyBase64Image{

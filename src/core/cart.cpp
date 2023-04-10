@@ -1,5 +1,7 @@
 #include "cart.hpp"
 
+#include "database.hpp"
+#include "util/logger.hpp"
 ////////////////////
 neroshop::Cart::Cart() : id("") {} // Note: cart can only hold up to 10 unique items. Cart items can only add up to a quantity of 100
 ////////////////////

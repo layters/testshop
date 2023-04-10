@@ -10,6 +10,8 @@ Item {
     id: root
     property string selectedNode: (listView.currentItem == null) ? "" : listView.currentItem.children[2].selectedNode
     property bool selectedNodeStatus: (listView.currentItem == null) ? "" : listView.currentItem.children[2].selectedNodeStatus
+    property alias currentIndex: listView.currentIndex
+    property alias model: listView.model
     
     ColumnLayout {
         anchors.fill: parent
@@ -79,6 +81,7 @@ Item {
                     onClicked: {
                         listView.currentIndex = index
                         listView.positionViewAtIndex(index, ListView.Contain)
+                        settingsDialog.save()
                     }
                 }
 

@@ -22,6 +22,7 @@ Switch {
         color: control.checked ? control.backgroundCheckedColor : "dimgray" // background color
         border.color: this.color//"#ffffff"
         border.width: 3
+        opacity: !enabled ? 0.7 : 1
 
         Rectangle {
             id: foreground
@@ -37,6 +38,7 @@ Switch {
             radius: parent.radius
             color: control.foregroundColor//control.checked ? "#ffffff" : "#000000" // foreground color
             border.color: this.color 
+            opacity: parent.opacity
         }
     }
 }

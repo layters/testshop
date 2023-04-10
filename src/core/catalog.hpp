@@ -6,10 +6,6 @@
 #include <iostream>
 #include <memory> // std::unique_ptr, std::shared_ptr, std::make_shared
 
-#include "debug.hpp"
-#include "database.hpp"
-#include "item.hpp" // item price, details, and upload images
-#include "currency_converter.hpp" // currency conversion
 #include "user.hpp" // for users' favorites/wishlist and verified purchases // cart is included here
 
 namespace neroshop {

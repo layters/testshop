@@ -1,7 +1,14 @@
 #include "order.hpp"
 
+#include "currency_converter.hpp" // currency converter
+#include "config.hpp" // neroshop::lua_state
+#include "database.hpp"
+#include "enums.hpp"
+#include "util/logger.hpp"
+#include "util.hpp" // neroshop::uuid::generate()
+
 ////////////////////
-neroshop::Order::Order() : id(""), status(order_status::incomplete) {}
+neroshop::Order::Order() : id(""), status(static_cast<int>(OrderStatus::Order_Incomplete)) {}
 ////////////////////
 neroshop::Order::Order(const std::string& id) {
     this->id = id; // once an order has a valid id, then it means it is already in the database
@@ -73,7 +80,7 @@ void neroshop::Order::create_order(const neroshop::Cart& cart, const std::string
         if(!item_in_stock) {
             neroshop::print("Order failed (Reason: The following item is out of stock: " + item_name + ")");
             // Set order status to failed
-            set_status(order_status::failed);
+            set_status(static_cast<int>(OrderStatus::Order_Failed));
             database->execute_params("UPDATE orders SET status = $1 WHERE uuid = $2", { get_status_string(), order_id });
             database->execute("ROLLBACK;");
             return;
@@ -100,7 +107,7 @@ void neroshop::Order::create_order(const neroshop::Cart& cart, const std::string
     const_cast<neroshop::Cart&>(cart).empty();
     //-------------------------------------------------------
     // TODO: Update order in first loop because seller_currency is different for each seller
-    set_status(order_status::failed); // Update order status to "failed"
+    set_status(static_cast<int>(OrderStatus::Order_Failed)); // Update order status to "failed"
     database->execute_params("UPDATE orders SET status = $1 WHERE uuid = $2", { get_status_string(), order_id });
     // TODO: Store price in database as piconeros
     // Convert price to Monero (XMR)
@@ -132,7 +139,7 @@ void neroshop::Order::create_order(const neroshop::Cart& cart, const std::string
     std::cout << "Order total: " << std::fixed << std::setprecision(12) << total_monero << " xmr" << std::fixed << std::setprecision(2) << " (" << neroshop::Converter::get_currency_sign(your_currency) << (neroshop::Converter::get_price(from, to) * total) << " " << neroshop::string::upper(your_currency) << ")" <<  std::endl;
     //std::cout << "Estimated delivery date: " << delivery_date_est << std::endl;
     // set order status => pending
-    set_status(order_status::pending); // if everything went well then order will be set to pending
+    set_status(static_cast<int>(OrderStatus::Order_Pending)); // if everything went well then order will be set to pending
     database->execute_params("UPDATE orders SET status = $1 WHERE uuid = $2", { get_status_string(), order_id });
     //-------------------------------------------------------
     database->execute("COMMIT;"); // end transaction
@@ -143,7 +150,7 @@ void neroshop::Order::cancel_order()
     // cannot cancel order if it has been at least 12 hours or more
     // sellers can request that a buyer cancels an order
     // only a buyer can cancel an order
-    set_status( order_status::cancelled );
+    set_status( static_cast<int>(OrderStatus::Order_Cancelled) );
 }
 ////////////////////
 void neroshop::Order::change_order()
@@ -154,7 +161,7 @@ void neroshop::Order::change_order()
 ////////////////////
 ////////////////////
 ////////////////////
-void neroshop::Order::set_status(order_status status) { this->status = status;}
+void neroshop::Order::set_status(int status) { this->status = status;}
 ////////////////////
 ////////////////////
 ////////////////////
@@ -164,20 +171,20 @@ std::string neroshop::Order::get_id() const {
     return id;
 }
 ////////////////////
-order_status neroshop::Order::get_status() const {return status;}
+int neroshop::Order::get_status() const {return status;}
 ////////////////////
 std::string neroshop::Order::get_status_string() const {
     switch(status) {
-        case order_status::incomplete: return "Incomplete";break; // order was interrupted while user was in the process of creating an order
-        case order_status::pending   : return "Pending"  ; break;
-        case order_status::preparing : return "Preparing"; break;
-        case order_status::shipped   : return "Shipped"  ; break;
-        case order_status::ready     : return "Ready"    ; break;
-        case order_status::done      : return "Delivered"; break;
-        case order_status::cancelled : return "Cancelled"; break;
-        case order_status::failed    : return "Failed"   ; break;
-        case order_status::returned  : return "Returned" ; break;
-        //case order_status:: : break;
+        case static_cast<int>(OrderStatus::Order_Incomplete): return "Incomplete";break; // order was interrupted while user was in the process of creating an order
+        case static_cast<int>(OrderStatus::Order_Pending)   : return "Pending"  ; break;
+        case static_cast<int>(OrderStatus::Order_Preparing) : return "Preparing"; break;
+        case static_cast<int>(OrderStatus::Order_Shipped)   : return "Shipped"  ; break;
+        case static_cast<int>(OrderStatus::Order_Ready)     : return "Ready"    ; break;
+        case static_cast<int>(OrderStatus::Order_Done)      : return "Delivered"; break;
+        case static_cast<int>(OrderStatus::Order_Cancelled) : return "Cancelled"; break;
+        case static_cast<int>(OrderStatus::Order_Failed)    : return "Failed"   ; break;
+        case static_cast<int>(OrderStatus::Order_Returned)  : return "Returned" ; break;
+        //case static_cast<int>(OrderStatus::Order_) : break;
         default: return "";
     }
 }
@@ -189,7 +196,7 @@ std::string neroshop::Order::get_status_string() const {
 ////////////////////
 ////////////////////
 ////////////////////
-bool neroshop::Order::is_cancelled() const {return (status == order_status::cancelled);}
+bool neroshop::Order::is_cancelled() const {return (status == static_cast<int>(OrderStatus::Order_Cancelled));}
 ////////////////////
 ////////////////////
 bool neroshop::Order::in_db(unsigned int order_number) // static - can be called without an obj

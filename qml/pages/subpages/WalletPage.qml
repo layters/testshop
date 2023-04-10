@@ -303,8 +303,11 @@ Page {
                                 verticalAlignment: Text.AlignVCenter
                             }
                             onClicked: {
-                                walletPasswordSendPrompt.open()
-                                walletPasswordSendPrompt.editAt(1).forceActiveFocus()
+                                if(settingsDialog.requirePasswordOnWithdrawal) {
+                                    walletPasswordSendPrompt.open()
+                                    walletPasswordSendPrompt.editAt(1).forceActiveFocus()
+                                }
+                                else Wallet.transfer(addressField.text, amountField.text)
                             }
                         }
                     }
@@ -329,7 +332,7 @@ Page {
                         const password_edit = editAt(1)
                         password_edit.echoMode = TextInput.Password
                         password_edit.inputMethodHints = Qt.ImhSensitiveData            
-                        buttonAt(0).color = NeroshopComponents.Style.moneroOrangeColor
+                        buttonAt(0).color = NeroshopComponents.Style.moneroGrayColor
                         buttonAt(1).color = "#66578e"
                         
                         onCloseCallback = function() { 

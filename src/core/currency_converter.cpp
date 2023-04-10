@@ -1,15 +1,15 @@
 #include "currency_converter.hpp"
 // copied from price_api_factory.cpp
-#include "price_api/coincodex.hpp"
-#include "price_api/coingecko.hpp"
-#include "price_api/coinmarketcap.hpp"
-#include "price_api/cointelegraph.hpp"
-#include "price_api/cryptorank.hpp"
-#include "price_api/cryptowatch.hpp"
-#include "price_api/fawazahmed0.hpp"
-#include "price_api/kraken.hpp"
+#include "price/coincodex.hpp"
+#include "price/coingecko.hpp"
+#include "price/coinmarketcap.hpp"
+#include "price/cointelegraph.hpp"
+#include "price/cryptorank.hpp"
+#include "price/cryptowatch.hpp"
+#include "price/fawazahmed0.hpp"
+#include "price/kraken.hpp"
 
-#include "debug.hpp"
+#include "util/logger.hpp"
 #include "util.hpp"
 #include "currency_map.hpp" // neroshop::CurrencyMap
 //-------------------------------------------------------

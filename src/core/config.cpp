@@ -1,14 +1,20 @@
 #include "config.hpp"
-#include "debug.hpp"
 
-/*#if defined(NEROSHOP_USE_QT)
+#include "util/logger.hpp"
+#include "util.hpp"
+
+#if defined(NEROSHOP_USE_QT)
+#include <QDir>
+#include <QFile>
+#include <QFileInfo>
 #include <QJsonArray>
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QJsonParseError>
+#include <QString>
 #else
 #include <nlohmann/json.hpp>
-#endif*/
+#endif
 
 #include <filesystem>
 
@@ -172,3 +178,222 @@ bool neroshop::open_configuration_file() {
 lua_State * neroshop::get_lua_state() {
 	return lua_state;
 }
+//----------------------------------------------------------------
+bool neroshop::create_json() {
+    std::string config_path = NEROSHOP_DEFAULT_CONFIGURATION_PATH;
+    std::string settings_filename = "settings.json";
+    std::string config_file = config_path + "/" + settings_filename;
+    #if defined(NEROSHOP_USE_QT)
+    // Exit function if file already exists
+    if(QFileInfo::exists(QString::fromStdString(config_file)) && QFileInfo(QString::fromStdString(config_file)).isFile()) {
+        ////neroshop::print(config_file + " already exists", 2);
+        return false;
+    }
+    // If path does not exist, create it
+    if(!QDir(QString::fromStdString(config_path)).exists()) {
+        neroshop::print("directory \"" + config_path + "\" does not exist, but I will create it for you (^_^)", 2);
+        if(!QDir().mkdir(QString::fromStdString(config_path))) { neroshop::print("create_config error: failed to make the path. Sorry (ᵕ人ᵕ)! ...", 1); return false; }
+        neroshop::print("\033[1;97;49mcreated path \"" + config_path + "\"");    
+    }
+    // if path exists, but the file is missing or deleted
+    if(!QFileInfo::exists(QString::fromStdString(config_file)) && !QFileInfo(QString::fromStdString(config_file)).isFile()) {
+        // Open settings file for writing
+        QFile settings_file(QString::fromStdString(config_file));
+        if (!settings_file.open(QIODevice::WriteOnly | QIODevice::Text)) {
+            neroshop::print("Error writing to " + settings_filename, 1); return false;
+        }
+        // Create JSON
+        QJsonObject root_obj;
+        root_obj.insert(QString("preferred_currency"), QJsonValue("USD"));
+        root_obj.insert(QString("dark_theme"), QJsonValue(false));
+        root_obj.insert(QString("theme"), QJsonValue("DefaultLight"));
+        root_obj.insert(QString("language"), QJsonValue("English"));
+        root_obj.insert(QString("hide_homepage_button"), QJsonValue(false));
+        root_obj.insert(QString("hide_price_display"), QJsonValue(false));
+        root_obj.insert(QString("wallet_directory"), QJsonValue(""));    
+        QJsonObject monero_obj;
+        //monero_obj.insert(QString("restore_height"), QJsonValue());
+        QJsonObject wallet_obj;
+        wallet_obj.insert(QString("balance_display"), QJsonValue("All balances"));
+        wallet_obj.insert(QString("balance_amount_precision"), QJsonValue(12));
+        wallet_obj.insert(QString("show_currency_sign"), QJsonValue(false));
+        wallet_obj.insert(QString("block_explorer"), QJsonValue("xmrchain.net"));
+        wallet_obj.insert(QString("require_password_on_withdrawal"), QJsonValue(true));
+        monero_obj.insert(QString("wallet"), QJsonValue(wallet_obj));
+        QJsonObject catalog_obj;
+        catalog_obj.insert(QString("price_display"), QJsonValue("All prices"));
+        catalog_obj.insert(QString("hide_product_details"), QJsonValue(false));
+        catalog_obj.insert(QString("catalog_view"), QJsonValue("Grid view"));
+        catalog_obj.insert(QString("grid_details_align_center"), QJsonValue(false));
+        catalog_obj.insert(QString("hide_illegal_products"), QJsonValue(true));
+        root_obj.insert(QString("catalog"), QJsonValue(catalog_obj));
+        QJsonObject daemon_obj;
+        daemon_obj.insert(QString("network_type"), QJsonValue("stagenet")); // has no effect when changed manually
+        daemon_obj.insert(QString("confirm_external_bind"), QJsonValue(false));
+        daemon_obj.insert(QString("restricted_rpc"), QJsonValue(true));
+        daemon_obj.insert(QString("data_dir"), QJsonValue(""));
+        daemon_obj.insert(QString("auto_sync"), QJsonValue(true));
+        daemon_obj.insert(QString("node_type"), QJsonValue(0));
+        daemon_obj.insert(QString("executable"), QJsonValue(""));
+        daemon_obj.insert(QString("last_selected_node"), QJsonValue(""));
+        monero_obj.insert(QString("daemon"), QJsonValue(daemon_obj));
+        root_obj.insert(QString("monero"), QJsonValue(monero_obj));
+        //QJsonObject _obj;
+        //_obj.insert(QString(""), QJsonValue());
+        // Convert to JSON string
+        QJsonDocument json_doc(root_obj);
+        QString settings_json = json_doc.toJson();
+        // Write to settings file
+        QTextStream out(&settings_file);
+        out << settings_json;
+        settings_file.close();
+        std::cout << "settings.json created\n";    
+        std::cout << settings_json.toStdString() << "\n";
+    }
+    #else
+    // Exit function if file already exists
+    if(std::filesystem::is_regular_file(config_file)) {
+        ////neroshop::print(config_file + " already exists", 2);
+        return false;
+    } 
+    // if path does not exist
+    if(!std::filesystem::is_directory(config_path)) 
+    {   // create the path
+        neroshop::print("directory \"" + config_path + "\" does not exist, but I will create it for you (^_^)", 2);
+        if(!std::filesystem::create_directories(config_path)) { neroshop::print("create_config error: failed to make the path. Sorry (ᵕ人ᵕ)! ...", 1); return false; }
+        neroshop::print("\033[1;97;49mcreated path \"" + config_path + "\"");
+    }
+    // if path exists, but the file is missing or deleted
+    if(!std::filesystem::is_regular_file(config_file)) {
+        // Open settings file for writing
+        std::ofstream settings_file;
+        settings_file.open (config_file, std::ios::out | std::ios::trunc);
+        // Create JSON
+        nlohmann::json settings_json;
+        settings_json["preferred_currency"] = "USD";
+        settings_json["dark_theme"] = false;
+        settings_json["theme"] = "DefaultLight";
+        settings_json["language"] = "English";
+        settings_json["hide_homepage_button"] = false;
+        settings_json["hide_price_display"] = false;
+        settings_json["wallet_directory"] = ""; // leave blank to use default
+        //settings_json[""] = ;
+        settings_json["monero"]["wallet"]["balance_display"] = "All balances";
+        settings_json["monero"]["wallet"]["balance_amount_precision"] = 12;
+        settings_json["monero"]["wallet"]["show_currency_sign"] = false;
+        settings_json["monero"]["wallet"]["block_explorer"] = "xmrchain.net";
+        settings_json["monero"]["wallet"]["require_password_on_withdrawal"] = true;
+        settings_json["catalog"]["price_display"] = "All prices";
+        settings_json["catalog"]["hide_product_details"] = false;
+        settings_json["catalog"]["catalog_view"] = "Grid view";
+        settings_json["catalog"]["grid_details_align_center"] = false;
+        settings_json["catalog"]["hide_illegal_products"] = true;
+        settings_json["monero"]["daemon"]["network_type"] = "stagenet";
+        settings_json["monero"]["daemon"]["confirm_external_bind"] = false;
+        settings_json["monero"]["daemon"]["restricted_rpc"] = true;
+        settings_json["monero"]["daemon"]["data_dir"] = ""; // leave blank to use default
+        settings_json["monero"]["daemon"]["auto_sync"] = true;
+        settings_json["monero"]["daemon"]["node_type"] = 0;
+        settings_json["monero"]["daemon"]["executable"] = "";
+        settings_json["monero"]["daemon"]["last_selected_node"] = "";
+        //settings_json[""][""] = ;
+        // Write to file then close it
+        settings_file << settings_json.dump(4);
+        settings_file.close();
+        neroshop::print("\033[1;97;49mcreated file \"" + config_file + "\"\033[0m");  
+        std::cout << settings_json.dump(4) << "\n";
+    }
+    #endif    
+    return true;
+}
+//----------------------------------------------------------------
+std::string neroshop::load_json() {
+    std::string config_path = NEROSHOP_DEFAULT_CONFIGURATION_PATH;
+    std::string settings_filename = "settings.json";
+    std::string config_file = config_path + "/" + settings_filename;
+    #if defined(NEROSHOP_USE_QT)
+    // Open settings file for reading
+    QFile settings_file(QString::fromStdString(config_file));
+    if (!settings_file.open(QIODevice::ReadOnly | QIODevice::Text)) {
+        neroshop::print("Error reading from " + settings_filename, 1);
+        // The file most likely does not exist so we must create it
+        return "";
+    }
+    // Validate the JSON    
+    QJsonParseError json_error;
+    const auto json_doc = QJsonDocument::fromJson(settings_file.readAll(), &json_error);
+    if (json_error.error != QJsonParseError::NoError) {
+        neroshop::print("Error parsing " + settings_filename, 1);
+        settings_file.close();
+        return "";
+    }    
+    settings_file.close();
+    // Create object from JSON or just return the JSON string
+    return json_doc.toJson(QJsonDocument::Indented).toStdString();
+    #else
+    std::ifstream file(config_file);
+    if(!file.is_open()) {
+        neroshop::print("Error reading from " + settings_filename, 1); return "";
+    }
+    nlohmann::json j = nlohmann::json::parse(file);
+    if (j.is_discarded()) {
+        neroshop::print("Error parsing " + settings_filename, 1);
+        file.close();
+        return "";
+    }
+    file.close();
+    return j.dump(4);
+    #endif    
+    return "";
+}
+//----------------------------------------------------------------
+bool neroshop::open_json(std::string& out) {
+    if(!create_json()) {
+        std::string out = load_json();
+        if(out.empty()) {
+            neroshop::print("Failed to load settings.json", 1);
+            return false;
+        }
+    }
+    return true;
+}
+//----------------------------------------------------------------
+void neroshop::modify_json(const std::string& settings) { // saves settings
+    std::string config_path = NEROSHOP_DEFAULT_CONFIGURATION_PATH;
+    std::string settings_filename = "settings.json";
+    std::string config_file = config_path + "/" + settings_filename;
+    #if defined(NEROSHOP_USE_QT)
+    // Validate the JSON
+    QJsonParseError json_error;
+    const auto json_doc = QJsonDocument::fromJson(QString::fromStdString(settings).toUtf8(), &json_error);
+    if(json_error.error != QJsonParseError::NoError) {
+        neroshop::print("Error parsing " + settings_filename, 1); return;
+    }
+    // Format the JSON
+    QString settings_json = json_doc.toJson(QJsonDocument::Indented);
+    // Open settings file for writing
+    QFile settings_file(QString::fromStdString(config_file));
+    if (!settings_file.open(QIODevice::WriteOnly | QIODevice::Text)) {
+        neroshop::print("Error writing to " + settings_filename, 1); return;
+    }
+    // Write to settings file
+    QTextStream out(&settings_file);
+    out << settings_json;//out << settings;
+    settings_file.close();
+    #else
+    nlohmann::json j = nlohmann::json::parse(settings, nullptr, false);
+    if (j.is_discarded()) {
+        neroshop::print("Error parsing " + settings_filename, 1); return;
+    }
+    std::string settings_json = j.dump(4);
+    // Open file for writing
+    std::ofstream file(config_file);
+    if(!file.is_open()) {
+        neroshop::print("Error reading from " + settings_filename, 1); return;
+    }    
+    file << settings_json;
+    file.close();
+    #endif    
+}
+//----------------------------------------------------------------
+

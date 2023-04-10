@@ -1,5 +1,11 @@
 #include "user.hpp"
 
+#include "client.hpp"
+#include "database.hpp"
+#include "util/logger.hpp"
+
+#include <fstream>
+
 ////////////////////
 neroshop::User::User() : id(""), logged(false), account_type(user_account_type::guest), cart(nullptr), order_list({}), favorites_list({}) {
     cart = std::unique_ptr<Cart>(new Cart());

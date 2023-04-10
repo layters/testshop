@@ -3,9 +3,8 @@
 
 #include <iostream>
 
-#include "validator.hpp" // db.hpp included here
+#include "cart.hpp"
 #include "order.hpp"
-#include "client.hpp"
 
 enum class user_account_type : unsigned int { guest, buyer, seller }; // guest is 0 by default
 

@@ -2,6 +2,7 @@
 
 #include <QClipboard>
 #include <QFile>
+#include <QFileInfo>
 #include <QGuiApplication>
 #include <QJsonArray>
 #include <QJsonDocument>
@@ -13,9 +14,16 @@
 #include <QProcess> // Note: QProcess is not supported on VxWorks, iOS, tvOS, or watchOS.
 #include <QUuid>
 
+#include "../core/client.hpp"
+#include "../core/currency_converter.hpp" // neroshop::Converter::is_supported_currency
 #include "../core/currency_map.hpp"
-//#include "../core/currency_converter.hpp"
-//#include "../core/validator.hpp"
+#include "../core/crypto/sha256.hpp" // sha256
+#include "../core/database.hpp"
+#include "../core/script.hpp"
+#include "../core/config.hpp"
+#include "script_controller.hpp" // neroshop::Script::get_table_string
+#include "../core/util.hpp"
+#include "../core/util/logger.hpp"
 
 #include <future>
 #include <thread>
@@ -247,8 +255,7 @@ std::string neroshop::Backend::getDatabaseHash() {
     db_content << rfile.rdbuf(); // dump file contents
     rfile.close();
     // Get SHA256sum of data.sqlite3 contents
-    std::string sha256sum;
-    Validator::generate_sha256_hash(db_content.str(), sha256sum);
+    std::string sha256sum = neroshop::crypto::sha256(db_content.str());
     std::cout << "sha256sum (data.sqlite3): " << sha256sum << std::endl;
     return sha256sum; // database may have to be closed first in order to get the accurate hash
 }
@@ -1318,7 +1325,7 @@ bool neroshop::Backend::loginWithKeys(WalletController* wallet_controller, UserC
     wallet_controller->restoreFromKeys(primary_address, secret_view_key, secret_spend_key);
     // Get the hash of the primary address
     std::string user_auth_key;// = neroshop::algo::sha256(primary_address);
-    Validator::generate_sha256_hash(primary_address, user_auth_key); // temp
+    ////Validator::generate_sha256_hash(primary_address, user_auth_key); // temp
     neroshop::print("Primary address: \033[1;33m" + primary_address + "\033[1;37m\nSHA256 hash: " + user_auth_key);
     //$ echo -n "528qdm2pXnYYesCy5VdmBneWeaSZutEijFVAKjpVHeVd4unsCSM55CjgViQsK9WFNHK1eZgcCuZ3fRqYpzKDokqSKp4yp38" | sha256sum
     // Check database to see if user key (hash of primary address) exists
@@ -1378,40 +1385,6 @@ void neroshop::Backend::connectToServerDaemon() {
 }
 //----------------------------------------------------------------
 //----------------------------------------------------------------
-#include <nlohmann/json.hpp>
-#include "../core/rpc.hpp"
-void neroshop::Backend::testWriteJson() {
-    neroshop::db::Sqlite3 * database = neroshop::get_database();
-    if(!database) throw std::runtime_error("database is NULL");
-    /*QJsonObject jsonObject; // base Object (required)
-    
-    //QJsonObject json_attributes_object; // subObject (optional)
-    
-    QJsonArray json_color_array; // An array of colors
-    json_color_array.insert(json_color_array.size(), QJsonValue("red"));
-    json_color_array.insert(json_color_array.size(), QJsonValue("green"));
-    json_color_array.insert(json_color_array.size(), QJsonValue("blue"));
-    
-    QJsonArray json_size_array; // An array of sizes
-    json_size_array.insert(json_size_array.size(), QJsonValue("XS"));
-    json_size_array.insert(json_size_array.size(), QJsonValue("S"));
-    json_size_array.insert(json_size_array.size(), QJsonValue("M"));
-    json_size_array.insert(json_size_array.size(), QJsonValue("L"));
-    json_size_array.insert(json_size_array.size(), QJsonValue("XL"));
-    
-    //jsonObject.insert
-    jsonObject.insert(QString("weight"), QJsonValue(12.5));
-    jsonObject.insert(QString("color"), json_color_array);
-    jsonObject.insert(QString("size"), json_size_array);
-    
-    //jsonObject.insert("attributes", json_attributes_object);
-    
-    // Convert JSON to QString
-    QJsonDocument doc(jsonObject);
-    QString strJson = doc.toJson(QJsonDocument::Compact); // https://doc.qt.io/qt-6/qjsondocument.html#JsonFormat-enum
-    // Display JSON as string
-    std::cout << strJson.toStdString() << std::endl;*/
-}
 //----------------------------------------------------------------
 void neroshop::Backend::testfts5() {
     neroshop::db::Sqlite3 * database = neroshop::get_database();

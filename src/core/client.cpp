@@ -1,5 +1,9 @@
 #include "client.hpp"
 
+#include "util/logger.hpp"
+
+#include <cstring> // memset
+
 neroshop::Client::Client() {//: socket(0) {
     create();
 }

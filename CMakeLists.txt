@@ -24,6 +24,13 @@ cmake_dependent_option(NEROSHOP_USE_SYSTEM_GRPC "Use system installed gRPC" ON "
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake" "${CMAKE_CURRENT_SOURCE_DIR}/external/monero-cpp/external/monero-project/cmake")
 ######################################
+set(NEROSHOP_SRC_DIR ${CMAKE_CURRENT_SOURCE_DIR}/src)
+set(NEROSHOP_CONSOLE_SRC_DIR ${NEROSHOP_SRC_DIR}/console)
+set(NEROSHOP_CORE_SRC_DIR ${NEROSHOP_SRC_DIR}/core)
+set(NEROSHOP_DAEMON_SRC_DIR ${NEROSHOP_SRC_DIR}/daemon)
+set(NEROSHOP_GUI_SRC_DIR ${NEROSHOP_SRC_DIR}/gui)
+
+######################################
 if(NEROSHOP_BUILD_GUI AND NEROSHOP_USE_QT)
     set(CMAKE_AUTOMOC ON)
     #set(CMAKE_AUTORCC ON)
@@ -68,7 +75,7 @@ if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
     message(STATUS "Building with clang")
 else()
     message(STATUS "Building with gcc/g++")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC -no-pie")# -fsanitize=address") # -no-pie=can run outside terminal
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC -no-pie -w")# -fsanitize=address") # -no-pie=can run outside terminal
 endif()
 endif()
 
@@ -376,27 +383,105 @@ set(lua_src ${CMAKE_CURRENT_SOURCE_DIR}/build/liblua.a)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/external/cxxopts/include/)
 
 ######################################
+# libi2pd (and i2pd_client)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/external/i2pd/libi2pd ${CMAKE_CURRENT_SOURCE_DIR}/external/i2pd/libi2pd_client)
+set(i2pd_src ${CMAKE_CURRENT_SOURCE_DIR}/build/libi2pd.a ${CMAKE_CURRENT_SOURCE_DIR}/build/libi2pd_client.a)
+
+######################################
+# dht
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/external/dht)
+set(dht_src ${CMAKE_CURRENT_SOURCE_DIR}/build/libdht.a)
+
+######################################
+# openpgp
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/external/openpgp)
+if(NEROSHOP_USE_OPENPGP)
+    message(STATUS "NEROSHOP_USE_OPENPGP option set to ON")
+    set(openpgp_src ${CMAKE_CURRENT_SOURCE_DIR}/external/build/libopenpgp.a)
+endif()
+
+######################################
 # neroshop link directories
 link_directories(${CMAKE_CURRENT_SOURCE_DIR}/build) # target_link_directories only available in CMake version 3.13 :(
 
 ######################################
 # neroshop core source files
-set(neroshop_database_srcs src/core/database/sqlite.cpp)
-set(neroshop_price_api_srcs src/core/price_api/coincodex.cpp src/core/price_api/coingecko.cpp src/core/price_api/coinmarketcap.cpp src/core/price_api/cointelegraph.cpp src/core/price_api/cryptorank.cpp src/core/price_api/cryptowatch.cpp src/core/price_api/fawazahmed0.cpp src/core/price_api/kraken.cpp)
-set(neroshop_core_src src/core/buyer.cpp src/core/cart.cpp src/core/catalog.cpp src/core/client.cpp src/core/config.cpp src/core/currency_converter.cpp src/core/database.cpp src/core/encryptor.cpp src/core/item.cpp src/core/order.cpp src/core/process.cpp src/core/rpc.cpp src/core/script.cpp src/core/seller.cpp src/core/server.cpp src/core/user.cpp src/core/validator.cpp src/core/wallet.cpp ${neroshop_database_srcs} ${neroshop_price_api_srcs})
+set(neroshop_crypto_src 
+    ${NEROSHOP_CORE_SRC_DIR}/crypto/pgp.cpp
+    ${NEROSHOP_CORE_SRC_DIR}/crypto/rsa.cpp
+    ${NEROSHOP_CORE_SRC_DIR}/crypto/sha256.cpp
+    ${NEROSHOP_CORE_SRC_DIR}/crypto/sha3.cpp
+)
+
+set(neroshop_database_src ${NEROSHOP_CORE_SRC_DIR}/database/sqlite.cpp)
+
+set(neroshop_network_src 
+    ${NEROSHOP_CORE_SRC_DIR}/network/i2p.cpp 
+    ${NEROSHOP_CORE_SRC_DIR}/network/tor.cpp
+)
+
+set(neroshop_price_src 
+    ${NEROSHOP_CORE_SRC_DIR}/price/coincodex.cpp 
+    ${NEROSHOP_CORE_SRC_DIR}/price/coingecko.cpp 
+    ${NEROSHOP_CORE_SRC_DIR}/price/coinmarketcap.cpp 
+    ${NEROSHOP_CORE_SRC_DIR}/price/cointelegraph.cpp 
+    ${NEROSHOP_CORE_SRC_DIR}/price/cryptorank.cpp 
+    ${NEROSHOP_CORE_SRC_DIR}/price/cryptowatch.cpp 
+    ${NEROSHOP_CORE_SRC_DIR}/price/fawazahmed0.cpp 
+    ${NEROSHOP_CORE_SRC_DIR}/price/kraken.cpp
+)
+
+set(neroshop_protocol_src 
+    ${NEROSHOP_CORE_SRC_DIR}/protocol/p2p/kademlia.cpp
+    ${NEROSHOP_CORE_SRC_DIR}/protocol/p2p/node.cpp
+    ${NEROSHOP_CORE_SRC_DIR}/protocol/rpc/json_rpc.cpp 
+)
+
+set(neroshop_util_src 
+    ${NEROSHOP_CORE_SRC_DIR}/util/downloader.cpp 
+    ${NEROSHOP_CORE_SRC_DIR}/util/extractor.cpp 
+    ${NEROSHOP_CORE_SRC_DIR}/util/logger.cpp 
+    ${NEROSHOP_CORE_SRC_DIR}/util/regex.cpp 
+    ${NEROSHOP_CORE_SRC_DIR}/util/updater.cpp
+)
+
+set(neroshop_core_src 
+    ${NEROSHOP_CORE_SRC_DIR}/buyer.cpp 
+    ${NEROSHOP_CORE_SRC_DIR}/cart.cpp 
+    ${NEROSHOP_CORE_SRC_DIR}/catalog.cpp 
+    ${NEROSHOP_CORE_SRC_DIR}/client.cpp 
+    ${NEROSHOP_CORE_SRC_DIR}/config.cpp 
+    ${NEROSHOP_CORE_SRC_DIR}/currency_converter.cpp 
+    ${NEROSHOP_CORE_SRC_DIR}/database.cpp 
+    ${NEROSHOP_CORE_SRC_DIR}/item.cpp 
+    ${NEROSHOP_CORE_SRC_DIR}/order.cpp 
+    ${NEROSHOP_CORE_SRC_DIR}/process.cpp 
+    ${NEROSHOP_CORE_SRC_DIR}/script.cpp 
+    ${NEROSHOP_CORE_SRC_DIR}/seller.cpp 
+    ${NEROSHOP_CORE_SRC_DIR}/server.cpp 
+    ${NEROSHOP_CORE_SRC_DIR}/user.cpp 
+    ${NEROSHOP_CORE_SRC_DIR}/wallet.cpp 
+    ${neroshop_crypto_src} 
+    ${neroshop_database_src} 
+    ${neroshop_network_src}
+    ${neroshop_price_src}
+    ${neroshop_protocol_src}
+    ${neroshop_util_src}
+    #[[${neroshop__src}]]
+)
 
 ######################################
 # neroshop tests
 if(NEROSHOP_BUILD_TESTS) # -DNEROSHOP_BUILD_TESTS=1
     enable_testing()
     message(STATUS "${BoldMagenta}NEROSHOP_BUILD_TESTS option set to ON${ColourReset}")
-    add_subdirectory(test)
+    add_subdirectory(tests)
 endif()
 
 ######################################
 # neroshop-daemon
 set(daemon_executable "neromon")
-add_executable(${daemon_executable} src/daemon/main.cpp src/core/server.cpp src/core/database/sqlite.cpp src/core/database.cpp src/core/rpc.cpp)#target_link_libraries(daemon ${curl_src} ${OPENSSL_LIBRARIES}) # curl requires both openssl(used in monero) and zlib(used in dokun-ui)
+add_executable(${daemon_executable} src/daemon/main.cpp src/core/server.cpp src/core/database/sqlite.cpp src/core/database.cpp src/core/protocol/rpc/json_rpc.cpp ${NEROSHOP_CORE_SRC_DIR}/util/logger.cpp)#target_link_libraries(daemon ${curl_src} ${OPENSSL_LIBRARIES}) # curl requires both openssl(used in monero) and zlib(used in dokun-ui)
 target_include_directories(${daemon_executable} PRIVATE #[[${CMAKE_CURRENT_SOURCE_DIR}/src/]])
 target_link_libraries(${daemon_executable} ${sqlite_src} ${raft_src})#set(CMAKE_CXX_LINK_EXECUTABLE "${CMAKE_CXX_LINK_EXECUTABLE} -ldl") # fixes undefined reference to symbol 'dlsym@@GLIBC_2.2.5' error
 
@@ -407,7 +492,7 @@ if(NEROSHOP_BUILD_CLI)
     add_executable(${neroshop_console} src/console/main.cpp ${neroshop_core_src})
     target_compile_definitions(${neroshop_console} PRIVATE NEROSHOP_DEBUG)
     target_include_directories(${neroshop_console} PRIVATE #[[${CMAKE_CURRENT_SOURCE_DIR}/src/]])
-    target_link_libraries(${neroshop_console} ${monero_cpp_src} ${sqlite_src} ${qr_code_generator_src} ${raft_src} ${curl_src} ${monero_src} ${lua_src} ${linenoise_src})
+    target_link_libraries(${neroshop_console} ${monero_cpp_src} ${sqlite_src} ${qr_code_generator_src} ${raft_src} ${curl_src} ${monero_src} ${lua_src} ${i2pd_src} ${dht_src} ${openpgp_src} ${linenoise_src})
     message(STATUS "${BoldMagenta}NEROSHOP_BUILD_CLI option set to ON${ColourReset}")
 endif()
 
@@ -419,11 +504,14 @@ if(NEROSHOP_BUILD_GUI)
     target_sources(${neroshop_executable} PRIVATE ${neroshop_res} src/gui/main.cpp src/gui/script_controller.cpp src/gui/wallet_controller.cpp src/gui/user_controller.cpp src/gui/image_loader.cpp src/gui/image_provider.cpp src/gui/wallet_qr_provider.cpp src/gui/currency_exchange_rates_provider.cpp #[[src/gui/table_model.cpp]] src/gui/backend.cpp ${neroshop_core_src})
     target_compile_definitions(${neroshop_executable} PRIVATE NEROSHOP_DEBUG)#set_target_properties(${neroshop_executable} PROPERTIES COMPILE_DEFINITIONS "NEROSHOP_DEBUG")
     target_include_directories(${neroshop_executable} PRIVATE #[[${CMAKE_CURRENT_SOURCE_DIR}/src/]])
-    target_link_libraries(${neroshop_executable} ${monero_cpp_src} ${sqlite_src} ${qr_code_generator_src} ${raft_src} ${monero_src} ${lua_src})
+    target_link_libraries(${neroshop_executable} ${monero_cpp_src} ${sqlite_src} ${qr_code_generator_src} ${raft_src} ${monero_src} ${lua_src} ${i2pd_src} ${dht_src} ${openpgp_src})
     message(STATUS "${BoldMagenta}NEROSHOP_BUILD_GUI option set to ON${ColourReset}")
     target_compile_definitions(${neroshop_executable} PRIVATE NEROSHOP_BUILD_GUI)
 endif()
 
+######################################
+# suppress boost warnings
+add_definitions(-DBOOST_DISABLE_PRAGMA_MESSAGE)
 ######################################
 # gRPC
 if(NEROSHOP_USE_GRPC)

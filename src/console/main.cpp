@@ -3,6 +3,7 @@
 
 #include "../neroshop.hpp"
 using namespace neroshop;
+namespace neroshop_tools = neroshop::tools;
 
 #include <linenoise.h>
 
@@ -12,7 +13,10 @@ static void print_commands() {
         {"exit        ", "Exit CLI"},
         {"version     ", "Show version"},
         {"monero_nodes", "Display a list of monero nodes"}, 
-        {"query       ", "Execute an SQLite query"}
+        {"query       ", "Execute an SQLite query"}, 
+        {"curl_version", "Show libcurl version"}, 
+        {"download_tor", "Download Tor"}, 
+        {"download_i2pd", "Download I2P Daemon"}
         /*, 
         {"", ""}*/
     };
@@ -24,6 +28,7 @@ static void print_commands() {
 }
 
 int main(int argc, char** argv) {
+    //-------------------------------------------------------
     // Connect to daemon server (daemon must be launched first)
     #ifndef NEROSHOP_DEBUG
     neroshop::Client * client = neroshop::Client::get_main_client();
@@ -55,20 +60,21 @@ int main(int argc, char** argv) {
     char * line = NULL;
     while((line = linenoise("neroshop-console> ")) != NULL) {
         std::string command { line };
+        command = neroshop::string::trim_left(command); // not necessary at all :D
 
         linenoiseHistoryLoad("history.txt");
         linenoiseHistoryAdd(line); // Add to the history.
         linenoiseHistorySave("history.txt"); // Save the history on disk.
 
-        if(command == "help" || !strncmp(line, "\0", command.length())) { // By default, pressing "Enter" on an empty string will execute this code
+        if(neroshop::string::trim_right(command) == "help" || !strncmp(line, "\0", command.length())) { // By default, pressing "Enter" on an empty string will execute this code
             print_commands();
         }  
-        else if(command == "monero_nodes") {
+        else if(neroshop::string::trim_right(command) == "monero_nodes") {
             for(std::string nodes : monero_nodes) {
                 std::cout << "\033[1;36m" << nodes << "\033[0m" << std::endl;
             }        
         }            
-        else if(command == "version") {
+        else if(neroshop::string::trim_right(command) == "version") {
             std::cout << "\033[0;93m" << "neroshop v" << NEROSHOP_VERSION << "\033[0m" << std::endl;
         }         
         else if(neroshop::string::starts_with(command, "query")) {
@@ -89,11 +95,26 @@ int main(int argc, char** argv) {
                  // Usage: query SELECT * FROM users;
             }
         }
-        else if(command == "exit") {
+        else if(neroshop::string::trim_right(command) == "curl_version") {
+            curl_version_info_data * curl_version = curl_version_info(CURLVERSION_NOW);
+            std::string curl_version_str = std::to_string((curl_version->version_num >> 16) & 0xff) + 
+                "." + std::to_string((curl_version->version_num >> 8) & 0xff) + 
+                "." + std::to_string(curl_version->version_num & 0xff);
+            std::cout << "libcurl version " << curl_version_str << std::endl;
+        }
+        else if(neroshop::string::trim_right(command) == "download_tor") {
+            std::packaged_task<void(void)> download_task([&]() -> void {
+                neroshop_tools::downloader::download_tor();
+            });
+            std::thread { std::move(download_task) }.detach();
+        }
+        /*else if(neroshop::string::trim_right(command) == "") {
+        }*/        
+        else if(neroshop::string::trim_right(command) == "exit") {
             break;
         }
         else {
-            std::cerr << std::string("\033[0;91mUnreconized command: \033[1;37m") << line << "\033[0m" << std::endl;  
+            std::cerr << std::string("\033[0;91mUnreconized command: \033[1;37m") << command << "\033[0m" << std::endl;  
         }
         linenoiseFree(line); // Or just free(line) if you use libc malloc.
     }

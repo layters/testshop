@@ -1,5 +1,8 @@
 #include "user_controller.hpp"
 
+#include "../core/database.hpp"
+#include "../core/util/logger.hpp"
+
 neroshop::UserController::UserController(QObject *parent) : QObject(parent)
 {
     // Should user not be initialized until they are logged in or?

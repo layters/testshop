@@ -277,7 +277,7 @@ ApplicationWindow {
                 
                 Text {
                     id: priceDisplayText
-                    property string scriptCurrency: Script.getString("neroshop.generalsettings.currency")
+                    property string scriptCurrency: settingsDialog.currency.currentText
                     property string currency: Backend.isSupportedCurrency(scriptCurrency) ? scriptCurrency : "usd"
                     readonly property double price: CurrencyExchangeRates.getXmrPrice(priceDisplayText.currency)
                     text: qsTr(FontAwesome.monero + "  %1%2").arg(Backend.getCurrencySign(currency)).arg(price.toFixed(Backend.getCurrencyDecimals(currency)))

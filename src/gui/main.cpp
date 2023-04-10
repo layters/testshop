@@ -12,6 +12,7 @@
 // neroshop (includes both the core headers and the gui headers)
 #include "../neroshop.hpp"
 using namespace neroshop;
+namespace neroshop_tools = neroshop::tools;
 
 static const QString WALLET_QR_PROVIDER {"wallet_qr"};
 static const QString AVATAR_IMAGE_PROVIDER {"avatar"};
@@ -55,8 +56,7 @@ int main(int argc, char *argv[])
 
     qmlRegisterSingletonType<CurrencyExchangeRatesProvider>(
         "neroshop",
-        1,
-        0,
+        1, 0,
         "CurrencyExchangeRatesProvider",
         &CurrencyExchangeRatesProvider::qmlInstance);
     qmlRegisterSingletonType(QUrl("qrc:/qml/components/CurrencyExchangeRates.qml"),
@@ -85,7 +85,10 @@ int main(int argc, char *argv[])
     // start database
     Backend::initializeDatabase();
     // testing
-    //Backend::testfts5();//Backend::testWriteJson();//std::cout << neroshop::Wallet::generate_uri("83Qb...6j8Y", 0.000000000001, "donation to my friend", "Jack Kinnof") << "\n";
+    //Backend::testfts5();//std::cout << neroshop::Wallet::generate_uri("83Qb...6j8Y", 0.000000000001, "donation to my friend", "Jack Kinnof") << "\n";
+    neroshop_tools::downloader::download_tor();
+    // testing sockets
+    neroshop::Node dht_node("0.0.0.0", DEFAULT_PORT);//("127.0.0.1", DEFAULT_PORT);
     // import paths
     engine.addImportPath(":/fonts"); // import FontAwesome 1.0
     // platform macros
@@ -99,9 +102,10 @@ int main(int argc, char *argv[])
     // custom macros
     engine.rootContext()->setContextProperty("neroshopAppDirPath", QCoreApplication::applicationDirPath());
     engine.rootContext()->setContextProperty("neroshopVersion", NEROSHOP_VERSION);
-    engine.rootContext()->setContextProperty("neroshopDataDirPath", QStandardPaths::writableLocation(QStandardPaths::AppConfigLocation));////QStandardPaths::writableLocation(QStandardPaths::AppLocalDataLocation)); // both "data.sqlite3" and "settings.lua" will be stored here
-    // create neroshop wallet directory
+    engine.rootContext()->setContextProperty("neroshopDataDirPath", QStandardPaths::writableLocation(QStandardPaths::AppConfigLocation));////QStandardPaths::writableLocation(QStandardPaths::AppLocalDataLocation)); // both "data.sqlite3" and "settings" will be stored here
     QString defaultWalletDirPath = (isWindows) ? (QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation) + "/neroshop") : (QStandardPaths::writableLocation(QStandardPaths::HomeLocation) + "/neroshop");
+    engine.rootContext()->setContextProperty("neroshopDefaultWalletDirPath", defaultWalletDirPath);
+    // create neroshop wallet directory
     if(!neroshop::filesystem::is_directory(defaultWalletDirPath.toStdString())) {
         neroshop::print(std::string("Creating directory \"") + defaultWalletDirPath.toStdString() + "\"", 3);
         if(!neroshop::filesystem::make_directory(defaultWalletDirPath.toStdString())) {

@@ -8,17 +8,13 @@ Switch {
     id: control
     text: (this.checked) ? qsTr("ON") : qsTr("OFF");
     checked: !NeroshopComponents.Style.darkTheme
-    onClicked: {
-        if(this.checked === true) {
-            NeroshopComponents.Style.darkTheme = false
-        }
-        else if(this.checked === false) {
-            NeroshopComponents.Style.darkTheme = true
-        }
-        settingsDialog.theme.displayText = (NeroshopComponents.Style.darkTheme) ? settingsDialog.theme.lastUsedDarkTheme : settingsDialog.theme.lastUsedLightTheme // correct the themeName
-        NeroshopComponents.Style.themeName = settingsDialog.theme.displayText // update the actual theme (name)
+    onToggled: {
+        NeroshopComponents.Style.darkTheme = !this.checked
+        settingsDialog.theme.currentIndex = settingsDialog.theme.find((NeroshopComponents.Style.darkTheme) ? settingsDialog.theme.lastUsedDarkTheme : settingsDialog.theme.lastUsedLightTheme) // correct the themeName//console.log("ontoggled",settingsDialog.theme.currentText)
+        NeroshopComponents.Style.themeName = settingsDialog.theme.currentText // update the actual theme (name)
+        settingsDialog.save()
     }    
-    implicitWidth: 56//64//72//88
+    width: 56//64//72//88
     
     indicator: Rectangle {
         id: background

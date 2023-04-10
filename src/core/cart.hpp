@@ -9,7 +9,6 @@
 #include <map> // std::map
 
 #include "item.hpp"
-#include "database.hpp"
 
 namespace neroshop {
 class Cart {

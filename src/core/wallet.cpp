@@ -1,6 +1,11 @@
 #include "wallet.hpp"
 
 #include "enums.hpp"
+#include "util/logger.hpp"
+#include "util.hpp"
+
+#include <cmath>
+#include <filesystem>
 
 neroshop::Wallet::Wallet() : process(nullptr), percentage(0.0), monero_wallet_obj(nullptr), network_type(monero_network_type::STAGENET)
 {}
@@ -375,6 +380,19 @@ std::vector<monero::monero_subaddress> neroshop::Wallet::get_addresses_unused(un
 }
 
 //-------------------------------------------------------
+std::vector<std::shared_ptr<monero_transfer>> neroshop::Wallet::get_transfers() {
+    std::promise<std::vector<std::shared_ptr<monero_transfer>>> my_promise;
+    auto async_future = std::async(std::launch::async, [&my_promise, this]() -> void/*std::vector<std::shared_ptr<monero_transfer>>*/ {
+        monero_transfer_query transfer_query; // optional
+        auto transfers = monero_wallet_obj->get_transfers(transfer_query);
+        my_promise.set_value(transfers);
+        ////return transfers;
+    });
+    return my_promise.get_future().get(); // return value inside promise
+    ////return async_future.get();//.wait() for function that returns void
+}
+//-------------------------------------------------------
+//-------------------------------------------------------
 std::string neroshop::Wallet::generate_uri(const std::string& payment_address, double amount, const std::string& description, const std::string& recipient) {
     bool has_amount = false;
     bool has_recipient = false;
@@ -553,7 +571,7 @@ bool neroshop::Wallet::daemon_connect_local(const std::string& username, const s
             // if height is zero, then it will sync from 80% but will still take long to sync
             std::packaged_task<void(void)> sync_job([this]() {
                 // monero_wallet_obj->get_daemon_height() is the height that the wallet's daemon is currently synced to
-                monero_wallet_obj->sync(monero_wallet_obj->get_sync_height()/*monero_wallet_obj->get_daemon_height()*/, *this);////monero_wallet_obj->sync(0, *this);// 0 = start_height	is the start height to sync from (ignored if less than last processed block) //(sync_listener);//monero_sync_result sync_result = monero_wallet_obj->sync(sync_listener); // synchronize the wallet with the daemon as a one-time synchronous process//if(sync_result.m_received_money) {neroshop::print(std::string("blocks fetched: ") + std::to_string(sync_result.m_num_blocks_fetched));neroshop::print("you have received money");}
+                monero_wallet_obj->sync(monero_wallet_obj->get_restore_height()/*monero_wallet_obj->get_daemon_height()*/, *this);////monero_wallet_obj->sync(0, *this);// 0 = start_height	is the start height to sync from (ignored if less than last processed block) //(sync_listener);//monero_sync_result sync_result = monero_wallet_obj->sync(sync_listener); // synchronize the wallet with the daemon as a one-time synchronous process//if(sync_result.m_received_money) {neroshop::print(std::string("blocks fetched: ") + std::to_string(sync_result.m_num_blocks_fetched));neroshop::print("you have received money");}
             // continue syncing in order to receive tx notifications
             std::cout << "\033[1;90;49m" << "starting background sync" << "\033[0m" << std::endl;
             monero_wallet_obj->start_syncing(5000); // begin syncing the wallet constantly in the background (every 5 seconds)
@@ -582,7 +600,7 @@ void neroshop::Wallet::daemon_connect_remote(const std::string& ip, const std::s
         std::cout << "\033[1;90;49m" << "connected to daemon" << "\033[0m" << std::endl;
             std::packaged_task<void(void)> sync_job([this, listener]() {
                 std::cout << "\033[1;90;49m" << "sync in progress ..." << "\033[0m" << std::endl;
-                monero_wallet_obj->sync(monero_wallet_obj->get_sync_height(), (listener != nullptr) ? *const_cast<monero_wallet_listener*>(listener) : *this);//*this); // a start_height of 0 is ignored // get_sync_height() is the height of the first block that the wallet scans// get_daemon_height() is the height that the wallet's daemon is currently synced to (will sync instantly but will not guarantee unique subaddress generation)
+                monero_wallet_obj->sync(monero_wallet_obj->get_restore_height(), (listener != nullptr) ? *const_cast<monero_wallet_listener*>(listener) : *this);//*this); // a start_height of 0 is ignored // get_restore_height() is the height of the first block that the wallet scans// get_daemon_height() is the height that the wallet's daemon is currently synced to (will sync instantly but will not guarantee unique subaddress generation)
                 // begin syncing the wallet constantly in the background (every 5 seconds) in order to receive tx notifications
                 monero_wallet_obj->start_syncing(5000);
                 // check if wallet's daemon is synced with the network
@@ -903,22 +921,3 @@ bool neroshop::Wallet::is_valid_address(const std::string& address) const {
     return monero_utils::is_valid_address(address, this->get_network_type());
 }
 //-------------------------------------------------------
-//-------------------------------------------------------
-//-------------------------------------------------------
-//-------------------------------------------------------
-//-------------------------------------------------------
-//-------------------------------------------------------
-//-------------------------------------------------------
-//-------------------------------------------------------
-//-------------------------------------------------------
-//-------------------------------------------------------
-//-------------------------------------------------------
-//-------------------------------------------------------
-//-------------------------------------------------------
-//-------------------------------------------------------
-// void monero::monero_wallet_full::rescan_blockchain	(		) // dangerous! restarts blockchain sync!
-// get last subaddress created
-//unsigned int last = (monero_wallet_obj->get_account(0, true).m_subaddresses.size() - 1);
-//return monero_wallet_obj->get_account(0, true).m_subaddresses[last].m_address.get() << std::endl;
-//monero_wallet_obj->move_to (wallet_file, "supersecretpassword123"); // Move the wallet from its current path to the given path.
-//std::cout << "\033[1;97;49m" << "moved file \"" << wallet->get_file() << "\" to \"" << wallet_file << "\"\033[0m" << std::endl;

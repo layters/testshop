@@ -4,23 +4,11 @@
 #define ORDER_HPP_NEROSHOP
 
 #include <iostream>
-#include <map>
 
-//#include "wallet.hpp"
-#include "cart.hpp"      // includes db.hpp
-#include "currency_converter.hpp" // currency converter
-#include "config.hpp" // neroshop::lua_state
-#include "util.hpp" // neroshop::uuid::generate()
-
-enum class payment_status{ PAYMENT_NOT_RECEIVED, // red // https://stackoverflow.com/a/46740323
-    PAYMENT_CONFIRMED,    // yellow
-    PAYMENT_RECEIVED,     // green
-};
-enum class order_status : unsigned int {incomplete, created, pending = created, preparing, shipped, ready_for_pickup, ready = ready_for_pickup, delivered, done = delivered, cancelled, failed, returned,}; // char, short or unsigned int // enum classes help avoid polluting the scope (either global or namespace)
-enum class payment_method{/*cash, card,*/ crypto,};
-enum class currency{xmr,};
+#include "cart.hpp"
 
 namespace neroshop {
+
 class Order { // create a db for orders that stores order numbers and details and retrieve order
 public:
 	Order();
@@ -38,7 +26,7 @@ public:
 	// setters
 	// getters
 	std::string get_id() const;
-	order_status get_status() const;
+	int get_status() const;
 	std::string get_status_string() const; // pending (awaiting_payment), processing (already paid for, now seller is preparing), preparing, shipped (fully | partially), refunded or returned (fully | partially), declined, disputed, failed (user fails to pay), cancelled, done (or completed; order was paid for and delivered to the buyer)
 	// boolean
 	bool is_cancelled() const;
@@ -49,8 +37,9 @@ private:
 	// order: order_id, [order_date], product, SKU, quantity, price (subtotal), discount (optional), shipping_cost/estimated_delivery, carrier[dhl, usps, etc.], payment method:monero[xmr], total
 	static bool in_db(unsigned int order_number); // check if an order is in the order database
 	std::string id;
-	order_status status;
-	void set_status(order_status status);
+	int status;
+	void set_status(int status);
 };
+
 }
 #endif

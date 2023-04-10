@@ -80,8 +80,8 @@ public:
     Q_INVOKABLE void createOrder(UserController * user_controller, const QString& shipping_address);
     
     static int deleteExpiredOrders();
+    
     //Q_INVOKABLE void ();
-    static void testWriteJson();
     static void testfts5();
     // Test function
     static void startServerDaemon();

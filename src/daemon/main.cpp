@@ -2,8 +2,8 @@
 // neroshop
 #include "../core/server.hpp"
 #include "../core/database.hpp"
-#include "../core/rpc.hpp"
-#include "../core/debug.hpp"
+#include "../core/protocol/rpc/json_rpc.hpp"
+#include "../core/util/logger.hpp"
 #include "../core/version.hpp"
 
 #include <cxxopts.hpp>
@@ -43,11 +43,13 @@ void do_heartbeat()
 int main(int argc, char** argv)
 {
     std::string daemon { "neromon" };
-    std::string daemon_version { daemon + " v" + std::string(NEROSHOP_VERSION) };
-    cxxopts::Options options(daemon, std::string(daemon_version + ", " + std::string(NEROSHOP_VERSION_FULL)));
+    std::string daemon_version { daemon + " v" + std::string(NEROSHOP_DAEMON_VERSION) };
+    cxxopts::Options options(daemon, std::string(daemon_version));
 
     options.add_options()
         ("h,help", "Print usage")
+        ("v,version", "Show version")
+        ("datadir", "Path to storage of nershop data")
     ;
     
     auto result = options.parse(argc, argv);
@@ -55,7 +57,11 @@ int main(int argc, char** argv)
     if(result.count("help")) {
         std::cout << options.help() << std::endl;
         exit(0);
-    }    
+    }
+    if(result.count("version")) {
+        std::cout << daemon << " version " << std::string(NEROSHOP_DAEMON_VERSION) << std::endl;
+        exit(0);
+    }        
     //-------------------------------------------------------
     // Start server
     std::atexit(close_server);
