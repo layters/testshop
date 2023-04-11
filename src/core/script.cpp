@@ -1,5 +1,8 @@
 #include "script.hpp"
 
+#include "util/logger.hpp"
+#include "util.hpp" // neroshop::string::
+
 neroshop::Script::Script(void)
 {
 	//Factory::get_script_factory()->store(this);
@@ -72,7 +75,7 @@ bool neroshop::Script::load_directory(lua_State * L, const std::string& path)
 	if(!std::filesystem::is_directory(path)) {
 	    std::filesystem::create_directories(path);
 	}
-	std::vector<std::string> scripts = neroshop::filesystem::get_dir(path, "*lua");
+	std::vector<std::string> scripts = neroshop::filesystem::get_directory(path, "*lua");
 	for(int i = 0; i < scripts.size(); i++)
 	{
 		Script script_ptr;

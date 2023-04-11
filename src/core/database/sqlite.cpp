@@ -1,5 +1,11 @@
 #include "sqlite.hpp"
 
+#include "../util/logger.hpp"
+
+#include <cstdarg>
+#include <fstream>
+#include <sstream>
+#include <stdexcept> // std::runtime_error
 
 neroshop::db::Sqlite3::Sqlite3() : handle(nullptr), opened(false) {}
 ////////////////////

@@ -3,13 +3,9 @@
 #ifndef ITEM_HPP_NEROSHOP
 #define ITEM_HPP_NEROSHOP
 
-//#include <image.hpp>
-#include <filesystem>
 #include <iostream>
-#include <vector>
 #include <tuple> // std::tuple, std::get, std::tie, std::ignore
-
-#include "database.hpp"
+#include <vector>
 
 namespace neroshop {
 class Item { // or Product or whatever you want to call it

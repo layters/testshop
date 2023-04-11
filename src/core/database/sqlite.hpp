@@ -10,13 +10,8 @@
 #include <nlohmann/json.hpp>
 
 #include <iostream>
-#include <cstdarg>
-#include <fstream>
-#include <sstream>
+#include <string>
 #include <vector> // std::vector
-#include <stdexcept> // std::runtime_error
-
-#include "../debug.hpp"
 
 namespace neroshop {
 

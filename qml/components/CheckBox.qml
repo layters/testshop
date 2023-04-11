@@ -17,11 +17,14 @@ CheckBox {
     }
     property int shapeType: NeroshopComponents.CheckBox.ShapeType.Check
     property string textColor: control.down ? "#443a5f" : "#4d426c"
+    property string color: "#ffffff"
         
     indicator: Rectangle { // This is the actual visual CheckBox or its background, you could say
         anchors.fill: parent
         radius: control.radius
         border.color: control.borderColor
+        color: control.color
+        border.width: control.checked ? 2 : 1
 
         Rectangle {
             width: parent.width / 2; height: width

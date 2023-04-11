@@ -1,3 +1,4 @@
+#pragma once
 #ifndef DATABASE_HPP_NEROSHOP
 #define DATABASE_HPP_NEROSHOP
 
@@ -20,7 +21,7 @@
 
 namespace neroshop {
 
-extern db::Sqlite3 * get_database();
+db::Sqlite3 * get_database();
 
 }
 #endif

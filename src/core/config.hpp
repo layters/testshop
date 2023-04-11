@@ -49,6 +49,11 @@ namespace neroshop {
 	extern bool open_configuration_file(); // create_config + load_config
 		
 	extern lua_State * get_lua_state();
+	//------------------------------------
+	extern bool create_json();
+	extern std::string load_json();	
+	extern bool open_json(std::string& out);
+	extern void modify_json(const std::string& settings);
 }
 
 #endif

@@ -14,23 +14,20 @@
 
 #include <iostream>
 #include <string>
+#include <variant>
 #include <vector>
 #include <utility> // std::pair
-#include <cmath>
-#include <filesystem>
 
 #include "process.hpp" // for monerod daemon process
 
 namespace neroshop {
-// TODO: maybe place enums in an "error.hpp" file or nah?
-enum class wallet_error : int { WALLET_SUCCESS = 0, WRONG_PASSWORD, PASSWORDS_NO_MATCH, WALLET_ALREADY_EXISTS/*Wallet I/O Error*/ };
 
 class Wallet : public monero_wallet_listener {
 public:
     Wallet();
     ~Wallet();
 
-    /*bool*/wallet_error create_random(const std::string& password, const std::string& confirm_pwd, const std::string& path);
+    int create_random(const std::string& password, const std::string& confirm_pwd, const std::string& path);
     bool create_from_mnemonic(const std::string& mnemonic, const std::string& password, const std::string& confirm_pwd, const std::string& path);
     bool create_from_keys(const std::string& address, const std::string& view_key, const std::string& spend_key, const std::string& password, const std::string &confirm_pwd, const std::string& path);
     
@@ -42,6 +39,8 @@ public:
     
     std::string upload(bool open = true, std::string password = ""); // change to mainnet later    
     
+    bool verify_password(const std::string& password);
+    
     // todo: create a function that connects a hardware wallet
     monero::monero_subaddress create_subaddress(unsigned int account_idx, const std::string & label = "") const; // generates a new subaddress from main account // monero addresses start with 4 or 8
     
@@ -51,9 +50,13 @@ public:
     unsigned int address_book_add(const std::string& address, std::string description = ""); // "address_book add <address> <description>"
     void address_book_delete(unsigned int index); // "address_book delete 0"  
     
+    static std::string generate_uri(const std::string& payment_address, double amount = 0.000000000000, const std::string& description = "", const std::string& recipient = ""); // Generates a monero uri for qr code with the amount embedded into it
+    
     std::vector<monero::monero_subaddress> get_addresses_all(unsigned int account_idx);
     std::vector<monero::monero_subaddress> get_addresses_used(unsigned int account_idx);
     std::vector<monero::monero_subaddress> get_addresses_unused(unsigned int account_idx);
+
+    std::vector<std::shared_ptr<monero_transfer>> get_transfers();
 
     void on_sync_progress(uint64_t height, uint64_t start_height, uint64_t end_height, double percent_done, const std::string& message);
     ////void on_new_block (uint64_t height);
@@ -61,7 +64,7 @@ public:
     void on_output_received(const monero_output_wallet& output);
     ////void on_output_spent (const monero_output_wallet &output);
     // daemon or node-related functions
-    void daemon_open(const std::string& daemon_dir, bool confirm_external_bind = false, bool restricted_rpc = true, std::string data_dir = std::string("/home/") + neroshop::device::get_user() + std::string("/.bitmonero")/*""*/, unsigned int restore_height = 0);
+    void daemon_open(const std::string& daemon_dir, bool confirm_external_bind = false, bool restricted_rpc = true, std::string data_dir = "", unsigned int restore_height = 0);
     bool daemon_connect_local(const std::string& username = "", const std::string& password = "");
     void daemon_connect_remote(const std::string& ip, const std::string& port, const std::string& username = "", const std::string& password = "", const monero_wallet_listener* listener = nullptr);
     void daemon_close();
@@ -138,6 +141,7 @@ private:
     volatile unsigned int height, start_height, end_height;
     /*volatile */std::string message;
     uint64_t/*unsigned long long*/ restore_height;
+    std::string password_hash; // pw hash that is only stored in memory
 };
 
 }

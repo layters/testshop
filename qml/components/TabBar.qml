@@ -58,7 +58,7 @@ Row {//TODO: try using a Column too
             MouseArea {
                 anchors.fill: parent
                 onPressed: mouse.accepted = false
-                cursorShape: !parent.checked ? Qt.PointingHandCursor : Qt.ArrowCursor
+                cursorShape: Qt.PointingHandCursor//!parent.checked ? Qt.PointingHandCursor : Qt.ArrowCursor
             }
         }
     }

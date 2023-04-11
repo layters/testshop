@@ -1,10 +1,13 @@
 #include "server.hpp"
 
-neroshop::Server::Server()
+#include "database.hpp"
+#include "util/logger.hpp"
+
+neroshop::Server::Server() :
 #if defined(NEROSHOP_USE_LIBUV)
- : handle_tcp(nullptr), handle_udp (nullptr)
+ handle_tcp(nullptr), handle_udp (nullptr),
 #endif
-{
+socket_type(SocketType::Socket_TCP) {
     #if defined(NEROSHOP_USE_LIBUV)
     //uv_loop_t loop = uv_default_loop();
     // causes Segfault if called outside of main function
@@ -19,12 +22,26 @@ neroshop::Server::Server()
 		std::cerr << "Could not create socket" << std::endl;
 		return;
 	}
+	/*This code sets a socket option to reuse the local address and port, which means that the same combination of IP address and port can be used by multiple sockets simultaneously, even if they are still in a TIME_WAIT state after the connection has been closed. This is useful for scenarios where you want to restart an application that uses a specific port quickly without waiting for the operating system to release the resources of the previous connection.
+
+The setsockopt() function is used to set the socket option, and the SO_REUSEADDR and SO_REUSEPORT options are used to enable the reuse of local addresses and ports. The one variable is set to 1 to enable the options, and its address and size are passed to the setsockopt() function as arguments.*/
 	// set socket options : SO_REUSEADDR (TCP:restart a closed/killed process on the same address so you can reuse address over and over again)
 	int one = 1; // enable
     if(setsockopt(socket, SOL_SOCKET, SO_REUSEADDR | SO_REUSEPORT, &one, sizeof(one)) < 0) {
         std::cerr << "Could not set socket options" << std::endl;
     }
 	#endif    
+}
+////////////////////
+neroshop::Server::Server(SocketType socket_type) {
+    const auto protocol = (socket_type == SocketType::Socket_UDP) ? SOCK_DGRAM : SOCK_STREAM;
+    this->socket_type = socket_type;
+    
+    socket = ::socket(AF_INET, protocol, 0);
+    if (socket < 0) {
+        throw std::runtime_error("Failed to create socket.");
+    }
+    //std::cout << "Created a " << ((protocol == SOCK_DGRAM) ? "UDP socket" : "TCP socket") << "\n";
 }
 ////////////////////
 neroshop::Server::~Server() {

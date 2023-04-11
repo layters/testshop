@@ -29,13 +29,19 @@ extern "C" {
 #include <cstring> // memset
 #include <random> // std::random_device
 
-#include "database.hpp"
-#include "debug.hpp"
-
 namespace neroshop {
+
+enum class SocketType {
+    Socket_TCP = SOCK_STREAM,
+    Socket_UDP = SOCK_DGRAM,
+};
+
 class Server {
+private:
+    SocketType socket_type;
 public:
     Server();
+    Server(SocketType socket_type);
     //Server(unsigned int port);
 	~Server();
 	bool bind(unsigned int port);
@@ -54,6 +60,8 @@ private:
     int client_socket;
     #endif    
     raft_server_t* raft;
+    
+    friend class Node; // node can now access the server's functions
     // functors
     //#if defined(__cplusplus) && (__cplusplus < 201703L)
     //std::unordered_map<std::string, std::function<void()>/*adaptor_type*/> functions;

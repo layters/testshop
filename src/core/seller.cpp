@@ -1,5 +1,10 @@
 #include "seller.hpp"
 
+#include "currency_converter.hpp"
+#include "util/logger.hpp"
+#include "util.hpp"
+#include "database.hpp"
+
 neroshop::Seller::Seller() : wallet(nullptr)
 {}
 ////////////////////

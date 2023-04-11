@@ -25,6 +25,7 @@ Popup {
     }
     
     contentItem: ScrollView {
+        id: mainScrollView
         anchors.fill: parent
         anchors.topMargin: 20; anchors.bottomMargin: anchors.topMargin////anchors.margins: 20
         clip: true
@@ -603,6 +604,7 @@ Popup {
                             }
                             onClicked: {
                                 productDialog.close()
+                                mainScrollView.ScrollBar.vertical.position = 0.0 // reset scrollbar
                             }
                         }    
                         // listButton
@@ -669,6 +671,8 @@ Popup {
                                 }
                                 // close productDialog
                                 productDialog.close()
+                                // reset scrollbar
+                                mainScrollView.ScrollBar.vertical.position = 0.0
                             }
                         }
                         }

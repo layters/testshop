@@ -1,5 +1,7 @@
 #include "buyer.hpp"
 
+#include "util.hpp" // neroshop::string::lower
+
 ////////////////////
 neroshop::Buyer::Buyer() {} // not used
 ////////////////////

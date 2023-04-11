@@ -9,7 +9,6 @@
 #include <map> // std::map
 
 #include "item.hpp"
-#include "database.hpp"
 
 namespace neroshop {
 class Cart {
@@ -21,7 +20,7 @@ public:
     void remove(const std::string& user_id, const std::string& product_id, int quantity = 1);
     void remove(const std::string& user_id, const neroshop::Item& item, int quantity = 1);
 
-    void empty(const std::string& user_id); // remove all items from cart
+    void empty(); // remove all items from cart
     void change_quantity(const std::string& user_id, const neroshop::Item& item, int quantity); // set_quantity is private so you can only change item quantity from this function
     //void move_to_wishlist();
     //void save_for_later();

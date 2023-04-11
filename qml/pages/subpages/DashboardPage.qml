@@ -382,11 +382,12 @@ Page {
                     }        
                     // Column 3
                     NeroshopComponents.CheckBox {
-                        id: showZeroQuantityProductsBox
+                        id: showOutOfStockProductsBox
                         Layout.preferredWidth: 20; Layout.preferredHeight: 20//anchors.verticalCenter: parent.verticalCenter
                         shapeType: NeroshopComponents.CheckBox.ShapeType.Block
-                        text: qsTr("Show zero quantity products")
+                        text: qsTr("Show out of stock products")
                         textColor: (NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000"
+                        color: "transparent"
                         checked: true
                     }                                
                     // Inventory table                    
@@ -406,7 +407,8 @@ Page {
                         y: mainWindow.y + (mainWindow.height - this.height) / 2
                         title: qsTr("Remove product")
                         text: qsTr("Are you sure you want to permanently remove the selected product(s)?")
-                        model: ["No", "Yes"]
+                        buttonModel: ["No", "Yes"]
+                        buttonRow.state: "centered"; buttonRow.width: 300 // buttons should fill the row width
                         Component.onCompleted: {
                             buttonAt(0).onClickedCallback = function() { close() }
                             buttonAt(1).color = "#4169e1"//"#4682b4"

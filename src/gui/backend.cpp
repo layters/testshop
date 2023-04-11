@@ -1,9 +1,29 @@
 #include "backend.hpp"
 
+#include <QClipboard>
+#include <QFile>
+#include <QFileInfo>
+#include <QGuiApplication>
+#include <QJsonArray>
+#include <QJsonDocument>
+#include <QJsonObject>
+#include <QJsonParseError>
 #include <QNetworkAccessManager>
 #include <QNetworkReply>
 #include <QNetworkRequest>
-#include <QFile>
+#include <QProcess> // Note: QProcess is not supported on VxWorks, iOS, tvOS, or watchOS.
+#include <QUuid>
+
+#include "../core/client.hpp"
+#include "../core/currency_converter.hpp" // neroshop::Converter::is_supported_currency
+#include "../core/currency_map.hpp"
+#include "../core/crypto/sha256.hpp" // sha256
+#include "../core/database.hpp"
+#include "../core/script.hpp"
+#include "../core/config.hpp"
+#include "script_controller.hpp" // neroshop::Script::get_table_string
+#include "../core/util.hpp"
+#include "../core/util/logger.hpp"
 
 #include <future>
 #include <thread>
@@ -121,28 +141,32 @@ void neroshop::Backend::initializeDatabase() {
         database->execute("CREATE UNIQUE INDEX index_cart_item ON cart_item (cart_id, product_id);"); // cart_id and product_id duo MUST be unqiue for each row
     }
     // orders (purchase_orders)
-    if(!database->table_exists("orders")) {
+    if(!database->table_exists("orders")) { // TODO: rename to order_requests or nah?
         database->execute("CREATE TABLE orders(uuid TEXT NOT NULL PRIMARY KEY);");//database->execute("ALTER TABLE orders ADD COLUMN ?col ?datatype;");
-        database->execute("ALTER TABLE orders ADD COLUMN timestamp TEXT DEFAULT CURRENT_TIMESTAMP;"); // creation_date // to get UTC time: set to datetime('now');
+        database->execute("ALTER TABLE orders ADD COLUMN created_at TEXT DEFAULT CURRENT_TIMESTAMP;"); // creation_date // to get UTC time: set to datetime('now');
         //database->execute("ALTER TABLE orders ADD COLUMN number TEXT;"); // uuid
         database->execute("ALTER TABLE orders ADD COLUMN status TEXT;");
-        database->execute("ALTER TABLE orders ADD COLUMN user_id TEXT REFERENCES users(monero_address);"); // the user that placed the order
+        database->execute("ALTER TABLE orders ADD COLUMN customer_id TEXT REFERENCES users(monero_address);"); // the user that placed the order
+        // Data below this comment will be stored in order_data as JSON TEXT
         //database->execute("ALTER TABLE orders ADD COLUMN weight REAL;"); // weight of all order items combined - not essential
-        database->execute("ALTER TABLE orders ADD COLUMN subtotal numeric(20, 12);");
-        database->execute("ALTER TABLE orders ADD COLUMN discount numeric(20, 12);");
-        //database->execute("ALTER TABLE orders ADD COLUMN shipping_method TEXT;"); // comment this out
-        database->execute("ALTER TABLE orders ADD COLUMN shipping_cost numeric(20, 12);");
-        database->execute("ALTER TABLE orders ADD COLUMN total numeric(20, 12);");
-        //database->execute("ALTER TABLE orders ADD COLUMN notes TEXT;"); // will contain sensative such as shipping address and tracking numbers that will be encrypted and can only be decrypted by the seller - this may not be necessary since buyer can contact seller privately
+        database->execute("ALTER TABLE orders ADD COLUMN subtotal INTEGER;");
+        database->execute("ALTER TABLE orders ADD COLUMN discount INTEGER;");
+        //database->execute("ALTER TABLE orders ADD COLUMN shipping_method TEXT;");
+        database->execute("ALTER TABLE orders ADD COLUMN shipping_cost INTEGER;");
+        database->execute("ALTER TABLE orders ADD COLUMN total INTEGER;");
+        database->execute("ALTER TABLE orders ADD COLUMN payment_option TEXT;"); // escrow (2 of 3), multisig (2 of 2), finalize (no escrow)
+        database->execute("ALTER TABLE orders ADD COLUMN coin TEXT;"); // monero, wownero
+        database->execute("ALTER TABLE orders ADD COLUMN notes TEXT;"); // additional message for seller
         //database->execute("ALTER TABLE orders ADD COLUMN order_data TEXT;"); // encrypted JSON
         // order_item
+        // TODO: remove order_item table and replace it with order_data JSON column
         database->execute("CREATE TABLE order_item(id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT, "
         "order_id TEXT REFERENCES orders(uuid) ON DELETE CASCADE, "
         "product_id TEXT REFERENCES products(uuid), "
         "seller_id TEXT REFERENCES users(monero_address), "
         "quantity INTEGER"
         ");");
-        //database->execute("ALTER TABLE order_item ADD COLUMN item_price ?datatype;");
+        //database->execute("ALTER TABLE order_item ADD COLUMN unit_price ?datatype;");
         //database->execute("ALTER TABLE order_item ADD COLUMN ?col ?datatype;");
     }
     // ratings - product_ratings, seller_ratings
@@ -231,8 +255,7 @@ std::string neroshop::Backend::getDatabaseHash() {
     db_content << rfile.rdbuf(); // dump file contents
     rfile.close();
     // Get SHA256sum of data.sqlite3 contents
-    std::string sha256sum;
-    Validator::generate_sha256_hash(db_content.str(), sha256sum);
+    std::string sha256sum = neroshop::crypto::sha256(db_content.str());
     std::cout << "sha256sum (data.sqlite3): " << sha256sum << std::endl;
     return sha256sum; // database may have to be closed first in order to get the accurate hash
 }
@@ -1018,6 +1041,21 @@ QVariantList neroshop::Backend::getListingsByPriceHighest() {
     return catalog_array;
 }
 //----------------------------------------------------------------
+void neroshop::Backend::createOrder(UserController * user_controller, const QString& shipping_address) {
+    user_controller->createOrder(shipping_address);
+}
+//----------------------------------------------------------------
+// TODO: run this function periodically
+int neroshop::Backend::deleteExpiredOrders() {
+    neroshop::db::Sqlite3 * database = neroshop::get_database();
+    if(!database) throw std::runtime_error("database is NULL");
+    // If order is at least 2 years old or older, then it is considered expired. Therefore it must be deleted
+    std::string modifier = "+" + std::to_string(2) + " years";//std::cout << modifier << std::endl;
+    std::string command = "DELETE FROM orders WHERE datetime(created_at, $1) <= datetime('now');";
+    return database->execute_params(command, { modifier }); // 0 = success
+}
+//----------------------------------------------------------------
+//----------------------------------------------------------------
 QVariantList neroshop::Backend::getNodeListDefault(const QString& coin) const {
     QVariantList node_list;
     std::string network_type = neroshop::Script::get_string(neroshop::lua_state, "neroshop.monero.daemon.network_type");
@@ -1287,7 +1325,7 @@ bool neroshop::Backend::loginWithKeys(WalletController* wallet_controller, UserC
     wallet_controller->restoreFromKeys(primary_address, secret_view_key, secret_spend_key);
     // Get the hash of the primary address
     std::string user_auth_key;// = neroshop::algo::sha256(primary_address);
-    Validator::generate_sha256_hash(primary_address, user_auth_key); // temp
+    ////Validator::generate_sha256_hash(primary_address, user_auth_key); // temp
     neroshop::print("Primary address: \033[1;33m" + primary_address + "\033[1;37m\nSHA256 hash: " + user_auth_key);
     //$ echo -n "528qdm2pXnYYesCy5VdmBneWeaSZutEijFVAKjpVHeVd4unsCSM55CjgViQsK9WFNHK1eZgcCuZ3fRqYpzKDokqSKp4yp38" | sha256sum
     // Check database to see if user key (hash of primary address) exists
@@ -1347,40 +1385,6 @@ void neroshop::Backend::connectToServerDaemon() {
 }
 //----------------------------------------------------------------
 //----------------------------------------------------------------
-#include <nlohmann/json.hpp>
-#include "../core/rpc.hpp"
-void neroshop::Backend::testWriteJson() {
-    neroshop::db::Sqlite3 * database = neroshop::get_database();
-    if(!database) throw std::runtime_error("database is NULL");
-    /*QJsonObject jsonObject; // base Object (required)
-    
-    //QJsonObject json_attributes_object; // subObject (optional)
-    
-    QJsonArray json_color_array; // An array of colors
-    json_color_array.insert(json_color_array.size(), QJsonValue("red"));
-    json_color_array.insert(json_color_array.size(), QJsonValue("green"));
-    json_color_array.insert(json_color_array.size(), QJsonValue("blue"));
-    
-    QJsonArray json_size_array; // An array of sizes
-    json_size_array.insert(json_size_array.size(), QJsonValue("XS"));
-    json_size_array.insert(json_size_array.size(), QJsonValue("S"));
-    json_size_array.insert(json_size_array.size(), QJsonValue("M"));
-    json_size_array.insert(json_size_array.size(), QJsonValue("L"));
-    json_size_array.insert(json_size_array.size(), QJsonValue("XL"));
-    
-    //jsonObject.insert
-    jsonObject.insert(QString("weight"), QJsonValue(12.5));
-    jsonObject.insert(QString("color"), json_color_array);
-    jsonObject.insert(QString("size"), json_size_array);
-    
-    //jsonObject.insert("attributes", json_attributes_object);
-    
-    // Convert JSON to QString
-    QJsonDocument doc(jsonObject);
-    QString strJson = doc.toJson(QJsonDocument::Compact); // https://doc.qt.io/qt-6/qjsondocument.html#JsonFormat-enum
-    // Display JSON as string
-    std::cout << strJson.toStdString() << std::endl;*/
-}
 //----------------------------------------------------------------
 void neroshop::Backend::testfts5() {
     neroshop::db::Sqlite3 * database = neroshop::get_database();

@@ -1,5 +1,7 @@
 #include "cart.hpp"
 
+#include "database.hpp"
+#include "util/logger.hpp"
 ////////////////////
 neroshop::Cart::Cart() : id("") {} // Note: cart can only hold up to 10 unique items. Cart items can only add up to a quantity of 100
 ////////////////////
@@ -92,7 +94,7 @@ void neroshop::Cart::add(const std::string& user_id, const std::string& product_
     // Out of stock - exit function
     int stock_available = database->get_integer_params("SELECT quantity FROM listings WHERE product_id = $1 AND quantity > 0", { product_id });
     if(stock_available == 0) {
-        neroshop::print(item_name + " is out of stock", 1);return;
+        neroshop::print(item_name + " is out of stock", 1); return;
     }
     //-------------------------------
     // Make sure user-specified quantity does not exceed amount in stock
@@ -143,11 +145,11 @@ void neroshop::Cart::remove(const std::string& user_id, const neroshop::Item& it
     remove(user_id, item.get_id(), quantity);
 }
 ////////////////////
-void neroshop::Cart::empty(const std::string& user_id) {
+void neroshop::Cart::empty() {
+    if(id.empty()) { neroshop::print("No cart found", 1); return; }
     neroshop::db::Sqlite3 * database = neroshop::get_database();
     if(!database) throw std::runtime_error("database is NULL");
-    std::string cart_id = database->get_text_params("SELECT uuid FROM cart WHERE user_id = $1", { user_id });
-    database->execute_params("DELETE FROM cart_item WHERE cart_id = $1;", { cart_id });
+    database->execute_params("DELETE FROM cart_item WHERE cart_id = $1;", { this->id });
     contents.clear();
 }
 ////////////////////

@@ -17,11 +17,9 @@
 #include <uv.h>
 #endif
 
+#include <iostream>
+#include <string>
 #include <memory> // std::unique_ptr
-#include <cstring> // memset
-
-#include "debug.hpp"
-#include "server.hpp" // temporary
 
 namespace neroshop {
 class Client {

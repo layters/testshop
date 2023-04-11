@@ -16,7 +16,7 @@ Item {
     property string columnColor: "transparent"//(NeroshopComponents.Style.darkTheme) ? (NeroshopComponents.Style.themeName == "PurpleDust" ? "#0e0e11" : "#101010") : "#f0f0f0"////"transparent"//"#6c6c6f"
     property alias list: listView
     function removeSelectedItems() { listView.removeSelectedItems() }
-    function getSelectionCount() { return listView.getSelectedItems().length }
+    function getSelectionCount() { const selection_count = listView.getSelectedItems().length; return selection_count }
     //width: childrenRect.width; height: childrenRect.height
     ColumnLayout {
         id: tableLayout
@@ -45,6 +45,7 @@ Item {
                     anchors.centerIn: parent
                     checkState: childGroup.checkState
                     contentItem: null
+                    color: NeroshopComponents.Style.getColorsFromTheme()[0]
                 }   
             }            
             Rectangle {
@@ -175,7 +176,7 @@ Item {
                 // This is due to the model changing every time we emit the signal
                 // Hence the creation of User.delistProducts (notice the s) which solves the issue
             }
-            model: User.inventory
+            model: showOutOfStockProductsBox.checked ? User.inventory : User.inventoryInStock
             delegate: Rectangle {
                 width: listView.width
                 height: listView.cellHeight
@@ -199,6 +200,7 @@ Item {
                         anchors.verticalCenter: parent.verticalCenter
                         ButtonGroup.group: childGroup
                         width: parentBox.width; height: width
+                        color: parentBox.color
                     }
                     Rectangle {
                         id: productImageBox

@@ -13,10 +13,9 @@
 #include <memory> // std::unique_ptr
 #include <vector>
 
-#include "wallet.hpp"
 #include "user.hpp"
+#include "wallet.hpp"
 #include "item.hpp"
-#include "currency_converter.hpp"
 
 namespace neroshop {
 class Seller : public User { 

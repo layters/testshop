@@ -9,7 +9,6 @@ import FontAwesome 1.0
 import "." as NeroshopComponents
 // This page provides an interface for modifying the configuration file, "settings.lua"
 // Stuff like themes, preferred currency, language, etc. will go here and will not be associated with an account but with the application config itself. This is to preserve privacy and reduce the size of the database
-// todo: use previous settings as placeholderText and rewrite settings.lua
 // default monero nodes cannot be modified but user may add addtional nodes to the nodelist
 
 Popup {
@@ -22,6 +21,7 @@ Popup {
     // General tab properties
     property alias theme: themeBox
     property alias currency: currencyBox
+    property alias language: languageBox
     property alias hideHomepageButton: hideHomepageButtonSwitch.checked
     property alias hidePriceDisplay: priceDisplaySwitch.checked
     // Wallet settings
@@ -29,24 +29,27 @@ Popup {
     property alias balanceAmountPrecision: balancePrecisionBox.currentText
     property alias showCurrencySign: showCurrencySignSwitch.checked
     property alias blockExplorer: blockExplorerBox.currentText
+    property alias requirePasswordOnWithdrawal: requirePasswordOnWithdrawalSwitch.checked
     // Catalog settings
     property alias catalogPriceBox: priceDisplayBox
     property alias hideProductDetails: hideProductDetailsSwitch.checked
     property alias gridDetailsAlignCenter: gridDetailsAlignCenterSwitch.checked
-    ////property alias hideIllegalProducts: hideIllegalProductsSwitch.checked
+    property alias catalogViewBox: viewBox
+    property alias hideIllegalProducts: hideIllegalProductsSwitch.checked
     // Monero tab properties
     property alias moneroNodeType: nodeTypeStackLayout.currentIndex//nodeTypeGroup.checkedButton.stackLayoutIndex
     property string moneroNodeAddress: (nodeTypeStackLayout.currentIndex == remoteNodeButton.stackLayoutIndex) ? moneroRemoteNodeList.selectedNode.replace(/^(https?:|)\/\//, '') : (moneroDaemonIPField.placeholderText + ":" + moneroDaemonPortField.placeholderText)
     property string moneroNodeDefaultPort: moneroDaemonPortField.placeholderText
-    property string monerodPath: Backend.urlToLocalFile(monerodPathField.text)
-    property string moneroDataDir: (moneroDataDirField.text.length < 1) ? Backend.urlToLocalFile(moneroDataDirField.placeholderText) : Backend.urlToLocalFile(moneroDataDirField.text)
+    property string monerodPath: monerodPathField.text
+    property string moneroDataDir: (moneroDataDirField.text.length < 1) ? moneroDataDirField.placeholderText : moneroDataDirField.text
     property bool confirmExternalBind: confirmExternalBindSwitch.checked
     property bool restrictedRpc: restrictedRpcSwitch.checked
     property string moneroDaemonUsername: moneroDaemonRpcLoginUser.text
     property string moneroDaemonPassword: moneroDaemonRpcLoginPwd.text
     property bool moneroDaemonAutoSync: (nodeTypeStackLayout.currentIndex == remoteNodeButton.stackLayoutIndex) ? autoNodeSyncSwitch.checked : autoDaemonSyncSwitch.checked
     property Button moneroDaemonConnectButton: (nodeTypeStackLayout.currentIndex == remoteNodeButton.stackLayoutIndex) ? remoteNodeConnectButton : localNodeConnectButton
-  
+    property string lastSelectedNode: Script.getJsonObject()["monero"]["daemon"]["last_selected_node"]
+    
     function resetScrollBar() {
         scrollView.ScrollBar.vertical.position = 0.0
     }
@@ -57,6 +60,54 @@ Popup {
         if(network_type == "testnet") return "28081";
         if(network_type == "stagenet") return "38081";
         return "18081"
+    }
+    
+    function save() { 
+        const settings_obj = {
+            // general
+            preferred_currency: currencyBox.currentText,
+            dark_theme: NeroshopComponents.Style.darkTheme,//(themeBox.currentText != "DefaultLight"),
+            theme: themeBox.currentText,
+            language: languageBox.currentText,//currentIndex,
+            hide_homepage_button: hideHomepageButtonSwitch.checked,
+            hide_price_display: priceDisplaySwitch.checked,
+            // catalog
+            catalog: {
+                price_display: priceDisplayBox.currentText,//currentIndex,
+                hide_product_details: hideProductDetailsSwitch.checked,
+                catalog_view: viewBox.currentText,//currentIndex,
+                grid_details_align_center: gridDetailsAlignCenterSwitch.checked,
+                hide_illegal_products: hideIllegalProductsSwitch.checked,
+            },
+            // nodes / network
+            monero: {
+                daemon: {
+                    network_type: Wallet.getNetworkTypeString(),
+                    confirm_external_bind: confirmExternalBindSwitch.checked,
+                    restricted_rpc: restrictedRpcSwitch.checked,
+                    data_dir: settingsDialog.moneroDataDir,
+                    auto_sync: settingsDialog.moneroDaemonAutoSync,
+                    node_type: settingsDialog.moneroNodeType,
+                    executable: settingsDialog.monerodPath,
+                    last_selected_node: moneroRemoteNodeList.selectedNode,
+                },
+                wallet: {
+                    balance_display: balanceDisplayBox.currentText,//currentIndex,
+                    balance_amount_precision: Number(balancePrecisionBox.currentText),
+                    show_currency_sign: showCurrencySignSwitch.checked,
+                    block_explorer: blockExplorerBox.currentText,//currentIndex,
+                    require_password_on_withdrawal: requirePasswordOnWithdrawalSwitch.checked,
+                },
+            },
+            // proxy / privacy
+            // paths
+            wallet_directory: (Script.getJsonObject()["wallet_directory"].length > 0) ? Script.getJsonObject()["wallet_directory"] : neroshopDefaultWalletDirPath,
+        };
+        
+        const settings_json = JSON.stringify(settings_obj);
+        //console.log("Settings changed: ")
+        //console.log("Saving to ", neroshopDataDirPath + "/settings.json")
+        Script.saveJson(settings_json)
     }
     
     background: Rectangle {
@@ -272,22 +323,15 @@ Popup {
                             id: currencyBox
                             anchors.right: parent.right//Layout.alignment: Qt.AlignRight; Layout.rightMargin: 0
                             width: settingsStack.comboBoxWidth
-                            currentIndex: model.indexOf(Script.getString("neroshop.generalsettings.currency").toUpperCase())
+                            currentIndex: model.indexOf(Script.getJsonObject()["preferred_currency"].toUpperCase())
                             displayText: currentText
-                            ////property string lastCurrencySet: (Script.getString("neroshop.generalsettings.currency")) ? Script.getString("neroshop.generalsettings.currency") : "USD"
                             //editable: true; selectTextByMouse: true
                             model: Backend.getCurrencyList()
                             //implicitContentWidthPolicy: ComboBox.WidestText//ComboBox.ContentItemImplicitWidth
-                            onAccepted: {
-                                if (find(editText) === -1)
-                                    model.append({text: editText})
-                            }
-                        
-                            onActivated: {    
-                                displayText = currentText
+                            onActivated: {
                                 priceDisplayText.currency = displayText
-                                ////lastCurrencySet = currentText
                             }
+                            onCurrentTextChanged: settingsDialog.save()
                             indicatorWidth: settingsStack.comboBoxButtonWidth
                             indicatorDoNotPassBorder: settingsStack.comboBoxNestedButton
                             color: "#f2f2f2"//(NeroshopComponents.Style.darkTheme) ? "#101010" : "#f0f0f0"
@@ -309,7 +353,8 @@ Popup {
                             anchors.right: parent.right
                             width: settingsStack.comboBoxWidth; indicatorWidth: settingsStack.comboBoxButtonWidth
                             //model: ["CoinGecko", "CoinMarketCap"]
-                            Component.onCompleted: currentIndex = find("CoinGecko")
+                            currentIndex: model.indexOf(Script.getJsonObject()["price_api"])//Component.onCompleted: currentIndex = find("CoinGecko")
+                            onCurrentTextChanged: settingsDialog.save()
                             indicatorDoNotPassBorder: settingsStack.comboBoxNestedButton
                             color: "#f2f2f2"
                         }
@@ -355,10 +400,10 @@ Popup {
                             id: themeBox
                             anchors.right: parent.right//Layout.alignment: Qt.AlignRight; Layout.rightMargin: 0
                             width: settingsStack.comboBoxWidth
-                            currentIndex: model.indexOf(NeroshopComponents.Style.themeName)//Component.onCompleted: currentIndex = model.indexOf(NeroshopComponents.Style.themeName) // Set the initial currentIndex to the index in the array containing themeName string
+                            currentIndex: model.indexOf(Script.getJsonObject()["theme"])//Component.onCompleted: currentIndex = model.indexOf(NeroshopComponents.Style.themeName) // Set the initial currentIndex to the index in the array containing themeName string
                             displayText: currentText
-                            property string lastUsedDarkTheme: (Script.getBoolean("neroshop.generalsettings.application.theme.dark")) ? Script.getString("neroshop.generalsettings.application.theme.name") : "DefaultDark"
-                            property string lastUsedLightTheme: (!Script.getBoolean("neroshop.generalsettings.application.theme.dark")) ? Script.getString("neroshop.generalsettings.application.theme.name") : "DefaultLight"
+                            property string lastUsedDarkTheme: (Script.getJsonObject()["dark_theme"]) ? Script.getJsonObject()["theme"] : "DefaultDark"
+                            property string lastUsedLightTheme: (!Script.getJsonObject()["dark_theme"]) ? Script.getJsonObject()["theme"] : "DefaultLight"
                             model: ["DefaultDark", "DefaultLight", "PurpleDust"]
                             onActivated: {
                                 if(currentText == "PurpleDust") {
@@ -373,12 +418,12 @@ Popup {
                                     NeroshopComponents.Style.darkTheme = false
                                     lastUsedLightTheme = currentText
                                 }
-                                displayText = currentText
-                                NeroshopComponents.Style.themeName = displayText // update the actual theme (name)
+                                NeroshopComponents.Style.themeName = currentText//displayText // update the actual theme (name)
                                 themeSwitcher.checked = !NeroshopComponents.Style.darkTheme // update the theme switch                           
                                 // NOTE:  on app launch, the theme will ALWAYS be reset back to its default unless you change the theme settings in your configuration file
                                 //todo: change theme in configuration file too
                                 console.log("Theme set to", currentText)
+                                settingsDialog.save()
                             }
                             indicatorWidth: settingsStack.comboBoxButtonWidth
                             indicatorDoNotPassBorder: settingsStack.comboBoxNestedButton
@@ -399,9 +444,10 @@ Popup {
                             id: hideHomepageButtonSwitch
                             anchors.right: parent.right; anchors.rightMargin: 5
                             //width: settingsStack.comboBoxWidth
-                            checked: true
+                            checked: Script.getJsonObject()["hide_homepage_button"]//true
                             radius: 13
                             backgroundCheckedColor: "#605185"
+                            onToggled: settingsDialog.save()
                         }
                     }
                     Item {
@@ -417,9 +463,10 @@ Popup {
                             id: priceDisplaySwitch
                             anchors.right: parent.right; anchors.rightMargin: 5
                             //width: settingsStack.comboBoxWidth
-                            checked: false
+                            checked: Script.getJsonObject()["hide_price_display"]//false
                             radius: 13
                             backgroundCheckedColor: "#605185"
+                            onToggled: settingsDialog.save()
                         }
                     }                                                    
                 } // RowLayout2
@@ -462,8 +509,9 @@ Popup {
                     id: languageBox
                     anchors.right: parent.right//Layout.alignment: Qt.AlignRight; Layout.rightMargin: 0
                     width: settingsStack.comboBoxWidth
-                    currentIndex: model.indexOf("English")
+                    currentIndex: model.indexOf(Script.getJsonObject()["language"])
                     model: ["English"] // TODO logic from controller
+                    onCurrentTextChanged: settingsDialog.save()
                     indicatorWidth: settingsStack.comboBoxButtonWidth
                     indicatorDoNotPassBorder: settingsStack.comboBoxNestedButton
                     color: "#f2f2f2"
@@ -511,7 +559,8 @@ Popup {
                             anchors.right: parent.right//; anchors.rightMargin: 0
                             width: settingsStack.comboBoxWidth; indicatorWidth: settingsStack.comboBoxButtonWidth
                             model: ["All balances", "Locked balance only", "Unlocked balance only"]
-                            Component.onCompleted: currentIndex = find("All balances")
+                            currentIndex: model.indexOf(Script.getJsonObject()["monero"]["wallet"]["balance_display"])
+                            onCurrentTextChanged: settingsDialog.save()
                             color: "#f2f2f2"
                             indicatorDoNotPassBorder: settingsStack.comboBoxNestedButton
                         }
@@ -530,8 +579,9 @@ Popup {
                             id: balancePrecisionBox
                             anchors.right: parent.right
                             width: settingsStack.comboBoxWidth; indicatorWidth: settingsStack.comboBoxButtonWidth
-                            model: ["3", "6", "9", "12"]
-                            Component.onCompleted: currentIndex = find("12")
+                            model: [3, 6, 9, 12]
+                            currentIndex: model.indexOf(Script.getJsonObject()["monero"]["wallet"]["balance_amount_precision"])
+                            onCurrentTextChanged: settingsDialog.save()
                             color: "#f2f2f2"
                             indicatorDoNotPassBorder: settingsStack.comboBoxNestedButton
                         }
@@ -550,9 +600,10 @@ Popup {
                             id: showCurrencySignSwitch
                             anchors.right: parent.right; anchors.rightMargin: 5
                             //width: settingsStack.comboBoxWidth
-                            checked: false
+                            checked: Script.getJsonObject()["monero"]["wallet"]["show_currency_sign"]//false
                             radius: 13
                             backgroundCheckedColor: "#605185"
+                            onToggled: settingsDialog.save()
                         }
                     }                    
                     // Block explorer
@@ -570,9 +621,31 @@ Popup {
                             anchors.right: parent.right
                             width: settingsStack.comboBoxWidth; indicatorWidth: settingsStack.comboBoxButtonWidth
                             model: ["xmrchain.net"]
-                            Component.onCompleted: currentIndex = find("xmrchain.net")
+                            currentIndex: model.indexOf(Script.getJsonObject()["monero"]["wallet"]["block_explorer"])
+                            onCurrentTextChanged: settingsDialog.save()
                             color: "#f2f2f2"
                             indicatorDoNotPassBorder: settingsStack.comboBoxNestedButton
+                        }
+                    }
+                    // Require password on withdrawal
+                    Item {
+                        Layout.fillWidth: true
+                        Layout.preferredHeight: childrenRect.height
+                        Text {
+                            anchors.verticalCenter: requirePasswordOnWithdrawalSwitch.verticalCenter
+                            text: qsTr("Require password on withdrawal:")
+                            color: NeroshopComponents.Style.darkTheme ? "#ffffff" : "#000000"
+                        }
+                        
+                        NeroshopComponents.Switch {
+                            id: requirePasswordOnWithdrawalSwitch
+                            anchors.right: parent.right; anchors.rightMargin: 5
+                            //width: settingsStack.comboBoxWidth
+                            checked: Script.getJsonObject()["monero"]["wallet"]["require_password_on_withdrawal"]//true
+                            radius: 13
+                            backgroundCheckedColor: "#605185"
+                            onToggled: settingsDialog.save()
+                            enabled: false // cannot be turned off unless done manually
                         }
                     }
                 }
@@ -606,6 +679,27 @@ Popup {
                 ColumnLayout {
                     id: catalogSetColumn
                     width: parent.width; height: childrenRect.height
+                    // Catalog view display
+                    Item {
+                        Layout.fillWidth: true
+                        Layout.preferredHeight: childrenRect.height
+                        Text {
+                            anchors.verticalCenter: viewBox.verticalCenter
+                            text: qsTr("Display:")
+                            color: NeroshopComponents.Style.darkTheme ? "#ffffff" : "#000000"
+                        }
+                        
+                        NeroshopComponents.ComboBox {
+                            id: viewBox
+                            anchors.right: parent.right
+                            width: settingsStack.comboBoxWidth; indicatorWidth: settingsStack.comboBoxButtonWidth
+                            model: ["Grid view", "List view"]
+                            currentIndex: model.indexOf(Script.getJsonObject()["catalog"]["catalog_view"])
+                            onCurrentTextChanged: settingsDialog.save()
+                            color: "#f2f2f2"
+                            indicatorDoNotPassBorder: settingsStack.comboBoxNestedButton
+                        }
+                    }                    
                     // Product details
                     Item {
                         Layout.fillWidth: true
@@ -620,9 +714,10 @@ Popup {
                             id: hideProductDetailsSwitch
                             anchors.right: parent.right; anchors.rightMargin: 5
                             //width: settingsStack.comboBoxWidth
-                            checked: false
+                            checked: Script.getJsonObject()["catalog"]["hide_product_details"]//false
                             radius: 13
                             backgroundCheckedColor: "#605185"
+                            onToggled: settingsDialog.save()
                         }
                     }
                     // Catalog price display
@@ -640,11 +735,12 @@ Popup {
                             anchors.right: parent.right
                             width: settingsStack.comboBoxWidth; indicatorWidth: settingsStack.comboBoxButtonWidth
                             model: ["All prices", "Fiat price only", "Monero price only"]
-                            Component.onCompleted: currentIndex = find("All prices")
+                            currentIndex: model.indexOf(Script.getJsonObject()["catalog"]["price_display"])
+                            onCurrentTextChanged: settingsDialog.save()
                             color: "#f2f2f2"
                             indicatorDoNotPassBorder: settingsStack.comboBoxNestedButton
                         }
-                    }
+                    }                    
                     // Grid product details aligned center
                     Item {
                         Layout.fillWidth: true
@@ -660,15 +756,17 @@ Popup {
                             id: gridDetailsAlignCenterSwitch
                             anchors.right: parent.right; anchors.rightMargin: 5
                             //width: settingsStack.comboBoxWidth
-                            checked: false
+                            checked: Script.getJsonObject()["catalog"]["grid_details_align_center"]//false
                             radius: 13
                             backgroundCheckedColor: "#605185"
+                            onToggled: settingsDialog.save()
                         }
                     }
                     // Show/Hide illegal products
-                    /*Item {
+                    Item {
                         Layout.fillWidth: true
                         Layout.preferredHeight: childrenRect.height
+                        visible: true // hide this option for now
                         Text {
                             anchors.verticalCenter: hideIllegalProductsSwitch.verticalCenter
                             text: qsTr("Hide illegal products:")
@@ -679,11 +777,13 @@ Popup {
                             id: hideIllegalProductsSwitch
                             anchors.right: parent.right; anchors.rightMargin: 5
                             //width: settingsStack.comboBoxWidth
-                            checked: true // ALWAYS hide illegal products by default!!
+                            checked: Script.getJsonObject()["catalog"]["hide_illegal_products"]//true // ALWAYS hide illegal products by default!!
                             radius: 13
                             backgroundCheckedColor: "#605185"
+                            onToggled: settingsDialog.save()
+                            enabled: false // cannot be turned off unless done manually
                         }
-                    }*/
+                    }
                 }
             }            
             
@@ -706,7 +806,10 @@ Popup {
                                         
                         ButtonGroup { 
                             id: nodeTypeGroup 
-                            onClicked: { nodeTypeStackLayout.currentIndex = button.stackLayoutIndex }
+                            onClicked: { 
+                                nodeTypeStackLayout.currentIndex = button.stackLayoutIndex
+                                settingsDialog.save()
+                            }
                         }
                         
                         Rectangle {
@@ -720,8 +823,10 @@ Popup {
                         MouseArea {
                             anchors.fill: parent
                             ////cursorShape: Qt.PointingHandCursor
-                            onClicked: { remoteNodeButton.checked = true 
+                            onClicked: { 
+                                remoteNodeButton.checked = true 
                                 nodeTypeStackLayout.currentIndex = remoteNodeButton.stackLayoutIndex
+                                settingsDialog.save()
                             }
                         }
 
@@ -729,7 +834,7 @@ Popup {
                             id: remoteNodeButton
                             anchors.horizontalCenter: parent.horizontalCenter
                             anchors.verticalCenter: parent.verticalCenter
-                            checked: true
+                            checked: (Script.getJsonObject()["monero"]["daemon"]["node_type"] == remoteNodeButton.stackLayoutIndex)//true
                             ButtonGroup.group: nodeTypeGroup
                             text: qsTr("Remote node")//FontAwesome.cloud
                             color: checked ? parent.parent.checkedColor : "#d9dada"
@@ -755,8 +860,10 @@ Popup {
                         MouseArea {
                             anchors.fill: parent
                             ////cursorShape: Qt.PointingHandCursor
-                            onClicked: { localNodeButton.checked = true 
+                            onClicked: { 
+                                localNodeButton.checked = true 
                                 nodeTypeStackLayout.currentIndex = localNodeButton.stackLayoutIndex
+                                settingsDialog.save()
                             }
                         }
                         
@@ -764,7 +871,7 @@ Popup {
                             id: localNodeButton
                             anchors.horizontalCenter: parent.horizontalCenter
                             anchors.verticalCenter: parent.verticalCenter
-                            checked: false
+                            checked: (Script.getJsonObject()["monero"]["daemon"]["node_type"] == localNodeButton.stackLayoutIndex)//false
                             ButtonGroup.group: nodeTypeGroup
                             text: qsTr("Local node")//FontAwesome.house
                             color: checked ? parent.parent.checkedColor : "#d9dada"
@@ -783,6 +890,7 @@ Popup {
                     //Layout.row: 1
                     Layout.fillWidth: true
                     Layout.fillHeight: true
+                    currentIndex: Script.getJsonObject()["monero"]["daemon"]["node_type"]
                     
 Item {
     Layout.preferredWidth: localNodeColumn.childrenRect.width
@@ -804,7 +912,9 @@ Item {
 
                 NeroshopComponents.NodeList {
                     id: moneroRemoteNodeList
-                    anchors.fill: parent                    
+                    anchors.fill: parent
+                    property int lastSelectedIndex: model.findIndex(function(item){ return item.address === settingsDialog.lastSelectedNode })
+                    currentIndex: (lastSelectedIndex != -1) ? lastSelectedIndex : 0
                 }
             }
                 RowLayout {
@@ -890,9 +1000,10 @@ Item {
                         id: autoNodeSyncSwitch
                         Layout.alignment: Qt.AlignRight
                         Layout.rightMargin: 5
-                        checked: true
+                        checked: Script.getJsonObject()["monero"]["daemon"]["auto_sync"]//true
                         radius: 13
                         backgroundCheckedColor: NeroshopComponents.Style.moneroOrangeColor
+                        onToggled: settingsDialog.save()
                     }                
                 }                            
     }
@@ -914,7 +1025,7 @@ Item {
                     placeholderText: qsTr((isWindows) ? "monerod.exe" : "monerod"); placeholderTextColor: (NeroshopComponents.Style.darkTheme) ? "#a9a9a9" : "#696969"
                     color: (NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000"
                     selectByMouse: true
-                    text: moneroDaemonFileDialog.file
+                    text: Script.getJsonObject()["monero"]["daemon"]["executable"]////moneroDaemonFileDialog.file
                 
                     background: Rectangle { 
                         color: (NeroshopComponents.Style.darkTheme) ? "#101010" : "#ffffff"
@@ -953,11 +1064,12 @@ Item {
                     Layout.preferredWidth: 500
                     Layout.preferredHeight: 50
                     property string defaultMoneroDataDirFolder: (isWindows) ? StandardPaths.writableLocation(StandardPaths.AppDataLocation) + "/bitmonero" : StandardPaths.writableLocation(StandardPaths.HomeLocation) + "/.bitmonero" // C:/ProgramData/bitmonero (Windows) or ~/.bitmonero (Linux and Mac OS X)
-                    placeholderText: qsTr(defaultMoneroDataDirFolder); placeholderTextColor: (NeroshopComponents.Style.darkTheme) ? "#a9a9a9" : "#696969"
+                    placeholderText: qsTr(Backend.urlToLocalFile(defaultMoneroDataDirFolder)); placeholderTextColor: (NeroshopComponents.Style.darkTheme) ? "#a9a9a9" : "#696969"
                     color: (NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000"
                     selectByMouse: true
-                    text: moneroDataDirFolderDialog.folder
-                
+                    readOnly: true
+                    text: Script.getJsonObject()["monero"]["daemon"]["data_dir"]
+                    
                     background: Rectangle { 
                         color: (NeroshopComponents.Style.darkTheme) ? "#101010" : "#ffffff"
                         border.color: (NeroshopComponents.Style.darkTheme) ? "#a9a9a9" : "#696969"
@@ -1093,9 +1205,10 @@ Item {
                         id: confirmExternalBindSwitch
                         Layout.alignment: Qt.AlignRight
                         Layout.rightMargin: 5
-                        checked: Script.getBoolean("neroshop.monero.daemon.confirm_external_bind");//false
+                        checked: Script.getJsonObject()["monero"]["daemon"]["confirm_external_bind"];//false
                         radius: 13
                         backgroundCheckedColor: NeroshopComponents.Style.moneroOrangeColor
+                        onToggled: settingsDialog.save()
                     }
                 }
                 
@@ -1115,9 +1228,10 @@ Item {
                         id: restrictedRpcSwitch
                         Layout.alignment: Qt.AlignRight
                         Layout.rightMargin: 5
-                        checked: Script.getBoolean("neroshop.monero.daemon.restricted_rpc");//true
+                        checked: Script.getJsonObject()["monero"]["daemon"]["restricted_rpc"];//true
                         radius: 13
                         backgroundCheckedColor: NeroshopComponents.Style.moneroOrangeColor
+                        onToggled: settingsDialog.save()
                     }                
                 }
                 // manage daemon buttons: stop daemon, start daemon, etc.
@@ -1142,7 +1256,7 @@ Item {
                         onClicked: {
                             if(Backend.isWalletDaemonRunning()) { messageBox.text = "monerod is already running in the background"; messageBox.open(); return; }
                             if(monerodPathField.text.length < 1) {messageBox.text="monerod not found. Please set the path to monerod or use a remote node instead";messageBox.open();return;}
-                            Wallet.daemonExecute(Backend.urlToLocalFile(monerodPathField.text), confirmExternalBindSwitch.checked, restrictedRpcSwitch.checked, (moneroDataDirField.text.length < 1) ? Backend.urlToLocalFile(moneroDataDirField.placeholderText) : Backend.urlToLocalFile(moneroDataDirField.text),
+                            Wallet.daemonExecute(monerodPathField.text, confirmExternalBindSwitch.checked, restrictedRpcSwitch.checked, settingsDialog.moneroDataDir,
                                 Wallet.getNetworkTypeString(), 0); // 0 = placeholder restore_height
                            // Connect to local node
                            /*if(!Wallet.isOpened()) return; // no need for this if we are only launching the monerod executable
@@ -1175,6 +1289,9 @@ Item {
                             if(Wallet.isDaemonSynced()) return; // local node is already synced so there's no need to connect to it again
                             ////if(!Backend.isWalletDaemonRunning()) {messageBox.text="monerod must be launched first before connecting to it";messageBox.open();return;}
                             Wallet.daemonConnect()//(moneroDaemonRpcLoginUser.text, moneroDaemonRpcLoginPwd.text)     
+                            if(Wallet.isConnectedToDaemon()) {
+                                moneroDaemonSyncBar.title = settingsDialog.moneroNodeAddress
+                            }
                         }
                     }                    
                 }
@@ -1195,9 +1312,10 @@ Item {
                         id: autoDaemonSyncSwitch
                         Layout.alignment: Qt.AlignRight
                         Layout.rightMargin: 5
-                        checked: true
+                        checked: Script.getJsonObject()["monero"]["daemon"]["auto_sync"]//true
                         radius: 13
                         backgroundCheckedColor: NeroshopComponents.Style.moneroOrangeColor
+                        onToggled: settingsDialog.save()
                     }                
                 }
                                    
@@ -1208,11 +1326,21 @@ Item {
         currentFile: monerodPathField.text // currentFile is deprecated since Qt 6.3. Use selectedFile instead
         folder: (isWindows) ? StandardPaths.writableLocation(StandardPaths.DocumentsLocation) + "/neroshop" : StandardPaths.writableLocation(StandardPaths.HomeLocation) + "/neroshop"
         nameFilters: ["Executable files (*.exe *.AppImage *)"]
+        onAccepted: {
+            monerodPathField.text = Backend.urlToLocalFile(moneroDaemonFileDialog.file)
+            settingsDialog.monerodPath = Backend.urlToLocalFile(moneroDaemonFileDialog.file)
+            settingsDialog.save()
+        }
     }   
     
     FolderDialog {
         id: moneroDataDirFolderDialog
         currentFolder: moneroDataDirField.text
+        onAccepted: {
+            moneroDataDirField.text = Backend.urlToLocalFile(moneroDataDirFolderDialog.folder)
+            settingsDialog.moneroDataDir = Backend.urlToLocalFile(moneroDataDirFolderDialog.folder)
+            settingsDialog.save()
+        }
     }                
                 } // Item 1
                 } // StackLayout (node)             

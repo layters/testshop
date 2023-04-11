@@ -1,5 +1,11 @@
 #include "user.hpp"
 
+#include "client.hpp"
+#include "database.hpp"
+#include "util/logger.hpp"
+
+#include <fstream>
+
 ////////////////////
 neroshop::User::User() : id(""), logged(false), account_type(user_account_type::guest), cart(nullptr), order_list({}), favorites_list({}) {
     cart = std::unique_ptr<Cart>(new Cart());
@@ -212,18 +218,22 @@ void neroshop::User::remove_from_cart(const neroshop::Item& item, int quantity) 
 }
 ////////////////////
 void neroshop::User::clear_cart() {
-    cart->empty(this->id);
+    cart->empty();
 }
 ////////////////////
 ////////////////////
 ////////////////////
 // order-related stuff here
 ////////////////////
-void neroshop::User::create_order(const std::string& shipping_address, std::string contact) {//const {
+void neroshop::User::create_order(const std::string& shipping_address) {//const {
     // name(first, last), address1(street, p.o box, company name, etc.), address2(apt number, suite, unit, building, floor, etc.) city, zip/postal_code, state/province/region country, optional(phone, email)
+    try {
     std::shared_ptr<neroshop::Order> order(std::make_shared<neroshop::Order>());//(new neroshop::Order());
-    order->create_order(*cart.get(), shipping_address, contact); // we are using crypto, not debit/credit cards so no billing address is needed
+    order->create_order(*cart.get(), shipping_address); // we are using crypto, not debit/credit cards so no billing address is needed
     order_list.push_back(order); // whether an order fails or succeeds, store it regardless
+    } catch(std::exception& e) {
+        std::cout << e.what() << "\n";
+    }
 }
 // cart->add(ball, 2);
 // cart->add(ring);

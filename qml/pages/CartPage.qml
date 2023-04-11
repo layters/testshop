@@ -184,6 +184,7 @@ Page {
 						background: Rectangle {
 							color: "#8071a8"
 						}
+						onClicked: pageLoader.setSource("qrc:/qml/pages/OrderCheckoutPage.qml")//, {"model": User.getOrders()})
 					}
 				}
 			}

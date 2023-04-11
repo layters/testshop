@@ -16,3 +16,9 @@
 [submodule "external/cxxopts"]
 	path = external/cxxopts
 	url = https://github.com/jarro2783/cxxopts.git
+[submodule "external/i2pd"]
+	path = external/i2pd
+	url = https://github.com/PurpleI2P/i2pd
+[submodule "external/dht"]
+	path = external/dht
+	url = https://github.com/jech/dht

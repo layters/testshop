@@ -252,7 +252,7 @@ Page {
                             id: amountField
                             anchors.horizontalCenter: parent.horizontalCenter
                             width: 500/*parent.width*/; height: 50
-                            placeholderText: qsTr("Amount")
+                            placeholderText: qsTr("Amount")//0.000000000000
                             color: balanceTxColumn.textColor
                             selectByMouse: true
                             validator: RegExpValidator{ regExp: new RegExp("^-?[0-9]+(\\.[0-9]{1," + Number(12) + "})?$") }
@@ -303,10 +303,60 @@ Page {
                                 verticalAlignment: Text.AlignVCenter
                             }
                             onClicked: {
-                                Wallet.transfer(addressField.text, amountField.text)
+                                if(settingsDialog.requirePasswordOnWithdrawal) {
+                                    walletPasswordSendPrompt.open()
+                                    walletPasswordSendPrompt.editAt(1).forceActiveFocus()
+                                }
+                                else Wallet.transfer(addressField.text, amountField.text)
                             }
                         }
                     }
+                }
+                // Enter wallet password message prompt
+                NeroshopComponents.MessageBox {
+                    id: walletPasswordSendPrompt
+                    x: mainWindow.x + (mainWindow.width - this.width) / 2
+                    y: mainWindow.y + (mainWindow.height - this.height) / 2
+                    title: qsTr("Send")
+                    text: qsTr("Please enter your wallet password")
+                    buttonModel: ["Cancel", "OK"]
+                    editModel: 2//1
+                    buttonRow.state: "centered"; buttonRow.width: editColumn.width
+                    editColumn.anchors.topMargin: 0
+                    Component.onCompleted: {
+                        //textObject.horizontalAlignment = TextEdit.AlignLeft
+                        
+                        const error_edit = editAt(0)
+                        error_edit.readOnly = true
+                        error_edit.background.color = "transparent"
+                        const password_edit = editAt(1)
+                        password_edit.echoMode = TextInput.Password
+                        password_edit.inputMethodHints = Qt.ImhSensitiveData            
+                        buttonAt(0).color = NeroshopComponents.Style.moneroGrayColor
+                        buttonAt(1).color = "#66578e"
+                        
+                        onCloseCallback = function() { 
+                            error_edit.color = "#353637"
+                            error_edit.text = ""
+                            password_edit.text = ""
+                        }
+                        
+                        buttonAt(0).onClickedCallback = function() { 
+                            onCloseCallback()
+                            close()
+                        }
+                        buttonAt(1).onClickedCallback = function() {
+                            if(!Wallet.verifyPassword(password_edit.text)) {
+                                error_edit.color = "#b22222"
+                                error_edit.text = qsTr("Password is incorrect. Try again")
+                                password_edit.text = ""
+                                return;
+                            }
+                            Wallet.transfer(addressField.text, amountField.text)
+                            onCloseCallback()
+                            close()
+                        }
+                    }    
                 }
             }
             // Receive

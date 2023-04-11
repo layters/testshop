@@ -2,7 +2,11 @@
 [![banner](images/appicons/LogoLight250x250.png)](https://github.com/larteyoh/testshop "neroshop logo")
 
 
-A decentralized P2P (peer-to-peer) marketplace for [**Monero**](https://getmonero.org/) users
+A decentralized P2P (peer-to-peer) marketplace for [**Monero**](https://getmonero.org/) users (PoC)
+
+__Disclaimer: This is an experimental project that is not ready for production use. Use at your own discretion.
+Lastly, I have ended the bounty program as I am no longer working full-time so disregard all issues labelled "bounty". I will be working on this project on my own from now onwards.
+If you would like to help out go ahead and do so, but there won't be any compensation for your work.__
 
 
 ## Table of contents
@@ -58,12 +62,13 @@ The name _neroshop_ is a combination of the words _nero_, which is Italian for _
 - [ ] No censorship (censorship-resistant)
 - [ ] No listing fees, sales tax, or any other fees (except for miner transaction fees and shipping costs and a 0.5% fee for using the optional built-in 2-of-3 escrow system)
 - [x] Pseudonymous identities (sellers and buyers are identified by their unique ids and/or optional display names)
-- [ ] End-to-end encrypted messaging system for communications between sellers and buyers
+- [ ] End-to-end encrypted messaging system for communications between sellers and buyers via matrix.org
 - [ ] Subaddress generator for direct payments without an escrow (a unique subaddress will be generated from a seller's synced wallet account for each order placed by a customer)
 - [x] Built-in Monero wallet with basic functionalities (transaction history, send, and receive)
 - [x] Option to run a local Monero node or connect to remote Monero nodes
+- [x] Payment address QR codes containing Monero URIs
 - [ ] Option to choose between sending funds directly to a seller or by using a multisignature escrow.
-- [ ] Native Tor and I2P support (both tor daemon and i2pd will be bundled with each release)
+- [ ] Native Tor and I2P support (tor daemon will be bundled with each release and i2pd will be built-in)
 - [x] Seller reputation system
 - [x] Product rating system
 - [ ] Wishlists
@@ -77,7 +82,6 @@ The name _neroshop_ is a combination of the words _nero_, which is Italian for _
 |      Library                                                       | Minimum Ver.       |         Purpose                                                        | Status                                   |
 |--------------------------------------------------------------------|--------------------|------------------------------------------------------------------------|------------------------------------------|
 | [monero-cpp](https://github.com/monero-ecosystem/monero-cpp)       | latest             | monero wallet and payment system                                       | :heavy_check_mark:                       |
-| [libbcrypt](https://github.com/rg3/libbcrypt)                      | 1.3                | password hashing                                                       | :x:                                      |
 | [sqlite3](https://sqlite.org/)                                     | 3.38.0             | database management                                                    | :heavy_check_mark:                       |
 | [QR Code generator](https://github.com/nayuki/QR-Code-generator)   | ?                  | qr code generation                                                     | :heavy_check_mark:                       |
 | [json](https://github.com/nlohmann/json/)                          | ?                  | json parsing                                                           | :heavy_check_mark:                       |
@@ -85,13 +89,15 @@ The name _neroshop_ is a combination of the words _nero_, which is Italian for _
 | [openssl](https://github.com/openssl/openssl)                      | 1.1.1              | for curl, sha256 sum and message encryption                            | :heavy_check_mark:                       |
 | [Qt](https://www.qt.io/)                                           | 5.12.8             | graphical user interface                                               | :heavy_check_mark:                       |
 | [libuv](https://github.com/libuv/libuv)                            | ?                  | networking and child process                                           | :grey_question:                          |
-| [raft](https://github.com/willemt/raft)                            | ?                  | consensus mechanism                                                    | :heavy_check_mark:                       |
+| [raft](https://github.com/willemt/raft)                            | ?                  | consensus mechanism                                                    | :grey_question:                          |
 | [stduuid](https://github.com/mariusbancila/stduuid)                | ?                  | unique id generation                                                   | :o:                                      |
 | [linenoise](https://github.com/antirez/linenoise)                  | ?                  | command line interface                                                 | :heavy_check_mark: :white_square_button: |
 | [lua](https://www.lua.org/)                                        | 5.1.5              | configuration script                                                   | :heavy_check_mark:                       |
 | [openpgp](external/openpgp)                                        | ?                  | public-key encryption and digital signatures                           | :grey_question:                          |
 | [cxxopts](https://github.com/jarro2783/cxxopts)                    | ?                  | command line option parser                                             | :heavy_check_mark:                       |
 | [libzmq](https://github.com/zeromq/libzmq)                         | ?                  | networking                                                             | :grey_question:                          |
+| [libi2pd](https://github.com/PurpleI2P/i2pd)                       | latest             | privacy network                                                        | :grey_question:                          |
+| [dht](https://github.com/jech/dht)                                 | ?                  | distributed hash table                                                 | :grey_question:                          |
 
 ### Compiling neroshop from source
 **0. Install prerequisites**
@@ -127,14 +133,14 @@ sudo apt install libcurl4-openssl-dev libssl-dev libuv1-dev qtdeclarative5-dev q
 # monero-cpp (monero)
 sudo apt update && sudo apt install pkg-config libssl-dev libzmq3-dev libsodium-dev libunwind8-dev liblzma-dev libreadline6-dev libpgm-dev qttools5-dev-tools libhidapi-dev libusb-1.0-0-dev libprotobuf-dev protobuf-compiler libudev-dev libboost-chrono-dev libboost-date-time-dev libboost-filesystem-dev libboost-locale-dev libboost-program-options-dev libboost-regex-dev libboost-serialization-dev libboost-system-dev libboost-thread-dev python3 ccache
 ```
-Arch (missing Qt libraries)
+Arch (missing Qt/QML libraries)
 ```bash
 # neroshop
 sudo pacman -Sy --needed curl openssl libuv
 # monero-cpp (monero)
 sudo pacman -Syu --needed boost openssl zeromq libpgm unbound libsodium libunwind xz readline gtest python3 ccache qt5-tools hidapi libusb protobuf systemd
 ```
-Fedora (missing Qt libraries)
+Fedora (missing Qt/QML libraries)
 ```bash
 # neroshop
 sudo dnf install libcurl-devel openssl-devel libuv-devel libuv-static
@@ -174,7 +180,7 @@ make
 cd ../
 ```
 
-In some cases, you may need to add this line under the "find_package(Boost .." in "external/monero-cpp/external/monero-project/CMakeLists.txt" in case of an "undefined reference to icu_*" error:
+If you happen to run into an `undefined reference to icu_*` error, you may need to add this line under the `find_package(Boost ...` in "external/monero-cpp/external/monero-project/CMakeLists.txt":
 `set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -licuio -licui18n -licuuc -licudata")`
 
 <!-- git submodule update --init --force --> <!-- <= call this before building monero -->
@@ -196,7 +202,7 @@ To build with [**CMake**](https://cmake.org/):
 # Build external libraries
 cd external/
 cmake -G"Unix Makefiles"
-make
+make -j$(nproc)
 cd ..
 ```
 
@@ -204,7 +210,7 @@ cd ..
 # Build neroshop
 cd build
 cmake .. #-DNEROSHOP_BUILD_CLI=1 #-DNEROSHOP_BUILD_TESTS=1
-make
+make -j$(nproc)
 ```
 
 ```bash
@@ -224,7 +230,7 @@ This project is licensed under the [GNU General Public License v3.0 (GPLv3)](LIC
 ## Donations
 You may support the neroshop project directly by donating to any of the addresses below. Received payments will be used to reward developers for their contributions to the project (mostly by completing bounties) and will also be used to fund our official website domain name.
 
-**Monero [XMR]**
+**Monero (XMR):**
 ```
 83QbQvnnyo7515rEnW8XwF1hbP5qMab6sHXFzP6pg3EKGscgXCbVjbt1FX5SF7AV9p4Ur1tiommuQSzrQQRHkZicVYu6j8Y
 ```
@@ -232,20 +238,28 @@ You may support the neroshop project directly by donating to any of the addresse
     <a href="monero:83QbQvnnyo7515rEnW8XwF1hbP5qMab6sHXFzP6pg3EKGscgXCbVjbt1FX5SF7AV9p4Ur1tiommuQSzrQQRHkZicVYu6j8Y" target="_blank"><img src="images/donate_xmr.png" width="128" height="128"></img></a>
 </p>
 
-**Wownero [WOW]**
+**Wownero (WOW):**
 ```
 WW2pQTQWHpyJf2CHrCmZG7Tn3zBnYRZTH8g4U3pSZf5s6xsTXrZc9odDWmrWzjRc9MMQWrKXxjHsRdzH5JpJ7kzx1jZuSVSfi
 ```
+<p align="center">
+    <a href="wownero:WW2pQTQWHpyJf2CHrCmZG7Tn3zBnYRZTH8g4U3pSZf5s6xsTXrZc9odDWmrWzjRc9MMQWrKXxjHsRdzH5JpJ7kzx1jZuSVSfi" target="_blank"><img src="images/donate_wow.png" width="128" height="128"></img></a>
+</p>
+
+[**OpenAlias**](https://openalias.org/):
+`donate.neroshop.org` or `donate@neroshop.org`
 
 
 ## Resources
 * Website: [neroshop.org](https://neroshop.org/)
 
+* Wiki: [Wikipage](https://github.com/larteyoh/testshop/wiki)
+
 * Git (Unofficial): [github.com/larteyoh/testshop](https://github.com/larteyoh/testshop)
 
 * Git (Official): [github.com/larteyoh/neroshop](https://github.com/larteyoh/neroshop)
 
-* Mail: neroshop@protonmail.com
+* Mail: larteyoh@protonmail.com or neroshop@protonmail.com
 
 * Matrix: [#neroshop:matrix.org](https://matrix.to/#/#neroshop:matrix.org)
 
@@ -256,14 +270,15 @@ WW2pQTQWHpyJf2CHrCmZG7Tn3zBnYRZTH8g4U3pSZf5s6xsTXrZc9odDWmrWzjRc9MMQWrKXxjHsRdzH
 ```
 u/EchoingCat — for the revision of the official neroshop logo
 woodser — for his guidance and for his work on the monero-cpp library which has made the development of this app possible
-yuriio147 — for his work on various QML components (Triangle, Banner, NodeList, etc.), the currency converter, wallet address qr provider, fixing a major bug in the RSA encryption code, the RSA signing and verifying functions, and for teaching me some Qt/Quick techniques
+yuriio147 — for his work on various QML components, the currency converter, wallet address qr provider, fixing a major bug in the RSA encryption code, the RSA signing and verifying functions, and for teaching me some Qt/Quick techniques
 lza_menace — for his help on creating the new monero.fail JSON API endpoint
+everyone in our matrix room — for sharing many great ideas that could be used improve the project
 ```
 
 [//]: # (./clean.sh)
 [//]: # (git checkout -b main)
-[//]: # (git add .gitignore .gitmodules cmake/ CMakeLists.txt CONTRIBUTING.md external/ fonts/ images/ LICENSE qml/ qml.qrc README.md shaders/ src/ test/)
-[//]: # (git commit -m"...")
+[//]: # (git add .gitignore .gitmodules cmake/ CMakeLists.txt CONTRIBUTING.md external/ fonts/ images/ LICENSE qml/ qml.qrc README.md shaders/ src/ tests/)
+[//]: # (git commit -m"..."    or    git commit -a --allow-empty-message -m "")
 [//]: # (git push -u origin backup --force)
 [//]: # (https://git.slipfox.xyz/larteyoh/testshop/settings => Mirror Settings => Synchronize Now)
 [//]: # (removing an external lib from submodules index: git rm --cached path/to/submodule)

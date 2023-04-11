@@ -1,5 +1,8 @@
 #include "process.hpp"
 
+#include "util/logger.hpp"
+#include "util.hpp"
+
 neroshop::Process::Process()
 {
 #ifdef __gnu_linux__

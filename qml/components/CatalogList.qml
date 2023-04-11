@@ -14,11 +14,14 @@ ListView {
     property real boxHeight: 300
     Component.onCompleted: {
         width = catalogList.boxWidth
-        height = (catalogList.boxHeight * count) + (spacing * (count - 1))
+        height = (catalogList.boxHeight * count) + (spacing * (count - 1))// + footerItem.height + mainWindow.footer.height
         // size and children size should match
         /*console.log("catalogList size", width, height)
         console.log("catalogList children size", childrenRect.width, childrenRect.height)*/
     }
+    ScrollBar.vertical: ScrollBar {
+        policy: ScrollBar.AsNeeded
+    }    
     model: Backend.getListings()//10
     delegate: Rectangle {
         id: productBox

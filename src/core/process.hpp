@@ -22,9 +22,6 @@
 #include <filesystem>
 #include <fstream>
 
-#include "util.hpp"
-#include "debug.hpp"
-
 namespace neroshop {
 class Process {
 public:

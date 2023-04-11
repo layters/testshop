@@ -4,17 +4,15 @@
 #define SCRIPT_CONTROLLER_HPP_NEROSHOP
 
 #if defined(NEROSHOP_USE_QT)
+#include <QJsonArray>
+#include <QJsonObject>
 #include <QObject>
 #include <QString>
 #include <QVariant>
 #endif
 
-#include "../core/script.hpp"
-#include "../core/config.hpp" // neroshop::lua_state
-
 namespace neroshop {
 
-#if defined(NEROSHOP_USE_QT)
 class ScriptController : public QObject {
     Q_OBJECT 
     // properties (for use in QML)
@@ -29,16 +27,21 @@ public:
     Q_INVOKABLE double getNumber(const QString& key) const;// {}
     Q_INVOKABLE bool getBoolean(const QString& key) const;// {}
     //Q_INVOKABLE <type> get_(const QString& key) const {}
-    // Containers
     Q_INVOKABLE QVariantList getTableStrings(const QString& key) const;
-#else
-class ScriptController {    
-#endif
-public:
-    //Script();
-    //~Script();
+    
+    Q_INVOKABLE void saveJson(const QString& settings);
+    Q_INVOKABLE QString getJsonString(const QString& key);
+    Q_INVOKABLE int getJsonInt(const QString& key);
+    Q_INVOKABLE bool getJsonBool(const QString& key);
+    Q_INVOKABLE double getJsonDouble(const QString& key);
+    Q_INVOKABLE QVariantList getJsonArray(const QString& key);
+    Q_INVOKABLE QVariantMap getJsonObject() const; // root object
+    Q_INVOKABLE QVariantMap getJsonObject(const QString& key);
+    Q_INVOKABLE QString getJsonLiteral();
+    //Q_INVOKABLE ? getJson(const QString& key);
+private:
+    QJsonObject json_object;
 };
 
 }
-
 #endif

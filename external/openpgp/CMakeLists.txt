@@ -10,10 +10,10 @@ add_library(openpgp
   ${SOURCES}
   ${HEADERS})
 
-#find_package(GCrypt)
 target_include_directories(openpgp
   PUBLIC
-    ${CMAKE_SOURCE_DIR}/monero/contrib/epee/include
+    #../monero-cpp/external/monero-project/external/easylogging++
+    ../monero-cpp/external/monero-project/contrib/epee/include
     ${GCRYPT_INCLUDE_DIR})
 
 target_link_libraries(openpgp

@@ -1,5 +1,9 @@
 #include "catalog.hpp"
 
+#include "database.hpp"
+#include "util/logger.hpp"
+#include "item.hpp" // item price, details, and upload images
+#include "currency_converter.hpp" // currency conversion
 ////////////////////
 neroshop::Catalog::Catalog() : cart(nullptr) {
     initialize();

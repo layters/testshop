@@ -119,7 +119,7 @@ ApplicationWindow {
         title: "prompt"
         x: mainWindow.x + (mainWindow.width - this.width) / 2
         y: mainWindow.y + (mainWindow.height - this.height) / 2
-        model: ["Cancel", "OK"]
+        buttonModel: ["Cancel", "OK"]
         Component.onCompleted: {
             buttonAt(0).onClickedCallback = function() { close() }
             buttonAt(1).color = "#4169e1"//"#4682b4"
@@ -277,7 +277,7 @@ ApplicationWindow {
                 
                 Text {
                     id: priceDisplayText
-                    property string scriptCurrency: Script.getString("neroshop.generalsettings.currency")
+                    property string scriptCurrency: settingsDialog.currency.currentText
                     property string currency: Backend.isSupportedCurrency(scriptCurrency) ? scriptCurrency : "usd"
                     readonly property double price: CurrencyExchangeRates.getXmrPrice(priceDisplayText.currency)
                     text: qsTr(FontAwesome.monero + "  %1%2").arg(Backend.getCurrencySign(currency)).arg(price.toFixed(Backend.getCurrencyDecimals(currency)))

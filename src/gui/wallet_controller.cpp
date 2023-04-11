@@ -1,5 +1,7 @@
 #include "wallet_controller.hpp"
 
+#include "../core/enums.hpp"
+
 neroshop::WalletController::WalletController(QObject *parent) : QObject(parent)
 {
     _wallet = std::make_unique<neroshop::Wallet>();
@@ -23,7 +25,7 @@ int neroshop::WalletController::createRandomWallet(const QString& password, cons
                                         confirm_pwd.toStdString(),
                                         path.toStdString());
     emit walletChanged();
-    if(error == neroshop::wallet_error::WALLET_SUCCESS) emit isOpenedChanged();
+    if(error == static_cast<int>(WalletResult::Wallet_Ok)) emit isOpenedChanged();
     return static_cast<int>(error);
 }
 
@@ -65,6 +67,12 @@ void neroshop::WalletController::close(bool save) {
     emit walletChanged();
     emit isOpenedChanged();
 }
+
+bool neroshop::WalletController::verifyPassword(const QString& password) {
+    if(!_wallet) throw std::runtime_error("neroshop::Wallet is not initialized");
+    return _wallet->verify_password(password.toStdString());
+}
+
 
 QVariantMap neroshop::WalletController::createUniqueSubaddressObject(unsigned int account_idx, const QString & label) {
     if (!_wallet)
@@ -238,17 +246,17 @@ QVariantList neroshop::WalletController::getTransfers() const {
     if (!_wallet.get()) throw std::runtime_error("neroshop::Wallet is not initialized");
     if (!_wallet->get_monero_wallet()) throw std::runtime_error("monero_wallet_full is not opened");
     // TODO: make this function async or put in a separate thread
-    std::packaged_task<QVariantList(void)> get_transfers_task([this]() -> QVariantList {
+    /*std::packaged_task<QVariantList(void)> get_transfers_task([this]() -> QVariantList {
         double piconero = 0.000000000001;
         monero_transfer_query transfer_query; // optional
         auto transfers = _wallet->get_monero_wallet()->get_transfers(transfer_query);
 
         QVariantList transfers_list;
 
-        for (auto transfer : transfers) { /*for(int i = 0; i < transfers.size(); i++) {
+        for (auto transfer : transfers) {*/ /*for(int i = 0; i < transfers.size(); i++) {
             monero_transfer * transfer = transfers[i].get();*/
 
-            QVariantMap transfer_object;
+            /*QVariantMap transfer_object;
             transfer_object.insert("amount", (transfer->m_amount.get() * piconero));
             transfer_object.insert("account_index", transfer->m_account_index.get()); // obviously account index 0
             transfer_object.insert("is_incoming", transfer->is_incoming().get());
@@ -268,7 +276,46 @@ QVariantList neroshop::WalletController::getTransfers() const {
     worker.detach(); // join may block but detach won't
     QVariantList transfers_result = future_result.get();
     
-    return transfers_result;
+    return transfers_result;*/
+    //--------------------------------------------------
+    // Create a promise object
+    std::promise<QVariantList> my_promise;
+    
+    // Start a new thread to perform the asynchronous task
+    auto async_future = std::async(std::launch::async, [&my_promise, this]() -> void {//QVariantList {
+        double piconero = 0.000000000001;
+        //monero_transfer_query transfer_query; // optional
+        auto transfers = _wallet->get_transfers();//_wallet->get_monero_wallet()->get_transfers(transfer_query);
+
+        QVariantList transfers_list;
+
+        for (auto transfer : transfers) {
+            QVariantMap transfer_object;
+            transfer_object.insert("amount", (transfer->m_amount.get() * piconero));
+            transfer_object.insert("account_index", transfer->m_account_index.get()); // obviously account index 0
+            transfer_object.insert("is_incoming", transfer->is_incoming().get());
+            transfer_object.insert("is_outgoing", transfer->is_outgoing().get());
+            monero_tx_wallet * tx_wallet = transfer->m_tx.get();
+            ////transfer_object.insert("", tx_wallet->);
+            //std::cout << ": " << tx_wallet-> << "\n";
+        
+            transfers_list.append(transfer_object);
+        }
+        
+        // Set the promise value with the result
+        my_promise.set_value(transfers_list);
+    });    
+    // ?
+    while (async_future.wait_for(std::chrono::seconds(0)) != std::future_status::ready) {//async_future.wait(); // if "std::async" returns void, use .wait()
+        std::cout << "Still waiting for tranfers to load..." << std::endl;
+    }
+    // Return a future object that will eventually hold the result
+    //return my_promise.get_future();
+    std::future<QVariantList> my_future = my_promise.get_future();
+    return my_future.get();
+    
+    // ?
+    //return async_future.get(); // if "std::async" returns QVariantList, use .get()
 }
 
 

@@ -14,13 +14,20 @@ Window {
         messageBox.open()
     }    
     width: 500; height: 250    
+    property var onCloseCallback: null
     property alias title: messageBox.title
     property alias text: messageBox.text
     property alias model: buttonRepeater.model
+    property alias buttonModel: buttonRepeater.model
     property var buttonAt: buttonRepeater.itemAt
     property int buttonCount: buttonRepeater.count
+    property alias editModel: textEditRepeater.model
+    property var editAt: textEditRepeater.itemAt
+    property int editCount: textEditRepeater.count
     property alias textObject: messageBoxTextArea
+    property alias textScroller: messageBoxTextScrollView
     property alias buttonRow: buttonsRow
+    property alias editColumn: textEditsColumn
     visible: messageBox.visible
     modality: Qt.ApplicationModal//Qt.WindowModal // A modal window prevents other windows from receiving input events (ESC closes window when modality is set)
     flags: Qt.FramelessWindowHint | Qt.Dialog
@@ -38,7 +45,7 @@ Window {
         	implicitWidth: messageBoxWindow.width
         	implicitHeight: messageBoxWindow.height
         	color: "#a0a0a0"////NeroshopComponents.Style.getColorsFromTheme()[2]
-        	border.color: "white"
+        	border.color: "#d9d9d9"
         	radius: 10//3
     	} // background
         // title bar
@@ -81,15 +88,37 @@ Window {
                     radius: 100
                 }
                 onClicked: {
+                    if(onCloseCallback != null) onCloseCallback()
                     messageBoxWindow.close()////messageBox.close()
                 }
             }
         }
         // message box text
         ScrollView {
-            anchors.verticalCenter: parent.verticalCenter////anchors.top: titleBar.bottom; anchors.topMargin: 20
+            id: messageBoxTextScrollView
+            states: [
+                State {
+                    name: "hasEdit"
+                    AnchorChanges {
+                        target: messageBoxTextScrollView
+                        anchors.top: titleBar.bottom
+                    }          
+                    PropertyChanges {
+                        target: messageBoxTextScrollView.anchors
+                        topMargin: 20
+                    }
+                },
+                State {
+                    name: "noEdit"
+                    AnchorChanges {
+                        target: messageBoxTextScrollView
+                        anchors.verticalCenter: parent.verticalCenter
+                    }          
+                }                                                        
+            ]
+            state: (textEditRepeater.count > 0) ? "hasEdit" : "noEdit"
             width: parent.width
-            height: 120
+            height: messageBoxTextArea.height//120
             clip: true
             ScrollBar.vertical.policy: ScrollBar.AsNeeded
             ScrollBar.horizontal.policy: ScrollBar.AsNeeded
@@ -104,6 +133,41 @@ Window {
                 verticalAlignment: TextEdit.AlignVCenter // align the text within the center of TextArea item's height
                 horizontalAlignment: TextEdit.AlignHCenter
             }    
+        }
+        // edits column
+        ColumnLayout {
+            id: textEditsColumn
+            states: [
+                State {
+                    name: "centered"
+                    AnchorChanges {
+                        target: textEditsColumn
+                        anchors.horizontalCenter: parent.horizontalCenter
+                    }          
+                },
+                State {
+                    name: "filled"
+                    PropertyChanges {
+                        target: textEditsColumn
+                        width: parent.width // = 470 = 500 - (messageBox.leftPadding + messageBox.rightPadding)
+                    }          
+                }                                                        
+            ]            
+            state: "centered"//"filled"
+            anchors.top: messageBoxTextScrollView.bottom; anchors.topMargin: 10
+            Repeater {
+                id: textEditRepeater
+                model: null
+                delegate: TextField {
+                    Layout.fillWidth: true
+                    Layout.preferredWidth: 330
+                    property int editIndex: index
+                    selectByMouse: true
+                    background: Rectangle {
+                        radius: 5//10
+                    }
+                }
+            }
         }
         // buttons row    
         RowLayout {

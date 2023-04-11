@@ -12,9 +12,6 @@
 #include <utility>
 #include <filesystem> // std::filesystem
 
-#include "util.hpp" // neroshop::string:: functions
-#include "debug.hpp"
-
 namespace neroshop {
 
 class Script {
