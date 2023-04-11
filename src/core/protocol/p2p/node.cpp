@@ -2,6 +2,7 @@
 
 #include "kademlia.hpp"
 #include "../../crypto/sha3.hpp"
+#include "routing_table.hpp"
 
 #include <cstring> // memset
 #include <sys/socket.h>
@@ -9,7 +10,7 @@
 
 namespace neroshop_crypto = neroshop::crypto;
 
-neroshop::Node::Node(const std::string& address, int port) {    
+neroshop::Node::Node(const std::string& address, int port) : sockfd(0) { 
     // Generate a random node ID
     node_id = get_node_id(address, port);
     std::vector<unsigned char> node_id_bytes(node_id.begin(), node_id.end());
@@ -53,27 +54,81 @@ neroshop::Node::Node(const std::string& address, int port) {
     }
 }
 
+neroshop::Node::Node(const Peer& peer) {
+    int sockfd = socket(AF_INET, SOCK_DGRAM, 0);
+    if (sockfd < 0) {
+        // handle error
+    }
+    // This socket is not meant to be bound to any port. It will only be used to retrieve the IP address and port number
+    
+    memset(&sockin, 0, sizeof(sockin));
+    sockin.sin_family = AF_INET;
+    sockin.sin_port = htons(peer.port);
+    if(inet_pton(AF_INET, peer.address.c_str(), &sockin.sin_addr) <= 0) {
+        // handle error
+    }
+
+    // Set socket options, such as timeout or buffer size, if needed
+}
+
 neroshop::Node::~Node() {
-    close(sockfd);
     dht_uninit();
+    close(sockfd);
 }
 
 std::string neroshop::Node::get_node_id(const std::string& address, int port) {
-    // This should generate a unique and deterministic node ID based on the node's address and port, which would remain constant each time the node goes online. This is a valid approach for generating stable node IDs.
-    // TODO: increase randomness
+    // TODO: increase randomness by using a hardware identifier while maintaining a stable node id
     std::string node_info = address + ":" + std::to_string(port);
     std::string hash = neroshop_crypto::sha3_256(node_info);
     return hash.substr(0, NUM_BITS / 4);
 }
 
-void neroshop::Node::join(const Peer& bootstrap_peer) {
-    std::cout << "joining bootstrap node - " << bootstrap_peer.address << ":" << bootstrap_peer.port << "\n";
-    /*// Bootstrap the DHT node with a set of known nodes (array n)
-    nodes = dht_ping_nodes(s, family, argv + 1, argc - 1, n, MAX_NODES);
-    printf("Got %d bootstrap nodes\n", nodes);
-    // Join the DHT network
-    rc = dht_join(s, myid);
-    printf("Join returned %d\n", rc);*/
+// Define the list of bootstrap nodes
+namespace {
+std::vector<neroshop::Peer> bootstrap_nodes = {
+    {"node.neroshop.org", DEFAULT_PORT}, // $ ping neroshop.org # or nslookup neroshop.org
+};
+}
+
+void neroshop::Node::join() {
+    // Create the routing table with the vector of nodes
+    if(!routing_table.get()) {
+        routing_table = std::make_unique<RoutingTable>(std::vector<Node*>{});
+    }
+    // Add your local node to the routing table
+    routing_table->add_node(this);
+    if (dht_insert_node(reinterpret_cast<const unsigned char*>(this->node_id.c_str()), (struct sockaddr *)&this->sockin, sizeof(this->sockin)) < 0) {
+        perror("dht_insert_node");
+        throw std::runtime_error("Failed to insert node");
+    }
+      
+    // Bootstrap the DHT node with a set of known nodes
+    // Add the bootstrap nodes to the routing table
+    for (const auto& bootstrap_node : bootstrap_nodes) {
+        std::cout << "joining bootstrap node - " << bootstrap_node.address << ":" << bootstrap_node.port << "\n";
+        
+        // Ping each known node to update the routing table ; dht_ping_node - the main bootstrapping primitive. If a node replies, and if there is space in the routing table, it will be inserted.
+        if(!ping(bootstrap_node.address, bootstrap_node.port)) {
+            std::cerr << "Failed to ping bootstrap node\n"; return;
+        }
+        
+        // Add the bootstrap node to routing table ; dht_insert_node - stores the node in the routing table for later use.
+        auto new_node = std::make_unique<Node>(bootstrap_node);//(bootstrap_node.address, bootstrap_node.port, false);
+        routing_table->add_node(std::move(new_node).get());
+        if (dht_insert_node(reinterpret_cast<const unsigned char*>(new_node->node_id.c_str()), (struct sockaddr *)&new_node->sockin, sizeof(new_node->sockin)) < 0) {
+            perror("dht_insert_node");
+            throw std::runtime_error("Failed to insert node");
+        }
+        
+        // Send a find_node message to the bootstrap node
+        /*if(!find_node(bootstrap_node.address, bootstrap_node.port, this->node_id)) {
+            std::cerr << "Failed to send find_node message to bootstrap node\n"; return;
+        }*/
+        //send_find_node(new_node->get_address(), new_node->get_port());
+    }
+    
+    // Print the contents of the routing table
+    routing_table->print_table();
 }
 
 void neroshop::Node::put(const std::string& key, const std::string& value) {
@@ -92,9 +147,68 @@ void neroshop::Node::remove(const std::string& key) {
     data.erase(key);
 }
 
+std::vector<neroshop::Node*> find_node(const std::string& target_id) {
+    /*std::vector<Node*> nodes;
+    
+    // Get the nodes from the routing table that are closest to the target node
+    std::vector<Node*> closest_nodes = routing_table->get_closest_nodes(target, bucket_size);
+    
+    // Send a "find_node" message to each of the closest nodes and add any new nodes to the routing table
+    for (const auto& node : closest_nodes) {
+        std::cout << "finding node - " << node->get_ip_address() << ":" << node->get_port() << "\n";
+        
+        // Send a "find_node" message to the node
+        std::vector<Node*> new_nodes = dht_find_node(reinterpret_cast<const unsigned char*>(target.c_str()), (struct sockaddr *)&(node->sockin), sizeof(node->sockin));
+        
+        // Add any new nodes to the routing table
+        for (const auto& new_node : new_nodes) {
+            if (routing_table->add_node(new_node)) {
+                nodes.push_back(new_node);
+            }
+        }
+    }
+    
+    return nodes;*/
+    
+    // Send a find_node message to the bootstrap node
+    /*std::vector<Node*> nodes;
+    if(!find_node(bootstrap_node.address, bootstrap_node.port, this->node_id, nodes)) {
+        std::cerr << "Failed to send find_node message to bootstrap node\n"; return;
+    }
+
+    // Add the nodes returned by the find_node message to the routing table
+    for (auto node : nodes) {
+        if (node->node_id != this->node_id) { // don't add yourself to the routing table
+            routing_table->add_node(node);
+            if (dht_insert_node(reinterpret_cast<const unsigned char*>(node->node_id.c_str()), (struct sockaddr *)&node->sockin, sizeof(node->sockin)) < 0) {
+                perror("dht_insert_node");
+                throw std::runtime_error("Failed to insert node");
+            }
+        }
+    }*/    
+}
+
 // ?
 std::vector<std::string> neroshop::Node::get_nodes() {
+    struct sockaddr_in sin[100];
+    struct sockaddr_in6 sin6[100];
+    int num = 100, num6 = 100;
 
+    if(dht_get_nodes(sin, &num, sin6, &num6) < 0) {
+        perror("dht_get_nodes returned an error");
+    }
+
+    for (int i = 0; i < num; i++) {
+        char buf[INET_ADDRSTRLEN];
+        inet_ntop(AF_INET, &(sin[i].sin_addr), buf, INET_ADDRSTRLEN);
+        printf("IPv4 node %d: %s:%d\n", i, buf, ntohs(sin[i].sin_port));
+    }
+
+    for (int i = 0; i < num6; i++) {
+        char buf[INET6_ADDRSTRLEN];
+        inet_ntop(AF_INET6, &(sin6[i].sin6_addr), buf, INET6_ADDRSTRLEN);
+        printf("IPv6 node %d: [%s]:%d\n", i, buf, ntohs(sin6[i].sin6_port));
+    }
 }
 
 bool neroshop::Node::ping(const std::string& address, int port) {
@@ -106,19 +220,18 @@ bool neroshop::Node::ping(const std::string& address, int port) {
     memset(&node_addr, 0, sizeof(node_addr));
     node_addr.sin_family = AF_INET;
     node_addr.sin_port = htons(port); // port goes here
-    inet_pton(AF_INET, address.c_str(), &node_addr.sin_addr); // IP address goes here 
+    inet_pton(AF_INET, address.c_str(), &node_addr.sin_addr); // IP address goes here // inet_pton (short for "presentation to network") is a more modern and versatile function than inet_addr and can handle both IPv4 and IPv6 addresses, making it a more flexible and future-proof option
     
     // Ping the node
     if(dht_ping_node(reinterpret_cast<const struct sockaddr*>(&node_addr), sizeof(node_addr)) < 0) {
+        perror("dht_ping_node");
         std::cerr << "Failed to ping node." << "\n";
         return false;
     }
     return true;
 }
 
-// You should call this function in a loop to continuously listen for incoming packets.
-void neroshop::Node::listen_for_packets(int sockfd) {
-    /*while (true) {
+void neroshop::Node::loop() {
         struct sockaddr_storage sender_addr;
         socklen_t sender_len = sizeof(sender_addr);
         unsigned char buffer[1024];
@@ -127,7 +240,7 @@ void neroshop::Node::listen_for_packets(int sockfd) {
         int bytes_received = recvfrom(sockfd, buffer, sizeof(buffer), 0, (struct sockaddr*)&sender_addr, &sender_len);
         if (bytes_received < 0) {
             // Handle error
-            continue;
+            //continue;
         }
 
         // Parse incoming packet
@@ -136,25 +249,51 @@ void neroshop::Node::listen_for_packets(int sockfd) {
         void* data = buffer;
         size_t data_len = bytes_received;
 
-        // Handle incoming packet
-        dht_periodic(data, data_len, (struct sockaddr*)&sender_addr, sender_len, NULL, dht_callback, &dht_state);
 
+    time_t tosleep = 0;
+    if (dht_periodic(NULL, 0, NULL, 0, &tosleep, NULL, NULL) < 0) {
+        perror("dht_periodic");
+        throw std::runtime_error("Periodic failed");
+    }
+    if (tosleep > 0) {
+        sleep(tosleep);
+    }
+    
         // Send response
         unsigned char response[1024];
         int response_len = 0;
-        int result = dht_send((struct sockaddr*)&sender_addr, sender_len, event, info_hash, response, sizeof(response), &response_len, buffer, bytes_received, &dht_state);
+        /*int result = sendto((struct sockaddr*)&sender_addr, sender_len, event, info_hash, response, sizeof(response), &response_len, buffer, bytes_received, &dht_state);
         if (result < 0) {
             // Handle error
-            continue;
-        }
+            //continue;
+        }*/
 
         // Send response packet
         int bytes_sent = sendto(sockfd, response, response_len, 0, (struct sockaddr*)&sender_addr, sender_len);
         if (bytes_sent < 0) {
             // Handle error
-            continue;
-        }
-    }*/
+            //continue;
+        }    
+}
+
+std::string neroshop::Node::get_id() {
+    std::string address = get_ip_address();
+    unsigned int port = get_port();
+    return get_node_id(address, port);
+}
+
+std::string neroshop::Node::get_ip_address() const {
+    std::string ip_address = inet_ntoa(sockin.sin_addr);
+    return ip_address;
+}
+
+int neroshop::Node::get_port() const {
+    uint16_t port = ntohs(sockin.sin_port);
+    return port;
+}
+
+neroshop::RoutingTable * neroshop::Node::get_routing_table() const {
+    return routing_table.get();
 }
 
 /*int main() {

@@ -432,11 +432,9 @@ void neroshop::WalletController::on_balances_changed(uint64_t new_balance, uint6
 
 void neroshop::WalletController::on_output_received(const monero_output_wallet& output) {
     emit transfersChanged();
-    std::cout << "transferschanged emitted\n";
 }
 
 void neroshop::WalletController::on_output_spent (const monero_output_wallet &output) {
     emit transfersChanged();
-    std::cout << "transferschanged emitted\n";
 }
 

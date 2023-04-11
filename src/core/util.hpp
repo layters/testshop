@@ -124,6 +124,12 @@ namespace string {
     static std::string trim(const std::string& str) {
         return trim_left(trim_right(str));
     }
+    static std::string join(const std::vector<std::string>& string_list, std::string delimeter = ",") {
+        std::stringstream ss;
+        std::copy(string_list.begin(), string_list.end() - 1, std::ostream_iterator<std::string>(ss, delimeter.c_str()));
+        ss << string_list.back();
+        return ss.str();
+    }
 }
 //-------------------------
 namespace filesystem {

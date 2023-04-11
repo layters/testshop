@@ -1,4 +1,4 @@
-#include "currency_exchange_rates_provider.hpp"
+#include "currency_rate_provider.hpp"
 
 #include <QFuture>
 #include <QMutexLocker>

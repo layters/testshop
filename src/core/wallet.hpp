@@ -141,7 +141,7 @@ private:
     volatile unsigned int height, start_height, end_height;
     /*volatile */std::string message;
     uint64_t/*unsigned long long*/ restore_height;
-    std::string password_hash; // bcrypt pw hash that is only stored in memory
+    std::string password_hash; // pw hash that is only stored in memory
 };
 
 }

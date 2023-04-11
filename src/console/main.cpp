@@ -15,8 +15,7 @@ static void print_commands() {
         {"monero_nodes", "Display a list of monero nodes"}, 
         {"query       ", "Execute an SQLite query"}, 
         {"curl_version", "Show libcurl version"}, 
-        {"download_tor", "Download Tor"}, 
-        {"download_i2pd", "Download I2P Daemon"}
+        {"download_tor", "Download Tor"}
         /*, 
         {"", ""}*/
     };

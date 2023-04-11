@@ -253,6 +253,8 @@ WW2pQTQWHpyJf2CHrCmZG7Tn3zBnYRZTH8g4U3pSZf5s6xsTXrZc9odDWmrWzjRc9MMQWrKXxjHsRdzH
 ## Resources
 * Website: [neroshop.org](https://neroshop.org/)
 
+* Wiki: [Wikipage](https://github.com/larteyoh/testshop/wiki)
+
 * Git (Unofficial): [github.com/larteyoh/testshop](https://github.com/larteyoh/testshop)
 
 * Git (Official): [github.com/larteyoh/neroshop](https://github.com/larteyoh/neroshop)
@@ -275,7 +277,7 @@ everyone in our matrix room — for sharing many great ideas that could be used 
 
 [//]: # (./clean.sh)
 [//]: # (git checkout -b main)
-[//]: # (git add .gitignore .gitmodules cmake/ CMakeLists.txt CONTRIBUTING.md external/ fonts/ images/ LICENSE qml/ qml.qrc README.md shaders/ src/ test/)
+[//]: # (git add .gitignore .gitmodules cmake/ CMakeLists.txt CONTRIBUTING.md external/ fonts/ images/ LICENSE qml/ qml.qrc README.md shaders/ src/ tests/)
 [//]: # (git commit -m"..."    or    git commit -a --allow-empty-message -m "")
 [//]: # (git push -u origin backup --force)
 [//]: # (https://git.slipfox.xyz/larteyoh/testshop/settings => Mirror Settings => Synchronize Now)

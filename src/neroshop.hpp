@@ -26,6 +26,7 @@
 // crypto
 #include "core/crypto/rsa.hpp"
 #include "core/crypto/sha256.hpp"
+#include "core/crypto/sha3.hpp"
 // database
 #include "core/database/sqlite.hpp"
 // price
@@ -33,6 +34,7 @@
 // protocol
 #include "core/protocol/p2p/kademlia.hpp"
 #include "core/protocol/p2p/node.hpp"
+#include "core/protocol/p2p/routing_table.hpp"
 #include "core/protocol/rpc/json_rpc.hpp"
 // network
 // ...
@@ -47,7 +49,7 @@
 // neroshop (gui)
 #if defined(NEROSHOP_BUILD_GUI)
 #include "gui/backend.hpp"
-#include "gui/currency_exchange_rates_provider.hpp"
+#include "gui/currency_rate_provider.hpp"
 #include "gui/script_controller.hpp"
 #include "gui/user_controller.hpp"
 #include "gui/image_provider.hpp"

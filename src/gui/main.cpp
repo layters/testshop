@@ -87,8 +87,6 @@ int main(int argc, char *argv[])
     // testing
     //Backend::testfts5();//std::cout << neroshop::Wallet::generate_uri("83Qb...6j8Y", 0.000000000001, "donation to my friend", "Jack Kinnof") << "\n";
     neroshop_tools::downloader::download_tor();
-    // testing sockets
-    neroshop::Node dht_node("0.0.0.0", DEFAULT_PORT);//("127.0.0.1", DEFAULT_PORT);
     // import paths
     engine.addImportPath(":/fonts"); // import FontAwesome 1.0
     // platform macros
