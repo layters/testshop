@@ -3,24 +3,10 @@
 #ifndef PROCESS_HPP_NEROSHOP
 #define PROCESS_HPP_NEROSHOP
 
-#ifdef _WIN32
-#include <windows.h>
-#endif
-
-#ifdef __gnu_linux__
-#include <unistd.h> // fork, execvp
-//#include <sys/types.h> // ?
-#include <dirent.h> // closedir, opendir
-#include <signal.h> // kill
-#endif
-
-//#include <uv.h>
-
 #include <iostream>
-#include <vector>
+#include <string>
 #include <tuple>
-#include <filesystem>
-#include <fstream>
+#include <vector>
 
 namespace neroshop {
 class Process {

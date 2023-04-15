@@ -2,13 +2,19 @@
 #define USER_HPP_NEROSHOP
 
 #include <iostream>
+#include <memory> // std::unique_ptr
+#include <string>
+#include <vector>
 
-#include "cart.hpp"
+#include "item.hpp"
 #include "order.hpp"
 
 enum class user_account_type : unsigned int { guest, buyer, seller }; // guest is 0 by default
 
 namespace neroshop {
+
+class Cart; // forward declaration
+
 class User { // base class of seller and buyer // sellers can buy and sell while buyers (including guests) can only buy but cannot sell
 public: 
     User();

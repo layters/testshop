@@ -4,10 +4,11 @@
 #define ORDER_HPP_NEROSHOP
 
 #include <iostream>
-
-#include "cart.hpp"
+#include <string>
 
 namespace neroshop {
+
+class Cart; // forward declaration
 
 class Order { // create a db for orders that stores order numbers and details and retrieve order
 public:

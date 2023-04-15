@@ -1,10 +1,16 @@
 #ifndef SERVER_HPP_NEROSHOP
 #define SERVER_HPP_NEROSHOP
 
+#if defined(_WIN32) && defined(NEROSHOP_USE_SYSTEM_SOCKETS)
+#include <winsock2.h> // core header for Winsock2
+#include <ws2tcpip.h> // header for TCP/IP protocols
+#include <iphlpapi.h> // header for IP helper functions
+#endif
+
 #if defined(__gnu_linux__) && defined(NEROSHOP_USE_SYSTEM_SOCKETS)
-#include <sys/socket.h>
+#include <sys/socket.h> // for sockaddr_storage, AF_INET, AF_INET6
 #include <netinet/in.h>
-#include <arpa/inet.h>
+#include <arpa/inet.h> // for inet_pton
 #include <netdb.h>
 #include <unistd.h>
 #endif

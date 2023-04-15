@@ -6,9 +6,11 @@
 #include <iostream>
 #include <memory> // std::unique_ptr, std::shared_ptr, std::make_shared
 
-#include "user.hpp" // for users' favorites/wishlist and verified purchases // cart is included here
-
 namespace neroshop {
+
+class User; // forward declaration
+class Cart; // forward declaration
+
 class Catalog {
 public:
     Catalog();//Catalog(int rows, int columns);

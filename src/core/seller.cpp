@@ -1,9 +1,15 @@
 #include "seller.hpp"
 
+#include "cart.hpp"
 #include "currency_converter.hpp"
 #include "util/logger.hpp"
-#include "util.hpp"
+#include "util.hpp" // uuid
 #include "database.hpp"
+#include "item.hpp"
+#include "wallet.hpp"
+
+#include <cmath> // floor
+#include <random>
 
 neroshop::Seller::Seller() : wallet(nullptr)
 {}

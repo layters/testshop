@@ -18,9 +18,9 @@
 #include <vector>
 #include <utility> // std::pair
 
-#include "process.hpp" // for monerod daemon process
-
 namespace neroshop {
+
+class Process; // forward declaration
 
 class Wallet : public monero_wallet_listener {
 public:

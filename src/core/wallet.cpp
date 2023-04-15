@@ -3,6 +3,7 @@
 #include "enums.hpp"
 #include "util/logger.hpp"
 #include "util.hpp"
+#include "process.hpp" // for monerod daemon process
 
 #include <cmath>
 #include <filesystem>

@@ -1,5 +1,6 @@
 #include "order.hpp"
 
+#include "cart.hpp"
 #include "currency_converter.hpp" // currency converter
 #include "config.hpp" // neroshop::lua_state
 #include "database.hpp"
