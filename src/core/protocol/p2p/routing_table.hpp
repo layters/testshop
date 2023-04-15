@@ -23,11 +23,15 @@ public:
 
     // Add a new node to the routing table
     bool add_node(Node * node);//void add_node(const Node& node);
+    
+    bool remove_node(const std::string& node_id);
 
     // Find the bucket that a given node belongs in
-    int find_bucket(const std::string&/*int*/ node_id) const;
+    int find_bucket(const std::string& node_id) const;
     
     std::optional<Node*> find_node(const std::string& node_id);// const;
+
+    std::optional<Node*> find_closest_node(const std::string& key);// const;
 
     // Print the contents of the routing table
     void print_table() const;

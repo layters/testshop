@@ -1,5 +1,6 @@
 #include "user_controller.hpp"
 
+#include "../core/cart.hpp"
 #include "../core/database.hpp"
 #include "../core/util/logger.hpp"
 

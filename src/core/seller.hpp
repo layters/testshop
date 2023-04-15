@@ -1,23 +1,21 @@
-//#pragma once
+#pragma once
+
 #ifndef SELLER_HPP_NEROSHOP
 #define SELLER_HPP_NEROSHOP
 
-#if defined(NEROSHOP_USE_QT)
-#include <QUuid>
-#else
-#include <uuid.h>
-#endif
-
-#include <cmath> // floor
-#include <random>
+#include <iostream>
 #include <memory> // std::unique_ptr
+#include <string>
 #include <vector>
 
 #include "user.hpp"
-#include "wallet.hpp"
-#include "item.hpp"
 
 namespace neroshop {
+
+// forward declarations
+class Wallet;
+class Item;
+
 class Seller : public User { 
 public:
 	Seller();

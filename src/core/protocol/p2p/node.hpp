@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../../server.hpp"
+#include "../../server.hpp" // TCP, UDP. IP-related headers here
 
 #include <iostream>
 #include <string>
@@ -25,13 +25,15 @@ struct Peer {
 
 class Node {
 private:
-    std::string node_id;
+    std::string id;
     std::string version;
-    std::unordered_map<std::string, Peer> peers;
     std::unordered_map<std::string, std::string> data; // internal hash table that stores key-value pairs 
-    int sockfd;//std::unique_ptr<Server> server;// a node acts as a server so it should have a server object
-    struct sockaddr_in sockin;
+    int sockfd, sockfd6;//std::unique_ptr<Server> server;// a node acts as a server so it should have a server object
+    struct sockaddr_in sockin; // IPV4
+    struct sockaddr_in6 sockin6; // IPV6
     std::unique_ptr<RoutingTable> routing_table; // Pointer to the node's routing table
+    friend class RoutingTable;
+    std::string public_ip_address;
     // Generates a node id from address and port combination
     std::string get_node_id(const std::string& address, int port);
     // Determines if node1 is closer to the target_id than node2
@@ -39,7 +41,7 @@ private:
     // Returns the closest peers to the target_id
     std::vector<Peer> get_closest_peers(const std::string& target_id);
 public:
-    Node(const std::string& address, int port); // Binds a socket to a port and initializes the DHT
+    Node(const std::string& address, int port, bool local); // Binds a socket to a port and initializes the DHT
     Node(const Peer& peer); // Creates a node/socket from a peer without binding socket or initializing the DHT
     ~Node();
     // Sends a join message to the bootstrap peer to join the network
@@ -60,6 +62,9 @@ public:
     // More functions
     std::string get_id(); // get ID of this node
     std::string get_ip_address() const;
+    std::string get_local_ip_address() const;
+    std::string get_device_ip_address() const;
+    std::string get_public_ip_address() const;
     int get_port() const;
     RoutingTable * get_routing_table() const;
 };

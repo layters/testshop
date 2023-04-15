@@ -14,6 +14,7 @@
 #include <QProcess> // Note: QProcess is not supported on VxWorks, iOS, tvOS, or watchOS.
 #include <QUuid>
 
+#include "../core/cart.hpp"
 #include "../core/client.hpp"
 #include "../core/currency_converter.hpp" // neroshop::Converter::is_supported_currency
 #include "../core/currency_map.hpp"
@@ -24,6 +25,7 @@
 #include "script_controller.hpp" // neroshop::Script::get_table_string
 #include "../core/util.hpp"
 #include "../core/util/logger.hpp"
+#include "../core/process.hpp"
 
 #include <future>
 #include <thread>

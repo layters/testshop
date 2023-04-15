@@ -96,7 +96,7 @@ The name _neroshop_ is a combination of the words _nero_, which is Italian for _
 | [openpgp](external/openpgp)                                        | ?                  | public-key encryption and digital signatures                           | :grey_question:                          |
 | [cxxopts](https://github.com/jarro2783/cxxopts)                    | ?                  | command line option parser                                             | :heavy_check_mark:                       |
 | [libzmq](https://github.com/zeromq/libzmq)                         | ?                  | networking                                                             | :grey_question:                          |
-| [libi2pd](https://github.com/PurpleI2P/i2pd)                       | latest             | privacy network                                                        | :grey_question:                          |
+| [libi2pd](https://github.com/PurpleI2P/i2pd)                       | latest             | network proxy                                                          | :grey_question:                          |
 | [dht](https://github.com/jech/dht)                                 | ?                  | distributed hash table                                                 | :grey_question:                          |
 
 ### Compiling neroshop from source

@@ -1,5 +1,6 @@
 #include "user.hpp"
 
+#include "cart.hpp"
 #include "client.hpp"
 #include "database.hpp"
 #include "util/logger.hpp"

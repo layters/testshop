@@ -1,7 +1,20 @@
 #include "process.hpp"
 
+#ifdef _WIN32
+#include <windows.h>
+#endif
+
+#ifdef __gnu_linux__
+#include <unistd.h> // fork, execvp
+//#include <sys/types.h> // ?
+#include <dirent.h> // closedir, opendir
+#include <signal.h> // kill
+#endif
+
+#include <fstream>
+
 #include "util/logger.hpp"
-#include "util.hpp"
+#include "util.hpp" // neroshop::filesystem
 
 neroshop::Process::Process()
 {
