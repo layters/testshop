@@ -13,6 +13,10 @@
 #include <arpa/inet.h> // for inet_pton
 #include <netdb.h>
 #include <unistd.h>
+#include <fcntl.h>
+//#include <ifaddrs.h>
+#include <errno.h>
+#include <poll.h>
 #endif
 
 #if defined(NEROSHOP_USE_LIBZMQ)

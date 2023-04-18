@@ -4,7 +4,7 @@
 
 A decentralized P2P (peer-to-peer) marketplace for [**Monero**](https://getmonero.org/) users (PoC)
 
-__Disclaimer: This is an experimental project that is not ready for production use. Use at your own discretion.
+__Disclaimer: This is an experimental project that is not ready for production use. Use at your own risk.
 Lastly, I have ended the bounty program as I am no longer working full-time so disregard all issues labelled "bounty". I will be working on this project on my own from now onwards.
 If you would like to help out go ahead and do so, but there won't be any compensation for your work.__
 
@@ -97,7 +97,6 @@ The name _neroshop_ is a combination of the words _nero_, which is Italian for _
 | [cxxopts](https://github.com/jarro2783/cxxopts)                    | ?                  | command line option parser                                             | :heavy_check_mark:                       |
 | [libzmq](https://github.com/zeromq/libzmq)                         | ?                  | networking                                                             | :grey_question:                          |
 | [libi2pd](https://github.com/PurpleI2P/i2pd)                       | latest             | network proxy                                                          | :grey_question:                          |
-| [dht](https://github.com/jech/dht)                                 | ?                  | distributed hash table                                                 | :grey_question:                          |
 
 ### Compiling neroshop from source
 **0. Install prerequisites**

@@ -68,11 +68,6 @@ endforeach()
 add_library(${i2pd_client_target} STATIC ${i2pd_client_srcs})
 target_include_directories(${i2pd_client_target} PUBLIC i2pd/i18n/ i2pd/libi2pd/ i2pd/libi2pd_client/)
 
-set(dht_target "dht")
-set(dht_srcs dht/dht.c)
-add_library(${dht_target} STATIC ${dht_srcs})
-target_include_directories(${dht_target} PUBLIC dht/)
-
 #[[
 set(_target "")
 set(_srcs )

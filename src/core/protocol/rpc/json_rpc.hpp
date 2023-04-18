@@ -27,6 +27,7 @@ namespace rpc {
     extern std::string get_query_method(const std::string& sql);
     extern bool is_query_method(const std::string& query_method);
     extern bool is_method(const std::string& method);
+    bool is_json_rpc(const std::string& str);
     extern std::string translate(const std::string& sql); // converts an sqlite query to a json_rpc request message
     extern std::string translate(const std::string& sql, const std::vector<std::string>& args);
     template <typename... Args>

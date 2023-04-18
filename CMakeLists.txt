@@ -388,11 +388,6 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR}/external/i2pd/libi2pd ${CMAKE_CU
 set(i2pd_src ${CMAKE_CURRENT_SOURCE_DIR}/build/libi2pd.a ${CMAKE_CURRENT_SOURCE_DIR}/build/libi2pd_client.a)
 
 ######################################
-# dht
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/external/dht)
-set(dht_src ${CMAKE_CURRENT_SOURCE_DIR}/build/libdht.a)
-
-######################################
 # openpgp
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/external/openpgp)
 if(NEROSHOP_USE_OPENPGP)
@@ -435,7 +430,9 @@ set(neroshop_protocol_src
     ${NEROSHOP_CORE_SRC_DIR}/protocol/p2p/kademlia.cpp
     ${NEROSHOP_CORE_SRC_DIR}/protocol/p2p/node.cpp
     ${NEROSHOP_CORE_SRC_DIR}/protocol/p2p/routing_table.cpp
+    ${NEROSHOP_CORE_SRC_DIR}/protocol/rpc/bencode.cpp    
     ${NEROSHOP_CORE_SRC_DIR}/protocol/rpc/json_rpc.cpp 
+    ${NEROSHOP_CORE_SRC_DIR}/protocol/rpc/krpc.cpp 
     ${NEROSHOP_CORE_SRC_DIR}/protocol/transport/ip_address.cpp 
 )
 
@@ -486,7 +483,7 @@ set(daemon_executable "neromon")
 add_executable(${daemon_executable} src/daemon/main.cpp src/core/server.cpp ${neroshop_crypto_src} ${neroshop_database_src} src/core/database.cpp ${neroshop_network_src} ${neroshop_protocol_src} ${NEROSHOP_CORE_SRC_DIR}/util/logger.cpp)#target_link_libraries(daemon ${curl_src} ${OPENSSL_LIBRARIES}) # curl requires both openssl(used in monero) and zlib(used in dokun-ui)
 target_compile_definitions(${daemon_executable} PRIVATE NEROSHOP_DEBUG)
 target_include_directories(${daemon_executable} PRIVATE #[[${CMAKE_CURRENT_SOURCE_DIR}/src/]])
-target_link_libraries(${daemon_executable} ${monero_cpp_src} ${sqlite_src} ${raft_src} ${monero_src} ${i2pd_src} ${dht_src})#set(CMAKE_CXX_LINK_EXECUTABLE "${CMAKE_CXX_LINK_EXECUTABLE} -ldl") # fixes undefined reference to symbol 'dlsym@@GLIBC_2.2.5' error
+target_link_libraries(${daemon_executable} ${monero_cpp_src} ${sqlite_src} ${raft_src} ${monero_src} ${i2pd_src})#set(CMAKE_CXX_LINK_EXECUTABLE "${CMAKE_CXX_LINK_EXECUTABLE} -ldl") # fixes undefined reference to symbol 'dlsym@@GLIBC_2.2.5' error
 
 ######################################
 # neroshop-console
@@ -495,7 +492,7 @@ if(NEROSHOP_BUILD_CLI)
     add_executable(${neroshop_console} src/console/main.cpp ${neroshop_core_src})
     target_compile_definitions(${neroshop_console} PRIVATE NEROSHOP_DEBUG)
     target_include_directories(${neroshop_console} PRIVATE #[[${CMAKE_CURRENT_SOURCE_DIR}/src/]])
-    target_link_libraries(${neroshop_console} ${monero_cpp_src} ${sqlite_src} #[[${qr_code_generator_src}]] ${raft_src} ${curl_src} ${monero_src} ${i2pd_src} ${dht_src} ${openpgp_src} ${lua_src} ${linenoise_src})
+    target_link_libraries(${neroshop_console} ${monero_cpp_src} ${sqlite_src} #[[${qr_code_generator_src}]] ${raft_src} ${curl_src} ${monero_src} ${i2pd_src} ${openpgp_src} ${lua_src} ${linenoise_src})
     message(STATUS "${BoldMagenta}NEROSHOP_BUILD_CLI option set to ON${ColourReset}")
 endif()
 
@@ -507,7 +504,7 @@ if(NEROSHOP_BUILD_GUI)
     target_sources(${neroshop_executable} PRIVATE ${neroshop_res} src/gui/main.cpp src/gui/script_controller.cpp src/gui/wallet_controller.cpp src/gui/user_controller.cpp src/gui/image_loader.cpp src/gui/image_provider.cpp src/gui/wallet_qr_provider.cpp src/gui/currency_rate_provider.cpp #[[src/gui/table_model.cpp]] src/gui/backend.cpp ${neroshop_core_src})
     target_compile_definitions(${neroshop_executable} PRIVATE NEROSHOP_DEBUG)#set_target_properties(${neroshop_executable} PROPERTIES COMPILE_DEFINITIONS "NEROSHOP_DEBUG")
     target_include_directories(${neroshop_executable} PRIVATE #[[${CMAKE_CURRENT_SOURCE_DIR}/src/]])
-    target_link_libraries(${neroshop_executable} ${monero_cpp_src} ${sqlite_src} ${qr_code_generator_src} ${raft_src} ${monero_src} ${i2pd_src} ${dht_src} ${openpgp_src} ${lua_src})
+    target_link_libraries(${neroshop_executable} ${monero_cpp_src} ${sqlite_src} ${qr_code_generator_src} ${raft_src} ${monero_src} ${i2pd_src} ${openpgp_src} ${lua_src})
     message(STATUS "${BoldMagenta}NEROSHOP_BUILD_GUI option set to ON${ColourReset}")
     target_compile_definitions(${neroshop_executable} PRIVATE NEROSHOP_BUILD_GUI)
 endif()

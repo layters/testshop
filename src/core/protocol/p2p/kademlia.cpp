@@ -1,22 +1,3 @@
-/*
-Copyright (c) 2009-2011 by Juliusz Chroboczek
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-The above copyright notice and this permission notice shall be included in
-all copies or substantial portions of the Software.
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-THE SOFTWARE.
-*/
-
 #include "kademlia.hpp"
 
 #include <netinet/in.h>
@@ -194,7 +175,7 @@ neroshop::dht_callback(void *closure,
          int event,
          const unsigned char *info_hash,
          const void *data, size_t data_len) {
-    if(event == DHT_EVENT_SEARCH_DONE)
+/*    if(event == DHT_EVENT_SEARCH_DONE)
         printf("Search done.\n");
     else if(event == DHT_EVENT_SEARCH_DONE6)
         printf("IPv6 search done.\n");
@@ -203,7 +184,7 @@ neroshop::dht_callback(void *closure,
     else if(event == DHT_EVENT_VALUES6)
         printf("Received %d IPv6 values.\n", (int)(data_len / 18));
     else
-        printf("Unknown DHT event %d.\n", event);
+        printf("Unknown DHT event %d.\n", event);*/
 }
 
 int

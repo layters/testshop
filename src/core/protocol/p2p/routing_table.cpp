@@ -32,7 +32,17 @@ bool neroshop::RoutingTable::add_node(Node* node) {//(const Node& node) {
         return false;
     }
 
-    buckets[bucket_index].push_back(std::move(node));
+    // Check if the node already exists in the bucket
+    auto& bucket = buckets[bucket_index];
+    for (const auto& n : bucket) {
+        if (n->get_id() == node_id) {
+            std::cout << "\033[0;33m" << (node->get_ip_address() + ":" + std::to_string(node->get_port())) << "\033[0m already exists in routing table\n";
+            return true;
+        }
+    }
+
+    // Add the node to the bucket
+    bucket.push_back(std::move(node));
     std::cout << "\033[0;36m" << (node->get_ip_address() + ":" + std::to_string(node->get_port())) << "\033[0m added to routing table\n";
     return true;
 }
