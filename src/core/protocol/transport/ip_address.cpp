@@ -177,16 +177,26 @@ std::string neroshop::get_device_ip_address() {
 
 std::string neroshop::url_to_ip(const std::string& url) {
     addrinfo hints{}, *res;
-    hints.ai_family = AF_INET;
+    hints.ai_family = AF_UNSPEC;
     hints.ai_socktype = SOCK_STREAM;
 
     if (getaddrinfo(url.c_str(), nullptr, &hints, &res) != 0) {
         return ""; // failed to resolve url
     }
 
-    sockaddr_in* ipv4 = (sockaddr_in*)res->ai_addr;
-    char ip[INET_ADDRSTRLEN];
-    inet_ntop(AF_INET, &(ipv4->sin_addr), ip, INET_ADDRSTRLEN);
+    std::string ip;
+    char ipstr[INET6_ADDRSTRLEN];
+    void* addr;
+    if (res->ai_family == AF_INET) {
+        sockaddr_in* ipv4 = (sockaddr_in*)res->ai_addr;
+        addr = &(ipv4->sin_addr);
+    } else {
+        sockaddr_in6* ipv6 = (sockaddr_in6*)res->ai_addr;
+        addr = &(ipv6->sin6_addr);
+    }
+
+    inet_ntop(res->ai_family, addr, ipstr, sizeof(ipstr));
+    ip = ipstr;
 
     freeaddrinfo(res);
 
@@ -239,51 +249,68 @@ int neroshop::get_ip_type(const std::string& address) {
 }
 
 bool neroshop::create_sockaddr(const std::string& address, int port, struct sockaddr_storage& node_addr) {
-    // No need to use `url_to_ip()` since `inet_pton()` handles that
-    
-    int ip_type = get_ip_type(address);
-    //std::cout << "ip type: " << ip_type << " " << ((ip_type == AF_INET6) ? "IPv6" : "IPv4") << "\n";
-
     memset(&node_addr, 0, sizeof(node_addr));
+        
+    if(!is_hostname(address)) { // works with url, ipv4 and ipv6 addresses
+        std::cerr << "is_hostname: Invalid address\n";
+        return false;
+    }
+
+    std::string ip_address = url_to_ip(address);
     
-    if (ip_type == AF_INET) {
+    if(is_ipv4(ip_address)) {
+        node_addr.ss_family = AF_INET; // Set IPv4 family
         struct sockaddr_in * addr4 = reinterpret_cast<sockaddr_in*>(&node_addr);
         addr4->sin_family = AF_INET;
         addr4->sin_port = htons(port); // port goes here
-        if(inet_pton(AF_INET, address.c_str(), &addr4->sin_addr) == 0) {//; // IP address goes here // inet_pton (short for "presentation to network") is a more modern and versatile function than inet_addr and can handle both IPv4 and IPv6 addresses, making it a more flexible and future-proof option
-            // address is not a valid IPv4 address, try resolving it as a hostname - causes error for some reason
-            /*struct addrinfo hints, *res;
-            memset(&hints, 0, sizeof(hints));
-            hints.ai_family = AF_INET;
-            hints.ai_socktype = SOCK_STREAM;
-            if (getaddrinfo(address.c_str(), NULL, &hints, &res) != 0) {
-                std::cerr << "Failed to resolve hostname\n";
-                return false;
-            }
-            memcpy(&addr4->sin_addr, &((struct sockaddr_in*)res->ai_addr)->sin_addr, sizeof(struct in_addr));
-            freeaddrinfo(res);*/
-        }
-    } else if (ip_type == AF_INET6) {
+        inet_pton(AF_INET, ip_address.c_str(), &addr4->sin_addr);/*if(inet_pton(AF_INET, address.c_str(), &addr4->sin_addr) == 0) {//; // inet_pton only works with dotted decimal IPv4 address strings
+            std::cerr << "Invalid IPv4 address\n";
+            return false;
+        }*/
+        std::cout << "IPv4 address created\n";
+    }
+    
+    else if(is_ipv6(ip_address)) {
+        node_addr.ss_family = AF_INET6; // Set IPv6 family
         struct sockaddr_in6 * addr6 = reinterpret_cast<sockaddr_in6*>(&node_addr);
         addr6->sin6_family = AF_INET6;
         addr6->sin6_port = htons(port);
-        if(inet_pton(AF_INET6, address.c_str(), &addr6->sin6_addr) == 0) {//;
-            // address is not a valid IPv6 address, try resolving it as a hostname - causes error for some reason
-            /*struct addrinfo hints, *res;
-            memset(&hints, 0, sizeof(hints));
-            hints.ai_family = AF_INET6;
-            hints.ai_socktype = SOCK_STREAM;
-            if (getaddrinfo(address.c_str(), NULL, &hints, &res) != 0) {
-                std::cerr << "Failed to resolve hostname\n";
-                return false;
-            }
-            memcpy(&addr6->sin6_addr, &((struct sockaddr_in6*)res->ai_addr)->sin6_addr, sizeof(struct in6_addr));
-            freeaddrinfo(res);*/
-        }
-    } else {
-        std::cerr << "Invalid address" << std::endl;
+        inet_pton(AF_INET6, ip_address.c_str(), &addr6->sin6_addr);/*if(inet_pton(AF_INET6, address.c_str(), &addr6->sin6_addr) == 0) { // //  If it returns 0, it means that the input string was not in a valid format for the specified address family
+            std::cerr << "Invalid IPv6 address\n";
+            return false;
+        }*/
+        std::cout << "IPv6 address created\n";
+    }
+    
+    else {
+        std::cerr << "create_socketaddr: Invalid address\n";
         return false;
     }
+        
+    return true;
+}
+
+bool neroshop::is_ipv4(const std::string& address) {
+    static const std::regex ipv4_regex("^([0-9]{1,3}\\.){3}[0-9]{1,3}$");
+    return std::regex_match(address, ipv4_regex);
+}
+
+bool neroshop::is_ipv6(const std::string& address) {
+    static const std::regex ipv6_regex("^([0-9a-fA-F]{1,4}:){7}[0-9a-fA-F]{1,4}$");
+    return std::regex_match(address, ipv6_regex);
+}
+
+bool neroshop::is_hostname(const std::string& address) {
+    addrinfo hints = {};
+    hints.ai_flags = AI_CANONNAME;
+
+    addrinfo* result;
+    int error = getaddrinfo(address.c_str(), nullptr, &hints, &result);
+    if (error) {
+        return false;
+    }
+
+    freeaddrinfo(result);
     return true;
 }
 
@@ -322,6 +349,15 @@ bool neroshop::create_sockaddr(const std::string& address, int port, struct sock
         // Handle error
     }
 
+    std::string ipv4_address = "192.168.1.1";
+    std::string ipv6_address = "2001:0db8:85a3:0000:0000:8a2e:0370:7334";
+    std::string invalid_address = "foo";
+
+    std::cout << ipv4_address << " is IPv4: " << is_ipv4(ipv4_address) << "\n";
+    std::cout << ipv6_address << " is IPv6: " << is_ipv6(ipv6_address) << "\n";
+    std::cout << invalid_address << " is IPv4: " << is_ipv4(invalid_address) << "\n";
+    std::cout << invalid_address << " is IPv6: " << is_ipv6(invalid_address) << "\n";
+    
     return 0;
 } // g++ ip_address.cpp -o ip -std=c++17
 */

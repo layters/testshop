@@ -37,4 +37,9 @@ namespace neroshop {
     int get_ip_type(const std::string& ip_address);
     
     bool create_sockaddr(const std::string& address, int port, struct sockaddr_storage& node_addr);
+
+    bool is_ipv4(const std::string& address);
+    bool is_ipv6(const std::string& address);
+    bool is_hostname(const std::string& address);
 }
+

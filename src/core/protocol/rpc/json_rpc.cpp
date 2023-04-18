@@ -420,6 +420,38 @@ bool neroshop::rpc::is_method(const std::string& method) {
     return (methods.count(method) > 0);
 }
 //----------------------------------------------------------------
+bool neroshop::rpc::is_json_rpc(const std::string& str) {
+#if defined(NEROSHOP_USE_QT)
+    // Parse the string as a JSON document
+    QJsonParseError error;
+    QJsonDocument doc = QJsonDocument::fromJson(QString::fromStdString(str).toUtf8(), &error);
+
+    // Check if parsing was successful and the root element is an object
+    if (error.error == QJsonParseError::NoError && doc.isObject()) {
+        QJsonObject obj = doc.object();
+
+        // Check if the object has a "jsonrpc" field with value "2.0"
+        if (obj.contains("jsonrpc") && obj["jsonrpc"].isString() && obj["jsonrpc"].toString() == "2.0"
+            && obj.contains("method") && obj["method"].isString()) {
+            return true;
+        }
+    }
+#else
+    try {
+        nlohmann::json j = nlohmann::json::parse(str);
+        if (j.is_object() && j.contains("jsonrpc") && j.contains("method")
+            && j["jsonrpc"].is_string() && j["method"].is_string()
+            && j["jsonrpc"].get<std::string>() == "2.0") {
+            return true;
+        }
+    }
+    catch (const std::exception& e) {
+        return false;
+    }
+#endif    
+    return false;
+}
+//----------------------------------------------------------------
 std::string neroshop::rpc::generate_random_id() {
     // Generate random number for id (id can be either a string or an integer or null which is not recommended)
     std::random_device rd; // obtain a random number from hardware

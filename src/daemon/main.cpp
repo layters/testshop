@@ -3,9 +3,11 @@
 #include "../core/crypto/sha3.hpp"
 #include "../core/protocol/p2p/node.hpp" // server.hpp included here (hopefully)
 #include "../core/protocol/p2p/routing_table.hpp" // uncomment if using routing_table
+#include "../core/protocol/rpc/bencode.hpp"
+#include "../core/protocol/rpc/krpc.hpp"
 //#include "../core/protocol/transport/ip_address.hpp"
-#include "../core/database.hpp"
 #include "../core/protocol/rpc/json_rpc.hpp"
+#include "../core/database.hpp"
 #include "../core/util/logger.hpp"
 #include "../core/version.hpp"
 
@@ -40,7 +42,15 @@ void do_heartbeat()
     // Read json-rpc request object from client
 	std::string request_object = server->read();
 	// Response to client with a json-rpc response object
-	server->write(neroshop::rpc::process(request_object));
+	if(neroshop::rpc::is_json_rpc(request_object)) {
+	    server->write(neroshop::rpc::process(request_object));
+	} 
+	else if(bencode::is_bencoded(request_object)) {
+	    // process bencode
+	} else {
+	    // server should ignore invalid requests
+	    std::cerr << "Invalid format\n";
+	}
 }
 // For security purposes, we don't allow any arguments to be passed into the daemon
 int main(int argc, char** argv)
@@ -66,7 +76,7 @@ int main(int argc, char** argv)
         exit(0);
     }        
     //-------------------------------------------------------
-    /*// Start server
+    // Start server
     std::atexit(close_server);
     
     server = new Server();
@@ -77,7 +87,7 @@ int main(int argc, char** argv)
 	}
 	server->listen(); // listens for any incoming connection
 	
-	const int SLEEP_INTERVAL = 1;
+	/*const int SLEEP_INTERVAL = 1;
   // Enter daemon loop
     while(true) {
         // Execute daemon heartbeat
@@ -97,16 +107,22 @@ int main(int argc, char** argv)
     std::cout << "Port number: " << dht_node.get_port() << "\n\n";
     std::cout << "******************************************************\n";
     // Join the DHT network
-    dht_node.join();
-
-    // Get a list of nodes
-    dht_node.get_nodes();
+    dht_node.join(); // find_node message should be sent from here
     
-    //while(true) {
+    const int SLEEP_INTERVAL = 1;
+    while(true) {
         //dht_periodic(n, NULL, 0);
         //usleep(10000);
-        dht_node.loop();
-    //}
+        //dht_node.loop();
+                // Execute daemon heartbeat
+        do_heartbeat();
+        // Sleep for a period of time
+        #ifdef _WIN32
+        Sleep(SLEEP_INTERVAL);
+        #else
+        sleep(SLEEP_INTERVAL);
+        #endif
+    }
     //-------------------------------------------------------
 	return 0;
 }
