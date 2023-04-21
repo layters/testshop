@@ -19,8 +19,6 @@
 #include "core/cart.hpp"
 #include "core/order.hpp"
 #include "core/catalog.hpp"
-#include "core/server.hpp"
-#include "core/client.hpp"
 #include "core/util.hpp"
 #include "core/process.hpp"
 // crypto
@@ -35,7 +33,12 @@
 #include "core/protocol/p2p/kademlia.hpp"
 #include "core/protocol/p2p/node.hpp"
 #include "core/protocol/p2p/routing_table.hpp"
+#include "core/protocol/rpc/bencode.hpp"
 #include "core/protocol/rpc/json_rpc.hpp"
+#include "core/protocol/rpc/krpc.hpp"
+#include "core/protocol/transport/client.hpp"
+#include "core/protocol/transport/ip_address.hpp"
+#include "core/protocol/transport/server.hpp"
 // network
 // ...
 // util

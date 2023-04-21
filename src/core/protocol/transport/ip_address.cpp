@@ -8,6 +8,7 @@
 #include <thread>
 #include <fstream>
 #include <stdexcept>
+#include <string>
 
 std::vector<std::string> IP_SOURCES = {
     "http://httpbin.org/ip", 
@@ -296,7 +297,7 @@ bool neroshop::is_ipv4(const std::string& address) {
 }
 
 bool neroshop::is_ipv6(const std::string& address) {
-    static const std::regex ipv6_regex("^([0-9a-fA-F]{1,4}:){7}[0-9a-fA-F]{1,4}$");
+    static const std::regex ipv6_regex("^(([0-9a-fA-F]{1,4}:){7}[0-9a-fA-F]{1,4}|[0-9a-fA-F]{1,4}(:[0-9a-fA-F]{1,4}){0,6})$");
     return std::regex_match(address, ipv6_regex);
 }
 
@@ -312,6 +313,22 @@ bool neroshop::is_hostname(const std::string& address) {
 
     freeaddrinfo(result);
     return true;
+}
+
+std::tuple<std::string, int> neroshop::parse_multiaddress(const std::string& multiaddress) {
+    std::regex pattern("/ip[46]/((?:\\d{1,3}\\.){3}\\d{1,3}|\\[[0-9a-fA-F:]+\\])/tcp/(\\d+)");
+
+    std::smatch match;
+    if (std::regex_match(multiaddress, match, pattern)) {
+        if (is_ipv4(match[1])) {
+            return std::make_tuple(match[1], std::stoi(match[2]));
+        } else if (is_ipv6(match[1])) {
+            return std::make_tuple(match[1].str().substr(1, match[1].str().size() - 2), std::stoi(match[2])); // Remove the square brackets from the IPv6 address
+        }
+    }
+
+    throw std::invalid_argument("Invalid multiaddress format");
+    return std::tuple<std::string, int>(); // This creates a new tuple with an empty string ("") and zero integer value (0).
 }
 
 /*int main() {

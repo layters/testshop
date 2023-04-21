@@ -31,7 +31,7 @@ int main(int argc, char** argv) {
     // Connect to daemon server (daemon must be launched first)
     #ifndef NEROSHOP_DEBUG
     neroshop::Client * client = neroshop::Client::get_main_client();
-	int port = 40441;
+	int port = DEFAULT_TCP_PORT;
 	std::string ip = "0.0.0.0";//"localhost"; // 0.0.0.0 means anyone can connect to your server
 	if(!client->connect(port, ip)) {
 	    std::cout << "Please launch neromon first\n";
@@ -59,21 +59,20 @@ int main(int argc, char** argv) {
     char * line = NULL;
     while((line = linenoise("neroshop-console> ")) != NULL) {
         std::string command { line };
-        command = neroshop::string::trim_left(command); // not necessary at all :D
 
         linenoiseHistoryLoad("history.txt");
         linenoiseHistoryAdd(line); // Add to the history.
         linenoiseHistorySave("history.txt"); // Save the history on disk.
 
-        if(neroshop::string::trim_right(command) == "help" || !strncmp(line, "\0", command.length())) { // By default, pressing "Enter" on an empty string will execute this code
+        if(command == "help" || !strncmp(line, "\0", command.length())) { // By default, pressing "Enter" on an empty string will execute this code
             print_commands();
         }  
-        else if(neroshop::string::trim_right(command) == "monero_nodes") {
+        else if(command == "monero_nodes") {
             for(std::string nodes : monero_nodes) {
                 std::cout << "\033[1;36m" << nodes << "\033[0m" << std::endl;
             }        
         }            
-        else if(neroshop::string::trim_right(command) == "version") {
+        else if(command == "version") {
             std::cout << "\033[0;93m" << "neroshop v" << NEROSHOP_VERSION << "\033[0m" << std::endl;
         }         
         else if(neroshop::string::starts_with(command, "query")) {
@@ -85,7 +84,7 @@ int main(int argc, char** argv) {
                  assert(neroshop::string::starts_with(sql, "SELECT", false) && "Only SELECT queries are allowed"); // since the ability to run sql commands gives too much power to the user to alter the database anyhow, limit queries to select statements only
                  std::string json = neroshop::rpc::translate(sql);
                  #ifdef NEROSHOP_DEBUG
-                 neroshop::rpc::process(json);
+                 std::cout << neroshop::rpc::process(json) << "\n";
                  #else
                  client->write(json); // write request to server
                  std::string response_object = client->read(); // read response from server
@@ -94,22 +93,22 @@ int main(int argc, char** argv) {
                  // Usage: query SELECT * FROM users;
             }
         }
-        else if(neroshop::string::trim_right(command) == "curl_version") {
+        else if(command == "curl_version") {
             curl_version_info_data * curl_version = curl_version_info(CURLVERSION_NOW);
             std::string curl_version_str = std::to_string((curl_version->version_num >> 16) & 0xff) + 
                 "." + std::to_string((curl_version->version_num >> 8) & 0xff) + 
                 "." + std::to_string(curl_version->version_num & 0xff);
             std::cout << "libcurl version " << curl_version_str << std::endl;
         }
-        else if(neroshop::string::trim_right(command) == "download_tor") {
+        else if(command == "download_tor") {
             std::packaged_task<void(void)> download_task([&]() -> void {
                 neroshop_tools::downloader::download_tor();
             });
             std::thread { std::move(download_task) }.detach();
         }
-        /*else if(neroshop::string::trim_right(command) == "") {
+        /*else if(command == "") {
         }*/        
-        else if(neroshop::string::trim_right(command) == "exit") {
+        else if(command == "exit") {
             break;
         }
         else {

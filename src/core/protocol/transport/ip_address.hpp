@@ -41,5 +41,7 @@ namespace neroshop {
     bool is_ipv4(const std::string& address);
     bool is_ipv6(const std::string& address);
     bool is_hostname(const std::string& address);
+    
+    std::tuple<std::string, int> parse_multiaddress(const std::string& multiaddress);
 }
 
