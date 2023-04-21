@@ -98,14 +98,14 @@ std::optional<neroshop::Node*> neroshop::RoutingTable::find_node(const std::stri
 }
 
 // un-tested
-std::optional<neroshop::Node*> neroshop::RoutingTable::find_closest_node(const std::string& key) {//const {
+std::optional<neroshop::Node*> neroshop::RoutingTable::find_closest_node(const std::string& key) {
     unsigned int key_hash = hash_to_int(key);
     int bucket_index = 0;
     while (bucket_index < NUM_BUCKETS && (key_hash & (1 << bucket_index)) == 0) {
         bucket_index++;
     }
 
-    if (bucket_index >= buckets.size()) {
+    if (bucket_index >= NUM_BUCKETS) {
         return std::nullopt; // routing table is empty
     }
 
@@ -130,7 +130,7 @@ std::optional<neroshop::Node*> neroshop::RoutingTable::find_closest_node(const s
     // If the bucket is empty, check the adjacent buckets for the closest node
     int left_bucket_index = bucket_index - 1;
     int right_bucket_index = bucket_index + 1;
-    while (left_bucket_index >= 0 || right_bucket_index < buckets.size()) {
+    while (left_bucket_index >= 0 || right_bucket_index < NUM_BUCKETS) {
         if (left_bucket_index >= 0) {
             const auto& left_bucket = buckets[left_bucket_index];
             if (!left_bucket.empty()) {
@@ -150,7 +150,7 @@ std::optional<neroshop::Node*> neroshop::RoutingTable::find_closest_node(const s
             }
             left_bucket_index--;
         }
-        if (right_bucket_index < buckets.size()) {
+        if (right_bucket_index < NUM_BUCKETS) {
             const auto& right_bucket = buckets[right_bucket_index];
             if (!right_bucket.empty()) {
                 auto closest_node = right_bucket.front();

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../../server.hpp" // TCP, UDP. IP-related headers here
+#include "../transport/server.hpp" // TCP, UDP. IP-related headers here
 
 #include <iostream>
 #include <string>
@@ -8,7 +8,7 @@
 #include <vector>
 #include <memory> // std::unique_ptr
 
-#define DEFAULT_PORT 6881
+#define DEFAULT_PORT DEFAULT_UDP_PORT
 #define MAX_NODES 100 // the maximum number of nodes that can be stored in the DHT routing table
 #define TIMEOUT_VALUE 5 // A reasonable timeout value for a DHT node could be between 5 to 30 seconds.
 
@@ -36,6 +36,7 @@ private:
     std::unique_ptr<RoutingTable> routing_table; // Pointer to the node's routing table
     friend class RoutingTable;
     std::string public_ip_address;
+    bool bootstrap;
     // Generates a node id from address and port combination
     std::string generate_node_id(const std::string& address, int port);
     // Determines if node1 is closer to the target_id than node2
@@ -66,6 +67,8 @@ public:
     std::string get_public_ip_address() const;
     int get_port() const;
     RoutingTable * get_routing_table() const;
+    void set_bootstrap(bool bootstrap);
+    bool is_bootstrap_node();
 };
 /*
 This is just a basic example implementation of a DHT in C++, and there are many details that are left out, such as the message routing mechanism, the peer discovery algorithm, and the node join and leave protocols. The actual implementation of a DHT can be quite complex and involves many different components, so this code should be considered as a starting point for further development.

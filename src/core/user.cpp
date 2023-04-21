@@ -1,7 +1,7 @@
 #include "user.hpp"
 
 #include "cart.hpp"
-#include "client.hpp"
+#include "protocol/transport/client.hpp"
 #include "database.hpp"
 #include "util/logger.hpp"
 

@@ -15,7 +15,7 @@
 #include <QUuid>
 
 #include "../core/cart.hpp"
-#include "../core/client.hpp"
+#include "../core/protocol/transport/client.hpp"
 #include "../core/currency_converter.hpp" // neroshop::Converter::is_supported_currency
 #include "../core/currency_map.hpp"
 #include "../core/crypto/sha256.hpp" // sha256

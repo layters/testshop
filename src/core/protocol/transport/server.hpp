@@ -38,6 +38,14 @@ extern "C" {
 #include <stdexcept> // std::runtime_error
 #include <cstring> // memset
 #include <random> // std::random_device
+#include <vector>
+
+#include "client.hpp"
+
+#define DEFAULT_TCP_PORT 57740 // Use ports between 49152-65535 that are not currently registered with IANA and are rarely used
+#define DEFAULT_UDP_PORT 50881
+
+#define DEFAULT_BACKLOG 511
 
 namespace neroshop {
 
@@ -55,36 +63,23 @@ public:
     //Server(unsigned int port);
 	~Server();
 	bool bind(unsigned int port);
-	bool listen();
+	bool listen(int backlog = DEFAULT_BACKLOG);
 	bool accept();
 	bool accept_all();
 	void write(const std::string& message);
 	std::string read();
 	void close(); // closes socket
 	void shutdown(); // shuts down entire connection, ending receiving and sending
+	
+	int get_socket() const;
+	const neroshop::Client& get_client(int index) const;
 
 private:
-    #if defined(__gnu_linux__) && defined(NEROSHOP_USE_SYSTEM_SOCKETS)
-    int socket;
-    char buffer[1024];
-    int client_socket;
-    #endif    
-    raft_server_t* raft;
-    
+    int sockfd;
+    struct sockaddr_in addr;
+    std::vector<std::unique_ptr<Client>> clients;
+    //raft_server_t* raft;
     friend class Node; // node can now access the server's functions
-    // functors
-    //#if defined(__cplusplus) && (__cplusplus < 201703L)
-    //std::unordered_map<std::string, std::function<void()>/*adaptor_type*/> functions;
-    //#endif
-    //#if defined(__cplusplus) && (__cplusplus >= 201703L)
-    std::unordered_map<std::string, std::any> functions;
-    //#endif
-    // ??
-    /*template< class R, class... Args >
-    std::unordered_map<std::string, std::function<R(Args...)>> functions;*/
-    // references:
-    // https://github.com/rpclib/rpclib/blob/master/include/rpc/dispatcher.h
-    // https://github.com/rpclib/rpclib/blob/master/include/rpc/server.h
 };
 }
 #endif

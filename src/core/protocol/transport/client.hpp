@@ -25,6 +25,7 @@ namespace neroshop {
 class Client {
 public:
     Client();
+    Client(int sockfd, struct sockaddr_in client_addr);
 	Client(std::string address, unsigned int port);
 	~Client();
 	void create(); // creates a new socket
@@ -39,10 +40,9 @@ public:
     bool is_connected() const;
 
 private:
-    #if defined(__gnu_linux__) && defined(NEROSHOP_USE_SYSTEM_SOCKETS)
-	int socket;
-	char buffer[1024];    
-	#endif
+	int sockfd;
+	struct sockaddr_in addr;
+	friend class Server;
 };
 }
 #endif

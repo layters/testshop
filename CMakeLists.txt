@@ -427,13 +427,15 @@ set(neroshop_price_src
 )
 
 set(neroshop_protocol_src 
-    ${NEROSHOP_CORE_SRC_DIR}/protocol/p2p/kademlia.cpp
-    ${NEROSHOP_CORE_SRC_DIR}/protocol/p2p/node.cpp
-    ${NEROSHOP_CORE_SRC_DIR}/protocol/p2p/routing_table.cpp
-    ${NEROSHOP_CORE_SRC_DIR}/protocol/rpc/bencode.cpp    
+    ${NEROSHOP_CORE_SRC_DIR}/protocol/p2p/kademlia.cpp 
+    ${NEROSHOP_CORE_SRC_DIR}/protocol/p2p/node.cpp 
+    ${NEROSHOP_CORE_SRC_DIR}/protocol/p2p/routing_table.cpp 
+    ${NEROSHOP_CORE_SRC_DIR}/protocol/rpc/bencode.cpp 
     ${NEROSHOP_CORE_SRC_DIR}/protocol/rpc/json_rpc.cpp 
     ${NEROSHOP_CORE_SRC_DIR}/protocol/rpc/krpc.cpp 
+    ${NEROSHOP_CORE_SRC_DIR}/protocol/transport/client.cpp 
     ${NEROSHOP_CORE_SRC_DIR}/protocol/transport/ip_address.cpp 
+    ${NEROSHOP_CORE_SRC_DIR}/protocol/transport/server.cpp 
 )
 
 set(neroshop_util_src 
@@ -448,7 +450,6 @@ set(neroshop_core_src
     ${NEROSHOP_CORE_SRC_DIR}/buyer.cpp 
     ${NEROSHOP_CORE_SRC_DIR}/cart.cpp 
     ${NEROSHOP_CORE_SRC_DIR}/catalog.cpp 
-    ${NEROSHOP_CORE_SRC_DIR}/client.cpp 
     ${NEROSHOP_CORE_SRC_DIR}/config.cpp 
     ${NEROSHOP_CORE_SRC_DIR}/currency_converter.cpp 
     ${NEROSHOP_CORE_SRC_DIR}/database.cpp 
@@ -457,7 +458,6 @@ set(neroshop_core_src
     ${NEROSHOP_CORE_SRC_DIR}/process.cpp 
     ${NEROSHOP_CORE_SRC_DIR}/script.cpp 
     ${NEROSHOP_CORE_SRC_DIR}/seller.cpp 
-    ${NEROSHOP_CORE_SRC_DIR}/server.cpp 
     ${NEROSHOP_CORE_SRC_DIR}/user.cpp 
     ${NEROSHOP_CORE_SRC_DIR}/wallet.cpp 
     ${neroshop_crypto_src} 
@@ -480,7 +480,7 @@ endif()
 ######################################
 # neroshop-daemon
 set(daemon_executable "neromon")
-add_executable(${daemon_executable} src/daemon/main.cpp src/core/server.cpp ${neroshop_crypto_src} ${neroshop_database_src} src/core/database.cpp ${neroshop_network_src} ${neroshop_protocol_src} ${NEROSHOP_CORE_SRC_DIR}/util/logger.cpp)#target_link_libraries(daemon ${curl_src} ${OPENSSL_LIBRARIES}) # curl requires both openssl(used in monero) and zlib(used in dokun-ui)
+add_executable(${daemon_executable} src/daemon/main.cpp ${neroshop_crypto_src} ${neroshop_database_src} src/core/database.cpp ${neroshop_network_src} ${neroshop_protocol_src} ${NEROSHOP_CORE_SRC_DIR}/util/logger.cpp)#target_link_libraries(daemon ${curl_src} ${OPENSSL_LIBRARIES}) # curl requires both openssl(used in monero) and zlib(used in dokun-ui)
 target_compile_definitions(${daemon_executable} PRIVATE NEROSHOP_DEBUG)
 target_include_directories(${daemon_executable} PRIVATE #[[${CMAKE_CURRENT_SOURCE_DIR}/src/]])
 target_link_libraries(${daemon_executable} ${monero_cpp_src} ${sqlite_src} ${raft_src} ${monero_src} ${i2pd_src})#set(CMAKE_CXX_LINK_EXECUTABLE "${CMAKE_CXX_LINK_EXECUTABLE} -ldl") # fixes undefined reference to symbol 'dlsym@@GLIBC_2.2.5' error

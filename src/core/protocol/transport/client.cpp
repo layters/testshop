@@ -1,22 +1,30 @@
 #include "client.hpp"
 
-#include "util/logger.hpp"
+#include "../../util/logger.hpp"
 
 #include <cstring> // memset
 
-neroshop::Client::Client() {//: socket(0) {
+neroshop::Client::Client() : sockfd(-1) {
     create();
 }
 ////////////////////
+neroshop::Client::Client(int sockfd, struct sockaddr_in client_addr) {
+    this->sockfd = sockfd;
+    this->addr = client_addr;
+}
+////////////////////
 neroshop::Client::~Client() {
-	close();
+    if(sockfd > 0) {
+        close();
+        sockfd = -1;
+    }
 }
 ////////////////////
 void neroshop::Client::create() {
     #if defined(__gnu_linux__) && defined(NEROSHOP_USE_SYSTEM_SOCKETS)
-    if(socket) return; // socket must be null before a new one can be created (if socket is not null then it means it was never closed)
-	socket = ::socket(AF_INET, SOCK_STREAM, 0);
-	if(socket < 0) {
+    if(sockfd > 0) return; // socket must be -1 before a new one can be created (if socket is not null then it means it was never closed)
+	sockfd = ::socket(AF_INET, SOCK_STREAM, 0);
+	if(sockfd < 0) {
 		neroshop::print("::socket: failed to create a socket", 1);
 	}    
     #endif
@@ -35,7 +43,7 @@ bool neroshop::Client::connect(unsigned int port, std::string address) {
     bcopy((char *)host->h_addr, (char *)&socket_addr.sin_addr.s_addr, host->h_length);
     socket_addr.sin_port = htons(port);
 	// connect to a server	
-	if(::connect(socket, (struct sockaddr *)(&socket_addr), sizeof(socket_addr)) < 0) {
+	if(::connect(sockfd, (struct sockaddr *)(&socket_addr), sizeof(socket_addr)) < 0) {
 		std::cerr << "Could not connect to server" << std::endl; // port is closed
 		close(); // kill socket // https://linux.die.net/man/3/connect => Application Usage
 		return false;
@@ -47,7 +55,7 @@ bool neroshop::Client::connect(unsigned int port, std::string address) {
 ////////////////////
 void neroshop::Client::write(const std::string& text) {
     #if defined(__gnu_linux__) && defined(NEROSHOP_USE_SYSTEM_SOCKETS)
-	ssize_t write_result = ::write(socket, text.c_str(), text.length());
+	ssize_t write_result = ::write(sockfd, text.c_str(), text.length());
 	if(write_result < 0) { // -1 = error
 		std::cerr << "Could not write to server" << std::endl;
 	}    
@@ -57,8 +65,9 @@ void neroshop::Client::write(const std::string& text) {
 std::string neroshop::Client::read()
 {
     #if defined(__gnu_linux__) && defined(NEROSHOP_USE_SYSTEM_SOCKETS)
+    char buffer[1024];
 	memset(buffer, 0, 1024); // clear buffer (fills buffer with 0's) before reading into buffer//bzero(buffer, 1024); // bzero is deprecated
-	ssize_t read_result = ::read(socket, buffer, 1023);
+	ssize_t read_result = ::read(sockfd, buffer, 1023);
 	if(read_result < 0) {
 		std::cerr << "Could not read from server" << std::endl;	
 	}
@@ -68,17 +77,11 @@ std::string neroshop::Client::read()
 }
 ////////////////////	
 void neroshop::Client::close() {
-    #if defined(__gnu_linux__) && defined(NEROSHOP_USE_SYSTEM_SOCKETS)
-    if(socket == 0) return;
-	::close(socket);
-	socket = 0;
-    #endif
+	::close(sockfd);
 }
 ////////////////////
 void neroshop::Client::shutdown() {
-    #if defined(__gnu_linux__) && defined(NEROSHOP_USE_SYSTEM_SOCKETS)
-    ::shutdown(socket, SHUT_RDWR); // SHUT_RD, SHUT_WR, SHUT_RDWR
-    #endif
+    ::shutdown(sockfd, SHUT_RDWR); // SHUT_RD, SHUT_WR, SHUT_RDWR
 }
 ////////////////////
 ////////////////////

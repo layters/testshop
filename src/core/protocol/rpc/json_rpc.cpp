@@ -160,14 +160,14 @@ std::string neroshop::rpc::process(const std::string& request) {
         response_object.insert(QString("id"), QJsonValue(QJsonValue::Null)); // "id" MUST be Null if there was an error in detecting the id in the Request object (e.g. Parse error/Invalid Request)
         // Return a response with an error_object
         response = QJsonDocument(response_object).toJson().toStdString();
-        #ifdef NEROSHOP_DEBUG
+        #ifdef NEROSHOP_DEBUG0
         std::cout << "Response output:\n\033[91m" << response << "\033[0m\n";
         #endif
         return response;
     }
     //  Retrieve keys and values from request_object
     #ifdef NEROSHOP_DEBUG
-    std::cout << "Request received:\n\033[33m" << json_doc.toJson().toStdString() << "\033[0m\n";
+    std::cout << /*"Request received:\n" << */"\033[33m" << json_doc.toJson(QJsonDocument::Compact).toStdString() << "\033[0m\n";
     #endif
     QJsonObject request_object = json_doc.object();
     QJsonValue jsonrpc_version = request_object.value("jsonrpc");
@@ -263,7 +263,7 @@ std::string neroshop::rpc::process(const std::string& request) {
     response_object.insert(QString("id"), id); // "id" MUST be the same as the request object's id
     // Print response (for debugging purposes)
     response = QJsonDocument(response_object).toJson(/*QJsonDocument::Compact*/).toStdString();
-    #ifdef NEROSHOP_DEBUG
+    #ifdef NEROSHOP_DEBUG0
     std::cout << "Response output:\n" << ((code != 0) ? "\033[91m" : "\033[32m") << response << "\033[0m\n";    
     #endif
     #else
@@ -281,14 +281,14 @@ std::string neroshop::rpc::process(const std::string& request) {
         response_object["error"]["data"] = exception.what(); // A Primitive (non-object) or Structured (array) value which may be omitted
         response_object["id"] = nullptr;
         response = response_object.dump(4);
-        #ifdef NEROSHOP_DEBUG
+        #ifdef NEROSHOP_DEBUG0
         std::cout << "Response output:\n\033[91m" << response << "\033[0m\n";
         #endif
         return response;
     }
     //  Retrieve keys and values from request_object
     #ifdef NEROSHOP_DEBUG
-    std::cout << "Request received:\n\033[33m" << request_object.dump(4) << "\033[0m\n";
+    std::cout << /*"Request received:\n" << */"\033[33m" << request_object.dump() << "\033[0m\n";
     #endif
     assert(request_object.is_object());
     assert(request_object["jsonrpc"].is_string());
@@ -375,7 +375,7 @@ std::string neroshop::rpc::process(const std::string& request) {
     response_object["id"] = id; // "id" MUST be the same as the request object's id
     // Print response (for debugging purposes)
     response = response_object.dump(4);
-    #ifdef NEROSHOP_DEBUG
+    #ifdef NEROSHOP_DEBUG0
     std::cout << "Response output:\n" << ((code != 0) ? "\033[91m" : "\033[32m") << response << "\033[0m\n";    
     #endif
     #endif
