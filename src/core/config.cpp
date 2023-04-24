@@ -18,67 +18,41 @@
 
 #include <filesystem>
 
-std::string neroshop::lua_string = R"(-- settings.lua
-localhost = "127.0.0.1"
-neroshop = {
-    generalsettings = {
-        currency = "usd",
-        application = {
-            theme = {
-                dark = false,
-                name = "DefaultLight", --"DefaultDark", "DefaultLight", "PurpleDust",
-            },        
-            window = {
-                width = 1280,
-                height = 720,
-                mode = 0, --0 (window_mode) or 1 (fullscreen)
-            }
-        }        
-    },
-    
-    monero = {
-        wallet = {
-            file = "",
-            restore_height = "2014-04-18" -- block height or date (YYYY-MM-DD)
+#define LUA_FILE "nodes.lua"
+#define JSON_FILE "settings.json"
+
+std::string neroshop::lua_string = R"(monero = {
+    nodes = {
+        mainnet = {
+            "node.community.rino.io:18081",
+            "node.sethforprivacy.com:18089",
+            "node2.sethforprivacy.com:18089",
+            "selsta1.featherwallet.net:18081",
+            "selsta2.featherwallet.net:18081",
+            "node.monerooutreach.org:18081",
+            "node.majesticbank.is:18089",
+            "node.majesticbank.su:18089",
+            "xmr-node-eu.cakewallet.com:18081",
+            "xmr-node-usa-east.cakewallet.com:18081",
+            "canada.node.xmr.pm:18089",
+            "singapore.node.xmr.pm:18089",
+            "nodes.hashvault.pro:18081",
+            "node.supportxmr.com:18081",
+            "node.xmr.ru:18081"
         },
-        daemon = {
-            network_type = "stagenet",
-            confirm_external_bind = false, -- if true then it confirms that you want to allow connections from other wallets outside of this system, but only when ip is set to "0.0.0.0"
-            restricted_rpc = true,
-            data_dir = "/home/<user>/.bitmonero",
+        stagenet = {
+            "http://node.monerodevs.org:38089",
+            "http://node2.monerodevs.org:38089",
+            "http://stagenet.community.rino.io:38081",
+            "http://stagenet.xmr-tw.org:38081",
+            "http://xmr-lux.boldsuck.org:38081",
+            "https://xmr-lux.boldsuck.org:38081",
         },
-        nodes = {
-            mainnet = {
-                "node.community.rino.io:18081",
-                "node.sethforprivacy.com:18089",
-                "node2.sethforprivacy.com:18089",
-                "selsta1.featherwallet.net:18081",
-                "selsta2.featherwallet.net:18081",
-                "node.monerooutreach.org:18081",
-                "node.majesticbank.is:18089",
-                "node.majesticbank.su:18089",
-                "xmr-node-eu.cakewallet.com:18081",
-                "xmr-node-usa-east.cakewallet.com:18081",
-                "canada.node.xmr.pm:18089",
-                "singapore.node.xmr.pm:18089",
-                "nodes.hashvault.pro:18081",
-                "node.supportxmr.com:18081",
-                "node.xmr.ru:18081"
-            },
-            stagenet = {
-                "http://node.monerodevs.org:38089",
-                "http://node2.monerodevs.org:38089",
-                "http://stagenet.community.rino.io:38081",
-                "http://stagenet.xmr-tw.org:38081",
-                "http://xmr-lux.boldsuck.org:38081",
-                "https://xmr-lux.boldsuck.org:38081",
-            },
-            testnet = {
-                "http://node.monerodevs.org:28089",
-                "http://node2.monerodevs.org:28089",
-                "http://testnet.community.rino.io:28081",
-                "http://testnet.xmr-tw.org:28081",
-            }
+        testnet = {
+            "http://node.monerodevs.org:28089",
+            "http://node2.monerodevs.org:28089",
+            "http://testnet.community.rino.io:28081",
+            "http://testnet.xmr-tw.org:28081",
         }
     }
 })";
@@ -86,30 +60,28 @@ neroshop = {
 lua_State * neroshop::lua_state(luaL_newstate());
 //----------------------------------------------------------------
 bool neroshop::load_config() {
-        std::string user = neroshop::device::get_user();
+        ////std::string user = neroshop::device::get_user();
         // "/home/<user>/.config/neroshop"
         std::string configuration_path = NEROSHOP_DEFAULT_CONFIGURATION_PATH;
-        std::string configuration_file = "settings.lua";
+        std::string configuration_file = LUA_FILE;
         // "/home/<user>/.config/neroshop/settings.lua"
         std::string neroshop_config_name = configuration_path + "/" + configuration_file;
         Script script;
         if(!script.load(lua_state, neroshop_config_name)) {
             return false;
         }
+        #ifdef NEROSHOP_DEBUG0
         neroshop::print("\033[1;94mloaded script \"" + script.get_file() + "\"");
+        #endif
         return true;
 	}
 //----------------------------------------------------------------
 bool neroshop::create_config() {
-    std::string user = neroshop::device::get_user();
+    ////std::string user = neroshop::device::get_user();
     std::string text(lua_string);
-        // swap data_dir with user
-    #if defined(__gnu_linux__) // works!    
-        text = neroshop::string::swap_first_of(text, "/home/<user>/.bitmonero", ("/home/" + user + "/.bitmonero"));
-    #endif    
         // "/home/<user>/.config/neroshop"
         std::string configuration_path = NEROSHOP_DEFAULT_CONFIGURATION_PATH;//"/home/" + user + "/.config/neroshop";
-        std::string configuration_file = "settings.lua";
+        std::string configuration_file = LUA_FILE;
         // "/home/<user>/.config/neroshop/config.lua"
         std::string neroshop_config_name = configuration_path + "/" + configuration_file;
         // if file already exists, no need to create it again
@@ -134,7 +106,9 @@ bool neroshop::create_config() {
             cfg.open (neroshop_config_name, std::ios::out | std::ios::trunc);
             cfg << text << "\n"; // write to file
             cfg.close();
+            #ifdef NEROSHOP_DEBUG0
             neroshop::print("\033[1;97;49mcreated file \"" + neroshop_config_name + "\"\033[0m");  
+            #endif
         }
         return true;		
 	}
@@ -143,7 +117,7 @@ void neroshop::edit_config(const std::string& old_str, const std::string& new_st
     std::string text(lua_string);
     
     std::string configuration_path = NEROSHOP_DEFAULT_CONFIGURATION_PATH;
-    std::string configuration_file = "settings.lua";
+    std::string configuration_file = LUA_FILE;
     std::string configuration = configuration_path + "/" + configuration_file;
     
     if(!std::filesystem::is_regular_file(configuration)) {
@@ -181,7 +155,7 @@ lua_State * neroshop::get_lua_state() {
 //----------------------------------------------------------------
 bool neroshop::create_json() {
     std::string config_path = NEROSHOP_DEFAULT_CONFIGURATION_PATH;
-    std::string settings_filename = "settings.json";
+    std::string settings_filename = JSON_FILE;
     std::string config_file = config_path + "/" + settings_filename;
     #if defined(NEROSHOP_USE_QT)
     // Exit function if file already exists
@@ -210,7 +184,10 @@ bool neroshop::create_json() {
         root_obj.insert(QString("language"), QJsonValue("English"));
         root_obj.insert(QString("hide_homepage_button"), QJsonValue(false));
         root_obj.insert(QString("hide_price_display"), QJsonValue(false));
-        root_obj.insert(QString("wallet_directory"), QJsonValue(""));    
+        root_obj.insert(QString("wallet_directory"), QJsonValue(""));
+        root_obj.insert(QString("window_width"), QJsonValue(1280));
+        root_obj.insert(QString("window_height"), QJsonValue(900));//720));
+        root_obj.insert(QString("window_mode"), QJsonValue(0));
         QJsonObject monero_obj;
         //monero_obj.insert(QString("restore_height"), QJsonValue());
         QJsonObject wallet_obj;
@@ -247,8 +224,10 @@ bool neroshop::create_json() {
         QTextStream out(&settings_file);
         out << settings_json;
         settings_file.close();
-        std::cout << "settings.json created\n";    
+        #ifdef NEROSHOP_DEBUG0
+        std::cout << "settings.json created\n";
         std::cout << settings_json.toStdString() << "\n";
+        #endif
     }
     #else
     // Exit function if file already exists
@@ -277,6 +256,9 @@ bool neroshop::create_json() {
         settings_json["hide_homepage_button"] = false;
         settings_json["hide_price_display"] = false;
         settings_json["wallet_directory"] = ""; // leave blank to use default
+        settings_json["window_width"] = 1280;
+        settings_json["window_height"] = 900;//720;
+        settings_json["window_mode"] = 0;
         //settings_json[""] = ;
         settings_json["monero"]["wallet"]["balance_display"] = "All balances";
         settings_json["monero"]["wallet"]["balance_amount_precision"] = 12;
@@ -300,8 +282,10 @@ bool neroshop::create_json() {
         // Write to file then close it
         settings_file << settings_json.dump(4);
         settings_file.close();
-        neroshop::print("\033[1;97;49mcreated file \"" + config_file + "\"\033[0m");  
+        #ifdef NEROSHOP_DEBUG0
+        neroshop::print("\033[1;97;49mcreated file \"" + config_file + "\"\033[0m");        
         std::cout << settings_json.dump(4) << "\n";
+        #endif
     }
     #endif    
     return true;
@@ -309,7 +293,7 @@ bool neroshop::create_json() {
 //----------------------------------------------------------------
 std::string neroshop::load_json() {
     std::string config_path = NEROSHOP_DEFAULT_CONFIGURATION_PATH;
-    std::string settings_filename = "settings.json";
+    std::string settings_filename = JSON_FILE;
     std::string config_file = config_path + "/" + settings_filename;
     #if defined(NEROSHOP_USE_QT)
     // Open settings file for reading
@@ -360,7 +344,7 @@ bool neroshop::open_json(std::string& out) {
 //----------------------------------------------------------------
 void neroshop::modify_json(const std::string& settings) { // saves settings
     std::string config_path = NEROSHOP_DEFAULT_CONFIGURATION_PATH;
-    std::string settings_filename = "settings.json";
+    std::string settings_filename = JSON_FILE;
     std::string config_file = config_path + "/" + settings_filename;
     #if defined(NEROSHOP_USE_QT)
     // Validate the JSON

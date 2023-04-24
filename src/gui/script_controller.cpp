@@ -84,7 +84,7 @@ QVariantMap neroshop::ScriptController::getJsonObject(const QString& key) {
     return json_obj.toVariantMap();
 }
 
-QVariantMap neroshop::ScriptController::getJsonObject() const {
+QVariantMap neroshop::ScriptController::getJsonRootObject() const {
     return json_object.toVariantMap();
 }
 
@@ -95,4 +95,8 @@ QString neroshop::ScriptController::getJsonLiteral() {
 
 void neroshop::ScriptController::saveJson(const QString& settings) {
     neroshop::modify_json(settings.toStdString());
+}
+
+QJsonObject neroshop::ScriptController::getJsonRootObjectCpp() const {
+    return json_object;
 }

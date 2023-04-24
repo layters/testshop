@@ -22,10 +22,10 @@
 
 using namespace neroshop;
 
-Server server;
+Server rpc_server;
 
 void close_server() {
-    server.shutdown();
+    rpc_server.shutdown();
     std::cout << NEROMON_TAG "\033[1;91mdisconnected\033[0m" << std::endl;
 }
 ////////////////////
@@ -61,7 +61,7 @@ void handle_requests() {
     std::lock_guard<std::mutex> lock(server_mutex);
 
     // Read json-rpc request object from client
-	std::string request_object = server.read();
+	std::string request_object = rpc_server.read();
 	
 	// Extract JSON payload from request
 	const std::string json_payload = extract_json_payload(request_object);
@@ -71,7 +71,7 @@ void handle_requests() {
 	// Process JSON-RPC request
 	std::string response_object = "";
 	if(neroshop::rpc::is_json_rpc(json_payload)) {
-	    response_object = neroshop::rpc::process(json_payload);
+	    response_object = neroshop::rpc::json::process(json_payload);
 	    http_response << "HTTP/1.1 200 OK\r\n";
 	} else {
         std::stringstream error_msg;
@@ -87,16 +87,14 @@ void handle_requests() {
     http_response << response_object;
 	
 	// Send HTTP response to client
-	server.write(http_response.str());
+	rpc_server.write(http_response.str());
 }
 ///////////////////
 void do_heartbeat()
 {
     // Accept incoming connections and handle clients concurrently
-    if(server.accept() != -1) {
+    if(rpc_server.accept() != -1) {
         clients_mutex.lock();
-        
-        std::lock_guard<std::mutex> lock(server_mutex);
         
         std::thread request_thread(handle_requests);
         request_thread.detach();
@@ -117,6 +115,7 @@ int main(int argc, char** argv)
         ("h,help", "Print usage")
         ("v,version", "Show version")
         ("b,bootstrap", "Run this node as a bootstrap node")////, cxxopts::value<std::string>())//("bl,bootstrap_lazy", "Run this node as a bootstrap node without specifying multiaddress")
+        //("bl,bootstrap-lazy", "Run this node as a bootstrap node without specifying multiaddress")
         ("c,config", "Path to configuration file")
     ;
     
@@ -158,7 +157,23 @@ int main(int argc, char** argv)
     std::cout << "Port number: " << dht_node.get_port() << "\n\n";
     std::cout << "******************************************************\n";
     // Join the DHT network
-    dht_node.join(); // find_node message should be sent from here
+    // ...
+    
+    std::mutex mutex;
+    std::condition_variable cond_var;
+    bool is_dht_node_joined = false;
+
+    dht_node.join([&]() {
+        // This callback will be called when the DHT node joins the network
+        std::unique_lock<std::mutex> lock(mutex);
+        is_dht_node_joined = true;
+        cond_var.notify_all();
+    });
+
+    {
+        std::unique_lock<std::mutex> lock(mutex);
+        cond_var.wait(lock, [&](){ return is_dht_node_joined; });
+    }
     
     std::thread udp_peer_thread([&dht_node](){ dht_node.loop(); });
     udp_peer_thread.detach(); // detach threads so that they run independently
@@ -169,10 +184,10 @@ int main(int argc, char** argv)
     std::atexit(close_server);
     
     int server_port = DEFAULT_TCP_PORT;
-	if(server.bind(server_port)) {
-	    std::cout << NEROMON_TAG "\033[1;97mTCP Server bound to port " + std::to_string(server_port) + "\033[0m\n";
+	if(rpc_server.bind(server_port)) {
+	    std::cout << NEROMON_TAG "\033[1;97mJSON-RPC Server (TCP) bound to port " + std::to_string(server_port) + "\033[0m\n";
 	}
-	server.listen(); // listens for any incoming connection
+	rpc_server.listen(); // listens for any incoming connection
 	
 	const int SLEEP_INTERVAL = 1 * 1000; // must be specified in milliseconds
     // Enter daemon loop (main thread)

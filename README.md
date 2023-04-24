@@ -4,9 +4,13 @@
 
 A decentralized P2P (peer-to-peer) marketplace for [**Monero**](https://getmonero.org/) users (PoC)
 
-__Disclaimer: This is an experimental project that is not ready for production use. Use at your own risk.
-Lastly, I have ended the bounty program as I am no longer working full-time so disregard all issues labelled "bounty". I will be working on this project on my own from now onwards.
-If you would like to help out go ahead and do so, but there won't be any compensation for your work.__
+
+__Disclaimer: This is an experimental/hobbyist project that is not ready for production use. Use at your own risk.
+
+Edit: As of April 24th, 2023, this project is no longer being actively developed. However, the code is open source and available for anyone to use, subject to the terms of the license. If you are interested in taking over development, please contact me beforehand.__
+
+
+[![Readme Card](https://github-readme-stats.vercel.app/api/pin/?username=larteyoh&repo=testshop&theme=shades-of-purple)](https://github.com/larteyoh/testshop)
 
 
 ## Table of contents
@@ -97,6 +101,7 @@ The name _neroshop_ is a combination of the words _nero_, which is Italian for _
 | [cxxopts](https://github.com/jarro2783/cxxopts)                    | ?                  | command line option parser                                             | :heavy_check_mark:                       |
 | [libzmq](https://github.com/zeromq/libzmq)                         | ?                  | networking                                                             | :grey_question:                          |
 | [libi2pd](https://github.com/PurpleI2P/i2pd)                       | latest             | network proxy                                                          | :grey_question:                          |
+| [msgpack11](https://github.com/ar90n/msgpack11)                    | ?                  | binary serialization                                                   | :grey_question:                          |
 
 ### Compiling neroshop from source
 **0. Install prerequisites**

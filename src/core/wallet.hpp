@@ -134,7 +134,7 @@ private:
     void load_from_config(std::string/*const std::string&*/ password = "supersecretpassword123");
 private:
     std::unique_ptr<monero::monero_wallet_full> monero_wallet_obj; // monero wallet
-    monero::monero_network_type network_type; // default will be mainnet when this application is released
+    static monero::monero_network_type network_type; // default will be mainnet when this application is released
     std::unique_ptr<Process> process; // monerod process // every wallet will have its own process
     volatile double percentage; // sync progress
     mutable std::mutex wallet_data_mutex;

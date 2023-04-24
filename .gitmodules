@@ -18,4 +18,4 @@
 	url = https://github.com/jarro2783/cxxopts.git
 [submodule "external/i2pd"]
 	path = external/i2pd
-	url = https://github.com/PurpleI2P/i2pd
+	url = https://github.com/PurpleI2P/i2pd.git

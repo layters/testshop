@@ -263,10 +263,8 @@ void bencode::parse_bencoded_dict(const std::string& str, size_t& pos) {
     }
     pos++;
     while (pos < str.length() && str[pos] != 'e') {
-        parse_bencoded(str, pos);
-        if (pos < str.length() && str[pos] != 'e') {
-            parse_bencoded(str, pos);
-        }
+        parse_bencoded_string(str, pos);
+        parse_bencoded(str, pos); // recursively parse the value
     }
     if (pos >= str.length() || str[pos] != 'e') {
         throw std::invalid_argument("Invalid bencoded dict");
@@ -275,6 +273,9 @@ void bencode::parse_bencoded_dict(const std::string& str, size_t& pos) {
 }
 
 void bencode::parse_bencoded(const std::string& str, size_t& pos) {
+    if (pos >= str.length()) {
+        throw std::invalid_argument("Unexpected end of bencoded data");
+    }
     switch (str[pos]) {
         case 'i':
             parse_bencoded_integer(str, pos);
@@ -286,7 +287,11 @@ void bencode::parse_bencoded(const std::string& str, size_t& pos) {
             parse_bencoded_dict(str, pos);
             break;
         default:
-            parse_bencoded_string(str, pos);
+            if (isdigit(str[pos])) {
+                parse_bencoded_string(str, pos);
+            } else {
+                throw std::invalid_argument("Invalid bencoded data");
+            }
             break;
     }
 }

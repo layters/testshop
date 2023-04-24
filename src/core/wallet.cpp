@@ -8,8 +8,10 @@
 #include <cmath>
 #include <filesystem>
 
-neroshop::Wallet::Wallet() : process(nullptr), percentage(0.0), monero_wallet_obj(nullptr), network_type(monero_network_type::STAGENET)
+neroshop::Wallet::Wallet() : process(nullptr), percentage(0.0), monero_wallet_obj(nullptr)
 {}
+//-------------------------------------------------------
+monero::monero_network_type neroshop::Wallet::network_type(monero_network_type::STAGENET);
 //-------------------------------------------------------
 neroshop::Wallet::~Wallet() 
 {

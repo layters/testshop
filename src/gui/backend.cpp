@@ -1060,8 +1060,9 @@ int neroshop::Backend::deleteExpiredOrders() {
 //----------------------------------------------------------------
 QVariantList neroshop::Backend::getNodeListDefault(const QString& coin) const {
     QVariantList node_list;
-    std::string network_type = neroshop::Script::get_string(neroshop::lua_state, "neroshop.monero.daemon.network_type");
-    std::vector<std::string> node_table = neroshop::Script::get_table_string(neroshop::lua_state, "neroshop." + coin.toStdString() + ".nodes." + network_type); // Get monero nodes from settings.lua////std::cout << "lua_query: " << "neroshop." + coin.toStdString() + ".nodes." + network_type << std::endl;
+    ScriptController script_controller;
+    std::string network_type = script_controller.getJsonRootObjectCpp().value("monero").toObject().value("daemon").toObject().value("network_type").toString().toStdString();//neroshop::Script::get_string(neroshop::lua_state, "neroshop.monero.daemon.network_type");
+    std::vector<std::string> node_table = neroshop::Script::get_table_string(neroshop::lua_state, coin.toStdString() + ".nodes." + network_type); // Get monero nodes from settings.lua////std::cout << "lua_query: " << "neroshop." + coin.toStdString() + ".nodes." + network_type << std::endl;
     for(auto strings : node_table) {
         node_list << QString::fromStdString(strings);
     }

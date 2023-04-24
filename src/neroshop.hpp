@@ -36,6 +36,7 @@
 #include "core/protocol/rpc/bencode.hpp"
 #include "core/protocol/rpc/json_rpc.hpp"
 #include "core/protocol/rpc/krpc.hpp"
+#include "core/protocol/rpc/msgpack.hpp"
 #include "core/protocol/transport/client.hpp"
 #include "core/protocol/transport/ip_address.hpp"
 #include "core/protocol/transport/server.hpp"

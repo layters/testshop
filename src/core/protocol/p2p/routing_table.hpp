@@ -31,11 +31,12 @@ public:
     
     std::optional<Node*> find_node(const std::string& node_id);// const;
 
-    std::optional<Node*> find_closest_node(const std::string& key);// const;
+    std::vector<neroshop::Node*> find_closest_nodes(const std::string& key, int count = 10);// const;
 
     // Print the contents of the routing table
     void print_table() const;
 
+    bool has_node(const std::string& node_id);// const;
 };
 
 }

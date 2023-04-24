@@ -39,18 +39,26 @@ int main(int argc, char** argv) {
 	}
 	#endif
     //-------------------------------------------------------
+    // nodes.lua
     if(!neroshop::create_config()) { 
         neroshop::load_config();
+    }
+    
+    // settings.json
+    create_json();
+    nlohmann::json json_object = nlohmann::json::parse(load_json(), nullptr, false);
+    if (json_object.is_discarded()) {
+        return 1;
     }
 
     std::vector<std::string> networks = {"mainnet", "stagenet", "testnet"};
 
-    std::string network_type = Script::get_string(lua_state, "neroshop.monero.daemon.network_type");
+    std::string network_type = json_object["monero"]["daemon"]["network_type"];//Script::get_string(lua_state, "monero.daemon.network_type");
     if (std::find(networks.begin(), networks.end(), network_type) == networks.end()) {
         neroshop::print("\033[1;91mnetwork_type \"" + network_type + "\" is not valid");
         return 1;
     }
-    std::vector<std::string> monero_nodes = Script::get_table_string(lua_state, "neroshop.monero.nodes." + network_type);
+    std::vector<std::string> monero_nodes = Script::get_table_string(lua_state, "monero.nodes." + network_type);
     
     if(monero_nodes.empty()) {
         std::cout << "failed to get nodes in the config file\nCheck your config file in ~/.config/neroshop" << std::endl;
@@ -82,14 +90,9 @@ int main(int argc, char** argv) {
                  std::size_t arg_pos = command.find_first_of(" ");
                  std::string sql = neroshop::string::trim_left(command.substr(arg_pos + 1));////trim_left(command.substr(std::string("query").length() + 1)); // <- this works too
                  assert(neroshop::string::starts_with(sql, "SELECT", false) && "Only SELECT queries are allowed"); // since the ability to run sql commands gives too much power to the user to alter the database anyhow, limit queries to select statements only
-                 std::string json = neroshop::rpc::translate(sql);
-                 #ifdef NEROSHOP_DEBUG
-                 std::cout << neroshop::rpc::process(json) << "\n";
-                 #else
-                 client->write(json); // write request to server
-                 std::string response_object = client->read(); // read response from server
-                 std::cout << "Server response: " << response_object << "\n";
-                 #endif
+                 std::string json = neroshop::rpc::json::translate(sql);
+                 // No need to call RPC server to access RPC functions when it can be done directly.
+                 std::cout << neroshop::rpc::json::process(json) << "\n";
                  // Usage: query SELECT * FROM users;
             }
         }

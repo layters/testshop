@@ -17,10 +17,10 @@ import "pages"
 ApplicationWindow {
     id: mainWindow
     visible: true
-    visibility: (Script.getNumber("neroshop.generalsettings.application.window.mode") == 1) ? "FullScreen" : "Windowed"
+    visibility: (Script.getJsonRootObject()["window_mode"] == 1) ? "FullScreen" : "Windowed"
     title: qsTr("neroshop" + " v" + neroshopVersion)
-    width: Script.getNumber("neroshop.generalsettings.application.window.width")
-    height: Script.getNumber("neroshop.generalsettings.application.window.height")
+    width: Script.getJsonRootObject()["window_width"]
+    height: Script.getJsonRootObject()["window_height"]
     minimumWidth: 850
     minimumHeight: 500    
     color: NeroshopComponents.Style.getColorsFromTheme()[0]
