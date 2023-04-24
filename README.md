@@ -5,9 +5,9 @@
 A decentralized P2P (peer-to-peer) marketplace for [**Monero**](https://getmonero.org/) users (PoC)
 
 
-__Disclaimer: This is an experimental/hobbyist project that is not ready for production use. Use at your own risk.
+__Disclaimer: This is an experimental/hobbyist project that is not ready for production use. Use at your own risk.__
 
-Edit: As of April 24th, 2023, this project is no longer being actively developed. However, the code is open source and available for anyone to use, subject to the terms of the license. If you are interested in taking over development, please contact me beforehand.__
+__Edit: As of April 24th, 2023, this project is no longer being actively developed. However, the code is open source and available for anyone to use, subject to the terms of the license. If you are interested in taking over development, please contact me beforehand.__
 
 
 [![Readme Card](https://github-readme-stats.vercel.app/api/pin/?username=larteyoh&repo=testshop&theme=shades-of-purple)](https://github.com/larteyoh/testshop)
