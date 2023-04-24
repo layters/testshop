@@ -35,10 +35,11 @@ public:
     Q_INVOKABLE bool getJsonBool(const QString& key);
     Q_INVOKABLE double getJsonDouble(const QString& key);
     Q_INVOKABLE QVariantList getJsonArray(const QString& key);
-    Q_INVOKABLE QVariantMap getJsonObject() const; // root object
+    Q_INVOKABLE QVariantMap getJsonRootObject() const; // root object
     Q_INVOKABLE QVariantMap getJsonObject(const QString& key);
     Q_INVOKABLE QString getJsonLiteral();
     //Q_INVOKABLE ? getJson(const QString& key);
+    QJsonObject getJsonRootObjectCpp() const;
 private:
     QJsonObject json_object;
 };

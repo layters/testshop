@@ -10,6 +10,7 @@
 #include <cstring> // memset
 #include <future>
 #include <iomanip> // std::set*
+#include <cassert>
 
 namespace neroshop_crypto = neroshop::crypto;
 
@@ -35,9 +36,16 @@ neroshop::Node::Node(const std::string& address, int port, bool local) : sockfd(
             throw std::runtime_error("::socket failed");
         }
 
-        // Set socket options with setsockopt (for IPv6)
+        // Set socket options with setsockopt
         /*int optval = 1;
         setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &optval, sizeof(optval));*/
+        // Set to broadcast mode - will broadcast a message to other nodes within the local network/to all devices on the local network, but it does not send the message beyond the network
+        // This is good for testing multiple local nodes
+        // In general, the first node or bootstrap node is the one that initiates the network and starts the communication. It can use broadcasting to announce its presence and make itself discoverable to other nodes. Once other nodes join the network, they can use other means, such as peer-to-peer discovery or querying a directory service, to find other nodes.
+        /*if(is_bootstrap_node()) {
+            int enable_broadcast = 1;
+            setsockopt(sockfd, SOL_SOCKET, SO_BROADCAST, &enable_broadcast, sizeof(enable_broadcast));
+        }*/
 
         // set a timeout of TIMEOUT_VALUE seconds for recvfrom
         struct timeval tv;
@@ -67,20 +75,28 @@ neroshop::Node::Node(const std::string& address, int port, bool local) : sockfd(
                 sockin = {0};//memset(&sockin, 0, sizeof(sockin)); // both approaches are valid, but memset is more reliable and portable
                 sockin.sin_family = storage.ss_family;
                 sockin.sin_port = htons(port_dynamic);//htons(std::stoi(std::to_string(port_dynamic))); // the second approach may be useful in cases where the port number is being manipulated as a string or integer elsewhere in the code
-                if(inet_pton(storage.ss_family, ip_address.c_str(), &sockin.sin_addr) <= 0) { //sockin.sin_addr.s_addr = htonl(INADDR_ANY) - binds to any available network interface // inet_addr(ip_address.c_str()) - binds to a specific ip // recommended to use inet_pton() over inet_addr() when working with networking in modern systems.
-                    perror("inet_pton");
-                }
+                /*if(is_bootstrap_node()) { sockin.sin_addr.s_addr = htonl(INADDR_BROADCAST); } // broadcast=255.255.255.255
+                else {*/
+                    if(inet_pton(storage.ss_family, ip_address.c_str(), &sockin.sin_addr) <= 0) { //sockin.sin_addr.s_addr = htonl(INADDR_ANY) - binds to any available network interface // inet_addr(ip_address.c_str()) - binds to a specific ip // recommended to use inet_pton() over inet_addr() when working with networking in modern systems.
+                        perror("inet_pton");
+                    }
+                //}
             }
             if(storage.ss_family == AF_INET6) {
                 memset(&sockin6, 0, sizeof(sockin6));
                 sockin6.sin6_family = storage.ss_family;
                 sockin6.sin6_port = htons(port_dynamic);
-                if(inet_pton(storage.ss_family, ip_address.c_str(), &sockin6.sin6_addr) <= 0) { 
-                    perror("inet_pton");
-                }
+                /*if(is_bootstrap_node()) { inet_pton(AF_INET6, "ff02::1", &sockin6.sin6_addr); } // broadcast=ff02::1 ; multicast=ff02::1:2
+                else {*/
+                    if(inet_pton(storage.ss_family, ip_address.c_str(), &sockin6.sin6_addr) <= 0) { 
+                        perror("inet_pton");
+                    }
+                //}
             }
             
             if(bind(sockfd, (storage.ss_family == AF_INET6) ? (struct sockaddr *)&sockin6 : (struct sockaddr *)&sockin, (storage.ss_family == AF_INET6) ? sizeof(sockin6) : sizeof(sockin)) == 0) {
+                // Update node_id if the port ever changes
+                id = generate_node_id(public_ip_address, port_dynamic);
                 std::cout << "DHT node bound to port " << port_dynamic << std::endl;
                 break;
             }
@@ -136,60 +152,43 @@ std::string neroshop::Node::generate_node_id(const std::string& address, int por
     return hash.substr(0, NUM_BITS / 4);
 }
 
-// This function uses the C++ standard library's random number generator to generate a random number between 0 and 65535 (the maximum value of a 2-byte unsigned integer). It then converts this number to a 2-byte string, with the most significant byte first, as required by the DHT protocol.
-static std::string generate_transaction_id() {
-    std::random_device rd;
-    std::mt19937 gen(rd());
-    std::uniform_int_distribution<unsigned short> dis(0, std::numeric_limits<unsigned short>::max());
-    unsigned short random_num = dis(gen);
-    char transaction_id[2];
-    transaction_id[0] = static_cast<char>(random_num >> 8);
-    transaction_id[1] = static_cast<char>(random_num & 0xFF);
-    //return std::string(transaction_id, 2);
-    // Visualize the transaction ID as a printable string and not an invisible one
-    std::stringstream ss;
-    ss << std::hex << std::setw(4) << std::setfill('0') << random_num; // a 4-byte transaction ID (TID) is a common choice for DHT-based protocols such as BitTorrent, Kademlia, and others. It provides a balance between uniqueness and size. A 4-byte TID can represent up to 2^32 unique values, which is typically sufficient for most use cases. Additionally, a 4-byte TID is small enough to be transmitted efficiently over the network without causing excessive overhead.
-    return ss.str();
-}
-
 // Define the list of bootstrap nodes
 std::vector<neroshop::Peer> bootstrap_nodes = {
     {"127.0.0.1", DEFAULT_PORT},
-    //{"node.neroshop.org", DEFAULT_PORT}, // $ ping neroshop.org # or nslookup neroshop.org
-    //{"router.bittorrent.com", DEFAULT_PORT}, 
-    //{"router.utorrent.com", DEFAULT_PORT}, 
-    //{"dht.transmissionbt.com", DEFAULT_PORT}, 
-    //{"dht.aelitis.com", DEFAULT_PORT}, 
+    {"node.neroshop.org", DEFAULT_PORT}, // $ ping neroshop.org # or nslookup neroshop.org
 };
 
-void neroshop::Node::join() {
+void neroshop::Node::join(std::function<void()> on_join_callback) {
     if(sockfd < 0) throw std::runtime_error("socket is dead");
-    if(bootstrap) { std::cout << "Skipping join for bootstrap node\n"; return; }
+
     // Create the routing table with the vector of nodes
     if(!routing_table.get()) {
         routing_table = std::make_unique<RoutingTable>(std::vector<Node*>{});
     }
     
     // Was going to add this node to the routing table, but nodes do not typically add their own public IP address to their routing table
-      
+    // Bootstrap node should ping itself in case its the only node in the network?
+    ////if(bootstrap) { std::cout << "Skipping join for bootstrap node\n"; return; }//bootstrap_nodes.push_back({"127.0.0.1", DEFAULT_PORT});
+    int port_dynamic = DEFAULT_PORT;
     // Bootstrap the DHT node with a set of known nodes
     for (const auto& bootstrap_node : bootstrap_nodes) {
-        std::cout << "joining bootstrap node - " << bootstrap_node.address << ":" << bootstrap_node.port << "\n";
+        std::cout << "Joining bootstrap node - " << bootstrap_node.address << ":" << bootstrap_node.port << "\n";
 
         // Ping each known node to confirm that it is online - the main bootstrapping primitive. If a node replies, and if there is space in the routing table, it will be inserted.
-        if(!ping(bootstrap_node.address, bootstrap_node.port)) {
-            std::cerr << "Failed to ping bootstrap node\n"; continue;
+        if(!ping(bootstrap_node.address, (bootstrap_node.address == "127.0.0.1") ? port_dynamic : bootstrap_node.port)) {
+            std::cerr << "ping: failed to ping bootstrap node\n"; continue;
         }
         
         // Add the bootstrap node to routing table ; dht_insert_node - stores the node in the routing table for later use.
-        auto new_node = std::make_unique<Node>(bootstrap_node.address, bootstrap_node.port, false);
+        auto new_node = std::make_unique<Node>(bootstrap_node.address, (bootstrap_node.address == "127.0.0.1") ? port_dynamic : bootstrap_node.port, false);
         routing_table->add_node(std::move(new_node).get());
         
+        port_dynamic++;
         // Send a "find_node" message to the bootstrap node and wait for a response message
-        /*auto nodes = find_node(new_node->get_id());
+        auto nodes = find_node(new_node->get_id());
         if(nodes.empty()) {
-            std::cerr << "Failed to send find_node message to bootstrap node\n"; continue;
-        }*/
+            std::cerr << "find_node: No nodes found\n"; continue;
+        }
         // Then add nodes to the routing table
     }
     
@@ -198,25 +197,29 @@ void neroshop::Node::join() {
     
     // Try listening for a connection
     // Edit: UDP socket cannot listen for connections in the same way that a TCP socket can.
+    on_join_callback(); // Call the callback function after the node joins the network
 }
-#include <cassert>
+
 bool neroshop::Node::ping(const std::string& address, int port) {
     // In a DHT network, new nodes usually ping a known bootstrap node to join the network. The bootstrap node is typically a well-known node in the network that is stable and has a high probability of being online. When a new node pings the bootstrap node, it receives information about other nodes in the network and can start building its routing table.
     // Existing nodes usually ping the nodes closest to them in the keyspace to update their routing tables and ensure they are still live and responsive. In a distributed hash table, the closest nodes are determined using the XOR metric on the node IDs. 
     if(sockfd < 0) throw std::runtime_error("socket is dead");
     ////assert(port == get_port()); // both this->sockin and dest_addr must be listening on the same port for the communication to happen between them. But if I'm testing nodes on a single computer, it is necessary to comment this out
     
-    std::string transaction_id = generate_transaction_id();
+    std::string transaction_id = rpc::krpc::generate_transaction_id();
     std::string message_type = "q"; // q = query
     std::string query_type = "ping";
+    bencode_dict arguments = {{"id", this->id}};
+    //std::string client_version = "NS01"; // use XX for unknown clients or custom clients
 
     bencode_dict ping_dict;
     ping_dict["t"] = transaction_id;
     ping_dict["y"] = message_type;
     ping_dict["q"] = query_type;
+    ping_dict["a.id"] = this->id;//ping_dict["a"] = arguments; // "a" must be a dict with a single key "id" containing the querying node's id
+    //ping_dict["v"] = client_version; // not necessary to include a "v" key in the message. The "v" key is specific to the Kademlia RPC protocol used by BitTorrent clients, and is used to identify the client and version in the context of the protocol.
 
     std::string ping_message = bencode::encode(ping_dict);
-    std::cout << "ping_message (sent): " << ping_message << "\n";
 
     // Create a sockaddr_in structure containing the IP address and port number of the destination node.
     /*struct sockaddr_in dest_addr;
@@ -247,7 +250,29 @@ bool neroshop::Node::ping(const std::string& address, int port) {
         std::cerr << "Error sending data to " << inet_ntoa(dest_addr.sin_addr) << ": " << strerror(errno) << std::endl;
         return false;
     } else {
-        std::cout << "Sent " << bytes_sent << " bytes of data" << std::endl;
+        std::cout << "ping_message (sent): \033[91m" << ping_message << " \033[0m(" << bytes_sent << " bytes)\n";
+    }
+    
+    // Set a timeout for the receive operation (in microseconds).
+    const int timeout_usec = TIMEOUT_VALUE * 1000000;
+
+    // Wait for the pong response from the destination node.
+    struct timeval tv;
+    tv.tv_sec = 0;
+    tv.tv_usec = timeout_usec;
+    fd_set read_fds;
+    FD_ZERO(&read_fds);
+    FD_SET(sockfd, &read_fds);
+    for (int i = TIMEOUT_VALUE; i > 0; i--) {
+        std::cout << "Waiting for response... (" << i << " seconds remaining)" << std::endl;
+        int select_result = select(sockfd + 1, &read_fds, NULL, NULL, &tv);
+        if (select_result == -1) {
+            perror("select");
+            return false;
+        } else if (select_result == 0) {
+            std::cerr << "Timeout waiting for response from " << address << ":" << port << std::endl;
+            return false;
+        }
     }
     
     // Receive the pong response from the destination node using the recvfrom() function.
@@ -258,71 +283,53 @@ bool neroshop::Node::ping(const std::string& address, int port) {
         return false;
     } 
     std::string pong_message(buffer, recvlen);
-    std::cout << "pong_message (received): " << pong_message << "\n";
+    if(pong_message.find("pong") != std::string::npos) std::cout << "pong_message (received): \033[32m" << pong_message << "\033[0m\n";  // The first node in the network usually pings itself so it would receive a ping rather than a pong
+    else std::cout << "\033[33myou've pinged yourself as you are likely the only node in the network\033[0m\n";
     
     // Parse the pong response to extract the transaction ID, message type, and response fields.
     size_t size = 0;
     bencode_dict pong_dict = bencode::decode_dict(pong_message, size);
-    for (const auto& [key, value] : pong_dict) {
-        std::cout << key << ": ";
-        if (std::holds_alternative<int64_t>(value)) {
-            std::cout << std::get<int64_t>(value) << std::endl;
-        } else if (std::holds_alternative<std::string>(value)) {
-            std::cout << std::get<std::string>(value) << std::endl;
-        } else if (std::holds_alternative<bencode_list>(value)) {
-            const bencode_list& list = std::get<bencode_list>(value);
-            std::cout << "[";
 
-            for (const auto& item : list) {
-                if (std::holds_alternative<int64_t>(item)) {
-                    std::cout << std::get<int64_t>(item);
-                } else if (std::holds_alternative<std::string>(item)) {
-                    std::cout << std::get<std::string>(item);
-                }
-                std::cout << ", ";
-            }
+    std::string pong_transaction_id, pong_message_type, pong_return_id, pong_return_type;
+    if (pong_dict.count("t") > 0) pong_transaction_id = std::get<std::string>(pong_dict["t"]); // In the pong message, the transaction_id parameter should match the transaction_id parameter from the corresponding ping message, so that the pong can be properly matched with its corresponding ping.
+    if (pong_dict.count("y") > 0) pong_message_type = std::get<std::string>(pong_dict["y"]); // message type should be "r" (response) to indicate that this is a response message.//if (pong_dict.count("r") > 0) std::string pong_response_type = std::get<std::string>(pong_dict["r"]);//pong_dict["r"] = bencode_dict{}; // empty additional response data to indicate successful ping - optional and unnecessary
+    if (pong_dict.count("r") > 0) pong_return_type = std::get<std::string>(pong_dict["r"]); // "pong"
+    if (pong_dict.count("r.id") > 0) pong_return_id = std::get<std::string>(pong_dict["r.id"]); // "id"
 
-            std::cout << "]" << std::endl;
-        }
-    }
-
-    if (pong_dict.count("t") > 0) std::string pong_transaction_id = std::get<std::string>(pong_dict["t"]); // In the pong message, the transaction_id parameter should match the transaction_id parameter from the corresponding ping message, so that the pong can be properly matched with its corresponding ping.
-    if (pong_dict.count("y") > 0) std::string pong_message_type = std::get<std::string>(pong_dict["y"]); // message type should be "r" (response) to indicate that this is a response message.
-    //if (pong_dict.count("r") > 0) std::string pong_response_type = std::get<std::string>(pong_dict["r"]);//pong_dict["r"] = bencode_dict{}; // empty additional response data to indicate successful ping - optional and unnecessary
-    if (pong_dict.count("q") > 0) std::string pong_query_type = std::get<std::string>(pong_dict["q"]); // should be a "pong"
+    assert(transaction_id == pong_transaction_id && "Transaction IDs do not match");
 
     return true;
 }
 
-std::vector<neroshop::Node*> neroshop::Node::find_node(const std::string& target_id) {
-    std::vector<Node*> nodes = {};
-    
-    std::string transaction_id = generate_transaction_id();
+std::vector<neroshop::Node*> neroshop::Node::find_node(const std::string& target_id) {    
+    std::vector<Node*> nodes;
+    std::string transaction_id = rpc::krpc::generate_transaction_id();
 
     bencode_dict query;
     query["t"] = transaction_id;
     query["y"] = "q";
     query["q"] = "find_node";
-    query["a"] = bencode_list { this->id, target_id }; // "id", "target"//, "address": get_public_ip_address() + ":" + std::to_string(DEFAULT_PORT);
+    query["a.id"] = this->id;//query["a"] = bencode_list { this->id, target_id }; // A find_node query has two arguments, "id" containing the node ID of the querying node, and "target" containing the ID of the node sought by the queryer
+    query["a.target"] = target_id;
+    //, "address": get_public_ip_address() + ":" + std::to_string(DEFAULT_PORT);
     
     std::string find_node_message = bencode::encode(query);
-    std::cout << "find_node (sent): " << find_node_message << "\n";
+    std::cout << "find_node_message (sent): \033[91m" << find_node_message << "\033[0m\n";
     
-// Get the nodes from the routing table that are closest to the target node
-    //std::vector<Node*> closest_nodes = routing_table->get_closest_nodes(target, bucket_size);
-        
+    // Get the nodes from the routing table that are closest to the target node
+    std::vector<Node*> closest_nodes = routing_table->find_closest_nodes(target_id);
+    /*std::cout << "Closest nodes:\n";
+    for (auto node : closest_nodes) {
+        std::cout << node->get_ip_address() << ":" << node->get_port() << " (id: " << node->get_id() << ")\n";
+    }*/
     // Send a find_node message to the bootstrap node
-    /*std::vector<Node*> nodes;
+    /*
     // ...
 
     // Add the nodes returned by the find_node message to the routing table
     for (auto node : nodes) {
-        if (node->id != this->id) { // don't add yourself to the routing table
+        if (node->id != this->id && !routing_table->has_node(node->id)) { // don't add yourself to the routing table
             routing_table->add_node(node);
-            if (dht_insert_node(reinterpret_cast<const unsigned char*>(node->id.c_str()), (struct sockaddr *)&node->sockin, sizeof(node->sockin)) < 0) {
-                perror("dht_insert_node");
-                throw std::runtime_error("Failed to insert node");
-            }
         }
     }*/
     //--------------------------------------------------------
@@ -350,7 +357,7 @@ std::vector<neroshop::Node*> neroshop::Node::find_node(const std::string& target
 std::vector<neroshop::Peer> neroshop::Node::get_peers() {
     std::vector<Peer> peers = {};
     
-    std::string transaction_id = generate_transaction_id();
+    std::string transaction_id = rpc::krpc::generate_transaction_id();
     
     bencode_dict query;
     query["t"] = transaction_id;
@@ -365,7 +372,7 @@ std::vector<neroshop::Peer> neroshop::Node::get_peers() {
 
 void neroshop::Node::announce_peer() {
     
-    std::string transaction_id = generate_transaction_id();
+    std::string transaction_id = rpc::krpc::generate_transaction_id();
     
     bencode_dict query;
     query["t"] = transaction_id;
@@ -377,7 +384,7 @@ void neroshop::Node::announce_peer() {
 
 void neroshop::Node::put(const std::string& key, const std::string& value) {
     
-    std::string transaction_id = generate_transaction_id();
+    std::string transaction_id = rpc::krpc::generate_transaction_id();
     
     bencode_dict query;
     query["t"] = transaction_id;
@@ -393,7 +400,7 @@ void neroshop::Node::put(const std::string& key, const std::string& value) {
 
 std::string neroshop::Node::get(const std::string& key) {
     
-    std::string transaction_id = generate_transaction_id();
+    std::string transaction_id = rpc::krpc::generate_transaction_id();
     
     bencode_dict query;
     query["t"] = transaction_id;
@@ -413,7 +420,7 @@ std::string neroshop::Node::get(const std::string& key) {
 
 void neroshop::Node::remove(const std::string& key) {
     
-    /*std::string transaction_id = generate_transaction_id();
+    /*std::string transaction_id = rpc::krpc::generate_transaction_id();
     std::string message_type = "q";
     std::string query_type = "";
     
@@ -454,7 +461,8 @@ void neroshop::Node::remove(const std::string& key) {
 void neroshop::Node::loop() {
     struct sockaddr_in client_addr;
     socklen_t client_addr_len = sizeof(client_addr);
-    char receive_buffer[4096]; // $ sysctl net.ipv4.udp_rmem_min
+    const size_t MAX_MESSAGE_SIZE = 4096; // adjust this value as needed
+    char receive_buffer[MAX_MESSAGE_SIZE]; // $ sysctl net.ipv4.udp_rmem_min
     
     while (true) {
         std::memset(receive_buffer, 0, sizeof(receive_buffer)); // clear buffer
@@ -471,20 +479,31 @@ void neroshop::Node::loop() {
             }
         } else {
             // data received successfully
-            std::cout << "Received " << bytes_received << " bytes from " << inet_ntoa(client_addr.sin_addr) << ":" << ntohs(client_addr.sin_port) << std::endl;
+            std::cout << "Received " << bytes_received << " bytes from " << inet_ntoa(client_addr.sin_addr) << ":\033[0;36m" << ntohs(client_addr.sin_port) << "\033[0m" << std::endl;
         
             if (bytes_received <= std::string().max_size()) {
                 std::string request_message(receive_buffer, bytes_received);
-                std::string response_message = neroshop::rpc::krpc_process(request_message); // process request message
+                std::string response_message = neroshop::rpc::krpc::process(request_message, this->id); // process request message
+                //size_t pos = 0;
                 //bencode_dict response_dict = std::get<bencode_dict>(bencode::decode(response_message, pos));
                 //std::string transaction_id = std::get<std::string>(response_dict["t"]); // All KRPC messages contain a "t" (transaction ID) parameter
+                
+                // Store node that pinged you
+                std::string ip_address = inet_ntoa(client_addr.sin_addr);
+                if (ip_address.length() <= 15) { // check that the length of the IP address string is not longer than 15 characters (maximum length for an IPv4 address)
+                    //auto node_that_pinged = std::make_unique<Node>(ip_address, ntohs(client_addr.sin_port), false);
+                    //routing_table->add_node(std::move(node_that_pinged).get());
+                } else {
+                    std::cerr << "Received invalid IP address" << std::endl;
+                }
+                
                 // Send the response message back to the client
                 int bytes_sent = sendto(sockfd, response_message.c_str(), response_message.length(), 0, (struct sockaddr*)&client_addr, client_addr_len);
                 if (bytes_sent < 0) {
                     std::cerr << "Error sending response message" << std::endl;
                 } else {
                     // Response message sent successfully
-                    std::cout << "Sent " << bytes_sent << " bytes to " << inet_ntoa(client_addr.sin_addr) << ":" << ntohs(client_addr.sin_port) << std::endl;
+                    std::cout << "Sent " << bytes_sent << " bytes to " << inet_ntoa(client_addr.sin_addr) << ":\033[0;36m" << ntohs(client_addr.sin_port) << "\033[0m" << std::endl;
                 }
                 
             } else {

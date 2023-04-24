@@ -18,7 +18,7 @@
 // #define NDEBUG
 #include <cassert>
 
-std::string neroshop::rpc::translate(const std::string& sql) {
+std::string neroshop::rpc::json::translate(const std::string& sql) {
     std::string request = "";
     std::string random_id = generate_random_id();
     #if defined(NEROSHOP_USE_QT)
@@ -48,7 +48,7 @@ std::string neroshop::rpc::translate(const std::string& sql) {
     return request;
 }
 //----------------------------------------------------------------
-std::string neroshop::rpc::translate(const std::string& sql, const std::vector<std::string>& args) {
+std::string neroshop::rpc::json::translate(const std::string& sql, const std::vector<std::string>& args) {
     std::string request = "";
     assert((get_query_method(sql) != "SELECT", "SELECT statements with arguments are not supported. Please use the non-query functions (e.g. get_*() functions)")); // This is due to a lack of a callback in execute_params which uses sqlite3_prepare, sqlite3_step functions. On the other hand, execute uses sqlite_exec which does have a callback that returns the result from a SELECT statement
     std::string random_id = generate_random_id();
@@ -93,7 +93,7 @@ std::string neroshop::rpc::translate(const std::string& sql, const std::vector<s
 }
 //----------------------------------------------------------------
 //----------------------------------------------------------------
-std::string neroshop::rpc::process(const std::string& request) {
+std::string neroshop::rpc::json::process(const std::string& request) {
     neroshop::db::Sqlite3 * database = neroshop::get_database();
     if(!database) throw std::runtime_error("database is NULL");
     std::string response = "";
@@ -383,40 +383,40 @@ std::string neroshop::rpc::process(const std::string& request) {
 }
 //----------------------------------------------------------------
 //----------------------------------------------------------------
-void neroshop::rpc::request(const std::string& json) { // TODO: this function should return a json_rpc response (string) from the server
+void neroshop::rpc::json::request(const std::string& json) { // TODO: this function should return a json_rpc response (string) from the server
     // Get the json which is basically a translated sqlite query or a translated c++ function name (string) + args
     // Send the request_object to the server
     ////zmq_send (requester, request.c_str(), request.size(), 0);
     // Lastly, the server will then execute the data and return any results
-} // Usage: neroshop::rpc::request(neroshop::rpc::translate("SELECT * FROM users;"));
+} // Usage: neroshop::rpc::json::request(neroshop::rpc::json::translate("SELECT * FROM users;"));
 //----------------------------------------------------------------
-void neroshop::rpc::request_batch(const std::vector<std::string>& json_batch) {
+void neroshop::rpc::json::request_batch(const std::vector<std::string>& json_batch) {
 }
 //----------------------------------------------------------------
 //----------------------------------------------------------------
-void neroshop::rpc::respond(const std::string& json) {
+void neroshop::rpc::json::respond(const std::string& json) {
     std::string response = process(json);
     if(response.empty()) return;
     // Reply to client with the response object
     ////zmq_send (responder, response.c_str(), response.size(), 0);    
 }
 //----------------------------------------------------------------
-void neroshop::rpc::respond_batch(const std::vector<std::string>& json_batch) {
+void neroshop::rpc::json::respond_batch(const std::vector<std::string>& json_batch) {
 }
 //----------------------------------------------------------------
 //----------------------------------------------------------------
-std::string neroshop::rpc::get_query_method(const std::string& sql) {
+std::string neroshop::rpc::json::get_query_method(const std::string& sql) {
 	std::string first_word = sql.substr(0, sql.find_first_of(" "));
 	std::transform(first_word.begin(), first_word.end(), first_word.begin(), [](unsigned char c){ return std::toupper(c); }); // query_methods are stored in UPPER case strings so the same must be applied to the first_word
     if(is_query_method(first_word)) return first_word;
     return "";
 }
 //----------------------------------------------------------------
-bool neroshop::rpc::is_query_method(const std::string& query_method) {
+bool neroshop::rpc::json::is_query_method(const std::string& query_method) {
     return (std::find(query_methods.begin(), query_methods.end(), query_method) != query_methods.end());
 }
 //----------------------------------------------------------------
-bool neroshop::rpc::is_method(const std::string& method) {
+bool neroshop::rpc::json::is_method(const std::string& method) {
     return (methods.count(method) > 0);
 }
 //----------------------------------------------------------------
@@ -452,7 +452,7 @@ bool neroshop::rpc::is_json_rpc(const std::string& str) {
     return false;
 }
 //----------------------------------------------------------------
-std::string neroshop::rpc::generate_random_id() {
+std::string neroshop::rpc::json::generate_random_id() {
     // Generate random number for id (id can be either a string or an integer or null which is not recommended)
     std::random_device rd; // obtain a random number from hardware
     std::mt19937 gen(rd()); // seed the generator

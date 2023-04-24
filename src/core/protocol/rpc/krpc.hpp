@@ -6,17 +6,24 @@ namespace neroshop {
 
 namespace rpc {
 
-static const std::vector<std::string> query_types = {
-    "ping",
-    "find_node",
-    "get_peers",
-    "announce_peer",
-    "get",
-    "put",
-};
- 
-std::string krpc_process(const std::string& request);
+    bool is_bencoded(const std::string& str);
 
-}
+namespace krpc {
+
+    static const std::vector<std::string> query_types = {
+        "ping",
+        "find_node",
+        "get_peers",
+        "announce_peer",
+        "get",
+        "put",
+    };
+    
+    std::string generate_transaction_id();
+    
+    std::string process(const std::string& request, const std::string& responding_node_id);
+} // namespace krpc
+
+} // namespace rpc
 
 }

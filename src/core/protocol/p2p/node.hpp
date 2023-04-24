@@ -7,6 +7,7 @@
 #include <unordered_map>
 #include <vector>
 #include <memory> // std::unique_ptr
+#include <functional> // std::function
 
 #define DEFAULT_PORT DEFAULT_UDP_PORT
 #define MAX_NODES 100 // the maximum number of nodes that can be stored in the DHT routing table
@@ -46,7 +47,7 @@ public:
     Node(const Peer& peer); // Creates a node/socket from a peer without binding socket or initializing the DHT
     ~Node();
     // Sends a join message to the bootstrap peer to join the network
-    void join();//(const Peer& bootstrap_peer);
+    void join(std::function<void()> on_join_callback);
     // DHT Query Types
     bool ping(const std::string& address, int port); // A simple query to check if a node is online and responsive.
     std::vector<Node*> find_node(const std::string& target_id); // A query to find the contact information for a specific node in the DHT. // Finds the node closest to the target_id

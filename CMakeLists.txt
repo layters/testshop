@@ -433,6 +433,7 @@ set(neroshop_protocol_src
     ${NEROSHOP_CORE_SRC_DIR}/protocol/rpc/bencode.cpp 
     ${NEROSHOP_CORE_SRC_DIR}/protocol/rpc/json_rpc.cpp 
     ${NEROSHOP_CORE_SRC_DIR}/protocol/rpc/krpc.cpp 
+    ${NEROSHOP_CORE_SRC_DIR}/protocol/rpc/msgpack.cpp 
     ${NEROSHOP_CORE_SRC_DIR}/protocol/transport/client.cpp 
     ${NEROSHOP_CORE_SRC_DIR}/protocol/transport/ip_address.cpp 
     ${NEROSHOP_CORE_SRC_DIR}/protocol/transport/server.cpp 

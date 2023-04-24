@@ -9,6 +9,8 @@
 namespace neroshop {
 
 namespace rpc {
+    bool is_json_rpc(const std::string& str);
+namespace json {
     // TODO: map names (strings) to functions
     static const std::unordered_map<std::string, std::function<void(const std::string&)>> methods = {//static std::unordered_map<std::string, std::function<void(int)>> methods_cmd
         { "query", nullptr },
@@ -27,7 +29,6 @@ namespace rpc {
     extern std::string get_query_method(const std::string& sql);
     extern bool is_query_method(const std::string& query_method);
     extern bool is_method(const std::string& method);
-    bool is_json_rpc(const std::string& str);
     extern std::string translate(const std::string& sql); // converts an sqlite query to a json_rpc request message
     extern std::string translate(const std::string& sql, const std::vector<std::string>& args);
     template <typename... Args>
@@ -43,6 +44,8 @@ namespace rpc {
     extern void request_batch(const std::vector<std::string>& json_batch); // sends a batch of json_rpc requests to the server and expects a batch of json_rpc responses
     extern void respond(const std::string& json); // for server - to respond to requests
     extern void respond_batch(const std::vector<std::string>& json_batch);
-}
+} // namespace json
+
+} // namespace rpc
 
 }
