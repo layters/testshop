@@ -1,8 +1,8 @@
 #include "user_controller.hpp"
 
 #include "../core/cart.hpp"
-#include "../core/database.hpp"
-#include "../core/util/logger.hpp"
+#include "../core/database/database.hpp"
+#include "../core/tools/logger.hpp"
 
 neroshop::UserController::UserController(QObject *parent) : QObject(parent)
 {

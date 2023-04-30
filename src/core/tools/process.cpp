@@ -13,8 +13,8 @@
 
 #include <fstream>
 
-#include "util/logger.hpp"
-#include "util.hpp" // neroshop::filesystem
+#include "logger.hpp"
+#include "tools.hpp" // neroshop::filesystem
 
 neroshop::Process::Process()
 {

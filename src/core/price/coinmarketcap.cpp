@@ -17,7 +17,7 @@
 
 #include <map>
 
-#include "../../core/currency_map.hpp"
+#include "currency_map.hpp"
 
 std::optional<double> CoinMarketCapApi::price(neroshop::Currency from, neroshop::Currency to) const
 {

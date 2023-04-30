@@ -7,7 +7,7 @@ A decentralized P2P (peer-to-peer) marketplace for [**Monero**](https://getmoner
 
 __Disclaimer: This is an experimental/hobbyist project that is not ready for production use. Use at your own risk.__
 
-__Edit: As of April 24th, 2023, this project is no longer being actively developed. However, the code is open source and available for anyone to use, subject to the terms of the license. If you are interested in taking over development, please contact me beforehand.__
+__Update: As of April 24th, 2023, this project is no longer being actively developed. However, the code is open source and available for anyone to use, subject to the terms of the license. If you are interested in taking over development, please contact me beforehand.__
 
 
 [![Readme Card](https://github-readme-stats.vercel.app/api/pin/?username=larteyoh&repo=testshop&theme=shades-of-purple)](https://github.com/larteyoh/testshop)
@@ -88,7 +88,7 @@ The name _neroshop_ is a combination of the words _nero_, which is Italian for _
 | [monero-cpp](https://github.com/monero-ecosystem/monero-cpp)       | latest             | monero wallet and payment system                                       | :heavy_check_mark:                       |
 | [sqlite3](https://sqlite.org/)                                     | 3.38.0             | database management                                                    | :heavy_check_mark:                       |
 | [QR Code generator](https://github.com/nayuki/QR-Code-generator)   | ?                  | qr code generation                                                     | :heavy_check_mark:                       |
-| [json](https://github.com/nlohmann/json/)                          | ?                  | json parsing                                                           | :heavy_check_mark:                       |
+| [json](https://github.com/nlohmann/json/)                          | ?                  | json parsing and msgpack                                               | :heavy_check_mark:                       |
 | [curl](https://github.com/curl/curl)                               | ?                  | currency conversion                                                    | :o:                                      |
 | [openssl](https://github.com/openssl/openssl)                      | 1.1.1              | for curl, sha256 sum and message encryption                            | :heavy_check_mark:                       |
 | [Qt](https://www.qt.io/)                                           | 5.12.8             | graphical user interface                                               | :heavy_check_mark:                       |
@@ -101,7 +101,6 @@ The name _neroshop_ is a combination of the words _nero_, which is Italian for _
 | [cxxopts](https://github.com/jarro2783/cxxopts)                    | ?                  | command line option parser                                             | :heavy_check_mark:                       |
 | [libzmq](https://github.com/zeromq/libzmq)                         | ?                  | networking                                                             | :grey_question:                          |
 | [libi2pd](https://github.com/PurpleI2P/i2pd)                       | latest             | network proxy                                                          | :grey_question:                          |
-| [msgpack11](https://github.com/ar90n/msgpack11)                    | ?                  | binary serialization                                                   | :grey_question:                          |
 
 ### Compiling neroshop from source
 **0. Install prerequisites**
@@ -276,7 +275,7 @@ u/EchoingCat — for the revision of the official neroshop logo
 woodser — for his guidance and for his work on the monero-cpp library which has made the development of this app possible
 yuriio147 — for his work on various QML components, the currency converter, wallet address qr provider, fixing a major bug in the RSA encryption code, the RSA signing and verifying functions, and for teaching me some Qt/Quick techniques
 lza_menace — for his help on creating the new monero.fail JSON API endpoint
-everyone in our matrix room — for sharing many great ideas that could be used improve the project
+everyone in our matrix room — for sharing many great ideas that could be used to improve the project
 ```
 
 [//]: # (./clean.sh)

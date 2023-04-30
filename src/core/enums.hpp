@@ -36,6 +36,7 @@ enum class Currency {
 };
 
 enum class PriceSource {
+    // Crypto Price Aggregators
     CoinMarketCap = 0,
     CoinGecko,
     CryptoWatch,
@@ -76,43 +77,6 @@ enum class WalletResult {
     Wallet_PasswordsDoNotMatch, 
     Wallet_AlreadyExists,
     Wallet_OpenedByAnotherProgram, //Wallet_IOError,
-};
-
-// order status
-enum class OrderStatus : unsigned int {
-    Order_Incomplete, 
-    Order_Created, 
-    Order_Pending = Order_Created, 
-    Order_Preparing, 
-    Order_Shipped, 
-    Order_ReadyForPickup, 
-    Order_Ready = Order_ReadyForPickup, 
-    Order_Delivered, 
-    Order_Done = Order_Delivered, 
-    Order_Cancelled, 
-    Order_Failed, 
-    Order_Returned,    
-};
-
-// payment status
-enum class PaymentStatus {
-    Payment_NotReceived, // red
-    Payment_Confirmed, // yellow
-    Payment_Received, // green
-};
-
-// payment options
-enum class PaymentOption {
-    Escrow, // 2 of 3
-    Multisig, // 2 of 2
-    Finalize, 
-};
-
-// payment methods - probably not necessary
-enum class PaymentMethod {
-    Cash, 
-    Card, // can be either credit or debit
-    Crypto, 
 };
 
 } // namespace neroshop

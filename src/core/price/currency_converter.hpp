@@ -17,7 +17,7 @@
 #include <future>
 
 #include <memory> // std::unique_ptr
-#include "price/price_api.hpp"
+#include "price_api.hpp"
 
 namespace neroshop {
 

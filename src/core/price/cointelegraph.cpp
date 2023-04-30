@@ -17,7 +17,7 @@
 
 #include <map>
 
-#include "../../core/currency_map.hpp"
+#include "currency_map.hpp"
 
 namespace {
 

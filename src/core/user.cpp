@@ -2,8 +2,8 @@
 
 #include "cart.hpp"
 #include "protocol/transport/client.hpp"
-#include "database.hpp"
-#include "util/logger.hpp"
+#include "database/database.hpp"
+#include "tools/logger.hpp"
 
 #include <fstream>
 
@@ -206,7 +206,7 @@ void neroshop::User::add_to_cart(const std::string& product_id, int quantity) {
     cart->add(this->id, product_id, quantity);
 }
 ////////////////////
-void neroshop::User::add_to_cart(const neroshop::Item& item, int quantity) {
+void neroshop::User::add_to_cart(const neroshop::Product& item, int quantity) {
     add_to_cart(item.get_id(), quantity);
 }
 ////////////////////
@@ -214,7 +214,7 @@ void neroshop::User::remove_from_cart(const std::string& product_id, int quantit
     cart->remove(this->id, product_id, quantity);
 }
 ////////////////////
-void neroshop::User::remove_from_cart(const neroshop::Item& item, int quantity) {
+void neroshop::User::remove_from_cart(const neroshop::Product& item, int quantity) {
     remove_from_cart(item.get_id(), quantity);
 }
 ////////////////////
@@ -307,12 +307,12 @@ void neroshop::User::add_to_favorites(const std::string& product_id) {
     // add item to favorites
     database->execute_params("UPDATE favorites SET product_ids = array_append(product_ids, $1::integer) WHERE user_id = $2", { product_id, std::to_string(this->id) });
     // store in vector as well
-    favorites_list.push_back(std::make_shared<neroshop::Item>(product_id));//(std::unique_ptr<neroshop::Item>(new neroshop::Item(product_id)));
+    favorites_list.push_back(std::make_shared<neroshop::Product>(product_id));//(std::unique_ptr<neroshop::Product>(new neroshop::Product(product_id)));
     neroshop::print("\"" + item_name + "\" has been added to your favorites", 3);//if(std::find(favorites_list.begin(), favorites_list.end(), product_id) == favorites_list.end()) { favorites_list.push_back(product_id); neroshop::print("\"" + item_name + "\" has been added to your favorites", 3); }// this works for a favorite_list that stores integers (product_ids) rather than the item object itself
 #endif    
 }
 ////////////////////
-void neroshop::User::add_to_favorites(const neroshop::Item& item) {
+void neroshop::User::add_to_favorites(const neroshop::Product& item) {
     add_to_favorites(item.get_id());
 }
 ////////////////////
@@ -335,7 +335,7 @@ void neroshop::User::remove_from_favorites(const std::string& product_id) {
 #endif        
 }
 ////////////////////
-void neroshop::User::remove_from_favorites(const neroshop::Item& item) {
+void neroshop::User::remove_from_favorites(const neroshop::Product& item) {
     remove_from_favorites(item.get_id());
 }
 ////////////////////
@@ -365,7 +365,7 @@ void neroshop::User::load_favorites() {
     }
     for(int i = 0; i < rows; i++) {
         int product_id = std::stoi(PQgetvalue(result, i, 0));
-        favorites_list.push_back(std::make_shared<neroshop::Item>(product_id));//(std::unique_ptr<neroshop::Item>(new neroshop::Item(product_id))); // store favorited_items for later use
+        favorites_list.push_back(std::make_shared<neroshop::Product>(product_id));//(std::unique_ptr<neroshop::Product>(new neroshop::Product(product_id))); // store favorited_items for later use
         neroshop::print("Favorited item (id: " + product_id + ") has been loaded");
     }
     PQclear(result);
@@ -640,7 +640,7 @@ std::vector<neroshop::Order *> neroshop::User::get_order_list() const {
 }
 ////////////////////
 ////////////////////
-neroshop::Item * neroshop::User::get_favorite(unsigned int index) const {
+neroshop::Product * neroshop::User::get_favorite(unsigned int index) const {
     if(index > (favorites_list.size() - 1)) throw std::out_of_range("neroshop::User::get_favorites(): attempt to access invalid index");
     return favorites_list[index].get();
 }
@@ -649,8 +649,8 @@ unsigned int neroshop::User::get_favorites_count() const {
     return favorites_list.size();
 }
 ////////////////////
-std::vector<neroshop::Item *> neroshop::User::get_favorites_list() const {
-    std::vector<neroshop::Item *> favorites = {};
+std::vector<neroshop::Product *> neroshop::User::get_favorites_list() const {
+    std::vector<neroshop::Product *> favorites = {};
     for(const auto & item : favorites_list) {//for(int f = 0; f < favorites_list.size(); f++) {
         favorites.push_back(item.get());//(favorites_list[f].get());
     }
@@ -856,7 +856,7 @@ bool neroshop::User::has_purchased(const std::string& product_id) { // for regis
     return false;    
 }
 ////////////////////
-bool neroshop::User::has_purchased(const neroshop::Item& item) {
+bool neroshop::User::has_purchased(const neroshop::Product& item) {
     return has_purchased(item.get_id());
 }
 ////////////////////
@@ -869,7 +869,7 @@ bool neroshop::User::has_favorited(const std::string& product_id) {
     return false;////return (std::find(favorites_list.begin(), favorites_list.end(), product_id) != favorites_list.end()); // this is good for when storing favorites as integers (product_ids)
 }
 ////////////////////
-bool neroshop::User::has_favorited(const neroshop::Item& item) {
+bool neroshop::User::has_favorited(const neroshop::Product& item) {
     return has_favorited(item.get_id());
 }
 ////////////////////

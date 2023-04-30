@@ -10,14 +10,25 @@ const int NUM_BUCKETS = 256; // recommended to use a number of buckets that is e
 
 // Initialize the routing table with a list of nodes
 neroshop::RoutingTable::RoutingTable(const std::vector<Node *>& nodes) : nodes(nodes) {
-    for (int i = 0; i < NUM_BUCKETS; i++) {
-        buckets[i] = {};
-    } 
+    // A single bucket can store up to 20 nodes
+    for (int i = 0; i < NUM_BUCKETS; ++i) {
+        buckets.emplace(i, std::vector<std::unique_ptr<Node>>{});
+    }//std::cout << "Buckets size: " << buckets.size() << "\n";
+    // Add nodes to the routing table
+    for (const auto& node_ptr : nodes) {
+        if (node_ptr == nullptr) {
+            continue;
+        }
+        const int bucket_index = hash_to_int(node_ptr->get_id());
+        std::cout << "Node stored in bucket " << bucket_index << "\n";
+        std::unique_ptr<Node> node_uptr(node_ptr);
+        buckets[bucket_index].push_back(std::move(node_uptr));
+    }
 }
 
 // Add a new node to the routing table
-bool neroshop::RoutingTable::add_node(Node* node) {//(const Node& node) {
-    if (!node) {
+bool neroshop::RoutingTable::add_node(std::unique_ptr<Node> node) {//(const Node& node) {
+    if (!node.get()) {
         std::cerr << "Error: cannot add a null node to the routing table.\n";
         return false;
     }
@@ -33,7 +44,7 @@ bool neroshop::RoutingTable::add_node(Node* node) {//(const Node& node) {
     }
 
     // Check if the node already exists in the bucket
-    auto& bucket = buckets[bucket_index];
+    auto& bucket = buckets.at(bucket_index);
     for (const auto& n : bucket) {
         if (n->get_id() == node_id) {
             std::cout << "\033[0;33m" << (node->get_ip_address() + ":" + std::to_string(node->get_port())) << "\033[0m already exists in routing table\n";
@@ -43,7 +54,7 @@ bool neroshop::RoutingTable::add_node(Node* node) {//(const Node& node) {
 
     // Add the node to the bucket
     bucket.push_back(std::move(node));
-    std::cout << "\033[0;36m" << (node->get_ip_address() + ":" + std::to_string(node->get_port())) << "\033[0m added to routing table\n";
+    std::cout << "\033[0;36m" << (bucket.back().get()->get_ip_address() + ":" + std::to_string(bucket.back().get()->get_port())) << "\033[0m added to routing table\n";
     return true;
 }
 
@@ -55,7 +66,7 @@ bool neroshop::RoutingTable::remove_node(const std::string& node_id) {
         return false;
     }
 
-    std::vector<Node*>& bucket = buckets[bucket_index];
+    std::vector<std::unique_ptr<Node>>& bucket = buckets[bucket_index];
     for (auto it = bucket.begin(); it != bucket.end(); ++it) {
         if ((*it)->get_id() == node_id) {
             std::cout << "\033[0;91m" << (*it)->get_ip_address() << ":" << (*it)->get_port() << "\033[0m removed from routing table\n";
@@ -78,7 +89,7 @@ int neroshop::RoutingTable::find_bucket(const std::string& node_id) const {//(in
     return bucket_index;
 }
 
-std::optional<neroshop::Node*> neroshop::RoutingTable::find_node(const std::string& node_id) {//const {
+std::optional<std::reference_wrapper<neroshop::Node>> neroshop::RoutingTable::get_node(const std::string& node_id) {//const {
     unsigned int id_num = hash_to_int(node_id);
     int bucket_index = 0;
     while (bucket_index < NUM_BUCKETS && (id_num & (1 << bucket_index)) == 0) {
@@ -91,7 +102,7 @@ std::optional<neroshop::Node*> neroshop::RoutingTable::find_node(const std::stri
     const auto& bucket = buckets[bucket_index];
     for (const auto& node : bucket) {
         if (node->get_id() == node_id) {
-            return node;
+            return std::ref(*node);
         }
     }
     return std::nullopt; // node not found in bucket
@@ -114,14 +125,14 @@ std::vector<neroshop::Node*> neroshop::RoutingTable::find_closest_nodes(const st
     const auto& bucket = buckets[bucket_index];
     if (!bucket.empty()) {
         // Find the closest node in the bucket
-        auto closest_node = bucket.front();
+        auto closest_node = bucket.front().get();
         unsigned int closest_node_hash = hash_to_int(closest_node->get_id());
         unsigned int distance_to_closest_node = closest_node_hash ^ key_hash;
         for (const auto& node : bucket) {
             unsigned int node_hash = hash_to_int(node->get_id());
             unsigned int distance_to_node = node_hash ^ key_hash;
             if (distance_to_node < distance_to_closest_node) {
-                closest_node = node;
+                closest_node = node.get();
                 closest_node_hash = node_hash;
                 distance_to_closest_node = distance_to_node;
             }
@@ -136,14 +147,14 @@ std::vector<neroshop::Node*> neroshop::RoutingTable::find_closest_nodes(const st
         if (left_bucket_index >= 0) {
             const auto& left_bucket = buckets[left_bucket_index];
             if (!left_bucket.empty()) {
-                auto closest_node = left_bucket.front();
+                auto closest_node = left_bucket.front().get();
                 unsigned int closest_node_hash = hash_to_int(closest_node->get_id());
                 unsigned int distance_to_closest_node = closest_node_hash ^ key_hash;
                 for (const auto& node : left_bucket) {
                     unsigned int node_hash = hash_to_int(node->get_id());
                     unsigned int distance_to_node = node_hash ^ key_hash;
                     if (distance_to_node < distance_to_closest_node) {
-                        closest_node = node;
+                        closest_node = node.get();
                         closest_node_hash = node_hash;
                         distance_to_closest_node = distance_to_node;
                     }
@@ -155,14 +166,14 @@ std::vector<neroshop::Node*> neroshop::RoutingTable::find_closest_nodes(const st
         if (right_bucket_index < NUM_BUCKETS) {
             const auto& right_bucket = buckets[right_bucket_index];
             if (!right_bucket.empty()) {
-                auto closest_node = right_bucket.front();
+                auto closest_node = right_bucket.front().get();
                 unsigned int closest_node_hash = hash_to_int(closest_node->get_id());
                 unsigned int distance_to_closest_node = closest_node_hash ^ key_hash;
                 for (const auto& node : right_bucket) {
                     unsigned int node_hash = hash_to_int(node->get_id());
                     unsigned int distance_to_node = node_hash ^ key_hash;
                     if (distance_to_node < distance_to_closest_node) {
-                        closest_node = node;
+                        closest_node = node.get();
                         closest_node_hash = node_hash;
                         distance_to_closest_node = distance_to_node;
                     }

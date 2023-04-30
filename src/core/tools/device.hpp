@@ -1,13 +1,12 @@
 #pragma once
 
-#ifndef UTIL_HPP_NEROSHOP
-#define UTIL_HPP_NEROSHOP
+#include "string_tools.hpp"
 
-#if defined(NEROSHOP_USE_QT)
-#include <QUuid>
-#else
-#include <uuid.h>
-//#include <catch.hpp>
+#include <fstream>
+
+#ifdef __gnu_linux__
+#include <pwd.h> // getpwnam, getpwnam_r, getpwuid, getpwuid_r
+#include <unistd.h> // geteuid, getcwd, getwd, get_current_dir_name, getpwnam, getpwnam_r, getpwuid, getpwuid_r
 #endif
 
 #ifdef _WIN32
@@ -15,187 +14,8 @@
 #include <Lmcons.h> // UNLEN
 #endif
 
-#ifdef __gnu_linux__
-#include <unistd.h> // getcwd, getwd, get_current_dir_name, getpwnam, getpwnam_r, getpwuid, getpwuid_r
-#include <sys/types.h> // ??
-#include <dirent.h> // opendir, fdopendir, closedir
-#include <pwd.h> // getpwnam, getpwnam_r, getpwuid, getpwuid_r
-#include <sys/stat.h> // mkdir
-#include <string.h> // strdup
-#endif
-
-#include <iostream>
-#include <sstream> // std::ostringstream
-#include <vector>
-#include <algorithm> // std::transform, std::remove
-#if defined(__cplusplus) && (__cplusplus >= 201703L)
-#include <filesystem> // std::filesystem
-#endif
-#include <cassert> // assert
-#include <fstream>
-
 namespace neroshop {
 
-namespace string {
-	static std::string lower(const std::string& str) 
-	{
-		std::string temp_str = str;
-		std::transform(temp_str.begin(), temp_str.end(), temp_str.begin(), [](unsigned char c){ return std::tolower(c); });	
-		return temp_str;
-	}
-	
-	static std::string upper(const std::string& str)
-	{
-		std::string temp_str = str;
-		std::transform(temp_str.begin(), temp_str.end(), temp_str.begin(), [](unsigned char c){ return std::toupper(c); });	
-		return temp_str;		
-	}    
-	
-    template <typename T>
-    static std::string precision(const T value, const int n)
-    {
-        std::ostringstream out;
-        out.precision(n);
-        out << std::fixed << value;
-        return out.str();
-    } 		
-    
-	static std::vector<std::string> split(const std::string& str, const std::string& delimiter)
-	{
-		std::vector<std::string> output;
-        char * dup = strdup(str.c_str());
-        char * token = strtok(dup, delimiter.c_str());
-        while(token != nullptr)
-		{
-            output.push_back(std::string(token));
-            token = strtok(nullptr, delimiter.c_str());
-        }
-        free(dup);	
-        return output;		
-	}
-		
-	static bool contains(const std::string& str, const std::string& what) {
-		return (str.find(what) != std::string::npos);
-	}	
-	static std::string swap_first_of(const std::string& str, const std::string& from, const std::string& to) // replaces first occurance of a word from a String with another
-	{
-		std::string string0 (str);
-		size_t start = string0.find(from); // find location of the first 'from'
-		if(start == std::string::npos)
-			return "error"; // error
-		return string0.replace(start, from.length(), to); // from location of 'from' to the length of 'from', replace with 'to'
-	}
-	static std::string swap_last_of(const std::string& str, const std::string& from, const std::string& to) // replace last occurance of a word from a String with another
-	{
-		std::string string0 (str);
-		size_t start = string0.rfind(from); // find location of the last 'from'
-		if(start == std::string::npos)
-			return "error"; // error
-		return string0.replace(start, from.length(), to); // from location of 'from' to the length of 'from', replace with 'to'
-	}	
-	static std::string swap_all(const std::string& str, const std::string& from, const std::string& to)
-	{
-		std::string string0 (str);
-		while (string0.find(from) != std::string::npos) // while String contains 'from'
-			string0.replace(string0.find(from), from.length(), to); // replace all occurances of 'from' (first-to-last)
-		return string0;
-	}	
-	static bool starts_with(const std::string& str, const std::string& what, bool case_sensative = true) {
-	    std::string first_word = str.substr(0, str.find_first_of(" "));
-	    if(!case_sensative) {
-	        return (lower(first_word) == lower(what));
-	    }
-	    return (first_word == what);
-	}
-	static std::string trim_left(const std::string& str) {
-        const std::string white_spaces(" \f\n\r\t\v");
-        std::string temp_str(str);
-        std::string::size_type pos = temp_str.find_first_not_of(white_spaces);
-        temp_str.erase(0, pos);
-        return temp_str;
-    }
-    static std::string trim_right(const std::string& str) {
-        const std::string white_spaces(" \f\n\r\t\v");
-        std::string temp_str(str);
-        std::string::size_type pos = temp_str.find_last_not_of(white_spaces);
-        temp_str.erase(pos + 1);
-        return temp_str;
-    }
-    static std::string trim(const std::string& str) {
-        return trim_left(trim_right(str));
-    }
-    static std::string join(const std::vector<std::string>& string_list, std::string delimeter = ",") {
-        std::stringstream ss;
-        std::copy(string_list.begin(), string_list.end() - 1, std::ostream_iterator<std::string>(ss, delimeter.c_str()));
-        ss << string_list.back();
-        return ss.str();
-    }
-}
-//-------------------------
-namespace filesystem {
-    static bool is_file(const std::string& filename) { // checks if file exists
-        return std::filesystem::is_regular_file(filename);
-    }
-    
-    static bool is_directory(const std::string& path) {
-        #if defined(__cplusplus) && (__cplusplus >= 201703L)
-        return std::filesystem::is_directory(path);
-        #endif
-        #ifdef _WIN32
-	    DWORD dwAttrib = GetFileAttributes(path.c_str());
-        return (dwAttrib != INVALID_FILE_ATTRIBUTES && (dwAttrib & FILE_ATTRIBUTE_DIRECTORY));
-        #endif
-        #ifdef __gnu_linux__
-        DIR * dir = opendir(path.c_str());
-        if(dir) {
-            closedir(dir);
-	        return true;
-        }		
-        #endif
-        return false;
-    }
-    
-    static bool make_directory(const std::string& path) {
-        if(is_directory(path)) {
-            std::cout << "\033[1;93mDirectory \"" << path << "\" already exists\033[0m" << std::endl;
-            return false;
-        }
-        #if defined(__cplusplus) && (__cplusplus >= 201703L)
-        return std::filesystem::create_directories(path.c_str());
-        #endif
-        #ifdef _WIN32
-	    return (CreateDirectory(path.c_str(), nullptr) != 0);
-        #endif
-        #ifdef __gnu_linux__
-	    return (mkdir(path.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH) == 0);
-        #endif	
-        return false;
-    }
-    
-    static std::string current_directory() {    
-        #if defined(__cplusplus) && (__cplusplus >= 201703L)
-        return std::filesystem::current_path();
-        #endif
-        #ifdef _WIN32
-        char buffer[1024/*MAX_PATH*/];
-        std::string path = std::string(buffer, GetModuleFileName(NULL, buffer, 1024)); // returns "E:\a.exe"
-        return path.substr(0, path.find_last_of("\\/"));
-        #endif
-        #ifdef __gnu_linux__
-	    char buffer[1024];
-        if(getcwd(buffer, sizeof(buffer)) != nullptr)
-		    return std::string(buffer);
-        #endif            
-        return "";
-    }
-    static std::vector<std::string> get_directory(const std::string& path, std::string filter) {return {};} // return a list of filenames in a directory
-    // filename string manipulation
-    /*static std::string get_file_extension(const std::string& filename) {
-	    std::string extension = filename.substr(filename.find_last_of(".") + 1);
-	    return extension;    
-    }*/
-}
-//-------------------------
 namespace device {
     static std::string get_user() {
 	    #ifdef _WIN32
@@ -369,36 +189,5 @@ namespace device {
         return arch;
     }
 }    
-//--------------------------
-namespace uuid {
-    static std::string generate() {
-        std::string uuid_out = "";
-        #if defined(NEROSHOP_USE_QT)
-        QString quuid = QUuid::createUuid().toString();
-        quuid = quuid.remove("{").remove("}"); // remove brackets
-        
-        uuid_out = quuid.toStdString();
-        #else
-        // Creating a new UUID with a default random generator
-        std::random_device rd;
-        auto seed_data = std::array<int, std::mt19937::state_size> {};
-        std::generate(std::begin(seed_data), std::end(seed_data), std::ref(rd));
-        std::seed_seq seq(std::begin(seed_data), std::end(seed_data));
-        std::mt19937 generator(seq);
-        uuids::uuid_random_generator gen{generator};
-
-        uuids::uuid const id = gen();
-        assert(!id.is_nil());
-        assert(id.as_bytes().size() == 16);
-        assert(id.version() == uuids::uuid_version::random_number_based);
-        assert(id.variant() == uuids::uuid_variant::rfc);
-    
-        uuid_out = uuids::to_string(id);
-        #endif
-        return uuid_out;
-    }
-}
 
 }
-
-#endif

@@ -1,6 +1,6 @@
 #include "extractor.hpp"
 
-#include "../util.hpp" // neroshop::filesystem::
+#include "../tools/tools.hpp" // neroshop::filesystem::
 
 #if defined(NEROSHOP_USE_QT)
 #include <QDebug>

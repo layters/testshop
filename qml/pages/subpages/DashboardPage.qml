@@ -45,180 +45,183 @@ Page {
                 contentHeight: parent.childrenRect.height + 100//* 2
                 ScrollBar.vertical.policy: ScrollBar.AsNeeded
                 clip: true
-                                
-                RowLayout {
-                    id: stats
-                    anchors.horizontalCenter: parent.horizontalCenter//Layout.alignment: Qt.AlignHCenter | Qt.AlignTop// <- this is not working :/
-                    property real numberTextFontSize: 24
-                    property string textColor: "#384364"////(NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#384364"
-                    property real boxWidth: 250//(scrollView.width / 3) - 20//scrollView.width / statsRepeater.count
-                    property real boxHeight: 110
-                    property real boxRadius: 6
-                    spacing: 15
-                    property bool useDefaultBoxColor: true//false
-                    property string boxColor: "#ffffff"////(NeroshopComponents.Style.darkTheme) ? "#384364" : "#ffffff"
-                    // Products (listed)
-                    Rectangle {
-                        Layout.preferredWidth: stats.boxWidth
-                        Layout.preferredHeight: stats.boxHeight
-                        color: stats.useDefaultBoxColor ? stats.boxColor : "#e9eefc"
-                        radius: stats.boxRadius
+                
+                ColumnLayout {                
+                    anchors.horizontalCenter: parent.horizontalCenter//
+                    spacing: 20
+                    RowLayout {
+                        id: stats
+                        Layout.alignment: Qt.AlignHCenter | Qt.AlignTop// <- this is not working :/
+                        property real numberTextFontSize: 24
+                        property string textColor: "#384364"////(NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#384364"
+                        property real boxWidth: 250//(scrollView.width / 3) - 20//scrollView.width / statsRepeater.count
+                        property real boxHeight: 110
+                        property real boxRadius: 6
+                        spacing: 15
+                        property bool useDefaultBoxColor: true//false
+                        property string boxColor: "#ffffff"////(NeroshopComponents.Style.darkTheme) ? "#384364" : "#ffffff"
+                        // Products (listed)
+                        Rectangle {
+                            Layout.preferredWidth: stats.boxWidth
+                            Layout.preferredHeight: stats.boxHeight
+                            color: stats.useDefaultBoxColor ? stats.boxColor : "#e9eefc"
+                            radius: stats.boxRadius
                     
-                        Item {
-                            anchors.fill: parent
-                            anchors.centerIn: parent
-                        
-                            Rectangle {
-                                anchors.verticalCenter: parent.verticalCenter
-                                anchors.left: parent.left; anchors.leftMargin: width / 2
-                                width: 64; height: 64
-                                color: "#e9eefc"
-                                radius: 50
-                                Image {
-                                    id: productIcon
-                                    source: "qrc:/images/open_parcel.png"
-                                    width: 32; height: 32
-                                    anchors.centerIn: parent
-                                }
-                            
-                                ColorOverlay {
-                                    anchors.fill: productIcon
-                                    source: productIcon
-                                    color: "#4169e1"
-                                    visible: productIcon.visible
-                                }
-                            }
-                            
                             Item {
-                                anchors.right: parent.children[0].right; anchors.rightMargin: -(contentWidth + 20)
-                                anchors.top: parent.children[0].top
+                                anchors.fill: parent
+                                anchors.centerIn: parent
+                        
+                                Rectangle {
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    anchors.left: parent.left; anchors.leftMargin: width / 2
+                                    width: 64; height: 64
+                                    color: "#e9eefc"
+                                    radius: 50
+                                    Image {
+                                        id: productIcon
+                                        source: "qrc:/images/open_parcel.png"
+                                        width: 32; height: 32
+                                        anchors.centerIn: parent
+                                    }
                             
-                                Text {
-                                    text: User.productsCount//"0"//"5430"
-                                    font.bold: true
-                                    font.pointSize: stats.numberTextFontSize
-                                    color: stats.textColor
+                                    ColorOverlay {
+                                        anchors.fill: productIcon
+                                        source: productIcon
+                                        color: "#4169e1"
+                                        visible: productIcon.visible
+                                    }
                                 }
+                            
+                                Item {
+                                    anchors.right: parent.children[0].right; anchors.rightMargin: -(contentWidth + 20)
+                                    anchors.top: parent.children[0].top
+                            
+                                    Text {
+                                        text: User.productsCount//"0"//"5430"
+                                        font.bold: true
+                                        font.pointSize: stats.numberTextFontSize
+                                        color: stats.textColor
+                                    }
                     
-                                Text {
-                                    text: "Products"
-                                    //font.bold: true
-                                    color: stats.textColor
-                                    anchors.left: parent.children[0].left
-                                    anchors.top: parent.children[0].bottom; anchors.topMargin: 10
+                                    Text {
+                                        text: "Products"
+                                        //font.bold: true
+                                        color: stats.textColor
+                                        anchors.left: parent.children[0].left
+                                        anchors.top: parent.children[0].bottom; anchors.topMargin: 10
+                                    }
                                 }
                             }
                         }
-                    }
-                    // Sales (the total number of completed orders)
-                    Rectangle {
-                        Layout.preferredWidth: stats.boxWidth
-                        Layout.preferredHeight: stats.boxHeight
-                        color: stats.useDefaultBoxColor ? stats.boxColor : "#eff5ef"
-                        radius: stats.boxRadius
+                        // Sales (the total number of completed orders)
+                        Rectangle {
+                            Layout.preferredWidth: stats.boxWidth
+                            Layout.preferredHeight: stats.boxHeight
+                            color: stats.useDefaultBoxColor ? stats.boxColor : "#eff5ef"
+                            radius: stats.boxRadius
                     
-                        Item {
-                            anchors.fill: parent
-                            anchors.centerIn: parent
-                        
-                            Rectangle {
-                                anchors.verticalCenter: parent.verticalCenter
-                                anchors.left: parent.left; anchors.leftMargin: width / 2
-                                width: 64; height: 64
-                                color: "#eff5ef"
-                                radius: 50
-                                Image {
-                                    id: salesIcon
-                                    source: "qrc:/images/increase.png"
-                                    width: 32; height: 32
-                                    anchors.centerIn: parent
-                                }
-                            
-                                ColorOverlay {
-                                    anchors.fill: salesIcon
-                                    source: salesIcon
-                                    color: "#8fbc8f"
-                                    visible: salesIcon.visible
-                                }
-                            }
-                        
                             Item {
-                                anchors.right: parent.children[0].right; anchors.rightMargin: -(contentWidth + 20)
-                                anchors.top: parent.children[0].top
+                                anchors.fill: parent
+                                anchors.centerIn: parent
+                        
+                                Rectangle {
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    anchors.left: parent.left; anchors.leftMargin: width / 2
+                                    width: 64; height: 64
+                                    color: "#eff5ef"
+                                    radius: 50
+                                    Image {
+                                        id: salesIcon
+                                        source: "qrc:/images/increase.png"
+                                        width: 32; height: 32
+                                        anchors.centerIn: parent
+                                    }
                             
-                                Text {
-                                    text: "0"//"17440"
-                                    font.bold: true
-                                    font.pointSize: stats.numberTextFontSize
-                                    color: stats.textColor
+                                    ColorOverlay {
+                                        anchors.fill: salesIcon
+                                        source: salesIcon
+                                        color: "#8fbc8f"
+                                        visible: salesIcon.visible
+                                    }
                                 }
+                        
+                                Item {
+                                    anchors.right: parent.children[0].right; anchors.rightMargin: -(contentWidth + 20)
+                                    anchors.top: parent.children[0].top
+                            
+                                    Text {
+                                        text: "0"//"17440"
+                                        font.bold: true
+                                        font.pointSize: stats.numberTextFontSize
+                                        color: stats.textColor
+                                    }
                     
-                                Text {
-                                    text: "Sales"
-                                    //font.bold: true
-                                    color: stats.textColor
-                                    anchors.left: parent.children[0].left
-                                    anchors.top: parent.children[0].bottom; anchors.topMargin: 10
+                                    Text {
+                                        text: "Sales"
+                                        //font.bold: true
+                                        color: stats.textColor
+                                        anchors.left: parent.children[0].left
+                                        anchors.top: parent.children[0].bottom; anchors.topMargin: 10
+                                    }
                                 }
                             }
                         }
-                    }
-                    // Ratings/Feedback/Reputation
-                    Rectangle {
-                        Layout.preferredWidth: stats.boxWidth
-                        Layout.preferredHeight: stats.boxHeight
-                        color: stats.useDefaultBoxColor ? stats.boxColor : "#fffbe5"
-                        radius: stats.boxRadius
+                        // Ratings/Feedback/Reputation
+                        Rectangle {
+                            Layout.preferredWidth: stats.boxWidth
+                            Layout.preferredHeight: stats.boxHeight
+                            color: stats.useDefaultBoxColor ? stats.boxColor : "#fffbe5"
+                            radius: stats.boxRadius
                     
-                        Item {
-                            anchors.fill: parent
-                            anchors.centerIn: parent
-                        
-                            Rectangle {
-                                anchors.verticalCenter: parent.verticalCenter
-                                anchors.left: parent.left; anchors.leftMargin: width / 2
-                                width: 64; height: 64
-                                color: "#fffbe5"
-                                radius: 50
-                                Image {
-                                    id: ratingIcon
-                                    source: "qrc:/images/rating.png"
-                                    width: 32; height: 32
-                                    anchors.centerIn: parent
-                                }
-                            
-                                ColorOverlay {
-                                    anchors.fill: ratingIcon
-                                    source: ratingIcon
-                                    color: "#ffd700"//"#e6c200"
-                                    visible: ratingIcon.visible
-                                }
-                            }
-                        
                             Item {
-                                anchors.right: parent.children[0].right; anchors.rightMargin: -(contentWidth + 20)
-                                anchors.top: parent.children[0].top
+                                anchors.fill: parent
+                                anchors.centerIn: parent
+                        
+                                Rectangle {
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    anchors.left: parent.left; anchors.leftMargin: width / 2
+                                    width: 64; height: 64
+                                    color: "#fffbe5"
+                                    radius: 50
+                                    Image {
+                                        id: ratingIcon
+                                        source: "qrc:/images/rating.png"
+                                        width: 32; height: 32
+                                        anchors.centerIn: parent
+                                    }
                             
-                                Text {
-                                    text: qsTr("%1%2").arg(User.getReputation()).arg("%")
-                                    font.bold: true
-                                    font.pointSize: stats.numberTextFontSize
-                                    color: stats.textColor
+                                    ColorOverlay {
+                                        anchors.fill: ratingIcon
+                                        source: ratingIcon
+                                        color: "#ffd700"//"#e6c200"
+                                        visible: ratingIcon.visible
+                                    }
                                 }
+                        
+                                Item {
+                                    anchors.right: parent.children[0].right; anchors.rightMargin: -(contentWidth + 20)
+                                    anchors.top: parent.children[0].top
+                            
+                                    Text {
+                                        text: qsTr("%1%2").arg(User.getReputation()).arg("%")
+                                        font.bold: true
+                                        font.pointSize: stats.numberTextFontSize
+                                        color: stats.textColor
+                                    }
                     
-                                Text {
-                                    text: "Reputation"
-                                    //font.bold: true
-                                    color: stats.textColor
-                                    anchors.left: parent.children[0].left
-                                    anchors.top: parent.children[0].bottom; anchors.topMargin: 10
+                                    Text {
+                                        text: "Reputation"
+                                        //font.bold: true
+                                        color: stats.textColor
+                                        anchors.left: parent.children[0].left
+                                        anchors.top: parent.children[0].bottom; anchors.topMargin: 10
+                                    }
                                 }
                             }
                         }
-                    }
-                } 
+                    } // Row
                 // TODO: show recent/pending orders from customers, show seller's top-selling products, show customer reviews on seller products
-                //ColumnLayout {}
+                } // ColumnLayout
             } // ScrollView 
         } // overview tab
             

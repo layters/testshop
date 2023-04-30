@@ -1,6 +1,6 @@
 #include "sha256.hpp"
 
-#include "../util/logger.hpp" // neroshop::print
+#include "../tools/logger.hpp" // neroshop::print
 
 #include <openssl/evp.h>
 #include <openssl/err.h>

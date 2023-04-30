@@ -8,7 +8,7 @@
 #endif
 
 #if !defined(NEROSHOP_USE_QT)
-#include "util.hpp"
+#include "../tools/tools.hpp"
 #if defined(__linux__) && !defined(__ANDROID__)
 #define NEROSHOP_DEFAULT_DATABASE_PATH "/home/" + neroshop::device::get_user() + "/.config/neroshop" //"/home/" + neroshop::device::get_user() + "/.local/share/neroshop"
 #endif
@@ -17,7 +17,7 @@
 #endif
 #endif // endif !defined(NEROSHOP_USE_QT)
 
-#include "database/sqlite.hpp"
+#include "sqlite.hpp"
 
 namespace neroshop {
 
