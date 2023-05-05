@@ -2,7 +2,7 @@
 
 #include "tools/logger.hpp"
 #include "tools/filesystem.hpp"
-#include "tools/string_tools.hpp"
+#include "tools/string.hpp"
 
 neroshop::Script::Script(void)
 {

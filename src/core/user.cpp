@@ -8,7 +8,7 @@
 #include <fstream>
 
 ////////////////////
-neroshop::User::User() : id(""), logged(false), account_type(user_account_type::guest), cart(nullptr), order_list({}), favorites_list({}) {
+neroshop::User::User() : id(""), logged(false), account_type(UserAccountType::Guest), cart(nullptr), order_list({}), favorites_list({}) {
     cart = std::unique_ptr<Cart>(new Cart());
 }
 ////////////////////
@@ -192,7 +192,7 @@ void neroshop::User::delete_account() {
     // reset user information and logout user
     set_id(0);
     name.clear();
-    set_account_type(user_account_type::guest);
+    set_account_type(UserAccountType::Guest);
     set_logged(false); // logout here (will call on_logout callback, if logged is false)    
     // end transaction
     ////database->execute("COMMIT;");
@@ -411,10 +411,12 @@ void neroshop::User::upload_avatar(const std::string& filename) {
     }
     image_file_r.seekg(0, std::ios::end); // std::ios::end is the same as image_file_r.end
     size_t size = static_cast<int>(image_file_r.tellg()); // in bytes
-    // Limit avatar image size to 1048576 bytes (1 megabyte)
+    // Limit avatar image size to 262144 bytes (256 kilobytes)
+    const int max_bytes = 262144;
+    double kilobytes = max_bytes / 1024.0;//std::cout << max_bytes << " bytes is equal to " << kilobytes << " kilobytes." << std::endl;
     // Todo: Database cannot scale to billions of users if I am storing blobs so I'll have to switch to text later
-    if(size >= 1048576) {
-        neroshop::print("Avatar upload image cannot exceed 1 MB (one megabyte)", 1);
+    if(size >= max_bytes) {
+        neroshop::print("Avatar upload image cannot exceed " + std::to_string(kilobytes) + " KB", 1);
         database->execute("ROLLBACK;"); return;
     }
     image_file_r.seekg(0); // image_file_r.seekg(0, image_file_r.beg);
@@ -560,6 +562,10 @@ void neroshop::User::delete_avatar() {
 }
 ////////////////////
 ////////////////////
+void neroshop::User::set_public_key(const std::string& public_key) {
+    // TODO: validate public key before setting it
+    this->public_key = public_key;
+}
 ////////////////////
 ////////////////////
 ////////////////////
@@ -578,7 +584,7 @@ void neroshop::User::set_name(const std::string& name) {
     this->name = name;
 }
 ////////////////////
-void neroshop::User::set_account_type(user_account_type account_type) {
+void neroshop::User::set_account_type(UserAccountType account_type) {
     this->account_type = account_type;
 }
 ////////////////////
@@ -603,17 +609,21 @@ std::string neroshop::User::get_name() const {
     return name;
 }
 ////////////////////
-user_account_type neroshop::User::get_account_type() const {
+UserAccountType neroshop::User::get_account_type() const {
     return account_type;
 }
 ////////////////////
 std::string neroshop::User::get_account_type_string() const {
     switch(this->account_type) {
-        case user_account_type::guest: return "Guest"; break;
-        case user_account_type::buyer: return "Buyer"; break;
-        case user_account_type::seller: return "Seller"; break;
+        case UserAccountType::Guest: return "Guest"; break;
+        case UserAccountType::Buyer: return "Buyer"; break;
+        case UserAccountType::Seller: return "Seller"; break;
         default: return ""; break;
     }
+}
+////////////////////
+std::string neroshop::User::get_public_key() const {
+    return public_key;
 }
 ////////////////////
 ////////////////////
@@ -887,7 +897,7 @@ void neroshop::User::logout() {
     // reset private members to their default values
     this->id = ""; // clear id
     this->name.clear(); // clear name
-    this->account_type = user_account_type::guest; // set account type to the default
+    this->account_type = UserAccountType::Guest; // set account type to the default
     this->logged = false; // make sure user is no longer logged in
     // delete this user
     if(this) delete this;//this = nullptr;//fails

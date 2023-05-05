@@ -1,6 +1,7 @@
 #include "serializer.hpp"
 
 #include "crypto/sha256.hpp"//#include "../../crypto/sha256.hpp"
+#include "tools/string.hpp"
 
 #include <nlohmann/json.hpp>
 
@@ -11,6 +12,7 @@
 **/
 
 namespace neroshop_crypto = neroshop::crypto;
+namespace neroshop_string = neroshop::string;
 
 std::pair<std::string, std::string> neroshop::Serializer::serialize(const neroshop::Object& obj) {
     // Determine namespace
@@ -22,8 +24,9 @@ std::pair<std::string, std::string> neroshop::Serializer::serialize(const nerosh
         const Seller& seller = std::get<Seller>(obj);
         json_object["display_name"] = seller.get_name();
         json_object["monero_address"] = seller.get_id(); // used as identifier
-        //json_object["public_key"] = "";
-        //json_object["avatar"] = ;
+        std::string public_key = seller.get_public_key();
+        if(!public_key.empty()) json_object["public_key"] = public_key;
+        //json_object["avatar"] = ; // TODO: Avatars
     }
     
     if(std::holds_alternative<Product>(obj)) {
@@ -34,22 +37,68 @@ std::pair<std::string, std::string> neroshop::Serializer::serialize(const nerosh
         json_object["description"] = product.get_description();
         for (const auto& attr : product.get_attributes()) {
             nlohmann::json attribute_obj = {};
-            if (!attr.color.empty()) {
-                attribute_obj["color"] = attr.color;
+            if (!attr.color.empty()) attribute_obj["color"] = attr.color;
+            if (!attr.size.empty()) attribute_obj["size"] = attr.size;
+            if (attr.weight != 0.0) attribute_obj["weight"] = attr.weight;
+            if (!attr.material.empty()) attribute_obj["material"] = attr.material;
+            bool dimensions_empty = (std::get<0>(attr.dimensions) == 0.0 && std::get<1>(attr.dimensions) == 0.0 && std::get<2>(attr.dimensions) == 0.0) || (std::get<3>(attr.dimensions).empty()); // make sure either all values in the dimensions tuple contains non-zero values or a non-empty string
+            if (!dimensions_empty) {
+                std::string format = neroshop_string::lower(std::get<3>(attr.dimensions));
+                format.erase(std::remove_if(format.begin(), format.end(), [](char c) { return c == 'x' || c == '-' || c == ' '; }), format.end());
+                nlohmann::json dimensions_obj = {};
+                if(format == "dh") {
+                    dimensions_obj["diameter"] = std::get<0>(attr.dimensions);
+                    dimensions_obj["height"] = std::get<1>(attr.dimensions);
+                }                
+                if(format == "wdh") {
+                    dimensions_obj["width"] = std::get<0>(attr.dimensions);
+                    dimensions_obj["depth"] = std::get<1>(attr.dimensions);
+                    dimensions_obj["height"] = std::get<2>(attr.dimensions);
+                }
+                if(format == "lwh") {
+                    if(std::get<0>(attr.dimensions) != 0.0) dimensions_obj["length"] = std::get<0>(attr.dimensions);
+                    dimensions_obj["width"] = std::get<1>(attr.dimensions);
+                    if(std::get<2>(attr.dimensions) != 0.0) dimensions_obj["height"] = std::get<2>(attr.dimensions);
+                }
+                attribute_obj["dimensions"] = dimensions_obj;
             }
-            if (!attr.size.empty()) {
-                attribute_obj["size"] = attr.size;
+            if (!attr.brand.empty()) attribute_obj["brand"] = attr.brand;
+            if (!attr.model.empty()) attribute_obj["model"] = attr.model;
+            if (!attr.manufacturer.empty()) attribute_obj["manufacturer"] = attr.manufacturer;
+            if (!attr.country_of_origin.empty()) attribute_obj["country_of_origin"] = attr.country_of_origin;
+            if (!attr.warranty_information.empty()) attribute_obj["warranty_information"] = attr.warranty_information;
+            if (!attr.product_code.empty()) attribute_obj["product_code"] = attr.product_code;
+            if (!attr.style.empty()) attribute_obj["style"] = attr.style;
+            if (!attr.gender.empty()) attribute_obj["gender"] = attr.gender;
+            if (attr.age_range.second > 0) {
+                nlohmann::json age_range_obj = {};
+                age_range_obj["min"] = attr.age_range.first;
+                age_range_obj["max"] = attr.age_range.second;
+                attribute_obj["age_range"] = age_range_obj;
             }
-            if (attr.weight != 0.0) {
-                attribute_obj["weight"] = attr.weight;
+            if (!attr.energy_efficiency_rating.empty()) attribute_obj["energy_efficiency_rating"] = attr.energy_efficiency_rating;
+            if (!attr.safety_features.empty()) {
+                nlohmann::json safety_features_array = nlohmann::json::array();
+                for (const auto& feature : attr.safety_features) {
+                    safety_features_array.push_back(feature);
+                }
+                attribute_obj["safety_features"] = safety_features_array;
             }
-            if (!attr.product_code.empty()) {
-                attribute_obj["product_code"] = attr.product_code;
-            }
+            if (attr.quantity_per_package != 0) attribute_obj["quantity_per_package"] = attr.quantity_per_package;
+            if (!attr.release_date.empty()) attribute_obj["release_date"] = attr.release_date;
             json_object["attributes"].push_back(attribute_obj); // rename to "variants" or "variant_options"?
         }
-        json_object["code"] = product.get_code(); // can be left empty if variants have their own product codes
+        std::string product_code = product.get_code();
+        if(!product_code.empty()) json_object["code"] = product_code; // can be left empty esp. if variants have their own product codes
         json_object["category_id"] = product.get_category_id(); // TODO: just use a category string
+        std::vector<std::string> tags = product.get_tags();
+        if (!tags.empty()) {
+            nlohmann::json tags_array = {};
+            for (const auto& tag : tags) {
+                tags_array.push_back(tag);
+            }
+            json_object["tags"] = tags_array;
+        }
         //json_object["images"] = // TODO: Product Images
     }
     
@@ -123,10 +172,6 @@ std::pair<std::string, std::string> neroshop::Serializer::serialize(const nerosh
         json_object["signature"] = seller_rating.signature;
     }    
     // TODO: Favorites (wishlists)
-    // Convert object to JSON format
-    #ifdef NEROSHOP_DEBUG
-    std::cout << json_object.dump(4) << "\n";
-    #endif
     //-------------------------------------------------------------
     assert(!name_prefix.empty() && "Invalid neroshop object type");
     // Get the `value`
@@ -137,6 +182,8 @@ std::pair<std::string, std::string> neroshop::Serializer::serialize(const nerosh
     std::string key = neroshop_crypto::sha256(value);
     //-------------------------------------------------------------
     #ifdef NEROSHOP_DEBUG
+    std::cout << json_object.dump(4) << "\n";
+    
     std::cout << "\nkey (hash of value): " << key << "\n";
     std::cout << "value: " << value << "\n";
     std::cout << "bytes (to_msgpack):\n";
@@ -177,14 +224,15 @@ std::string neroshop::Serializer::to_json(Args&&... args) {
 
     neroshop::Object obj = neroshop::Product { "my_product_uuid", "Nintendo Switch Lite", "A really fun gaming system", 
         {
-            {.color = "yellow"   , .size = "lite", .weight = .61}, // 0.61 lbs
-            {.color = "gray"     , .size = "lite", .weight = .61},
-            {.color = "turquoise", .size = "lite", .weight = .61, .product_code = "045496882266"},
-            {.color = "coral"    , .size = "lite", .weight = .61, .product_code = "045496882662"},
-            {.color = "blue"     , .size = "lite", .weight = .61},
+            {.color = "yellow"   , .size = "lite", .weight = .61, .product_code = "00045496882303"}, // 0.61 lbs
+            {.color = "gray"     , .size = "lite", .weight = .61, .product_code = "00045496882280"},
+            {.color = "turquoise", .size = "lite", .weight = .61, .product_code = "00045496882266"},
+            {.color = "coral"    , .size = "lite", .weight = .61, .product_code = "00045496882662"},
+            {.color = "blue"     , .size = "lite", .weight = .61, .product_code = "00045496882716"},
         },
         "my_product_code",
         0,
+        {"video games", "nintendo", "switch lite"}
     };
     
     //neroshop::Object obj = neroshop::ProductRating { "user1", "Good product", "signed", "product123", 4 };

@@ -1,7 +1,7 @@
 #include "product.hpp"
 
-neroshop::Product::Product(const std::string& id, const std::string& name, const std::string& description, const std::vector<neroshop::Attribute>& attributes, const std::string& code, unsigned int category_id)
-    : id(id), name(name), description(description), attributes(attributes), code(code), category_id(category_id)
+neroshop::Product::Product(const std::string& id, const std::string& name, const std::string& description, const std::vector<neroshop::Attribute>& attributes, const std::string& code, unsigned int category_id, const std::vector<std::string>& tags)
+    : id(id), name(name), description(description), attributes(attributes), code(code), category_id(category_id), tags(tags)
 {}
 
 
@@ -13,6 +13,10 @@ void neroshop::Product::add_attribute(const Attribute& attribute) {
 
 void neroshop::Product::add_variant(const Attribute& variant) {
     add_attribute(variant);
+}
+
+void neroshop::Product::add_tag(const std::string& tag) {
+    tags.push_back(tag);
 }
 
 //-----------------------------------------------------------------------------
@@ -30,16 +34,28 @@ void neroshop::Product::set_description(const std::string& description) {
 }
 
 void neroshop::Product::set_color(const std::string& color, int index) {
+    if(index == 0 && attributes.empty()) {
+        attributes.emplace_back(Attribute{.color = color});
+        return;
+    }
     if (index < 0 || index >= attributes.size()) throw std::out_of_range("set_color error: invalid index");
     attributes[index].color = color;
 }
 
 void neroshop::Product::set_size(const std::string& size, int index) {
+    if(index == 0 && attributes.empty()) {
+        attributes.emplace_back(Attribute{.size = size});
+        return;
+    }
     if (index < 0 || index >= attributes.size()) throw std::out_of_range("set_size error: invalid index");
     attributes[index].size = size;
 }
 
 void neroshop::Product::set_weight(double weight, int index) {
+    if(index == 0 && attributes.empty()) {
+        attributes.emplace_back(Attribute{.weight = weight});
+        return;
+    }
     if (index < 0 || index >= attributes.size()) throw std::out_of_range("set_weight error: invalid index");
     attributes[index].weight = weight;
 }
@@ -58,6 +74,10 @@ void neroshop::Product::set_code(const std::string& code) {
 
 void neroshop::Product::set_category_id(unsigned int category_id) {
     this->category_id = category_id;
+}
+
+void neroshop::Product::set_tags(const std::vector<std::string>& tags) {
+    this->tags = tags;
 }
 
 //-----------------------------------------------------------------------------
@@ -106,4 +126,8 @@ int neroshop::Product::get_category_id() const {
 }
 
 //std::string get_category_as_string() const {}
+
+std::vector<std::string> neroshop::Product::get_tags() const {
+    return tags;
+}
 

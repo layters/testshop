@@ -62,7 +62,6 @@ private:
 	struct sockaddr_in addr;
 	SocketType socket_type;
 	friend class Server;
-	int epoll_fd;
 };
 }
 #endif

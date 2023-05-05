@@ -5,7 +5,7 @@
 
 #include "device.hpp"
 #include "filesystem.hpp"
-#include "string_tools.hpp"
+#include "string.hpp"
 #include "uuid.hpp"
 
 #endif

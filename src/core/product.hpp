@@ -25,46 +25,48 @@ struct Attribute {
     std::string energy_efficiency_rating; // A++, A+, A, B, C, ... G etc.
     std::vector<std::string> safety_features;
     unsigned int quantity_per_package;
-    bool availability; // could also be a string like "In stock", "Out of stock", "Pre-order", etc.
-    //double price; // retail price (MSRP/RRP) to be specific since Sellers set their own price
+    std::string release_date;
 };
 
 class Product { // can also be used for Services
 public:
-    Product(const std::string& id, const std::string& name, const std::string& description, const std::vector<Attribute>& attributes, const std::string& code, unsigned int category_id);
+    Product(const std::string& id, const std::string& name, const std::string& description, const std::vector<Attribute>& attributes, const std::string& code, unsigned int category_id, const std::vector<std::string>& tags);
     
     void add_attribute(const Attribute& attribute);
     void add_variant(const Attribute& variant);
+    void add_tag(const std::string& tag);
     
     void set_id(const std::string& id);
     void set_name(const std::string& name);
     void set_description(const std::string& description);
-    void set_color(const std::string& color, int index);
-    void set_size(const std::string& size, int index);
-    void set_weight(double weight, int index);
+    void set_color(const std::string& color, int index = 0);
+    void set_size(const std::string& size, int index = 0);
+    void set_weight(double weight, int index = 0);
     void set_attributes(const std::vector<Attribute>& attributes);
     void set_variants(const std::vector<Attribute>& variants);
     void set_code(const std::string& code);
     void set_category_id(unsigned int id);
+    void set_tags(const std::vector<std::string>& tags);
 
     std::string get_id() const;
     std::string get_name() const;
     std::string get_description() const;
-    std::string get_color(int index) const;
-    std::string get_size(int index) const;
-    double get_weight(int index) const;
+    std::string get_color(int index = 0) const;
+    std::string get_size(int index = 0) const;
+    double get_weight(int index = 0) const;
     std::vector<Attribute> get_attributes() const;
     std::vector<Attribute> get_variants() const;
     std::string get_code() const;
     int get_category_id() const;//std::string get_category_as_string() const;
+    std::vector<std::string> get_tags() const;
 private:
     std::string id;
     std::string name;
     std::string description;
     std::vector<Attribute> attributes;
-    std::string code; // main product code for all variants of a single product
+    std::string code; // optional - main product code
     unsigned int category_id;
-    //TODO: tags, brand, manufacturer
+    std::vector<std::string> tags; // optional
 };
 
 }

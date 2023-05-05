@@ -616,7 +616,7 @@ neroshop::User * neroshop::Seller::on_login(const neroshop::Wallet& wallet) { //
     dynamic_cast<Seller *>(user)->set_logged(true); // protected, so can only be accessed by child class obj    
     dynamic_cast<Seller *>(user)->set_id(monero_address);
     dynamic_cast<Seller *>(user)->set_wallet(wallet);
-    dynamic_cast<Seller *>(user)->set_account_type(user_account_type::seller);    
+    dynamic_cast<Seller *>(user)->set_account_type(UserAccountType::Seller);
     //-------------------------------
     /*// load orders
     dynamic_cast<Seller *>(user)->load_orders();
