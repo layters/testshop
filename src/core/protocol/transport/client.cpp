@@ -1,10 +1,11 @@
 #include "client.hpp"
 
-#include "../../util/logger.hpp"
+#include "../../tools/logger.hpp"
 
 #include <cstring> // memset
+#include <cassert>
 
-neroshop::Client::Client() : sockfd(-1) {
+neroshop::Client::Client() : sockfd(-1), socket_type(SocketType::Socket_TCP) {
     create();
 }
 ////////////////////
@@ -15,6 +16,7 @@ neroshop::Client::Client(int sockfd, struct sockaddr_in client_addr) {
 ////////////////////
 neroshop::Client::~Client() {
     if(sockfd > 0) {
+        shutdown();
         close();
         sockfd = -1;
     }
@@ -23,7 +25,7 @@ neroshop::Client::~Client() {
 void neroshop::Client::create() {
     #if defined(__gnu_linux__) && defined(NEROSHOP_USE_SYSTEM_SOCKETS)
     if(sockfd > 0) return; // socket must be -1 before a new one can be created (if socket is not null then it means it was never closed)
-	sockfd = ::socket(AF_INET, SOCK_STREAM, 0);
+	sockfd = ::socket(AF_INET, (socket_type == SocketType::Socket_UDP) ? SOCK_DGRAM : SOCK_STREAM, 0);
 	if(sockfd < 0) {
 		neroshop::print("::socket: failed to create a socket", 1);
 	}    
@@ -38,9 +40,9 @@ bool neroshop::Client::connect(unsigned int port, std::string address) {
 	}
 	struct sockaddr_in socket_addr;	// IPv4 
 	//struct sockaddr_in6 // IPv6	
-	memset(&socket_addr, 0, sizeof(struct sockaddr_in));//bzero((char *) &socket_addr, sizeof(socket_addr));
+	memset(&socket_addr, 0, sizeof(struct sockaddr_in));
     socket_addr.sin_family = AF_INET;
-    bcopy((char *)host->h_addr, (char *)&socket_addr.sin_addr.s_addr, host->h_length);
+    memcpy(&socket_addr.sin_addr.s_addr, host->h_addr, host->h_length);
     socket_addr.sin_port = htons(port);
 	// connect to a server	
 	if(::connect(sockfd, (struct sockaddr *)(&socket_addr), sizeof(socket_addr)) < 0) {
@@ -75,6 +77,42 @@ std::string neroshop::Client::read()
     #endif
     return "";
 }
+////////////////////
+void neroshop::Client::send() {
+    if(socket_type == SocketType::Socket_TCP) {
+        // ::send
+    } else if(socket_type == SocketType::Socket_UDP) {
+        // ::sendto()
+    }
+}
+////////////////////
+void neroshop::Client::send(const std::vector<uint8_t>& packed) {
+    assert(socket_type == SocketType::Socket_TCP && "Socket is not TCP");
+    // ::send - instead of sending to a specific destination like sendto, send on SOCK_STREAM (TCP) socket sends the data to the connected socket, and returns the number of bytes sent.
+    ssize_t sent_bytes = ::send(sockfd, packed.data(), packed.size(), 0);
+    if (sent_bytes < 0) {//== -1) {
+        perror("send");
+    }
+}
+////////////////////
+void neroshop::Client::send_to(const std::vector<uint8_t>& packed, const struct sockaddr_in& dest_addr) {
+    assert(socket_type == SocketType::Socket_UDP && "Socket is not UDP");
+    // ::sendto()
+    ssize_t sent_bytes = ::sendto(sockfd, packed.data(), packed.size(), 0, (struct sockaddr*)&dest_addr, sizeof(dest_addr));
+    if (sent_bytes < 0) {//== -1) {
+        perror("sendto");
+    }    
+}
+////////////////////
+std::string neroshop::Client::receive() {
+    assert(socket_type == SocketType::Socket_TCP && "Socket is not TCP");
+    // ::recv()
+}
+////////////////////
+std::string neroshop::Client::receive_from() {
+    assert(socket_type == SocketType::Socket_UDP && "Socket is not UDP");
+    // ::recvfrom()
+}
 ////////////////////	
 void neroshop::Client::close() {
 	::close(sockfd);
@@ -100,9 +138,13 @@ neroshop::Client * neroshop::Client::get_main_client() {
     return &client_obj;
 }
 ////////////////////
+int neroshop::Client::get_socket() const {
+    return sockfd;
+}
+////////////////////
 ////////////////////
 bool neroshop::Client::is_connected() const { // https://stackoverflow.com/a/4142038 // can only work when close() is called
-    return true;
+    return (sockfd != -1);
 }
 ////////////////////
 ////////////////////

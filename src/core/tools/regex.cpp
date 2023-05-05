@@ -1,29 +1,46 @@
 #include "regex.hpp"
 
-#include "../util/logger.hpp" // neroshop::print
+#include "../tools/logger.hpp" // neroshop::print
 
-std::regex neroshop::tools::regex::email() {
+bool neroshop::string_tools::is_email(const std::string& email) {
     const std::regex pattern("(\\w+)(\\.|_)?(\\w*)@(\\w+)(\\.(\\w+))+");
-    return pattern;
+    return std::regex_match(email, pattern);
 }
 
-std::regex neroshop::tools::regex::password() {
+bool neroshop::string_tools::is_strong_password(const std::string& password) {
     // Minimum eight characters, at least one uppercase letter, one lowercase letter, one number and one special character:
     const std::regex pattern("^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])(?=.*?[#?!@$%^&*-]).{8,}$"); // source: https://stackoverflow.com/questions/19605150/regex-for-password-must-contain-at-least-eight-characters-at-least-one-number-a
-    return pattern;
+    return std::regex_match(password, pattern);
+}
+
+// untested
+bool is_product_code(const std::string& code) {
+    // Define regular expressions for each product code type
+    std::regex upc("^\\d{12}$");
+    std::regex ean("^\\d{13}$");
+    std::regex jan("^49\\d{10}$");
+    std::regex isbn("^(\\d{9}(\\d|X)|978\\d{10}|979\\d{10})$"); // validates both ISBN-10 and ISBN-13 codes
+    std::regex issn("^\\d{8}$");
+    std::regex gtin("^\\d{8,14}$");
+    std::regex sku("^\\w+$"); // Assumes SKU can contain alphanumeric characters
+    std::regex mpn("^\\w+$"); // Assumes MPN can contain alphanumeric characters
+    std::regex ndc("^\\d{10}$");
+    
+    // Check if the code matches any of the regular expressions
+    return std::regex_match(code, upc) || std::regex_match(code, ean) || std::regex_match(code, isbn) || 
+           std::regex_match(code, issn) || std::regex_match(code, gtin) || std::regex_match(code, sku) ||
+           std::regex_match(code, mpn) || std::regex_match(code, ndc);
 }
 
 /*int main() {
-    auto email_pattern = neroshop::tools::regex::email();
     std::string email = "mail@neroshop.org";
-    if(!std::regex_match(email, email_pattern)) {
+    if(!neroshop::string_tools::is_email(email)) {
         neroshop::print("Email address is not valid", 1);
         return 1;
     }
 
-    auto password_pattern = neroshop::tools::regex::password();
     std::string password = "supersecretpassword123";
-    if(!std::regex_match(password, password_pattern))
+    if(!neroshop::string_tools::is_strong_password(password))
     {
         // Figure out the specific reason why password failed to follow the regex rules  //if(password.empty()) { std::cout << "Please enter a valid password" << std::endl; return false; }
         if(!std::regex_search(password.c_str(), std::regex("(?=.*?[A-Z])"))) {
@@ -46,5 +63,5 @@ std::regex neroshop::tools::regex::password() {
     }
     
     return 0;
-} // g++ regex.cpp -std=c++17
+} // g++ regex.cpp logger.cpp -std=c++17 -I.
 */

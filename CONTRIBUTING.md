@@ -4,3 +4,5 @@ There are many ways that you can contribute.
 - Making a [donation](https://github.com/larteyoh/testshop#donations) to fund the development of the project
 - Reporting any bugs or vulnerabilities found in the code as a GitHub [issue](https://github.com/larteyoh/testshop/issues)
 - Sharing this project so more people can learn about its existence
+
+**Please refer to [the wiki](https://github.com/larteyoh/testshop/wiki/FAQ#how-can-i-contribute-to-neroshop-if-i-dont-know-c-or-c) for more information on how to contribute.**

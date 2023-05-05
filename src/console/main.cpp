@@ -29,15 +29,15 @@ static void print_commands() {
 int main(int argc, char** argv) {
     //-------------------------------------------------------
     // Connect to daemon server (daemon must be launched first)
-    #ifndef NEROSHOP_DEBUG
+    //#ifndef NEROSHOP_DEBUG
     neroshop::Client * client = neroshop::Client::get_main_client();
 	int port = DEFAULT_TCP_PORT;
-	std::string ip = "0.0.0.0";//"localhost"; // 0.0.0.0 means anyone can connect to your server
+	std::string ip = "localhost"; // 0.0.0.0 means anyone can connect to your server
 	if(!client->connect(port, ip)) {
 	    std::cout << "Please launch neromon first\n";
 	    exit(0);
 	}
-	#endif
+	//#endif
     //-------------------------------------------------------
     // nodes.lua
     if(!neroshop::create_config()) { 
@@ -109,6 +109,22 @@ int main(int argc, char** argv) {
             });
             std::thread { std::move(download_task) }.detach();
         }
+        else if(command == "send") {
+            if (client->is_connected()) {
+                nlohmann::json j = {{"foo", "bar"}, {"baz", 1}};
+                std::vector<uint8_t> packed = nlohmann::json::to_msgpack(j);
+                /*for (auto byte : packed) {
+                    std::cout << std::hex << (int)byte << " ";
+                }*/
+                std::cout << std::endl;
+                client->send(packed);
+                std::string response = neroshop::msgpack::receive_data(client->get_socket());
+                std::cout << "Response from server: " << response << "\n";
+            
+            } else {
+                std::cout << "Failed to establish connection to server\n";
+            }
+        }        
         /*else if(command == "") {
         }*/        
         else if(command == "exit") {

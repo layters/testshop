@@ -2,13 +2,13 @@
 
 #include "cart.hpp"
 #include "protocol/transport/client.hpp"
-#include "database.hpp"
-#include "util/logger.hpp"
+#include "database/database.hpp"
+#include "tools/logger.hpp"
 
 #include <fstream>
 
 ////////////////////
-neroshop::User::User() : id(""), logged(false), account_type(user_account_type::guest), cart(nullptr), order_list({}), favorites_list({}) {
+neroshop::User::User() : id(""), logged(false), account_type(UserAccountType::Guest), cart(nullptr), order_list({}), favorites_list({}) {
     cart = std::unique_ptr<Cart>(new Cart());
 }
 ////////////////////
@@ -192,7 +192,7 @@ void neroshop::User::delete_account() {
     // reset user information and logout user
     set_id(0);
     name.clear();
-    set_account_type(user_account_type::guest);
+    set_account_type(UserAccountType::Guest);
     set_logged(false); // logout here (will call on_logout callback, if logged is false)    
     // end transaction
     ////database->execute("COMMIT;");
@@ -206,7 +206,7 @@ void neroshop::User::add_to_cart(const std::string& product_id, int quantity) {
     cart->add(this->id, product_id, quantity);
 }
 ////////////////////
-void neroshop::User::add_to_cart(const neroshop::Item& item, int quantity) {
+void neroshop::User::add_to_cart(const neroshop::Product& item, int quantity) {
     add_to_cart(item.get_id(), quantity);
 }
 ////////////////////
@@ -214,7 +214,7 @@ void neroshop::User::remove_from_cart(const std::string& product_id, int quantit
     cart->remove(this->id, product_id, quantity);
 }
 ////////////////////
-void neroshop::User::remove_from_cart(const neroshop::Item& item, int quantity) {
+void neroshop::User::remove_from_cart(const neroshop::Product& item, int quantity) {
     remove_from_cart(item.get_id(), quantity);
 }
 ////////////////////
@@ -307,12 +307,12 @@ void neroshop::User::add_to_favorites(const std::string& product_id) {
     // add item to favorites
     database->execute_params("UPDATE favorites SET product_ids = array_append(product_ids, $1::integer) WHERE user_id = $2", { product_id, std::to_string(this->id) });
     // store in vector as well
-    favorites_list.push_back(std::make_shared<neroshop::Item>(product_id));//(std::unique_ptr<neroshop::Item>(new neroshop::Item(product_id)));
+    favorites_list.push_back(std::make_shared<neroshop::Product>(product_id));//(std::unique_ptr<neroshop::Product>(new neroshop::Product(product_id)));
     neroshop::print("\"" + item_name + "\" has been added to your favorites", 3);//if(std::find(favorites_list.begin(), favorites_list.end(), product_id) == favorites_list.end()) { favorites_list.push_back(product_id); neroshop::print("\"" + item_name + "\" has been added to your favorites", 3); }// this works for a favorite_list that stores integers (product_ids) rather than the item object itself
 #endif    
 }
 ////////////////////
-void neroshop::User::add_to_favorites(const neroshop::Item& item) {
+void neroshop::User::add_to_favorites(const neroshop::Product& item) {
     add_to_favorites(item.get_id());
 }
 ////////////////////
@@ -335,7 +335,7 @@ void neroshop::User::remove_from_favorites(const std::string& product_id) {
 #endif        
 }
 ////////////////////
-void neroshop::User::remove_from_favorites(const neroshop::Item& item) {
+void neroshop::User::remove_from_favorites(const neroshop::Product& item) {
     remove_from_favorites(item.get_id());
 }
 ////////////////////
@@ -365,7 +365,7 @@ void neroshop::User::load_favorites() {
     }
     for(int i = 0; i < rows; i++) {
         int product_id = std::stoi(PQgetvalue(result, i, 0));
-        favorites_list.push_back(std::make_shared<neroshop::Item>(product_id));//(std::unique_ptr<neroshop::Item>(new neroshop::Item(product_id))); // store favorited_items for later use
+        favorites_list.push_back(std::make_shared<neroshop::Product>(product_id));//(std::unique_ptr<neroshop::Product>(new neroshop::Product(product_id))); // store favorited_items for later use
         neroshop::print("Favorited item (id: " + product_id + ") has been loaded");
     }
     PQclear(result);
@@ -411,10 +411,12 @@ void neroshop::User::upload_avatar(const std::string& filename) {
     }
     image_file_r.seekg(0, std::ios::end); // std::ios::end is the same as image_file_r.end
     size_t size = static_cast<int>(image_file_r.tellg()); // in bytes
-    // Limit avatar image size to 1048576 bytes (1 megabyte)
+    // Limit avatar image size to 262144 bytes (256 kilobytes)
+    const int max_bytes = 262144;
+    double kilobytes = max_bytes / 1024.0;//std::cout << max_bytes << " bytes is equal to " << kilobytes << " kilobytes." << std::endl;
     // Todo: Database cannot scale to billions of users if I am storing blobs so I'll have to switch to text later
-    if(size >= 1048576) {
-        neroshop::print("Avatar upload image cannot exceed 1 MB (one megabyte)", 1);
+    if(size >= max_bytes) {
+        neroshop::print("Avatar upload image cannot exceed " + std::to_string(kilobytes) + " KB", 1);
         database->execute("ROLLBACK;"); return;
     }
     image_file_r.seekg(0); // image_file_r.seekg(0, image_file_r.beg);
@@ -560,6 +562,10 @@ void neroshop::User::delete_avatar() {
 }
 ////////////////////
 ////////////////////
+void neroshop::User::set_public_key(const std::string& public_key) {
+    // TODO: validate public key before setting it
+    this->public_key = public_key;
+}
 ////////////////////
 ////////////////////
 ////////////////////
@@ -578,7 +584,7 @@ void neroshop::User::set_name(const std::string& name) {
     this->name = name;
 }
 ////////////////////
-void neroshop::User::set_account_type(user_account_type account_type) {
+void neroshop::User::set_account_type(UserAccountType account_type) {
     this->account_type = account_type;
 }
 ////////////////////
@@ -603,17 +609,21 @@ std::string neroshop::User::get_name() const {
     return name;
 }
 ////////////////////
-user_account_type neroshop::User::get_account_type() const {
+UserAccountType neroshop::User::get_account_type() const {
     return account_type;
 }
 ////////////////////
 std::string neroshop::User::get_account_type_string() const {
     switch(this->account_type) {
-        case user_account_type::guest: return "Guest"; break;
-        case user_account_type::buyer: return "Buyer"; break;
-        case user_account_type::seller: return "Seller"; break;
+        case UserAccountType::Guest: return "Guest"; break;
+        case UserAccountType::Buyer: return "Buyer"; break;
+        case UserAccountType::Seller: return "Seller"; break;
         default: return ""; break;
     }
+}
+////////////////////
+std::string neroshop::User::get_public_key() const {
+    return public_key;
 }
 ////////////////////
 ////////////////////
@@ -640,7 +650,7 @@ std::vector<neroshop::Order *> neroshop::User::get_order_list() const {
 }
 ////////////////////
 ////////////////////
-neroshop::Item * neroshop::User::get_favorite(unsigned int index) const {
+neroshop::Product * neroshop::User::get_favorite(unsigned int index) const {
     if(index > (favorites_list.size() - 1)) throw std::out_of_range("neroshop::User::get_favorites(): attempt to access invalid index");
     return favorites_list[index].get();
 }
@@ -649,8 +659,8 @@ unsigned int neroshop::User::get_favorites_count() const {
     return favorites_list.size();
 }
 ////////////////////
-std::vector<neroshop::Item *> neroshop::User::get_favorites_list() const {
-    std::vector<neroshop::Item *> favorites = {};
+std::vector<neroshop::Product *> neroshop::User::get_favorites_list() const {
+    std::vector<neroshop::Product *> favorites = {};
     for(const auto & item : favorites_list) {//for(int f = 0; f < favorites_list.size(); f++) {
         favorites.push_back(item.get());//(favorites_list[f].get());
     }
@@ -856,7 +866,7 @@ bool neroshop::User::has_purchased(const std::string& product_id) { // for regis
     return false;    
 }
 ////////////////////
-bool neroshop::User::has_purchased(const neroshop::Item& item) {
+bool neroshop::User::has_purchased(const neroshop::Product& item) {
     return has_purchased(item.get_id());
 }
 ////////////////////
@@ -869,7 +879,7 @@ bool neroshop::User::has_favorited(const std::string& product_id) {
     return false;////return (std::find(favorites_list.begin(), favorites_list.end(), product_id) != favorites_list.end()); // this is good for when storing favorites as integers (product_ids)
 }
 ////////////////////
-bool neroshop::User::has_favorited(const neroshop::Item& item) {
+bool neroshop::User::has_favorited(const neroshop::Product& item) {
     return has_favorited(item.get_id());
 }
 ////////////////////
@@ -887,7 +897,7 @@ void neroshop::User::logout() {
     // reset private members to their default values
     this->id = ""; // clear id
     this->name.clear(); // clear name
-    this->account_type = user_account_type::guest; // set account type to the default
+    this->account_type = UserAccountType::Guest; // set account type to the default
     this->logged = false; // make sure user is no longer logged in
     // delete this user
     if(this) delete this;//this = nullptr;//fails

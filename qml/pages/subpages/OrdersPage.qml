@@ -4,4 +4,9 @@ import QtQuick.Layouts 1.12
 
 import "../../components" as NeroshopComponents
 
-
+Page {
+    id: ordersPage
+    background: Rectangle {
+        color: "transparent"
+    }
+}

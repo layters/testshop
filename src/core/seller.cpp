@@ -1,11 +1,10 @@
 #include "seller.hpp"
 
 #include "cart.hpp"
-#include "currency_converter.hpp"
-#include "util/logger.hpp"
-#include "util.hpp" // uuid
-#include "database.hpp"
-#include "item.hpp"
+#include "tools/logger.hpp"
+#include "tools/tools.hpp" // uuid
+#include "database/database.hpp"
+#include "product.hpp"
 #include "wallet.hpp"
 
 #include <cmath> // floor
@@ -56,9 +55,9 @@ void neroshop::Seller::list_item(const std::string& product_id, unsigned int qua
 #endif
 }
 ////////////////////
-void neroshop::Seller::list_item(const neroshop::Item& item, unsigned int stock_qty, double sales_price, std::string currency, double discount, unsigned int discounted_items, unsigned int discount_times, std::string discount_expiry, std::string condition) { // ex. 5% off 10 balls
+/*void neroshop::Seller::list_item(const neroshop::Product& item, unsigned int stock_qty, double sales_price, std::string currency, double discount, unsigned int discounted_items, unsigned int discount_times, std::string discount_expiry, std::string condition) { // ex. 5% off 10 balls
     list_item(item.get_id(), stock_qty, sales_price, currency, discount, discounted_items, discount_times, discount_expiry, condition);
-}
+}*/
 // static_cast<Seller *>(user)->list_item(ball, 50, 8.50, "usd", 0.00, 0, 0, "", "new"); // $0.50 cents off every 2 balls
 ////////////////////
 void neroshop::Seller::delist_item(const std::string& product_id) {
@@ -68,7 +67,7 @@ void neroshop::Seller::delist_item(const std::string& product_id) {
     // TODO: remove product from table cart_item, table images, table products, and table product_ratings as well
 }
 ////////////////////
-void neroshop::Seller::delist_item(const neroshop::Item& item) {
+void neroshop::Seller::delist_item(const neroshop::Product& item) {
     delist_item(item.get_id());
 }
 ////////////////////
@@ -104,7 +103,7 @@ void neroshop::Seller::load_customer_orders() {
             // get items in the order_item table
             const std::string& product_id = db.get_column_integer("order_item", "product_id", "id = " + std::to_string(i) + " AND seller_id = " + get_id());
             unsigned int item_qty = db.get_column_integer("order_item", "item_qty", "id = " + std::to_string(i) + " AND seller_id = " + get_id());
-            Item item(product_id); // item obj will die at the end of this scope
+            Product item(product_id); // item obj will die at the end of this scope
             std::cout << "You've received an order (id: " << order_id << ") from a customer " 
             << "containing items: " << item.get_name() << " (id: " << product_id << ", qty: " << item_qty << ")" << std::endl;
         }
@@ -142,7 +141,7 @@ void neroshop::Seller::load_customer_orders() {
             // get items in the order_item table
             const std::string& product_id = database->get_integer_params("SELECT product_id FROM order_item WHERE id = $1 AND seller_id = $2", { std::to_string(i), get_id() });
             unsigned int item_qty = database->get_integer_params("SELECT item_qty FROM order_item WHERE id = $1 AND seller_id = $2", { std::to_string(i), get_id() });
-            Item item(product_id); // item obj will die at the end of this scope
+            Product item(product_id); // item obj will die at the end of this scope
             std::cout << "You've received an order (id: " << order_id << ") from a customer " 
             << "containing items: " << item.get_name() << " (id: " << product_id << ", qty: " << item_qty << ")" << std::endl;
         #endif    */        
@@ -242,7 +241,7 @@ void neroshop::Seller::set_stock_quantity(const std::string& product_id, unsigne
     // user must be an actual seller, not a buyer
     if(!is_seller()) {neroshop::print("Must be a seller to set stock (id: " + product_id + ")", 2); return;}    
     // a seller can create an item and then register it to the database
-    ////if(product_id <= 0) {NEROSHOP_TAG_OUT std::cout << "\033[0;91m" << "Could not set stock_qty (invalid Item id)" << "\033[0m" << std::endl; return;}
+    ////if(product_id <= 0) {NEROSHOP_TAG_OUT std::cout << "\033[0;91m" << "Could not set stock_qty (invalid Product id)" << "\033[0m" << std::endl; return;}
     /*// update stock_qty in database
     db::Sqlite3 db("neroshop.db");
 	//db.execute("PRAGMA journal_mode = WAL;"); // this may reduce the incidence of SQLITE_BUSY errors (such as database being locked)
@@ -262,7 +261,7 @@ void neroshop::Seller::set_stock_quantity(const std::string& product_id, unsigne
 #endif    
 }
 ////////////////////
-void neroshop::Seller::set_stock_quantity(const neroshop::Item& item, unsigned int stock_qty) {
+void neroshop::Seller::set_stock_quantity(const neroshop::Product& item, unsigned int stock_qty) {
     set_stock_quantity(item.get_id(), stock_qty);
 }
 ////////////////////
@@ -503,7 +502,7 @@ unsigned int neroshop::Seller::get_units_sold(const std::string& product_id) con
     return 0;    
 }
 ////////////////////
-unsigned int neroshop::Seller::get_units_sold(const neroshop::Item& item) const {
+unsigned int neroshop::Seller::get_units_sold(const neroshop::Product& item) const {
     return get_units_sold(item.get_id());
 }
 ////////////////////
@@ -523,7 +522,7 @@ double neroshop::Seller::get_profits_made(const std::string& product_id) const {
     return 0.0;
 }
 ////////////////////
-double neroshop::Seller::get_profits_made(const neroshop::Item& item) const {
+double neroshop::Seller::get_profits_made(const neroshop::Product& item) const {
     return get_profits_made(item.get_id());
 }
 ////////////////////
@@ -569,7 +568,7 @@ bool neroshop::Seller::has_listed(const std::string& product_id) const {
     return false;	
 }
 ////////////////////
-bool neroshop::Seller::has_listed(const neroshop::Item& item) const {
+bool neroshop::Seller::has_listed(const neroshop::Product& item) const {
     return has_listed(item.get_id());
 }
 ////////////////////
@@ -581,7 +580,7 @@ bool neroshop::Seller::has_stock(const std::string& product_id) const {
     return false;    
 }
 ////////////////////
-bool neroshop::Seller::has_stock(const neroshop::Item& item) const {
+bool neroshop::Seller::has_stock(const neroshop::Product& item) const {
     return has_stock(item.get_id());
 }
 ////////////////////
@@ -617,7 +616,7 @@ neroshop::User * neroshop::Seller::on_login(const neroshop::Wallet& wallet) { //
     dynamic_cast<Seller *>(user)->set_logged(true); // protected, so can only be accessed by child class obj    
     dynamic_cast<Seller *>(user)->set_id(monero_address);
     dynamic_cast<Seller *>(user)->set_wallet(wallet);
-    dynamic_cast<Seller *>(user)->set_account_type(user_account_type::seller);    
+    dynamic_cast<Seller *>(user)->set_account_type(UserAccountType::Seller);
     //-------------------------------
     /*// load orders
     dynamic_cast<Seller *>(user)->load_orders();

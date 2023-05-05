@@ -16,16 +16,16 @@
 
 #include "../core/cart.hpp"
 #include "../core/protocol/transport/client.hpp"
-#include "../core/currency_converter.hpp" // neroshop::Converter::is_supported_currency
-#include "../core/currency_map.hpp"
+#include "../core/price/currency_converter.hpp" // neroshop::Converter::is_supported_currency
+#include "../core/price/currency_map.hpp"
 #include "../core/crypto/sha256.hpp" // sha256
-#include "../core/database.hpp"
+#include "../core/database/database.hpp"
 #include "../core/script.hpp"
 #include "../core/config.hpp"
 #include "script_controller.hpp" // neroshop::Script::get_table_string
-#include "../core/util.hpp"
-#include "../core/util/logger.hpp"
-#include "../core/process.hpp"
+#include "../core/tools/tools.hpp"
+#include "../core/tools/logger.hpp"
+#include "../core/tools/process.hpp"
 
 #include <future>
 #include <thread>
@@ -70,6 +70,11 @@ QString neroshop::Backend::getCurrencySign(const QString& currency) const {
 //----------------------------------------------------------------
 bool neroshop::Backend::isSupportedCurrency(const QString& currency) const {
     return neroshop::Converter::is_supported_currency(currency.toStdString());
+}
+//----------------------------------------------------------------
+//----------------------------------------------------------------
+void neroshop::Backend::initializeDHT() {
+    // TODO: add categories/subcategories to DHT using 'put' function
 }
 //----------------------------------------------------------------
 //----------------------------------------------------------------
@@ -1225,7 +1230,7 @@ QVariantList neroshop::Backend::registerUser(WalletController* wallet_controller
     QString cart_uuid = QUuid::createUuid().toString();
     cart_uuid = cart_uuid.remove("{").remove("}"); // remove brackets
     database->execute_params("INSERT INTO cart (uuid, user_id) VALUES ($1, $2)", { cart_uuid.toStdString(), user_id });
-    // initialize user obj (Todo: make a seperate class headers + source files for User)
+    // initialize user obj
     std::unique_ptr<neroshop::User> seller(neroshop::Seller::on_login(*wallet_controller->getWallet()));
     user_controller->_user = std::move(seller);
     if (user_controller->getUser() == nullptr) {

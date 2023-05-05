@@ -1,5 +1,6 @@
 #pragma once
 
+//#include "dht_node.hpp"
 #include "../transport/server.hpp" // TCP, UDP. IP-related headers here
 
 #include <iostream>
@@ -10,8 +11,7 @@
 #include <functional> // std::function
 
 #define DEFAULT_PORT DEFAULT_UDP_PORT
-#define MAX_NODES 100 // the maximum number of nodes that can be stored in the DHT routing table
-#define TIMEOUT_VALUE 5 // A reasonable timeout value for a DHT node could be between 5 to 30 seconds.
+#define TIMEOUT_VALUE 10 // A reasonable timeout value for a DHT node could be between 5 to 30 seconds.
 
 const int NUM_BITS = 256;
 const int NUM_PEERS = 10;
@@ -25,7 +25,7 @@ struct Peer {
     int port;
 };
 
-class Node {
+class Node {//: public DHTNode {
 private:
     std::string id;
     std::string version;
@@ -44,13 +44,14 @@ private:
     bool is_closer(const std::string& target_id, const std::string& node1_id, const std::string& node2_id);
 public:
     Node(const std::string& address, int port, bool local); // Binds a socket to a port and initializes the DHT
-    Node(const Peer& peer); // Creates a node/socket from a peer without binding socket or initializing the DHT
+    //Node(const Node& other); // copy another node
+    //Node(const Peer& peer); // Creates a node/socket from a peer without binding socket or initializing the DHT
     ~Node();
     // Sends a join message to the bootstrap peer to join the network
     void join(std::function<void()> on_join_callback);
     // DHT Query Types
     bool ping(const std::string& address, int port); // A simple query to check if a node is online and responsive.
-    std::vector<Node*> find_node(const std::string& target_id); // A query to find the contact information for a specific node in the DHT. // Finds the node closest to the target_id
+    std::vector<Node*> find_node(const std::string& target_id);// override; // A query to find the contact information for a specific node in the DHT. // Finds the node closest to the target_id
     std::vector<Peer> get_peers(); // A query to get a list of peers for a specific torrent or infohash.
     void announce_peer(); // A query to announce that a peer has joined a specific torrent or infohash.
     void put(const std::string& key, const std::string& value); // A query to store a value in the DHT.    // Stores the key-value pair in the DHT

@@ -1,7 +1,7 @@
 #include "json_rpc.hpp"
 
-#include "../../database.hpp"
-#include "../../util/logger.hpp"
+#include "../../database/database.hpp"
+#include "../../tools/logger.hpp"
 
 #if defined(NEROSHOP_USE_QT)
 #include <QJsonArray>

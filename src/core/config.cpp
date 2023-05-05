@@ -1,7 +1,7 @@
 #include "config.hpp"
 
-#include "util/logger.hpp"
-#include "util.hpp"
+#include "tools/logger.hpp"
+#include "tools/tools.hpp"
 
 #if defined(NEROSHOP_USE_QT)
 #include <QDir>

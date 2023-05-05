@@ -1,7 +1,7 @@
 #include "cart.hpp"
 
-#include "database.hpp"
-#include "util/logger.hpp"
+#include "database/database.hpp"
+#include "tools/logger.hpp"
 ////////////////////
 neroshop::Cart::Cart() : id("") {} // Note: cart can only hold up to 10 unique items. Cart items can only add up to a quantity of 100
 ////////////////////
@@ -24,6 +24,8 @@ void neroshop::Cart::load(const std::string& user_id) {
     if(!database) throw std::runtime_error("database is NULL");
     // Set the cart's id
     this->id = database->get_text_params("SELECT uuid FROM cart WHERE user_id = $1", { user_id });
+    // Set the cart's owner id
+    this->owner_id = user_id;
     // Prepare (compile) statement
     std::string command = "SELECT product_id, quantity FROM cart_item WHERE cart_id = $1";
     sqlite3_stmt * stmt = nullptr;
@@ -131,7 +133,7 @@ void neroshop::Cart::add(const std::string& user_id, const std::string& product_
     _print();
 }
 ////////////////////
-void neroshop::Cart::add(const std::string& user_id, const neroshop::Item& item, int quantity) {
+void neroshop::Cart::add(const std::string& user_id, const neroshop::Product& item, int quantity) {
     add(user_id, item.get_id(), quantity);
 }
 ////////////////////
@@ -141,7 +143,7 @@ void neroshop::Cart::remove(const std::string& user_id, const std::string& produ
     
 }
 ////////////////////
-void neroshop::Cart::remove(const std::string& user_id, const neroshop::Item& item, int quantity) {
+void neroshop::Cart::remove(const std::string& user_id, const neroshop::Product& item, int quantity) {
     remove(user_id, item.get_id(), quantity);
 }
 ////////////////////
@@ -153,7 +155,7 @@ void neroshop::Cart::empty() {
     contents.clear();
 }
 ////////////////////
-void neroshop::Cart::change_quantity(const std::string& user_id, const neroshop::Item& item, int quantity) {
+void neroshop::Cart::change_quantity(const std::string& user_id, const neroshop::Product& item, int quantity) {
 }
 ////////////////////
 ////////////////////
@@ -174,6 +176,10 @@ void neroshop::Cart::_print() {
 ////////////////////
 std::string neroshop::Cart::get_id() const {
     return id;
+}
+////////////////////
+std::string neroshop::Cart::get_owner_id() const {
+    return owner_id;
 }
 ////////////////////
 ////////////////////
@@ -214,7 +220,7 @@ bool neroshop::Cart::in_cart(const std::string& product_id) const {
     return (contents.count(product_id) > 0);
 }
 ////////////////////
-bool neroshop::Cart::in_cart(const neroshop::Item& item) const {
+bool neroshop::Cart::in_cart(const neroshop::Product& item) const {
     return in_cart(item.get_id());
 }
 ////////////////////

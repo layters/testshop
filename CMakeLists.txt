@@ -408,7 +408,10 @@ set(neroshop_crypto_src
     ${NEROSHOP_CORE_SRC_DIR}/crypto/sha3.cpp
 )
 
-set(neroshop_database_src ${NEROSHOP_CORE_SRC_DIR}/database/sqlite.cpp)
+set(neroshop_database_src 
+    ${NEROSHOP_CORE_SRC_DIR}/database/database.cpp 
+    ${NEROSHOP_CORE_SRC_DIR}/database/sqlite.cpp
+)
 
 set(neroshop_network_src 
     ${NEROSHOP_CORE_SRC_DIR}/network/i2p.cpp 
@@ -422,42 +425,41 @@ set(neroshop_price_src
     ${NEROSHOP_CORE_SRC_DIR}/price/cointelegraph.cpp 
     ${NEROSHOP_CORE_SRC_DIR}/price/cryptorank.cpp 
     ${NEROSHOP_CORE_SRC_DIR}/price/cryptowatch.cpp 
+    ${NEROSHOP_CORE_SRC_DIR}/price/currency_converter.cpp     
     ${NEROSHOP_CORE_SRC_DIR}/price/fawazahmed0.cpp 
     ${NEROSHOP_CORE_SRC_DIR}/price/kraken.cpp
 )
 
 set(neroshop_protocol_src 
+    ${NEROSHOP_CORE_SRC_DIR}/protocol/messages/msgpack.cpp
     ${NEROSHOP_CORE_SRC_DIR}/protocol/p2p/kademlia.cpp 
     ${NEROSHOP_CORE_SRC_DIR}/protocol/p2p/node.cpp 
     ${NEROSHOP_CORE_SRC_DIR}/protocol/p2p/routing_table.cpp 
     ${NEROSHOP_CORE_SRC_DIR}/protocol/rpc/bencode.cpp 
     ${NEROSHOP_CORE_SRC_DIR}/protocol/rpc/json_rpc.cpp 
-    ${NEROSHOP_CORE_SRC_DIR}/protocol/rpc/krpc.cpp 
-    ${NEROSHOP_CORE_SRC_DIR}/protocol/rpc/msgpack.cpp 
+    ${NEROSHOP_CORE_SRC_DIR}/protocol/rpc/krpc.cpp  
     ${NEROSHOP_CORE_SRC_DIR}/protocol/transport/client.cpp 
     ${NEROSHOP_CORE_SRC_DIR}/protocol/transport/ip_address.cpp 
     ${NEROSHOP_CORE_SRC_DIR}/protocol/transport/server.cpp 
 )
 
-set(neroshop_util_src 
-    ${NEROSHOP_CORE_SRC_DIR}/util/downloader.cpp 
-    ${NEROSHOP_CORE_SRC_DIR}/util/extractor.cpp 
-    ${NEROSHOP_CORE_SRC_DIR}/util/logger.cpp 
-    ${NEROSHOP_CORE_SRC_DIR}/util/regex.cpp 
-    ${NEROSHOP_CORE_SRC_DIR}/util/updater.cpp
+set(neroshop_tools_src 
+    ${NEROSHOP_CORE_SRC_DIR}/tools/downloader.cpp 
+    ${NEROSHOP_CORE_SRC_DIR}/tools/extractor.cpp 
+    ${NEROSHOP_CORE_SRC_DIR}/tools/logger.cpp 
+    ${NEROSHOP_CORE_SRC_DIR}/tools/process.cpp     
+    ${NEROSHOP_CORE_SRC_DIR}/tools/regex.cpp 
+    ${NEROSHOP_CORE_SRC_DIR}/tools/updater.cpp
 )
 
 set(neroshop_core_src 
-    ${NEROSHOP_CORE_SRC_DIR}/buyer.cpp 
     ${NEROSHOP_CORE_SRC_DIR}/cart.cpp 
-    ${NEROSHOP_CORE_SRC_DIR}/catalog.cpp 
-    ${NEROSHOP_CORE_SRC_DIR}/config.cpp 
-    ${NEROSHOP_CORE_SRC_DIR}/currency_converter.cpp 
-    ${NEROSHOP_CORE_SRC_DIR}/database.cpp 
-    ${NEROSHOP_CORE_SRC_DIR}/item.cpp 
+    ${NEROSHOP_CORE_SRC_DIR}/config.cpp  # TODO: move to tools or not?
+    ${NEROSHOP_CORE_SRC_DIR}/listing.cpp 
     ${NEROSHOP_CORE_SRC_DIR}/order.cpp 
-    ${NEROSHOP_CORE_SRC_DIR}/process.cpp 
-    ${NEROSHOP_CORE_SRC_DIR}/script.cpp 
+    ${NEROSHOP_CORE_SRC_DIR}/product.cpp 
+    ${NEROSHOP_CORE_SRC_DIR}/script.cpp  # TODO: move to tools 
+    ${NEROSHOP_CORE_SRC_DIR}/serializer.cpp # TODO: move to tools or protocol/p2p
     ${NEROSHOP_CORE_SRC_DIR}/seller.cpp 
     ${NEROSHOP_CORE_SRC_DIR}/user.cpp 
     ${NEROSHOP_CORE_SRC_DIR}/wallet.cpp 
@@ -466,7 +468,7 @@ set(neroshop_core_src
     ${neroshop_network_src}
     ${neroshop_price_src}
     ${neroshop_protocol_src}
-    ${neroshop_util_src}
+    ${neroshop_tools_src}
     #[[${neroshop__src}]]
 )
 
@@ -481,7 +483,7 @@ endif()
 ######################################
 # neroshop-daemon
 set(daemon_executable "neromon")
-add_executable(${daemon_executable} src/daemon/main.cpp ${neroshop_crypto_src} ${neroshop_database_src} src/core/database.cpp ${neroshop_network_src} ${neroshop_protocol_src} ${NEROSHOP_CORE_SRC_DIR}/util/logger.cpp)#target_link_libraries(daemon ${curl_src} ${OPENSSL_LIBRARIES}) # curl requires both openssl(used in monero) and zlib(used in dokun-ui)
+add_executable(${daemon_executable} src/daemon/main.cpp ${neroshop_crypto_src} ${neroshop_database_src} ${neroshop_network_src} ${neroshop_protocol_src} ${NEROSHOP_CORE_SRC_DIR}/tools/logger.cpp)#target_link_libraries(daemon ${curl_src} ${OPENSSL_LIBRARIES}) # curl requires both openssl(used in monero) and zlib(used in dokun-ui)
 target_compile_definitions(${daemon_executable} PRIVATE NEROSHOP_DEBUG)
 target_include_directories(${daemon_executable} PRIVATE #[[${CMAKE_CURRENT_SOURCE_DIR}/src/]])
 target_link_libraries(${daemon_executable} ${monero_cpp_src} ${sqlite_src} ${raft_src} ${monero_src} ${i2pd_src})#set(CMAKE_CXX_LINK_EXECUTABLE "${CMAKE_CXX_LINK_EXECUTABLE} -ldl") # fixes undefined reference to symbol 'dlsym@@GLIBC_2.2.5' error

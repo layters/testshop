@@ -15,9 +15,9 @@
 */
 #endif
 
-#include "extractor.hpp" // ../util.hpp included here
+#include "extractor.hpp" // ../tools/tools.hpp included here
 #include "../config.hpp" // for config path
-#include "../util.hpp"
+#include "../tools/tools.hpp"
 
 namespace {
 const std::string tor_archive_url { "https://archive.torproject.org/tor-package-archive/torbrowser" };

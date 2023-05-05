@@ -1,6 +1,7 @@
 #include "kademlia.hpp"
+// TODO: delete this file
 
-#include <netinet/in.h>
+/*#include <netinet/in.h>
 #include <arpa/inet.h>
 
 #include <fstream>
@@ -8,11 +9,11 @@
 #include <stdexcept>
 #include <cstring> // memset
 
-#include <openssl/evp.h>
+#include <openssl/evp.h>*/
 
 /* Functions called by the DHT. */
 
-int dht_sendto(int sockfd, const void *buf, int len, int flags,
+/*int dht_sendto(int sockfd, const void *buf, int len, int flags,
                const struct sockaddr *to, int tolen) {
     return sendto(sockfd, buf, len, flags, to, tolen);               
 }
@@ -66,7 +67,7 @@ int dht_random_bytes(void* buf, size_t size) {
 
     return static_cast<int>(size);
 }
-#endif
+#endif*/
 // See dht-example.c for different implementation examples
 // These functions may be defined in dht.c but have NEVER been declared in dht.h
 /*int
@@ -121,7 +122,7 @@ neroshop::node_blacklisted(const struct sockaddr *sa, int salen) {*/
 
 // Copied from dht-example.c
 
-#define MAX_BOOTSTRAP_NODES 20
+/*#define MAX_BOOTSTRAP_NODES 20
 static struct sockaddr_storage bootstrap_nodes[MAX_BOOTSTRAP_NODES];
 static int num_bootstrap_nodes = 0;
 
@@ -174,7 +175,7 @@ void
 neroshop::dht_callback(void *closure,
          int event,
          const unsigned char *info_hash,
-         const void *data, size_t data_len) {
+         const void *data, size_t data_len) {*/
 /*    if(event == DHT_EVENT_SEARCH_DONE)
         printf("Search done.\n");
     else if(event == DHT_EVENT_SEARCH_DONE6)
@@ -185,9 +186,9 @@ neroshop::dht_callback(void *closure,
         printf("Received %d IPv6 values.\n", (int)(data_len / 18));
     else
         printf("Unknown DHT event %d.\n", event);*/
-}
+//}
 
-int
+/*int
 neroshop::set_nonblocking(int fd, int nonblocking)
 {
     int rc;
@@ -201,19 +202,4 @@ neroshop::set_nonblocking(int fd, int nonblocking)
         return -1;
 
     return 0;
-}         
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+}         */

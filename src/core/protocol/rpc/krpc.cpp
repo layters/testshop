@@ -53,6 +53,7 @@ std::string neroshop::rpc::krpc::process(const std::string& request, const std::
             response_dict["y"] = "r";
             //response_dict["r.id"] = ""; // "r" is a dict with two keys, "nodes" containing a string of nodes' info (address:ip) or the closests good nodes in the routing table, and "id" containing the ID of the nodes sought by the queryer.
             //response_dict["r.nodes"] = "";
+            std::cout << "query type is `find_node`\n";
         }
         if(query_type == "get_peers") {
         }
@@ -75,7 +76,7 @@ std::string neroshop::rpc::krpc::process(const std::string& request, const std::
     //response_dict["t"] = <transaction id we got from the request>;
     //response_dict["y"] = "r"; // "r" is for a response message_type ("y")
     //response_dict["q"] = // can be "pong", "nodes", etc.
-    response = bencode::encode(response_dict);
+    //response = bencode::encode(response_dict);
     #ifdef NEROSHOP_DEBUG0
     std::cout << "Response output:\n" << ((code != 0) ? "\033[91m" : "\033[32m") << response << "\033[0m\n";    
     #endif

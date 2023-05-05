@@ -138,6 +138,8 @@ neroshop::Node::Node(const std::string& address, int port, bool local) : sockfd(
     }
 }
 
+//neroshop::Node::Node(const Node& other) : id(other.id), data(other.data), public_ip_address(public_ip_address), sockin(other.sockin), sockin6(other.sockin6), storage(other.storage)//, routing_table(std::make_unique<RoutingTable>(*other.routing_table)) {}
+
 neroshop::Node::~Node() {
     if(sockfd > 0) {
         close(sockfd);
@@ -172,7 +174,7 @@ void neroshop::Node::join(std::function<void()> on_join_callback) {
     int port_dynamic = DEFAULT_PORT;
     // Bootstrap the DHT node with a set of known nodes
     for (const auto& bootstrap_node : bootstrap_nodes) {
-        std::cout << "Joining bootstrap node - " << bootstrap_node.address << ":" << bootstrap_node.port << "\n";
+        std::cout << "Joining bootstrap node - " << bootstrap_node.address << ":" << ((bootstrap_node.address == "127.0.0.1") ? port_dynamic : bootstrap_node.port) << "\n";
 
         // Ping each known node to confirm that it is online - the main bootstrapping primitive. If a node replies, and if there is space in the routing table, it will be inserted.
         if(!ping(bootstrap_node.address, (bootstrap_node.address == "127.0.0.1") ? port_dynamic : bootstrap_node.port)) {
@@ -180,12 +182,13 @@ void neroshop::Node::join(std::function<void()> on_join_callback) {
         }
         
         // Add the bootstrap node to routing table ; dht_insert_node - stores the node in the routing table for later use.
-        auto new_node = std::make_unique<Node>(bootstrap_node.address, (bootstrap_node.address == "127.0.0.1") ? port_dynamic : bootstrap_node.port, false);
-        routing_table->add_node(std::move(new_node).get());
+        auto new_node = std::make_unique<Node>((bootstrap_node.address == "127.0.0.1") ? get_public_ip_address() : bootstrap_node.address, (bootstrap_node.address == "127.0.0.1") ? port_dynamic : bootstrap_node.port, false);
+        Node& new_node_ref = *new_node; // take a reference to the Node object (to avoid segfault)
+        routing_table->add_node(std::move(new_node)); // new_node becomes invalid after we move ownership to routing table so it cannot be used
         
         port_dynamic++;
         // Send a "find_node" message to the bootstrap node and wait for a response message
-        auto nodes = find_node(new_node->get_id());
+        auto nodes = find_node(new_node_ref.get_id());
         if(nodes.empty()) {
             std::cerr << "find_node: No nodes found\n"; continue;
         }
@@ -314,14 +317,17 @@ std::vector<neroshop::Node*> neroshop::Node::find_node(const std::string& target
     //, "address": get_public_ip_address() + ":" + std::to_string(DEFAULT_PORT);
     
     std::string find_node_message = bencode::encode(query);
-    std::cout << "find_node_message (sent): \033[91m" << find_node_message << "\033[0m\n";
+    ////std::cout << "find_node_message (sent): \033[91m" << find_node_message << "\033[0m\n";
     
+    //---------------------------------------------------------
     // Get the nodes from the routing table that are closest to the target node
     std::vector<Node*> closest_nodes = routing_table->find_closest_nodes(target_id);
-    /*std::cout << "Closest nodes:\n";
+    std::cout << "Closest nodes:\n";
     for (auto node : closest_nodes) {
         std::cout << node->get_ip_address() << ":" << node->get_port() << " (id: " << node->get_id() << ")\n";
-    }*/
+        // sendto a find_node message to each of the closest nodes
+        // any node that responds to the "find_node" message should then be added to the routing table
+    }
     // Send a find_node message to the bootstrap node
     /*
     // ...
@@ -350,6 +356,15 @@ std::vector<neroshop::Node*> neroshop::Node::find_node(const std::string& target
             std::cout << val << ", ";
         }, value);
     }*/    
+    //--------------------------------------------------------
+    // Create a new vector of neroshop::DHTNode*
+    /*std::vector<neroshop::DHTNode*> dhtNodes(nodes.size());
+
+    // Use std::transform to convert each element from nodes to dhtNodes
+    std::transform(nodes.begin(), nodes.end(), dhtNodes.begin(),
+        [](neroshop::Node* node) {
+            return static_cast<neroshop::DHTNode*>(node);
+        });*/
     
     return nodes;    
 }
@@ -491,8 +506,9 @@ void neroshop::Node::loop() {
                 // Store node that pinged you
                 std::string ip_address = inet_ntoa(client_addr.sin_addr);
                 if (ip_address.length() <= 15) { // check that the length of the IP address string is not longer than 15 characters (maximum length for an IPv4 address)
-                    //auto node_that_pinged = std::make_unique<Node>(ip_address, ntohs(client_addr.sin_port), false);
-                    //routing_table->add_node(std::move(node_that_pinged).get());
+                    auto node_that_pinged = std::make_unique<Node>((ip_address == "127.0.0.1") ? get_public_ip_address() : ip_address, ntohs(client_addr.sin_port), false); // ALWAYS use public ip so that unique id is generated and actual address is stored in routing table for others to locate your node
+                    routing_table->add_node(std::move(node_that_pinged));
+                    routing_table->print_table();
                 } else {
                     std::cerr << "Received invalid IP address" << std::endl;
                 }

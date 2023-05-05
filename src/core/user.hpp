@@ -6,10 +6,10 @@
 #include <string>
 #include <vector>
 
-#include "item.hpp"
+#include "product.hpp"
 #include "order.hpp"
 
-enum class user_account_type : unsigned int { guest, buyer, seller }; // guest is 0 by default
+enum class UserAccountType : unsigned int { Guest, Buyer, Seller };
 
 namespace neroshop {
 
@@ -27,37 +27,39 @@ public:
     void logout();
     // cart-related stuff (50% complete - cart class still needs some more work)
     void add_to_cart(const std::string& product_id, int quantity = 1);
-    void add_to_cart(const neroshop::Item& item, int quantity = 1); // use int and NOT unsigned int 'cause unsigned int assumes the arg will never be negative number, but when arg is negative, it converts it to some random positive number
+    void add_to_cart(const neroshop::Product& item, int quantity = 1); // use int and NOT unsigned int 'cause unsigned int assumes the arg will never be negative number, but when arg is negative, it converts it to some random positive number
     void remove_from_cart(const std::string& product_id, int quantity = 1);
-    void remove_from_cart(const neroshop::Item& item, int quantity = 1);
+    void remove_from_cart(const neroshop::Product& item, int quantity = 1);
     void clear_cart();
     // order-related stuff (50% complete - order class still needs some more work)
     void create_order(const std::string& shipping_address);// const;//void create_order();
     // favorite-or-wishlist-related stuff (100% complete)
     void add_to_favorites(const std::string& product_id);
-    void add_to_favorites(const neroshop::Item& item);
+    void add_to_favorites(const neroshop::Product& item);
     void remove_from_favorites(const std::string& product_id);
-    void remove_from_favorites(const neroshop::Item& item);
+    void remove_from_favorites(const neroshop::Product& item);
     void clear_favorites();
     // avatar-related stuff (10% complete)
     void upload_avatar(const std::string& filename);
     bool export_avatar();
     void delete_avatar();
     // setters
+    void set_public_key(const std::string& public_key);
     // getters
+    std::string get_public_key() const;
     // account-related stuff - getters
     std::string get_id() const;//unsigned int get_id() const;
     std::string get_name() const;
-    user_account_type get_account_type() const;
+    UserAccountType get_account_type() const;
     std::string get_account_type_string() const;
     // buyer-related stuff - getters
     neroshop::Cart * get_cart() const;
     neroshop::Order * get_order(unsigned int index) const;
     unsigned int get_order_count() const;
     std::vector<neroshop::Order *> get_order_list() const;
-    neroshop::Item * get_favorite(unsigned int index) const;
+    neroshop::Product * get_favorite(unsigned int index) const;
     unsigned int get_favorites_count() const;
-    std::vector<neroshop::Item *> get_favorites_list() const;
+    std::vector<neroshop::Product *> get_favorites_list() const;
     // boolean
     bool is_guest() const;
     bool is_buyer() const;
@@ -70,9 +72,9 @@ public:
     bool has_avatar() const;
     // item-related stuff - boolean
     bool has_purchased(const std::string& product_id); // checks if an item was previously purchased or not
-    bool has_purchased(const neroshop::Item& item); // checks if an item was previously purchased or not
+    bool has_purchased(const neroshop::Product& item); // checks if an item was previously purchased or not
     bool has_favorited(const std::string& product_id); // checks if an item is in a user's favorites or wishlist
-    bool has_favorited(const neroshop::Item& item); // checks if an item is in a user's favorites or wishlist
+    bool has_favorited(const neroshop::Product& item); // checks if an item is in a user's favorites or wishlist
     // callbacks
     void on_registration(const std::string& name); // on registering an account
     //virtual User * on_login(const std::string& username);// = 0; // load all data: orders, reputation/ratings, settings // for all users
@@ -81,10 +83,11 @@ public:
     // friends
     friend class Backend;
     friend class UserController;
+    friend class Serializer;
 protected: // can only be accessed by classes that inherit from class User (even instants of the bass class User cannot call these functions unless you dynamically cast them into a derived class)
     void set_id(const std::string& id);//void set_id(unsigned int id);
     void set_name(const std::string& name); // the same for every derived class 
-    void set_account_type(user_account_type account_type); // either buyer or seller // the same for every derived class 
+    void set_account_type(UserAccountType account_type); // either buyer or seller // the same for every derived class 
     void set_logged(bool logged); // the same for every derived class
     void set_online(bool online);
     // loading into memory so we don't always have to fetch from the database within the same session
@@ -94,11 +97,12 @@ protected: // can only be accessed by classes that inherit from class User (even
 private:
     std::string id;
     std::string name;
-    user_account_type account_type; // seller, buyer (guest)
+    UserAccountType account_type; // seller, buyer (guest)
     bool logged; // determines whether user is logged in or not//bool online;
+    std::string public_key;
     std::unique_ptr<Cart> cart;
     std::vector<std::shared_ptr<neroshop::Order>> order_list;
-    std::vector<std::shared_ptr<neroshop::Item>> favorites_list; // I get the error "/usr/include/c++/9/bits/stl_uninitialized.h:127:72: error: static assertion failed: result type must be constructible from value type of input range" while trying to use unique_ptr so I'm stuck with a shared_ptr container for now
+    std::vector<std::shared_ptr<neroshop::Product>> favorites_list; // I get the error "/usr/include/c++/9/bits/stl_uninitialized.h:127:72: error: static assertion failed: result type must be constructible from value type of input range" while trying to use unique_ptr so I'm stuck with a shared_ptr container for now
 };
 }
 #endif

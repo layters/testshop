@@ -1,5 +1,7 @@
 #pragma once
 
+#include "node.hpp"
+#include "routing_table.hpp"
 /*#ifdef _WIN32
 #include <Winsock2.h>
 #else
@@ -12,7 +14,7 @@
 
 // Copied from dht-example.c
 /* For crypt */
-#define _GNU_SOURCE
+/*#define _GNU_SOURCE
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -28,7 +30,7 @@
 #include <signal.h>
 #include <sys/signal.h>
 
-/* This must be provided by the user. */
+// This must be provided by the user. 
 int dht_sendto(int sockfd, const void *buf, int len, int flags,
                const struct sockaddr *to, int tolen);
 int dht_blacklisted(const struct sockaddr *sa, int salen);
@@ -60,9 +62,9 @@ const unsigned char hash[20] = {
     0x1f, 0x81, 0x94, 0xa9, 0x3a, 0x16, 0x98, 0x8b, 0x72, 0x7b
 };
 
-/* The call-back function is called by the DHT whenever something
-   interesting happens.  Right now, it only happens when we get a new value or
-   when a search completes, but this may be extended in future versions. */
+// The call-back function is called by the DHT whenever something
+//   interesting happens.  Right now, it only happens when we get a new value or
+//   when a search completes, but this may be extended in future versions. 
 void dht_callback(void *closure,
          int event,
          const unsigned char *info_hash,
@@ -73,4 +75,4 @@ static unsigned char buf[4096];
 static int
 set_nonblocking(int fd, int nonblocking);
 
-}
+}*/

@@ -1,11 +1,11 @@
 #include "server.hpp"
 
-#include "../../database.hpp"
-#include "../../util/logger.hpp"
+#include "../../database/database.hpp"
+#include "../../tools/logger.hpp"
 
 neroshop::Server::Server() : sockfd(-1), socket_type(SocketType::Socket_TCP) {
 	#if defined(__gnu_linux__) && defined(NEROSHOP_USE_SYSTEM_SOCKETS)
-	sockfd = ::socket(AF_INET, SOCK_STREAM, 0);
+	sockfd = ::socket(AF_INET, (socket_type == SocketType::Socket_UDP) ? SOCK_DGRAM : SOCK_STREAM, 0);
     if (sockfd < 0) {
 		throw std::runtime_error("Failed to create socket.");
 	}
@@ -17,6 +17,7 @@ The setsockopt() function is used to set the socket option, and the SO_REUSEADDR
     if(setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR | SO_REUSEPORT, &opt, sizeof(opt)) < 0) {
         throw std::runtime_error("Failed to set socket option SO_REUSEADDR.");
     }
+    
 	#endif    
 }
 ////////////////////
@@ -111,6 +112,26 @@ std::string neroshop::Server::read() // receive data
     return "";
 }
 ////////////////////
+void neroshop::Server::send() {
+    if(socket_type == SocketType::Socket_TCP) {
+        // ::send
+    } else if(socket_type == SocketType::Socket_UDP) {
+        // ::sendto()
+    }
+}
+////////////////////
+std::string neroshop::Server::receive() { 
+    if(socket_type == SocketType::Socket_TCP) {
+        // ::recv()
+        /*recv(sockfd, buffer.data(), BUFFER_SIZE, 0);
+        if (recv_bytes == -1) {
+            perror("recv");
+        }*/
+    } else if(socket_type == SocketType::Socket_UDP) {
+        // ::recvfrom()
+    }
+}
+////////////////////
 void neroshop::Server::close() {
     ::close(sockfd);
     sockfd = -1;
@@ -134,4 +155,24 @@ const neroshop::Client& neroshop::Server::get_client(int index) const {
     return *(clients.at(index));
 }
 ////////////////////
+////////////////////
+void neroshop::Server::set_nonblocking(bool nonblocking) {
+    int flags = fcntl(sockfd, F_GETFL, 0);
+    if(flags == -1) {
+        perror("fcntl");
+        throw std::runtime_error("set_nonblocking: Failed to get socket flags.");
+        return;
+    }
+    
+    if (nonblocking) {
+        flags |= O_NONBLOCK;
+    } else {
+        flags &= ~O_NONBLOCK;
+    }
+
+    if (fcntl(sockfd, F_SETFL, flags) == -1) {
+        perror("fcntl");
+        throw std::runtime_error("set_nonblocking: Failed to set socket to non-blocking mode.");
+    }
+}        
 ////////////////////

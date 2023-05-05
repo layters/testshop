@@ -9,7 +9,7 @@
 #endif
 
 #if !defined(NEROSHOP_USE_QT)
-#include "util.hpp" // neroshop::device::get_user
+#include "tools/tools.hpp" // neroshop::device::get_user
 #if defined(_WIN32)
 #define NEROSHOP_DEFAULT_CONFIGURATION_PATH "C:/Users/" + neroshop::device::get_user() + "/AppData/Local/neroshop"
 #define NEROSHOP_DEFAULT_CONFIGURATION_PATH_ALT "C:/ProgramData/neroshop"

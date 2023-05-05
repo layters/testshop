@@ -11,8 +11,8 @@
 #include "../core/protocol/transport/ip_address.hpp"
 #include "../core/protocol/rpc/json_rpc.hpp"
 #include "../core/protocol/messages/msgpack.hpp"
-#include "../core/database/database.hpp"
-#include "../core/tools/logger.hpp"
+#include "../core/database.hpp"
+#include "../core/util/logger.hpp"
 #include "../core/version.hpp"
 
 #include <cxxopts.hpp>
@@ -23,37 +23,84 @@
 
 using namespace neroshop;
 
-Server ipc_server;
+Server rpc_server;
 
+void close_server() {
+    rpc_server.shutdown();
+    std::cout << NEROMON_TAG "\033[1;91mdisconnected\033[0m" << std::endl;
+}
+////////////////////
+///////////////////
+// In case request is an HTTP request
+// This function will extract the JSON payload from a HTTP request string that contains headers
+/* This portion is excluded:
+	   POST / HTTP/1.1
+       Host: 127.0.0.1:57740
+       User-Agent: curl/7.81.0
+       Accept: -/-
+       Content-Type: application/json
+       Content-Length: 121
+*/
+std::string extract_json_payload(const std::string& request) {
+    // Find the start of the JSON payload
+    const std::string json_start = "\r\n\r\n";
+    const auto json_pos = request.find(json_start);
+    if (json_pos == std::string::npos) {
+        // JSON payload not found
+        return "";
+    }
+    // Extract the JSON payload
+    const auto json_payload = request.substr(json_pos + json_start.size());
+    return json_payload;
+}
+///////////////////
 std::mutex clients_mutex;
 std::mutex server_mutex;
-///////////////////
-std::mutex response_mutex;
-std::condition_variable response_cv;
 ///////////////////
 void handle_requests() {
     // Lock the server mutex
     std::lock_guard<std::mutex> lock(server_mutex);
 
-    // Read msgpack request object from client
-	std::string request = neroshop::msgpack::receive_data( ipc_server.get_client(0).get_socket() );//(ipc_server.get_socket());////std::string request_data = ipc_server.read();
+    // Read json-rpc request object from client
+	std::string request_object = rpc_server.read();
 	
-    // Build a response
-    nlohmann::json response_object = {{"food", "bartender"}, {"back", 2}};
-    std::vector<uint8_t> packed = nlohmann::json::to_msgpack(response_object);
-    
-	// Send msg-packed response to client
-	neroshop::msgpack::send_data( ipc_server.get_client(0).get_socket(), packed );//ipc_server.write(response_data);
-    {
-        std::lock_guard<std::mutex> lock(response_mutex);
-        response_cv.notify_one();
+	// Extract JSON payload from request
+	const std::string json_payload = extract_json_payload(request_object);
+	
+	std::stringstream http_response;
+	
+	// Process JSON-RPC request
+	std::string response_object = "";
+	if(neroshop::rpc::is_json_rpc(json_payload)) {
+	    response_object = neroshop::rpc::json::process(json_payload);
+	    http_response << "HTTP/1.1 200 OK\r\n";
+	} else {
+        std::stringstream error_msg;
+        nlohmann::json error_obj;
+        error_obj["jsonrpc"] = "2.0";
+        error_obj["error"] = {};
+        error_obj["error"]["code"] = -32600;
+        error_obj["error"]["message"] = "Invalid Request";//error_obj["error"]["data"] = "Additional error information"; // may be ommited
+        error_obj["id"] = nullptr;
+        error_msg << error_obj.dump();//error_msg << "{ \"jsonrpc\": \"2.0\", \"error\": { \"code\": -32600, \"message\": \"Invalid Request\", \"data\": \"Additional error information\" }, \"id\": null }";
+        response_object = error_msg.str();
+        http_response << "HTTP/1.1 400 Bad Request\r\n";
     }
+	
+	// Build HTTP response string
+    http_response << "Content-Type: application/json\r\n";
+    http_response << "Content-Length: " << response_object.length() << "\r\n";
+    http_response << "\r\n";
+    http_response << response_object;
+	
+	// Send HTTP response to client
+	rpc_server.write(http_response.str());
 }
 ///////////////////
-void do_ipc_heartbeat()
+void do_rpc_heartbeat()
 {
     // Accept incoming connections and handle clients concurrently
-    if(ipc_server.accept() != -1) {
+    if(rpc_server.accept() != -1) {
         clients_mutex.lock();
         
         std::thread request_thread(handle_requests);
@@ -65,7 +112,7 @@ void do_ipc_heartbeat()
 // For security purposes, we don't allow any arguments to be passed into the daemon
 int main(int argc, char** argv)
 {
-    //neroshop::Node dht_node("127.0.0.1", DEFAULT_PORT, true);//("0.0.0.0", DEFAULT_PORT);
+    neroshop::Node dht_node("127.0.0.1", DEFAULT_PORT, true);//("0.0.0.0", DEFAULT_PORT);
 
     std::string daemon { "neromon" };
     std::string daemon_version { daemon + " v" + std::string(NEROSHOP_DAEMON_VERSION) };
@@ -105,12 +152,12 @@ int main(int argc, char** argv)
         assert(port == DEFAULT_TCP_PORT && "Port is not the default value.");*/
         
         std::cout << "Switching to bootstrap mode ...\n";
-        //dht_node.set_bootstrap(true);
+        dht_node.set_bootstrap(true);
         // TODO: bootstrap nodes will typically use both TCP and UDP
         // ALWAYS use public ip address for bootstrap nodes so that it is reachable by all nodes in the network, regardless of their location.
     }
     //-------------------------------------------------------
-/*
+
     std::cout << "******************************************************\n";
     std::cout << "Node ID: " << dht_node.get_id() << "\n";
     std::cout << "IP address: " << dht_node.get_ip_address() << "\n";
@@ -138,22 +185,29 @@ int main(int argc, char** argv)
     std::thread udp_peer_thread([&dht_node](){ dht_node.loop(); });
     udp_peer_thread.detach(); // detach threads so that they run independently
     
-*/
+
     //-------------------------------------------------------
-    int port = DEFAULT_TCP_PORT;
-	if(ipc_server.bind(port)) {
-	    std::cout << NEROMON_TAG "\033[1;97mIPC Server (TCP) bound to port " + std::to_string(port) + "\033[0m\n";
+    // Start TCP server
+    std::atexit(close_server);
+    
+    int server_port = DEFAULT_TCP_PORT;
+	if(rpc_server.bind(server_port)) {
+	    std::cout << NEROMON_TAG "\033[1;97mJSON-RPC Server (TCP) bound to port " + std::to_string(server_port) + "\033[0m\n";
 	}
+	rpc_server.listen(); // listens for any incoming connection
 	
-	ipc_server.listen();
-	
+	const int SLEEP_INTERVAL = 1 * 1000; // must be specified in milliseconds
     // Enter daemon loop (main thread)
     while(true) {
         // Execute daemon heartbeat in a new thread
-        std::thread ipc_thread(do_ipc_heartbeat);
+        std::thread rpc_thread(do_rpc_heartbeat);
+        
+        // Sleep for a period of time
+        /*std::chrono::milliseconds sleep_duration(SLEEP_INTERVAL);
+        std::this_thread::sleep_for(sleep_duration);*/
 
         // Join the heartbeat thread to wait for it to finish
-        ipc_thread.join();        
+        rpc_thread.join();        
     }
     //-------------------------------------------------------
 	return 0;

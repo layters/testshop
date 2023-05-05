@@ -14,7 +14,7 @@ namespace neroshop {
 
 // forward declarations
 class Wallet;
-class Item;
+class Product;
 
 class Seller : public User { 
 public:
@@ -22,12 +22,12 @@ public:
 	Seller(const std::string& name);
 	~Seller();
 	void list_item(const std::string& product_id, unsigned int quantity, double sales_price, const std::string& currency, /*double discount = 0.00, unsigned int discounted_items = 1, unsigned int discount_times = 1, std::string discount_expiry = "0000-00-00 00:00:00", */const std::string& condition, const std::string& location); // adds an item to the inventory
-	void list_item(const neroshop::Item& item, unsigned int stock_qty, double sales_price = 0.00, std::string currency = "usd", double discount = 0.00, unsigned int discounted_items = 1, unsigned int discount_times = 1, std::string discount_expiry = ""/*"0000-00-00 00:00:00"*/, std::string condition = "new");
+	////void list_item(const neroshop::Product& item, unsigned int stock_qty, double sales_price = 0.00, std::string currency = "usd", double discount = 0.00, unsigned int discounted_items = 1, unsigned int discount_times = 1, std::string discount_expiry = ""/*"0000-00-00 00:00:00"*/, std::string condition = "new");
 	void delist_item(const std::string& product_id); // deletes an item from the inventory
-	void delist_item(const neroshop::Item& item);
+	void delist_item(const neroshop::Product& item);
 	// setters - item and inventory-related stuff
 	void set_stock_quantity(const std::string& product_id, unsigned int stock_qty);
-	void set_stock_quantity(const neroshop::Item& item, unsigned int stock_qty);
+	void set_stock_quantity(const neroshop::Product& item, unsigned int stock_qty);
 	// setters - wallet-related stuff
 	void set_wallet(const neroshop::Wallet& wallet);// temporary - delete ASAP
 	// getters - seller rating system
@@ -47,20 +47,20 @@ public:
     unsigned int get_products_count() const; // returns number of products listed by this seller
     unsigned int get_sales_count() const; // returns the total number of items sold by this seller
     unsigned int get_units_sold(const std::string& product_id) const; // returns the total number of a specific item sold by this seller
-    unsigned int get_units_sold(const neroshop::Item& item) const;
+    unsigned int get_units_sold(const neroshop::Product& item) const;
     double get_sales_profit() const; // returns the overall profit made from the sale of all items sold by this seller
     double get_profits_made(const std::string& product_id) const; // returns the overall profit made from the sale of a specific item sold by this seller
-    double get_profits_made(const neroshop::Item& item) const;
+    double get_profits_made(const neroshop::Product& item) const;
     unsigned int get_product_id_with_most_sales() const; // returns the product_id with the most purchases (based on biggest sum of item_qty in "order_item")
     unsigned int get_product_id_with_most_orders() const; // returns the product_id with the mode (most occuring) or the most ordered item in "order_item"
-	//Item * get_item_with_most_sales() const;
-	//Item * get_item_with_most_orders() const;
+	//Product * get_item_with_most_sales() const;
+	//Product * get_item_with_most_orders() const;
 	// boolean
 	//bool is_verified() const; // returns true if seller is verified brand owner (or original manufacturer)
 	bool has_listed(const std::string& product_id) const; // returns true if this seller has listed an item
-	bool has_listed(const neroshop::Item& item) const; // returns true if this seller has listed an item
+	bool has_listed(const neroshop::Product& item) const; // returns true if this seller has listed an item
 	bool has_stock(const std::string& product_id) const; // returns true if this seller has an item in stock
-	bool has_stock(const neroshop::Item& item) const;
+	bool has_stock(const neroshop::Product& item) const;
 	bool has_wallet() const; // returns true if seller's wallet is opened
 	bool has_wallet_synced() const; // returns true if seller's wallet is synced to a node
 	// callbacks
@@ -73,6 +73,7 @@ protected:
 private:
 	std::unique_ptr<neroshop::Wallet> wallet;
 	std::vector<int> customer_order_list;
+	friend class Serializer;
 };
 }
 #endif
