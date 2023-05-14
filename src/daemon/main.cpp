@@ -6,8 +6,6 @@
 #include "../core/crypto/sha3.hpp"
 #include "../core/protocol/p2p/node.hpp" // server.hpp included here (hopefully)
 #include "../core/protocol/p2p/routing_table.hpp" // uncomment if using routing_table
-#include "../core/protocol/rpc/bencode.hpp"
-#include "../core/protocol/rpc/krpc.hpp"
 #include "../core/protocol/transport/ip_address.hpp"
 #include "../core/protocol/rpc/json_rpc.hpp"
 #include "../core/protocol/messages/msgpack.hpp"
@@ -23,49 +21,142 @@
 
 using namespace neroshop;
 
-Server ipc_server;
-
 std::mutex clients_mutex;
 std::mutex server_mutex;
-///////////////////
-std::mutex response_mutex;
-std::condition_variable response_cv;
-///////////////////
-void handle_requests() {
-    // Lock the server mutex
-    std::lock_guard<std::mutex> lock(server_mutex);
+std::mutex node_mtx;
+//-----------------------------------------------------------------------------
 
-    // Read msgpack request object from client
-	std::string request = neroshop::msgpack::receive_data( ipc_server.get_client(0).get_socket() );//(ipc_server.get_socket());////std::string request_data = ipc_server.read();
-	
-    // Build a response
-    nlohmann::json response_object = {{"food", "bartender"}, {"back", 2}};
-    std::vector<uint8_t> packed = nlohmann::json::to_msgpack(response_object);
-    
-	// Send msg-packed response to client
-	neroshop::msgpack::send_data( ipc_server.get_client(0).get_socket(), packed );//ipc_server.write(response_data);
-    {
-        std::lock_guard<std::mutex> lock(response_mutex);
-        response_cv.notify_one();
+std::string extract_json_payload(const std::string& request) {
+    // Find the start of the JSON payload
+    const std::string json_start = "\r\n\r\n";
+    const auto json_pos = request.find(json_start);
+    if (json_pos == std::string::npos) {
+        // JSON payload not found
+        return "";
     }
+    // Extract the JSON payload
+    const auto json_payload = request.substr(json_pos + json_start.size());
+    return json_payload;
 }
-///////////////////
-void do_ipc_heartbeat()
-{
-    // Accept incoming connections and handle clients concurrently
-    if(ipc_server.accept() != -1) {
-        clients_mutex.lock();
-        
-        std::thread request_thread(handle_requests);
-        request_thread.detach();
-        
-        clients_mutex.unlock();
-    }	
+
+//-----------------------------------------------------------------------------
+
+void rpc_server() {
+    Server server("127.0.0.1", DEFAULT_RPC_PORT);
+    
+    while (true) {
+        // Accept incoming connections and handle clients concurrently
+        if(server.accept() != -1) {
+            std::thread request_thread([&]() {
+                // Lock the server mutex
+                std::lock_guard<std::mutex> lock(server_mutex);
+
+                // Read json-rpc request object from client
+                std::string request_object = server.read();
+
+                // Extract JSON payload from request
+                const std::string json_payload = extract_json_payload(request_object);
+
+                std::stringstream http_response;
+
+                // Process JSON-RPC request
+                std::string response_object = "";
+                if(neroshop::rpc::is_json_rpc(json_payload)) {
+                    response_object = neroshop::rpc::json::process(json_payload);
+                    http_response << "HTTP/1.1 200 OK\r\n";
+                } else {
+                    std::stringstream error_msg;
+                    nlohmann::json error_obj;
+                    error_obj["jsonrpc"] = "2.0";
+                    error_obj["error"] = {};
+                    error_obj["error"]["code"] = -32600;
+                    error_obj["error"]["message"] = "Invalid Request";//error_obj["error"]["data"] = "Additional error information"; // may be ommited
+                    error_obj["id"] = nullptr;
+                    error_msg << error_obj.dump();
+                    response_object = error_msg.str();
+                    http_response << "HTTP/1.1 400 Bad Request\r\n";
+                }
+
+                // Build HTTP response string
+                http_response << "Content-Type: application/json\r\n";
+                http_response << "Content-Length: " << response_object.length() << "\r\n";
+                http_response << "\r\n";
+                http_response << response_object;
+
+                // Send HTTP response to client
+                server.write(http_response.str());
+            });
+
+            request_thread.detach();
+        }
+    }
+    // Close the server socket before exiting
+    server.close();
 }
-// For security purposes, we don't allow any arguments to be passed into the daemon
+
+//-----------------------------------------------------------------------------
+
+void ipc_server(Node& node) {
+    Server server("127.0.0.1", DEFAULT_TCP_PORT);
+    
+    while (true) {
+        if(server.accept() != -1) {  // ONLY accepts a single client
+            while (true) {
+                std::vector<uint8_t> request;
+                // wait for incoming message from client
+                int recv_size = server.receive(request);
+                if (recv_size == 0) {
+                    // Connection closed by client, break out of loop
+                    break;
+                }
+                {
+                    // Acquire lock before accessing the node object
+                    std::lock_guard<std::mutex> lock(node_mtx);
+                    
+                    // process JSON request and generate response
+                    std::vector<uint8_t> response = neroshop::msgpack::process(request, node);
+            
+                    // send response to client
+                    server.send(response);
+                }
+                // The lock_guard is destroyed and the lock is released here
+            }
+        } 
+    }  
+    // Close the server socket before exiting // TODO: implement SIGINT (Ctrl+C)
+    server.close();
+}
+
+//-----------------------------------------------------------------------------
+
+// still needs a lot of work. I have no idea what I'm doing :/
+void dht_server(Node& node) {
+    /*Server server("127.0.0.1", DEFAULT_UDP_PORT, SocketType::Socket_UDP);
+    server.set_nonblocking(true);*/
+    {
+        // Acquire lock before accessing the node object
+        ////std::lock_guard<std::mutex> lock(node_mtx);    
+        //std::cout << "node addr: " << node.get_public_ip_address() << "\n";
+        std::cout << "******************************************************\n";
+        std::cout << "Node ID: " << node.get_id() << "\n";
+        std::cout << "IP address: " << node.get_ip_address() << "\n";
+        std::cout << "Port number: " << node.get_port() << "\n\n";
+        std::cout << "******************************************************\n";
+        // Join the DHT network
+        if(!node.is_bootstrap_node()) {
+            node.join(); // a boostrap node cannot join the network
+        }
+    
+        node.run();  
+    }
+    // The lock_guard is destroyed and the lock is released here
+}
+
+//-----------------------------------------------------------------------------
+
 int main(int argc, char** argv)
 {
-    //neroshop::Node dht_node("127.0.0.1", DEFAULT_PORT, true);//("0.0.0.0", DEFAULT_PORT);
+    neroshop::Node node("127.0.0.1", DEFAULT_UDP_PORT, true);//("0.0.0.0", DEFAULT_PORT);
 
     std::string daemon { "neromon" };
     std::string daemon_version { daemon + " v" + std::string(NEROSHOP_DAEMON_VERSION) };
@@ -76,7 +167,8 @@ int main(int argc, char** argv)
         ("v,version", "Show version")
         ("b,bootstrap", "Run this node as a bootstrap node")////, cxxopts::value<std::string>())//("bl,bootstrap_lazy", "Run this node as a bootstrap node without specifying multiaddress")
         //("bl,bootstrap-lazy", "Run this node as a bootstrap node without specifying multiaddress")
-        ("c,config", "Path to configuration file")
+        //("c,config", "Path to configuration file")
+        ("rpc,enable-rpc", "Enables the RPC daemon server")
     ;
     
     auto result = options.parse(argc, argv);
@@ -89,72 +181,28 @@ int main(int argc, char** argv)
         std::cout << daemon << " version " << std::string(NEROSHOP_DAEMON_VERSION) << std::endl;
         exit(0);
     }       
-    if(result.count("bootstrap")) { 
-        /*std::string multiaddress = result["bootstrap"].as<std::string>(); // ./neromon --bootstrap /ip4/12.144.256.32/tcp/57740 ; ./neromon --bootstrap "/ip6/[2001:0db8:85a3:0000:0000:8a2e:0370:7334]/tcp/4001" // Note that IPv6 addresses are enclosed in square brackets
-        std::string ip_address; int port;
-        try {
-            auto address = neroshop::parse_multiaddress(multiaddress);
-            ip_address = std::get<0>(address);
-            port = std::get<1>(address);
-            std::cout << "IP address + port: " << ip_address << ":" << port << std::endl;
-        } catch (std::invalid_argument& e) {
-            std::cerr << "Error: " << e.what() << " ( Format is: /ip4/<ip_address>/tcp/<port> )" << std::endl;
-            exit(1);
-        }
-        
-        assert(port == DEFAULT_TCP_PORT && "Port is not the default value.");*/
-        
+    if(result.count("bootstrap")) {   
         std::cout << "Switching to bootstrap mode ...\n";
-        //dht_node.set_bootstrap(true);
+        node.set_bootstrap(true);
         // TODO: bootstrap nodes will typically use both TCP and UDP
         // ALWAYS use public ip address for bootstrap nodes so that it is reachable by all nodes in the network, regardless of their location.
     }
     //-------------------------------------------------------
-/*
-    std::cout << "******************************************************\n";
-    std::cout << "Node ID: " << dht_node.get_id() << "\n";
-    std::cout << "IP address: " << dht_node.get_ip_address() << "\n";
-    std::cout << "Port number: " << dht_node.get_port() << "\n\n";
-    std::cout << "******************************************************\n";
-    // Join the DHT network
-    // ...
+    std::thread ipc_thread(ipc_server, std::ref(node));//([&node]() { ipc_server(node); });  // For IPC communication between the local GUI client and the local daemon server
+    std::thread dht_thread(dht_server, std::ref(node));//([&node]() { dht_server(node); }); // DHT communication for peer discovery and data storage
+    std::thread rpc_thread;  // Declare the thread object // RPC communication for processing requests from outside clients (disabled by default)
     
-    std::mutex mutex;
-    std::condition_variable cond_var;
-    bool is_dht_node_joined = false;
-
-    dht_node.join([&]() {
-        // This callback will be called when the DHT node joins the network
-        std::unique_lock<std::mutex> lock(mutex);
-        is_dht_node_joined = true;
-        cond_var.notify_all();
-    });
-
-    {
-        std::unique_lock<std::mutex> lock(mutex);
-        cond_var.wait(lock, [&](){ return is_dht_node_joined; });
+    if(result.count("rpc")) {
+        std::cout << "RPC enabled\n";
+        rpc_thread = std::thread(rpc_server);  // Initialize the thread object 
     }
     
-    std::thread udp_peer_thread([&dht_node](){ dht_node.loop(); });
-    udp_peer_thread.detach(); // detach threads so that they run independently
-    
-*/
-    //-------------------------------------------------------
-    int port = DEFAULT_TCP_PORT;
-	if(ipc_server.bind(port)) {
-	    std::cout << NEROMON_TAG "\033[1;97mIPC Server (TCP) bound to port " + std::to_string(port) + "\033[0m\n";
-	}
-	
-	ipc_server.listen();
-	
-    // Enter daemon loop (main thread)
-    while(true) {
-        // Execute daemon heartbeat in a new thread
-        std::thread ipc_thread(do_ipc_heartbeat);
-
-        // Join the heartbeat thread to wait for it to finish
-        ipc_thread.join();        
+    // Wait for all threads to finish
+    if (rpc_thread.joinable()) {
+        rpc_thread.join();
     }
-    //-------------------------------------------------------
+    ipc_thread.join();
+    dht_thread.join(); // Uses a ton of resources due to UDP socket being non-blocking :/
+
 	return 0;
 }

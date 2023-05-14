@@ -1,10 +1,61 @@
 #include "listing.hpp"
 
+#include <utility> // std::exchange
+
+neroshop::Listing::Listing() : quantity(0), price(0.00) {}
+
 neroshop::Listing::Listing(const std::string& id, const std::string& product_id, const std::string& seller_id, unsigned int quantity,
         double price, const std::string& currency, const std::string& condition, const std::string& location, const std::string& date)
     : id(id), product_id(product_id), seller_id(seller_id), quantity(quantity),
       price(price), currency(currency), condition(condition), location(location), date(date)
 {}
+
+neroshop::Listing::Listing(const Listing& other)
+    : id(other.id), product_id(other.product_id), seller_id(other.seller_id), quantity(other.quantity),
+      price(other.price), currency(other.currency), condition(other.condition), location(other.location),
+      date(other.date)
+{}
+
+neroshop::Listing::Listing(Listing&& other) noexcept
+    : id(std::move(other.id)), product_id(std::move(other.product_id)), seller_id(std::move(other.seller_id)),
+      quantity(std::exchange(other.quantity, 0)), price(std::exchange(other.price, 0.0)),
+      currency(std::move(other.currency)), condition(std::move(other.condition)), location(std::move(other.location)),
+      date(std::move(other.date))
+{}
+
+//-----------------------------------------------------------------------------
+
+neroshop::Listing& neroshop::Listing::operator=(const neroshop::Listing& other)
+{
+    if (this != &other) {
+        id = other.id;
+        product_id = other.product_id;
+        seller_id = other.seller_id;
+        quantity = other.quantity;
+        price = other.price;
+        currency = other.currency;
+        condition = other.condition;
+        location = other.location;
+        date = other.date;
+    }
+    return *this;
+}
+
+neroshop::Listing& neroshop::Listing::operator=(neroshop::Listing&& other) noexcept
+{
+    if (this != &other) {
+        id = std::move(other.id);
+        product_id = std::move(other.product_id);
+        seller_id = std::move(other.seller_id);
+        quantity = std::exchange(other.quantity, 0);
+        price = std::exchange(other.price, 0.0);
+        currency = std::move(other.currency);
+        condition = std::move(other.condition);
+        location = std::move(other.location);
+        date = std::move(other.date);
+    }
+    return *this;
+}
 
 //-----------------------------------------------------------------------------
 
@@ -40,7 +91,7 @@ void neroshop::Listing::set_location(const std::string& location) {
     this->location = location; 
 }
 
-void neroshop::Listing::set_creation_date(const std::string& date) { 
+void neroshop::Listing::set_date(const std::string& date) { 
     this->date = date; 
 }
 

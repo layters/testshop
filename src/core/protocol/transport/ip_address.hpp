@@ -21,14 +21,26 @@
 
 #include <iostream>
 #include <string>
+#include <vector>
 
 namespace neroshop {
+    enum class IPVersion {
+        Unknown,
+        IPV4,
+        IPV6
+    };
+
     std::string get_public_ip_address();
     std::string get_public_ip_address_tor(); // tor is required but this always fails so I dunno ...
     
     std::string get_device_ip_address();
     
-    std::string url_to_ip(const std::string& url);
+    namespace ip {
+        std::string resolve(const std::string& hostname);
+        std::vector<std::string> resolve_v2(const std::string& hostname);
+        
+        bool is_localhost(const char* ip_str);
+    }
     
     bool is_valid_url(const std::string& url);
     

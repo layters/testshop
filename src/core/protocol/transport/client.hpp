@@ -1,7 +1,13 @@
 #ifndef CLIENT_HPP_NEROSHOP
 #define CLIENT_HPP_NEROSHOP
 
-#if defined(__gnu_linux__) && defined(NEROSHOP_USE_SYSTEM_SOCKETS)
+#if defined(_WIN32)
+#include <winsock2.h> // core header for Winsock2
+#include <ws2tcpip.h> // header for TCP/IP protocols
+#include <iphlpapi.h> // header for IP helper functions
+#endif
+
+#if defined(__gnu_linux__)
 #include <sys/socket.h> // for sockaddr_storage, AF_INET, AF_INET6
 #include <netinet/in.h>
 #include <arpa/inet.h> // for inet_pton
@@ -43,11 +49,10 @@ public:
 	bool connect(unsigned int port, std::string address = "0.0.0.0");
 	void write(const std::string& text);
 	std::string read();
-	void send();
-	void send(const std::vector<uint8_t>& packed); // tcp
-	void send_to(const std::vector<uint8_t>& packed, const struct sockaddr_in& addr); // udp
-    std::string receive(); // tcp
-    std::string receive_from(); // udp
+	void send(const std::vector<uint8_t>& message); // tcp
+	void send_to(const std::vector<uint8_t>& message, const struct sockaddr_in& addr); // udp
+    void receive(std::vector<uint8_t>& message); // tcp
+    void receive_from(std::vector<uint8_t>& message, const struct sockaddr_in& addr); // udp
 	void close(); // kills socket
 	void shutdown(); // shuts down connection (disconnects from server)
     void disconnect(); // breaks connection to server then closes the client socket // combination of shutdown() and close()
@@ -60,6 +65,7 @@ public:
 private:
 	int sockfd;
 	struct sockaddr_in addr;
+	struct sockaddr_in6 addr6;
 	SocketType socket_type;
 	friend class Server;
 };

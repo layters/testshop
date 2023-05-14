@@ -26,6 +26,9 @@
 #include "../core/tools/tools.hpp"
 #include "../core/tools/logger.hpp"
 #include "../core/tools/process.hpp"
+#include "../core/category.hpp"
+#include "../core/tools/regex.hpp"
+#include "../core/crypto/rsa.hpp"
 
 #include <future>
 #include <thread>
@@ -143,7 +146,8 @@ void neroshop::Backend::initializeDatabase() {
         ");");
         database->execute("ALTER TABLE cart_item ADD COLUMN product_id TEXT REFERENCES products(uuid);");
         database->execute("ALTER TABLE cart_item ADD COLUMN quantity INTEGER;");
-        //database->execute("ALTER TABLE cart_item ADD COLUMN item_price numeric;"); // sales_price will be used for the final pricing rather than the unit_price
+        database->execute("ALTER TABLE cart_item ADD COLUMN seller_id TEXT REFERENCES users(monero_address);"); // for a multi-vendor cart, specifying the seller_id is important!
+        //database->execute("ALTER TABLE cart_item ADD COLUMN item_price numeric;"); // sales_price will be used for the final pricing rather than the retail_price
         //database->execute("ALTER TABLE cart_item ADD COLUMN item_weight REAL;");//database->execute("CREATE TABLE cart_item(id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT, cart_id TEXT REFERENCES cart(id), product_id TEXT REFERENCES products(id), item_qty INTEGER, item_price NUMERIC, item_weight REAL);");
         database->execute("CREATE UNIQUE INDEX index_cart_item ON cart_item (cart_id, product_id);"); // cart_id and product_id duo MUST be unqiue for each row
     }
@@ -1065,9 +1069,8 @@ int neroshop::Backend::deleteExpiredOrders() {
 //----------------------------------------------------------------
 QVariantList neroshop::Backend::getNodeListDefault(const QString& coin) const {
     QVariantList node_list;
-    ScriptController script_controller;
-    std::string network_type = script_controller.getJsonRootObjectCpp().value("monero").toObject().value("daemon").toObject().value("network_type").toString().toStdString();//neroshop::Script::get_string(neroshop::lua_state, "neroshop.monero.daemon.network_type");
-    std::vector<std::string> node_table = neroshop::Script::get_table_string(neroshop::lua_state, coin.toStdString() + ".nodes." + network_type); // Get monero nodes from settings.lua////std::cout << "lua_query: " << "neroshop." + coin.toStdString() + ".nodes." + network_type << std::endl;
+    std::string network_type = neroshop::Script::get_string(neroshop::lua_state, "monero.network_type");
+    std::vector<std::string> node_table = neroshop::Script::get_table_string(neroshop::lua_state, coin.toStdString() + ".nodes." + network_type); // Get monero nodes from settings.lua////std::cout << "lua_query: " << coin.toStdString() + ".nodes." + network_type << std::endl;
     for(auto strings : node_table) {
         node_list << QString::fromStdString(strings);
     }
@@ -1129,52 +1132,39 @@ QVariantList neroshop::Backend::validateDisplayName(const QString& display_name)
     std::string username = display_name.toStdString();
     // Empty display names are acceptable
     if(display_name.isEmpty()) return { true, "" };
-    // If display name is set, make sure it is at least 2 characters short (min_user_length=2)
-    unsigned int min_user_length = 2;
-    if(username.length() < min_user_length) {
-        std::string message = "Your username must be at least " + std::to_string(min_user_length) + " characters in length";
-        return { false, QString::fromStdString(message) };
-    }
-    // make sure username is at least 30 characters long (max_user_length=30)
-    unsigned int max_user_length = 30; // what if a company has a long name? :o // also consider the textbox's max-length
-    if(username.length() > max_user_length) {
-        std::string message = "Your username must not exceed " + std::to_string(max_user_length) + " characters in length";
-        return { false, QString::fromStdString(message) };
-    }
-    for(int i = 0; i < username.length(); i++)
-    {
-        // make sure username does not contain any spaces //std::cout << username[i] << " - char\n";
-        if(isspace(username[i])) {
-            std::string message = "Your username cannot contain any spaces";
+
+    if(!neroshop::string_tools::is_valid_username(username)) {
+        std::string default_message = "Invalid username: " + username;
+        neroshop::print(default_message, 1);
+        if (username.length() < 2) {
+            std::string message = "must be at least 2 characters in length";
             return { false, QString::fromStdString(message) };
         }
-        // make sure username can only contain letters, numbers, and these specific symbols: a hyphen, underscore, and period (-,_,.) //https://stackoverflow.com/questions/39819830/what-are-the-allowed-character-in-snapchat-username#comment97381763_41959421
-        // symbols like @,#,$,etc. are invalid
-        if(!isalnum(username[i])) {
-            if(username[i] != '-'){
-            if(username[i] != '_'){
-            if(username[i] != '.'){
-                std::string message = "Your username cannot contain any symbols except (-, _, .)";// + username[i];
-                return { false, QString::fromStdString(message) };
-            }}}
+        if (username.length() > 30) {
+            std::string message = "cannot exceed 30 characters in length";
+            return { false, QString::fromStdString(message) };
         }
-    }
-    // make sure username begins with a letter (username cannot start with a symbol or number)
-    char first_char = username.at(username.find_first_of(username));
-    if(!isalpha(first_char)) {
-        std::string message = "Your username must begin with a letter";// + first_char;
-        return { false, QString::fromStdString(message) };
-    }
-    // make sure username does not end with a symbol (username can end with a number, but NOT with a symbol)
-    char last_char = username.at(username.find_last_of(username));
-    if(!isalnum(last_char)) { //if(last_char != '_') { // underscore allowed at end of username? :o
-        std::string message = "Your username must end with a letter or number";// + last_char;
-        return { false, QString::fromStdString(message) };
-    }
-    // the name guest is reserved for guests only, so it cannot be used by any other user
-    if(neroshop::string::lower(username) == "guest") {
-        std::string message = "The name \"Guest\" is reserved for guests ONLY";
-        return { false, QString::fromStdString(message) };
+        if (std::regex_search(username, std::regex("\\s"))) {
+            std::string message = "cannot contain spaces\n";
+            return { false, QString::fromStdString(message) };
+        }
+        if (!std::regex_search(username, std::regex("^[a-zA-Z]"))) {
+            std::string message = "must begin with a letter (cannot start with a symbol or number)";
+            return { false, QString::fromStdString(message) };
+        }
+        if (!std::regex_search(username, std::regex("[a-zA-Z0-9]$"))) {
+            std::string message = "must end with a letter or number (cannot end with a symbol)";
+            return { false, QString::fromStdString(message) };
+        }
+        if (std::regex_search(username, std::regex("[^a-zA-Z0-9._-]"))) {
+            std::string message = "contains invalid symbol(s) (only '.', '_', and '-' are allowed in between the display name)";
+            return { false, QString::fromStdString(message) };
+        }
+        if (username == "Guest") {
+            std::string message = "name \"Guest\" is reserved for guests only and cannot be used by any other user";
+            return { false, QString::fromStdString(message) };
+        }
+        return { false, QString::fromStdString(default_message) };
     }
     
     // Check database to see if display name is available
@@ -1209,6 +1199,7 @@ QVariantList neroshop::Backend::checkDisplayName(const QString& display_name) co
 QVariantList neroshop::Backend::registerUser(WalletController* wallet_controller, const QString& display_name, UserController * user_controller) {
     neroshop::db::Sqlite3 * database = neroshop::get_database();
     if(!database) throw std::runtime_error("database is NULL");
+    //---------------------------------------------
     // Validate display name
     auto name_validation_result = validateDisplayName(display_name);
     if(!name_validation_result[0].toBool()) {
@@ -1216,15 +1207,33 @@ QVariantList neroshop::Backend::registerUser(WalletController* wallet_controller
         QString message_result = name_validation_result[1].toString();
         return { boolean_result, message_result };
     }
+    //---------------------------------------------
     // Get wallet primary address and check its validity
     std::string primary_address = wallet_controller->getPrimaryAddress().toStdString();//neroshop::print("Primary address: \033[1;33m" + primary_address + "\033[1;37m\n");
     if(!wallet_controller->getWallet()->is_valid_address(primary_address)) {
         return { false, "Invalid monero address" };
     }
+    //---------------------------------------------
+    // Generate RSA key pair
+    std::string config_path = NEROSHOP_DEFAULT_CONFIGURATION_PATH;
+    std::string public_key_filename = config_path + "/" + "public.pem"; // TODO: use .asc extension for PGP keys
+    std::string private_key_filename = config_path + "/" + "private.pem";
+    EVP_PKEY * pkey = neroshop::crypto::rsa_generate_keys_get();
+    if(pkey == nullptr) {
+        return { false, "Failed to generate RSA key pair" };
+    }
+    // Get a copy of the public key
+    std::string public_key = neroshop::crypto::rsa_get_public_key(pkey);
+    std::string private_key = neroshop::crypto::rsa_get_private_key(pkey);
+    // Save the key pair to disk
+    if(!neroshop::crypto::rsa_save_keys(pkey, public_key_filename, private_key_filename)) {
+        return { false, "Failed to save RSA key pair" };
+    }
+    //---------------------------------------------
     // Store login credentials in database
     // Todo: make this command (DB entry) a client request that the server must respond to and the consensus must agree with
     // Note: Multiple users cannot have the same display_name. Each display_name must be unique!
-    std::string user_id = database->get_text_params("INSERT INTO users(name, monero_address) VALUES($1, $2) RETURNING monero_address;", { display_name.toStdString(), primary_address });//int user_id = database->get_integer_params("INSERT INTO users(name, monero_address) VALUES($1, $2) RETURNING id;", { display_name.toStdString(), primary_address.toStdString() });
+    std::string user_id = database->get_text_params("INSERT INTO users(name, monero_address, public_key) VALUES($1, $2, $3) RETURNING monero_address;", { display_name.toStdString(), primary_address, public_key });//int user_id = database->get_integer_params("INSERT INTO users(name, monero_address) VALUES($1, $2) RETURNING id;", { display_name.toStdString(), primary_address.toStdString() });
     if(user_id.empty()) { return { false, "Account registration failed (due to database error)" }; }//if(user_id == 0) { return { false, "Account registration failed (due to database error)" }; }
     // Create cart for user
     QString cart_uuid = QUuid::createUuid().toString();

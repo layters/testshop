@@ -12,26 +12,30 @@ namespace neroshop {
 class Cart; // forward declaration
 
 // order status
-enum class OrderStatus : unsigned int {
-    Order_Incomplete, 
-    Order_Created, 
-    Order_Pending = Order_Created, 
-    Order_Preparing, 
-    Order_Shipped, 
-    Order_ReadyForPickup, 
-    Order_Ready = Order_ReadyForPickup, 
-    Order_Delivered, 
-    Order_Done = Order_Delivered, 
-    Order_Cancelled, 
-    Order_Failed, 
-    Order_Returned,    
+enum class OrderStatus {
+    New, // Newly created or placed order
+    Pending, // Order is approved and is now awaiting payment
+    Processing, // Order that is being prepared or assembled
+    Shipped, // Order has been shipped
+    ReadyForPickup, Ready = ReadyForPickup, // Order is ready for pickup from a seller-specified location
+    Delivered, Done = Delivered, // Order that has been delivered or picked up
+    Cancelled, // Order was cancelled by the buyer
+    Failed, // Order failed due to an error or technical issue
+    Returned, // Order has been returned
+    Disputed, // Customer has initiated a dispute process
+    Declined, // Order was declined by the seller
 };
 
 // payment status
 enum class PaymentStatus {
-    Payment_NotReceived, // red
-    Payment_Confirmed, // yellow
-    Payment_Received, // green
+    Pending, // Payment has been initiated but has not been received yet
+    Confirmed, // Payment has been confirmed and accepted by the blockchain network
+    Completed, // Payment has been successfully completed and the transaction is final
+    Partial, // Payment has been partially completed or only a portion of the requested amount has been received
+    Refunded, // Payment has been refunded
+    Expired, // Payment window has expired and the transaction cannot be completed
+    Released, // Payment has been released to the seller after the transaction is complete
+    Held, // Payment is being held in escrow until the transaction is completed or resolved
 };
 
 // payment options
@@ -85,9 +89,8 @@ public:
 	// order item-related functions
 	void cancel_order_item(); // remove an item from a order
 	void change_order_item(); // replace order_item with a different item
-	void change_order_item_quantity(); // change order_item quantity
-	// setters - there are no setters. Call `create_order` to set the member variable values
-	// getters
+	void change_order_item_quantity();
+	
 	std::string get_id() const;
 	OrderStatus get_status() const;
 	std::string get_status_as_string() const; // pending (awaiting_payment), processing (already paid for, now seller is preparing), preparing, shipped (fully | partially), refunded or returned (fully | partially), declined, disputed, failed (user fails to pay), cancelled, done (or completed; order was paid for and delivered to the buyer)
@@ -109,6 +112,7 @@ public:
 	bool is_cancelled() const;
 	// friend
 	friend class Seller;
+	friend class Serializer;
 private:
 	std::string id;
 	std::string date; // date of creation
@@ -122,9 +126,25 @@ private:
 	PaymentCoin payment_coin; // "Monero"
 	DeliveryOption delivery_option; // "Delivery", "Pickup"
 	std::string notes; // encrypted note containing sensative information
-	std::vector<std::tuple<std::string, int, std::string>> items; // I am using vector so that each item is stored in the order by which it is placed/inserted
-	// TODO: make cart contents a vector instead of a map?
+	std::vector<std::tuple<std::string, int, std::string>> items; // <product_id>,<quantity>,<seller_id>
+	// TODO: make cart contents a vector instead of a map so cart items can be in correct order
+	void set_id(const std::string& id);
+	void set_date(const std::string& date);
 	void set_status(OrderStatus status);
+	void set_status_by_string(const std::string& status);
+	void set_customer_id(const std::string& customer_id);
+	void set_subtotal(double subtotal);
+	void set_discount(double discount);
+	void set_shipping_cost(double shipping_cost);
+	void set_total(double total);
+	void set_payment_option(PaymentOption payment_option);
+	void set_payment_option_by_string(const std::string& payment_option);
+	void set_payment_coin(PaymentCoin payment_coin);
+	void set_payment_coin_by_string(const std::string& payment_coin);
+	void set_delivery_option(DeliveryOption delivery_option);
+	void set_delivery_option_by_string(const std::string& delivery_option);
+	void set_notes(const std::string& notes);		
+	void set_items(const std::vector<std::tuple<std::string, int, std::string>>& items);		
 };
 
 }

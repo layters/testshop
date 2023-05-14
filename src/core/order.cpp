@@ -8,7 +8,7 @@
 #include "tools/tools.hpp" // neroshop::uuid::generate()
 
 ////////////////////
-neroshop::Order::Order() : status(OrderStatus::Order_Incomplete), subtotal(0.00), discount(0.00), shipping_cost(0.00), total(0.00), 
+neroshop::Order::Order() : status(OrderStatus::New), subtotal(0.00), discount(0.00), shipping_cost(0.00), total(0.00), 
     payment_option(PaymentOption::Escrow), payment_coin(PaymentCoin::Monero), delivery_option(DeliveryOption::Delivery)
 {}
 
@@ -26,6 +26,7 @@ neroshop::Order::~Order() {
     std::cout << "order deleted\n";
 #endif    
 }
+////////////////////
 ////////////////////
 void neroshop::Order::create_order(const neroshop::Cart& cart, const std::string& shipping_address) {
     neroshop::db::Sqlite3 * database = neroshop::get_database();
@@ -59,13 +60,11 @@ void neroshop::Order::create_order(const neroshop::Cart& cart, const std::string
     //-------------------------------------------------------
     double subtotal = 0.00, discount = 0.00, shipping_cost = 0.00, total = 0.00;
     std::string seller_currency = "USD";
-    for (auto const& [key, value] : cart.contents) { // Go through all cart items
-        std::string item_id = key;
-        unsigned int item_qty = value;
+    for (const auto& [item_id, item_qty, seller_id] : cart.contents) {
         std::string item_name = database->get_text_params("SELECT name FROM products WHERE uuid = $1", { item_id });
         
         // If seller_id is not specified, then choose a random seller who is selling the same product, but it MUST be in stock!!
-        std::string seller_id = database->get_text_params("SELECT seller_id FROM listings WHERE product_id = $1 AND quantity > 0", { item_id });
+        ////std::string seller_id = database->get_text_params("SELECT seller_id FROM listings WHERE product_id = $1 AND quantity > 0", { item_id });
         if(seller_id.empty()) { std::cout << "item seller not found" << std::endl; database->execute("ROLLBACK;"); return; }//database->finish(); return; }
         // Prevent customer from purchasing their own products
         if(customer_id == seller_id) { neroshop::print("You cannot purchase your own product(s)", 1); database->execute("ROLLBACK;"); return; }
@@ -87,7 +86,7 @@ void neroshop::Order::create_order(const neroshop::Cart& cart, const std::string
         if(!item_in_stock) {
             neroshop::print("Order failed (Reason: The following item is out of stock: " + item_name + ")");
             // Set order status to failed
-            set_status(OrderStatus::Order_Failed);
+            set_status(OrderStatus::Failed);
             database->execute_params("UPDATE orders SET status = $1 WHERE uuid = $2", { get_status_as_string(), order_id });
             database->execute("ROLLBACK;");
             return;
@@ -103,10 +102,9 @@ void neroshop::Order::create_order(const neroshop::Cart& cart, const std::string
     // Print order message
     neroshop::print("Thank you for using neroshop.");
     neroshop::io_write("You have ordered: ");
-    for (auto const& [key, value] : cart.contents) { // Go through all cart items
-        std::string item_id = key;
+    for (const auto& [item_id, item_qty, seller_id] : cart.contents) {
         std::string item_name = database->get_text_params("SELECT name FROM products WHERE uuid = $1", { item_id });
-        int item_qty = database->get_integer_params("SELECT quantity FROM cart_item WHERE cart_id = $1 AND product_id = $2", { cart.get_id(), item_id });
+        ////int item_qty = database->get_integer_params("SELECT quantity FROM cart_item WHERE cart_id = $1 AND product_id = $2", { cart.get_id(), item_id });
         std::cout << "\033[0;94m" + item_name << " (x" << item_qty << ")\033[0m" << std::endl;
         database->execute_params("UPDATE cart_item SET quantity = $1 WHERE cart_id = $2 AND product_id = $3", { std::to_string(0), cart.get_id(), item_id }); // Reset all cart_item quantity to 0 (now that order has been completed)
     }
@@ -114,7 +112,7 @@ void neroshop::Order::create_order(const neroshop::Cart& cart, const std::string
     const_cast<neroshop::Cart&>(cart).empty();
     //-------------------------------------------------------
     // TODO: Update order in first loop because seller_currency is different for each seller
-    set_status(OrderStatus::Order_Failed); // Update order status to "failed"
+    set_status(OrderStatus::Failed); // Update order status to "failed"
     database->execute_params("UPDATE orders SET status = $1 WHERE uuid = $2", { get_status_as_string(), order_id });
     // TODO: Store price in database as piconeros
     // Convert price to Monero (XMR)
@@ -146,7 +144,7 @@ void neroshop::Order::create_order(const neroshop::Cart& cart, const std::string
     std::cout << "Order total: " << std::fixed << std::setprecision(12) << total_monero << " xmr" << std::fixed << std::setprecision(2) << " (" << neroshop::Converter::get_currency_sign(your_currency) << (neroshop::Converter::get_price(from, to) * total) << " " << neroshop::string::upper(your_currency) << ")" <<  std::endl;
     //std::cout << "Estimated delivery date: " << delivery_date_est << std::endl;
     // set order status => pending
-    set_status(OrderStatus::Order_Pending); // if everything went well then order will be set to pending
+    set_status(OrderStatus::New); // if everything went well then order will be set to pending
     database->execute_params("UPDATE orders SET status = $1 WHERE uuid = $2", { get_status_as_string(), order_id });
     //-------------------------------------------------------
     database->execute("COMMIT;"); // end transaction
@@ -157,17 +155,95 @@ void neroshop::Order::cancel_order()
     // cannot cancel order if it has been at least 12 hours or more
     // sellers can request that a buyer cancels an order
     // only a buyer can cancel an order
-    set_status( OrderStatus::Order_Cancelled );
+    set_status( OrderStatus::Cancelled );
 }
 ////////////////////
 void neroshop::Order::change_order()
 {}
 ////////////////////
 ////////////////////
-////////////////////
-////////////////////
+void neroshop::Order::set_id(const std::string& id) {
+    this->id = id;
+}
+
+void neroshop::Order::set_date(const std::string& date) {
+    this->date = date;
+}
+
 void neroshop::Order::set_status(OrderStatus status) { 
     this->status = status;
+}
+
+void neroshop::Order::set_status_by_string(const std::string& status) {
+    if(status == "New") set_status(OrderStatus::New);
+    if(status == "Pending") set_status(OrderStatus::Pending);
+    if(status == "Processing") set_status(OrderStatus::Processing);
+    if(status == "Shipped") set_status(OrderStatus::Shipped);
+    if(status == "Ready For Pickup") set_status(OrderStatus::ReadyForPickup);
+    if(status == "Delivered") set_status(OrderStatus::Delivered);
+    if(status == "Cancelled") set_status(OrderStatus::Cancelled);
+    if(status == "Failed") set_status(OrderStatus::Failed);
+    if(status == "Returned") set_status(OrderStatus::Returned);
+    if(status == "Disputed") set_status(OrderStatus::Disputed);
+    if(status == "Declined") set_status(OrderStatus::Declined);
+    //if(status == "") set_status(OrderStatus::);
+}
+
+void neroshop::Order::set_customer_id(const std::string& customer_id) {
+    this->customer_id = customer_id;
+}
+
+void neroshop::Order::set_subtotal(double subtotal) {
+    this->subtotal = subtotal;
+}
+
+void neroshop::Order::set_discount(double discount) {
+    this->discount = discount;
+}
+
+void neroshop::Order::set_shipping_cost(double shipping_cost) {
+    this->shipping_cost = shipping_cost;
+}
+
+void neroshop::Order::set_total(double total) {
+    this->total = total;
+}
+
+void neroshop::Order::set_payment_option(PaymentOption payment_option) {
+    this->payment_option = payment_option;
+}
+
+void neroshop::Order::set_payment_option_by_string(const std::string& payment_option) {
+    if(payment_option == "Escrow") set_payment_option(PaymentOption::Escrow);
+    if(payment_option == "Multisig") set_payment_option(PaymentOption::Multisig);
+    if(payment_option == "Finalize") set_payment_option(PaymentOption::Finalize);
+}
+
+void neroshop::Order::set_payment_coin(PaymentCoin payment_coin) {
+    this->payment_coin = payment_coin;
+}
+
+void neroshop::Order::set_payment_coin_by_string(const std::string& payment_coin) {
+    if(payment_coin == "None") set_payment_coin(PaymentCoin::None);
+    if(payment_coin == "Monero") set_payment_coin(PaymentCoin::Monero);
+    //if(payment_coin == "") set_payment_coin(PaymentCoin::);
+}
+
+void neroshop::Order::set_delivery_option(DeliveryOption delivery_option) {
+    this->delivery_option = delivery_option;
+}
+
+void neroshop::Order::set_delivery_option_by_string(const std::string& delivery_option) {
+    if(delivery_option == "Delivery") set_delivery_option(DeliveryOption::Delivery);
+    if(delivery_option == "Pickup") set_delivery_option(DeliveryOption::Pickup);
+}
+
+void neroshop::Order::set_notes(const std::string& notes) {
+    this->notes = notes;
+}
+
+void neroshop::Order::set_items(const std::vector<std::tuple<std::string, int, std::string>>& items) {
+    this->items = items;
 }
 ////////////////////
 ////////////////////
@@ -181,21 +257,23 @@ neroshop::OrderStatus neroshop::Order::get_status() const {
 
 std::string neroshop::Order::get_status_as_string() const {
     switch(status) {
-        case OrderStatus::Order_Incomplete: return "Incomplete"; break; // order was interrupted while user was in the process of creating an order
-        case OrderStatus::Order_Pending: return "Pending"; break;
-        case OrderStatus::Order_Preparing: return "Preparing"; break;
-        case OrderStatus::Order_Shipped: return "Shipped"; break;
-        case OrderStatus::Order_Ready: return "Ready"; break;
-        case OrderStatus::Order_Done: return "Delivered"; break;
-        case OrderStatus::Order_Cancelled: return "Cancelled"; break;
-        case OrderStatus::Order_Failed: return "Failed"; break;
-        case OrderStatus::Order_Returned: return "Returned"; break;
-        //case OrderStatus::Order_ : return ""; break;
-        default: return "Incomplete";
+        case OrderStatus::New: return "New"; break;
+        case OrderStatus::Pending: return "Pending"; break;
+        case OrderStatus::Processing: return "Processing"; break;
+        case OrderStatus::Shipped: return "Shipped"; break;
+        case OrderStatus::ReadyForPickup: return "Ready For Pickup"; break; //case OrderStatus::Ready: return "Ready For Pickup"; break;
+        case OrderStatus::Delivered: return "Delivered"; break; //case OrderStatus::Done: return "Delivered"; break;
+        case OrderStatus::Cancelled: return "Cancelled"; break;
+        case OrderStatus::Failed: return "Failed"; break;
+        case OrderStatus::Returned: return "Returned"; break;
+        case OrderStatus::Disputed: return "Disputed"; break;
+        case OrderStatus::Declined: return "Declined"; break;
+        //case OrderStatus::: return ""; break;
+        default: return "New";
     }
-    //return "Incomplete";
+    //return "New";
 }
-////////////////////
+
 std::string neroshop::Order::get_date() const {
     return date;
 }
@@ -271,7 +349,7 @@ std::vector<std::tuple<std::string, int, std::string>> neroshop::Order::get_item
 ////////////////////
 ////////////////////
 bool neroshop::Order::is_cancelled() const {
-    return (status == OrderStatus::Order_Cancelled);
+    return (status == OrderStatus::Cancelled);
 }
 ////////////////////
 ////////////////////

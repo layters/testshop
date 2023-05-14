@@ -13,6 +13,17 @@ bool neroshop::string_tools::is_strong_password(const std::string& password) {
     return std::regex_match(password, pattern);
 }
 
+/**
+    The username must begin with a letter (uppercase or lowercase), represented by [a-zA-Z].
+    The username can contain any combination of letters (uppercase or lowercase), numbers, period . , underscore _ or hyphen -, represented by [a-zA-Z0-9._-].
+    The username must be between 2 and 30 characters long, which is enforced by {0,28} in the regex. The total length includes the starting and ending letter, hence 0 to 28 characters are allowed between them.
+    The username must end with a letter or number, which is enforced by [a-zA-Z0-9]$.
+**/
+bool neroshop::string_tools::is_valid_username(const std::string& username) {
+    const std::regex pattern("^[a-zA-Z][a-zA-Z0-9._-]{0,28}[a-zA-Z0-9]$");
+    return std::regex_match(username, pattern);
+}
+
 // untested
 bool is_product_code(const std::string& code) {
     // Define regular expressions for each product code type
@@ -59,7 +70,34 @@ bool is_product_code(const std::string& code) {
             neroshop::print("Password must be at least 8 characters long", 1);
         } 
         ////neroshop::print("Please enter a stronger password (at least 1 upper case letter, 1 lower case letter, 1 digit, and 1 special character)", 1);
-        return 1;
+        ////return 1;
+    }
+    
+    std::string username = "Jack_ass-wipe.dude";//"k_u_n";
+    if(!neroshop::string_tools::is_valid_username(username)) {
+        neroshop::print("Invalid username: " + username, 1);
+        if (username.length() < 2) {
+            std::cout << "must be at least 2 characters in length\n";
+        }
+        if (username.length() > 30) {
+            std::cout << "cannot exceed 30 characters in length\n";
+        }
+        if (std::regex_search(username, std::regex("\\s"))) {
+            std::cout << "cannot contain spaces\n";
+        }
+        if (!std::regex_search(username, std::regex("^[a-zA-Z]"))) {
+            std::cout << "must begin with a letter (cannot start with a symbol or number)\n";
+        }
+        if (!std::regex_search(username, std::regex("[a-zA-Z0-9]$"))) {
+            std::cout << "must end with a letter or number (cannot end with a symbol)\n";
+        }
+        if (std::regex_search(username, std::regex("[^a-zA-Z0-9._-]"))) {
+            std::cout << "contains invalid symbol(s) (only '.', '_', and '-' are allowed in between the username)\n";
+        }
+        if (username == "Guest") {
+            std::cout << "name \"Guest\" is reserved for guests only and cannot be used by any other user\n";
+        }
+        ////return 1;
     }
     
     return 0;

@@ -30,11 +30,18 @@ struct Attribute {
 
 class Product { // can also be used for Services
 public:
-    Product(const std::string& id, const std::string& name, const std::string& description, const std::vector<Attribute>& attributes, const std::string& code, unsigned int category_id, const std::vector<std::string>& tags);
+    Product();
+    Product(const std::string& id, const std::string& name, const std::string& description, const std::vector<Attribute>& attributes, const std::string& code, unsigned int category_id, int subcategory_id, const std::vector<std::string>& tags);
+    Product(const Product& other);// copy constructor
+    Product(Product&& other) noexcept; // move constructor
+    
+    Product& operator=(const Product&); // copy assignment operator
+    Product& operator=(Product&&) noexcept; // move assignment operator
     
     void add_attribute(const Attribute& attribute);
     void add_variant(const Attribute& variant);
     void add_tag(const std::string& tag);
+    void print_product();
     
     void set_id(const std::string& id);
     void set_name(const std::string& name);
@@ -45,7 +52,8 @@ public:
     void set_attributes(const std::vector<Attribute>& attributes);
     void set_variants(const std::vector<Attribute>& variants);
     void set_code(const std::string& code);
-    void set_category_id(unsigned int id);
+    void set_category_id(unsigned int category_id);
+    void set_subcategory_id(int subcategory_id);
     void set_tags(const std::vector<std::string>& tags);
 
     std::string get_id() const;
@@ -57,7 +65,9 @@ public:
     std::vector<Attribute> get_attributes() const;
     std::vector<Attribute> get_variants() const;
     std::string get_code() const;
-    int get_category_id() const;//std::string get_category_as_string() const;
+    int get_category_id() const;
+    std::string get_category_as_string() const;
+    int get_subcategory_id() const;//std::string get_subcategory_as_string() const;
     std::vector<std::string> get_tags() const;
 private:
     std::string id;
@@ -66,6 +76,7 @@ private:
     std::vector<Attribute> attributes;
     std::string code; // optional - main product code
     unsigned int category_id;
+    int subcategory_id; // optional
     std::vector<std::string> tags; // optional
 };
 

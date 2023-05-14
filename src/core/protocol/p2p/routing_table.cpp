@@ -124,20 +124,19 @@ std::vector<neroshop::Node*> neroshop::RoutingTable::find_closest_nodes(const st
     // Check the bucket containing the key
     const auto& bucket = buckets[bucket_index];
     if (!bucket.empty()) {
-        // Find the closest node in the bucket
-        auto closest_node = bucket.front().get();
-        unsigned int closest_node_hash = hash_to_int(closest_node->get_id());
-        unsigned int distance_to_closest_node = closest_node_hash ^ key_hash;
+        // Find the closest node(s) in the bucket
+        std::map<unsigned int, neroshop::Node*> closest_nodes_map;
         for (const auto& node : bucket) {
             unsigned int node_hash = hash_to_int(node->get_id());
             unsigned int distance_to_node = node_hash ^ key_hash;
-            if (distance_to_node < distance_to_closest_node) {
-                closest_node = node.get();
-                closest_node_hash = node_hash;
-                distance_to_closest_node = distance_to_node;
+            closest_nodes_map[distance_to_node] = node.get();
+        }
+        for (const auto& closest_node_pair : closest_nodes_map) {
+            closest_nodes.push_back(closest_node_pair.second);
+            if (closest_nodes.size() == count) {
+                return closest_nodes;
             }
         }
-        closest_nodes.push_back(closest_node);
     }
 
     // Check the adjacent buckets for the closest nodes
@@ -147,38 +146,36 @@ std::vector<neroshop::Node*> neroshop::RoutingTable::find_closest_nodes(const st
         if (left_bucket_index >= 0) {
             const auto& left_bucket = buckets[left_bucket_index];
             if (!left_bucket.empty()) {
-                auto closest_node = left_bucket.front().get();
-                unsigned int closest_node_hash = hash_to_int(closest_node->get_id());
-                unsigned int distance_to_closest_node = closest_node_hash ^ key_hash;
+                std::map<unsigned int, neroshop::Node*> closest_nodes_map;
                 for (const auto& node : left_bucket) {
                     unsigned int node_hash = hash_to_int(node->get_id());
                     unsigned int distance_to_node = node_hash ^ key_hash;
-                    if (distance_to_node < distance_to_closest_node) {
-                        closest_node = node.get();
-                        closest_node_hash = node_hash;
-                        distance_to_closest_node = distance_to_node;
+                    closest_nodes_map[distance_to_node] = node.get();
+                }
+                for (const auto& closest_node_pair : closest_nodes_map) {
+                    closest_nodes.push_back(closest_node_pair.second);
+                    if (closest_nodes.size() == count) {
+                        return closest_nodes;
                     }
                 }
-                closest_nodes.push_back(closest_node);
             }
             left_bucket_index--;
         }
         if (right_bucket_index < NUM_BUCKETS) {
             const auto& right_bucket = buckets[right_bucket_index];
             if (!right_bucket.empty()) {
-                auto closest_node = right_bucket.front().get();
-                unsigned int closest_node_hash = hash_to_int(closest_node->get_id());
-                unsigned int distance_to_closest_node = closest_node_hash ^ key_hash;
+                std::map<unsigned int, neroshop::Node*> closest_nodes_map;
                 for (const auto& node : right_bucket) {
                     unsigned int node_hash = hash_to_int(node->get_id());
                     unsigned int distance_to_node = node_hash ^ key_hash;
-                    if (distance_to_node < distance_to_closest_node) {
-                        closest_node = node.get();
-                        closest_node_hash = node_hash;
-                        distance_to_closest_node = distance_to_node;
+                    closest_nodes_map[distance_to_node] = node.get();
+                }
+                for (const auto& closest_node_pair : closest_nodes_map) {
+                    closest_nodes.push_back(closest_node_pair.second);
+                    if (closest_nodes.size() == count) {
+                        return closest_nodes;
                     }
                 }
-                closest_nodes.push_back(closest_node);
             }
             right_bucket_index++;
         }
