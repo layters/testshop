@@ -7,8 +7,6 @@ A decentralized P2P (peer-to-peer) marketplace for [**Monero**](https://getmoner
 
 __Disclaimer: This is an experimental/hobbyist project that is not ready for production use. Use at your own risk.__
 
-__Update: As of April 24th, 2023, this project is no longer being actively developed. However, the code is open source and available for anyone to use, subject to the terms of the license. If you are interested in taking over development, please contact me beforehand.__
-
 
 [![Readme Card](https://github-readme-stats.vercel.app/api/pin/?username=larteyoh&repo=testshop&theme=shades-of-purple)](https://github.com/larteyoh/testshop)
 
@@ -252,13 +250,14 @@ WW2pQTQWHpyJf2CHrCmZG7Tn3zBnYRZTH8g4U3pSZf5s6xsTXrZc9odDWmrWzjRc9MMQWrKXxjHsRdzH
 [**OpenAlias**](https://openalias.org/):
 `donate.neroshop.org` or `donate@neroshop.org`
 
-Donations Log (_for transparency_):
+Donations Log:
 ```
 amount     sender     timestamp
-0.12 xmr - anonymous, 2022-10-25
-0.50 xmr - anonymous, 2022-11-15
-0.02 xmr - anonymous, 2022-11-22
-0.003 xmr - anonymous, 2023-01-03
+--------------------------------
+0.12 xmr   anonymous, 2022-10-25
+0.50 xmr   anonymous, 2022-11-15
+0.02 xmr   anonymous, 2022-11-22
+0.003 xmr  anonymous, 2023-01-03
 ```
 
 
