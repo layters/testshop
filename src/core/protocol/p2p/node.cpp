@@ -358,12 +358,12 @@ bool neroshop::Node::ping(const std::string& address, int port) {
     return send_ping(address, port);
 }
 
-std::vector<neroshop::Node*> neroshop::Node::find_node(const std::string& target_id) const { 
+std::vector<neroshop::Node*> neroshop::Node::find_node(const std::string& target_id, int count) const { 
     if(!routing_table.get()) {
         return {};
     }
     // Get the nodes from the routing table that are closest to the target node
-    std::vector<Node*> closest_nodes = routing_table->find_closest_nodes(target_id);
+    std::vector<Node*> closest_nodes = routing_table->find_closest_nodes(target_id, count);
     return closest_nodes;
 }
 
@@ -669,14 +669,30 @@ void neroshop::Node::send_put(const std::string& key, const std::string& value) 
     
     std::vector<uint8_t> put_message = nlohmann::json::to_msgpack(query_object);
     //-----------------------------------------------
+    // determine which node(s) get to `put` the key-value data in their hash table
+    std::vector<Node *> closest_nodes = find_node(key, 5); // 5=replication factor
+    //-----------------------------------------------
     // socket sendto and recvfrom here
-    //auto receive_buffer = send_query(address, port, put_message);
+    for(auto const& node : closest_nodes) {
+        std::string node_ip = node->get_ip_address();
+        int node_port = node->get_port();
+        std::cout << "Sending 'put' to " << node_ip << ":" << node_port << "\n";
+        auto receive_buffer = send_query(node_ip, node_port, put_message);
     //-----------------------------------------------
     // process the response here
+        nlohmann::json put_response_message;
+        try {
+            put_response_message = nlohmann::json::from_msgpack(receive_buffer);
+        } catch (const std::exception& e) {
+            std::cerr << "Node \033[91m" << node_ip << ":" << node_port << "\033[0m did not respond" << std::endl;
+            return;
+        }
+        std::cout << "\033[32m" << put_response_message.dump() << "\033[0m\n";
     // ...    
     //-----------------------------------------------
     // get result of put request
     // ...
+    }
 }
 
 void neroshop::Node::send_get(const std::string& key) {

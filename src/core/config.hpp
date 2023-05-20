@@ -37,6 +37,8 @@
 #include "script.hpp"
 
 namespace neroshop {
+
+//namespace config {
     extern std::string lua_string;
     extern lua_State * lua_state;
 	extern bool create_config();
@@ -47,6 +49,7 @@ namespace neroshop {
     extern bool create_configuration_file();
 	extern bool load_configuration_file();
 	extern bool open_configuration_file(); // create_config + load_config
+	extern bool load_nodes_from_memory();
 		
 	extern lua_State * get_lua_state();
 	//------------------------------------
@@ -54,6 +57,8 @@ namespace neroshop {
 	extern std::string load_json();	
 	extern bool open_json(std::string& out);
 	extern void modify_json(const std::string& settings);
+//}
+	
 }
 
 #endif

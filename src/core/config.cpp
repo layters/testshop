@@ -150,6 +150,30 @@ bool neroshop::open_configuration_file() {
     return neroshop::open_config();
 }
 //----------------------------------------------------------------
+bool neroshop::load_nodes_from_memory() {
+    // Load and compile the Lua code into a Lua function
+    int result = luaL_loadstring(lua_state, lua_string.c_str());
+    if (result != LUA_OK) {
+        const char* error_message = lua_tostring(lua_state, -1);
+        std::cerr << "Lua compilation error: " << error_message << std::endl;
+        lua_pop(lua_state, 1); // Remove the error message from the stack
+        lua_close(lua_state);
+        return false;
+    }
+    
+    // Execute the Lua function
+    result = lua_pcall(lua_state, 0, 0, 0);
+    if (result != LUA_OK) {
+        const char* error_message = lua_tostring(lua_state, -1);
+        std::cerr << "Lua runtime error: " << error_message << std::endl;
+        lua_pop(lua_state, 1); // Remove the error message from the stack
+        lua_close(lua_state);
+        return false;
+    }
+
+    return true;    
+}
+//----------------------------------------------------------------
 lua_State * neroshop::get_lua_state() {
 	return lua_state;
 }

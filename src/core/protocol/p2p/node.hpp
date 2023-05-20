@@ -11,7 +11,10 @@
 #include <functional> // std::function
 
 #define DEFAULT_PORT DEFAULT_UDP_PORT
+#define PING_TIMEOUT_VALUE 2
 #define TIMEOUT_VALUE 5 // A reasonable timeout value for a DHT node could be between 5 to 30 seconds.
+#define MAX_CLOSEST_NODES 10 // 20-50
+#define REPLICATION_FACTOR 5 // 10-20
 
 const int NUM_BITS = 256;
 const int NUM_PEERS = 10;
@@ -78,7 +81,7 @@ public:
     static void handle_request(int sockfd, struct sockaddr_in client_addr, std::vector<uint8_t> buffer, socklen_t client_addr_len, Node* node);
     // DHT Query Types
     bool ping(const std::string& address, int port); // A simple query to check if a node is online and responsive.
-    std::vector<Node*> find_node(const std::string& target_id) const;// override; // A query to find the contact information for a specific node in the DHT. // Finds the node closest to the target_id
+    std::vector<Node*> find_node(const std::string& target_id, int count = MAX_CLOSEST_NODES) const;// override; // A query to find the contact information for a specific node in the DHT. // Finds the node closest to the target_id
     std::vector<Peer> get_peers(const std::string& info_hash) const; // A query to get a list of peers for a specific torrent or infohash.
     void announce_peer(const std::string& info_hash, int port, const std::string& token); // A query to announce that a peer has joined a specific torrent or infohash.
     void add_peer(const std::string& info_hash, const Peer& peer);

@@ -157,7 +157,7 @@ int main(int argc, char** argv) {
             if (client->is_connected()) {
                 nlohmann::json arguments_obj = {
                     {"id", "my_node_id"},
-                    {"key", "name"},
+                    {"key", "f4bb012e0a4c219b25d31af01b9289a3e826979d1dfd221e7dc55a29ad6d1cf5"},
                     {"value", "Jack"},
                 };
                 nlohmann::json j = {
@@ -185,7 +185,7 @@ int main(int argc, char** argv) {
             if (client->is_connected()) {
                 nlohmann::json arguments_obj = {
                     {"id", "my_node_id"},
-                    {"key", "name"},
+                    {"key", "f4bb012e0a4c219b25d31af01b9289a3e826979d1dfd221e7dc55a29ad6d1cf5"},
                 };
                 nlohmann::json j = {
                     {"version", std::string(NEROSHOP_VERSION)},

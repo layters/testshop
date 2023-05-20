@@ -432,7 +432,6 @@ set(neroshop_price_src
 
 set(neroshop_protocol_src 
     ${NEROSHOP_CORE_SRC_DIR}/protocol/messages/msgpack.cpp
-    ${NEROSHOP_CORE_SRC_DIR}/protocol/p2p/hash_ring.cpp 
     ${NEROSHOP_CORE_SRC_DIR}/protocol/p2p/kademlia.cpp 
     ${NEROSHOP_CORE_SRC_DIR}/protocol/p2p/node.cpp 
     ${NEROSHOP_CORE_SRC_DIR}/protocol/p2p/routing_table.cpp 
