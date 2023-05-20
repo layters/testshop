@@ -1216,8 +1216,9 @@ QVariantList neroshop::Backend::registerUser(WalletController* wallet_controller
     //---------------------------------------------
     // Generate RSA key pair
     std::string config_path = NEROSHOP_DEFAULT_CONFIGURATION_PATH;
-    std::string public_key_filename = config_path + "/" + "public.pem"; // TODO: use .asc extension for PGP keys
-    std::string private_key_filename = config_path + "/" + "private.pem";
+    std::string key_name = primary_address;////(display_name.isEmpty()) ? primary_address : display_name.toStdString();
+    std::string public_key_filename = config_path + "/" + key_name + ".pub";
+    std::string private_key_filename = config_path + "/" + key_name + ".key";
     EVP_PKEY * pkey = neroshop::crypto::rsa_generate_keys_get();
     if(pkey == nullptr) {
         return { false, "Failed to generate RSA key pair" };

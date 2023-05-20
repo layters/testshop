@@ -95,7 +95,7 @@ std::vector<uint8_t> neroshop::msgpack::process(const std::vector<uint8_t>& requ
                     {"port", n->get_port()}
                 };
                 nodes_array.push_back(node_object);
-                std::cout << "Node IP address: " << n->get_ip_address() << ", Node port: " << n->get_port() << std::endl;
+                //std::cout << "Node IP address: " << n->get_ip_address() << ", Node port: " << n->get_port() << std::endl;
             }
             response_object["response"]["nodes"] = nodes_array;
         }
@@ -124,7 +124,7 @@ std::vector<uint8_t> neroshop::msgpack::process(const std::vector<uint8_t>& requ
                     {"port", n->get_port()}
                 };
                 nodes_array.push_back(node_object);
-                std::cout << "Node ID: " << n->get_id() << ", Node IP address: " << n->get_ip_address() << ", Node port: " << n->get_port() << std::endl;
+                //std::cout << "Node ID: " << n->get_id() << ", Node IP address: " << n->get_ip_address() << ", Node port: " << n->get_port() << std::endl;
             }
             response_object["response"]["nodes"] = nodes_array; // If the queried node has no peers for the infohash, a key "nodes" is returned containing the K nodes in the queried nodes routing table closest to the infohash supplied in the query
         } else {
@@ -135,7 +135,7 @@ std::vector<uint8_t> neroshop::msgpack::process(const std::vector<uint8_t>& requ
                     {"port", p.port}
                 };
                 peers_array.push_back(peer_object);
-                std::cout << "Peer IP address: " << p.address << ", Peer port: " << p.port << std::endl;
+                //std::cout << "Peer IP address: " << p.address << ", Peer port: " << p.port << std::endl;
             }
             response_object["response"]["values"] = peers_array; // If the queried node has peers for the infohash, they are returned in a key "values" as a list of strings. Each string containing "compact" format peer information for a single peer
         }

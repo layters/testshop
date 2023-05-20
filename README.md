@@ -92,7 +92,6 @@ The name _neroshop_ is a combination of the words _nero_, which is Italian for _
 | [curl](https://github.com/curl/curl)                               | ?                  | currency conversion                                                    | :o:                                      |
 | [openssl](https://github.com/openssl/openssl)                      | 1.1.1              | for curl, sha256 sum and message encryption                            | :heavy_check_mark:                       |
 | [Qt](https://www.qt.io/)                                           | 5.12.8             | graphical user interface                                               | :heavy_check_mark:                       |
-| [libuv](https://github.com/libuv/libuv)                            | ?                  | networking and child process                                           | :grey_question:                          |
 | [raft](https://github.com/willemt/raft)                            | ?                  | consensus mechanism                                                    | :grey_question:                          |
 | [stduuid](https://github.com/mariusbancila/stduuid)                | ?                  | unique id generation                                                   | :o:                                      |
 | [linenoise](https://github.com/antirez/linenoise)                  | ?                  | command line interface                                                 | :heavy_check_mark: :white_square_button: |
@@ -132,21 +131,21 @@ cd testshop
 Debian/Ubuntu
 ```bash
 # neroshop
-sudo apt install libcurl4-openssl-dev libssl-dev libuv1-dev qtdeclarative5-dev qml-module-qt-labs-platform qml-module-qtquick-controls qml-module-qtquick-controls2 qml-module-qtquick-shapes qml-module-qtquick-dialogs
+sudo apt install libcurl4-openssl-dev libssl-dev qtdeclarative5-dev qml-module-qt-labs-platform qml-module-qtquick-controls qml-module-qtquick-controls2 qml-module-qtquick-shapes qml-module-qtquick-dialogs
 # monero-cpp (monero)
 sudo apt update && sudo apt install pkg-config libssl-dev libzmq3-dev libsodium-dev libunwind8-dev liblzma-dev libreadline6-dev libpgm-dev qttools5-dev-tools libhidapi-dev libusb-1.0-0-dev libprotobuf-dev protobuf-compiler libudev-dev libboost-chrono-dev libboost-date-time-dev libboost-filesystem-dev libboost-locale-dev libboost-program-options-dev libboost-regex-dev libboost-serialization-dev libboost-system-dev libboost-thread-dev python3 ccache
 ```
 Arch (missing Qt/QML libraries)
 ```bash
 # neroshop
-sudo pacman -Sy --needed curl openssl libuv
+sudo pacman -Sy --needed curl openssl
 # monero-cpp (monero)
 sudo pacman -Syu --needed boost openssl zeromq libpgm unbound libsodium libunwind xz readline gtest python3 ccache qt5-tools hidapi libusb protobuf systemd
 ```
 Fedora (missing Qt/QML libraries)
 ```bash
 # neroshop
-sudo dnf install libcurl-devel openssl-devel libuv-devel libuv-static
+sudo dnf install libcurl-devel openssl-devel
 # monero-cpp (monero)
 sudo dnf install boost-static libstdc++-static pkgconf boost-devel openssl-devel zeromq-devel openpgm-devel unbound-devel libsodium-devel libunwind-devel xz-devel readline-devel gtest-devel ccache qt5-linguist hidapi-devel libusbx-devel protobuf-devel protobuf-compiler systemd-devel
 ```
@@ -231,7 +230,8 @@ This project is licensed under the [GNU General Public License v3.0 (GPLv3)](LIC
 
 
 ## Donations
-You may support the neroshop project directly by donating to any of the addresses below. Received payments will be used to reward developers for their contributions to the project (mostly by completing bounties) and will also be used to fund our official website domain name.
+~~You may support the neroshop project directly by donating to any of the addresses below. Received payments will be used to reward developers for their contributions to the project (mostly by completing bounties) and will also be used to fund our official website domain name.~~
+Don't donate please.
 
 **Monero (XMR):**
 ```
@@ -251,6 +251,15 @@ WW2pQTQWHpyJf2CHrCmZG7Tn3zBnYRZTH8g4U3pSZf5s6xsTXrZc9odDWmrWzjRc9MMQWrKXxjHsRdzH
 
 [**OpenAlias**](https://openalias.org/):
 `donate.neroshop.org` or `donate@neroshop.org`
+
+Donations Log (_for transparency_):
+```
+amount     sender     timestamp
+0.12 xmr - anonymous, 2022-10-25
+0.50 xmr - anonymous, 2022-11-15
+0.02 xmr - anonymous, 2022-11-22
+0.003 xmr - anonymous, 2023-01-03
+```
 
 
 ## Resources

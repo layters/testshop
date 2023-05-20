@@ -169,10 +169,50 @@ neroshop::Node::Node(const std::string& address, int port, bool local) : sockfd(
     // Create the routing table with an empty vector of nodes
     if(!routing_table.get()) {
         routing_table = std::make_unique<RoutingTable>(std::vector<Node*>{});
+        routing_table->my_node_id = this->id;
     }    
 }
 
-//neroshop::Node::Node(const Node& other) : id(other.id), data(other.data), public_ip_address(public_ip_address), sockin(other.sockin), sockin6(other.sockin6), storage(other.storage)//, routing_table(std::make_unique<RoutingTable>(*other.routing_table)) {}
+/*neroshop::Node::Node(const Node& other)
+    : id(other.id),
+      version(other.version),
+      data(other.data),
+      info_hash_peers(other.info_hash_peers),
+      //server(nullptr),
+      sockfd(other.sockfd),
+      sockin(other.sockin),
+      sockin6(other.sockin6),
+      storage(other.storage),
+      routing_table(nullptr),
+      public_ip_address(other.public_ip_address),
+      bootstrap(other.bootstrap)
+{
+    //if (other.server)
+    //    server = std::make_unique<Server>(*other.server);
+
+    if (other.routing_table)
+        routing_table = std::make_unique<RoutingTable>(*other.routing_table);
+}*/
+
+
+neroshop::Node::Node(Node&& other) noexcept
+    : id(std::move(other.id)),
+      version(std::move(other.version)),
+      data(std::move(other.data)),
+      info_hash_peers(std::move(other.info_hash_peers)),
+      //server(std::move(other.server)),
+      sockfd(other.sockfd),
+      sockin(std::move(other.sockin)),
+      sockin6(std::move(other.sockin6)),
+      storage(std::move(other.storage)),
+      routing_table(std::move(other.routing_table)),
+      public_ip_address(std::move(other.public_ip_address)),
+      bootstrap(other.bootstrap)
+{
+    // Reset the moved-from object's members to a valid state
+    other.sockfd = -1;
+    // ... reset other members ...
+}
 
 neroshop::Node::~Node() {
     if(sockfd > 0) {
@@ -181,11 +221,88 @@ neroshop::Node::~Node() {
     }
 }
 
+//-----------------------------------------------------------------------------
+
+/*neroshop::Node& neroshop::Node::operator=(const Node& other)
+{
+    if (this != &other) {
+        id = other.id;
+        version = other.version;
+        data = other.data;
+        info_hash_peers = other.info_hash_peers;
+        sockfd = other.sockfd;
+        sockin = other.sockin;
+        sockin6 = other.sockin6;
+        storage = other.storage;
+        public_ip_address = other.public_ip_address;
+        bootstrap = other.bootstrap;
+
+        //if (other.server)
+        //    server = std::make_unique<Server>(*other.server);
+        //else
+        //    server.reset();
+
+        if (other.routing_table)
+            routing_table = std::make_unique<RoutingTable>(*other.routing_table);
+        else
+            routing_table.reset();
+    }
+
+    return *this;
+}*/
+
+//-----------------------------------------------------------------------------
+
 std::string neroshop::Node::generate_node_id(const std::string& address, int port) {
     // TODO: increase randomness by using a hardware identifier while maintaining a stable node id
     std::string node_info = address + ":" + std::to_string(port);
     std::string hash = neroshop_crypto::sha3_256(node_info);
     return hash.substr(0, NUM_BITS / 4);
+}
+
+//-----------------------------------------------------------------------------
+
+std::vector<neroshop::Node*> neroshop::Node::lookup(const std::string& key) {
+    // Perform iterative lookup to find nodes or peers based on the key
+    
+    // Start by finding the closest nodes to the key in the local routing table
+    std::vector<Node*> closest_nodes = find_node(key);
+    
+    // Perform iterative lookup to refine the search and find more nodes or peers
+    // Repeat the process until the desired number of nodes or peers is found or a termination condition is met
+    /*
+    std::set<std::string> queried_nodes; // To keep track of already queried nodes
+    const int MAX_QUERIES = 3; // Maximum number of queries per node
+
+    // Repeat until a sufficient number of nodes are found or a stopping condition is met
+    while (!closest_nodes.empty() && queried_nodes.size() < MAX_QUERIES) {
+        std::vector<Node*> queried;
+        for (Node* node : closest_nodes) {
+            if (queried_nodes.find(node->get_id()) != queried_nodes.end()) {
+                // Skip nodes that have already been queried
+                continue;
+            }
+            queried.push_back(node);
+            queried_nodes.insert(node->get_id());
+
+            // Send find_node requests to the node
+            send_find_node(node->get_id(), node->get_ip_address(), node->get_port());
+        }
+
+        // Wait for responses and update routing table
+        for (Node* node : queried) {
+            std::vector<Node*> response_nodes = receive_find_node_response(node->get_id());
+            for (Node* response_node : response_nodes) {
+                routing_table->add_node(std::unique_ptr<Node>(response_node));
+            }
+        }
+
+        // Get the updated closest nodes
+        closest_nodes = find_node(target_id);
+    }    
+    */
+    // Return the list of nodes or peers found during the lookup
+    return closest_nodes;
 }
 
 // Define the list of bootstrap nodes
@@ -194,7 +311,7 @@ std::vector<neroshop::Peer> bootstrap_nodes = {
     {"node.neroshop.org", DEFAULT_PORT}, // $ ping neroshop.org # or nslookup neroshop.org
 };
 
-void neroshop::Node::join(/*std::function<void()> on_join_callback*/) {
+void neroshop::Node::join() {
     if(sockfd < 0) throw std::runtime_error("socket is dead");
 
     // Bootstrap the DHT node with a set of known nodes
@@ -206,29 +323,33 @@ void neroshop::Node::join(/*std::function<void()> on_join_callback*/) {
             std::cerr << "ping: failed to ping bootstrap node\n"; continue;
         }
         
-        // Add the bootstrap node to routing table (optional); dht_insert_node - stores the node in the routing table for later use.
-        auto new_node = std::make_unique<Node>((bootstrap_node.address == "127.0.0.1") ? get_public_ip_address() : bootstrap_node.address, bootstrap_node.port, false);
+        // Add the bootstrap node to routing table (optional) - stores the node in the routing table for later use.
+        auto new_node = std::make_unique<Node>((bootstrap_node.address == "127.0.0.1") ? this->public_ip_address : bootstrap_node.address, bootstrap_node.port, false);
+        new_node->set_bootstrap(true);
         Node& new_node_ref = *new_node; // take a reference to the Node object (to avoid segfault)
         routing_table->add_node(std::move(new_node)); // new_node becomes invalid after we move ownership to routing table so it cannot be used
         
         // Send a "find_node" message to the bootstrap node and wait for a response message
-        auto nodes = send_find_node(new_node_ref.get_id(), (bootstrap_node.address == "127.0.0.1") ? "127.0.0.1" : new_node_ref.get_ip_address(), new_node_ref.get_port());//std::cout << "Sending find_node message to " << new_node_ref.get_ip_address() << ":" << new_node_ref.get_port() << "\n";
+        auto nodes = send_find_node(this->id, (bootstrap_node.address == "127.0.0.1") ? "127.0.0.1" : new_node_ref.get_ip_address(), new_node_ref.get_port());//std::cout << "Sending find_node message to " << new_node_ref.get_ip_address() << ":" << new_node_ref.get_port() << "\n";
         if(nodes.empty()) {
             std::cerr << "find_node: No nodes found\n"; continue;
         }
         
         // Then add nodes to the routing table
         for (auto node : nodes) {
+            // Ping the received nodes first
+            std::string node_ip = (node->get_ip_address() == this->public_ip_address) ? "127.0.0.1" : node->get_ip_address();
+            if(!ping(node_ip, node->get_port())) {
+                continue; // Skip the node and continue with the next iteration
+            }
+            // Process the response and update the routing table if necessary
             routing_table->add_node(std::unique_ptr<neroshop::Node>(node));
         }
     }
     
     // Print the contents of the routing table
     routing_table->print_table();
-    
-    // Try listening for a connection
-    // Edit: UDP socket cannot listen for connections in the same way that a TCP socket can.
-    ////on_join_callback(); // Call the callback function after the node joins the network
+    std::cout << "Join DONE\n";
 }
 
 bool neroshop::Node::ping(const std::string& address, int port) {
@@ -257,67 +378,20 @@ std::vector<neroshop::Peer> neroshop::Node::get_peers(const std::string& info_ha
     } else {
         std::vector<Node*> nodes = find_node(info_hash);
         for (Node* node : nodes) {
-            std::string transaction_id = msgpack::generate_transaction_id();
-
-            /*bencode_dict query;
-            query["t"] = transaction_id;
-            query["y"] = "q";
-            query["q"] = "get_peers";
-            query["a"]["info_hash"] = info_hash;
-
-            std::string message = bencode::encode(query);*/
-            //send_message(node->get_ip_address(), node->get_port(), message);
-
-            // TODO: add asynchronous I/O to receive responses from nodes
+            // Access the info_hash_peers map for each node and concatenate the vectors of peers
+            auto node_it = node->info_hash_peers.find(info_hash);
+            if (node_it != node->info_hash_peers.end()) {
+                const std::vector<Peer>& node_peers = node_it->second;
+                peers.insert(peers.end(), node_peers.begin(), node_peers.end());
+            }
         }
     }
-    //-----------------------------------------------------
-    std::string transaction_id = msgpack::generate_transaction_id();
-    
-    /*bencode_dict query;
-    query["t"] = transaction_id;
-    query["y"] = "q";
-    query["q"] = "get_peers";
-    
-    std::string get_peers_message = bencode::encode(query);*/
-    //-----------------------------------------------------
-    nlohmann::json query_object;
-    query_object["tid"] = transaction_id;
-    query_object["query"] = "get_peers";
-    query_object["args"]["id"] = this->id;
-    query_object["args"]["info_hash"] = info_hash;
-    query_object["version"] = std::string(NEROSHOP_VERSION);
-    
     
     return peers;
 }
 
 void neroshop::Node::announce_peer(const std::string& info_hash, int port, const std::string& token/*, bool implied_port*/) {
-    // announce_peer is called by a client to announce that it is downloading a file with a specific infohash and is now a potential peer for that file. This is typically called when a client starts downloading a file or completes downloading a file and wants to start seeding it.
-    // When a client calls announce_peer, it sends an announce_peer query to the DHT network, which contains the client's node ID, the infohash of the file, and the client's IP address and port number. If the query is successful, the DHT network will store the client's IP address and port number in the list of peers for the specified infohash.
-    // Other clients who are also downloading or seeding the same file can then query the DHT network for a list of peers for that infohash. The DHT network will respond with a list of IP addresses and port numbers of all the peers who have announced themselves for that infohash. The requesting client can then use this list to connect to other peers and start downloading or uploading data.
-    std::string transaction_id = msgpack::generate_transaction_id();
-    
-    /*bencode_dict query;
-    query["t"] = transaction_id;
-    query["y"] = "q";
-    query["q"] = "announce_peer";
-    
-    std::string announce_peer_message = bencode::encode(query);*/
-    //---------------------------------------------------------
-    nlohmann::json query_object;
-    query_object["tid"] = transaction_id;
-    query_object["query"] = "announce_peer";
-    query_object["args"]["id"] = this->id;
-    query_object["args"]["info_hash"] = info_hash;
-    query_object["args"]["port"] = port; // the port of the peer that is announcing itself
-    query_object["args"]["token"] = token;
-    query_object["args"]["implied_port"] = (port != 0);//implied_port; // optional // set to 1 if the port number is included in the peer list, and 0 otherwise. // refers to the port of the peer that is announcing itself, not the port of the node that receives the announcement // the value of implied_port should be set based on whether the port number is included in the peer list or not, and it should not be set to this->port.
-    query_object["version"] = std::string(NEROSHOP_VERSION);
-    
-    // send the query to the nodes in the routing table
-    // and process the response
-    // ...
+
 }
 
 void neroshop::Node::add_peer(const std::string& info_hash, const Peer& peer) {
@@ -332,9 +406,18 @@ void neroshop::Node::add_peer(const std::string& info_hash, const Peer& peer) {
     }
 }
 
+void neroshop::Node::remove_peer(const std::string& info_hash) {
+    // Find the info_hash entry in the info_hash_peers map
+    auto it = info_hash_peers.find(info_hash);
+    if (it != info_hash_peers.end()) {
+        // If the info_hash exists, remove the entry from the map
+        info_hash_peers.erase(it);
+    }
+}
 
 void neroshop::Node::put(const std::string& key, const std::string& value) {    
     data[key] = value;
+    ////return (data.count(key) > 0); // In case we want to return the result of the insertion
 }
 
 std::string neroshop::Node::get(const std::string& key) const {    
@@ -347,7 +430,10 @@ std::string neroshop::Node::get(const std::string& key) const {
 
 void neroshop::Node::remove(const std::string& key) {
     data.erase(key);
+    ////return (data.count(key) == 0); // In case we want to return the result of the removal
 }
+
+//-------------------------------------------------------------------------------------
 
 std::vector<uint8_t> neroshop::Node::send_query(const std::string& address, uint16_t port, const std::vector<uint8_t>& message) {
     // Step 2: Resolve the hostname and construct a destination address
@@ -372,29 +458,50 @@ std::vector<uint8_t> neroshop::Node::send_query(const std::string& address, uint
     freeaddrinfo(res);
     //--------------------------------------------
     // Step 3: Create a new socket descriptor and send the ping message to the server
-    int sockfd_ping = socket(AF_INET, SOCK_DGRAM, 0);
-    if (sockfd_ping < 0) {
+    // Note: This is a separate socket used for actively sending/receiving queries while the main socket, which is non-blocking is used for listening/responding to messages
+    int socket_fd = socket(AF_INET, SOCK_DGRAM, 0);
+    if (socket_fd < 0) {
         perror("socket");
         return {};
     }
-    if (sendto(sockfd_ping/*sockfd*/, message.data(), message.size(), 0, (struct sockaddr*)&dest_addr, sizeof(dest_addr)) < 0) {
+
+    if (sendto(socket_fd/*sockfd*/, message.data(), message.size(), 0, (struct sockaddr*)&dest_addr, sizeof(dest_addr)) < 0) {
         perror("sendto");
-        close(sockfd_ping);
+        close(socket_fd);
+        return {};
+    }
+    //--------------------------------------------
+    // Set a timeout for the receive operation
+    // Note: Setting a timeout is better than setting the socket to non-blocking because if the socket is non-blocking then it will never receive the pong because it does not wait for the pong message so it fails immediately (returns immediately, regardless of whether data is available or not).
+    struct timeval timeout;
+    timeout.tv_sec = 2;  // Timeout in seconds
+    timeout.tv_usec = 0;
+    if (setsockopt(socket_fd, SOL_SOCKET, SO_RCVTIMEO, (char*)&timeout, sizeof(timeout)) < 0) {
+        perror("setsockopt");
+        close(socket_fd);
         return {};
     }
     //--------------------------------------------
     // Step 4: Receive the pong message from the server
     std::vector<uint8_t> receive_buffer(4096);
     socklen_t fromlen = sizeof(struct sockaddr_in);
-    int bytes_received = recvfrom(sockfd_ping/*sockfd*/, receive_buffer.data(), receive_buffer.size(), 0,
+    int bytes_received = recvfrom(socket_fd/*sockfd*/, receive_buffer.data(), receive_buffer.size(), 0,
                                   (struct sockaddr*)&dest_addr, &fromlen);
     if (bytes_received < 0) {
-        perror("recvfrom");
-        close(sockfd_ping);
+        if (errno != EWOULDBLOCK && errno != EAGAIN) {
+            perror("recvfrom");
+            close(socket_fd);
+            return {};
+        }
+        
+        // No data available at the moment, you can handle it based on your needs
+        // For example, you can retry receiving or return an empty vector
+        
+        close(socket_fd);
         return {};
     }
     receive_buffer.resize(bytes_received);
-    close(sockfd_ping);
+    close(socket_fd);
 
     return receive_buffer;
 }
@@ -418,7 +525,17 @@ bool neroshop::Node::send_ping(const std::string& address, int port) {
     auto receive_buffer = send_query(address, port, ping_message);
     //--------------------------------------------
     // Step 5: Parse the pong message and extract the transaction ID and response fields
-    nlohmann::json pong_message = nlohmann::json::from_msgpack(receive_buffer);
+    nlohmann::json pong_message;
+    try {
+        pong_message = nlohmann::json::from_msgpack(receive_buffer);
+    } catch (const std::exception& e) {
+        std::cerr << "Node \033[91m" << address << ":" << port << "\033[0m did not respond" << std::endl;
+        return false;
+    }
+    // Check if the parsed JSON object contains a response or an error field
+    if (!pong_message.contains("response") || pong_message.contains("error")) {
+        return false;
+    }
     std::cout << "\033[32m" << pong_message.dump() << "\033[0m\n";
     std::string received_transaction_id = pong_message["tid"].get<std::string>();
     auto response_object = pong_message["response"];
@@ -476,10 +593,63 @@ std::vector<neroshop::Node*> neroshop::Node::send_find_node(const std::string& t
 
 void neroshop::Node::send_get_peers(const std::string& info_hash) {
 
+    std::string transaction_id = msgpack::generate_transaction_id();
+    
+    /*bencode_dict query;
+    query["t"] = transaction_id;
+    query["y"] = "q";
+    query["q"] = "get_peers";
+    
+    std::string get_peers_message = bencode::encode(query);*/
+    //-----------------------------------------------------
+    nlohmann::json query_object;
+    query_object["tid"] = transaction_id;
+    query_object["query"] = "get_peers";
+    query_object["args"]["id"] = this->id;
+    query_object["args"]["info_hash"] = info_hash;
+    query_object["version"] = std::string(NEROSHOP_VERSION);
+    //-----------------------------------------------
+    // socket sendto and recvfrom here
+    //auto receive_buffer = send_query(address, port, _message);
+    //-----------------------------------------------
+    // process the response here
+    // ...    
+    //-----------------------------------------------
+    // get result of put request
+    // ...    
 }
 
 void neroshop::Node::send_announce_peer(const std::string& info_hash, int port, const std::string& token) {
-
+    // announce_peer is called by a client to announce that it is downloading a file with a specific infohash and is now a potential peer for that file. This is typically called when a client starts downloading a file or completes downloading a file and wants to start seeding it.
+    // When a client calls announce_peer, it sends an announce_peer query to the DHT network, which contains the client's node ID, the infohash of the file, and the client's IP address and port number. If the query is successful, the DHT network will store the client's IP address and port number in the list of peers for the specified infohash.
+    // Other clients who are also downloading or seeding the same file can then query the DHT network for a list of peers for that infohash. The DHT network will respond with a list of IP addresses and port numbers of all the peers who have announced themselves for that infohash. The requesting client can then use this list to connect to other peers and start downloading or uploading data.
+    std::string transaction_id = msgpack::generate_transaction_id();
+    
+    /*bencode_dict query;
+    query["t"] = transaction_id;
+    query["y"] = "q";
+    query["q"] = "announce_peer";
+    
+    std::string announce_peer_message = bencode::encode(query);*/
+    //---------------------------------------------------------
+    nlohmann::json query_object;
+    query_object["tid"] = transaction_id;
+    query_object["query"] = "announce_peer";
+    query_object["args"]["id"] = this->id;
+    query_object["args"]["info_hash"] = info_hash;
+    query_object["args"]["port"] = port; // the port of the peer that is announcing itself
+    query_object["args"]["token"] = token;
+    query_object["args"]["implied_port"] = (port != 0);//implied_port; // optional // set to 1 if the port number is included in the peer list, and 0 otherwise. // refers to the port of the peer that is announcing itself, not the port of the node that receives the announcement // the value of implied_port should be set based on whether the port number is included in the peer list or not, and it should not be set to this->port.
+    query_object["version"] = std::string(NEROSHOP_VERSION);
+    //-----------------------------------------------    
+    // send the query to the nodes in the routing table
+    //auto receive_buffer = send_query(address, port, _message);  
+    //-----------------------------------------------    
+    // process the response
+    // ...
+    //-----------------------------------------------
+    // get result of put request
+    // ...        
 }
 
 void neroshop::Node::send_add_peer(const std::string& info_hash, const Peer& peer) {
@@ -500,7 +670,7 @@ void neroshop::Node::send_put(const std::string& key, const std::string& value) 
     std::vector<uint8_t> put_message = nlohmann::json::to_msgpack(query_object);
     //-----------------------------------------------
     // socket sendto and recvfrom here
-    // ...
+    //auto receive_buffer = send_query(address, port, put_message);
     //-----------------------------------------------
     // process the response here
     // ...    
@@ -522,7 +692,7 @@ void neroshop::Node::send_get(const std::string& key) {
     std::vector<uint8_t> get_message = nlohmann::json::to_msgpack(query_object);
     //-----------------------------------------------
     // socket sendto and recvfrom here
-    // ...
+    //auto receive_buffer = send_query(address, port, get_message);
     //-----------------------------------------------
     // process the response here
     // ...
@@ -545,12 +715,42 @@ void neroshop::Node::send_remove(const std::string& key) {
 
 //-----------------------------------------------------------------------------
 
+void neroshop::Node::handle_request(int sockfd, struct sockaddr_in client_addr, std::vector<uint8_t> buffer, socklen_t client_addr_len, Node* node) {
+    // Process the message
+    std::vector<uint8_t> response = neroshop::msgpack::process(buffer, *node);
+
+    // Send the response
+    int bytes_sent = sendto(sockfd/*server.get_socket()*/, response.data(), response.size(), 0,
+                                (struct sockaddr*)&client_addr, client_addr_len);
+    if (bytes_sent < 0) {
+        perror("sendto");
+    }
+        
+    // Add the node that pinged this node to the routing table
+    if (buffer.size() > 0) {
+        nlohmann::json message = nlohmann::json::from_msgpack(buffer);
+        if (message.contains("query") && message["query"] == "ping") {
+            std::string sender_id = message["args"]["id"].get<std::string>();
+            std::string sender_ip = inet_ntoa(client_addr.sin_addr);
+            uint16_t sender_port = (message["args"].contains("ephemeral_port")) ? (uint16_t)message["args"]["ephemeral_port"] : DEFAULT_PORT;//ntohs(client_addr.sin_port);// ephemeral ports are for multiple local nodes running on the same local network
+            auto node_that_pinged = std::make_unique<Node>((sender_ip == "127.0.0.1") ? node->get_public_ip_address() : sender_ip, sender_port, false); // ALWAYS use public ip so that unique id is generated and actual address is stored in routing table for others to locate your node
+            node->routing_table->add_node(std::move(node_that_pinged));
+            node->routing_table->print_table();
+        }
+    }
+}
+
 void neroshop::Node::run() {
+    //if(!bootstrap) {
+        run_optimized();
+        return; 
+    //}
+    
     while (true) {
         std::vector<uint8_t> buffer(4096);
         struct sockaddr_in client_addr;
         socklen_t client_addr_len = sizeof(client_addr);
-        int bytes_received = recvfrom(sockfd/*server.get_socket()*/, buffer.data(), buffer.size(), 0,
+        int bytes_received = recvfrom(sockfd, buffer.data(), buffer.size(), 0,
                                       (struct sockaddr*)&client_addr, &client_addr_len);
         if (bytes_received == -1 && errno == EAGAIN) {
             // No data available, continue loop
@@ -563,11 +763,11 @@ void neroshop::Node::run() {
         // Resize the buffer to the actual number of received bytes
         buffer.resize(bytes_received);
 
-        // Process the message
+        /*// Process the message
         std::vector<uint8_t> response = neroshop::msgpack::process(buffer, *this);
 
         // Send the response
-        int bytes_sent = sendto(sockfd/*server.get_socket()*/, response.data(), response.size(), 0,
+        int bytes_sent = sendto(sockfd, response.data(), response.size(), 0,
                                 (struct sockaddr*)&client_addr, client_addr_len);
         if (bytes_sent < 0) {
             perror("sendto");
@@ -584,9 +784,62 @@ void neroshop::Node::run() {
                 routing_table->add_node(std::move(node_that_pinged));
                 routing_table->print_table();
             }
+        }*/
+        // Create a new thread to handle the request
+        std::thread request_thread([=]() { handle_request(sockfd, client_addr, buffer, client_addr_len, this); });
+        request_thread.detach();
+    }             
+}
+
+// This uses less CPU
+void neroshop::Node::run_optimized() {
+    while (true) {
+        fd_set read_set;
+        FD_ZERO(&read_set);
+        FD_SET(sockfd, &read_set);
+
+        struct timeval timeout;
+        timeout.tv_sec = 0;
+        timeout.tv_usec = 100000;  // Timeout of 100ms
+
+        int ready = select(sockfd + 1, &read_set, nullptr, nullptr, &timeout);
+        if (ready == -1) {
+            perror("select");
+            // Handle the error
+            // ...
+            break;
+        } else if (ready == 0) {
+            // No data available within the timeout period, continue the loop
+            continue;
+        }
+
+        if (FD_ISSET(sockfd, &read_set)) {
+            std::vector<uint8_t> buffer(4096);
+            struct sockaddr_in client_addr;
+            socklen_t client_addr_len = sizeof(client_addr);
+            int bytes_received = recvfrom(sockfd, buffer.data(), buffer.size(), MSG_DONTWAIT,
+                                          (struct sockaddr*)&client_addr, &client_addr_len);
+            if (bytes_received == -1 && errno == EAGAIN) {
+                // No data available, continue loop
+                continue;
+            }
+            else if (bytes_received < 0) {
+                perror("recvfrom");
+            }
+            
+            if (bytes_received > 0) {
+                // Resize the buffer to the actual number of received bytes
+                buffer.resize(bytes_received);
+
+                // Create a new thread to handle the request
+                std::thread request_thread([=]() { handle_request(sockfd, client_addr, buffer, client_addr_len, this); });
+                request_thread.detach();
+            }
         }
     }             
 }
+
+//-----------------------------------------------------------------------------
 
 std::string neroshop::Node::get_id() const {
     return id;
@@ -639,17 +892,21 @@ uint16_t neroshop::Node::get_port() const {
     return port;
 }
 
-neroshop::Server * neroshop::Node::get_server() const {
+/*neroshop::Server * neroshop::Node::get_server() const {
     return server.get();
-}
+}*/
 
 neroshop::RoutingTable * neroshop::Node::get_routing_table() const {
     return routing_table.get();
 }
 
+//-----------------------------------------------------------------------------
+
 bool neroshop::Node::is_bootstrap_node() {
     return (bootstrap == true);
 }
+
+//-----------------------------------------------------------------------------
 
 void neroshop::Node::set_bootstrap(bool bootstrap) {
     this->bootstrap = bootstrap;

@@ -135,19 +135,24 @@ void dht_server(Node& node) {
     server.set_nonblocking(true);*/
     {
         // Acquire lock before accessing the node object
-        ////std::lock_guard<std::mutex> lock(node_mtx);    
+        std::lock_guard<std::mutex> lock(node_mtx);    
         //std::cout << "node addr: " << node.get_public_ip_address() << "\n";
         std::cout << "******************************************************\n";
         std::cout << "Node ID: " << node.get_id() << "\n";
         std::cout << "IP address: " << node.get_ip_address() << "\n";
         std::cout << "Port number: " << node.get_port() << "\n\n";
         std::cout << "******************************************************\n";
+        // Start the DHT node's main loop in a separate thread
+        std::thread run_thread([&]() {
+            node.run();
+        });
+
         // Join the DHT network
-        if(!node.is_bootstrap_node()) {
-            node.join(); // a boostrap node cannot join the network
+        if (!node.is_bootstrap_node()) {
+            node.join(); // A bootstrap node cannot join the network
         }
-    
-        node.run();  
+
+        run_thread.join(); // Wait for the run thread to finish
     }
     // The lock_guard is destroyed and the lock is released here
 }
@@ -165,9 +170,7 @@ int main(int argc, char** argv)
     options.add_options()
         ("h,help", "Print usage")
         ("v,version", "Show version")
-        ("b,bootstrap", "Run this node as a bootstrap node")////, cxxopts::value<std::string>())//("bl,bootstrap_lazy", "Run this node as a bootstrap node without specifying multiaddress")
-        //("bl,bootstrap-lazy", "Run this node as a bootstrap node without specifying multiaddress")
-        //("c,config", "Path to configuration file")
+        ("b,bootstrap", "Run this node as a bootstrap node")//("bl,bootstrap-lazy", "Run this node as a bootstrap node without specifying multiaddress")//("c,config", "Path to configuration file", cxxopts::value<std::string>())
         ("rpc,enable-rpc", "Enables the RPC daemon server")
     ;
     
@@ -186,6 +189,10 @@ int main(int argc, char** argv)
         node.set_bootstrap(true);
         // TODO: bootstrap nodes will typically use both TCP and UDP
         // ALWAYS use public ip address for bootstrap nodes so that it is reachable by all nodes in the network, regardless of their location.
+    }
+    if(result.count("config")) {
+        std::string config_path = result["config"].as<std::string>();
+        if(!config_path.empty()) {}
     }
     //-------------------------------------------------------
     std::thread ipc_thread(ipc_server, std::ref(node));//([&node]() { ipc_server(node); });  // For IPC communication between the local GUI client and the local daemon server

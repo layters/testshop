@@ -153,7 +153,7 @@ int main(int argc, char** argv) {
             std::cout << "Received response: " << j2.dump() << std::endl;//std::cout << "Received response: " << response << std::endl;
             #endif
         }        
-        else if(command == "put") {
+        else if(command == "put") { // This is only a test command
             if (client->is_connected()) {
                 nlohmann::json arguments_obj = {
                     {"id", "my_node_id"},
@@ -181,7 +181,7 @@ int main(int argc, char** argv) {
                 }
             }       
         } 
-        else if(command == "get") {
+        else if(command == "get") { // This is only a test command
             if (client->is_connected()) {
                 nlohmann::json arguments_obj = {
                     {"id", "my_node_id"},
