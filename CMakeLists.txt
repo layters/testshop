@@ -432,15 +432,16 @@ set(neroshop_price_src
 
 set(neroshop_protocol_src 
     ${NEROSHOP_CORE_SRC_DIR}/protocol/messages/msgpack.cpp
+    ${NEROSHOP_CORE_SRC_DIR}/protocol/p2p/hash_ring.cpp 
     ${NEROSHOP_CORE_SRC_DIR}/protocol/p2p/kademlia.cpp 
     ${NEROSHOP_CORE_SRC_DIR}/protocol/p2p/node.cpp 
     ${NEROSHOP_CORE_SRC_DIR}/protocol/p2p/routing_table.cpp 
-    ${NEROSHOP_CORE_SRC_DIR}/protocol/rpc/bencode.cpp 
     ${NEROSHOP_CORE_SRC_DIR}/protocol/rpc/json_rpc.cpp 
-    ${NEROSHOP_CORE_SRC_DIR}/protocol/rpc/krpc.cpp  
     ${NEROSHOP_CORE_SRC_DIR}/protocol/transport/client.cpp 
     ${NEROSHOP_CORE_SRC_DIR}/protocol/transport/ip_address.cpp 
     ${NEROSHOP_CORE_SRC_DIR}/protocol/transport/server.cpp 
+    ${NEROSHOP_CORE_SRC_DIR}/protocol/transport/zmq_client.cpp 
+    ${NEROSHOP_CORE_SRC_DIR}/protocol/transport/zmq_server.cpp 
 )
 
 set(neroshop_tools_src 

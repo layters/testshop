@@ -22,6 +22,7 @@
 #define JSON_FILE "settings.json"
 
 std::string neroshop::lua_string = R"(monero = {
+    network_type = "stagenet", -- TODO: remove this on mainnet release
     nodes = {
         mainnet = {
             "node.community.rino.io:18081",
@@ -185,9 +186,9 @@ bool neroshop::create_json() {
         root_obj.insert(QString("hide_homepage_button"), QJsonValue(false));
         root_obj.insert(QString("hide_price_display"), QJsonValue(false));
         root_obj.insert(QString("wallet_directory"), QJsonValue(""));
-        root_obj.insert(QString("window_width"), QJsonValue(1280));
+        /*root_obj.insert(QString("window_width"), QJsonValue(1280));
         root_obj.insert(QString("window_height"), QJsonValue(900));//720));
-        root_obj.insert(QString("window_mode"), QJsonValue(0));
+        root_obj.insert(QString("window_mode"), QJsonValue(0));*/
         QJsonObject monero_obj;
         //monero_obj.insert(QString("restore_height"), QJsonValue());
         QJsonObject wallet_obj;
@@ -205,7 +206,7 @@ bool neroshop::create_json() {
         catalog_obj.insert(QString("hide_illegal_products"), QJsonValue(true));
         root_obj.insert(QString("catalog"), QJsonValue(catalog_obj));
         QJsonObject daemon_obj;
-        daemon_obj.insert(QString("network_type"), QJsonValue("stagenet")); // has no effect when changed manually
+        //daemon_obj.insert(QString("network_type"), QJsonValue("stagenet")); // has no effect when changed manually
         daemon_obj.insert(QString("confirm_external_bind"), QJsonValue(false));
         daemon_obj.insert(QString("restricted_rpc"), QJsonValue(true));
         daemon_obj.insert(QString("data_dir"), QJsonValue(""));
@@ -256,9 +257,9 @@ bool neroshop::create_json() {
         settings_json["hide_homepage_button"] = false;
         settings_json["hide_price_display"] = false;
         settings_json["wallet_directory"] = ""; // leave blank to use default
-        settings_json["window_width"] = 1280;
+        /*settings_json["window_width"] = 1280;
         settings_json["window_height"] = 900;//720;
-        settings_json["window_mode"] = 0;
+        settings_json["window_mode"] = 0;*/
         //settings_json[""] = ;
         settings_json["monero"]["wallet"]["balance_display"] = "All balances";
         settings_json["monero"]["wallet"]["balance_amount_precision"] = 12;
@@ -270,7 +271,7 @@ bool neroshop::create_json() {
         settings_json["catalog"]["catalog_view"] = "Grid view";
         settings_json["catalog"]["grid_details_align_center"] = false;
         settings_json["catalog"]["hide_illegal_products"] = true;
-        settings_json["monero"]["daemon"]["network_type"] = "stagenet";
+        //settings_json["monero"]["daemon"]["network_type"] = "stagenet";
         settings_json["monero"]["daemon"]["confirm_external_bind"] = false;
         settings_json["monero"]["daemon"]["restricted_rpc"] = true;
         settings_json["monero"]["daemon"]["data_dir"] = ""; // leave blank to use default

@@ -176,10 +176,10 @@ std::string neroshop::get_device_ip_address() {
     return inet_ntoa(serv_addr.sin_addr);
 }
 
-std::string neroshop::url_to_ip(const std::string& url) {
+std::string neroshop::ip::resolve(const std::string& url) {
     addrinfo hints{}, *res;
-    hints.ai_family = AF_UNSPEC;
-    hints.ai_socktype = SOCK_STREAM;
+    hints.ai_family = AF_UNSPEC; // Allow IPv4 or IPv6
+    hints.ai_socktype = SOCK_STREAM; // TCP
 
     if (getaddrinfo(url.c_str(), nullptr, &hints, &res) != 0) {
         return ""; // failed to resolve url
@@ -202,6 +202,51 @@ std::string neroshop::url_to_ip(const std::string& url) {
     freeaddrinfo(res);
 
     return ip;
+}
+
+// Function to resolve hostname to IP address
+std::vector<std::string> neroshop::ip::resolve_v2(const std::string& hostname) {
+    std::vector<std::string> ips;
+    struct addrinfo hints, *res;
+    int status;
+
+    // Clear the hints struct
+    memset(&hints, 0, sizeof hints);
+
+    // Set the address family to either IPv4 or IPv6
+    hints.ai_family = AF_UNSPEC;
+
+    // Set the socket type to either TCP or UDP
+    hints.ai_socktype = SOCK_STREAM;
+
+    // Get the address information for the hostname
+    if ((status = getaddrinfo(hostname.c_str(), NULL, &hints, &res)) != 0) {
+        std::cerr << "getaddrinfo error: " << gai_strerror(status) << std::endl;
+        return ips;
+    }
+
+    // Loop through all the addresses and add them to the vector
+    for (struct addrinfo* p = res; p != NULL; p = p->ai_next) {
+        void* addr;
+        char ip[INET6_ADDRSTRLEN];
+
+        if (p->ai_family == AF_INET) { // IPv4 address
+            struct sockaddr_in* ipv4 = (struct sockaddr_in*)p->ai_addr;
+            addr = &(ipv4->sin_addr);
+        } else { // IPv6 address
+            struct sockaddr_in6* ipv6 = (struct sockaddr_in6*)p->ai_addr;
+            addr = &(ipv6->sin6_addr);
+        }
+
+        // Convert the IP address to a string and add it to the vector
+        inet_ntop(p->ai_family, addr, ip, sizeof ip);
+        ips.push_back(ip);
+    }
+
+    // Free the address information
+    freeaddrinfo(res);
+
+    return ips;
 }
 
 // The is_valid_url function assumes that a valid URL starts with a scheme (such as "http" or "https") and contains a host name, so it would consider "router.bittorrent.com" as not a valid URL
@@ -257,7 +302,7 @@ bool neroshop::create_sockaddr(const std::string& address, int port, struct sock
         return false;
     }
 
-    std::string ip_address = url_to_ip(address);
+    std::string ip_address = ip::resolve(address);
     
     if(is_ipv4(ip_address)) {
         node_addr.ss_family = AF_INET; // Set IPv4 family
@@ -331,6 +376,21 @@ std::tuple<std::string, int> neroshop::parse_multiaddress(const std::string& mul
     return std::tuple<std::string, int>(); // This creates a new tuple with an empty string ("") and zero integer value (0).
 }
 
+bool neroshop::ip::is_localhost(const char* ip_str) {
+    struct in_addr ip_addr;
+    if (inet_pton(AF_INET, ip_str, &ip_addr) == 1) {
+        // IPv4
+        return ip_addr.s_addr == htonl(INADDR_LOOPBACK);
+    } else if (inet_pton(AF_INET6, ip_str, &ip_addr) == 1) {
+        // IPv6
+        struct in6_addr* ipv6_addr = (struct in6_addr*)&ip_addr;
+        return memcmp(ipv6_addr, &in6addr_loopback, sizeof(struct in6_addr)) == 0;
+    }
+
+    // Invalid IP address
+    return false;
+}
+
 /*int main() {
     try {
         std::string device_ip_address = neroshop::get_device_ip_address();
@@ -374,6 +434,11 @@ std::tuple<std::string, int> neroshop::parse_multiaddress(const std::string& mul
     std::cout << ipv6_address << " is IPv6: " << is_ipv6(ipv6_address) << "\n";
     std::cout << invalid_address << " is IPv4: " << is_ipv4(invalid_address) << "\n";
     std::cout << invalid_address << " is IPv6: " << is_ipv6(invalid_address) << "\n";
+    
+    std::vector<std::string> ips = neroshop::resolve_hostname("www.google.com");
+    for (const auto& ip : ips) {
+        std::cout << ip << std::endl;
+    }    
     
     return 0;
 } // g++ ip_address.cpp -o ip -std=c++17

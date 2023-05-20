@@ -1,6 +1,6 @@
 #include "image_provider.hpp"
 
-#include "image_loader.h"
+#include "image_loader.hpp"
 #include <QGuiApplication>
 
 ImageProvider::ImageProvider(const QString &name)

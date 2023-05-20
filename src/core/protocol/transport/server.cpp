@@ -1,38 +1,35 @@
 #include "server.hpp"
 
-#include "../../database/database.hpp"
+#include <cassert>
+
 #include "../../tools/logger.hpp"
 
 neroshop::Server::Server() : sockfd(-1), socket_type(SocketType::Socket_TCP) {
-	#if defined(__gnu_linux__) && defined(NEROSHOP_USE_SYSTEM_SOCKETS)
-	sockfd = ::socket(AF_INET, (socket_type == SocketType::Socket_UDP) ? SOCK_DGRAM : SOCK_STREAM, 0);
+	//#if defined(__gnu_linux__) && defined(NEROSHOP_USE_SYSTEM_SOCKETS)
+	sockfd = ::socket(AF_INET, SOCK_STREAM, 0);
     if (sockfd < 0) {
+        perror("socket");
 		throw std::runtime_error("Failed to create socket.");
 	}
-	/*This code sets a socket option to reuse the local address and port, which means that the same combination of IP address and port can be used by multiple sockets simultaneously, even if they are still in a TIME_WAIT state after the connection has been closed. This is useful for scenarios where you want to restart an application that uses a specific port quickly without waiting for the operating system to release the resources of the previous connection.
-
-The setsockopt() function is used to set the socket option, and the SO_REUSEADDR and SO_REUSEPORT options are used to enable the reuse of local addresses and ports. The one variable is set to 1 to enable the options, and its address and size are passed to the setsockopt() function as arguments.*/
-	// set socket options : SO_REUSEADDR (TCP:restart a closed/killed process on the same address so you can reuse address over and over again)
-	int opt = 1; // enable
-    if(setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR | SO_REUSEPORT, &opt, sizeof(opt)) < 0) {
-        throw std::runtime_error("Failed to set socket option SO_REUSEADDR.");
-    }
-    
-	#endif    
 }
-////////////////////
-neroshop::Server::Server(SocketType socket_type) : socket_type(socket_type) {
+
+neroshop::Server::Server(SocketType socket_type) : sockfd(-1), socket_type(socket_type) {
     const auto protocol = (socket_type == SocketType::Socket_UDP) ? SOCK_DGRAM : SOCK_STREAM;
     
     sockfd = ::socket(AF_INET, protocol, 0);
     if (sockfd < 0) {
+        perror("socket");
         throw std::runtime_error("Failed to create socket.");
     }
-    //std::cout << "Created a " << ((protocol == SOCK_DGRAM) ? "UDP socket" : "TCP socket") << "\n";
+}
+
+neroshop::Server::Server(const std::string& address, unsigned int port, SocketType socket_type) : sockfd(-1), socket_type(socket_type) {
+    init_socket(address, port);
 }
 ////////////////////
 neroshop::Server::~Server() {
     if(sockfd > 0) {
+        shutdown();
         close();
         sockfd = -1;
     }
@@ -43,7 +40,7 @@ bool neroshop::Server::bind(unsigned int port)
     memset(&this->addr, 0, sizeof(this->addr));
     this->addr.sin_port = htons(port);
     this->addr.sin_family = AF_INET;
-    this->addr.sin_addr.s_addr = INADDR_ANY;
+    this->addr.sin_addr.s_addr = INADDR_ANY; // sets the IP address in the sockaddr_in structure to the IP address of the current machine, which means that the server will be bound to all available network interfaces.
 
     if (::bind(sockfd, (struct sockaddr *) &this->addr, sizeof(this->addr)) == -1) {
         std::cerr << "Cannot bind socket" << std::endl;
@@ -53,10 +50,63 @@ bool neroshop::Server::bind(unsigned int port)
 
 	return true;
 }
+////////////////////
+bool neroshop::Server::bind(const std::string& address, unsigned int port) {
+    // Configure socket address
+    std::memset(&this->addr, 0, sizeof(this->addr));
+
+    // Convert IP address or domain name to network byte order
+    struct addrinfo hints, *result;
+    std::memset(&hints, 0, sizeof(hints));
+    hints.ai_family = AF_UNSPEC; // Use IPv4 or IPv6
+    hints.ai_socktype = (socket_type == SocketType::Socket_UDP) ? SOCK_DGRAM : SOCK_STREAM;
+    hints.ai_flags = AI_PASSIVE;
+
+    int error = getaddrinfo(address.c_str(), NULL, &hints, &result);
+    if (error != 0) {
+        perror("getaddrinfo");
+        std::cerr << "Failed to get address info: " << gai_strerror(error) << std::endl;
+        return false;
+    }
+
+    // Find the first IPv4 or IPv6 address
+    bool bound = false;
+    for (struct addrinfo* rp = result; rp != nullptr; rp = rp->ai_next) {
+        if (rp->ai_family == AF_INET) {
+            struct sockaddr_in* addr_in = (struct sockaddr_in*)rp->ai_addr;
+            this->addr.sin_family = AF_INET;
+            this->addr.sin_addr = addr_in->sin_addr;
+            this->addr.sin_port = htons(port);
+            bound = (::bind(sockfd, (struct sockaddr*)&this->addr, sizeof(this->addr)) == 0);
+        }
+        else if (rp->ai_family == AF_INET6) {
+            struct sockaddr_in6* addr_in6 = (struct sockaddr_in6*)rp->ai_addr;
+            this->addr6.sin6_family = AF_INET6;
+            this->addr6.sin6_addr = addr_in6->sin6_addr;//in6addr_loopback; // Use the IPv6 loopback address
+            this->addr6.sin6_port = htons(port);
+            bound = (::bind(sockfd, (struct sockaddr*)&this->addr6, sizeof(this->addr6)) == 0);
+        }
+        if (bound) {
+            break;
+        }
+    }
+
+    freeaddrinfo(result);
+    
+    // Bind socket to address and port
+    if (!bound) {
+        perror("bind");
+        std::cerr << "Failed to bind socket" << std::endl;
+        return false;
+    }
+    
+    return true;
+}	
 ////////////////////	
 bool neroshop::Server::listen(int backlog)
 {
     if (::listen(sockfd, backlog) == -1) {
+        perror("listen");
         std::cerr << "Cannot listen for a connection" << std::endl;
         close();
         return false;
@@ -71,6 +121,7 @@ bool neroshop::Server::accept() {
     int client_fd = ::accept(sockfd, (struct sockaddr*) &client_addr, &addr_len);
 
     if (client_fd == -1) {
+        perror("accept");
         return false;
     }
     
@@ -87,6 +138,7 @@ void neroshop::Server::write(const std::string& message) {
     #if defined(__gnu_linux__) && defined(NEROSHOP_USE_SYSTEM_SOCKETS)
 	ssize_t write_result = ::write(clients.back()->sockfd, message.c_str(), message.length()/*buffer, strlen(buffer)*/);
     if(write_result < 0) { // -1 = error
+        perror("write");
         std::cout << "Server unable to write to client" << std::endl;
     }    
     #endif
@@ -112,24 +164,85 @@ std::string neroshop::Server::read() // receive data
     return "";
 }
 ////////////////////
-void neroshop::Server::send() {
-    if(socket_type == SocketType::Socket_TCP) {
-        // ::send
-    } else if(socket_type == SocketType::Socket_UDP) {
-        // ::sendto()
+void neroshop::Server::send(const std::vector<uint8_t>& message) {
+    assert(socket_type == SocketType::Socket_TCP && "Socket is not TCP");
+
+    if (message.empty()) {
+        std::cerr << "Message is empty!" << std::endl;
+        return;
+    }
+    
+    const uint8_t* data = message.data();
+    size_t size = message.size();
+    
+    // use a loop to repeatedly call send() until all the bytes are sent
+    size_t total_sent = 0;
+    while (total_sent < size) {
+        int bytes_sent = ::send(clients.back()->sockfd, data + total_sent, size - total_sent, 0);
+        if (bytes_sent == -1) {
+            perror("send");
+            break;
+        }
+        total_sent += bytes_sent;
+    }
+}
+
+void neroshop::Server::send_to(const std::vector<uint8_t>& message, const struct sockaddr_in& addr) {
+    assert(socket_type == SocketType::Socket_UDP && "Socket is not UDP");
+
+    if (message.empty()) {
+        std::cerr << "Message is empty!" << std::endl;
+        return;
+    }
+    
+    const uint8_t* data = message.data();
+    size_t size = message.size();
+
+    if (addr.sin_family != AF_INET || addr.sin_port == 0) {
+        std::cerr << "Invalid socket address!" << std::endl;
+        return;
+    }   
+    // addr must be constructed first before passing as arg
+    int bytes_sent = ::sendto(sockfd, data, size, 0, (struct sockaddr*)&addr, sizeof(addr));
+    if (bytes_sent == -1) {
+        perror("sendto");
     }
 }
 ////////////////////
-std::string neroshop::Server::receive() { 
-    if(socket_type == SocketType::Socket_TCP) {
-        // ::recv()
-        /*recv(sockfd, buffer.data(), BUFFER_SIZE, 0);
-        if (recv_bytes == -1) {
-            perror("recv");
-        }*/
-    } else if(socket_type == SocketType::Socket_UDP) {
-        // ::recvfrom()
+ssize_t neroshop::Server::receive(std::vector<uint8_t>& message) { 
+    assert(socket_type == SocketType::Socket_TCP && "Socket is not TCP");
+
+    const int BUFFER_SIZE = 4096;
+        
+    std::vector<uint8_t> buffer(BUFFER_SIZE);
+    ssize_t recv_bytes = ::recv(clients.back()->sockfd, buffer.data(), BUFFER_SIZE, 0); // In the case of TCP, the server should receive from the client's sockfd, as this is the socket that is connected to the client and is used to communicate with the client.
+    if (recv_bytes == -1) {
+        perror("recv");
+        return recv_bytes;
     }
+    if (recv_bytes > 0) {
+        message.assign(buffer.data(), buffer.data() + recv_bytes);
+    }
+    return recv_bytes;
+}
+
+ssize_t neroshop::Server::receive_from(std::vector<uint8_t>& message, const struct sockaddr_in& addr) {
+    assert(socket_type == SocketType::Socket_UDP && "Socket is not UDP");
+    
+    const int BUFFER_SIZE = 4096;
+    
+    std::vector<uint8_t> buffer(BUFFER_SIZE);
+    // addr must be constructed first before passing as arg
+    socklen_t addr_len = static_cast<socklen_t>(sizeof(addr));
+    ssize_t recv_bytes = ::recvfrom(sockfd, buffer.data(), BUFFER_SIZE, 0, (struct sockaddr*)&addr, &addr_len); // A server should receive from its own sockfd in the case of UDP
+    if (recv_bytes == -1) {
+        perror("recvfrom");
+        return recv_bytes;
+    }
+    if (recv_bytes > 0) {
+        message.assign(buffer.data(), buffer.data() + recv_bytes);
+    }
+    return recv_bytes;
 }
 ////////////////////
 void neroshop::Server::close() {
@@ -145,14 +258,51 @@ void neroshop::Server::shutdown() {
     ::shutdown(sockfd, SHUT_RDWR); // SHUT_RD, SHUT_WR, SHUT_RDWR
 }
 ////////////////////
+void neroshop::Server::init_socket(const std::string& address, unsigned int port) {
+	#if defined(__gnu_linux__) && defined(NEROSHOP_USE_SYSTEM_SOCKETS)
+	sockfd = ::socket(AF_INET, (socket_type == SocketType::Socket_UDP) ? SOCK_DGRAM : SOCK_STREAM, 0);
+    if (sockfd < 0) {
+		throw std::runtime_error("Failed to create socket.");
+	}
+	//----------------------------------
+	/*This code sets a socket option to reuse the local address and port, which means that the same combination of IP address and port can be used by multiple sockets simultaneously, even if they are still in a TIME_WAIT state after the connection has been closed. This is useful for scenarios where you want to restart an application that uses a specific port quickly without waiting for the operating system to release the resources of the previous connection.
+
+The setsockopt() function is used to set the socket option, and the SO_REUSEADDR and SO_REUSEPORT options are used to enable the reuse of local addresses and ports. The one variable is set to 1 to enable the options, and its address and size are passed to the setsockopt() function as arguments.*/
+	// set socket options : SO_REUSEADDR (TCP:restart a closed/killed process on the same address so you can reuse address over and over again)
+	// TO prevent the "Address already in use" error and allow reuse of local addresses and ports
+	int opt = 1; // enable
+    if(setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR | SO_REUSEPORT, &opt, sizeof(opt)) < 0) {
+        throw std::runtime_error("Failed to set socket option SO_REUSEADDR.");
+    }
+    
+	if(!bind(address, port)) {
+	    throw std::runtime_error("Failed to bound to port");
+	}
+	std::cout << "bound to port " << port << "\n";//std::cout << NEROMON_TAG "\033[1;97mServer " + "(TCP)" + " bound to port " + std::to_string(port) + "\033[0m\n";
+	
+	
+	if(!listen()) {
+	    throw std::runtime_error("Failed to listen for connection");
+	}
+	#endif    
+}
+////////////////////
 ////////////////////
 int neroshop::Server::get_socket() const {
     return sockfd;
 }
 ////////////////////
+const struct sockaddr_storage& neroshop::Server::get_storage() const {
+    storage;
+}
+////////////////////
 const neroshop::Client& neroshop::Server::get_client(int index) const {
     if (index >= clients.size()) throw std::out_of_range("get_client: invalid or out of range index");
     return *(clients.at(index));
+}
+
+int neroshop::Server::get_client_count() const {
+    return clients.size();
 }
 ////////////////////
 ////////////////////

@@ -17,7 +17,7 @@ int main() {
         return 1;
     }
 
-    std::string url = "http://127.0.0.1:57740";
+    std::string url = "http://127.0.0.1:57741";
     std::string payload = R"({
         "id": "5135958352",
         "jsonrpc": "2.0",
@@ -35,6 +35,7 @@ int main() {
     curl_easy_setopt(curl, CURLOPT_POST, 1L);
     curl_easy_setopt(curl, CURLOPT_POSTFIELDS, payload.c_str());
     curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
+    //curl_easy_setopt(curl, CURLOPT_TIMEOUT, 10L); // set timeout to 10 seconds
     
     curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_data);
     std::string response_data;

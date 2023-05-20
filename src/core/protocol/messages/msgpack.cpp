@@ -2,8 +2,278 @@
 
 #define JSON_USE_MSGPACK
 #include <nlohmann/json.hpp>
+#include <openssl/evp.h>
+#include <openssl/rand.h>
 
+#include "../../version.hpp"
+#include "../../tools/logger.hpp"
 #include "../p2p/kademlia.hpp"
+
+
+std::vector<uint8_t> neroshop::msgpack::process(const std::vector<uint8_t>& request) {
+    nlohmann::json request_object;
+    
+    nlohmann::json response_object;
+    std::vector<uint8_t> response; // bytes
+    
+    
+    return response;
+}
+
+//-----------------------------------------------------------------------------
+
+// This should be used in DHT server rather than the IPC
+std::vector<uint8_t> neroshop::msgpack::process(const std::vector<uint8_t>& request, Node& node) {
+    nlohmann::json request_object;
+    
+    nlohmann::json response_object;
+    std::vector<uint8_t> response; // bytes
+
+    // Process (parse) the request
+    try {
+        request_object = nlohmann::json::from_msgpack(request);
+        std::cout << "\033[33m" << request_object.dump() << "\033[0m" << std::endl;
+    }
+    catch(nlohmann::json::parse_error& exception) {
+        neroshop::print("Error parsing client request", 1);
+        response_object["version"] = std::string(NEROSHOP_VERSION);//"0.1.0"; // neroshop version
+        response_object["error"]["code"] = 201; // "code" MUST be an integer
+        response_object["error"]["message"] = "Parse error";
+        response_object["error"]["data"] = exception.what(); // A Primitive (non-object) or Structured (array) value which may be omitted
+        response_object["tid"] = nullptr;
+        response = nlohmann::json::to_msgpack(response_object);
+        #ifdef NEROSHOP_DEBUG//0
+        std::cout << "Response output:\n\033[91m" << response_object.dump(4) << "\033[0m\n";
+        #endif
+        return response;//return response_object.dump(4);
+    }
+    //-----------------------------------------------------
+    assert(request_object.is_object());
+    assert(request_object["version"].is_string());
+    std::string neroshop_version = request_object["version"];
+    assert(neroshop_version == std::string(NEROSHOP_VERSION));
+    if(request_object.contains("method")) {
+        std::cout << "Non DHT-related method requested\n";
+        return neroshop::msgpack::process(request);
+    }    
+    assert(request_object["query"].is_string());
+    std::string method = request_object["query"];
+    // "args" must contain the querying node's ID 
+    assert(request_object["args"].is_object());
+    auto params_object = request_object["args"];
+    assert(params_object["id"].is_string()); // querying node's id
+    std::string requester_node_id = params_object["id"];
+    
+    if(!request_object.contains("tid")) {
+        std::cout << "No tid found, hence a notification that will not receive a response from the server\n";
+        return {};
+    }
+    auto tid = request_object["tid"];
+    //-----------------------------------------------------
+    if(method == "ping") {
+        response_object["version"] = std::string(NEROSHOP_VERSION);
+        response_object["response"]["message"] = "pong";
+        response_object["response"]["id"] = node.get_id();
+    }
+    //-----------------------------------------------------
+    if(method == "find_node") {
+        assert(request_object["args"].is_object());
+        auto params_object = request_object["args"];
+        assert(params_object["target"].is_string()); // target node id sought after by the querying node
+        std::string target = params_object["target"];
+        
+        response_object["version"] = std::string(NEROSHOP_VERSION);
+        response_object["response"]["id"] = node.get_id();
+        std::vector<Node*> nodes = node.find_node(target);
+        if(nodes.empty()) {
+            response_object["response"]["nodes"] = nlohmann::json::array();
+        } else {
+            std::vector<nlohmann::json> nodes_array;
+            for (const auto& n : nodes) {
+                nlohmann::json node_object = {
+                    {"ip_address", n->get_ip_address()},
+                    {"port", n->get_port()}
+                };
+                nodes_array.push_back(node_object);
+                //std::cout << "Node IP address: " << n->get_ip_address() << ", Node port: " << n->get_port() << std::endl;
+            }
+            response_object["response"]["nodes"] = nodes_array;
+        }
+    }
+    //-----------------------------------------------------
+    if(method == "get_peers") {
+        std::cout << "message type is a get_peers\n"; // 
+        assert(request_object["args"].is_object());
+        auto params_object = request_object["args"];
+        assert(params_object["info_hash"].is_string()); // info hash
+        std::string info_hash = params_object["info_hash"];
+        
+        response_object["version"] = std::string(NEROSHOP_VERSION);
+        response_object["response"]["id"] = node.get_id();
+        // Check if the queried node has peers for the requested infohash
+        std::vector<Peer> peers = node.get_peers(info_hash);
+        if(peers.empty()) {
+            // If the queried node has no peers for the requested infohash,
+            // return the K closest nodes in the routing table to the requested infohash
+            std::vector<Node*> closest_nodes = node.find_node(info_hash);
+            std::vector<nlohmann::json> nodes_array;
+            for (const auto& n : closest_nodes) {
+                nlohmann::json node_object = {
+                    {"id", n->get_id()},
+                    {"ip_address", n->get_ip_address()},
+                    {"port", n->get_port()}
+                };
+                nodes_array.push_back(node_object);
+                //std::cout << "Node ID: " << n->get_id() << ", Node IP address: " << n->get_ip_address() << ", Node port: " << n->get_port() << std::endl;
+            }
+            response_object["response"]["nodes"] = nodes_array; // If the queried node has no peers for the infohash, a key "nodes" is returned containing the K nodes in the queried nodes routing table closest to the infohash supplied in the query
+        } else {
+            std::vector<nlohmann::json> peers_array;
+            for (const auto& p : peers) {
+                nlohmann::json peer_object = {
+                    {"ip_address", p.address},
+                    {"port", p.port}
+                };
+                peers_array.push_back(peer_object);
+                //std::cout << "Peer IP address: " << p.address << ", Peer port: " << p.port << std::endl;
+            }
+            response_object["response"]["values"] = peers_array; // If the queried node has peers for the infohash, they are returned in a key "values" as a list of strings. Each string containing "compact" format peer information for a single peer
+        }
+        // Generate and include a token value in the response
+        auto secret = generate_secret(16);
+        std::string token = generate_token(node.get_id(), info_hash, secret); // The reason for concatenating the node ID and info hash is to ensure that the generated token is unique and specific to the peer making the request. This helps prevent replay attacks, where an attacker intercepts and reuses a token generated for another peer.
+        response_object["response"]["token"] = token;
+    }
+    //-----------------------------------------------------
+    if(method == "announce_peer") {
+        std::cout << "message type is a announce_peer\n";
+        assert(request_object["args"].is_object());
+        auto params_object = request_object["args"];
+        assert(params_object["info_hash"].is_string()); // info hash
+        std::string info_hash = params_object["info_hash"];
+        assert(params_object["token"].is_string());
+        std::string token = params_object["token"];
+        assert(params_object["port"].is_number_integer());
+        int port = params_object["port"];
+        
+        // Verify the token
+        std::string secret = generate_secret(16);
+        std::string expected_token = generate_token(node.get_id(), info_hash, secret);
+        if (token != expected_token) {
+            // Invalid token, return error response
+            response_object["error"]["code"] = 203;
+            response_object["error"]["message"] = "Invalid token";
+            response_object["tid"] = tid;
+            response = nlohmann::json::to_msgpack(response_object);
+            return response;
+        }
+
+        // Add the peer to the info_hash_peers unordered_map
+        node.add_peer(info_hash, {/*ip_address*/"", port});
+        
+        // Return success response
+        response_object["version"] = std::string(NEROSHOP_VERSION);
+        response_object["response"]["id"] = node.get_id();
+        response_object["response"]["message"] = "Peer announced"; // not needed
+    }
+    //-----------------------------------------------------
+    if(method == "get") {
+        std::cout << "message type is a get\n";
+        assert(request_object["args"].is_object());
+        auto params_object = request_object["args"];
+        assert(params_object["key"].is_string());
+        std::string key = params_object["key"];
+        
+        // Look up the value in the node's hash table
+        std::string value = node.get(key);
+        if (value.empty()) {
+            // Key not found, return error response
+            response_object["error"]["code"] = 404;
+            response_object["error"]["message"] = "Key not found";
+            response_object["tid"] = tid;
+            response = nlohmann::json::to_msgpack(response_object);
+            return response;
+        } else {
+            // Key found, return success response with value
+            response_object["version"] = std::string(NEROSHOP_VERSION);
+            response_object["response"]["id"] = node.get_id();
+            response_object["response"]["value"] = value;
+        }
+    }
+    //-----------------------------------------------------
+    if(method == "put") {
+        std::cout << "message type is a put\n"; // 
+        assert(request_object["args"].is_object());
+        auto params_object = request_object["args"];
+        assert(params_object["key"].is_string());
+        std::string key = params_object["key"];
+        assert(params_object["value"].is_string());
+        std::string value = params_object["value"];
+        
+        // Add the key-value pair to the key-value store
+        node.put(key, value);
+        
+        // Return success response
+        response_object["version"] = std::string(NEROSHOP_VERSION);
+        response_object["response"]["id"] = node.get_id();
+        response_object["response"]["message"] = "Key-value pair added"; // not needed
+    }
+    //-----------------------------------------------------
+    response_object["tid"] = tid; // transaction id - MUST be the same as the request object's id
+    response = nlohmann::json::to_msgpack(response_object);
+    return response;
+}
+
+//-----------------------------------------------------------------------------
+
+std::string neroshop::msgpack::generate_secret(int length) {
+    std::string secret(length, ' ');
+    RAND_bytes((unsigned char*)&secret[0], length);
+    return secret;
+}
+
+//-----------------------------------------------------------------------------
+
+std::string neroshop::msgpack::generate_token(const std::string& node_id, const std::string& info_hash, const std::string& secret) {
+    std::string token;
+    uint8_t token_data[EVP_MAX_MD_SIZE];
+    unsigned int token_length = 0;
+
+    const EVP_MD* md = EVP_get_digestbyname("sha3-256");
+    EVP_MD_CTX* md_ctx = EVP_MD_CTX_new();
+
+    EVP_DigestInit_ex(md_ctx, md, nullptr);
+    EVP_DigestUpdate(md_ctx, node_id.data(), node_id.size());
+    EVP_DigestUpdate(md_ctx, info_hash.data(), info_hash.size());
+    EVP_DigestUpdate(md_ctx, secret.data(), secret.size());
+    EVP_DigestFinal_ex(md_ctx, token_data, &token_length);
+
+    EVP_MD_CTX_free(md_ctx);
+
+    token = std::string(reinterpret_cast<char*>(token_data), token_length);
+    return token;
+}
+
+
+//-----------------------------------------------------------------------------
+std::string neroshop::msgpack::generate_transaction_id() {
+    std::random_device rd;
+    std::mt19937 gen(rd());
+    std::uniform_int_distribution<std::uint32_t> dis(0, std::numeric_limits<std::uint32_t>::max());
+    std::uint32_t tid = dis(gen);
+    std::array<std::uint8_t, 4> tid_bytes;
+    tid_bytes[0] = static_cast<std::uint8_t>((tid >> 24) & 0xFF);
+    tid_bytes[1] = static_cast<std::uint8_t>((tid >> 16) & 0xFF);
+    tid_bytes[2] = static_cast<std::uint8_t>((tid >> 8) & 0xFF);
+    tid_bytes[3] = static_cast<std::uint8_t>(tid & 0xFF);
+    ////return std::string(reinterpret_cast<const char*>(tid_bytes.data()), 4);
+    std::stringstream ss;
+    for (const auto& b : tid_bytes) {
+        ss << std::hex << std::setw(2) << std::setfill('0') << static_cast<int>(b);
+    }
+    return ss.str().substr(0, 4); // take the first 4 characters only
+}
+//-----------------------------------------------------------------------------
 
 bool neroshop::msgpack::send_data(int sockfd, const std::vector<uint8_t>& packed) {
     if(sockfd < 0) throw std::runtime_error("socket is dead");

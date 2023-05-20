@@ -71,9 +71,9 @@ Popup {
             language: languageBox.currentText,//currentIndex,
             hide_homepage_button: hideHomepageButtonSwitch.checked,
             hide_price_display: priceDisplaySwitch.checked,
-            window_width: Script.getJsonRootObject()["window_width"],
+            /*window_width: Script.getJsonRootObject()["window_width"],
             window_height: Script.getJsonRootObject()["window_height"],
-            window_mode: Script.getJsonRootObject()["window_mode"],
+            window_mode: Script.getJsonRootObject()["window_mode"],*/
             // catalog
             catalog: {
                 price_display: priceDisplayBox.currentText,//currentIndex,
@@ -85,7 +85,7 @@ Popup {
             // nodes / network
             monero: {
                 daemon: {
-                    network_type: Wallet.getNetworkTypeString(),
+                    //network_type: Wallet.getNetworkTypeString(),
                     confirm_external_bind: confirmExternalBindSwitch.checked,
                     restricted_rpc: restrictedRpcSwitch.checked,
                     data_dir: settingsDialog.moneroDataDir,

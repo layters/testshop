@@ -7,8 +7,14 @@ namespace neroshop {
 
 class Listing {
 public:
+    Listing();
     Listing(const std::string& id, const std::string& product_id, const std::string& seller_id, unsigned int quantity,
             double price, const std::string& currency, const std::string& condition, const std::string& location, const std::string& date);
+    Listing(const Listing& other);// copy constructor
+    Listing(Listing&& other) noexcept; // move constructor
+    
+    Listing& operator=(const Listing&); // copy assignment operator
+    Listing& operator=(Listing&&) noexcept; // move assignment operator
     
     void set_id(const std::string& id);
     void set_product_id(const std::string& product_id);
@@ -18,7 +24,7 @@ public:
     void set_currency(const std::string& currency);
     void set_condition(const std::string& condition);
     void set_location(const std::string& location);
-    void set_creation_date(const std::string& date);
+    void set_date(const std::string& date);
     
     std::string get_id() const;
     std::string get_product_id() const;

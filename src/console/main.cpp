@@ -1,6 +1,8 @@
 #include <iostream>
 #include <string>
 
+#include "../core/protocol/transport/zmq_client.hpp"
+
 #include "../neroshop.hpp"
 using namespace neroshop;
 namespace neroshop_tools = neroshop::tools;
@@ -15,7 +17,8 @@ static void print_commands() {
         {"monero_nodes", "Display a list of monero nodes"}, 
         {"query       ", "Execute an SQLite query"}, 
         {"curl_version", "Show libcurl version"}, 
-        {"download_tor", "Download Tor"}
+        {"download_tor", "Download Tor"}, 
+        {"send        ", "Send a test message to the local daemon IPC server"}
         /*, 
         {"", ""}*/
     };
@@ -29,7 +32,7 @@ static void print_commands() {
 int main(int argc, char** argv) {
     //-------------------------------------------------------
     // Connect to daemon server (daemon must be launched first)
-    //#ifndef NEROSHOP_DEBUG
+    #if !defined(NEROSHOP_USE_LIBZMQ)
     neroshop::Client * client = neroshop::Client::get_main_client();
 	int port = DEFAULT_TCP_PORT;
 	std::string ip = "localhost"; // 0.0.0.0 means anyone can connect to your server
@@ -37,23 +40,18 @@ int main(int argc, char** argv) {
 	    std::cout << "Please launch neromon first\n";
 	    exit(0);
 	}
-	//#endif
+	#else
+	neroshop::ZmqClient client("tcp://localhost:5555");
+	#endif
     //-------------------------------------------------------
     // nodes.lua
     if(!neroshop::create_config()) { 
         neroshop::load_config();
     }
-    
-    // settings.json
-    create_json();
-    nlohmann::json json_object = nlohmann::json::parse(load_json(), nullptr, false);
-    if (json_object.is_discarded()) {
-        return 1;
-    }
 
     std::vector<std::string> networks = {"mainnet", "stagenet", "testnet"};
 
-    std::string network_type = json_object["monero"]["daemon"]["network_type"];//Script::get_string(lua_state, "monero.daemon.network_type");
+    std::string network_type = Script::get_string(lua_state, "monero.network_type");
     if (std::find(networks.begin(), networks.end(), network_type) == networks.end()) {
         neroshop::print("\033[1;91mnetwork_type \"" + network_type + "\" is not valid");
         return 1;
@@ -109,25 +107,114 @@ int main(int argc, char** argv) {
             });
             std::thread { std::move(download_task) }.detach();
         }
-        else if(command == "send") {
+        else if(command == "send") { // This is only a test command
+            #if !defined(NEROSHOP_USE_LIBZMQ)
             if (client->is_connected()) {
-                nlohmann::json j = {{"foo", "bar"}, {"baz", 1}};
-                std::vector<uint8_t> packed = nlohmann::json::to_msgpack(j);
-                /*for (auto byte : packed) {
-                    std::cout << std::hex << (int)byte << " ";
-                }*/
-                std::cout << std::endl;
-                client->send(packed);
-                std::string response = neroshop::msgpack::receive_data(client->get_socket());
-                std::cout << "Response from server: " << response << "\n";
+            nlohmann::json arguments_obj = {
+                {"id", ""},
+            };//nlohmann::json nested_array = {"item1", "item2", "item3"};
+            nlohmann::json j = {
+                {"version", std::string(NEROSHOP_VERSION)},
+                {"query", "ping"},
+                {"args", arguments_obj},
+                {"tid", 123},
+            };
+            // send packed data to POSIX server
+            std::vector<uint8_t> packed = nlohmann::json::to_msgpack(j);
+            client->send(packed);//client.send("Hello, POSIX Server!");
+            
+            try {
+            std::vector<uint8_t> response;//std::string response;
+            client->receive(response);
+            // Deserialize the response from MessagePack to a JSON object
+            nlohmann::json j2 = nlohmann::json::from_msgpack(response);
+            std::cout << "Received response: " << j2.dump() << std::endl;
+            } catch (const nlohmann::detail::parse_error& e) {
+                std::cerr << "An error occurred: " << "Server was disconnected" << std::endl;//std::cout << "Failed to parse server response: " << e.what() << std::endl;
+            }
             
             } else {
                 std::cout << "Failed to establish connection to server\n";
+            }
+            //------------------------------------------------------------
+            #else
+            nlohmann::json j = {
+                {"message", "Hello, ZMQ Server!"},
+                {"id", 123}
+            };
+            // send packed data to ZMQ server
+            std::vector<uint8_t> packed = nlohmann::json::to_msgpack(j);
+            client.send(packed);//client.send("Hello, ZMQ Server!");
+            
+            std::vector<uint8_t> response;//std::string response;
+            client.receive(response);
+            // Deserialize the response from MessagePack to a JSON object
+            nlohmann::json j2 = nlohmann::json::from_msgpack(response);
+            std::cout << "Received response: " << j2.dump() << std::endl;//std::cout << "Received response: " << response << std::endl;
+            #endif
+        }        
+        else if(command == "put") { // This is only a test command
+            if (client->is_connected()) {
+                nlohmann::json arguments_obj = {
+                    {"id", "my_node_id"},
+                    {"key", "name"},
+                    {"value", "Jack"},
+                };
+                nlohmann::json j = {
+                    {"version", std::string(NEROSHOP_VERSION)},
+                    {"query", "put"},
+                    {"args", arguments_obj},
+                    {"tid", 123},
+                };
+                // send packed data to POSIX server
+                std::vector<uint8_t> packed = nlohmann::json::to_msgpack(j);
+                client->send(packed);//client.send("Hello, POSIX Server!");
+            
+                try {
+                std::vector<uint8_t> response;//std::string response;
+                client->receive(response);
+                // Deserialize the response from MessagePack to a JSON object
+                nlohmann::json j2 = nlohmann::json::from_msgpack(response);
+                std::cout << "Received response: " << j2.dump() << std::endl;
+                } catch (const nlohmann::detail::parse_error& e) {
+                    std::cerr << "An error occurred: " << "Server was disconnected" << std::endl;//std::cout << "Failed to parse server response: " << e.what() << std::endl;
+                }
+            }       
+        } 
+        else if(command == "get") { // This is only a test command
+            if (client->is_connected()) {
+                nlohmann::json arguments_obj = {
+                    {"id", "my_node_id"},
+                    {"key", "name"},
+                };
+                nlohmann::json j = {
+                    {"version", std::string(NEROSHOP_VERSION)},
+                    {"query", "get"},
+                    {"args", arguments_obj},
+                    {"tid", 123},
+                };
+                // send packed data to POSIX server
+                std::vector<uint8_t> packed = nlohmann::json::to_msgpack(j);
+                client->send(packed);//client.send("Hello, POSIX Server!");
+            
+                try {
+                std::vector<uint8_t> response;//std::string response;
+                client->receive(response);
+                // Deserialize the response from MessagePack to a JSON object
+                nlohmann::json j2 = nlohmann::json::from_msgpack(response);
+                std::cout << "Received response: " << j2.dump() << std::endl;
+                } catch (const nlohmann::detail::parse_error& e) {
+                    std::cerr << "An error occurred: " << "Server was disconnected" << std::endl;//std::cout << "Failed to parse server response: " << e.what() << std::endl;
+                }
             }
         }        
         /*else if(command == "") {
         }*/        
         else if(command == "exit") {
+            #if !defined(NEROSHOP_USE_LIBZMQ)
+            // close the connection
+            client->close();
+            #endif
             break;
         }
         else {

@@ -13,8 +13,8 @@ class Node; // forward declaration
 
 class RoutingTable {
 private:     
-    // Convert hash to string
-    static unsigned int hash_to_int(const std::string& hash);
+    friend class Node;
+    std::string my_node_id;
     std::vector<Node *> nodes;  // List of nodes in the DHT
     std::unordered_map<int, std::vector<std::unique_ptr<Node>>> buckets;  // Routing table buckets
 public:
@@ -33,10 +33,14 @@ public:
 
     std::vector<Node*> find_closest_nodes(const std::string& key, int count = 10);// const;// K or count is the maximum number of closest nodes to return
 
+    bool split_bucket(int bucket_index);
+
     // Print the contents of the routing table
     void print_table() const;
 
     bool has_node(const std::string& node_id);// const;
+    
+    static std::string calculate_distance(const std::string& hash1, const std::string& hash2);  
 };
 
 }

@@ -4,10 +4,12 @@
 #include <functional> // std::hash
 #include <regex>
 
+#include <openssl/bn.h> // BIGNUM
+
 #include "node.hpp"
 
 const int NUM_BUCKETS = 256; // recommended to use a number of buckets that is equal to the number of bits in the node id (sha-3-256 so 256 bits)
-
+const int MAX_BUCKET_SIZE = 20;
 // Initialize the routing table with a list of nodes
 neroshop::RoutingTable::RoutingTable(const std::vector<Node *>& nodes) : nodes(nodes) {
     // A single bucket can store up to 20 nodes
@@ -19,7 +21,12 @@ neroshop::RoutingTable::RoutingTable(const std::vector<Node *>& nodes) : nodes(n
         if (node_ptr == nullptr) {
             continue;
         }
-        const int bucket_index = hash_to_int(node_ptr->get_id());
+        const std::string& node_id = node_ptr->get_id();
+        const std::string& key_hash = calculate_distance(node_id, my_node_id); // Calculate distance from the current node
+        int bucket_index = 0;
+        while (bucket_index < NUM_BUCKETS && (key_hash[bucket_index] == 0)) {
+            bucket_index++;
+        }
         std::cout << "Node stored in bucket " << bucket_index << "\n";
         std::unique_ptr<Node> node_uptr(node_ptr);
         buckets[bucket_index].push_back(std::move(node_uptr));
@@ -55,6 +62,17 @@ bool neroshop::RoutingTable::add_node(std::unique_ptr<Node> node) {//(const Node
     // Add the node to the bucket
     bucket.push_back(std::move(node));
     std::cout << "\033[0;36m" << (bucket.back().get()->get_ip_address() + ":" + std::to_string(bucket.back().get()->get_port())) << "\033[0m added to routing table\n";
+
+    // Check if bucket splitting is required and perform the split
+    if (bucket.size() > 20) { // buckets have a max size of 20 nodes
+        bool split_success = split_bucket(bucket_index);
+        if (!split_success) {
+            std::cerr << "Error: unable to split bucket " << bucket_index << ".\n";
+            return false;
+        }
+        std::cout << "Bucket " << bucket_index << " split into " << bucket_index << " and " << (bucket_index + 1) << ".\n";
+    }    
+    
     return true;
 }
 
@@ -81,24 +99,58 @@ bool neroshop::RoutingTable::remove_node(const std::string& node_id) {
 
 // Find the index of the bucket that a given node identifier belongs to
 int neroshop::RoutingTable::find_bucket(const std::string& node_id) const {//(int node_id) const {
-    unsigned int id_num = hash_to_int(node_id);
-    int bucket_index = 0;
-    while (bucket_index < NUM_BUCKETS && (id_num & (1 << bucket_index)) == 0) {
-        bucket_index++;
+    std::string distance = calculate_distance(node_id, my_node_id);
+
+    // Find the index of the non-zero bit from the left in the distance string
+    int bucket_index = NUM_BUCKETS - 1;
+    while (bucket_index >= 0 && distance[bucket_index] == '0') {
+        bucket_index--;
     }
+
+    // Return the index of the bucket
     return bucket_index;
 }
 
+bool neroshop::RoutingTable::split_bucket(int bucket_index) {
+    // Check if splitting is possible (requires at least one node in the bucket)
+    if (buckets[bucket_index].empty()) {
+        return false;
+    }
+
+    // Create two new empty buckets
+    std::vector<std::unique_ptr<Node>> new_bucket1;
+    std::vector<std::unique_ptr<Node>> new_bucket2;
+
+    // Move nodes from the original bucket to the new buckets
+    for (auto& node : buckets[bucket_index]) {
+        // Calculate the new bucket index for the node
+        unsigned long long new_bucket_index = find_bucket(node->get_id());
+        if (new_bucket_index == bucket_index) {
+            new_bucket1.push_back(std::move(node));
+    } else {
+          new_bucket2.push_back(std::move(node));
+        }
+    }
+
+    // Update the routing table with the new bucket configuration
+    buckets[bucket_index] = std::move(new_bucket1);
+    buckets[bucket_index + 1] = std::move(new_bucket2);
+
+    return true;
+}
+
+
 std::optional<std::reference_wrapper<neroshop::Node>> neroshop::RoutingTable::get_node(const std::string& node_id) {//const {
-    unsigned int id_num = hash_to_int(node_id);
+    const std::string& key_hash = calculate_distance(node_id, my_node_id); // Calculate distance from the current node
     int bucket_index = 0;
-    while (bucket_index < NUM_BUCKETS && (id_num & (1 << bucket_index)) == 0) {
+    while (bucket_index < NUM_BUCKETS && (key_hash[bucket_index] == 0)) {
         bucket_index++;
     }
-        
+
     if (bucket_index >= buckets.size()) {
         return std::nullopt; // bucket is empty
     }
+
     const auto& bucket = buckets[bucket_index];
     for (const auto& node : bucket) {
         if (node->get_id() == node_id) {
@@ -111,9 +163,9 @@ std::optional<std::reference_wrapper<neroshop::Node>> neroshop::RoutingTable::ge
 // un-tested
 std::vector<neroshop::Node*> neroshop::RoutingTable::find_closest_nodes(const std::string& key, int count) {
     std::vector<neroshop::Node*> closest_nodes;
-    unsigned int key_hash = hash_to_int(key);
+    std::string key_hash = key;//hash_to_string(key);
     int bucket_index = 0;
-    while (bucket_index < NUM_BUCKETS && (key_hash & (1 << bucket_index)) == 0) {
+    while (bucket_index < NUM_BUCKETS && (key_hash[bucket_index] == 0)) {
         bucket_index++;
     }
 
@@ -124,20 +176,19 @@ std::vector<neroshop::Node*> neroshop::RoutingTable::find_closest_nodes(const st
     // Check the bucket containing the key
     const auto& bucket = buckets[bucket_index];
     if (!bucket.empty()) {
-        // Find the closest node in the bucket
-        auto closest_node = bucket.front().get();
-        unsigned int closest_node_hash = hash_to_int(closest_node->get_id());
-        unsigned int distance_to_closest_node = closest_node_hash ^ key_hash;
+        // Find the closest node(s) in the bucket
+        std::map<std::string, neroshop::Node*> closest_nodes_map;
         for (const auto& node : bucket) {
-            unsigned int node_hash = hash_to_int(node->get_id());
-            unsigned int distance_to_node = node_hash ^ key_hash;
-            if (distance_to_node < distance_to_closest_node) {
-                closest_node = node.get();
-                closest_node_hash = node_hash;
-                distance_to_closest_node = distance_to_node;
+            std::string node_hash = node->get_id();
+            std::string distance_to_node = calculate_distance(node_hash, key_hash);
+            closest_nodes_map[distance_to_node] = node.get();
+        }
+        for (const auto& closest_node_pair : closest_nodes_map) {
+            closest_nodes.push_back(closest_node_pair.second);
+            if (closest_nodes.size() == count) {
+                return closest_nodes;
             }
         }
-        closest_nodes.push_back(closest_node);
     }
 
     // Check the adjacent buckets for the closest nodes
@@ -147,38 +198,36 @@ std::vector<neroshop::Node*> neroshop::RoutingTable::find_closest_nodes(const st
         if (left_bucket_index >= 0) {
             const auto& left_bucket = buckets[left_bucket_index];
             if (!left_bucket.empty()) {
-                auto closest_node = left_bucket.front().get();
-                unsigned int closest_node_hash = hash_to_int(closest_node->get_id());
-                unsigned int distance_to_closest_node = closest_node_hash ^ key_hash;
+                std::map<std::string, neroshop::Node*> closest_nodes_map;
                 for (const auto& node : left_bucket) {
-                    unsigned int node_hash = hash_to_int(node->get_id());
-                    unsigned int distance_to_node = node_hash ^ key_hash;
-                    if (distance_to_node < distance_to_closest_node) {
-                        closest_node = node.get();
-                        closest_node_hash = node_hash;
-                        distance_to_closest_node = distance_to_node;
+                    std::string node_hash = node->get_id();
+                    std::string distance_to_node = calculate_distance(node_hash, key_hash);
+                    closest_nodes_map[distance_to_node] = node.get();
+                }
+                for (const auto& closest_node_pair : closest_nodes_map) {
+                    closest_nodes.push_back(closest_node_pair.second);
+                    if (closest_nodes.size() == count) {
+                        return closest_nodes;
                     }
                 }
-                closest_nodes.push_back(closest_node);
             }
             left_bucket_index--;
         }
         if (right_bucket_index < NUM_BUCKETS) {
             const auto& right_bucket = buckets[right_bucket_index];
             if (!right_bucket.empty()) {
-                auto closest_node = right_bucket.front().get();
-                unsigned int closest_node_hash = hash_to_int(closest_node->get_id());
-                unsigned int distance_to_closest_node = closest_node_hash ^ key_hash;
+                std::map<std::string, neroshop::Node*> closest_nodes_map;
                 for (const auto& node : right_bucket) {
-                    unsigned int node_hash = hash_to_int(node->get_id());
-                    unsigned int distance_to_node = node_hash ^ key_hash;
-                    if (distance_to_node < distance_to_closest_node) {
-                        closest_node = node.get();
-                        closest_node_hash = node_hash;
-                        distance_to_closest_node = distance_to_node;
+                    std::string node_hash = node->get_id();
+                    std::string distance_to_node = calculate_distance(node_hash, key_hash);
+                    closest_nodes_map[distance_to_node] = node.get();
+                }
+                for (const auto& closest_node_pair : closest_nodes_map) {
+                    closest_nodes.push_back(closest_node_pair.second);
+                    if (closest_nodes.size() == count) {
+                        return closest_nodes;
                     }
                 }
-                closest_nodes.push_back(closest_node);
             }
             right_bucket_index++;
         }
@@ -189,9 +238,9 @@ std::vector<neroshop::Node*> neroshop::RoutingTable::find_closest_nodes(const st
     
 
 bool neroshop::RoutingTable::has_node(const std::string& node_id) {//const {
-    unsigned int node_hash = hash_to_int(node_id);
+    const std::string& key_hash = calculate_distance(node_id, my_node_id); // Calculate distance from the current node
     int bucket_index = 0;
-    while (bucket_index < NUM_BUCKETS && (node_hash & (1 << bucket_index)) == 0) {
+    while (bucket_index < NUM_BUCKETS && (key_hash[bucket_index] == 0)) {
         bucket_index++;
     }
 
@@ -216,25 +265,44 @@ void neroshop::RoutingTable::print_table() const {
             std::cout << "Bucket " << bucket_index << ": ";
             for (auto& node : bucket_nodes) {
                 std::cout << node->get_ip_address() << ":" << node->get_port() << " ";
+                //std::cout << "[" << calculate_distance(node->get_id(), my_node_id) << "] ";
             }
             std::cout << std::endl;
         }
     }
 }
 
-unsigned int neroshop::RoutingTable::hash_to_int(const std::string& hash) {
-    if (hash.size() != 64) {
-        throw std::invalid_argument("Hash length must be 64 characters (SHA-3-256)");
+
+// Calculate the distance between two hash values
+std::string neroshop::RoutingTable::calculate_distance(const std::string& hash1, const std::string& hash2) {
+    std::string distance;
+    const size_t numBits = hash1.size() * 8;
+    for (size_t i = 0; i < numBits; i++) {
+        // Get the byte and bit position of the current bit
+        size_t byteIndex = i / 8;
+        size_t bitIndex = i % 8;
+
+        // Extract the corresponding bits from the two hash values
+        char bit1 = (hash1[byteIndex] >> bitIndex) & 1;
+        char bit2 = (hash2[byteIndex] >> bitIndex) & 1;
+
+        // Perform bitwise XOR on the bits
+        char xorValue = bit1 ^ bit2;
+
+        // Convert XOR value to binary string representation and append it to the distance string
+        std::string xorStr = std::bitset<8>(xorValue).to_string();
+        distance += xorStr;
     }
-    // Validate the hash using a regular expression
-    static const std::regex hex_regex("^[0-9a-fA-F]{64}$");
-    if (!std::regex_match(hash, hex_regex)) {
-        throw std::invalid_argument("Hash must be a 64-character hexadecimal string");
-    }
-    // Convert the entire hash to an integer
-    unsigned int result = 0;
-    std::stringstream ss;
-    ss << std::hex << hash;
-    ss >> result;    
-    return result % NUM_BUCKETS; // limit result to the range [0, 256)
+    
+    return distance;
 }
+
+
+
+// Determine the bucket index for a hash value
+/*unsigned int getBucketIndex(const std::string& hash) {
+    // Extract the most significant bits (e.g., first 8 bits)
+    char msb = hash[0];
+    unsigned int bucketIndex = static_cast<unsigned int>(msb) % NUM_BUCKETS;
+    return bucketIndex;
+}*/

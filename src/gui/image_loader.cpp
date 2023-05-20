@@ -1,4 +1,4 @@
-#include "image_loader.h"
+#include "image_loader.hpp"
 #include <QCoreApplication>
 #include <QFile>
 

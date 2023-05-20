@@ -1,9 +1,69 @@
 #include "product.hpp"
 
-neroshop::Product::Product(const std::string& id, const std::string& name, const std::string& description, const std::vector<neroshop::Attribute>& attributes, const std::string& code, unsigned int category_id, const std::vector<std::string>& tags)
-    : id(id), name(name), description(description), attributes(attributes), code(code), category_id(category_id), tags(tags)
+#include "category.hpp"
+
+neroshop::Product::Product() : id(""), name(""), description(""), code(""), category_id(0), subcategory_id(-1) {}
+
+neroshop::Product::Product(const std::string& id, const std::string& name, const std::string& description, const std::vector<neroshop::Attribute>& attributes, const std::string& code, unsigned int category_id, int subcategory_id, const std::vector<std::string>& tags)
+    : id(id), name(name), description(description), attributes(attributes), code(code), category_id(category_id), subcategory_id(subcategory_id), tags(tags)
 {}
 
+neroshop::Product::Product(const Product& other)
+    : id(other.id), name(other.name), description(other.description), 
+      attributes(other.attributes), code(other.code), category_id(other.category_id), 
+      subcategory_id(other.subcategory_id), tags(other.tags)
+{}
+
+neroshop::Product::Product(Product&& other) noexcept
+    : id(std::move(other.id)),
+      name(std::move(other.name)),
+      description(std::move(other.description)),
+      attributes(std::move(other.attributes)),
+      code(std::move(other.code)),
+      category_id(std::move(other.category_id)),
+      subcategory_id(std::move(other.subcategory_id)),
+      tags(std::move(other.tags))
+{}
+
+//-----------------------------------------------------------------------------
+
+neroshop::Product& neroshop::Product::operator=(const neroshop::Product& other) {
+    if (this != &other) {
+        id = other.id;
+        name = other.name;
+        description = other.description;
+        attributes = other.attributes;
+        code = other.code;
+        category_id = other.category_id;
+        subcategory_id = other.subcategory_id;
+        tags = other.tags;
+    }
+    return *this;
+}
+
+neroshop::Product& neroshop::Product::operator=(neroshop::Product&& other) noexcept {
+    if (this != &other) {
+        id = std::move(other.id);
+        name = std::move(other.name);
+        description = std::move(other.description);
+        attributes = std::move(other.attributes);
+        code = std::move(other.code);
+        category_id = std::move(other.category_id);
+        subcategory_id = std::move(other.subcategory_id);
+        tags = std::move(other.tags);
+
+        // Set other object's fields to default values
+        other.id = "";
+        other.name = "";
+        other.description = "";
+        other.attributes = {};
+        other.code = "";
+        other.category_id = 0;
+        other.subcategory_id = 0;
+        other.tags = {};
+    }
+    return *this;
+}
 
 //-----------------------------------------------------------------------------
 
@@ -17,6 +77,50 @@ void neroshop::Product::add_variant(const Attribute& variant) {
 
 void neroshop::Product::add_tag(const std::string& tag) {
     tags.push_back(tag);
+}
+
+void neroshop::Product::print_product() {
+    std::cout << "ID: " << get_id() << std::endl;
+    std::cout << "Name: " << get_name() << std::endl;
+    std::cout << "Description: " << get_description() << std::endl;
+
+    std::vector<neroshop::Attribute> attributes = get_attributes();
+    for (size_t i = 0; i < attributes.size(); i++) {
+        if(i != 0) std::cout << std::endl;
+        if(attributes.size() > 1) std::cout << "Variant #" << i+1 << std::endl;
+        if(!attributes[i].color.empty()) std::cout << "Color: " << attributes[i].color << std::endl;
+        if(!attributes[i].size.empty()) std::cout << "Size: " << attributes[i].size << std::endl;
+        if(attributes[i].weight != 0.0) std::cout << "Weight: " << attributes[i].weight << std::endl;
+        if(!attributes[i].material.empty()) std::cout << "Material: " << attributes[i].material << std::endl;
+        if(!std::get<3>(attributes[i].dimensions).empty()) std::cout << "Dimensions: " << std::get<0>(attributes[i].dimensions) << "x" << std::get<1>(attributes[i].dimensions) << "x" << std::get<2>(attributes[i].dimensions) << " (" << std::get<3>(attributes[i].dimensions) << ")" << std::endl;
+        if(!attributes[i].brand.empty()) std::cout << "Brand: " << attributes[i].brand << std::endl;
+        if(!attributes[i].model.empty()) std::cout << "Model: " << attributes[i].model << std::endl;
+        if(!attributes[i].manufacturer.empty()) std::cout << "Manufacturer: " << attributes[i].manufacturer << std::endl;
+        if(!attributes[i].country_of_origin.empty()) std::cout << "Country of Origin: " << attributes[i].country_of_origin << std::endl;
+        if(!attributes[i].warranty_information.empty()) std::cout << "Warranty Information: " << attributes[i].warranty_information << std::endl;
+        if(!attributes[i].product_code.empty()) std::cout << "Product Code: " << attributes[i].product_code << std::endl;
+        if(!attributes[i].style.empty()) std::cout << "Style: " << attributes[i].style << std::endl;
+        if(!attributes[i].gender.empty()) std::cout << "Gender: " << attributes[i].gender << std::endl;
+        if(attributes[i].age_range.second > 0) std::cout << "Age Range: " << attributes[i].age_range.first << "-" << attributes[i].age_range.second << std::endl;
+        if(!attributes[i].energy_efficiency_rating.empty()) std::cout << "Energy Efficiency Rating: " << attributes[i].energy_efficiency_rating << std::endl;
+        if(!attributes[i].safety_features.empty()) {
+            std::cout << "Safety Features: ";
+            for (const auto& feature : attributes[i].safety_features) {
+                std::cout << feature << ", ";
+            }
+            std::cout << std::endl;
+        }        
+        if(attributes[i].quantity_per_package != 0) std::cout << "Quantity per Package: " << attributes[i].quantity_per_package << std::endl;
+        if(!attributes[i].release_date.empty()) std::cout << "Release Date: " << attributes[i].release_date << std::endl;
+    }
+    std::cout << "Main Product Code: " << get_code() << std::endl;
+    std::cout << "Category: " << get_category_as_string() << std::endl;//std::cout << "Category ID: " << get_category_id() << std::endl;
+    if(subcategory_id != -1) std::cout << "Subcategory ID: " << get_subcategory_id() << std::endl;
+    std::cout << "Tags: ";
+    for (const auto& tags : get_tags()) {
+        std::cout << tags << ", ";
+    }
+    std::cout << std::endl;
 }
 
 //-----------------------------------------------------------------------------
@@ -76,6 +180,10 @@ void neroshop::Product::set_category_id(unsigned int category_id) {
     this->category_id = category_id;
 }
 
+void neroshop::Product::set_subcategory_id(int subcategory_id) {
+    this->subcategory_id = subcategory_id;
+}
+
 void neroshop::Product::set_tags(const std::vector<std::string>& tags) {
     this->tags = tags;
 }
@@ -125,7 +233,15 @@ int neroshop::Product::get_category_id() const {
     return category_id;
 }
 
-//std::string get_category_as_string() const {}
+std::string neroshop::Product::get_category_as_string() const {
+    return get_category_name_by_id(category_id);
+}
+
+int neroshop::Product::get_subcategory_id() const {
+    return subcategory_id;
+}
+
+//std::string neroshop::Product::get_subcategory_as_string() const {}
 
 std::vector<std::string> neroshop::Product::get_tags() const {
     return tags;

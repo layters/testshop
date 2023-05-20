@@ -78,8 +78,8 @@ int main(int argc, char *argv[])
     neroshop::open_configuration_file();
     // Set monero network type
     std::vector<std::string> networks = { "mainnet", "testnet", "stagenet" };
-    ScriptController * script_controller = new ScriptController(&engine);
-    std::string network_type = script_controller->getJsonRootObjectCpp().value("monero").toObject().value("daemon").toObject().value("network_type").toString().toStdString();
+    
+    std::string network_type = Script::get_string(neroshop::lua_state, "monero.network_type");
     if (std::find(networks.begin(), networks.end(), network_type) == networks.end()) {
         neroshop::print("\033[1;91mnetwork_type \"" + network_type + "\" is not valid");
         return 1;
@@ -118,6 +118,7 @@ int main(int argc, char *argv[])
     engine.rootContext()->setContextProperty("Wallet", wallet);//new WalletController());//qmlRegisterUncreatableType<WalletProxy>("neroshop.Wallet", 1, 0, "Wallet", "Wallet cannot be instantiated directly.");//qmlRegisterType<WalletProxy>("neroshop.Wallet", 1, 0, "Wallet"); // Usage: import neroshop.Wallet  ...  Wallet { id: wallet }
     qRegisterMetaType<WalletController*>(); // Wallet can now be used as an argument in function parameters
     // register script
+    ScriptController * script_controller = new ScriptController(&engine);
     engine.rootContext()->setContextProperty("Script", script_controller);
     // register backend
     engine.rootContext()->setContextProperty("Backend", new Backend(&engine));
