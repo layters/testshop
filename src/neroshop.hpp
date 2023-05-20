@@ -37,7 +37,6 @@
 // protocol
 #include "core/protocol/messages/msgpack.hpp"
 //#include "core/protocol/p2p/gossip.hpp"
-#include "core/protocol/p2p/hash_ring.hpp"
 #include "core/protocol/p2p/kademlia.hpp"
 #include "core/protocol/p2p/node.hpp"
 #include "core/protocol/p2p/routing_table.hpp"

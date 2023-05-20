@@ -18,7 +18,7 @@ neroshop::Script::Script(lua_State *L, const std::string& file_name) : Script()
 //////////
 neroshop::Script::~Script(void)
 {
-	//Factory::get_script_factory()->release(this);
+	//lua_close(L);
 }
 //////////
 std::vector<std::string> neroshop::Script::cache	({});
