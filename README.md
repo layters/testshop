@@ -254,10 +254,10 @@ Donations Log:
 ```
 amount     sender     timestamp
 --------------------------------
-0.12 xmr   anonymous, 2022-10-25
-0.50 xmr   anonymous, 2022-11-15
-0.02 xmr   anonymous, 2022-11-22
-0.003 xmr  anonymous, 2023-01-03
+0.12 xmr   anonymous  2022-10-25
+0.50 xmr   anonymous  2022-11-15
+0.02 xmr   anonymous  2022-11-22
+0.003 xmr  anonymous  2023-01-03
 ```
 
 
