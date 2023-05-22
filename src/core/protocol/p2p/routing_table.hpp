@@ -7,6 +7,8 @@
 #include <unordered_map>
 #include <vector>
 
+#include "../../../neroshop_config.hpp"
+
 namespace neroshop {
 
 class Node; // forward declaration
@@ -31,7 +33,7 @@ public:
     
     std::optional<std::reference_wrapper<neroshop::Node>> get_node(const std::string& node_id);// const;
 
-    std::vector<Node*> find_closest_nodes(const std::string& key, int count = 10);// const;// K or count is the maximum number of closest nodes to return
+    std::vector<Node*> find_closest_nodes(const std::string& key, int count = NEROSHOP_DHT_MAX_CLOSEST_NODES);// const;// K or count is the maximum number of closest nodes to return
 
     bool split_bucket(int bucket_index);
 

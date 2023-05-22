@@ -64,7 +64,7 @@ neroshop::Node::Node(const std::string& address, int port, bool local) : sockfd(
 
         // set a timeout of TIMEOUT_VALUE seconds for recvfrom
         struct timeval tv;
-        tv.tv_sec = TIMEOUT_VALUE;  // timeout in seconds
+        tv.tv_sec = NEROSHOP_DHT_QUERY_RECV_TIMEOUT;  // timeout in seconds
         tv.tv_usec = 0; // timeout in microseconds
         if (setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO, (const char*)&tv, sizeof(tv)) < 0) {
             std::cerr << "Error setting socket options" << std::endl;
@@ -266,7 +266,7 @@ std::vector<neroshop::Node*> neroshop::Node::lookup(const std::string& key) {
     // Perform iterative lookup to find nodes or peers based on the key
     
     // Start by finding the closest nodes to the key in the local routing table
-    std::vector<Node*> closest_nodes = find_node(key);
+    std::vector<Node*> closest_nodes = find_node(key, NEROSHOP_DHT_MAX_CLOSEST_NODES);
     
     // Perform iterative lookup to refine the search and find more nodes or peers
     // Repeat the process until the desired number of nodes or peers is found or a termination condition is met
@@ -298,7 +298,7 @@ std::vector<neroshop::Node*> neroshop::Node::lookup(const std::string& key) {
         }
 
         // Get the updated closest nodes
-        closest_nodes = find_node(target_id);
+        closest_nodes = find_node(target_id, NEROSHOP_DHT_MAX_CLOSEST_NODES);
     }    
     */
     // Return the list of nodes or peers found during the lookup
@@ -307,8 +307,8 @@ std::vector<neroshop::Node*> neroshop::Node::lookup(const std::string& key) {
 
 // Define the list of bootstrap nodes
 std::vector<neroshop::Peer> bootstrap_nodes = {
-    {"127.0.0.1", DEFAULT_PORT},
-    {"node.neroshop.org", DEFAULT_PORT}, // $ ping neroshop.org # or nslookup neroshop.org
+    {"127.0.0.1", NEROSHOP_P2P_DEFAULT_PORT},
+    {"node.neroshop.org", NEROSHOP_P2P_DEFAULT_PORT}, // $ ping neroshop.org # or nslookup neroshop.org
 };
 
 void neroshop::Node::join() {
@@ -376,7 +376,7 @@ std::vector<neroshop::Peer> neroshop::Node::get_peers(const std::string& info_ha
         // If info_hash is in info_hash_peers, get the vector of peers
         peers = info_hash_it->second;
     } else {
-        std::vector<Node*> nodes = find_node(info_hash);
+        std::vector<Node*> nodes = find_node(info_hash, NEROSHOP_DHT_MAX_CLOSEST_NODES);
         for (Node* node : nodes) {
             // Access the info_hash_peers map for each node and concatenate the vectors of peers
             auto node_it = node->info_hash_peers.find(info_hash);
@@ -415,7 +415,7 @@ void neroshop::Node::remove_peer(const std::string& info_hash) {
     }
 }
 
-void neroshop::Node::put(const std::string& key, const std::string& value) {    
+void neroshop::Node::store(const std::string& key, const std::string& value) {    
     data[key] = value;
     ////return (data.count(key) > 0); // In case we want to return the result of the insertion
 }
@@ -441,7 +441,7 @@ std::vector<uint8_t> neroshop::Node::send_query(const std::string& address, uint
     memset(&hints, 0, sizeof(hints));
     hints.ai_family = AF_INET; // use IPv4
     hints.ai_socktype = SOCK_DGRAM; // use UDP //SOCK_STREAM; // use TCP
-    if (getaddrinfo(address.c_str(), std::to_string(port ? port : DEFAULT_PORT).c_str(), &hints, &res) != 0) {
+    if (getaddrinfo(address.c_str(), std::to_string(port ? port : NEROSHOP_P2P_DEFAULT_PORT).c_str(), &hints, &res) != 0) {
         std::cerr << "Error resolving hostname" << std::endl; // probably the wrong family
         return {};
     }
@@ -658,25 +658,25 @@ void neroshop::Node::send_add_peer(const std::string& info_hash, const Peer& pee
 
 void neroshop::Node::send_put(const std::string& key, const std::string& value) {
     
-    std::string transaction_id = msgpack::generate_transaction_id();
-    
     nlohmann::json query_object;
-    query_object["tid"] = transaction_id;
-    query_object["query"] = "put";////query_object["method"] = "put";
+    query_object["query"] = "put";
     query_object["args"]["id"] = this->id;
     query_object["args"]["key"] = key;
     query_object["args"]["value"] = value;
-    
-    std::vector<uint8_t> put_message = nlohmann::json::to_msgpack(query_object);
+    query_object["version"] = std::string(NEROSHOP_VERSION);
     //-----------------------------------------------
-    // determine which node(s) get to `put` the key-value data in their hash table
-    std::vector<Node *> closest_nodes = find_node(key, 5); // 5=replication factor
+    // determine which node(s) gets to `put` the key-value data in their hash table
+    std::vector<Node *> closest_nodes = find_node(key, NEROSHOP_DHT_REPLICATION_FACTOR); // 5=replication factor
     //-----------------------------------------------
     // socket sendto and recvfrom here
     for(auto const& node : closest_nodes) {
-        std::string node_ip = node->get_ip_address();
+        std::string transaction_id = msgpack::generate_transaction_id();
+        query_object["tid"] = transaction_id; // tid should be unique for each put message
+        std::vector<uint8_t> put_message = nlohmann::json::to_msgpack(query_object);
+    
+        std::string node_ip = (node->get_ip_address() == this->public_ip_address) ? "127.0.0.1" : node->get_ip_address();
         int node_port = node->get_port();
-        std::cout << "Sending 'put' to " << node_ip << ":" << node_port << "\n";
+        std::cout << "Sending put request to \033[36m" << node_ip << ":" << node_port << "\033[0m\n";
         auto receive_buffer = send_query(node_ip, node_port, put_message);
     //-----------------------------------------------
     // process the response here
@@ -685,7 +685,7 @@ void neroshop::Node::send_put(const std::string& key, const std::string& value) 
             put_response_message = nlohmann::json::from_msgpack(receive_buffer);
         } catch (const std::exception& e) {
             std::cerr << "Node \033[91m" << node_ip << ":" << node_port << "\033[0m did not respond" << std::endl;
-            return;
+            continue; // Continue with the next closest node if this one fails
         }
         std::cout << "\033[32m" << put_response_message.dump() << "\033[0m\n";
     // ...    
@@ -704,6 +704,7 @@ void neroshop::Node::send_get(const std::string& key) {
     query_object["query"] = "get";
     query_object["args"]["id"] = this->id;
     query_object["args"]["key"] = key;
+    query_object["version"] = std::string(NEROSHOP_VERSION);
     
     std::vector<uint8_t> get_message = nlohmann::json::to_msgpack(query_object);
     //-----------------------------------------------
@@ -725,6 +726,7 @@ void neroshop::Node::send_remove(const std::string& key) {
     query_object["tid"] = transaction_id;
     query_object["query"] = "remove";////query_object["method"] = "remove";
     query_object["args"]["key"] = key;
+    query_object["version"] = std::string(NEROSHOP_VERSION);
     
     //std::string _message = bencode::encode(query);
 }
@@ -748,7 +750,7 @@ void neroshop::Node::handle_request(int sockfd, struct sockaddr_in client_addr, 
         if (message.contains("query") && message["query"] == "ping") {
             std::string sender_id = message["args"]["id"].get<std::string>();
             std::string sender_ip = inet_ntoa(client_addr.sin_addr);
-            uint16_t sender_port = (message["args"].contains("ephemeral_port")) ? (uint16_t)message["args"]["ephemeral_port"] : DEFAULT_PORT;//ntohs(client_addr.sin_port);// ephemeral ports are for multiple local nodes running on the same local network
+            uint16_t sender_port = (message["args"].contains("ephemeral_port")) ? (uint16_t)message["args"]["ephemeral_port"] : NEROSHOP_P2P_DEFAULT_PORT;//ntohs(client_addr.sin_port);// ephemeral ports are for multiple local nodes running on the same local network
             auto node_that_pinged = std::make_unique<Node>((sender_ip == "127.0.0.1") ? node->get_public_ip_address() : sender_ip, sender_port, false); // ALWAYS use public ip so that unique id is generated and actual address is stored in routing table for others to locate your node
             node->routing_table->add_node(std::move(node_that_pinged));
             node->routing_table->print_table();
@@ -795,7 +797,7 @@ void neroshop::Node::run() {
             if (message.contains("query") && message["query"] == "ping") {
                 std::string sender_id = message["args"]["id"].get<std::string>();
                 std::string sender_ip = inet_ntoa(client_addr.sin_addr);
-                uint16_t sender_port = (message["args"].contains("ephemeral_port")) ? (uint16_t)message["args"]["ephemeral_port"] : DEFAULT_PORT;//ntohs(client_addr.sin_port);// ephemeral ports are for multiple local nodes running on the same local network
+                uint16_t sender_port = (message["args"].contains("ephemeral_port")) ? (uint16_t)message["args"]["ephemeral_port"] : NEROSHOP_P2P_DEFAULT_PORT;//ntohs(client_addr.sin_port);// ephemeral ports are for multiple local nodes running on the same local network
                 auto node_that_pinged = std::make_unique<Node>((sender_ip == "127.0.0.1") ? get_public_ip_address() : sender_ip, sender_port, false); // ALWAYS use public ip so that unique id is generated and actual address is stored in routing table for others to locate your node
                 routing_table->add_node(std::move(node_that_pinged));
                 routing_table->print_table();
@@ -929,19 +931,19 @@ void neroshop::Node::set_bootstrap(bool bootstrap) {
 }
 /*int main() {
     // Create a new DHT instance and join the bootstrap node
-    neroshop::Node dht_node("127.0.0.1", DEFAULT_PORT);
+    neroshop::Node dht_node("127.0.0.1", NEROSHOP_P2P_DEFAULT_PORT);
     neroshop::Peer bootstrap_peer = {"bootstrap.example.com", 5678}; // can be a randomly chosen existing node that provides the initial information to the new node that connects to it
     dht_node.join(bootstrap_peer);
     // Add some key-value pairs to the DHT
-    dht_node.put("key1", "value1");
-    dht_node.put("key2", "value2");
+    dht_node.store("key1", "value1");
+    dht_node.store("key2", "value2");
     // Retrieve a value from the DHT
     std::string value = dht_node.get("key1");
     std::cout << "Value: " << value << std::endl;
     // Remove a key-value pair from the DHT
     dht_node.remove("key2");
     // Find a node
-    node.find_node("target_id");
+    node.find_node("target_id", NEROSHOP_DHT_MAX_CLOSEST_NODES);
     return 0;
 } // g++ node.cpp ../../../crypto/sha3.cpp ../../../util/logger.cpp -I"../../../crypto/" -o node -lcrypto -lssl
 */

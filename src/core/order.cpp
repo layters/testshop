@@ -2,7 +2,7 @@
 
 #include "cart.hpp"
 #include "price/currency_converter.hpp" // currency converter, enums.hpp
-#include "config.hpp" // neroshop::lua_state
+#include "settings.hpp" // neroshop::lua_state
 #include "database/database.hpp"
 #include "tools/logger.hpp"
 #include "tools/tools.hpp" // neroshop::uuid::generate()

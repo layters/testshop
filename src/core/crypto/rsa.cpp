@@ -1,11 +1,12 @@
 #include "rsa.hpp"
 
-#include "../tools/logger.hpp" // neroshop::print
+#include <sstream>
 
 #include <openssl/rsa.h>
 #include <openssl/err.h>
 
-#include <sstream>
+#include "../../neroshop_config.hpp" // NEROSHOP_RSA_DEFAULT_BITS
+#include "../tools/logger.hpp" // neroshop::print
 
 EVP_PKEY * neroshop::crypto::rsa_generate_keys_get() {
     // Generate public/private key pairs
@@ -17,7 +18,7 @@ EVP_PKEY * neroshop::crypto::rsa_generate_keys_get() {
         neroshop::print(std::string("EVP_PKEY_keygen_init ") + std::string(ERR_error_string(ERR_get_error(), nullptr)), 1);
         return nullptr;
     }
-    if(EVP_PKEY_CTX_set_rsa_keygen_bits(ctx, DEFAULT_RSA_BITS) <= 0) {
+    if(EVP_PKEY_CTX_set_rsa_keygen_bits(ctx, NEROSHOP_RSA_DEFAULT_BITS) <= 0) {
         EVP_PKEY_CTX_free(ctx);
         neroshop::print(std::string("EVP_PKEY_CTX_set_rsa_keygen_bits ") + std::string(ERR_error_string(ERR_get_error(), nullptr)), 1);
         return nullptr;
@@ -45,7 +46,7 @@ bool neroshop::crypto::rsa_generate_keys(std::string public_key_filename, std::s
         return false;
     }
     // set the RSA key length bits (default: 2048)
-    if(EVP_PKEY_CTX_set_rsa_keygen_bits(ctx, DEFAULT_RSA_BITS) <= 0) {
+    if(EVP_PKEY_CTX_set_rsa_keygen_bits(ctx, NEROSHOP_RSA_DEFAULT_BITS) <= 0) {
         EVP_PKEY_CTX_free(ctx);
         neroshop::print(ERR_error_string(ERR_get_error(), nullptr), 1);
         return false;
@@ -71,7 +72,7 @@ bool neroshop::crypto::rsa_generate_keys_ex() {
 #endif
 #if defined(NEROSHOP_OPENSSL_3_0) || defined(NEROSHOP_OPENSSL_3)
     // an RSA key can be generated simply like this:
-    EVP_PKEY * pkey = EVP_RSA_gen(DEFAULT_RSA_BITS);//(4096); // https://www.openssl.org/docs/man3.0/man7/EVP_PKEY-RSA.html
+    EVP_PKEY * pkey = EVP_RSA_gen(NEROSHOP_RSA_DEFAULT_BITS);//(4096); // https://www.openssl.org/docs/man3.0/man7/EVP_PKEY-RSA.html
     if(!pkey) { neroshop::print("EVP_RSA_gen failed", 1); return false; }
     // save key pair
     if(!rsa_save_keys(pkey)) return false;

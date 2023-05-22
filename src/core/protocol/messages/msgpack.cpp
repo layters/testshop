@@ -10,20 +10,7 @@
 #include "../p2p/kademlia.hpp"
 
 
-std::vector<uint8_t> neroshop::msgpack::process(const std::vector<uint8_t>& request) {
-    nlohmann::json request_object;
-    
-    nlohmann::json response_object;
-    std::vector<uint8_t> response; // bytes
-    
-    
-    return response;
-}
-
-//-----------------------------------------------------------------------------
-
-// This should be used in DHT server rather than the IPC
-std::vector<uint8_t> neroshop::msgpack::process(const std::vector<uint8_t>& request, Node& node) {
+std::vector<uint8_t> neroshop::msgpack::process(const std::vector<uint8_t>& request, Node& node, bool ipc_mode) {
     nlohmann::json request_object;
     
     nlohmann::json response_object;
@@ -52,10 +39,6 @@ std::vector<uint8_t> neroshop::msgpack::process(const std::vector<uint8_t>& requ
     assert(request_object["version"].is_string());
     std::string neroshop_version = request_object["version"];
     assert(neroshop_version == std::string(NEROSHOP_VERSION));
-    if(request_object.contains("method")) {
-        std::cout << "Non DHT-related method requested\n";
-        return neroshop::msgpack::process(request);
-    }    
     assert(request_object["query"].is_string());
     std::string method = request_object["query"];
     // "args" must contain the querying node's ID 
@@ -69,6 +52,7 @@ std::vector<uint8_t> neroshop::msgpack::process(const std::vector<uint8_t>& requ
         return {};
     }
     auto tid = request_object["tid"];
+    int code = 0;
     //-----------------------------------------------------
     if(method == "ping") {
         response_object["version"] = std::string(NEROSHOP_VERSION);
@@ -84,7 +68,7 @@ std::vector<uint8_t> neroshop::msgpack::process(const std::vector<uint8_t>& requ
         
         response_object["version"] = std::string(NEROSHOP_VERSION);
         response_object["response"]["id"] = node.get_id();
-        std::vector<Node*> nodes = node.find_node(target);
+        std::vector<Node*> nodes = node.find_node(target, NEROSHOP_DHT_MAX_CLOSEST_NODES);
         if(nodes.empty()) {
             response_object["response"]["nodes"] = nlohmann::json::array();
         } else {
@@ -115,7 +99,7 @@ std::vector<uint8_t> neroshop::msgpack::process(const std::vector<uint8_t>& requ
         if(peers.empty()) {
             // If the queried node has no peers for the requested infohash,
             // return the K closest nodes in the routing table to the requested infohash
-            std::vector<Node*> closest_nodes = node.find_node(info_hash);
+            std::vector<Node*> closest_nodes = node.find_node(info_hash, NEROSHOP_DHT_MAX_CLOSEST_NODES);
             std::vector<nlohmann::json> nodes_array;
             for (const auto& n : closest_nodes) {
                 nlohmann::json node_object = {
@@ -174,6 +158,7 @@ std::vector<uint8_t> neroshop::msgpack::process(const std::vector<uint8_t>& requ
         // Return success response
         response_object["version"] = std::string(NEROSHOP_VERSION);
         response_object["response"]["id"] = node.get_id();
+        response_object["response"]["code"] = code;
         response_object["response"]["message"] = "Peer announced"; // not needed
     }
     //-----------------------------------------------------
@@ -202,21 +187,46 @@ std::vector<uint8_t> neroshop::msgpack::process(const std::vector<uint8_t>& requ
     }
     //-----------------------------------------------------
     if(method == "put") {
-        std::cout << "message type is a put\n"; // 
-        assert(request_object["args"].is_object());
-        auto params_object = request_object["args"];
-        assert(params_object["key"].is_string());
-        std::string key = params_object["key"];
-        assert(params_object["value"].is_string());
-        std::string value = params_object["value"];
+        // If ipc_mode is false, it means the "put" message is being processed from other nodes. In this case, the key-value pair is stored in the node's own key-value store using the node.store(key, value) function.
+        if(ipc_mode == false) { // For Processing Put Requests from Other Nodes:
+            std::cout << "message type is a put\n"; // 
+            assert(request_object["args"].is_object());
+            auto params_object = request_object["args"];
+            assert(params_object["key"].is_string());
+            std::string key = params_object["key"];
+            assert(params_object["value"].is_string());
+            std::string value = params_object["value"];
         
-        // Add the key-value pair to the key-value store
-        node.put(key, value);
+            // Add the key-value pair to the key-value store
+            node.store(key, value);
         
-        // Return success response
-        response_object["version"] = std::string(NEROSHOP_VERSION);
-        response_object["response"]["id"] = node.get_id();
-        response_object["response"]["message"] = "Key-value pair added"; // not needed
+            // Return success response
+            response_object["version"] = std::string(NEROSHOP_VERSION);
+            response_object["response"]["id"] = node.get_id();
+            response_object["response"]["code"] = code;
+            response_object["response"]["message"] = "Key-value pair added"; // not needed
+        } else { // For Sending Put Requests to Other Nodes
+            // On the other hand, if ipc_mode is true, it means the "put" message is being sent from the local IPC client. In this case, the node.send_put(key, value) function is called to send the put message to the closest nodes in the routing table. Additionally, you can add a line of code to store the key-value pair in the local node's own hash table as well
+            std::cout << "message type is a put from local IPC client\n"; // 
+            assert(request_object["args"].is_object());
+            auto params_object = request_object["args"];
+            assert(params_object["key"].is_string());
+            std::string key = params_object["key"];
+            assert(params_object["value"].is_string());
+            std::string value = params_object["value"];
+        
+            // Send put messages to the closest nodes in your routing table (IPC mode)
+            node.send_put(key, value);
+            
+            // Store the key-value pair in your own node as well
+            node.store(key, value);
+        
+            // Return success response
+            response_object["version"] = std::string(NEROSHOP_VERSION);
+            response_object["response"]["id"] = node.get_id();
+            response_object["response"]["code"] = code;
+            response_object["response"]["message"] = "Key-value pair added";
+        }
     }
     //-----------------------------------------------------
     response_object["tid"] = tid; // transaction id - MUST be the same as the request object's id

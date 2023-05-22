@@ -42,7 +42,7 @@ std::string extract_json_payload(const std::string& request) {
 //-----------------------------------------------------------------------------
 
 void rpc_server() {
-    Server server("127.0.0.1", DEFAULT_RPC_PORT);
+    Server server("127.0.0.1", NEROSHOP_RPC_DEFAULT_PORT);
     
     while (true) {
         // Accept incoming connections and handle clients concurrently
@@ -97,7 +97,7 @@ void rpc_server() {
 //-----------------------------------------------------------------------------
 
 void ipc_server(Node& node) {
-    Server server("127.0.0.1", DEFAULT_TCP_PORT);
+    Server server("127.0.0.1", NEROSHOP_IPC_DEFAULT_PORT);
     
     while (true) {
         if(server.accept() != -1) {  // ONLY accepts a single client
@@ -111,10 +111,10 @@ void ipc_server(Node& node) {
                 }
                 {
                     // Acquire lock before accessing the node object
-                    std::lock_guard<std::mutex> lock(node_mtx);
+                    ////std::lock_guard<std::mutex> lock(node_mtx); // Locking the node_mtx causes the IPC server to not respond to the client requests for some reason :/
                     
                     // process JSON request and generate response
-                    std::vector<uint8_t> response = neroshop::msgpack::process(request, node);
+                    std::vector<uint8_t> response = neroshop::msgpack::process(request, node, true);
             
                     // send response to client
                     server.send(response);
@@ -131,29 +131,26 @@ void ipc_server(Node& node) {
 
 // still needs a lot of work. I have no idea what I'm doing :/
 void dht_server(Node& node) {
-    /*Server server("127.0.0.1", DEFAULT_UDP_PORT, SocketType::Socket_UDP);
+    /*Server server("127.0.0.1", NEROSHOP_P2P_DEFAULT_PORT, SocketType::Socket_UDP);
     server.set_nonblocking(true);*/
-    {
-        // Acquire lock before accessing the node object
-        std::lock_guard<std::mutex> lock(node_mtx);    
-        //std::cout << "node addr: " << node.get_public_ip_address() << "\n";
-        std::cout << "******************************************************\n";
-        std::cout << "Node ID: " << node.get_id() << "\n";
-        std::cout << "IP address: " << node.get_ip_address() << "\n";
-        std::cout << "Port number: " << node.get_port() << "\n\n";
-        std::cout << "******************************************************\n";
-        // Start the DHT node's main loop in a separate thread
-        std::thread run_thread([&]() {
-            node.run();
-        });
+    // Acquire lock before accessing the node object
+    ////std::lock_guard<std::mutex> lock(node_mtx);
+    std::cout << "******************************************************\n";
+    std::cout << "Node ID: " << node.get_id() << "\n";
+    std::cout << "IP address: " << node.get_ip_address() << " (" << node.get_public_ip_address() << ")\n";
+    std::cout << "Port number: " << node.get_port() << "\n\n";
+    std::cout << "******************************************************\n";
+    // Start the DHT node's main loop in a separate thread
+    std::thread run_thread([&]() {
+        node.run();
+    });
 
-        // Join the DHT network
-        if (!node.is_bootstrap_node()) {
-            node.join(); // A bootstrap node cannot join the network
-        }
-
-        run_thread.join(); // Wait for the run thread to finish
+    // Join the DHT network
+    if (!node.is_bootstrap_node()) {
+        node.join(); // A bootstrap node cannot join the network
     }
+
+    run_thread.join(); // Wait for the run thread to finish
     // The lock_guard is destroyed and the lock is released here
 }
 
@@ -161,7 +158,7 @@ void dht_server(Node& node) {
 
 int main(int argc, char** argv)
 {
-    neroshop::Node node("127.0.0.1", DEFAULT_UDP_PORT, true);//("0.0.0.0", DEFAULT_PORT);
+    neroshop::Node node("127.0.0.1", NEROSHOP_P2P_DEFAULT_PORT, true);//("0.0.0.0", DEFAULT_PORT);
 
     std::string daemon { "neromon" };
     std::string daemon_version { daemon + " v" + std::string(NEROSHOP_DAEMON_VERSION) };
@@ -187,7 +184,6 @@ int main(int argc, char** argv)
     if(result.count("bootstrap")) {   
         std::cout << "Switching to bootstrap mode ...\n";
         node.set_bootstrap(true);
-        // TODO: bootstrap nodes will typically use both TCP and UDP
         // ALWAYS use public ip address for bootstrap nodes so that it is reachable by all nodes in the network, regardless of their location.
     }
     if(result.count("config")) {

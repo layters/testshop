@@ -454,13 +454,13 @@ set(neroshop_tools_src
 
 set(neroshop_core_src 
     ${NEROSHOP_CORE_SRC_DIR}/cart.cpp 
-    ${NEROSHOP_CORE_SRC_DIR}/config.cpp  # TODO: move to tools or not?
     ${NEROSHOP_CORE_SRC_DIR}/listing.cpp 
     ${NEROSHOP_CORE_SRC_DIR}/order.cpp 
     ${NEROSHOP_CORE_SRC_DIR}/product.cpp 
     ${NEROSHOP_CORE_SRC_DIR}/script.cpp  # TODO: move to tools 
+    ${NEROSHOP_CORE_SRC_DIR}/seller.cpp     
     ${NEROSHOP_CORE_SRC_DIR}/serializer.cpp # TODO: move to tools or protocol/p2p
-    ${NEROSHOP_CORE_SRC_DIR}/seller.cpp 
+    ${NEROSHOP_CORE_SRC_DIR}/settings.cpp  # TODO: move to tools or not?    
     ${NEROSHOP_CORE_SRC_DIR}/user.cpp 
     ${NEROSHOP_CORE_SRC_DIR}/wallet.cpp 
     ${neroshop_crypto_src} 

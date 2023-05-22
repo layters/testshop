@@ -1,15 +1,14 @@
+// Copyright (c) 2021-2023 the neroshop core team
+// Distributed under the GPLv3 software license, see the accompanying
+// file COPYING or https://opensource.org/license/gpl-3-0/.
+
 #ifndef NEROSHOP_HPP
 #define NEROSHOP_HPP
 
-#define NEROSHOP_APPLICATION_NAME  "neroshop"
-#define NEROSHOP_AUTHOR    "larteyoh"
-#define NEROSHOP_LICENSE   "GNU General Public License v3.0"
-#define NEROSHOP_COPYRIGHT "Copyright (C) 2021-present larteyoh@protonmail.com"
 // These include files constitute the main neroshop API
 // neroshop (core)
 #include "core/cart.hpp"
 #include "core/category.hpp"
-#include "core/config.hpp"
 #include "core/enums.hpp"
 #include "core/listing.hpp"
 #include "core/order.hpp"
@@ -18,6 +17,7 @@
 #include "core/script.hpp"
 #include "core/seller.hpp"
 #include "core/serializer.hpp"
+#include "core/settings.hpp"
 #include "core/user.hpp"
 #include "core/version.hpp"
 #include "core/wallet.hpp"

@@ -43,10 +43,6 @@ extern "C" {
 #include "client.hpp" // Client, SocketType::
 //#include "ip_address.hpp"
 
-#define DEFAULT_TCP_PORT 57740 // Use ports between 49152-65535 that are not currently registered with IANA and are rarely used
-#define DEFAULT_UDP_PORT 50881
-#define DEFAULT_RPC_PORT DEFAULT_TCP_PORT + 1
-
 #define DEFAULT_BACKLOG 511
 
 namespace neroshop {
