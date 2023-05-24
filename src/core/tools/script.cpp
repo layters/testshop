@@ -1,8 +1,8 @@
 #include "script.hpp"
 
-#include "tools/logger.hpp"
-#include "tools/filesystem.hpp"
-#include "tools/string.hpp"
+#include "logger.hpp"
+#include "filesystem.hpp"
+#include "string.hpp"
 
 neroshop::Script::Script(void)
 {

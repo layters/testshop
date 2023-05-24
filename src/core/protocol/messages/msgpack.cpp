@@ -24,7 +24,7 @@ std::vector<uint8_t> neroshop::msgpack::process(const std::vector<uint8_t>& requ
     catch(nlohmann::json::parse_error& exception) {
         neroshop::print("Error parsing client request", 1);
         response_object["version"] = std::string(NEROSHOP_VERSION);//"0.1.0"; // neroshop version
-        response_object["error"]["code"] = 201; // "code" MUST be an integer
+        response_object["error"]["code"] = static_cast<int>(KadResultCode::ParseError); // "code" MUST be an integer
         response_object["error"]["message"] = "Parse error";
         response_object["error"]["data"] = exception.what(); // A Primitive (non-object) or Structured (array) value which may be omitted
         response_object["tid"] = nullptr;
@@ -56,7 +56,7 @@ std::vector<uint8_t> neroshop::msgpack::process(const std::vector<uint8_t>& requ
     //-----------------------------------------------------
     if(method == "ping") {
         response_object["version"] = std::string(NEROSHOP_VERSION);
-        response_object["response"]["message"] = "pong";
+        ////response_object["response"]["message"] = "pong";
         response_object["response"]["id"] = node.get_id();
     }
     //-----------------------------------------------------
@@ -145,7 +145,8 @@ std::vector<uint8_t> neroshop::msgpack::process(const std::vector<uint8_t>& requ
         std::string expected_token = generate_token(node.get_id(), info_hash, secret);
         if (token != expected_token) {
             // Invalid token, return error response
-            response_object["error"]["code"] = 203;
+            code = static_cast<int>(KadResultCode::InvalidToken);
+            response_object["error"]["code"] = code;
             response_object["error"]["message"] = "Invalid token";
             response_object["tid"] = tid;
             response = nlohmann::json::to_msgpack(response_object);
@@ -173,7 +174,8 @@ std::vector<uint8_t> neroshop::msgpack::process(const std::vector<uint8_t>& requ
         std::string value = node.get(key);
         if (value.empty()) {
             // Key not found, return error response
-            response_object["error"]["code"] = 404;
+            code = static_cast<int>(KadResultCode::RetrieveFailed);
+            response_object["error"]["code"] = code;
             response_object["error"]["message"] = "Key not found";
             response_object["tid"] = tid;
             response = nlohmann::json::to_msgpack(response_object);
@@ -189,7 +191,6 @@ std::vector<uint8_t> neroshop::msgpack::process(const std::vector<uint8_t>& requ
     if(method == "put") {
         // If ipc_mode is false, it means the "put" message is being processed from other nodes. In this case, the key-value pair is stored in the node's own key-value store using the node.store(key, value) function.
         if(ipc_mode == false) { // For Processing Put Requests from Other Nodes:
-            std::cout << "message type is a put\n"; // 
             assert(request_object["args"].is_object());
             auto params_object = request_object["args"];
             assert(params_object["key"].is_string());
@@ -198,34 +199,39 @@ std::vector<uint8_t> neroshop::msgpack::process(const std::vector<uint8_t>& requ
             std::string value = params_object["value"];
         
             // Add the key-value pair to the key-value store
-            node.store(key, value);
+            code = (node.store(key, value) == false) 
+                   ? static_cast<int>(KadResultCode::StoreFailed) 
+                   : static_cast<int>(KadResultCode::Success);
         
-            // Return success response
+            // Return success response // TODO: error reply
             response_object["version"] = std::string(NEROSHOP_VERSION);
             response_object["response"]["id"] = node.get_id();
             response_object["response"]["code"] = code;
-            response_object["response"]["message"] = "Key-value pair added"; // not needed
+            response_object["response"]["message"] = (code != 0) ? "Store failed" : "Success";
         } else { // For Sending Put Requests to Other Nodes
             // On the other hand, if ipc_mode is true, it means the "put" message is being sent from the local IPC client. In this case, the node.send_put(key, value) function is called to send the put message to the closest nodes in the routing table. Additionally, you can add a line of code to store the key-value pair in the local node's own hash table as well
-            std::cout << "message type is a put from local IPC client\n"; // 
             assert(request_object["args"].is_object());
             auto params_object = request_object["args"];
             assert(params_object["key"].is_string());
             std::string key = params_object["key"];
             assert(params_object["value"].is_string());
             std::string value = params_object["value"];
-        
+
             // Send put messages to the closest nodes in your routing table (IPC mode)
-            node.send_put(key, value);
-            
+            int put_messages_sent = node.send_put(key, value);
+            code = (put_messages_sent <= 0) 
+                   ? static_cast<int>(KadResultCode::StoreFailed) 
+                   : static_cast<int>(KadResultCode::Success);
+            std::cout << "Number of nodes you've sent a put_value message to: " << put_messages_sent << "\n";
+                   
             // Store the key-value pair in your own node as well
             node.store(key, value);
         
             // Return success response
             response_object["version"] = std::string(NEROSHOP_VERSION);
             response_object["response"]["id"] = node.get_id();
-            response_object["response"]["code"] = code;
-            response_object["response"]["message"] = "Key-value pair added";
+            response_object["response"]["code"] = (code != 0) ? static_cast<int>(KadResultCode::StorePartial) : code;
+            response_object["response"]["message"] = (code != 0) ? "Store partial" : "Success";
         }
     }
     //-----------------------------------------------------

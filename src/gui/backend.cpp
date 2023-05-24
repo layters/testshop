@@ -20,7 +20,7 @@
 #include "../core/price/currency_map.hpp"
 #include "../core/crypto/sha256.hpp" // sha256
 #include "../core/database/database.hpp"
-#include "../core/script.hpp"
+#include "../core/tools/script.hpp"
 #include "../core/settings.hpp"
 #include "script_controller.hpp" // neroshop::Script::get_table_string
 #include "../core/tools/tools.hpp"

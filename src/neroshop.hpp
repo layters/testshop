@@ -14,7 +14,6 @@
 #include "core/order.hpp"
 #include "core/product.hpp"
 #include "core/rating.hpp"
-#include "core/script.hpp"
 #include "core/seller.hpp"
 #include "core/serializer.hpp"
 #include "core/settings.hpp"
@@ -45,13 +44,18 @@
 #include "core/protocol/transport/ip_address.hpp"
 #include "core/protocol/transport/server.hpp"
 // tools (utilities)
+#include "core/tools/device.hpp"
 #include "core/tools/downloader.hpp"
 #include "core/tools/extractor.hpp"
+#include "core/tools/filesystem.hpp"
 #include "core/tools/logger.hpp"
 #include "core/tools/process.hpp"
 #include "core/tools/regex.hpp"
+#include "core/tools/script.hpp"
+#include "core/tools/string.hpp"
 #include "core/tools/tools.hpp"
 #include "core/tools/updater.hpp"
+#include "core/tools/uuid.hpp"
 // neroshop-daemon
 // ...
 // neroshop (gui)

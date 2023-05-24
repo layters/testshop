@@ -1,6 +1,6 @@
 #include "script_controller.hpp"
 
-#include "../core/script.hpp"
+#include "../core/tools/script.hpp"
 #include "../core/settings.hpp" // neroshop::lua_state
 
 #include <QFile>

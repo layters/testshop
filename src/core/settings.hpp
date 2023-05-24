@@ -5,7 +5,7 @@
 
 #include "../neroshop_config.hpp"
 
-#include "script.hpp" // lua_State
+#include "tools/script.hpp" // lua_State
 
 #define LUA_TAG "\033[1;34m[lua]:\033[0m "
 

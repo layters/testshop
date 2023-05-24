@@ -210,7 +210,7 @@ int main(int argc, char** argv) {
         else if(command == "exit") {
             #if !defined(NEROSHOP_USE_LIBZMQ)
             // close the connection
-            client->close();
+            client->disconnect();
             #endif
             break;
         }
