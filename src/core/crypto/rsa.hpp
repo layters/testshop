@@ -6,8 +6,6 @@
 #include <fstream>
 #include <string>
 
-#define DEFAULT_RSA_BITS 4096
-
 namespace neroshop {
 
 namespace crypto {

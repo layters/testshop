@@ -1,4 +1,4 @@
-#include "config.hpp"
+#include "settings.hpp"
 
 #include "tools/logger.hpp"
 #include "tools/tools.hpp"
@@ -18,10 +18,7 @@
 
 #include <filesystem>
 
-#define LUA_FILE "nodes.lua"
-#define JSON_FILE "settings.json"
-
-std::string neroshop::lua_string = R"(monero = {
+const static std::string lua_string = R"(monero = {
     network_type = "stagenet", -- TODO: remove this on mainnet release
     nodes = {
         mainnet = {
@@ -60,11 +57,11 @@ std::string neroshop::lua_string = R"(monero = {
 //----------------------------------------------------------------
 lua_State * neroshop::lua_state(luaL_newstate());
 //----------------------------------------------------------------
-bool neroshop::load_config() {
+bool neroshop::load_lua() {
         ////std::string user = neroshop::device::get_user();
         // "/home/<user>/.config/neroshop"
         std::string configuration_path = NEROSHOP_DEFAULT_CONFIGURATION_PATH;
-        std::string configuration_file = LUA_FILE;
+        std::string configuration_file = NEROSHOP_NODES_FILENAME;
         // "/home/<user>/.config/neroshop/settings.lua"
         std::string neroshop_config_name = configuration_path + "/" + configuration_file;
         Script script;
@@ -77,12 +74,12 @@ bool neroshop::load_config() {
         return true;
 	}
 //----------------------------------------------------------------
-bool neroshop::create_config() {
+bool neroshop::export_lua() {
     ////std::string user = neroshop::device::get_user();
     std::string text(lua_string);
         // "/home/<user>/.config/neroshop"
         std::string configuration_path = NEROSHOP_DEFAULT_CONFIGURATION_PATH;//"/home/" + user + "/.config/neroshop";
-        std::string configuration_file = LUA_FILE;
+        std::string configuration_file = NEROSHOP_NODES_FILENAME;
         // "/home/<user>/.config/neroshop/config.lua"
         std::string neroshop_config_name = configuration_path + "/" + configuration_file;
         // if file already exists, no need to create it again
@@ -97,7 +94,7 @@ bool neroshop::create_config() {
         if(!std::filesystem::is_directory(configuration_path)) 
         {   // create the path
             neroshop::print("directory \"" + configuration_path + "\" does not exist, but I will create it for you (^_^)", 2);
-            if(!std::filesystem::create_directories(configuration_path)) { neroshop::print("create_config error: failed to make the path. Sorry (ᵕ人ᵕ)! ...", 1); return false; }
+            if(!std::filesystem::create_directories(configuration_path)) { neroshop::print("export_lua error: failed to make the path. Sorry (ᵕ人ᵕ)! ...", 1); return false; }
             neroshop::print("\033[1;97;49mcreated path \"" + configuration_path + "\"");
         }
         // if path exists, but the file is missing or deleted
@@ -114,23 +111,9 @@ bool neroshop::create_config() {
         return true;		
 	}
 //----------------------------------------------------------------
-void neroshop::edit_config(const std::string& old_str, const std::string& new_str) { // not possible to edit lua files with my current knowledge
-    std::string text(lua_string);
-    
-    std::string configuration_path = NEROSHOP_DEFAULT_CONFIGURATION_PATH;
-    std::string configuration_file = LUA_FILE;
-    std::string configuration = configuration_path + "/" + configuration_file;
-    
-    if(!std::filesystem::is_regular_file(configuration)) {
-        neroshop::print("Missing " + configuration); return;
-    }   
-    // Modify file
-    // ...
-}
-//----------------------------------------------------------------
-extern bool neroshop::open_config() {
-    if(!neroshop::create_config()) { 
-        if(!neroshop::load_config()) {
+extern bool neroshop::open_lua() {
+    if(!neroshop::export_lua()) { 
+        if(!neroshop::load_lua()) {
             neroshop::print("Failed to load configuration file", 1);
             return false;
         }
@@ -138,21 +121,9 @@ extern bool neroshop::open_config() {
     return true;
 }
 //----------------------------------------------------------------
-bool neroshop::create_configuration_file() {
-    return neroshop::create_config();
-}
-//----------------------------------------------------------------
-bool neroshop::load_configuration_file() {
-    return neroshop::load_config();
-}
-//----------------------------------------------------------------
-bool neroshop::open_configuration_file() {
-    return neroshop::open_config();
-}
-//----------------------------------------------------------------
 bool neroshop::load_nodes_from_memory() {
     // Load and compile the Lua code into a Lua function
-    int result = luaL_loadstring(lua_state, lua_string.c_str());
+    int result = luaL_loadstring(lua_state, lua_string.c_str()); // pushes the compiled Lua chunk (function) onto the stack
     if (result != LUA_OK) {
         const char* error_message = lua_tostring(lua_state, -1);
         std::cerr << "Lua compilation error: " << error_message << std::endl;
@@ -180,7 +151,7 @@ lua_State * neroshop::get_lua_state() {
 //----------------------------------------------------------------
 bool neroshop::create_json() {
     std::string config_path = NEROSHOP_DEFAULT_CONFIGURATION_PATH;
-    std::string settings_filename = JSON_FILE;
+    std::string settings_filename = NEROSHOP_SETTINGS_FILENAME;
     std::string config_file = config_path + "/" + settings_filename;
     #if defined(NEROSHOP_USE_QT)
     // Exit function if file already exists
@@ -191,7 +162,7 @@ bool neroshop::create_json() {
     // If path does not exist, create it
     if(!QDir(QString::fromStdString(config_path)).exists()) {
         neroshop::print("directory \"" + config_path + "\" does not exist, but I will create it for you (^_^)", 2);
-        if(!QDir().mkdir(QString::fromStdString(config_path))) { neroshop::print("create_config error: failed to make the path. Sorry (ᵕ人ᵕ)! ...", 1); return false; }
+        if(!QDir().mkdir(QString::fromStdString(config_path))) { neroshop::print("create_json error: failed to make the path. Sorry (ᵕ人ᵕ)! ...", 1); return false; }
         neroshop::print("\033[1;97;49mcreated path \"" + config_path + "\"");    
     }
     // if path exists, but the file is missing or deleted
@@ -318,7 +289,7 @@ bool neroshop::create_json() {
 //----------------------------------------------------------------
 std::string neroshop::load_json() {
     std::string config_path = NEROSHOP_DEFAULT_CONFIGURATION_PATH;
-    std::string settings_filename = JSON_FILE;
+    std::string settings_filename = NEROSHOP_SETTINGS_FILENAME;
     std::string config_file = config_path + "/" + settings_filename;
     #if defined(NEROSHOP_USE_QT)
     // Open settings file for reading
@@ -369,7 +340,7 @@ bool neroshop::open_json(std::string& out) {
 //----------------------------------------------------------------
 void neroshop::modify_json(const std::string& settings) { // saves settings
     std::string config_path = NEROSHOP_DEFAULT_CONFIGURATION_PATH;
-    std::string settings_filename = JSON_FILE;
+    std::string settings_filename = NEROSHOP_SETTINGS_FILENAME;
     std::string config_file = config_path + "/" + settings_filename;
     #if defined(NEROSHOP_USE_QT)
     // Validate the JSON

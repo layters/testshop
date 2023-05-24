@@ -14,6 +14,7 @@
 #include <iomanip> // std::set*
 #include <cassert>
 #include <thread>
+#include <unordered_set>
 
 namespace neroshop_crypto = neroshop::crypto;
 
@@ -64,7 +65,7 @@ neroshop::Node::Node(const std::string& address, int port, bool local) : sockfd(
 
         // set a timeout of TIMEOUT_VALUE seconds for recvfrom
         struct timeval tv;
-        tv.tv_sec = TIMEOUT_VALUE;  // timeout in seconds
+        tv.tv_sec = NEROSHOP_DHT_QUERY_RECV_TIMEOUT;  // timeout in seconds
         tv.tv_usec = 0; // timeout in microseconds
         if (setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO, (const char*)&tv, sizeof(tv)) < 0) {
             std::cerr << "Error setting socket options" << std::endl;
@@ -266,7 +267,7 @@ std::vector<neroshop::Node*> neroshop::Node::lookup(const std::string& key) {
     // Perform iterative lookup to find nodes or peers based on the key
     
     // Start by finding the closest nodes to the key in the local routing table
-    std::vector<Node*> closest_nodes = find_node(key);
+    std::vector<Node*> closest_nodes = find_node(key, NEROSHOP_DHT_MAX_CLOSEST_NODES);
     
     // Perform iterative lookup to refine the search and find more nodes or peers
     // Repeat the process until the desired number of nodes or peers is found or a termination condition is met
@@ -298,7 +299,7 @@ std::vector<neroshop::Node*> neroshop::Node::lookup(const std::string& key) {
         }
 
         // Get the updated closest nodes
-        closest_nodes = find_node(target_id);
+        closest_nodes = find_node(target_id, NEROSHOP_DHT_MAX_CLOSEST_NODES);
     }    
     */
     // Return the list of nodes or peers found during the lookup
@@ -307,8 +308,8 @@ std::vector<neroshop::Node*> neroshop::Node::lookup(const std::string& key) {
 
 // Define the list of bootstrap nodes
 std::vector<neroshop::Peer> bootstrap_nodes = {
-    {"127.0.0.1", DEFAULT_PORT},
-    {"node.neroshop.org", DEFAULT_PORT}, // $ ping neroshop.org # or nslookup neroshop.org
+    {"127.0.0.1", NEROSHOP_P2P_DEFAULT_PORT},
+    {"node.neroshop.org", NEROSHOP_P2P_DEFAULT_PORT}, // $ ping neroshop.org # or nslookup neroshop.org
 };
 
 void neroshop::Node::join() {
@@ -316,7 +317,7 @@ void neroshop::Node::join() {
 
     // Bootstrap the DHT node with a set of known nodes
     for (const auto& bootstrap_node : bootstrap_nodes) {
-        std::cout << "Joining bootstrap node - " << bootstrap_node.address << ":" << bootstrap_node.port << "\n";
+        std::cout << "\033[35;1mJoining bootstrap node - " << bootstrap_node.address << ":" << bootstrap_node.port << "\033[0m\n";
 
         // Ping each known node to confirm that it is online - the main bootstrapping primitive. If a node replies, and if there is space in the routing table, it will be inserted.
         if(!ping(bootstrap_node.address, bootstrap_node.port)) {
@@ -352,6 +353,8 @@ void neroshop::Node::join() {
     std::cout << "Join DONE\n";
 }
 
+// TODO: create a softer version of the ping-based join() called join_insert() function for storing pre-existing nodes from local database
+
 bool neroshop::Node::ping(const std::string& address, int port) {
     // In a DHT network, new nodes usually ping a known bootstrap node to join the network. The bootstrap node is typically a well-known node in the network that is stable and has a high probability of being online. When a new node pings the bootstrap node, it receives information about other nodes in the network and can start building its routing table.
     // Existing nodes usually ping the nodes closest to them in the keyspace to update their routing tables and ensure they are still live and responsive. In a distributed hash table, the closest nodes are determined using the XOR metric on the node IDs.
@@ -376,7 +379,7 @@ std::vector<neroshop::Peer> neroshop::Node::get_peers(const std::string& info_ha
         // If info_hash is in info_hash_peers, get the vector of peers
         peers = info_hash_it->second;
     } else {
-        std::vector<Node*> nodes = find_node(info_hash);
+        std::vector<Node*> nodes = find_node(info_hash, NEROSHOP_DHT_MAX_CLOSEST_NODES);
         for (Node* node : nodes) {
             // Access the info_hash_peers map for each node and concatenate the vectors of peers
             auto node_it = node->info_hash_peers.find(info_hash);
@@ -415,9 +418,9 @@ void neroshop::Node::remove_peer(const std::string& info_hash) {
     }
 }
 
-void neroshop::Node::put(const std::string& key, const std::string& value) {    
+int neroshop::Node::store(const std::string& key, const std::string& value) {    
     data[key] = value;
-    ////return (data.count(key) > 0); // In case we want to return the result of the insertion
+    return has_key(key); // boolean
 }
 
 std::string neroshop::Node::get(const std::string& key) const {    
@@ -428,20 +431,24 @@ std::string neroshop::Node::get(const std::string& key) const {
     return "";
 }
 
-void neroshop::Node::remove(const std::string& key) {
+int neroshop::Node::remove(const std::string& key) {
     data.erase(key);
-    ////return (data.count(key) == 0); // In case we want to return the result of the removal
+    return (data.count(key) == 0); // boolean
+}
+
+bool neroshop::Node::has_key(const std::string& key) const {
+    return (data.count(key) > 0);
 }
 
 //-------------------------------------------------------------------------------------
 
-std::vector<uint8_t> neroshop::Node::send_query(const std::string& address, uint16_t port, const std::vector<uint8_t>& message) {
+std::vector<uint8_t> neroshop::Node::send_query(const std::string& address, uint16_t port, const std::vector<uint8_t>& message, int recv_timeout) {
     // Step 2: Resolve the hostname and construct a destination address
     struct addrinfo hints, *res;
     memset(&hints, 0, sizeof(hints));
     hints.ai_family = AF_INET; // use IPv4
     hints.ai_socktype = SOCK_DGRAM; // use UDP //SOCK_STREAM; // use TCP
-    if (getaddrinfo(address.c_str(), std::to_string(port ? port : DEFAULT_PORT).c_str(), &hints, &res) != 0) {
+    if (getaddrinfo(address.c_str(), std::to_string(port ? port : NEROSHOP_P2P_DEFAULT_PORT).c_str(), &hints, &res) != 0) {
         std::cerr << "Error resolving hostname" << std::endl; // probably the wrong family
         return {};
     }
@@ -474,7 +481,7 @@ std::vector<uint8_t> neroshop::Node::send_query(const std::string& address, uint
     // Set a timeout for the receive operation
     // Note: Setting a timeout is better than setting the socket to non-blocking because if the socket is non-blocking then it will never receive the pong because it does not wait for the pong message so it fails immediately (returns immediately, regardless of whether data is available or not).
     struct timeval timeout;
-    timeout.tv_sec = 2;  // Timeout in seconds
+    timeout.tv_sec = recv_timeout; // Timeout in seconds
     timeout.tv_usec = 0;
     if (setsockopt(socket_fd, SOL_SOCKET, SO_RCVTIMEO, (char*)&timeout, sizeof(timeout)) < 0) {
         perror("setsockopt");
@@ -509,7 +516,7 @@ std::vector<uint8_t> neroshop::Node::send_query(const std::string& address, uint
 //-----------------------------------------------------------------------------
 
 bool neroshop::Node::send_ping(const std::string& address, int port) {
-    // Step 1: Create the ping message
+    // Create the ping message
     std::string transaction_id = msgpack::generate_transaction_id();
     nlohmann::json query_object;
     query_object["tid"] = transaction_id;
@@ -520,11 +527,11 @@ bool neroshop::Node::send_ping(const std::string& address, int port) {
     }
     query_object["version"] = std::string(NEROSHOP_VERSION);
     
-    auto ping_message = nlohmann::json::to_msgpack(query_object); // ping_object
+    auto ping_message = nlohmann::json::to_msgpack(query_object);
     //--------------------------------------------
     auto receive_buffer = send_query(address, port, ping_message);
     //--------------------------------------------
-    // Step 5: Parse the pong message and extract the transaction ID and response fields
+    // Parse the pong message and extract the transaction ID and response fields
     nlohmann::json pong_message;
     try {
         pong_message = nlohmann::json::from_msgpack(receive_buffer);
@@ -532,25 +539,15 @@ bool neroshop::Node::send_ping(const std::string& address, int port) {
         std::cerr << "Node \033[91m" << address << ":" << port << "\033[0m did not respond" << std::endl;
         return false;
     }
-    // Check if the parsed JSON object contains a response or an error field
-    if (!pong_message.contains("response") || pong_message.contains("error")) {
-        return false;
-    }
+    assert (pong_message.contains("response") && !pong_message.contains("error"));
     std::cout << "\033[32m" << pong_message.dump() << "\033[0m\n";
     std::string received_transaction_id = pong_message["tid"].get<std::string>();
     auto response_object = pong_message["response"];
     std::string response_id = response_object["id"].get<std::string>();
-    std::string response_message = response_object["message"].get<std::string>();
     
     // Check that the pong message corresponds to the ping message
     if (received_transaction_id != transaction_id) {//assert(received_transaction_id == transaction_id && "Transaction IDs do not match");
         std::cerr << "Received pong message with incorrect transaction ID" << std::endl;
-        return false;
-    }
-    
-    // Check that the pong message is a valid response to a ping query
-    if (response_message != "pong") {
-        std::cerr << "Received unexpected response: " << response_message << std::endl;
         return false;
     }
 
@@ -572,7 +569,13 @@ std::vector<neroshop::Node*> neroshop::Node::send_find_node(const std::string& t
     auto receive_buffer = send_query(address, port, find_node_message);
     //---------------------------------------------------------
     // Parse nodes message
-    nlohmann::json nodes_message = nlohmann::json::from_msgpack(receive_buffer);
+    nlohmann::json nodes_message;
+    try {
+        nodes_message = nlohmann::json::from_msgpack(receive_buffer);
+    } catch (const std::exception& e) {
+        std::cerr << "Node \033[91m" << address << ":" << port << "\033[0m did not respond" << std::endl;
+        return {};
+    }
     std::cout << "\033[32m" << nodes_message.dump() << "\033[0m\n";
     // Create node vector and store nodes from the message inside the vector
     std::vector<Node*> nodes;
@@ -656,43 +659,104 @@ void neroshop::Node::send_add_peer(const std::string& info_hash, const Peer& pee
 
 }
 
-void neroshop::Node::send_put(const std::string& key, const std::string& value) {
-    
-    std::string transaction_id = msgpack::generate_transaction_id();
+int neroshop::Node::send_put(const std::string& key, const std::string& value) {
     
     nlohmann::json query_object;
-    query_object["tid"] = transaction_id;
-    query_object["query"] = "put";////query_object["method"] = "put";
+    query_object["query"] = "put";
     query_object["args"]["id"] = this->id;
     query_object["args"]["key"] = key;
     query_object["args"]["value"] = value;
-    
-    std::vector<uint8_t> put_message = nlohmann::json::to_msgpack(query_object);
+    query_object["version"] = std::string(NEROSHOP_VERSION);
     //-----------------------------------------------
-    // determine which node(s) get to `put` the key-value data in their hash table
-    std::vector<Node *> closest_nodes = find_node(key, 5); // 5=replication factor
-    //-----------------------------------------------
-    // socket sendto and recvfrom here
+    // Determine which nodes get to put the key-value data in their hash table
+    std::vector<Node *> closest_nodes = find_node(key, NEROSHOP_DHT_REPLICATION_FACTOR); // 5=replication factor
+
+    // Keep track of the number of nodes to which put messages have been sent
+    size_t nodes_sent_count = 0;
+    std::unordered_set<Node*> sent_nodes;
+    std::unordered_set<Node*> failed_nodes;
+    // Send put message to the closest nodes
     for(auto const& node : closest_nodes) {
-        std::string node_ip = node->get_ip_address();
+        std::string transaction_id = msgpack::generate_transaction_id();
+        query_object["tid"] = transaction_id; // tid should be unique for each put message
+        std::vector<uint8_t> put_message = nlohmann::json::to_msgpack(query_object);
+    
+        std::string node_ip = (node->get_ip_address() == this->public_ip_address) ? "127.0.0.1" : node->get_ip_address();
         int node_port = node->get_port();
-        std::cout << "Sending 'put' to " << node_ip << ":" << node_port << "\n";
+        std::cout << "Sending put request to \033[36m" << node_ip << ":" << node_port << "\033[0m\n";
         auto receive_buffer = send_query(node_ip, node_port, put_message);
-    //-----------------------------------------------
-    // process the response here
+        // Process the response here
         nlohmann::json put_response_message;
         try {
             put_response_message = nlohmann::json::from_msgpack(receive_buffer);
         } catch (const std::exception& e) {
             std::cerr << "Node \033[91m" << node_ip << ":" << node_port << "\033[0m did not respond" << std::endl;
-            return;
-        }
+            node->check_counter += 1;
+            failed_nodes.insert(node);
+            continue; // Continue with the next closest node if this one fails
+        }   
+        // Add the node to the sent_nodes set
+        sent_nodes.insert(node);
+        // Show response and increase count
         std::cout << "\033[32m" << put_response_message.dump() << "\033[0m\n";
-    // ...    
-    //-----------------------------------------------
-    // get result of put request
-    // ...
+        nodes_sent_count++;
     }
+    //-----------------------------------------------
+    // Handle the case when there are fewer closest nodes than NEROSHOP_DHT_REPLICATION_FACTOR
+    if (closest_nodes.size() < NEROSHOP_DHT_REPLICATION_FACTOR) return nodes_sent_count;
+    //-----------------------------------------------
+    // If the desired number of nodes is not reached due to non-responses, replace failed nodes with new nodes and continue sending put messages
+    if (nodes_sent_count < NEROSHOP_DHT_REPLICATION_FACTOR) {
+        size_t remaining_nodes = NEROSHOP_DHT_REPLICATION_FACTOR - nodes_sent_count;
+        std::cout << "Nodes remaining: " << remaining_nodes << " out of " << NEROSHOP_DHT_REPLICATION_FACTOR << "\n";
+        std::cout << "Routing table total node count: " << routing_table->get_node_count() << "\n";
+        
+        std::vector<Node*> all_nodes = find_node(key, routing_table->get_node_count());
+        std::vector<Node*> replacement_nodes;
+        
+        // Iterate over all the nodes in the routing table
+        for (const auto& node : all_nodes) {
+            if (std::find(closest_nodes.begin(), closest_nodes.end(), node) == closest_nodes.end() &&
+                std::find(failed_nodes.begin(), failed_nodes.end(), node) == failed_nodes.end() &&
+                sent_nodes.find(node) == sent_nodes.end()) {
+                    replacement_nodes.push_back(node);
+            }
+        }
+        
+        if (replacement_nodes.size() < remaining_nodes) {
+            // Handle the case where there are not enough replacement nodes available
+            std::cerr << "Not enough replacement nodes available.\n";
+        } else {
+            // Select the required number of replacement nodes
+            replacement_nodes.resize(remaining_nodes);
+
+            // Send put messages to the replacement nodes
+            for (const auto& replacement_node : replacement_nodes) {
+                std::string transaction_id = msgpack::generate_transaction_id();
+                query_object["tid"] = transaction_id;
+                std::vector<uint8_t> put_message = nlohmann::json::to_msgpack(query_object);
+
+                std::string node_ip = (replacement_node->get_ip_address() == this->public_ip_address) ? "127.0.0.1" : replacement_node->get_ip_address();
+                int node_port = replacement_node->get_port();
+                std::cout << "Sending put request to \033[36m" << node_ip << ":" << node_port << "\033[0m\n";
+                auto receive_buffer = send_query(node_ip, node_port, put_message);
+                // Process the response and update the nodes_sent_count and sent_nodes accordingly
+                nlohmann::json put_response_message;
+                try {
+                    put_response_message = nlohmann::json::from_msgpack(receive_buffer);
+                } catch (const std::exception& e) {
+                    std::cerr << "Node \033[91m" << node_ip << ":" << node_port << "\033[0m did not respond" << std::endl;
+                    replacement_node->check_counter += 1;
+                    continue; // Continue with the next replacement node if this one fails
+                }   
+                // Show response and increase count
+                std::cout << "\033[32m" << put_response_message.dump() << "\033[0m\n";
+                nodes_sent_count++;
+            }
+        }
+    }
+    //-----------------------------------------------
+    return nodes_sent_count;
 }
 
 void neroshop::Node::send_get(const std::string& key) {
@@ -704,11 +768,36 @@ void neroshop::Node::send_get(const std::string& key) {
     query_object["query"] = "get";
     query_object["args"]["id"] = this->id;
     query_object["args"]["key"] = key;
+    query_object["version"] = std::string(NEROSHOP_VERSION);
     
     std::vector<uint8_t> get_message = nlohmann::json::to_msgpack(query_object);
     //-----------------------------------------------
+    /*std::vector<Node *> closest_nodes = find_node(key, NEROSHOP_DHT_MAX_CLOSEST_NODES);
+    //-----------------------------------------------
     // socket sendto and recvfrom here
     //auto receive_buffer = send_query(address, port, get_message);
+    // Send get message to the closest nodes
+    for(auto const& node : closest_nodes) {
+        std::string transaction_id = msgpack::generate_transaction_id();
+        query_object["tid"] = transaction_id; // tid should be unique for each get message
+        std::vector<uint8_t> get_message = nlohmann::json::to_msgpack(query_object);
+    
+        std::string node_ip = (node->get_ip_address() == this->public_ip_address) ? "127.0.0.1" : node->get_ip_address();
+        int node_port = node->get_port();
+        std::cout << "Sending get request to \033[36m" << node_ip << ":" << node_port << "\033[0m\n";
+        auto receive_buffer = send_query(node_ip, node_port, get_message);
+        // Process the response here
+        nlohmann::json get_response_message;
+        try {
+            get_response_message = nlohmann::json::from_msgpack(receive_buffer);
+        } catch (const std::exception& e) {
+            std::cerr << "Node \033[91m" << node_ip << ":" << node_port << "\033[0m did not respond" << std::endl;
+            node->check_counter += 1;
+            continue; // Continue with the next closest node if this one fails
+        }   
+        // Show response
+        std::cout << "\033[32m" << get_response_message.dump() << "\033[0m\n";
+    }*/
     //-----------------------------------------------
     // process the response here
     // ...
@@ -725,42 +814,60 @@ void neroshop::Node::send_remove(const std::string& key) {
     query_object["tid"] = transaction_id;
     query_object["query"] = "remove";////query_object["method"] = "remove";
     query_object["args"]["key"] = key;
+    query_object["version"] = std::string(NEROSHOP_VERSION);
     
     //std::string _message = bencode::encode(query);
 }
 
 //-----------------------------------------------------------------------------
 
-void neroshop::Node::handle_request(int sockfd, struct sockaddr_in client_addr, std::vector<uint8_t> buffer, socklen_t client_addr_len, Node* node) {
-    // Process the message
-    std::vector<uint8_t> response = neroshop::msgpack::process(buffer, *node);
-
-    // Send the response
-    int bytes_sent = sendto(sockfd/*server.get_socket()*/, response.data(), response.size(), 0,
-                                (struct sockaddr*)&client_addr, client_addr_len);
-    if (bytes_sent < 0) {
-        perror("sendto");
-    }
-        
-    // Add the node that pinged this node to the routing table
-    if (buffer.size() > 0) {
-        nlohmann::json message = nlohmann::json::from_msgpack(buffer);
-        if (message.contains("query") && message["query"] == "ping") {
-            std::string sender_id = message["args"]["id"].get<std::string>();
-            std::string sender_ip = inet_ntoa(client_addr.sin_addr);
-            uint16_t sender_port = (message["args"].contains("ephemeral_port")) ? (uint16_t)message["args"]["ephemeral_port"] : DEFAULT_PORT;//ntohs(client_addr.sin_port);// ephemeral ports are for multiple local nodes running on the same local network
-            auto node_that_pinged = std::make_unique<Node>((sender_ip == "127.0.0.1") ? node->get_public_ip_address() : sender_ip, sender_port, false); // ALWAYS use public ip so that unique id is generated and actual address is stored in routing table for others to locate your node
-            node->routing_table->add_node(std::move(node_that_pinged));
-            node->routing_table->print_table();
+void neroshop::Node::periodic() {
+    while(true) {
+        // Acquire the lock before accessing the routing table
+        ////std::lock_guard<std::mutex> lock(routing_table_mutex);
+        // Perform periodic checks here
+        // This code will run concurrently with the listen/receive loop
+        for (auto& bucket : routing_table->buckets) {
+            for (auto& node : bucket.second) {
+                std::string node_ip = (node->get_ip_address() == this->public_ip_address) ? "127.0.0.1" : node->get_ip_address();
+                uint16_t node_port = node->get_port();
+                
+                // Skip the bootstrap nodes from the periodic checks
+                if (is_bootstrap_node(node_ip, node_port)) continue;
+                
+                std::cout << "Performing periodic check on \033[34m" << node_ip << ":" << node_port << "\033[0m\n";
+                
+                // Perform the liveness check on the current node
+                bool pinged = ping(node_ip, node_port);
+                
+                // Update the liveness status of the node in the routing table
+                node->check_counter = pinged ? 0 : (node->check_counter + 1);
+                std::cout << "Health check failures: " << node->check_counter << "\n";
+                
+                // If node is dead, remove it from the routing table
+                if(node->is_dead()) {
+                    std::cout << "\033[0;91m" << node->public_ip_address << ":" << node_port << "\033[0m marked as dead\n";
+                    if(routing_table->has_node(node->public_ip_address, node_port)) {
+                        std::unique_lock<std::shared_mutex> lock(routing_table_mutex);
+                        routing_table->remove_node(node->get_id());
+                    }
+                }
+            }
         }
+        // Sleep for a specified interval
+        std::this_thread::sleep_for(std::chrono::seconds(10)); // Perform checks every 60 seconds//std::this_thread::sleep_for(std::chrono::minutes(60)); // Perform checks every 60 minutes
     }
 }
 
+//-----------------------------------------------------------------------------
+
 void neroshop::Node::run() {
-    //if(!bootstrap) {
-        run_optimized();
-        return; 
-    //}
+    
+    run_optimized();
+    return;
+    
+    // Start a separate thread for periodic checks
+    //std::thread periodic_thread([this]() { periodic(); });
     
     while (true) {
         std::vector<uint8_t> buffer(4096);
@@ -779,36 +886,46 @@ void neroshop::Node::run() {
         // Resize the buffer to the actual number of received bytes
         buffer.resize(bytes_received);
 
-        /*// Process the message
-        std::vector<uint8_t> response = neroshop::msgpack::process(buffer, *this);
-
-        // Send the response
-        int bytes_sent = sendto(sockfd, response.data(), response.size(), 0,
-                                (struct sockaddr*)&client_addr, client_addr_len);
-        if (bytes_sent < 0) {
-            perror("sendto");
-        }
+        if (buffer.size() > 0) std::cout << "Received request from \033[0;36m" << inet_ntoa(client_addr.sin_addr) << "\033[0m\n";
         
-        // Add the node that pinged this node to the routing table
-        if (buffer.size() > 0) {
-            nlohmann::json message = nlohmann::json::from_msgpack(buffer);
-            if (message.contains("query") && message["query"] == "ping") {
-                std::string sender_id = message["args"]["id"].get<std::string>();
-                std::string sender_ip = inet_ntoa(client_addr.sin_addr);
-                uint16_t sender_port = (message["args"].contains("ephemeral_port")) ? (uint16_t)message["args"]["ephemeral_port"] : DEFAULT_PORT;//ntohs(client_addr.sin_port);// ephemeral ports are for multiple local nodes running on the same local network
-                auto node_that_pinged = std::make_unique<Node>((sender_ip == "127.0.0.1") ? get_public_ip_address() : sender_ip, sender_port, false); // ALWAYS use public ip so that unique id is generated and actual address is stored in routing table for others to locate your node
-                routing_table->add_node(std::move(node_that_pinged));
-                routing_table->print_table();
+        // Create a lambda function to handle the request
+        auto handle_request_fn = [=]() {
+            // Process the message
+            std::vector<uint8_t> response = neroshop::msgpack::process(buffer, *this);
+
+            // Send the response
+            int bytes_sent = sendto(sockfd, response.data(), response.size(), 0,
+                                (struct sockaddr*)&client_addr, client_addr_len);
+            if (bytes_sent < 0) {
+                perror("sendto");
             }
-        }*/
-        // Create a new thread to handle the request
-        std::thread request_thread([=]() { handle_request(sockfd, client_addr, buffer, client_addr_len, this); });
-        request_thread.detach();
-    }             
+        
+            // Add the node that pinged this node to the routing table
+            if (buffer.size() > 0) {
+                nlohmann::json message = nlohmann::json::from_msgpack(buffer);
+                if (message.contains("query") && message["query"] == "ping") {
+                    std::string sender_id = message["args"]["id"].get<std::string>();
+                    std::string sender_ip = inet_ntoa(client_addr.sin_addr);
+                    uint16_t sender_port = (message["args"].contains("ephemeral_port")) ? (uint16_t)message["args"]["ephemeral_port"] : NEROSHOP_P2P_DEFAULT_PORT;//ntohs(client_addr.sin_port);// ephemeral ports are for multiple local nodes running on the same local network
+                    bool node_exists = routing_table->has_node((sender_ip == "127.0.0.1") ? this->public_ip_address : sender_ip, sender_port);
+                    if (!node_exists) {
+                        auto node_that_pinged = std::make_unique<Node>((sender_ip == "127.0.0.1") ? this->public_ip_address : sender_ip, sender_port, false); // ALWAYS use public ip so that unique id is generated and actual address is stored in routing table for others to locate your node
+                        routing_table->add_node(std::move(node_that_pinged));
+                        routing_table->print_table();
+                    }
+                }
+            }
+        };
+    }
+    // Wait for the periodic check thread to finish
+    //periodic_thread.join();             
 }
 
 // This uses less CPU
 void neroshop::Node::run_optimized() {
+    // Start a separate thread for periodic checks
+    std::thread periodic_thread([this]() { periodic(); });
+
     while (true) {
         fd_set read_set;
         FD_ZERO(&read_set);
@@ -847,12 +964,45 @@ void neroshop::Node::run_optimized() {
                 // Resize the buffer to the actual number of received bytes
                 buffer.resize(bytes_received);
 
-                // Create a new thread to handle the request
-                std::thread request_thread([=]() { handle_request(sockfd, client_addr, buffer, client_addr_len, this); });
+                if (buffer.size() > 0) std::cout << "Received request from \033[0;36m" << inet_ntoa(client_addr.sin_addr) << "\033[0m\n";
+                
+                // Create a lambda function to handle the request
+                auto handle_request_fn = [=]() {
+                    // Process the message
+                    std::vector<uint8_t> response = neroshop::msgpack::process(buffer, *this);
+
+                    // Send the response
+                    int bytes_sent = sendto(sockfd, response.data(), response.size(), 0,
+                                    (struct sockaddr*)&client_addr, client_addr_len);
+                    if (bytes_sent < 0) {
+                        perror("sendto");
+                    }
+                
+                    // Add the node that pinged this node to the routing table
+                    if (buffer.size() > 0) {
+                        nlohmann::json message = nlohmann::json::from_msgpack(buffer);
+                        if (message.contains("query") && message["query"] == "ping") {
+                            std::string sender_id = message["args"]["id"].get<std::string>();
+                            std::string sender_ip = inet_ntoa(client_addr.sin_addr);
+                            uint16_t sender_port = (message["args"].contains("ephemeral_port")) ? (uint16_t)message["args"]["ephemeral_port"] : NEROSHOP_P2P_DEFAULT_PORT;//ntohs(client_addr.sin_port);// ephemeral ports are for multiple local nodes running on the same local network
+                            bool node_exists = routing_table->has_node((sender_ip == "127.0.0.1") ? this->public_ip_address : sender_ip, sender_port);
+                            if (!node_exists) {
+                                auto node_that_pinged = std::make_unique<Node>((sender_ip == "127.0.0.1") ? this->public_ip_address : sender_ip, sender_port, false); // ALWAYS use public ip so that unique id is generated and actual address is stored in routing table for others to locate your node
+                                routing_table->add_node(std::move(node_that_pinged));
+                                routing_table->print_table();
+                            }
+                        }
+                    }
+                };
+                
+                // Create a detached thread to handle the request
+                std::thread request_thread(handle_request_fn);
                 request_thread.detach();
             }
         }
-    }             
+    }         
+    // Wait for the periodic check thread to finish
+    periodic_thread.join();    
 }
 
 //-----------------------------------------------------------------------------
@@ -918,8 +1068,21 @@ neroshop::RoutingTable * neroshop::Node::get_routing_table() const {
 
 //-----------------------------------------------------------------------------
 
+bool neroshop::Node::is_bootstrap_node(const std::string& address, uint16_t port) {
+    for (const auto& bootstrap : bootstrap_nodes) {
+        if (bootstrap.address == address && bootstrap.port == port) {
+            return true;
+        }
+    }
+    return false;
+}
+
 bool neroshop::Node::is_bootstrap_node() {
     return (bootstrap == true);
+}
+
+bool neroshop::Node::is_dead() {
+    return (check_counter >= NEROSHOP_DHT_MAX_HEALTH_CHECKS);
 }
 
 //-----------------------------------------------------------------------------
@@ -929,19 +1092,19 @@ void neroshop::Node::set_bootstrap(bool bootstrap) {
 }
 /*int main() {
     // Create a new DHT instance and join the bootstrap node
-    neroshop::Node dht_node("127.0.0.1", DEFAULT_PORT);
+    neroshop::Node dht_node("127.0.0.1", NEROSHOP_P2P_DEFAULT_PORT);
     neroshop::Peer bootstrap_peer = {"bootstrap.example.com", 5678}; // can be a randomly chosen existing node that provides the initial information to the new node that connects to it
     dht_node.join(bootstrap_peer);
     // Add some key-value pairs to the DHT
-    dht_node.put("key1", "value1");
-    dht_node.put("key2", "value2");
+    dht_node.store("key1", "value1");
+    dht_node.store("key2", "value2");
     // Retrieve a value from the DHT
     std::string value = dht_node.get("key1");
     std::cout << "Value: " << value << std::endl;
     // Remove a key-value pair from the DHT
     dht_node.remove("key2");
     // Find a node
-    node.find_node("target_id");
+    node.find_node("target_id", NEROSHOP_DHT_MAX_CLOSEST_NODES);
     return 0;
 } // g++ node.cpp ../../../crypto/sha3.cpp ../../../util/logger.cpp -I"../../../crypto/" -o node -lcrypto -lssl
 */

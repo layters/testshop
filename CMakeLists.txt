@@ -18,7 +18,6 @@ option(UUID_SYSTEM_GENERATOR "Enable operating system uuid generator" OFF)
 option(UUID_TIME_GENERATOR "Enable experimental time-based uuid generator" OFF)
 cmake_dependent_option(NEROSHOP_USE_SYSTEM_SOCKETS "Build neroshop with SYSTEM_SOCKETS" ON "NOT NEROSHOP_USE_LIBZMQ;NOT NEROSHOP_USE_LIBUV" OFF)
 cmake_dependent_option(NEROSHOP_USE_LIBZMQ "Build neroshop with LibZMQ" ON "NOT NEROSHOP_USE_LIBUV;NOT NEROSHOP_USE_SYSTEM_SOCKETS" OFF)
-cmake_dependent_option(NEROSHOP_USE_LIBUV "Build neroshop with LIBUV" ON "NOT NEROSHOP_USE_LIBZMQ;NOT NEROSHOP_USE_SYSTEM_SOCKETS" OFF)
 option(NEROSHOP_USE_GRPC "Build neroshop with gRPC" OFF)
 cmake_dependent_option(NEROSHOP_USE_SYSTEM_GRPC "Use system installed gRPC" ON "NEROSHOP_USE_GRPC;USE_SYSTEM_GRPC" OFF)
 
@@ -449,18 +448,18 @@ set(neroshop_tools_src
     ${NEROSHOP_CORE_SRC_DIR}/tools/logger.cpp 
     ${NEROSHOP_CORE_SRC_DIR}/tools/process.cpp     
     ${NEROSHOP_CORE_SRC_DIR}/tools/regex.cpp 
+    ${NEROSHOP_CORE_SRC_DIR}/tools/script.cpp 
     ${NEROSHOP_CORE_SRC_DIR}/tools/updater.cpp
 )
 
 set(neroshop_core_src 
     ${NEROSHOP_CORE_SRC_DIR}/cart.cpp 
-    ${NEROSHOP_CORE_SRC_DIR}/config.cpp  # TODO: move to tools or not?
     ${NEROSHOP_CORE_SRC_DIR}/listing.cpp 
     ${NEROSHOP_CORE_SRC_DIR}/order.cpp 
     ${NEROSHOP_CORE_SRC_DIR}/product.cpp 
-    ${NEROSHOP_CORE_SRC_DIR}/script.cpp  # TODO: move to tools 
+    ${NEROSHOP_CORE_SRC_DIR}/seller.cpp     
     ${NEROSHOP_CORE_SRC_DIR}/serializer.cpp # TODO: move to tools or protocol/p2p
-    ${NEROSHOP_CORE_SRC_DIR}/seller.cpp 
+    ${NEROSHOP_CORE_SRC_DIR}/settings.cpp  # TODO: move to tools or not?
     ${NEROSHOP_CORE_SRC_DIR}/user.cpp 
     ${NEROSHOP_CORE_SRC_DIR}/wallet.cpp 
     ${neroshop_crypto_src} 
@@ -544,41 +543,6 @@ if(NOT NEROSHOP_USE_LIBZMQ AND NOT NEROSHOP_USE_LIBUV)
         target_compile_definitions(${neroshop_console} PRIVATE NEROSHOP_USE_SYSTEM_SOCKETS)
     endif()
     target_compile_definitions(${daemon_executable} PRIVATE NEROSHOP_USE_SYSTEM_SOCKETS)
-endif()
-
-######################################
-# libuv
-find_package(LibUV)
-if(LIBUV_FOUND)
-    if(NEROSHOP_USE_LIBUV)
-        message(STATUS "${BoldGreen}Using LibUV: ${LibUV_LIBRARIES} (v${LibUV_VERSION})${ColourReset}")
-        #include_directories(${LibUV_INCLUDE_DIRS})
-        if(NEROSHOP_BUILD_GUI)
-            target_compile_definitions(${neroshop_executable} PRIVATE NEROSHOP_USE_LIBUV)
-            target_link_libraries(${neroshop_executable} ${LibUV_LIBRARIES})
-        endif()
-        if(NEROSHOP_BUILD_CLI)
-            target_compile_definitions(${neroshop_console} PRIVATE NEROSHOP_USE_LIBUV)
-            target_link_libraries(${neroshop_console} ${LibUV_LIBRARIES})
-        endif()        
-        target_compile_definitions(${daemon_executable} PRIVATE NEROSHOP_USE_LIBUV)
-        target_link_libraries(${daemon_executable} ${LibUV_LIBRARIES})
-    endif()
-endif()
-if(NOT LIBUV_FOUND)
-    if(NEROSHOP_USE_LIBUV)
-        include_directories(${CMAKE_CURRENT_SOURCE_DIR}/external/libuv/include ${CMAKE_CURRENT_SOURCE_DIR}/external/libuv/src)
-        if(NEROSHOP_BUILD_GUI)
-            target_compile_definitions(${neroshop_executable} PRIVATE NEROSHOP_USE_LIBUV)
-            target_link_libraries(${neroshop_executable} ${CMAKE_CURRENT_SOURCE_DIR}/external/libuv/.libs/libuv.a)
-        endif()
-        if(NEROSHOP_BUILD_CLI)
-            target_compile_definitions(${neroshop_console} PRIVATE NEROSHOP_USE_LIBUV)
-            target_link_libraries(${neroshop_console} ${CMAKE_CURRENT_SOURCE_DIR}/external/libuv/.libs/libuv.a)
-        endif()
-        target_compile_definitions(${daemon_executable} PRIVATE NEROSHOP_USE_LIBUV)
-        target_link_libraries(${daemon_executable} ${CMAKE_CURRENT_SOURCE_DIR}/external/libuv/.libs/libuv.a) # In case user chooses to build libuv themselves instead of installing it on the system
-    endif()
 endif()
 
 ######################################

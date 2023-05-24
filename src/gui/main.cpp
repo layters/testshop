@@ -75,7 +75,7 @@ int main(int argc, char *argv[])
     Backend::connectToServerDaemon();*/
     // Configuration file must be loaded right after Qt Application object has been created so that we can get the correct config location
     // open configuration script
-    neroshop::load_nodes_from_memory();//neroshop::open_configuration_file();
+    neroshop::load_nodes_from_memory();
     // Set monero network type
     std::vector<std::string> networks = { "mainnet", "testnet", "stagenet" };
     

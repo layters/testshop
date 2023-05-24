@@ -2,77 +2,74 @@
 
 #include "node.hpp"
 #include "routing_table.hpp"
-/*#ifdef _WIN32
-#include <Winsock2.h>
-#else
-#include <sys/socket.h> // sockaddr_storage
-#endif
 
-#include <cstddef> // size_t
-#include <cstdio> // FILE*
-#include <ctime> // time_t*/
-
-// Copied from dht-example.c
-/* For crypt */
-/*#define _GNU_SOURCE
-
-#include <stdio.h>
-#include <stdlib.h>
-#include <errno.h>
-#include <string.h>
-#include <unistd.h>
-#include <fcntl.h>
-#include <sys/time.h>
-#include <arpa/inet.h>
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <netdb.h>
-#include <signal.h>
-#include <sys/signal.h>
-
-// This must be provided by the user. 
-int dht_sendto(int sockfd, const void *buf, int len, int flags,
-               const struct sockaddr *to, int tolen);
-int dht_blacklisted(const struct sockaddr *sa, int salen);
-void dht_hash(void *hash_return, int hash_size,
-              const void *v1, int len1,
-              const void *v2, int len2,
-              const void *v3, int len3);
-int dht_random_bytes(void *buf, size_t size);
-
+// TODO: DHT blacklisted nodes and probably callbacks/periodic node liveliness checks
 
 namespace neroshop {
 
-// Copied from dht-example.c
-
-static void
-sigdump(int signo);
-
-static void
-sigtest(int signo);
-
-static void
-sigexit(int signo);
-
-static void
-init_signals(void);
-
-const unsigned char hash[20] = {
-    0x54, 0x57, 0x87, 0x89, 0xdf, 0xc4, 0x23, 0xee, 0xf6, 0x03,
-    0x1f, 0x81, 0x94, 0xa9, 0x3a, 0x16, 0x98, 0x8b, 0x72, 0x7b
+enum class KadResultCode {
+    Success = 0,
+    Generic, // Generic error code.
+    Timeout, // Operation timed out.
+    InvalidKey, // Invalid key provided.
+    InvalidValue, // Invalid value provided.
+    InvalidToken,
+    NodeNotFound, // The requested node is not found in the DHT.
+    BucketFull, // The routing table bucket is full and cannot accept more nodes.
+    StoreFailed, // Failed to store the key-value pair in the DHT.
+    StorePartial, StoreToSelf = StorePartial,// Partial success in storing the value - when you fail to store to the closest nodes but succeed in storing in your own node
+    RetrieveFailed, // Failed to retrieve the value from the DHT.
+    JoinFailed, // Failed to join the Kademlia network.
+    PingFailed, // Failed to ping the target node.
+    InvalidOperation, // Invalid or unsupported operation requested.
+    NetworkError, // A network error occurred during the operation.
+    InvalidRequest,
+    ParseError,
 };
 
-// The call-back function is called by the DHT whenever something
-//   interesting happens.  Right now, it only happens when we get a new value or
-//   when a search completes, but this may be extended in future versions. 
-void dht_callback(void *closure,
-         int event,
-         const unsigned char *info_hash,
-         const void *data, size_t data_len);
+namespace kademlia {
 
-static unsigned char buf[4096];
+static std::string get_result_code_as_string(KadResultCode result_code) {
+    switch (result_code) {
+        case KadResultCode::Success:
+            return "Success";
+        case KadResultCode::Generic:
+            return "Error";
+        case KadResultCode::Timeout:
+            return "Timeout";
+        case KadResultCode::InvalidKey:
+            return "Invalid key";
+        case KadResultCode::InvalidValue:
+            return "Invalid value";
+        case KadResultCode::InvalidToken:
+            return "Invalid token";            
+        case KadResultCode::NodeNotFound:
+            return "Node not found";
+        case KadResultCode::BucketFull:
+            return "Bucket full";
+        case KadResultCode::StoreFailed:
+            return "Store failed";
+        case KadResultCode::StorePartial:
+            return "Store partial";            
+        case KadResultCode::RetrieveFailed:
+            return "Retrieve failed";
+        case KadResultCode::JoinFailed:
+            return "Join failed";
+        case KadResultCode::PingFailed:
+            return "Ping failed";
+        case KadResultCode::InvalidOperation:
+            return "Invalid operation";
+        case KadResultCode::NetworkError:
+            return "Network error";
+        case KadResultCode::InvalidRequest:
+            return "Invalid request";
+        case KadResultCode::ParseError:
+            return "Parse error";
+        default:
+            return "Unknown result code";
+    }
+}
 
-static int
-set_nonblocking(int fd, int nonblocking);
+}
 
-}*/
+}

@@ -34,7 +34,7 @@ int main(int argc, char** argv) {
     // Connect to daemon server (daemon must be launched first)
     #if !defined(NEROSHOP_USE_LIBZMQ)
     neroshop::Client * client = neroshop::Client::get_main_client();
-	int port = DEFAULT_TCP_PORT;
+	int port = NEROSHOP_IPC_DEFAULT_PORT;
 	std::string ip = "localhost"; // 0.0.0.0 means anyone can connect to your server
 	if(!client->connect(port, ip)) {
 	    std::cout << "Please launch neromon first\n";
@@ -44,10 +44,7 @@ int main(int argc, char** argv) {
 	neroshop::ZmqClient client("tcp://localhost:5555");
 	#endif
     //-------------------------------------------------------
-    // nodes.lua
-    if(!neroshop::create_config()) { 
-        neroshop::load_config();
-    }
+    neroshop::load_nodes_from_memory();
 
     std::vector<std::string> networks = {"mainnet", "stagenet", "testnet"};
 
@@ -117,7 +114,7 @@ int main(int argc, char** argv) {
                 {"version", std::string(NEROSHOP_VERSION)},
                 {"query", "ping"},
                 {"args", arguments_obj},
-                {"tid", 123},
+                {"tid", 1234},
             };
             // send packed data to POSIX server
             std::vector<uint8_t> packed = nlohmann::json::to_msgpack(j);
@@ -140,7 +137,7 @@ int main(int argc, char** argv) {
             #else
             nlohmann::json j = {
                 {"message", "Hello, ZMQ Server!"},
-                {"id", 123}
+                {"id", 1234}
             };
             // send packed data to ZMQ server
             std::vector<uint8_t> packed = nlohmann::json::to_msgpack(j);
@@ -164,7 +161,7 @@ int main(int argc, char** argv) {
                     {"version", std::string(NEROSHOP_VERSION)},
                     {"query", "put"},
                     {"args", arguments_obj},
-                    {"tid", 123},
+                    {"tid", 1234}, // tid is meaningless when it comes from the IPC client so a tid of 0 would be ok
                 };
                 // send packed data to POSIX server
                 std::vector<uint8_t> packed = nlohmann::json::to_msgpack(j);
@@ -191,7 +188,7 @@ int main(int argc, char** argv) {
                     {"version", std::string(NEROSHOP_VERSION)},
                     {"query", "get"},
                     {"args", arguments_obj},
-                    {"tid", 123},
+                    {"tid", 1234},
                 };
                 // send packed data to POSIX server
                 std::vector<uint8_t> packed = nlohmann::json::to_msgpack(j);
@@ -213,7 +210,7 @@ int main(int argc, char** argv) {
         else if(command == "exit") {
             #if !defined(NEROSHOP_USE_LIBZMQ)
             // close the connection
-            client->close();
+            client->disconnect();
             #endif
             break;
         }

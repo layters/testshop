@@ -3,6 +3,7 @@
 #include <cassert>
 
 #include "../../tools/logger.hpp"
+#include "../../../neroshop_config.hpp"
 
 neroshop::Server::Server() : sockfd(-1), socket_type(SocketType::Socket_TCP) {
 	//#if defined(__gnu_linux__) && defined(NEROSHOP_USE_SYSTEM_SOCKETS)
@@ -278,7 +279,7 @@ The setsockopt() function is used to set the socket option, and the SO_REUSEADDR
 	if(!bind(address, port)) {
 	    throw std::runtime_error("Failed to bound to port");
 	}
-	std::cout << "bound to port " << port << "\n";//std::cout << NEROMON_TAG "\033[1;97mServer " + "(TCP)" + " bound to port " + std::to_string(port) + "\033[0m\n";
+	std::cout << ((port == NEROSHOP_RPC_DEFAULT_PORT) ? "RPC server " : ((port == NEROSHOP_P2P_DEFAULT_PORT) ? "P2P server " : "IPC server ")) << "bound to port " << port << "\n";//std::cout << NEROMON_TAG "\033[1;97mServer " + "(TCP)" + " bound to port " + std::to_string(port) + "\033[0m\n";
 	
 	
 	if(!listen()) {

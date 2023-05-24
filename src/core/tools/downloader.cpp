@@ -15,8 +15,8 @@
 */
 #endif
 
+#include "../../neroshop_config.hpp" // for config path
 #include "extractor.hpp" // ../tools/tools.hpp included here
-#include "../config.hpp" // for config path
 #include "../tools/tools.hpp"
 
 namespace {
