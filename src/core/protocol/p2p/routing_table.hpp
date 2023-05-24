@@ -26,6 +26,7 @@ public:
     // Add a new node to the routing table
     bool add_node(std::unique_ptr<Node> node);//void add_node(const Node& node);
     
+    bool remove_node(const std::string& node_ip, uint16_t node_port);
     bool remove_node(const std::string& node_id);
 
     // Find the bucket that a given node belongs in

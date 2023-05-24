@@ -849,7 +849,7 @@ void neroshop::Node::periodic() {
                     std::cout << "\033[0;91m" << node->public_ip_address << ":" << node_port << "\033[0m marked as dead\n";
                     if(routing_table->has_node(node->public_ip_address, node_port)) {
                         std::unique_lock<std::shared_mutex> lock(routing_table_mutex);
-                        routing_table->remove_node(node->get_id());
+                        routing_table->remove_node(node->public_ip_address, node_port);//(node->get_id());
                     }
                 }
             }

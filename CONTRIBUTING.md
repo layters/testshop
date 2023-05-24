@@ -9,7 +9,7 @@ There are many ways that you can contribute.
 
 
 # Testing
-Also, If you would like to help test the P2P network, here are some instructions:
+Also, If you would like to help test the P2P network, you can skip to this [section](#testing-dht)
 
 ### Testing RPC
 
@@ -49,8 +49,19 @@ Then in another terminal tab or window, open up neromon again, but this time wit
 ./neromon
 ```
 
-The bootstrap node should then receive a `ping` and will respond with a `pong`. On receiving a ping, the bootstrap node will add the sender node to its own routing table. The sender node will also add the bootstrap node to its own routing table as soon it receives the pong from the bootstrap node.
+The bootstrap node should then receive a `ping` and will respond with a `pong`. On receiving a ping, the bootstrap node will add the sender node to its own routing table. The sender node will also add the bootstrap node to its own routing table as soon as it receives the pong from the bootstrap node.
 
 Afterwards, the sender node will send a `find_node` message to the bootstrap node and the bootstrap node will respond with a `nodes` message containing the closest nodes in the bootstrap node's routing table, which the sender node will also store in its own routing table.
 
 The is what is called the `join` process and it will be how all nodes join the network.
+
+
+### Running a public node
+To run a public node, you must include the `public` flag when starting the daemon:
+```
+./neromon --public
+```
+
+Be sure that port forwarding is enabled on your machine in order for other nodes to find your node.
+
+Fun fact: You can also run a public RPC server by combining the `--rpc` and `--public` flags.

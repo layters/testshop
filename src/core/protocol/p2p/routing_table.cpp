@@ -75,6 +75,25 @@ bool neroshop::RoutingTable::add_node(std::unique_ptr<Node> node) {//(const Node
     return true;
 }
 
+bool neroshop::RoutingTable::remove_node(const std::string& node_ip, uint16_t node_port) {
+    assert(node_ip != "127.0.0.1" && "Routing table only stores public IP addresses");
+    for (auto& bucket : buckets) {
+        std::vector<std::unique_ptr<Node>>& nodes = bucket.second;
+        for (auto it = nodes.begin(); it != nodes.end(); /* no increment here */) {
+            if ((*it)->get_ip_address() == node_ip && (*it)->get_port() == node_port) {
+                std::cout << "\033[0;91m" << node_ip << ":" << node_port << "\033[0m removed from routing table\n";
+                it = nodes.erase(it);  // erase returns the iterator to the next valid element
+                return true;
+            } else {
+                ++it;  // increment the iterator only if element not found
+            }
+        }
+    }
+
+    std::cerr << "Error: node with IP " << node_ip << " and port " << node_port << " not found in the routing table.\n";
+    return false;
+}
+
 bool neroshop::RoutingTable::remove_node(const std::string& node_id) {
     int bucket_index = find_bucket(node_id);
 
