@@ -4,12 +4,20 @@ There are many ways that you can contribute.
 - Making a [donation](https://github.com/larteyoh/testshop#donations) to fund the development of the project
 - Reporting any bugs or vulnerabilities found in the code as a GitHub [issue](https://github.com/larteyoh/testshop/issues)
 - Sharing this project so more people can learn about its existence
+- Help us [test](#testing) the software for any bugs or vulnerabilities
 
 **Please refer to [the wiki](https://github.com/larteyoh/testshop/wiki/FAQ#how-can-i-contribute-to-neroshop-if-i-dont-know-c-or-c) for more information on how to contribute.**
 
 
 # Testing
 Also, If you would like to help test the P2P network, you can skip to this [section](#testing-dht)
+
+### Testing GUI
+To run the GUI application, use the following command:
+```
+./neroshop
+```
+
 
 ### Testing RPC
 
@@ -18,7 +26,7 @@ To run the RPC server, use the following command:
 ./neromon --enable-rpc
 ```
 
-Then you can open a browser and test the RPC network by typing `http://127.0.0.1:57741` in the address bar.
+Then you can open a browser and test the RPC network by typing `http://127.0.0.1:50882` in the address bar.
 
 A JSON-RPC error response should appear.
 
@@ -51,7 +59,7 @@ Then in another terminal tab or window, open up neromon again, but this time wit
 
 The bootstrap node should then receive a `ping` and will respond with a `pong`. On receiving a ping, the bootstrap node will add the sender node to its own routing table. The sender node will also add the bootstrap node to its own routing table as soon as it receives the pong from the bootstrap node.
 
-Afterwards, the sender node will send a `find_node` message to the bootstrap node and the bootstrap node will respond with a `nodes` message containing the closest nodes in the bootstrap node's routing table, which the sender node will also store in its own routing table.
+Afterwards, the sender node will send a `find_node` message to the bootstrap node and the bootstrap node will respond with a `nodes` message containing the closest nodes in the bootstrap node's routing table, which the sender node will also contact and then store in its own routing table.
 
 The is what is called the `join` process and it will be how all nodes join the network.
 
@@ -62,6 +70,6 @@ To run a public node, you must include the `--public` flag when starting the dae
 ./neromon --public
 ```
 
-Be sure that port forwarding is enabled on your machine in order for other nodes to find your node.
+**Be sure that port forwarding is enabled on your machine in order for other nodes to find your node.**
 
 Another thing: You can also run a public RPC server by combining the `--rpc` and `--public` flags.
