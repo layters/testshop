@@ -8,9 +8,6 @@ A decentralized P2P (peer-to-peer) marketplace for [**Monero**](https://getmoner
 __Disclaimer: This is an experimental/hobbyist project that is not ready for production use. Use at your own risk.__
 
 
-[![Readme Card](https://github-readme-stats.vercel.app/api/pin/?username=larteyoh&repo=testshop&theme=shades-of-purple)](https://github.com/larteyoh/testshop)
-
-
 ## Table of contents
 <!-- - [The history behind neroshop](#about)-->
 - [Demo](#demo)

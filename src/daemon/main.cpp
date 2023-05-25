@@ -24,7 +24,7 @@ using namespace neroshop;
 
 std::mutex clients_mutex;
 std::mutex server_mutex;
-std::shared_mutex node_mtx; // Shared mutex to protect access to the Node object
+std::shared_mutex node_mutex; // Define a shared mutex to protect concurrent access to the Node object
 //-----------------------------------------------------------------------------
 
 std::string extract_json_payload(const std::string& request) {
@@ -112,8 +112,9 @@ void ipc_server(Node& node) {
                 }
                 std::vector<uint8_t> response;
                 {
-                    //std::unique_lock<std::shared_mutex> lock(node_mtx);//std::shared_lock<std::shared_mutex> lock(node_mtx);  // Acquire shared lock before accessing the node object // Locking the node_mtx causes the IPC server to not respond to the client requests for some reason :/
                     
+                    //std::shared_lock<std::shared_mutex> read_lock(node_mutex); // Locking the node_mutex may cause the IPC server to not respond to the client requests for some reason
+                    // Perform both read and write operations on the node object
                     // process JSON request and generate response
                     response = neroshop::msgpack::process(request, node, true);
                 }
@@ -133,8 +134,6 @@ void ipc_server(Node& node) {
 void dht_server(Node& node) {
     /*Server server("127.0.0.1", NEROSHOP_P2P_DEFAULT_PORT, SocketType::Socket_UDP);
     server.set_nonblocking(true);*/
-    // Acquire lock before accessing the node object
-    ////std::lock_guard<std::shared_mutex> lock(node_mtx);
     std::cout << "******************************************************\n";
     std::cout << "Node ID: " << node.get_id() << "\n";
     std::cout << "IP address: " << node.get_ip_address() << /*" (" << node.get_public_ip_address() << ")*/"\n";
@@ -142,13 +141,13 @@ void dht_server(Node& node) {
     std::cout << "******************************************************\n";
     // Start the DHT node's main loop in a separate thread
     std::thread run_thread([&]() {
-        //std::unique_lock<std::shared_mutex> lock(node_mtx);  // Acquire exclusive lock before accessing the node object
+        //std::shared_lock<std::shared_mutex> read_lock(node_mutex);
         node.run();
     });
 
     // Join the DHT network
     if (!node.is_bootstrap_node()) {
-        //std::unique_lock<std::shared_mutex> lock(node_mtx);//std::shared_lock<std::shared_mutex> lock(node_mtx);  // Acquire shared lock before accessing the node object
+        //std::shared_lock<std::shared_mutex> read_lock(node_mutex);
         node.join(); // A bootstrap node cannot join the network
     }
 

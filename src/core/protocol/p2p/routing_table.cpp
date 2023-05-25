@@ -58,6 +58,9 @@ bool neroshop::RoutingTable::add_node(std::unique_ptr<Node> node) {//(const Node
         }
     }
 
+    // Acquire a lock to ensure exclusive access to the routing table
+    std::unique_lock<std::shared_mutex> write_lock(routing_table_mutex);
+    
     // Add the node to the bucket
     bucket.push_back(std::move(node));
     std::cout << "\033[0;36m" << (bucket.back().get()->get_ip_address() + ":" + std::to_string(bucket.back().get()->get_port())) << "\033[0m added to routing table\n";
@@ -75,24 +78,42 @@ bool neroshop::RoutingTable::add_node(std::unique_ptr<Node> node) {//(const Node
     return true;
 }
 
-bool neroshop::RoutingTable::remove_node(const std::string& node_id) {
-    int bucket_index = find_bucket(node_id);
-
-    if (bucket_index < 0 || bucket_index >= NEROSHOP_DHT_ROUTING_TABLE_BUCKETS) {
-        std::cerr << "Error: invalid bucket index " << bucket_index << " for node with ID " << node_id << ".\n";
-        return false;
-    }
-
-    std::vector<std::unique_ptr<Node>>& bucket = buckets[bucket_index];
-    for (auto it = bucket.begin(); it != bucket.end(); ++it) {
-        if ((*it)->get_id() == node_id) {
-            std::cout << "\033[0;91m" << (*it)->get_ip_address() << ":" << (*it)->get_port() << "\033[0m removed from routing table\n";
-            bucket.erase(it);
-            return true;
+bool neroshop::RoutingTable::remove_node(const std::string& node_ip, uint16_t node_port) {
+    assert(node_ip != "127.0.0.1" && "Routing table only stores public IP addresses");
+    for (auto& bucket : buckets) {
+        std::vector<std::unique_ptr<Node>>& nodes = bucket.second;
+        std::unique_lock<std::shared_mutex> write_lock(routing_table_mutex);  // Acquire an exclusive lock
+        for (auto it = nodes.begin(); it != nodes.end(); /* no increment here */) {
+            if ((*it)->get_ip_address() == node_ip && (*it)->get_port() == node_port) {
+                std::cout << "\033[0;91m" << node_ip << ":" << node_port << "\033[0m removed from routing table\n";
+                it = nodes.erase(it);  // erase returns the iterator to the next valid element
+                return true;
+            } else {
+                ++it;  // increment the iterator only if element not found
+            }
         }
     }
 
-    std::cerr << "Error: node with ID " << node_id << " not found in bucket " << bucket_index << ".\n";
+    std::cerr << "Error: node with IP " << node_ip << " and port " << node_port << " not found in the routing table.\n";
+    return false;
+}
+
+bool neroshop::RoutingTable::remove_node(const std::string& node_id) {
+    for (auto& bucket : buckets) {
+        std::vector<std::unique_ptr<Node>>& nodes = bucket.second;
+        std::unique_lock<std::shared_mutex> write_lock(routing_table_mutex);  // Acquire an exclusive lock
+        for (auto it = nodes.begin(); it != nodes.end(); /* no increment here */) {
+            if ((*it)->get_id() == node_id) {
+                std::cout << "\033[0;91m" << node_id << "\033[0m removed from routing table\n";
+                it = nodes.erase(it);  // erase returns the iterator to the next valid element
+                return true;
+            } else {
+                ++it;  // increment the iterator only if element not found
+            }
+        }
+    }
+
+    std::cerr << "Error: node with ID " << node_id << " not found in the routing table.\n";
     return false;
 }
 
