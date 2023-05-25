@@ -823,12 +823,14 @@ void neroshop::Node::send_remove(const std::string& key) {
 
 void neroshop::Node::periodic() {
     while(true) {
+        {
         // Acquire the lock before accessing the routing table
-        ////std::lock_guard<std::mutex> lock(routing_table_mutex);
+        std::shared_lock<std::shared_mutex> read_lock(node_read_mutex);
         // Perform periodic checks here
         // This code will run concurrently with the listen/receive loop
         for (auto& bucket : routing_table->buckets) {
             for (auto& node : bucket.second) {
+                if (node.get() == nullptr) { std::cout << "Invalid node found in the routing table.\n"; continue; } // It's possible that the invalid node object is being accessed or modified by another thread concurrently, even though its already been removed from the routing_table
                 std::string node_ip = (node->get_ip_address() == this->public_ip_address) ? "127.0.0.1" : node->get_ip_address();
                 uint16_t node_port = node->get_port();
                 
@@ -848,14 +850,14 @@ void neroshop::Node::periodic() {
                 if(node->is_dead()) {
                     std::cout << "\033[0;91m" << node->public_ip_address << ":" << node_port << "\033[0m marked as dead\n";
                     if(routing_table->has_node(node->public_ip_address, node_port)) {
-                        std::unique_lock<std::shared_mutex> lock(routing_table_mutex);
-                        routing_table->remove_node(node->public_ip_address, node_port);//(node->get_id());
+                        routing_table->remove_node(node->public_ip_address, node_port); // Already has internal write_lock
                     }
                 }
             }
         }
+        } // read_lock is released here
         // Sleep for a specified interval
-        std::this_thread::sleep_for(std::chrono::seconds(10)); // Perform checks every 60 seconds//std::this_thread::sleep_for(std::chrono::minutes(60)); // Perform checks every 60 minutes
+        std::this_thread::sleep_for(std::chrono::seconds(NEROSHOP_DHT_PERIODIC_CHECK_INTERVAL));
     }
 }
 
@@ -890,6 +892,8 @@ void neroshop::Node::run() {
         
         // Create a lambda function to handle the request
         auto handle_request_fn = [=]() {
+            // Acquire the lock before accessing the routing table
+            std::shared_lock<std::shared_mutex> read_lock(node_read_mutex);
             // Process the message
             std::vector<uint8_t> response = neroshop::msgpack::process(buffer, *this);
 
@@ -910,12 +914,16 @@ void neroshop::Node::run() {
                     bool node_exists = routing_table->has_node((sender_ip == "127.0.0.1") ? this->public_ip_address : sender_ip, sender_port);
                     if (!node_exists) {
                         auto node_that_pinged = std::make_unique<Node>((sender_ip == "127.0.0.1") ? this->public_ip_address : sender_ip, sender_port, false); // ALWAYS use public ip so that unique id is generated and actual address is stored in routing table for others to locate your node
-                        routing_table->add_node(std::move(node_that_pinged));
+                        routing_table->add_node(std::move(node_that_pinged)); // Already has internal write_lock
                         routing_table->print_table();
                     }
                 }
             }
         };
+        
+        // Create a detached thread to handle the request
+        std::thread request_thread(handle_request_fn);
+        request_thread.detach();
     }
     // Wait for the periodic check thread to finish
     //periodic_thread.join();             
@@ -968,6 +976,8 @@ void neroshop::Node::run_optimized() {
                 
                 // Create a lambda function to handle the request
                 auto handle_request_fn = [=]() {
+                    // Acquire the lock before accessing the routing table
+                    std::shared_lock<std::shared_mutex> read_lock(node_read_mutex);
                     // Process the message
                     std::vector<uint8_t> response = neroshop::msgpack::process(buffer, *this);
 
@@ -988,7 +998,7 @@ void neroshop::Node::run_optimized() {
                             bool node_exists = routing_table->has_node((sender_ip == "127.0.0.1") ? this->public_ip_address : sender_ip, sender_port);
                             if (!node_exists) {
                                 auto node_that_pinged = std::make_unique<Node>((sender_ip == "127.0.0.1") ? this->public_ip_address : sender_ip, sender_port, false); // ALWAYS use public ip so that unique id is generated and actual address is stored in routing table for others to locate your node
-                                routing_table->add_node(std::move(node_that_pinged));
+                                routing_table->add_node(std::move(node_that_pinged)); // Already has internal write_lock
                                 routing_table->print_table();
                             }
                         }

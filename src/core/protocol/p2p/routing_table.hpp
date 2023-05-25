@@ -6,6 +6,8 @@
 #include <string>
 #include <unordered_map>
 #include <vector>
+#include <mutex>
+#include <shared_mutex>
 
 #include "../../../neroshop_config.hpp"
 
@@ -19,6 +21,8 @@ private:
     std::string my_node_id;
     std::vector<Node *> nodes;  // List of nodes in the DHT
     mutable std::unordered_map<int, std::vector<std::unique_ptr<Node>>> buckets;  // Routing table buckets
+    // Declare a mutex to protect access to the routing table
+    std::shared_mutex routing_table_mutex; // Shared mutex for routing table access
 public:
     // Initialize the routing table with a list of nodes
     RoutingTable(const std::vector<Node *>& nodes);

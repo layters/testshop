@@ -37,6 +37,7 @@
 #define NEROSHOP_DHT_MAX_NODES_PER_BUCKET  NEROSHOP_DHT_MAX_BUCKET_SIZE
 #define NEROSHOP_DHT_MAX_ROUTING_TABLE_NODES NEROSHOP_DHT_ROUTING_TABLE_BUCKETS * NEROSHOP_DHT_MAX_BUCKET_SIZE
 #define NEROSHOP_DHT_MAX_HEALTH_CHECKS     3 // Maximum number of consecutive failed checks before marking the node as dead
+#define NEROSHOP_DHT_PERIODIC_CHECK_INTERVAL 10 // Number of seconds between each periodic health check
 
 #define NEROSHOP_PRIVATE_KEY_FILENAME             "private_key.pem"
 #define NEROSHOP_PRIVATE_KEY_FILENAME             "private_key.pem"

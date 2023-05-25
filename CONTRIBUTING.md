@@ -57,11 +57,11 @@ The is what is called the `join` process and it will be how all nodes join the n
 
 
 ### Running a public node
-To run a public node, you must include the `public` flag when starting the daemon:
+To run a public node, you must include the `--public` flag when starting the daemon:
 ```
 ./neromon --public
 ```
 
 Be sure that port forwarding is enabled on your machine in order for other nodes to find your node.
 
-Fun fact: You can also run a public RPC server by combining the `--rpc` and `--public` flags.
+Another thing: You can also run a public RPC server by combining the `--rpc` and `--public` flags.

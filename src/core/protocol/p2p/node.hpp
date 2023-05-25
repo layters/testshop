@@ -41,7 +41,8 @@ private:
     bool bootstrap;
     unsigned int check_counter; // Counter to track the number of consecutive failed checks
     // Declare a mutex to protect access to the routing table
-    std::shared_mutex routing_table_mutex; // Shared mutex for routing table access
+    std::shared_mutex node_read_mutex; // Shared mutex for routing table access
+    std::shared_mutex node_write_mutex; // Shared mutex for routing table access
     // Generates a node id from address and port combination
     std::string generate_node_id(const std::string& address, int port);
     // Determines if node1 is closer to the target_id than node2
