@@ -70,7 +70,8 @@ To run a public node, you must include the `--public` flag when starting the dae
 ./neromon --public
 ```
 
-**Be sure that port forwarding is enabled on your machine in order for other nodes to find your node.
-Edit: As of May 26 2023, automatic port forwarding now works on UPnP-enabled routers and the `--public` flag is no longer required to participate in the neroshop DHT network.**
+**Be sure that port forwarding is enabled on your machine in order for other nodes to find your node.**
+
+**Edit: As of May 26 2023, automatic port forwarding now works on UPnP-enabled routers and the `--public` flag is no longer required to participate in the neroshop DHT network.**
 
 Another thing: You can also run a public RPC server by combining the `--rpc` and `--public` flags.
