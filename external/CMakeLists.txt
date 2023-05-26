@@ -4,6 +4,7 @@ project(neroshop_external)
 
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ../build)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ../build)
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ../build)
 
 option(NEROSHOP_USE_OPENPGP "Build neroshop with PGP support" OFF)
 if(NEROSHOP_USE_OPENPGP)
@@ -67,6 +68,8 @@ foreach(CPP_FILE ${I2PD_CLIENT_CPP_FILES})
 endforeach()
 add_library(${i2pd_client_target} STATIC ${i2pd_client_srcs})
 target_include_directories(${i2pd_client_target} PUBLIC i2pd/i18n/ i2pd/libi2pd/ i2pd/libi2pd_client/)
+
+add_subdirectory(miniupnp/miniupnpc)
 
 #[[
 set(_target "")

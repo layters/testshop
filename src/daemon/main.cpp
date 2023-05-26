@@ -16,13 +16,15 @@
 
 #include <cxxopts.hpp>
 
-#define NEROMON_TAG "\033[1;95m[neromon]:\033[0m "
+#if defined(NEROSHOP_USE_MINIUPNP)
+#include <miniupnpc.h>
+#include <upnpcommands.h>
+#endif
 
-// Daemon will handle database server requests from the client
+#define NEROMON_TAG "\033[1;95m[neromon]:\033[0m "
 
 using namespace neroshop;
 
-std::mutex clients_mutex;
 std::mutex server_mutex;
 std::shared_mutex node_mutex; // Define a shared mutex to protect concurrent access to the Node object
 //-----------------------------------------------------------------------------
@@ -130,7 +132,6 @@ void ipc_server(Node& node) {
 
 //-----------------------------------------------------------------------------
 
-// still needs a lot of work. I have no idea what I'm doing :/
 void dht_server(Node& node) {
     /*Server server("127.0.0.1", NEROSHOP_P2P_DEFAULT_PORT, SocketType::Socket_UDP);
     server.set_nonblocking(true);*/
@@ -152,7 +153,6 @@ void dht_server(Node& node) {
     }
 
     run_thread.join(); // Wait for the run thread to finish
-    // The unique_lock is destroyed and the lock is released here
 }
 
 //-----------------------------------------------------------------------------
@@ -193,12 +193,51 @@ int main(int argc, char** argv)
         ip_address = NEROSHOP_ANY_ADDRESS;
     }
     //-------------------------------------------------------
+    #if defined(NEROSHOP_USE_MINIUPNP)
+    // Initialize the miniupnpc library and obtain a UPnP context
+    UPNPUrls urls;
+    IGDdatas data;
+    int error = 0;
+    char lanaddr[INET_ADDRSTRLEN];
+
+    // Initialize miniupnpc
+    struct UPNPDev* devlist = upnpDiscover(2000, NULL, NULL, 0, 0, 2, &error);
+    if (devlist != NULL) {
+        // Obtain the UPnP context
+        error = UPNP_GetValidIGD(devlist, &urls, &data, lanaddr, sizeof(lanaddr));
+        if (error == 1) {
+            // UPnP context obtained successfully. You can now use the UPnP functions to open ports
+            // Open the first port
+            int p2p_port = NEROSHOP_P2P_DEFAULT_PORT;
+            const char* protocol1 = "UDP";
+            const char* description1 = "Neroshop P2P Port";
+            const char* remoteHost1 = NULL;
+            error = UPNP_AddPortMapping(urls.controlURL, data.first.servicetype, std::to_string(p2p_port).c_str(), std::to_string(p2p_port).c_str(), lanaddr, description1, protocol1, remoteHost1, NULL);
+            if (error != UPNPCOMMAND_SUCCESS) {
+                neroshop::print("UPNP_AddPortMapping: failed to open P2P port", 1);
+            }
+            
+            // Open the second port
+            if(result.count("rpc")) {
+                int rpc_port = NEROSHOP_RPC_DEFAULT_PORT;
+                const char* protocol2 = "TCP";
+                const char* description2 = "Neroshop RPC Port";
+                const char* remoteHost2 = NULL;
+                error = UPNP_AddPortMapping(urls.controlURL, data.first.servicetype, std::to_string(rpc_port).c_str(), std::to_string(rpc_port).c_str(), lanaddr, description2, protocol2, remoteHost2, NULL);
+                if (error != UPNPCOMMAND_SUCCESS) {
+                    neroshop::print("UPNP_AddPortMapping: failed to open RPC port", 1);
+                }
+            }
+        }
+    }
+    #endif
+    //-------------------------------------------------------
     neroshop::Node node(ip_address, NEROSHOP_P2P_DEFAULT_PORT, true);
     
     if(result.count("bootstrap")) {   
         std::cout << "Switching to bootstrap mode ...\n";
         node.set_bootstrap(true);
-        #ifdef NEROSHOP_RELEASE
+        #ifndef NEROSHOP_DEBUG
         assert(ip_address == NEROSHOP_ANY_ADDRESS && "Bootstrap node is not public");
         #endif
         // ALWAYS use address "0.0.0.0" for bootstrap nodes so that it is reachable by all nodes in the network, regardless of their location.
@@ -219,6 +258,12 @@ int main(int argc, char** argv)
     }
     ipc_thread.join();
     dht_thread.join(); // Uses a ton of resources due to UDP socket being non-blocking + when calling run() :/
+    
+    #if defined(NEROSHOP_USE_MINIUPNP)
+    // Release the UPnP context and free resources
+    FreeUPNPUrls(&urls);
+    freeUPNPDevlist(devlist);
+    #endif
 
 	return 0;
 }
