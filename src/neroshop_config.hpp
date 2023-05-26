@@ -23,26 +23,26 @@
 //TODO This port will allow outside clients to interact with neroshop daemon RPC server
 #define NEROSHOP_RPC_DEFAULT_PORT 50882
 
-#define NEROSHOP_LOOPBACK_ADDRESS      "127.0.0.1"
-#define NEROSHOP_ANY_ADDRESS           "0.0.0.0"
+#define NEROSHOP_LOOPBACK_ADDRESS            "127.0.0.1"
+#define NEROSHOP_ANY_ADDRESS                 "0.0.0.0"
 
-#define NEROSHOP_RECV_BUFFER_SIZE          4096
+#define NEROSHOP_RECV_BUFFER_SIZE            4096
 
-#define NEROSHOP_DHT_REPLICATION_FACTOR    10 // 10 to 20 (or even higher) // Usually 3 or 5 but a higher number would improve fault tolerant, mitigating the risk of data loss even if multiple nodes go offline simultaneously. It also helps distribute the load across more nodes, potentially improving read performance by allowing concurrent access from multiple replicas.
-#define NEROSHOP_DHT_MAX_CLOSEST_NODES     10 // 50 to 100 (or even higher) // Default is 8 in most Kademlia DHTs
-#define NEROSHOP_DHT_QUERY_RECV_TIMEOUT    5 // A reasonable timeout value for a DHT node could be between 5 to 30 seconds.
-#define NEROSHOP_DHT_PING_MESSAGE_TIMEOUT  2
-#define NEROSHOP_DHT_ROUTING_TABLE_BUCKETS 256 // recommended to use a number of buckets that is equal to the number of bits in the node id (in this case, sha-3-256 so 256 bits)
-#define NEROSHOP_DHT_MAX_BUCKET_SIZE       25 // Each bucket should hold up to 12-25 or 25-50 nodes
-#define NEROSHOP_DHT_MAX_NODES_PER_BUCKET  NEROSHOP_DHT_MAX_BUCKET_SIZE
+#define NEROSHOP_DHT_REPLICATION_FACTOR      10 // 10 to 20 (or even higher) // Usually 3 or 5 but a higher number would improve fault tolerant, mitigating the risk of data loss even if multiple nodes go offline simultaneously. It also helps distribute the load across more nodes, potentially improving read performance by allowing concurrent access from multiple replicas.
+#define NEROSHOP_DHT_MAX_CLOSEST_NODES       10 // 50 to 100 (or even higher) // Default is 8 in most Kademlia DHTs
+#define NEROSHOP_DHT_QUERY_RECV_TIMEOUT      5 // A reasonable timeout value for a DHT node could be between 5 to 30 seconds.
+#define NEROSHOP_DHT_PING_MESSAGE_TIMEOUT    2
+#define NEROSHOP_DHT_ROUTING_TABLE_BUCKETS   256 // recommended to use a number of buckets that is equal to the number of bits in the node id (in this case, sha-3-256 so 256 bits)
+#define NEROSHOP_DHT_MAX_BUCKET_SIZE         25 // Each bucket should hold up to 12-25 or 25-50 nodes
+#define NEROSHOP_DHT_MAX_NODES_PER_BUCKET    NEROSHOP_DHT_MAX_BUCKET_SIZE
 #define NEROSHOP_DHT_MAX_ROUTING_TABLE_NODES NEROSHOP_DHT_ROUTING_TABLE_BUCKETS * NEROSHOP_DHT_MAX_BUCKET_SIZE
-#define NEROSHOP_DHT_MAX_HEALTH_CHECKS     3 // Maximum number of consecutive failed checks before marking the node as dead
+#define NEROSHOP_DHT_MAX_HEALTH_CHECKS       3 // Maximum number of consecutive failed checks before marking the node as dead
 #define NEROSHOP_DHT_PERIODIC_CHECK_INTERVAL 10 // Number of seconds between each periodic health check
 
-#define NEROSHOP_PRIVATE_KEY_FILENAME             "private_key.pem"
-#define NEROSHOP_PRIVATE_KEY_FILENAME             "private_key.pem"
-#define NEROSHOP_PUBLIC_KEY_FILENAME_V2           "<user_id>.pub"
-#define NEROSHOP_PRIVATE_KEY_FILENAME_V2          "<user_id>.key"
+#define NEROSHOP_PUBLIC_KEY_FILENAME              "<user_id>.pub"
+#define NEROSHOP_PRIVATE_KEY_FILENAME             "<user_id>.key"
+#define NEROSHOP_PUBLIC_KEY_FILENAME_OPENSSL      "<user_id>.pem"
+#define NEROSHOP_PRIVATE_KEY_FILENAME_OPENSSL     "<user_id>.pem"
 #define NEROSHOP_PGP_PRIVATE_KEY_FILENAME         "private_key.pgp"
 #define NEROSHOP_PGP_PUBLIC_KEY_FILENAME          "public_key.pgp"
 #define NEROSHOP_PGP_ARMORED_PRIVATE_KEY_FILENAME "private_key.asc"

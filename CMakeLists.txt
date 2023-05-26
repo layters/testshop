@@ -16,7 +16,7 @@ include(CMakeDependentOption)
 cmake_dependent_option(NEROSHOP_USE_QT "Build neroshop with Qt" ON "NEROSHOP_BUILD_GUI" OFF)
 option(UUID_SYSTEM_GENERATOR "Enable operating system uuid generator" OFF)
 option(UUID_TIME_GENERATOR "Enable experimental time-based uuid generator" OFF)
-cmake_dependent_option(NEROSHOP_USE_SYSTEM_SOCKETS "Build neroshop with SYSTEM_SOCKETS" ON "NOT NEROSHOP_USE_LIBZMQ;NOT NEROSHOP_USE_LIBUV" OFF)
+cmake_dependent_option(NEROSHOP_USE_SYSTEM_SOCKETS "Build neroshop with system sockets" ON "NOT NEROSHOP_USE_LIBZMQ;NOT NEROSHOP_USE_LIBUV" OFF)
 cmake_dependent_option(NEROSHOP_USE_LIBZMQ "Build neroshop with LibZMQ" ON "NOT NEROSHOP_USE_LIBUV;NOT NEROSHOP_USE_SYSTEM_SOCKETS" OFF)
 option(NEROSHOP_USE_GRPC "Build neroshop with gRPC" OFF)
 cmake_dependent_option(NEROSHOP_USE_SYSTEM_GRPC "Use system installed gRPC" ON "NEROSHOP_USE_GRPC;USE_SYSTEM_GRPC" OFF)
@@ -74,7 +74,7 @@ if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
     message(STATUS "Building with clang")
 else()
     message(STATUS "Building with gcc/g++")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC -no-pie -w")# -fsanitize=address") # -no-pie=can run outside terminal
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC -no-pie")# -w")# -fsanitize=address") # -no-pie=can run outside terminal
 endif()
 endif()
 
@@ -395,6 +395,15 @@ if(NEROSHOP_USE_OPENPGP)
 endif()
 
 ######################################
+# miniupnp (miniupnpc)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/external/miniupnp/miniupnpc/include/)
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/external/miniupnp/build/libminiupnpc.a")
+    option(NEROSHOP_USE_MINIUPNP "Build neroshop with miniupnp" ON)
+    message(STATUS "Using miniupnp")
+    set(miniupnp_src ${CMAKE_CURRENT_SOURCE_DIR}/external/miniupnp/build/libminiupnpc.a)
+endif()
+
+######################################
 # neroshop link directories
 link_directories(${CMAKE_CURRENT_SOURCE_DIR}/build) # target_link_directories only available in CMake version 3.13 :(
 
@@ -468,7 +477,7 @@ set(neroshop_core_src
     ${neroshop_price_src}
     ${neroshop_protocol_src}
     ${neroshop_tools_src}
-    #[[${neroshop__src}]]
+    #[[${neroshop_wallet_src}]]
 )
 
 ######################################
@@ -483,9 +492,12 @@ endif()
 # neroshop-daemon
 set(daemon_executable "neromon")
 add_executable(${daemon_executable} src/daemon/main.cpp ${neroshop_crypto_src} ${neroshop_database_src} ${neroshop_network_src} ${neroshop_protocol_src} ${NEROSHOP_CORE_SRC_DIR}/tools/logger.cpp)#target_link_libraries(daemon ${curl_src} ${OPENSSL_LIBRARIES}) # curl requires both openssl(used in monero) and zlib(used in dokun-ui)
+if(NEROSHOP_USE_MINIUPNP)
+    target_compile_definitions(${daemon_executable} PRIVATE NEROSHOP_USE_MINIUPNP)
+endif()
 target_compile_definitions(${daemon_executable} PRIVATE NEROSHOP_DEBUG)
 target_include_directories(${daemon_executable} PRIVATE #[[${CMAKE_CURRENT_SOURCE_DIR}/src/]])
-target_link_libraries(${daemon_executable} ${monero_cpp_src} ${sqlite_src} ${raft_src} ${monero_src} ${i2pd_src})#set(CMAKE_CXX_LINK_EXECUTABLE "${CMAKE_CXX_LINK_EXECUTABLE} -ldl") # fixes undefined reference to symbol 'dlsym@@GLIBC_2.2.5' error
+target_link_libraries(${daemon_executable} ${monero_cpp_src} ${sqlite_src} ${raft_src} ${monero_src} ${i2pd_src} ${miniupnp_src})#set(CMAKE_CXX_LINK_EXECUTABLE "${CMAKE_CXX_LINK_EXECUTABLE} -ldl") # fixes undefined reference to symbol 'dlsym@@GLIBC_2.2.5' error
 
 ######################################
 # neroshop-console

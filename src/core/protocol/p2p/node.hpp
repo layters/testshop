@@ -1,6 +1,5 @@
 #pragma once
 
-//#include "dht_node.hpp"
 #include "../transport/server.hpp" // TCP, UDP. IP-related headers here
 
 #include <iostream>
@@ -12,7 +11,6 @@
 #include <shared_mutex>
 
 const int NUM_BITS = 256;
-const int NUM_PEERS = 10;
 
 namespace neroshop {
 
@@ -23,7 +21,9 @@ struct Peer {
     int port;
 };
 
-class Node {//: public DHTNode {
+enum class NodeStatus { Inactive, Idle, Active };
+
+class Node {
 private:
     std::string id;
     std::string version;
@@ -39,7 +39,7 @@ private:
     friend class Server;
     std::string public_ip_address;
     bool bootstrap;
-    unsigned int check_counter; // Counter to track the number of consecutive failed checks
+    int check_counter; // Counter to track the number of consecutive failed checks
     // Declare a mutex to protect access to the routing table
     std::shared_mutex node_read_mutex; // Shared mutex for routing table access
     std::shared_mutex node_write_mutex; // Shared mutex for routing table access
@@ -58,7 +58,7 @@ public:
     //Node& operator=(Node&&) noexcept;
     bool operator==(const Node& other) const {
         // compare the relevant fields of this Node and other
-        return this->id == other.id;
+        return (this->public_ip_address == other.public_ip_address && this->get_port() == other.get_port());
     }
     
     std::vector<uint8_t> send_query(const std::string& address, uint16_t port, const std::vector<uint8_t>& message, int recv_timeout = 5);
@@ -79,6 +79,9 @@ public:
     void run(); // Main loop that listens for incoming messages
     void run_optimized(); // Uses less CPU than run but slower to process requests
     void periodic();
+    //---------------------------------------------------
+    void on_ping_callback(const std::vector<uint8_t>& buffer, const struct sockaddr_in& client_addr);
+    //---------------------------------------------------
     // DHT Query Types
     bool ping(const std::string& address, int port); // A simple query to check if a node is online and responsive.
     std::vector<Node*> find_node(const std::string& target_id, int count) const;// override; // A query to find the contact information for a specific node in the DHT. // Finds the node closest to the target_id
@@ -97,7 +100,11 @@ public:
     std::string get_public_ip_address() const;
     uint16_t get_port() const;
     RoutingTable * get_routing_table() const;
+    NodeStatus get_status() const;
+    std::string get_status_as_string() const;
+    
     void set_bootstrap(bool bootstrap);
+    
     bool is_bootstrap_node();
     static bool is_bootstrap_node(const std::string& address, uint16_t port);
     ////Server * get_server() const;

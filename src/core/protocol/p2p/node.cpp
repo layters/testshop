@@ -18,7 +18,7 @@
 
 namespace neroshop_crypto = neroshop::crypto;
 
-neroshop::Node::Node(const std::string& address, int port, bool local) : sockfd(-1), bootstrap(false) { 
+neroshop::Node::Node(const std::string& address, int port, bool local) : sockfd(-1), bootstrap(false), check_counter(0) { 
     // Convert URL to IP (in case it happens to be a url)
     std::string ip_address = neroshop::ip::resolve(address);
     // Generate a random node ID - use public ip address for uniqueness
@@ -186,7 +186,8 @@ neroshop::Node::Node(const std::string& address, int port, bool local) : sockfd(
       storage(other.storage),
       routing_table(nullptr),
       public_ip_address(other.public_ip_address),
-      bootstrap(other.bootstrap)
+      bootstrap(other.bootstrap),
+      check_counter(other.check_counter)
 {
     //if (other.server)
     //    server = std::make_unique<Server>(*other.server);
@@ -208,7 +209,8 @@ neroshop::Node::Node(Node&& other) noexcept
       storage(std::move(other.storage)),
       routing_table(std::move(other.routing_table)),
       public_ip_address(std::move(other.public_ip_address)),
-      bootstrap(other.bootstrap)
+      bootstrap(other.bootstrap),
+      check_counter(other.check_counter)
 {
     // Reset the moved-from object's members to a valid state
     other.sockfd = -1;
@@ -830,7 +832,7 @@ void neroshop::Node::periodic() {
         // This code will run concurrently with the listen/receive loop
         for (auto& bucket : routing_table->buckets) {
             for (auto& node : bucket.second) {
-                if (node.get() == nullptr) { std::cout << "Invalid node found in the routing table.\n"; continue; } // It's possible that the invalid node object is being accessed or modified by another thread concurrently, even though its already been removed from the routing_table
+                if (node.get() == nullptr) continue; // It's possible that the invalid node object is being accessed or modified by another thread concurrently, even though its already been removed from the routing_table
                 std::string node_ip = (node->get_ip_address() == this->public_ip_address) ? "127.0.0.1" : node->get_ip_address();
                 uint16_t node_port = node->get_port();
                 
@@ -844,7 +846,7 @@ void neroshop::Node::periodic() {
                 
                 // Update the liveness status of the node in the routing table
                 node->check_counter = pinged ? 0 : (node->check_counter + 1);
-                std::cout << "Health check failures: " << node->check_counter << "\n";
+                std::cout << "Health check failures: " << node->check_counter << (" (" + node->get_status_as_string() + ")") << "\n";
                 
                 // If node is dead, remove it from the routing table
                 if(node->is_dead()) {
@@ -863,13 +865,32 @@ void neroshop::Node::periodic() {
 
 //-----------------------------------------------------------------------------
 
+void neroshop::Node::on_ping_callback(const std::vector<uint8_t>& buffer, const struct sockaddr_in& client_addr) {
+    if (buffer.size() > 0) {
+        nlohmann::json message = nlohmann::json::from_msgpack(buffer);
+        if (message.contains("query") && message["query"] == "ping") {
+            std::string sender_id = message["args"]["id"].get<std::string>();
+            std::string sender_ip = inet_ntoa(client_addr.sin_addr);
+            uint16_t sender_port = (message["args"].contains("ephemeral_port")) ? (uint16_t)message["args"]["ephemeral_port"] : NEROSHOP_P2P_DEFAULT_PORT;
+            bool node_exists = routing_table->has_node((sender_ip == "127.0.0.1") ? this->public_ip_address : sender_ip, sender_port);
+            if (!node_exists) {
+                auto node_that_pinged = std::make_unique<Node>((sender_ip == "127.0.0.1") ? this->public_ip_address : sender_ip, sender_port, false);
+                routing_table->add_node(std::move(node_that_pinged)); // Already has internal write_lock
+                routing_table->print_table();
+            }
+        }
+    }
+}
+
+//-----------------------------------------------------------------------------
+
 void neroshop::Node::run() {
     
     run_optimized();
     return;
     
     // Start a separate thread for periodic checks
-    //std::thread periodic_thread([this]() { periodic(); });
+    std::thread periodic_thread([this]() { periodic(); });
     
     while (true) {
         std::vector<uint8_t> buffer(4096);
@@ -879,7 +900,7 @@ void neroshop::Node::run() {
                                       (struct sockaddr*)&client_addr, &client_addr_len);
         if (bytes_received == -1 && errno == EAGAIN) {
             // No data available, continue loop
-            continue;//std::this_thread::sleep_for(std::chrono::milliseconds(100)); // wait for 100 ms before retrying
+            continue;
         }
         else if (bytes_received < 0) {
             perror("recvfrom");
@@ -905,20 +926,7 @@ void neroshop::Node::run() {
             }
         
             // Add the node that pinged this node to the routing table
-            if (buffer.size() > 0) {
-                nlohmann::json message = nlohmann::json::from_msgpack(buffer);
-                if (message.contains("query") && message["query"] == "ping") {
-                    std::string sender_id = message["args"]["id"].get<std::string>();
-                    std::string sender_ip = inet_ntoa(client_addr.sin_addr);
-                    uint16_t sender_port = (message["args"].contains("ephemeral_port")) ? (uint16_t)message["args"]["ephemeral_port"] : NEROSHOP_P2P_DEFAULT_PORT;//ntohs(client_addr.sin_port);// ephemeral ports are for multiple local nodes running on the same local network
-                    bool node_exists = routing_table->has_node((sender_ip == "127.0.0.1") ? this->public_ip_address : sender_ip, sender_port);
-                    if (!node_exists) {
-                        auto node_that_pinged = std::make_unique<Node>((sender_ip == "127.0.0.1") ? this->public_ip_address : sender_ip, sender_port, false); // ALWAYS use public ip so that unique id is generated and actual address is stored in routing table for others to locate your node
-                        routing_table->add_node(std::move(node_that_pinged)); // Already has internal write_lock
-                        routing_table->print_table();
-                    }
-                }
-            }
+            on_ping_callback(buffer, client_addr);
         };
         
         // Create a detached thread to handle the request
@@ -926,7 +934,7 @@ void neroshop::Node::run() {
         request_thread.detach();
     }
     // Wait for the periodic check thread to finish
-    //periodic_thread.join();             
+    periodic_thread.join();
 }
 
 // This uses less CPU
@@ -989,20 +997,7 @@ void neroshop::Node::run_optimized() {
                     }
                 
                     // Add the node that pinged this node to the routing table
-                    if (buffer.size() > 0) {
-                        nlohmann::json message = nlohmann::json::from_msgpack(buffer);
-                        if (message.contains("query") && message["query"] == "ping") {
-                            std::string sender_id = message["args"]["id"].get<std::string>();
-                            std::string sender_ip = inet_ntoa(client_addr.sin_addr);
-                            uint16_t sender_port = (message["args"].contains("ephemeral_port")) ? (uint16_t)message["args"]["ephemeral_port"] : NEROSHOP_P2P_DEFAULT_PORT;//ntohs(client_addr.sin_port);// ephemeral ports are for multiple local nodes running on the same local network
-                            bool node_exists = routing_table->has_node((sender_ip == "127.0.0.1") ? this->public_ip_address : sender_ip, sender_port);
-                            if (!node_exists) {
-                                auto node_that_pinged = std::make_unique<Node>((sender_ip == "127.0.0.1") ? this->public_ip_address : sender_ip, sender_port, false); // ALWAYS use public ip so that unique id is generated and actual address is stored in routing table for others to locate your node
-                                routing_table->add_node(std::move(node_that_pinged)); // Already has internal write_lock
-                                routing_table->print_table();
-                            }
-                        }
-                    }
+                    on_ping_callback(buffer, client_addr);
                 };
                 
                 // Create a detached thread to handle the request
@@ -1074,6 +1069,20 @@ uint16_t neroshop::Node::get_port() const {
 
 neroshop::RoutingTable * neroshop::Node::get_routing_table() const {
     return routing_table.get();
+}
+
+neroshop::NodeStatus neroshop::Node::get_status() const {
+    if(check_counter == 0) return NodeStatus::Active;
+    if(check_counter <= (NEROSHOP_DHT_MAX_HEALTH_CHECKS - 1)) return NodeStatus::Idle;
+    if(check_counter >= NEROSHOP_DHT_MAX_HEALTH_CHECKS) return NodeStatus::Inactive;
+    return NodeStatus::Inactive;
+}
+
+std::string neroshop::Node::get_status_as_string() const {
+    if(check_counter == 0) return "Active"; // Green
+    if(check_counter <= (NEROSHOP_DHT_MAX_HEALTH_CHECKS - 1)) return "Idle"; // Yellow
+    if(check_counter >= NEROSHOP_DHT_MAX_HEALTH_CHECKS) return "Inactive"; // Red
+    return "Unknown";
 }
 
 //-----------------------------------------------------------------------------

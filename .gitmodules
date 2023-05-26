@@ -19,3 +19,6 @@
 [submodule "external/i2pd"]
 	path = external/i2pd
 	url = https://github.com/PurpleI2P/i2pd.git
+[submodule "external/miniupnp"]
+	path = external/miniupnp
+	url = https://github.com/miniupnp/miniupnp.git
