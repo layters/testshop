@@ -232,7 +232,7 @@ int main(int argc, char** argv)
     }
     #endif
     //-------------------------------------------------------
-    neroshop::Node node(ip_address, NEROSHOP_P2P_DEFAULT_PORT, true);
+    neroshop::Node node("0.0.0.0", NEROSHOP_P2P_DEFAULT_PORT, true);
     
     if(result.count("bootstrap")) {   
         std::cout << "Switching to bootstrap mode ...\n";
