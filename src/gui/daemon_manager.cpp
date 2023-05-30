@@ -4,7 +4,6 @@
 #include <chrono>
 #include <thread>
 
-#include <QtConcurrent/QtConcurrent>
 #include <QTcpSocket>
 
 #include "../neroshop_config.hpp"
@@ -89,7 +88,7 @@ void neroshop::DaemonManager::startDaemonProcessDetached() {
     if(!success) { 
         throw std::runtime_error("neroshop daemon process could not be started");
     }
-    std::cout << "\033[35mneromon started (pid: " << pid << ")\033[0m\n";
+    std::cout << "\033[35;1mneromon started (pid: " << pid << ")\033[0m\n";
     setDaemonRunning(true);
     
     std::thread connectionThread([this]() {
@@ -131,22 +130,23 @@ void neroshop::DaemonManager::connect() {
 
     if (!client->connect(NEROSHOP_IPC_DEFAULT_PORT, "127.0.0.1")) {
         onConnectionFailure();
+        return;
     }
 
     onConnectionSuccess(); // setDaemonConnected(true) called here
 }
 
 void neroshop::DaemonManager::onConnectionSuccess() {
-    std::cout << "\033[32mconnected to neromon\033[0m\n";
+    std::cout << "\033[32;1mconnected to neromon\033[0m\n";
     setDaemonConnected(true);
 }
 
 void neroshop::DaemonManager::onConnectionFailure() {
     std::cout << "Failed to connect to neromon. Retrying...\n";
-    QTimer::singleShot(5000, this, [this]() {
-        Client* client = Client::get_main_client();
-        client->connect(NEROSHOP_IPC_DEFAULT_PORT, "127.0.0.1");
-    });
+
+    std::this_thread::sleep_until(std::chrono::steady_clock::now() + std::chrono::seconds(5));
+    Client* client = Client::get_main_client();
+    client->connect(NEROSHOP_IPC_DEFAULT_PORT, "127.0.0.1");
 }
 
 void neroshop::DaemonManager::disconnect() {
@@ -155,7 +155,7 @@ void neroshop::DaemonManager::disconnect() {
         client->disconnect();
         setDaemonConnected(false);
         setDaemonRunning(false);
-        std::cout << "\033[91mdisconnected from neromon\033[0m\n";
+        std::cout << "\033[91;1mdisconnected from neromon\033[0m\n";
     }
 }
 

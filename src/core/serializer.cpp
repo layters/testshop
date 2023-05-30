@@ -31,39 +31,20 @@ namespace neroshop_string = neroshop::string;
 
 //-----------------------------------------------------------------------------
 
-static std::string extract_hash(const std::string& str) { // extracts hash after separator
-    size_t separator_pos = str.find_first_of("_-");
-    if (separator_pos == std::string::npos) {
-        // Separator not found in string
-        return "";
-    }
-    return str.substr(separator_pos + 1);
-}
-
-static std::string extract_prefix(const std::string& str) {
-    size_t separator_pos = std::min(str.find("_"), str.find("-"));
-    std::string name_prefix = separator_pos == std::string::npos ? str : str.substr(0, separator_pos);
-    return name_prefix;
-}
-
-//-----------------------------------------------------------------------------
-
-std::pair<std::string, std::vector<uint8_t>> neroshop::Serializer::serialize(const neroshop::Object& obj) {
-    std::string name_prefix = "";
+std::pair<std::string, std::string/*std::vector<uint8_t>*/> neroshop::Serializer::serialize(const neroshop::Object& obj) {
     nlohmann::json json_object = {};
     
     if(std::holds_alternative<Seller>(obj)) {
-        name_prefix = "user";
         const Seller& seller = std::get<Seller>(obj);
         json_object["display_name"] = seller.get_name();
         json_object["monero_address"] = seller.get_id(); // used as identifier
         std::string public_key = seller.get_public_key();
         if(!public_key.empty()) json_object["public_key"] = public_key;
         //json_object["avatar"] = ; // TODO: Avatars
+        json_object["metadata"] = "user";
     }
     
     if(std::holds_alternative<Product>(obj)) {
-        name_prefix = "product";
         const Product& product = std::get<Product>(obj);
         json_object["id"] = product.get_id();
         json_object["name"] = product.get_name();
@@ -135,10 +116,10 @@ std::pair<std::string, std::vector<uint8_t>> neroshop::Serializer::serialize(con
             json_object["tags"] = tags_array;
         }
         //json_object["images"] = // TODO: Product Images
+        json_object["metadata"] = "product";
     }
     
     if(std::holds_alternative<Listing>(obj)) {
-        name_prefix = "listing";
         const Listing& listing = std::get<Listing>(obj);
         json_object["id"] = listing.get_id();
         json_object["product_id"] = listing.get_product_id();
@@ -149,10 +130,11 @@ std::pair<std::string, std::vector<uint8_t>> neroshop::Serializer::serialize(con
         json_object["condition"] = listing.get_condition();
         json_object["location"] = listing.get_location();
         json_object["date"] = listing.get_date();
+        //json_object["signature"] = // listings can be updated by the user that can verify the signature
+        json_object["metadata"] = "listing";
     }
     
     if(std::holds_alternative<Cart>(obj)) { 
-        name_prefix = "cart";
         const Cart& cart = std::get<Cart>(obj);
         json_object["id"] = cart.get_id();
         json_object["owner_id"] = cart.get_owner_id();
@@ -163,10 +145,10 @@ std::pair<std::string, std::vector<uint8_t>> neroshop::Serializer::serialize(con
             cart_item_obj["seller_id"] = std::get<2>(item);
             json_object["contents"].push_back(cart_item_obj); // cart_items // TODO: encrypt cart contents
         }
+        json_object["metadata"] = "cart";
     }
     
     if(std::holds_alternative<Order>(obj)) {
-        name_prefix = "order";
         const Order& order = std::get<Order>(obj);
         json_object["id"] = order.get_id();
         json_object["created_at"] = order.get_date();
@@ -187,31 +169,31 @@ std::pair<std::string, std::vector<uint8_t>> neroshop::Serializer::serialize(con
             order_item_obj["seller_id"] = std::get<2>(item);
             json_object["items"].push_back(order_item_obj); // order_items // TODO: encrypt order items
         }
+        json_object["metadata"] = "order";
     }
     
     if(std::holds_alternative<ProductRating>(obj)) {
-        name_prefix = "product_rating";
         const ProductRating& product_rating = std::get<ProductRating>(obj);
         json_object["product_id"] = product_rating.product_id;
         json_object["stars"] = product_rating.stars;
         json_object["rater_id"] = product_rating.rater_id;
         json_object["comments"] = product_rating.comments;
         json_object["signature"] = product_rating.signature;
+        json_object["metadata"] = "product_rating";
     }
     
     if(std::holds_alternative<SellerRating>(obj)) {
-        name_prefix = "seller_rating";
         const SellerRating& seller_rating = std::get<SellerRating>(obj);
         json_object["seller_id"] = seller_rating.seller_id;
         json_object["score"] = seller_rating.score;
         json_object["rater_id"] = seller_rating.rater_id;
         json_object["comments"] = seller_rating.comments;
         json_object["signature"] = seller_rating.signature;
+        json_object["metadata"] = "seller_rating";
     }    
     // TODO: Favorites (wishlists). EDIT: Favorites won't be stored in the DHT but will be stored locally
     // Use versioning or timestamping for updating values in DHT. Keys remain the same.
     //-------------------------------------------------------------
-    assert(!name_prefix.empty() && "Invalid neroshop object type");
     // Get the `value`
     std::string value = json_object.dump();
     // Convert the string to a byte string (UTF-8 encoding) in case we ever decide to store values as bytes instead of as json string
@@ -219,7 +201,7 @@ std::pair<std::string, std::vector<uint8_t>> neroshop::Serializer::serialize(con
     // Generate `key` by hashing the value
     std::string key = neroshop_crypto::sha3_256(value);//std::string key = neroshop_crypto::sha3_256(value_bytes);
     //-------------------------------------------------------------
-    #ifdef NEROSHOP_DEBUG
+    #ifdef NEROSHOP_DEBUG0
     std::cout << json_object.dump(4) << "\n";
     
     std::cout << "\nkey (hash of value): " << key << "\n";
@@ -235,28 +217,28 @@ std::pair<std::string, std::vector<uint8_t>> neroshop::Serializer::serialize(con
     #endif
     
     // Return key-value pair
-    return std::make_pair(name_prefix + "_" + key, value_bytes);
+    return std::make_pair(key, value);//value_bytes);
 }
 
 //-----------------------------------------------------------------------------
 
-std::shared_ptr<neroshop::Object> neroshop::Serializer::deserialize(const std::pair<std::string, std::vector<uint8_t>>& data, std::size_t length) {//const neroshop::Object& neroshop::Serializer::deserialize(const std::pair<std::string, std::vector<uint8_t>>& data) {
+std::shared_ptr<neroshop::Object> neroshop::Serializer::deserialize(const std::pair<std::string, std::string/*std::vector<uint8_t>*/>& data, std::size_t length) {//const neroshop::Object& neroshop::Serializer::deserialize(const std::pair<std::string, std::vector<uint8_t>>& data) {
     // First element of the pair is the key
-    std::string key = data.first;//extract_hash(data.first);
+    std::string key = data.first;
     // Second element of the pair is the serialized value
-    std::vector<uint8_t> serialized_value = data.second;
+    ////std::vector<uint8_t> serialized_value = data.second;
     // Deserialize the value
-    nlohmann::json value = nlohmann::json::from_msgpack(serialized_value);
+    nlohmann::json value = nlohmann::json::parse(data.second);////nlohmann::json::from_msgpack(serialized_value);
     ////std::string json_string = value.dump();
     // Deserialize the JSON object and create the appropriate variant object
-    std::string name_prefix = extract_prefix(key);
+    std::string metadata = value["metadata"];
     std::shared_ptr<neroshop::Object> variant_object;
-    if(name_prefix == "user") {
+    if(metadata == "user") {
         Seller seller;
         //variant_object = std::make_shared<Object>(seller);//std::make_shared<Object>(std::move(seller));
     }
     
-    if(name_prefix == "product") {
+    if(metadata == "product") {
         Product product; // initialize the Product object
         product.set_id(value["id"].get<std::string>());
         product.set_name(value["name"].get<std::string>());
@@ -322,7 +304,7 @@ std::shared_ptr<neroshop::Object> neroshop::Serializer::deserialize(const std::p
         variant_object = std::make_shared<Object>(std::move(product)); // move the object into the shared_ptr
     }
     
-    if(name_prefix == "listing") {
+    if(metadata == "listing") {
         Listing listing;
         listing.set_id(value["id"].get<std::string>());
         listing.set_product_id(value["product_id"].get<std::string>());
@@ -336,7 +318,7 @@ std::shared_ptr<neroshop::Object> neroshop::Serializer::deserialize(const std::p
         variant_object = std::make_shared<Object>(std::move(listing));
     }
     
-    if(name_prefix == "cart") {
+    if(metadata == "cart") {
         Cart cart;
         cart.set_id(value["id"].get<std::string>());
         cart.set_owner_id(value["owner_id"].get<std::string>());
@@ -352,7 +334,7 @@ std::shared_ptr<neroshop::Object> neroshop::Serializer::deserialize(const std::p
         variant_object = std::make_shared<Object>(cart);
     }
     
-    if(name_prefix == "order") {
+    if(metadata == "order") {
         Order order;
         order.set_id(value["id"].get<std::string>());
         order.set_date(value["created_at"].get<std::string>());
@@ -378,7 +360,7 @@ std::shared_ptr<neroshop::Object> neroshop::Serializer::deserialize(const std::p
         variant_object = std::make_shared<Object>(order);
     }
     
-    if(name_prefix == "product_rating") {
+    if(metadata == "product_rating") {
         ProductRating product_rating;
         product_rating.rater_id = value["rater_id"].get<std::string>();
         product_rating.comments = value["comments"].get<std::string>();
@@ -388,7 +370,7 @@ std::shared_ptr<neroshop::Object> neroshop::Serializer::deserialize(const std::p
         variant_object = std::make_shared<Object>(product_rating);
     }
     
-    if(name_prefix == "seller_rating") {
+    if(metadata == "seller_rating") {
         SellerRating seller_rating;
         seller_rating.rater_id = value["rater_id"].get<std::string>();
         seller_rating.comments = value["comments"].get<std::string>();
@@ -399,6 +381,37 @@ std::shared_ptr<neroshop::Object> neroshop::Serializer::deserialize(const std::p
     }
     // Return variant object as shared_ptr
     return variant_object;
+}
+
+//-----------------------------------------------------------------------------
+
+std::pair<std::string, std::string> neroshop::Serializer::serialize(const Seller& seller) {
+    nlohmann::json json_object = {};
+    
+    json_object["display_name"] = seller.get_name();
+    json_object["monero_address"] = seller.get_id(); // used as identifier
+    std::string public_key = seller.get_public_key();
+    if(!public_key.empty()) json_object["public_key"] = public_key;
+    //json_object["avatar"] = ; // TODO: Avatars
+    json_object["metadata"] = "user";
+    //-------------------------------------------------------------
+    // Get the `value`
+    std::string value = json_object.dump();
+    // Convert the string to a byte string (UTF-8 encoding) in case we ever decide to store values as bytes instead of as json string
+    std::vector<uint8_t> value_bytes = nlohmann::json::to_msgpack(json_object);
+    // Generate `key` by hashing the value
+    std::string key = neroshop_crypto::sha3_256(value);//std::string key = neroshop_crypto::sha3_256(value_bytes);
+    //-------------------------------------------------------------
+    #ifdef NEROSHOP_DEBUG0
+    std::cout << "\nkey (hash of value): " << key << "\n";
+    std::cout << "value: " << value << "\n";
+
+    nlohmann::json bytes_to_json = nlohmann::json::from_msgpack(value_bytes);
+    assert(value == bytes_to_json.dump()); // The value should be the same as the bytes dumped
+    #endif
+    
+    // Return key-value pair
+    return std::make_pair(key, value);//value_bytes);
 }
 
 //-----------------------------------------------------------------------------
@@ -437,7 +450,7 @@ std::string neroshop::Serializer::to_json(Args&&... args) {
     std::string key = result.first;
     nlohmann::json value_json = nlohmann::json::from_msgpack(result.second);
     //std::cout << key << ": " << value_json << "\n";
-    assert(neroshop_crypto::sha3_256(value_json.dump()) == extract_hash(key)); // key must be hash of value
+    assert(neroshop_crypto::sha3_256(value_json.dump()) == key); // key must be hash of value
     
     
     auto obj2 = neroshop::Serializer::deserialize(result);
@@ -447,7 +460,7 @@ std::string neroshop::Serializer::to_json(Args&&... args) {
     std::string key2 = result2.first;
     nlohmann::json value_json2 = nlohmann::json::from_msgpack(result2.second);
     //std::cout << key2 << ": " << value_json2 << "\n";
-    assert(neroshop_crypto::sha3_256(value_json2.dump()) == extract_hash(key2)); // key must be hash of value
+    assert(neroshop_crypto::sha3_256(value_json2.dump()) == key2); // key must be hash of value
     return 0;
 }*/
 // g++ serializer.cpp crypto/sha3_256.cpp tools/logger.cpp price/*.cpp config.cpp script.cpp cart.cpp product.cpp listing.cpp order.cpp database/database.cpp database/sqlite.cpp -o serialize -lcrypto -lssl -I../../external/json/single_include -Icrypto -I../../external/stduuid/include -I../../external/stduuid/ -I../../external/lua/src -L../../build -lsqlite3 -lcurl -llua  

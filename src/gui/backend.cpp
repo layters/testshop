@@ -14,6 +14,10 @@
 #include <QProcess> // Note: QProcess is not supported on VxWorks, iOS, tvOS, or watchOS.
 #include <QUuid>
 
+#include "../neroshop_config.hpp"
+#include "../core/version.hpp"
+#include "../core/serializer.hpp"
+#include "daemon_manager.hpp"
 #include "../core/cart.hpp"
 #include "../core/protocol/transport/client.hpp"
 #include "../core/price/currency_converter.hpp" // neroshop::Converter::is_supported_currency
@@ -1197,6 +1201,11 @@ QVariantList neroshop::Backend::checkDisplayName(const QString& display_name) co
 //----------------------------------------------------------------
 // TODO: replace function return type with enum
 QVariantList neroshop::Backend::registerUser(WalletController* wallet_controller, const QString& display_name, UserController * user_controller) {
+    // TODO: Make sure daemon is connected first
+    if(!DaemonManager::isDaemonServerBound()) {
+        return { false, "Please wait for the daemon IPC server to connect first" };
+    }
+    //---------------------------------------------
     neroshop::db::Sqlite3 * database = neroshop::get_database();
     if(!database) throw std::runtime_error("database is NULL");
     //---------------------------------------------
@@ -1216,9 +1225,8 @@ QVariantList neroshop::Backend::registerUser(WalletController* wallet_controller
     //---------------------------------------------
     // Generate RSA key pair
     std::string config_path = NEROSHOP_DEFAULT_CONFIGURATION_PATH;
-    std::string key_name = primary_address;////(display_name.isEmpty()) ? primary_address : display_name.toStdString();
-    std::string public_key_filename = config_path + "/" + key_name + ".pub";
-    std::string private_key_filename = config_path + "/" + key_name + ".key";
+    std::string public_key_filename = config_path + "/" + primary_address + ".pub";
+    std::string private_key_filename = config_path + "/" + primary_address + ".key";
     EVP_PKEY * pkey = neroshop::crypto::rsa_generate_keys_get();
     if(pkey == nullptr) {
         return { false, "Failed to generate RSA key pair" };
@@ -1246,6 +1254,35 @@ QVariantList neroshop::Backend::registerUser(WalletController* wallet_controller
     if (user_controller->getUser() == nullptr) {
         return {false, "user is NULL"};
     }
+    user_controller->_user->set_name(display_name.toStdString());
+    user_controller->_user->set_public_key(public_key);
+    //---------------------------------------------
+    // Store login credentials in DHT
+    Client * client = Client::get_main_client();
+    // If client is not connect, return error
+    if (!client->is_connected()) return { false, "Not connected to daemon server" };
+    // Serialize user object
+    neroshop::Seller& seller_ref = dynamic_cast<neroshop::Seller&>(*user_controller->_user); // Create a temporary reference from the unique_ptr
+    auto data = neroshop::Serializer::serialize(seller_ref);
+    std::string key = data.first;
+    std::string value = data.second;
+    
+    // Send put
+    nlohmann::json args_obj = { {"key", key}, {"value", value} };
+    nlohmann::json query_object = { {"version", std::string(NEROSHOP_VERSION)}, {"query", "put"}, {"args", args_obj}, {"tid", nullptr} };
+    std::vector<uint8_t> packed_data = nlohmann::json::to_msgpack(query_object);
+    client->send(packed_data);
+    // Receive response
+    try {
+        std::vector<uint8_t> response;
+        client->receive(response);
+        // Deserialize the response from MessagePack to a JSON object
+        nlohmann::json response_object = nlohmann::json::from_msgpack(response);
+        std::cout << "Received response: " << response_object.dump() << std::endl;
+    } catch (const nlohmann::detail::parse_error& e) {
+        std::cerr << "An error occurred: " << "Server was disconnected" << std::endl;//std::cout << "Failed to parse server response: " << e.what() << std::endl;
+    }
+    //---------------------------------------------    
     emit user_controller->userChanged();
     emit user_controller->userLogged();
     //user_controller->rateItem("3c20978b-a543-4c58-bc68-5f900027796f", 3, "This product is aiight");
