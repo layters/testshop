@@ -131,7 +131,6 @@ bool neroshop::Server::accept() {
     clients.emplace_back(std::move(client));
     
     std::cout << "\033[0;37mReceived connection from " + std::string(inet_ntoa(client_addr.sin_addr)) + ":\033[0;36m" + std::to_string(ntohs(client_addr.sin_port)) + "\033[0m\n";
-    
     return true;
 }
 ////////////////////

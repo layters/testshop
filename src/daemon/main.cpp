@@ -255,7 +255,7 @@ int main(int argc, char** argv)
         rpc_thread.join();
     }
     ipc_thread.join();
-    dht_thread.join(); // Uses a ton of resources due to UDP socket being non-blocking + when calling run() :/
+    dht_thread.join();
     
     #if defined(NEROSHOP_USE_MINIUPNP)
     // Release the UPnP context and free resources

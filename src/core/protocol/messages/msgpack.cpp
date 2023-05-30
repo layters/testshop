@@ -44,14 +44,14 @@ std::vector<uint8_t> neroshop::msgpack::process(const std::vector<uint8_t>& requ
     // "args" must contain the querying node's ID 
     assert(request_object["args"].is_object());
     auto params_object = request_object["args"];
-    assert(params_object["id"].is_string()); // querying node's id
-    std::string requester_node_id = params_object["id"];
+    if(!ipc_mode) assert(params_object["id"].is_string()); // querying node's id
+    std::string requester_node_id = (ipc_mode) ? node.get_id() : params_object["id"].get<std::string>();
     
-    if(!request_object.contains("tid")) {
+    if(!request_object.contains("tid") && !ipc_mode) {
         std::cout << "No tid found, hence a notification that will not receive a response from the server\n";
         return {};
     }
-    auto tid = request_object["tid"];
+    auto tid = (ipc_mode) ? nullptr : request_object["tid"];
     int code = 0;
     //-----------------------------------------------------
     if(method == "ping") {

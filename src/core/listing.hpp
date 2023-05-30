@@ -45,6 +45,7 @@ private:
     std::string condition; // TODO: make this an enum or nah?
     std::string location;
     std::string date; // date the listing was `created_at`
+    std::string signature;
 };
 
 }      

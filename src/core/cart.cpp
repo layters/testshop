@@ -82,7 +82,7 @@ void neroshop::Cart::load(const std::string& user_id) {
         std::get<1>(cart_item) = quantity;
         neroshop::print("loaded cart item (id: " + product_id + ", qty: " + std::to_string(quantity) + ")", 3);
     }
-    print_cart();
+    //print_cart();
 }
 ////////////////////
 void neroshop::Cart::add(const std::string& user_id, const std::string& product_id, int quantity) {
