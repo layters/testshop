@@ -67,12 +67,6 @@ int main(int argc, char *argv[])
 
     QQmlApplicationEngine engine;
     //--------------------------
-    // start server daemon
-    /*Backend::startServerDaemon();
-    // wait for daemon server to open
-    Backend::waitForServerDaemon();
-    // connect to server daemon
-    Backend::connectToServerDaemon();*/
     // Configuration file must be loaded right after Qt Application object has been created so that we can get the correct config location
     // open configuration script
     neroshop::load_nodes_from_memory();
@@ -112,6 +106,10 @@ int main(int argc, char *argv[])
             return 1;
         }
     }    
+    // Create an instance of DaemonManager and expose it to QML
+    DaemonManager daemonManager;
+    daemonManager.startDaemonProcessDetached();
+    engine.rootContext()->setContextProperty("DaemonManager", &daemonManager);
     // we can also register an instance of a class instead of the class itself
     WalletController *wallet = new WalletController(&engine);
     wallet->setNetworkTypeByString(QString::fromStdString(network_type));

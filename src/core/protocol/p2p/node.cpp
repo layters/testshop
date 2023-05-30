@@ -352,7 +352,6 @@ void neroshop::Node::join() {
     
     // Print the contents of the routing table
     routing_table->print_table();
-    std::cout << "Join DONE\n";
 }
 
 // TODO: create a softer version of the ping-based join() called join_insert() function for storing pre-existing nodes from local database
@@ -420,9 +419,13 @@ void neroshop::Node::remove_peer(const std::string& info_hash) {
     }
 }
 
-int neroshop::Node::store(const std::string& key, const std::string& value) {    
+int neroshop::Node::put(const std::string& key, const std::string& value) {
     data[key] = value;
     return has_key(key); // boolean
+}
+
+int neroshop::Node::store(const std::string& key, const std::string& value) {    
+    return put(key, value);
 }
 
 std::string neroshop::Node::get(const std::string& key) const {    
@@ -431,6 +434,10 @@ std::string neroshop::Node::get(const std::string& key) const {
         return it->second;
     }
     return "";
+}
+
+std::string neroshop::Node::find_value(const std::string& key) const {
+    return get(key);
 }
 
 int neroshop::Node::remove(const std::string& key) {
@@ -531,7 +538,7 @@ bool neroshop::Node::send_ping(const std::string& address, int port) {
     
     auto ping_message = nlohmann::json::to_msgpack(query_object);
     //--------------------------------------------
-    auto receive_buffer = send_query(address, port, ping_message);
+    auto receive_buffer = send_query(address, port, ping_message, NEROSHOP_DHT_PING_MESSAGE_TIMEOUT);
     //--------------------------------------------
     // Parse the pong message and extract the transaction ID and response fields
     nlohmann::json pong_message;
@@ -672,7 +679,11 @@ int neroshop::Node::send_put(const std::string& key, const std::string& value) {
     //-----------------------------------------------
     // Determine which nodes get to put the key-value data in their hash table
     std::vector<Node *> closest_nodes = find_node(key, NEROSHOP_DHT_REPLICATION_FACTOR); // 5=replication factor
-
+    
+    std::random_device rd;
+    std::mt19937 rng(rd());
+    std::shuffle(closest_nodes.begin(), closest_nodes.end(), rng);
+    //-----------------------------------------------
     // Keep track of the number of nodes to which put messages have been sent
     size_t nodes_sent_count = 0;
     std::unordered_set<Node*> sent_nodes;
@@ -704,7 +715,7 @@ int neroshop::Node::send_put(const std::string& key, const std::string& value) {
         nodes_sent_count++;
     }
     //-----------------------------------------------
-    // Handle the case when there are fewer closest nodes than NEROSHOP_DHT_REPLICATION_FACTOR
+    // Handle the case when there are fewer closest nodes than NEROSHOP_DHT_REPLICATION_FACTOR - this most likely means that the size of the network is tiny
     if (closest_nodes.size() < NEROSHOP_DHT_REPLICATION_FACTOR) return nodes_sent_count;
     //-----------------------------------------------
     // If the desired number of nodes is not reached due to non-responses, replace failed nodes with new nodes and continue sending put messages
@@ -761,12 +772,14 @@ int neroshop::Node::send_put(const std::string& key, const std::string& value) {
     return nodes_sent_count;
 }
 
-void neroshop::Node::send_get(const std::string& key) {
-    
-    std::string transaction_id = msgpack::generate_transaction_id();
-    
+int neroshop::Node::send_store(const std::string& key, const std::string& value) {
+    return send_put(key, value);
+}
+
+std::string neroshop::Node::send_get(const std::string& key) {
+    std::string value = "";
+
     nlohmann::json query_object;
-    query_object["tid"] = transaction_id;
     query_object["query"] = "get";
     query_object["args"]["id"] = this->id;
     query_object["args"]["key"] = key;
@@ -774,10 +787,12 @@ void neroshop::Node::send_get(const std::string& key) {
     
     std::vector<uint8_t> get_message = nlohmann::json::to_msgpack(query_object);
     //-----------------------------------------------
-    /*std::vector<Node *> closest_nodes = find_node(key, NEROSHOP_DHT_MAX_CLOSEST_NODES);
+    std::vector<Node *> closest_nodes = find_node(key, NEROSHOP_DHT_MAX_CLOSEST_NODES);
+    
+    std::random_device rd;
+    std::mt19937 rng(rd());
+    std::shuffle(closest_nodes.begin(), closest_nodes.end(), rng);
     //-----------------------------------------------
-    // socket sendto and recvfrom here
-    //auto receive_buffer = send_query(address, port, get_message);
     // Send get message to the closest nodes
     for(auto const& node : closest_nodes) {
         std::string transaction_id = msgpack::generate_transaction_id();
@@ -797,16 +812,21 @@ void neroshop::Node::send_get(const std::string& key) {
             node->check_counter += 1;
             continue; // Continue with the next closest node if this one fails
         }   
-        // Show response
-        std::cout << "\033[32m" << get_response_message.dump() << "\033[0m\n";
-    }*/
+        // Show response and handle the retrieved value
+        std::cout << ((get_response_message.contains("error")) ? ("\033[91m") : ("\033[32m")) << get_response_message.dump() << "\033[0m\n";
+        if(get_response_message.contains("error")) continue; // Skip if error
+        if (get_response_message.contains("response") && get_response_message["response"].contains("value")) {
+            std::string value = get_response_message["response"]["value"].get<std::string>();
+            if(value.empty()) continue; // Skip empty values
+            return value; // Return the retrieved value
+        }
+    }
     //-----------------------------------------------
-    // process the response here
-    // ...
-    //-----------------------------------------------
-    // get 'value' from get request
-    // ...
-    
+    return "";
+}
+
+std::string neroshop::Node::send_find_value(const std::string& key) {
+    return send_get(key);
 }
 
 void neroshop::Node::send_remove(const std::string& key) {
@@ -857,7 +877,9 @@ void neroshop::Node::periodic() {
                 }
             }
         }
-        } // read_lock is released here
+            // read_lock is released here
+        }
+        
         // Sleep for a specified interval
         std::this_thread::sleep_for(std::chrono::seconds(NEROSHOP_DHT_PERIODIC_CHECK_INTERVAL));
     }
@@ -1084,6 +1106,30 @@ std::string neroshop::Node::get_status_as_string() const {
     if(check_counter >= NEROSHOP_DHT_MAX_HEALTH_CHECKS) return "Inactive"; // Red
     return "Unknown";
 }
+
+std::vector<std::string> neroshop::Node::get_keys() const {
+    std::vector<std::string> keys;
+
+    for (const auto& pair : data) {
+        keys.push_back(pair.first);
+    }
+
+    return keys;
+}
+
+std::vector<std::pair<std::string, std::string>> neroshop::Node::get_data() const {
+    std::vector<std::pair<std::string, std::string>> data_vector;
+
+    for (const auto& pair : data) {
+        data_vector.push_back(pair);
+    }
+
+    return data_vector;
+}
+
+/*const std::unordered_map<std::string, std::string>& neroshop::Node::get_data() const {
+    return data;
+}*/
 
 //-----------------------------------------------------------------------------
 

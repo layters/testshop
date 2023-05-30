@@ -1,6 +1,6 @@
 // Copyright (c) 2021-2023 the neroshop core team
 // Distributed under the GPLv3 software license, see the accompanying
-// file COPYING or https://opensource.org/license/gpl-3-0/.
+// file LICENSE or https://opensource.org/license/gpl-3-0/.
 
 #ifndef NEROSHOP_HPP
 #define NEROSHOP_HPP
@@ -62,6 +62,7 @@
 #if defined(NEROSHOP_BUILD_GUI)
 #include "gui/backend.hpp"
 #include "gui/currency_rate_provider.hpp"
+#include "gui/daemon_manager.hpp"
 #include "gui/image_loader.hpp"
 #include "gui/image_provider.hpp"
 #include "gui/script_controller.hpp"

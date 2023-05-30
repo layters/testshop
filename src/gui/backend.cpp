@@ -1370,38 +1370,6 @@ bool neroshop::Backend::loginWithHW(WalletController* wallet_controller, UserCon
 }
 //----------------------------------------------------------------
 //----------------------------------------------------------------
-void neroshop::Backend::startServerDaemon() {
-    #ifdef Q_OS_WIN
-    QString program = "neromon.exe";
-    #else
-    QString program = "./neromon";
-    #endif
-
-    // Note: If the calling process exits, the detached process will continue to run unaffected.
-    qint64 pid = -1;
-    bool success = QProcess::startDetached(program, {}, QString(), &pid);
-    if(!success) { throw std::runtime_error("neroshop daemon process could not be started"); }
-    std::cout << "\033[35mneromon started (pid: " << pid << ")\033[0m\n";
-}
-//----------------------------------------------------------------
-void neroshop::Backend::waitForServerDaemon() {
-    ::sleep(2);
-}
-//----------------------------------------------------------------
-void neroshop::Backend::connectToServerDaemon() {
-    // We will use JSON to write the request data that will sent to the server
-    neroshop::Client * client = neroshop::Client::get_main_client();
-	int client_port = 40441;
-	std::string client_ip = "0.0.0.0";//"localhost";//0.0.0.0 means anyone can connect to your server
-	if(!client->connect(client_port, client_ip)) {
-	    // free process
-	    ////delete server_process; // kills process
-	    ////server_process = nullptr;
-	    // exit application
-	    exit(0);
-	} else std::cout << client->read() << std::endl;
-}
-//----------------------------------------------------------------
 //----------------------------------------------------------------
 //----------------------------------------------------------------
 void neroshop::Backend::testfts5() {

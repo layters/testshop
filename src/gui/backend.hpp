@@ -85,10 +85,6 @@ public:
     
     //Q_INVOKABLE void ();
     static void testfts5();
-    // Test function
-    static void startServerDaemon();
-    static void waitForServerDaemon();
-    static void connectToServerDaemon();
 private:
 };
 }

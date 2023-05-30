@@ -69,9 +69,11 @@ public:
     void send_announce_peer(const std::string& info_hash, int port, const std::string& token);
     void send_add_peer(const std::string& info_hash, const Peer& peer);
     int send_put(const std::string& key, const std::string& value);
-    void send_get(const std::string& key);
+    int send_store(const std::string& key, const std::string& value);
+    std::string send_get(const std::string& key);
+    std::string send_find_value(const std::string& key);
     void send_remove(const std::string& key);
-    void send_find_value(const std::string& key); // Will be used in lookups
+    // announce_peer, get_peers are specific to Bittorent and are not used in standard Kademlia
     //---------------------------------------------------
     std::vector<Node*> lookup(const std::string& key); // In Kademlia, the primary purpose of the lookup function is to find the nodes responsible for storing a particular key in the DHT, rather than retrieving the actual value of the key. The lookup function helps in locating the nodes that are likely to have the key or be able to provide information about it.
     //---------------------------------------------------    
@@ -89,8 +91,10 @@ public:
     void announce_peer(const std::string& info_hash, int port, const std::string& token); // A query to announce that a peer has joined a specific torrent or infohash.
     void add_peer(const std::string& info_hash, const Peer& peer);
     void remove_peer(const std::string& info_hash);
-    int store(const std::string& key, const std::string& value); // A query to store a value in the DHT.    // Stores the key-value pair in the DHT
+    int put(const std::string& key, const std::string& value); // A query to store a value in the DHT.    // Stores the key-value pair in the DHT
+    int store(const std::string& key, const std::string& value);
     std::string get(const std::string& key) const; // A query to get a specific value stored in the DHT.         // Retrieves the value associated with the key from the DHT
+    std::string find_value(const std::string& key) const;
     int remove(const std::string& key); // Remove a key-value pair from the DHT
     //---------------------------------------------------
     std::string get_id() const; // get ID of this node
@@ -102,6 +106,8 @@ public:
     RoutingTable * get_routing_table() const;
     NodeStatus get_status() const;
     std::string get_status_as_string() const;
+    std::vector<std::string> get_keys() const;
+    std::vector<std::pair<std::string, std::string>> get_data() const;
     
     void set_bootstrap(bool bootstrap);
     

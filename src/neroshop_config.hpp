@@ -1,6 +1,6 @@
 // Copyright (c) 2021-2023 the neroshop core team
 // Distributed under the GPLv3 software license, see the accompanying
-// file COPYING or https://opensource.org/license/gpl-3-0/.
+// file LICENSE or https://opensource.org/license/gpl-3-0/.
 
 #pragma once
 
@@ -23,6 +23,8 @@
 //TODO This port will allow outside clients to interact with neroshop daemon RPC server
 #define NEROSHOP_RPC_DEFAULT_PORT 50882
 
+#define NEROSHOP_DAEMON_WAIT_TIME 20 // Measured in seconds
+
 #define NEROSHOP_LOOPBACK_ADDRESS            "127.0.0.1"
 #define NEROSHOP_ANY_ADDRESS                 "0.0.0.0"
 
@@ -37,16 +39,17 @@
 #define NEROSHOP_DHT_MAX_NODES_PER_BUCKET    NEROSHOP_DHT_MAX_BUCKET_SIZE
 #define NEROSHOP_DHT_MAX_ROUTING_TABLE_NODES NEROSHOP_DHT_ROUTING_TABLE_BUCKETS * NEROSHOP_DHT_MAX_BUCKET_SIZE
 #define NEROSHOP_DHT_MAX_HEALTH_CHECKS       3 // Maximum number of consecutive failed checks before marking the node as dead
-#define NEROSHOP_DHT_PERIODIC_CHECK_INTERVAL 10 // Number of seconds between each periodic health check
+#define NEROSHOP_DHT_PERIODIC_CHECK_INTERVAL 60 // Number of seconds between each periodic health check
+#define NEROSHOP_DHT_MAX_SEARCHES            3
 
 #define NEROSHOP_PUBLIC_KEY_FILENAME              "<user_id>.pub"
 #define NEROSHOP_PRIVATE_KEY_FILENAME             "<user_id>.key"
-#define NEROSHOP_PUBLIC_KEY_FILENAME_OPENSSL      "<user_id>.pem"
-#define NEROSHOP_PRIVATE_KEY_FILENAME_OPENSSL     "<user_id>.pem"
-#define NEROSHOP_PGP_PRIVATE_KEY_FILENAME         "private_key.pgp"
-#define NEROSHOP_PGP_PUBLIC_KEY_FILENAME          "public_key.pgp"
-#define NEROSHOP_PGP_ARMORED_PRIVATE_KEY_FILENAME "private_key.asc"
-#define NEROSHOP_PGP_ARMORED_PUBLIC_KEY_FILENAME  "public_key.asc"
+#define NEROSHOP_OPENSSL_PUBLIC_KEY_FILENAME      "<user_id>.pem"
+#define NEROSHOP_OPENSSL_PRIVATE_KEY_FILENAME     "<user_id>.pem"
+#define NEROSHOP_PGP_PRIVATE_KEY_FILENAME         "<user_id>.pgp"
+#define NEROSHOP_PGP_PUBLIC_KEY_FILENAME          "<user_id>.pgp"
+#define NEROSHOP_PGP_ARMORED_PRIVATE_KEY_FILENAME "<user_id>.asc"
+#define NEROSHOP_PGP_ARMORED_PUBLIC_KEY_FILENAME  "<user_id>.asc"
 
 #define NEROSHOP_RSA_DEFAULT_BIT_LENGTH 4096
 #define NEROSHOP_RSA_DEFAULT_BITS NEROSHOP_RSA_DEFAULT_BIT_LENGTH
