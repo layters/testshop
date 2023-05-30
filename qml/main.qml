@@ -205,7 +205,7 @@ ApplicationWindow {
                     //textObject.visible: true
                     hoverEnabled: true
                     anchors.verticalCenter: parent.verticalCenter//anchors.top: parent.top; anchors.topMargin: (parent.height - this.height) / 2 // center vertically on footer (height)
-                    value: 0.5 // placeholder value
+                    value: DaemonManager.daemonProgress//0.5 // placeholder value
                     barWidth: 200
 
                     NeroshopComponents.Hint {
@@ -213,7 +213,7 @@ ApplicationWindow {
                         x: parent.x + (parent.width - this.width) / 2 // Popups don't have anchors :(
                         height: contentHeight + 20; width: (contentWidth > parent.width) ? 300 : parent.width
                         bottomMargin : footer.height + 5
-                        text: qsTr("neromon\n%1 %2").arg((parent.value <= 0.0) ? "Disconnected" : ((parent.value > 0.0 && parent.value < 1.0) ? "Synchronizing" : "Connected")).arg((parent.value > 0.0 && parent.value < 1.0) ? ("(" + (parent.value * 100).toString() + "%)") : "")
+                        text: qsTr("neromon\n%1 %2").arg(DaemonManager.daemonStatusText/*(parent.value <= 0.0) ? "Disconnected" : ((parent.value > 0.0 && parent.value < 1.0) ? "Synchronizing" : "Connected")*/).arg((parent.value > 0.0 && parent.value < 1.0) ? ("(" + (parent.value * 100).toString() + "%)") : "")
                         pointer.visible: false
                     }
                 }      

@@ -232,19 +232,17 @@ int main(int argc, char** argv)
     }
     #endif
     //-------------------------------------------------------
-    neroshop::Node node("0.0.0.0", NEROSHOP_P2P_DEFAULT_PORT, true);
+    neroshop::Node node("0.0.0.0"/*ip_address*/, NEROSHOP_P2P_DEFAULT_PORT, true);
     
     if(result.count("bootstrap")) {   
         std::cout << "Switching to bootstrap mode ...\n";
         node.set_bootstrap(true);
-        #ifndef NEROSHOP_DEBUG
-        assert(ip_address == NEROSHOP_ANY_ADDRESS && "Bootstrap node is not public");
-        #endif
+        assert(node.get_ip_address() == NEROSHOP_ANY_ADDRESS && "Bootstrap node is not public");
         // ALWAYS use address "0.0.0.0" for bootstrap nodes so that it is reachable by all nodes in the network, regardless of their location.
     }
     //-------------------------------------------------------
-    std::thread ipc_thread([&node]() { ipc_server(node); });//(ipc_server, std::ref(node));//  // For IPC communication between the local GUI client and the local daemon server
-    std::thread dht_thread([&node]() { dht_server(node); });//(dht_server, std::ref(node));// // DHT communication for peer discovery and data storage
+    std::thread ipc_thread([&node]() { ipc_server(node); }); // For IPC communication between the local GUI client and the local daemon server
+    std::thread dht_thread([&node]() { dht_server(node); }); // DHT communication for peer discovery and data storage
     std::thread rpc_thread;  // Declare the thread object // RPC communication for processing requests from outside clients (disabled by default)
     
     if(result.count("rpc")) {

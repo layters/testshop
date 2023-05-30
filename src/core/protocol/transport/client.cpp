@@ -67,7 +67,8 @@ bool neroshop::Client::connect(unsigned int port, std::string address) {
             perror("connect failed");
             continue;
         }
-        break;
+        freeaddrinfo(result);
+        return true;  // Return true immediately after a successful connection
     }
 
     freeaddrinfo(result);
@@ -77,7 +78,7 @@ bool neroshop::Client::connect(unsigned int port, std::string address) {
         close();
         return false;
     }        
-    return true;    
+    return false;  // Return false if no successful connection was made
     //------------------------------------------------------------------
     /*#if defined(__gnu_linux__) && defined(NEROSHOP_USE_SYSTEM_SOCKETS)
 	struct hostent * host = gethostbyname(address.c_str()); // gethostbyname only supports IPv4 addresses, while getaddrinfo is a newer function that can handle both IPv4 and IPv6 addresses.

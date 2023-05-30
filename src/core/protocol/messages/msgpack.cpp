@@ -56,7 +56,6 @@ std::vector<uint8_t> neroshop::msgpack::process(const std::vector<uint8_t>& requ
     //-----------------------------------------------------
     if(method == "ping") {
         response_object["version"] = std::string(NEROSHOP_VERSION);
-        ////response_object["response"]["message"] = "pong";
         response_object["response"]["id"] = node.get_id();
     }
     //-----------------------------------------------------
@@ -79,7 +78,6 @@ std::vector<uint8_t> neroshop::msgpack::process(const std::vector<uint8_t>& requ
                     {"port", n->get_port()}
                 };
                 nodes_array.push_back(node_object);
-                //std::cout << "Node IP address: " << n->get_ip_address() << ", Node port: " << n->get_port() << std::endl;
             }
             response_object["response"]["nodes"] = nodes_array;
         }
@@ -164,23 +162,66 @@ std::vector<uint8_t> neroshop::msgpack::process(const std::vector<uint8_t>& requ
     }
     //-----------------------------------------------------
     if(method == "get") {
-        std::cout << "message type is a get\n";
-        assert(request_object["args"].is_object());
-        auto params_object = request_object["args"];
-        assert(params_object["key"].is_string());
-        std::string key = params_object["key"];
+        if(ipc_mode == false) { // For Processing Get Requests from Other Nodes:
+            std::cout << "message type is a get\n";
+            assert(request_object["args"].is_object());
+            auto params_object = request_object["args"];
+            assert(params_object["key"].is_string());
+            std::string key = params_object["key"];
         
-        // Look up the value in the node's hash table
-        std::string value = node.get(key);
-        if (value.empty()) {
+            // If node does not have the key, check the closest nodes to see if they have it
+            if (!node.has_key(key)) {
+                std::string value;
+                int search_attempts = 0;
+                // Key not found, send more get requests to closest nodes
+                while (search_attempts < NEROSHOP_DHT_MAX_SEARCHES) {
+                    value = node.send_get(key);
+                    if(!value.empty()) {
+                        response_object["version"] = std::string(NEROSHOP_VERSION);
+                        response_object["response"]["id"] = node.get_id();
+                        response_object["response"]["value"] = value;
+                        response_object["tid"] = tid;
+                        response = nlohmann::json::to_msgpack(response_object);
+                        return response; // Value found, exit the loop with response
+                    }
+                    search_attempts = search_attempts + 1;
+                }
+                
+                // Key not found, return error response
+                code = static_cast<int>(KadResultCode::RetrieveFailed);
+                response_object["error"]["code"] = code;
+                response_object["error"]["message"] = "Key not found";
+                response_object["tid"] = tid;
+                response = nlohmann::json::to_msgpack(response_object);
+                return response;
+            }
+            // Look up the value in the node's own hash table
+            std::string value = node.find_value(key);
+            // Key found, return success response with value
+            response_object["version"] = std::string(NEROSHOP_VERSION);
+            response_object["response"]["id"] = node.get_id();
+            response_object["response"]["value"] = value;
+
+        } else { // For Sending Get Requests to Other Nodes
+            std::cout << "message type is a send_get\n";
+            assert(request_object["args"].is_object());
+            auto params_object = request_object["args"];
+            assert(params_object["key"].is_string());
+            std::string key = params_object["key"];
+            
+            // Send get messages to the closest nodes in your routing table (IPC mode)
+            std::string value = node.send_get(key);
+            std::cout << "value (IPC mode): " << value << "\n";
+            
             // Key not found, return error response
-            code = static_cast<int>(KadResultCode::RetrieveFailed);
-            response_object["error"]["code"] = code;
-            response_object["error"]["message"] = "Key not found";
-            response_object["tid"] = tid;
-            response = nlohmann::json::to_msgpack(response_object);
-            return response;
-        } else {
+            if (value.empty()) {
+                code = static_cast<int>(KadResultCode::RetrieveFailed);
+                response_object["error"]["code"] = code;
+                response_object["error"]["message"] = "Key not found";
+                response_object["tid"] = tid;
+                response = nlohmann::json::to_msgpack(response_object);
+                return response;
+            }
             // Key found, return success response with value
             response_object["version"] = std::string(NEROSHOP_VERSION);
             response_object["response"]["id"] = node.get_id();

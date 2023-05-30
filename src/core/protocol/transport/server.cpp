@@ -294,7 +294,7 @@ int neroshop::Server::get_socket() const {
 }
 ////////////////////
 const struct sockaddr_storage& neroshop::Server::get_storage() const {
-    storage;
+    return storage;
 }
 ////////////////////
 const neroshop::Client& neroshop::Server::get_client(int index) const {
