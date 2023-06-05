@@ -1,9 +1,12 @@
 #include "client.hpp"
 
 #include "../../tools/logger.hpp"
+#include "../../version.hpp" // NEROSHOP_VERSION
 
 #include <cstring> // memset
 #include <cassert>
+
+#include <nlohmann/json.hpp>
 
 neroshop::Client::Client() : sockfd(-1), socket_type(SocketType::Socket_TCP) {
     create();
@@ -142,7 +145,7 @@ void neroshop::Client::send_to(const std::vector<uint8_t>& message, const struct
     }    
 }
 ////////////////////
-void neroshop::Client::receive(std::vector<uint8_t>& message) {
+ssize_t neroshop::Client::receive(std::vector<uint8_t>& message) {
     assert(socket_type == SocketType::Socket_TCP && "Socket is not TCP");
 
     const int BUFFER_SIZE = 4096;
@@ -155,7 +158,7 @@ void neroshop::Client::receive(std::vector<uint8_t>& message) {
         ssize_t recv_bytes = ::recv(sockfd, buffer.data() + total_recv, BUFFER_SIZE - total_recv, 0);
         if (recv_bytes == -1) {
             perror("recv");
-            return;
+            return recv_bytes;
         }
         if (recv_bytes == 0) {
             break; // connection closed by server
@@ -172,9 +175,10 @@ void neroshop::Client::receive(std::vector<uint8_t>& message) {
     if (total_recv > 0) {
         message.insert(message.end(), buffer.begin(), buffer.begin() + total_recv);
     }
+    return total_recv;
 }
 ////////////////////
-void neroshop::Client::receive_from(std::vector<uint8_t>& message, const struct sockaddr_in& addr) {
+ssize_t neroshop::Client::receive_from(std::vector<uint8_t>& message, const struct sockaddr_in& addr) {
     assert(socket_type == SocketType::Socket_UDP && "Socket is not UDP");
     
     const int BUFFER_SIZE = 4096;
@@ -185,11 +189,54 @@ void neroshop::Client::receive_from(std::vector<uint8_t>& message, const struct 
     ssize_t recv_bytes = ::recvfrom(sockfd, buffer.data(), BUFFER_SIZE, 0, (struct sockaddr*)&addr, &addr_len);
     if (recv_bytes == -1) {
         perror("recvfrom");
-        return;
+        return recv_bytes;
     }
     if (recv_bytes > 0) {
         message.assign(buffer.data(), buffer.data() + recv_bytes);
     }
+    return recv_bytes;
+}
+////////////////////
+void neroshop::Client::put(const std::string& key, const std::string& value, std::string& reply) {
+    // Send put - no id or tid required for IPC client requests. The DHT server will deal with that
+    nlohmann::json args_obj = { {"key", key}, {"value", value} };
+    nlohmann::json query_object = { {"version", std::string(NEROSHOP_VERSION)}, {"query", "put"}, {"args", args_obj}, {"tid", nullptr} };
+    std::vector<uint8_t> packed_data = nlohmann::json::to_msgpack(query_object);
+    send(packed_data);
+    // Receive response
+    try {
+        std::vector<uint8_t> response;
+        receive(response);
+        try {
+            nlohmann::json response_object = nlohmann::json::from_msgpack(response);
+            reply = response_object.dump();//return response_object.dump();
+        } catch (const nlohmann::detail::parse_error& e) {
+            std::cerr << "Failed to parse server response: " << e.what() << std::endl;
+        }
+    } catch (const nlohmann::detail::parse_error& e) {
+        std::cerr << "An error occurred: " << "Node was disconnected" << std::endl;
+    }
+}
+
+void neroshop::Client::get(const std::string& key, std::string& reply) {
+    // Send get - no id or tid required for IPC client requests. The DHT server will deal with that
+    nlohmann::json args_obj = { {"key", key} };
+    nlohmann::json query_object = { {"version", std::string(NEROSHOP_VERSION)}, {"query", "get"}, {"args", args_obj}, {"tid", nullptr} };
+    std::vector<uint8_t> packed_data = nlohmann::json::to_msgpack(query_object);
+    send(packed_data);
+    // Receive response
+    try {
+        std::vector<uint8_t> response;
+        receive(response);
+        try {
+            nlohmann::json response_object = nlohmann::json::from_msgpack(response);
+            reply = response_object.dump();//return response_object.dump();
+        } catch (const nlohmann::detail::parse_error& e) {
+            std::cerr << "Failed to parse server response: " << e.what() << std::endl;
+        }
+    } catch (const nlohmann::detail::parse_error& e) {
+        std::cerr << "An error occurred: " << "Node was disconnected" << std::endl;
+    }    
 }
 ////////////////////	
 void neroshop::Client::close() {
@@ -218,6 +265,19 @@ neroshop::Client * neroshop::Client::get_main_client() {
 ////////////////////
 int neroshop::Client::get_socket() const {
     return sockfd;
+}
+////////////////////
+int neroshop::Client::get_max_buffer_recv_size() const {
+    int max_buffer_size;
+    socklen_t bufferSizeLen = sizeof(max_buffer_size);
+    if (getsockopt(sockfd, SOL_SOCKET, SO_RCVBUF, &max_buffer_size, &bufferSizeLen) == 0) {
+        // `max_buffer_size` contains the maximum receive buffer size
+        std::cout << "Maximum receive buffer size: " << max_buffer_size << " bytes" << std::endl;
+    } else {
+        perror("getsockopt"); // Failed to retrieve the maximum receive buffer size
+        return -1; // Return an error value indicating failure
+    }
+    return max_buffer_size;
 }
 ////////////////////
 ////////////////////

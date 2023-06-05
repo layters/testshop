@@ -271,7 +271,6 @@ std::string neroshop::Order::get_status_as_string() const {
         //case OrderStatus::: return ""; break;
         default: return "New";
     }
-    //return "New";
 }
 
 std::string neroshop::Order::get_date() const {
@@ -309,7 +308,6 @@ std::string neroshop::Order::get_payment_option_as_string() const {
         case PaymentOption::Finalize: return "Finalize"; break;
         default: return "Escrow";
     }
-    //return "Escrow";
 }
 
 neroshop::PaymentCoin neroshop::Order::get_payment_coin() const {
@@ -323,7 +321,6 @@ std::string neroshop::Order::get_payment_coin_as_string() const {
         //case PaymentCoin::: return ""; break;
         default: return "Monero";
     }
-    //return "Monero";
 }
 
 neroshop::DeliveryOption neroshop::Order::get_delivery_option() const {
@@ -336,7 +333,6 @@ std::string neroshop::Order::get_delivery_option_as_string() const {
         case DeliveryOption::Pickup: return "Pickup"; break;
         default: return "Delivery";
     }
-    //return "Delivery";
 }
 
 std::string neroshop::Order::get_notes() const {

@@ -2,19 +2,24 @@
 
 #include <iostream>
 #include <string>
+#include <memory>
 
 namespace neroshop {
+
+class Product;
 
 class Listing {
 public:
     Listing();
-    Listing(const std::string& id, const std::string& product_id, const std::string& seller_id, unsigned int quantity,
+    Listing(const std::string& id, const Product& product, const std::string& seller_id, unsigned int quantity,
             double price, const std::string& currency, const std::string& condition, const std::string& location, const std::string& date);
     Listing(const Listing& other);// copy constructor
     Listing(Listing&& other) noexcept; // move constructor
     
     Listing& operator=(const Listing&); // copy assignment operator
     Listing& operator=(Listing&&) noexcept; // move assignment operator
+    
+    void print_listing();
     
     void set_id(const std::string& id);
     void set_product_id(const std::string& product_id);
@@ -25,6 +30,7 @@ public:
     void set_condition(const std::string& condition);
     void set_location(const std::string& location);
     void set_date(const std::string& date);
+    void set_product(const Product& product);
     
     std::string get_id() const;
     std::string get_product_id() const;
@@ -35,9 +41,9 @@ public:
     std::string get_condition() const;
     std::string get_location() const;
     std::string get_date() const;
+    Product * get_product() const;
 private:
     std::string id;
-    std::string product_id;
     std::string seller_id;
     unsigned int quantity;
     double price; // unit price or price per unit
@@ -46,6 +52,7 @@ private:
     std::string location;
     std::string date; // date the listing was `created_at`
     std::string signature;
+    std::unique_ptr<Product> product;
 };
 
 }      

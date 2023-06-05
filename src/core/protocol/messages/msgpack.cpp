@@ -168,39 +168,45 @@ std::vector<uint8_t> neroshop::msgpack::process(const std::vector<uint8_t>& requ
             auto params_object = request_object["args"];
             assert(params_object["key"].is_string());
             std::string key = params_object["key"];
-        
-            // If node does not have the key, check the closest nodes to see if they have it
-            if (!node.has_key(key)) {
-                std::string value;
-                int search_attempts = 0;
-                // Key not found, send more get requests to closest nodes
-                while (search_attempts < NEROSHOP_DHT_MAX_SEARCHES) {
-                    value = node.send_get(key);
-                    if(!value.empty()) {
-                        response_object["version"] = std::string(NEROSHOP_VERSION);
-                        response_object["response"]["id"] = node.get_id();
-                        response_object["response"]["value"] = value;
-                        response_object["tid"] = tid;
-                        response = nlohmann::json::to_msgpack(response_object);
-                        return response; // Value found, exit the loop with response
-                    }
-                    search_attempts = search_attempts + 1;
-                }
-                
-                // Key not found, return error response
-                code = static_cast<int>(KadResultCode::RetrieveFailed);
-                response_object["error"]["code"] = code;
-                response_object["error"]["message"] = "Key not found";
-                response_object["tid"] = tid;
-                response = nlohmann::json::to_msgpack(response_object);
-                return response;
-            }
+
             // Look up the value in the node's own hash table
             std::string value = node.find_value(key);
-            // Key found, return success response with value
-            response_object["version"] = std::string(NEROSHOP_VERSION);
-            response_object["response"]["id"] = node.get_id();
-            response_object["response"]["value"] = value;
+                    
+            if (!value.empty()) {
+                // Key found, return success response with value
+                response_object["version"] = std::string(NEROSHOP_VERSION);
+                response_object["response"]["id"] = node.get_id();
+                response_object["response"]["value"] = value;
+            } else {
+                // If node does not have the key, check the closest nodes to see if they have it
+                std::vector<Node*> closest_nodes = node.find_node(key, NEROSHOP_DHT_MAX_CLOSEST_NODES);
+
+                std::random_device rd;
+                std::mt19937 rng(rd());
+                std::shuffle(closest_nodes.begin(), closest_nodes.end(), rng);
+
+                std::string closest_node_value;
+                for (auto const& closest_node : closest_nodes) {
+                    closest_node_value = closest_node->find_value(key);
+                    if (!closest_node_value.empty()) {
+                        break;
+                    }
+                }
+
+                if (!closest_node_value.empty()) {
+                    response_object["version"] = std::string(NEROSHOP_VERSION);
+                    response_object["response"]["id"] = node.get_id();
+                    response_object["response"]["value"] = closest_node_value;
+                } else {
+                    // Key not found, return error response
+                    code = static_cast<int>(KadResultCode::RetrieveFailed);
+                    response_object["error"]["code"] = code;
+                    response_object["error"]["message"] = "Key not found";
+                    response_object["tid"] = tid;
+                    response = nlohmann::json::to_msgpack(response_object);
+                    return response;
+                }
+            }
 
         } else { // For Sending Get Requests to Other Nodes
             std::cout << "message type is a send_get\n";
@@ -208,10 +214,9 @@ std::vector<uint8_t> neroshop::msgpack::process(const std::vector<uint8_t>& requ
             auto params_object = request_object["args"];
             assert(params_object["key"].is_string());
             std::string key = params_object["key"];
-            
+                        
             // Send get messages to the closest nodes in your routing table (IPC mode)
             std::string value = node.send_get(key);
-            std::cout << "value (IPC mode): " << value << "\n";
             
             // Key not found, return error response
             if (value.empty()) {
@@ -263,7 +268,7 @@ std::vector<uint8_t> neroshop::msgpack::process(const std::vector<uint8_t>& requ
             code = (put_messages_sent <= 0) 
                    ? static_cast<int>(KadResultCode::StoreFailed) 
                    : static_cast<int>(KadResultCode::Success);
-            std::cout << "Number of nodes you've sent a put_value message to: " << put_messages_sent << "\n";
+            std::cout << "Number of nodes you've sent a put message to: " << put_messages_sent << "\n";
                    
             // Store the key-value pair in your own node as well
             node.store(key, value);
@@ -273,6 +278,62 @@ std::vector<uint8_t> neroshop::msgpack::process(const std::vector<uint8_t>& requ
             response_object["response"]["id"] = node.get_id();
             response_object["response"]["code"] = (code != 0) ? static_cast<int>(KadResultCode::StorePartial) : code;
             response_object["response"]["message"] = (code != 0) ? "Store partial" : "Success";
+        }
+    }
+    //-----------------------------------------------------
+    if(method == "search" && ipc_mode) { // For value-based DHT lookups, but only works on data that your node has
+        assert(request_object["args"].is_object());
+        auto params_object = request_object["args"];
+        assert(params_object["what"].is_string());
+        std::string what = params_object["what"].get<std::string>(); // what field=id, name, etc.
+        assert(params_object["from"].is_string());
+        std::string from = params_object["from"]; // from=user,product
+        std::string condition; // condition=order by name ASC
+        if(params_object.contains("condition")) {
+            assert(params_object["condition"].is_string());
+            condition = params_object["condition"];
+        }
+            
+        std::vector<std::pair<std::string, std::string>> node_data = node.get_data();
+        if(node_data.empty()) {
+            response_object["version"] = std::string(NEROSHOP_VERSION);
+            response_object["response"]["id"] = node.get_id();
+            response_object["response"]["result"] = nullptr;
+        }
+        
+        if(!node_data.empty()) {
+            std::vector<nlohmann::json> result_array;
+            for (const auto& data : node_data) { 
+                std::string value = data.second;
+                nlohmann::json json;
+                try {
+                    json = nlohmann::json::parse(value);
+                } catch (const nlohmann::json::parse_error& e) {
+                    std::cerr << "JSON parsing error: " << e.what() << std::endl;
+                    continue; // Skip to the next data if parsing fails
+                }
+                if (json.contains("metadata")) {
+                    assert(json["metadata"].is_string());
+                    std::string metadata = json["metadata"];
+                    if (metadata == from) { // user, product, etc.
+                        if(what == "*" || what == "all") {
+                            response_object["version"] = std::string(NEROSHOP_VERSION);
+                            response_object["response"]["id"] = node.get_id();
+                            result_array.push_back(json); //json=entire object
+                        } else {
+                            response_object["version"] = std::string(NEROSHOP_VERSION);
+                            response_object["response"]["id"] = node.get_id();
+                            result_array.push_back(json[what]); // what=name, id, etc.
+                        }
+                        // Apply additional conditions or perform desired operations
+                        // based on the matching metadata
+                        // ...
+                        // Example: Print the matched value
+                        //std::cout << "Matched value: " << value << std::endl;
+                    }
+                }
+            }
+            response_object["response"]["result"] = result_array;
         }
     }
     //-----------------------------------------------------

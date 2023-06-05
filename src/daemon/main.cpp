@@ -13,6 +13,7 @@
 #include "../core/database/database.hpp"
 #include "../core/tools/logger.hpp"
 #include "../core/version.hpp"
+#include "../core/tools/timer.hpp"
 
 #include <cxxopts.hpp>
 
@@ -27,6 +28,8 @@ using namespace neroshop;
 
 std::mutex server_mutex;
 std::shared_mutex node_mutex; // Define a shared mutex to protect concurrent access to the Node object
+
+std::atomic<bool> running(true);
 //-----------------------------------------------------------------------------
 
 std::string extract_json_payload(const std::string& request) {
@@ -47,9 +50,9 @@ std::string extract_json_payload(const std::string& request) {
 void rpc_server(const std::string& address) {
     Server server(address, NEROSHOP_RPC_DEFAULT_PORT);
     
-    while (true) {
+    while (running) {
         // Accept incoming connections and handle clients concurrently
-        if(server.accept() != -1) {
+        if(server.accept() != -1) {            
             std::thread request_thread([&]() {
                 // Lock the server mutex
                 std::lock_guard<std::mutex> lock(server_mutex);
@@ -92,8 +95,15 @@ void rpc_server(const std::string& address) {
 
             request_thread.detach();
         }
+        
+        if (!running) {
+            // Stop accepting new connections and exit the loop
+            break;
+        }        
     }
     // Close the server socket before exiting
+    std::cout << "RPC server closed\n";
+    server.shutdown();
     server.close();
 }
 
@@ -102,13 +112,17 @@ void rpc_server(const std::string& address) {
 void ipc_server(Node& node) {
     Server server("127.0.0.1", NEROSHOP_IPC_DEFAULT_PORT);
     
-    while (true) {
-        if(server.accept() != -1) {  // ONLY accepts a single client
+    while (running) {        
+        if(server.accept() != -1) {  // ONLY accepts a single client            
             while (true) {
                 std::vector<uint8_t> request;
                 // wait for incoming message from client
                 int recv_size = server.receive(request);
                 if (recv_size == 0) {
+                    // Republish data before exiting (or in case of client app crashes)
+                    node.republish();
+                    // Set running to false to close the server (TODO: find a way to gracefully close all threads)
+                    ////running = false;
                     // Connection closed by client, break out of loop
                     break;
                 }
@@ -127,6 +141,7 @@ void ipc_server(Node& node) {
         } 
     }  
     // Close the server socket before exiting // TODO: implement SIGINT (Ctrl+C)
+    std::cout << "IPC server closed\n";
     server.close();
 }
 

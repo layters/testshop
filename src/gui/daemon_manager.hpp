@@ -48,7 +48,7 @@ private:
     QProcess daemonProcess;
     bool m_daemonRunning;
     bool m_daemonConnected;
-    qint64 pid;
+    static qint64 pid;
     std::mutex clientMutex;
     void onConnectionSuccess();
     void onConnectionFailure();    

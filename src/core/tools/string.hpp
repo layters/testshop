@@ -52,6 +52,9 @@ namespace string {
 	static bool contains(const std::string& str, const std::string& what) {
 		return (str.find(what) != std::string::npos);
 	}	
+	static bool contains_first_of(const std::string& str, const std::string& what) {
+		return (str.find(what, 0) == 0);
+	}		
 	static std::string swap_first_of(const std::string& str, const std::string& from, const std::string& to) // replaces first occurance of a word from a String with another
 	{
 		std::string string0 (str);

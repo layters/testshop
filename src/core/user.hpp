@@ -45,6 +45,7 @@ public:
     void delete_avatar();
     // setters
     void set_public_key(const std::string& public_key);
+    void set_private_key(const std::string& private_key);
     // getters
     std::string get_public_key() const;
     // account-related stuff - getters
@@ -100,9 +101,11 @@ private:
     UserAccountType account_type; // seller, buyer (guest)
     bool logged; // determines whether user is logged in or not//bool online;
     std::string public_key;
+    std::string private_key;
     std::unique_ptr<Cart> cart;
     std::vector<std::shared_ptr<neroshop::Order>> order_list;
     std::vector<std::shared_ptr<neroshop::Product>> favorites_list; // I get the error "/usr/include/c++/9/bits/stl_uninitialized.h:127:72: error: static assertion failed: result type must be constructible from value type of input range" while trying to use unique_ptr so I'm stuck with a shared_ptr container for now
+    std::string get_private_key() const;
 };
 }
 #endif

@@ -2,10 +2,13 @@
 
 #include "kademlia.hpp"
 #include "../../crypto/sha3.hpp"
+#include "../../crypto/rsa.hpp"
 #include "routing_table.hpp"
 #include "../transport/ip_address.hpp"
 #include "../messages/msgpack.hpp"
 #include "../../version.hpp"
+#include "../../tools/base64.hpp"
+#include "mapper.hpp"
 
 #include <nlohmann/json.hpp>
 
@@ -420,7 +423,39 @@ void neroshop::Node::remove_peer(const std::string& info_hash) {
 }
 
 int neroshop::Node::put(const std::string& key, const std::string& value) {
+    // TODO: return error code/enum rather than boolean
+    assert(!value.empty() && "Value is empty");
+    // TODO: If key already exists, require verification in order to update it - only required for account data and listing data
+    if(has_key(key)) {
+        std::cout << "Key already exists. Verifying ...\n";
+        std::string preexisting_value = find_value(key);//std::cout << "pre-value: " << preexisting_value << std::endl;
+        nlohmann::json json;
+        try {
+            json = nlohmann::json::parse(preexisting_value);
+        } catch (const nlohmann::json::parse_error& e) {
+              std::cerr << "JSON parsing error: " << e.what() << std::endl;
+              return false; // Invalid value, return false
+        }
+            
+        // Verify signature using user's public key
+        if (json.contains("signature")) {
+            assert(json["signature"].is_string());
+            std::string signature = neroshop::base64_decode(json["signature"].get<std::string>());
+            
+            // Get the public key and other account data from the user
+            /////std::string public_key = user.get_public_key(); // Get the public key from the user object
+            ////std::string user_id = user.get_id(); // Get the user ID from the user object
+        
+            /*bool verified = neroshop_crypto::rsa_public_verify(public_key, user_id, signature);
+            if(!verified) {
+                std::cerr << "Verification failed." << std::endl;
+                return false; // Verification failed, return false
+            }*/
+        }
+    }
+    //--------------------------------------------
     data[key] = value;
+    map(key, value); // Map search terms to key for efficient retrieval of data associated with those terms
     return has_key(key); // boolean
 }
 
@@ -447,6 +482,12 @@ int neroshop::Node::remove(const std::string& key) {
 
 bool neroshop::Node::has_key(const std::string& key) const {
     return (data.count(key) > 0);
+}
+
+void neroshop::Node::map(const std::string& key, const std::string& value) {
+    Mapper::add(key, value);
+    auto index = Mapper::serialize();
+    data[index.first] = index.second;
 }
 
 //-------------------------------------------------------------------------------------
@@ -531,9 +572,7 @@ bool neroshop::Node::send_ping(const std::string& address, int port) {
     query_object["tid"] = transaction_id;
     query_object["query"] = "ping";
     query_object["args"]["id"] = this->id;
-    if(address == "127.0.0.1") {
-        query_object["args"]["ephemeral_port"] = get_port(); // for testing on local network
-    }
+    query_object["args"]["ephemeral_port"] = get_port(); // for testing on local network
     query_object["version"] = std::string(NEROSHOP_VERSION);
     
     auto ping_message = nlohmann::json::to_msgpack(query_object);
@@ -777,7 +816,7 @@ int neroshop::Node::send_store(const std::string& key, const std::string& value)
 }
 
 std::string neroshop::Node::send_get(const std::string& key) {
-    std::string value = "";
+    std::string value;
 
     nlohmann::json query_object;
     query_object["query"] = "get";
@@ -792,6 +831,9 @@ std::string neroshop::Node::send_get(const std::string& key) {
     std::random_device rd;
     std::mt19937 rng(rd());
     std::shuffle(closest_nodes.begin(), closest_nodes.end(), rng);
+    //-----------------------------------------------
+    // First, check to see if we have the key before performing any other operations
+    if(has_key(key)) return find_value(key);
     //-----------------------------------------------
     // Send get message to the closest nodes
     for(auto const& node : closest_nodes) {
@@ -814,15 +856,19 @@ std::string neroshop::Node::send_get(const std::string& key) {
         }   
         // Show response and handle the retrieved value
         std::cout << ((get_response_message.contains("error")) ? ("\033[91m") : ("\033[32m")) << get_response_message.dump() << "\033[0m\n";
-        if(get_response_message.contains("error")) continue; // Skip if error
+        if(get_response_message.contains("error")) {
+            continue; // Skip if error
+        }
         if (get_response_message.contains("response") && get_response_message["response"].contains("value")) {
-            std::string value = get_response_message["response"]["value"].get<std::string>();
-            if(value.empty()) continue; // Skip empty values
-            return value; // Return the retrieved value
+            std::string retrieved_value = get_response_message["response"]["value"].get<std::string>();
+            if (!retrieved_value.empty()) {
+                value = retrieved_value;
+                break; // Exit the loop if a value is found
+            }
         }
     }
     //-----------------------------------------------
-    return "";
+    return value;
 }
 
 std::string neroshop::Node::send_find_value(const std::string& key) {
@@ -843,7 +889,68 @@ void neroshop::Node::send_remove(const std::string& key) {
 
 //-----------------------------------------------------------------------------
 
-void neroshop::Node::periodic() {
+void neroshop::Node::republish() {
+    for (const auto& pair : data) {
+        const std::string& key = pair.first;
+        const std::string& value = pair.second;
+
+        send_put(key, value);
+    }
+    if(!data.empty()) std::cout << "\033[93mData republished\033[0m\n";
+}
+
+void neroshop::Node::republish(const std::string& address, int port) {
+    nlohmann::json query_object;
+    query_object["query"] = "put";
+    query_object["args"]["id"] = this->id;
+    query_object["version"] = std::string(NEROSHOP_VERSION);
+    
+    for (const auto& pair : data) {
+        const std::string& key = pair.first;
+        const std::string& value = pair.second;
+        
+        query_object["args"]["key"] = key;
+        query_object["args"]["value"] = value;
+        std::string transaction_id = msgpack::generate_transaction_id();
+        query_object["tid"] = transaction_id; // tid should be unique for each put message
+        std::vector<uint8_t> put_message = nlohmann::json::to_msgpack(query_object);
+
+        auto receive_buffer = send_query(address, port, put_message);
+        // Process the response here
+        nlohmann::json put_response_message;
+        try {
+            put_response_message = nlohmann::json::from_msgpack(receive_buffer);
+        } catch (const std::exception& e) {
+            std::cerr << "Node \033[91m" << address << ":" << port << "\033[0m did not respond" << std::endl;
+        }
+    }
+    if(!data.empty()) std::cout << "\033[93mData republished to " << address << ":" << port << "\033[0m\n";
+}
+
+//-----------------------------------------------------------------------------
+
+void neroshop::Node::periodic_refresh() {
+    while (true) {
+        {
+            // Acquire the lock before accessing the data
+            std::shared_lock<std::shared_mutex> read_lock(node_read_mutex);
+            
+            // Perform periodic republishing here
+            // This code will run concurrently with the listen/receive loop
+            
+            republish();
+            
+            // read_lock is released here
+        }
+        
+        // Sleep for a specified interval
+        std::this_thread::sleep_for(std::chrono::hours(NEROSHOP_DHT_REPUBLISH_INTERVAL));
+    }
+}
+
+//-----------------------------------------------------------------------------
+
+void neroshop::Node::periodic_check() {
     while(true) {
         {
         // Acquire the lock before accessing the routing table
@@ -857,7 +964,7 @@ void neroshop::Node::periodic() {
                 uint16_t node_port = node->get_port();
                 
                 // Skip the bootstrap nodes from the periodic checks
-                if (is_bootstrap_node(node_ip, node_port)) continue;
+                if (is_bootstrap_node(node->public_ip_address, node_port) || node->is_bootstrap_node()) continue;
                 
                 std::cout << "Performing periodic check on \033[34m" << node_ip << ":" << node_port << "\033[0m\n";
                 
@@ -893,12 +1000,13 @@ void neroshop::Node::on_ping_callback(const std::vector<uint8_t>& buffer, const 
         if (message.contains("query") && message["query"] == "ping") {
             std::string sender_id = message["args"]["id"].get<std::string>();
             std::string sender_ip = inet_ntoa(client_addr.sin_addr);
-            uint16_t sender_port = (message["args"].contains("ephemeral_port")) ? (uint16_t)message["args"]["ephemeral_port"] : NEROSHOP_P2P_DEFAULT_PORT;
+            uint16_t sender_port = (message["args"].contains("ephemeral_port")) ? (uint16_t)message["args"]["ephemeral_port"] : ntohs(client_addr.sin_port);//NEROSHOP_P2P_DEFAULT_PORT;
             bool node_exists = routing_table->has_node((sender_ip == "127.0.0.1") ? this->public_ip_address : sender_ip, sender_port);
             if (!node_exists) {
                 auto node_that_pinged = std::make_unique<Node>((sender_ip == "127.0.0.1") ? this->public_ip_address : sender_ip, sender_port, false);
                 routing_table->add_node(std::move(node_that_pinged)); // Already has internal write_lock
                 routing_table->print_table();
+                republish(sender_ip, sender_port); // Republish your data to the new node that recently joined the network
             }
         }
     }
@@ -912,7 +1020,7 @@ void neroshop::Node::run() {
     return;
     
     // Start a separate thread for periodic checks
-    std::thread periodic_thread([this]() { periodic(); });
+    std::thread periodic_check_thread([this]() { periodic_check(); });
     
     while (true) {
         std::vector<uint8_t> buffer(4096);
@@ -956,13 +1064,13 @@ void neroshop::Node::run() {
         request_thread.detach();
     }
     // Wait for the periodic check thread to finish
-    periodic_thread.join();
+    periodic_check_thread.join();
 }
 
 // This uses less CPU
 void neroshop::Node::run_optimized() {
     // Start a separate thread for periodic checks
-    std::thread periodic_thread([this]() { periodic(); });
+    std::thread periodic_check_thread([this]() { periodic_check(); });
 
     while (true) {
         fd_set read_set;
@@ -1029,7 +1137,7 @@ void neroshop::Node::run_optimized() {
         }
     }         
     // Wait for the periodic check thread to finish
-    periodic_thread.join();    
+    periodic_check_thread.join();    
 }
 
 //-----------------------------------------------------------------------------
@@ -1135,18 +1243,18 @@ std::vector<std::pair<std::string, std::string>> neroshop::Node::get_data() cons
 
 bool neroshop::Node::is_bootstrap_node(const std::string& address, uint16_t port) {
     for (const auto& bootstrap : bootstrap_nodes) {
-        if (bootstrap.address == address && bootstrap.port == port) {
+        if (neroshop::ip::resolve(bootstrap.address) == address && bootstrap.port == port) {
             return true;
         }
     }
     return false;
 }
 
-bool neroshop::Node::is_bootstrap_node() {
+bool neroshop::Node::is_bootstrap_node() const {
     return (bootstrap == true);
 }
 
-bool neroshop::Node::is_dead() {
+bool neroshop::Node::is_dead() const {
     return (check_counter >= NEROSHOP_DHT_MAX_HEALTH_CHECKS);
 }
 

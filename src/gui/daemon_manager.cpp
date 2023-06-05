@@ -4,13 +4,11 @@
 #include <chrono>
 #include <thread>
 
-#include <QTcpSocket>
-
 #include "../neroshop_config.hpp"
 #include "../core/protocol/transport/client.hpp"
 
 neroshop::DaemonManager::DaemonManager(QObject *parent)
-    : QObject{parent}, m_daemonRunning(false), m_daemonConnected(false), pid(-1)
+    : QObject{parent}, m_daemonRunning(false), m_daemonConnected(false)//, pid(-1)
 {}
 
 neroshop::DaemonManager::~DaemonManager() {
@@ -21,6 +19,8 @@ neroshop::DaemonManager::~DaemonManager() {
     std::cout << "daemon manager deleted\n";
     #endif
 }
+
+qint64 neroshop::DaemonManager::pid(-1);
 
 void neroshop::DaemonManager::startDaemonProcess()
 {
@@ -169,7 +169,7 @@ double neroshop::DaemonManager::getDaemonProgress() const {
 QString neroshop::DaemonManager::getDaemonStatusText() const {
     // Return the appropriate status text based on the daemon state
     if(m_daemonConnected) return "Connected";
-    if(m_daemonRunning) return "Running"; // Waiting or Launching state
+    if(m_daemonRunning) return "Launching"; // Waiting or Launching state
     return "Disconnected";
 }
 
@@ -212,14 +212,21 @@ bool neroshop::DaemonManager::isDaemonRunningAlready()
 }
 
 bool neroshop::DaemonManager::isDaemonServerBound() {
-    QTcpSocket socket;
-    socket.abort(); // Ensure the socket is not already in use
-    socket.connectToHost("127.0.0.1", NEROSHOP_IPC_DEFAULT_PORT);
-    if (socket.waitForConnected(1000)) {
-        socket.disconnectFromHost();
-        return true;
+    int sockfd = socket(AF_INET, SOCK_STREAM, 0);
+    if (sockfd == -1) {
+        std::cerr << "Failed to create socket\n";
+        return false;
     }
-    return false;    
+
+    struct sockaddr_in serverAddress{};
+    serverAddress.sin_family = AF_INET;
+    serverAddress.sin_addr.s_addr = INADDR_ANY;
+    serverAddress.sin_port = htons(NEROSHOP_IPC_DEFAULT_PORT);
+
+    int result = bind(sockfd, (struct sockaddr*) &serverAddress, sizeof(serverAddress));
+    close(sockfd);
+
+    return (result == -1); // If bind fails, daemon is already bound to port
 }
 
 bool neroshop::DaemonManager::isDaemonConnected() const {

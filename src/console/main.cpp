@@ -153,15 +153,14 @@ int main(int argc, char** argv) {
         else if(command == "put") { // This is only a test command
             if (client->is_connected()) {
                 nlohmann::json arguments_obj = {
-                    {"id", "my_node_id"},
-                    {"key", "f4bb012e0a4c219b25d31af01b9289a3e826979d1dfd221e7dc55a29ad6d1cf5"},
-                    {"value", "Jack"},
+                    {"key", "63075a22aaed744829b33ed9e16bb3aa0f06121500861bbf8fcbdfee2e708a66"},
+                    {"value", "{\"name\": \"Jack\"}"}, // {"name": "Jack"}
                 };
                 nlohmann::json j = {
                     {"version", std::string(NEROSHOP_VERSION)},
                     {"query", "put"},
                     {"args", arguments_obj},
-                    {"tid", 1234}, // tid is meaningless when it comes from the IPC client so a tid of 0 would be ok
+                    {"tid", nullptr}, // tid is not needed. DHT server will automatically deal with this
                 };
                 // send packed data to POSIX server
                 std::vector<uint8_t> packed = nlohmann::json::to_msgpack(j);
@@ -181,14 +180,13 @@ int main(int argc, char** argv) {
         else if(command == "get") { // This is only a test command
             if (client->is_connected()) {
                 nlohmann::json arguments_obj = {
-                    {"id", "my_node_id"},
-                    {"key", "f4bb012e0a4c219b25d31af01b9289a3e826979d1dfd221e7dc55a29ad6d1cf5"},
+                    {"key", "63075a22aaed744829b33ed9e16bb3aa0f06121500861bbf8fcbdfee2e708a66"},
                 };
                 nlohmann::json j = {
                     {"version", std::string(NEROSHOP_VERSION)},
                     {"query", "get"},
                     {"args", arguments_obj},
-                    {"tid", 1234},
+                    {"tid", nullptr},
                 };
                 // send packed data to POSIX server
                 std::vector<uint8_t> packed = nlohmann::json::to_msgpack(j);
@@ -204,7 +202,50 @@ int main(int argc, char** argv) {
                     std::cerr << "An error occurred: " << "Server was disconnected" << std::endl;//std::cout << "Failed to parse server response: " << e.what() << std::endl;
                 }
             }
-        }        
+        }     
+        else if(command == "register") {
+            User user;
+            //user.set_name("Jack");
+            //user.set_public_key("<public_key>");
+            //user.set_id("<monero_addr>");
+            auto data = neroshop::Serializer::serialize(user);
+            std::string key = data.first;
+            std::string value = data.second;
+    
+            // Send put and receive response
+            std::string put_response;
+            client->put(key, value, put_response);
+            std::cout << "Received response: " << put_response << "\n";
+        } 
+        else if(command == "search") { // This is only a test command
+            if (client->is_connected()) {
+                nlohmann::json arguments_obj = {
+                    {"what", "monero_address"},//"*"},
+                    {"from", "user"},
+                    //{"condition", ""},
+                    //{"", ""},
+                };
+                nlohmann::json j = {
+                    {"version", std::string(NEROSHOP_VERSION)},
+                    {"query", "search"},
+                    {"args", arguments_obj},
+                    {"tid", nullptr},
+                };
+                // send packed data to POSIX server
+                std::vector<uint8_t> packed = nlohmann::json::to_msgpack(j);
+                client->send(packed);//client.send("Hello, POSIX Server!");
+            
+                try {
+                std::vector<uint8_t> response;//std::string response;
+                client->receive(response);
+                // Deserialize the response from MessagePack to a JSON object
+                nlohmann::json j2 = nlohmann::json::from_msgpack(response);
+                std::cout << "Received response: " << j2.dump() << std::endl;
+                } catch (const nlohmann::detail::parse_error& e) {
+                    std::cerr << "An error occurred: " << "Server was disconnected" << std::endl;//std::cout << "Failed to parse server response: " << e.what() << std::endl;
+                }
+            }
+        }   
         /*else if(command == "") {
         }*/        
         else if(command == "exit") {
