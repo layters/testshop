@@ -387,14 +387,6 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR}/external/i2pd/libi2pd ${CMAKE_CU
 set(i2pd_src ${CMAKE_CURRENT_SOURCE_DIR}/build/libi2pd.a ${CMAKE_CURRENT_SOURCE_DIR}/build/libi2pd_client.a)
 
 ######################################
-# openpgp
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/external/openpgp)
-if(NEROSHOP_USE_OPENPGP)
-    message(STATUS "NEROSHOP_USE_OPENPGP option set to ON")
-    set(openpgp_src ${CMAKE_CURRENT_SOURCE_DIR}/external/build/libopenpgp.a)
-endif()
-
-######################################
 # miniupnp (miniupnpc)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/external/miniupnp/miniupnpc/include/)
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/external/miniupnp/build/libminiupnpc.a")
@@ -410,7 +402,6 @@ link_directories(${CMAKE_CURRENT_SOURCE_DIR}/build) # target_link_directories on
 ######################################
 # neroshop core source files
 set(neroshop_crypto_src 
-    ${NEROSHOP_CORE_SRC_DIR}/crypto/pgp.cpp
     ${NEROSHOP_CORE_SRC_DIR}/crypto/rsa.cpp
     ${NEROSHOP_CORE_SRC_DIR}/crypto/sha256.cpp
     ${NEROSHOP_CORE_SRC_DIR}/crypto/sha3.cpp
@@ -441,8 +432,10 @@ set(neroshop_price_src
 set(neroshop_protocol_src 
     ${NEROSHOP_CORE_SRC_DIR}/protocol/messages/msgpack.cpp
     ${NEROSHOP_CORE_SRC_DIR}/protocol/p2p/kademlia.cpp 
+    ${NEROSHOP_CORE_SRC_DIR}/protocol/p2p/mapper.cpp     
     ${NEROSHOP_CORE_SRC_DIR}/protocol/p2p/node.cpp 
     ${NEROSHOP_CORE_SRC_DIR}/protocol/p2p/routing_table.cpp 
+    ${NEROSHOP_CORE_SRC_DIR}/protocol/p2p/serializer.cpp 
     ${NEROSHOP_CORE_SRC_DIR}/protocol/rpc/json_rpc.cpp 
     ${NEROSHOP_CORE_SRC_DIR}/protocol/transport/client.cpp 
     ${NEROSHOP_CORE_SRC_DIR}/protocol/transport/ip_address.cpp 
@@ -452,6 +445,7 @@ set(neroshop_protocol_src
 )
 
 set(neroshop_tools_src 
+    ${NEROSHOP_CORE_SRC_DIR}/tools/base64.cpp 
     ${NEROSHOP_CORE_SRC_DIR}/tools/downloader.cpp 
     ${NEROSHOP_CORE_SRC_DIR}/tools/extractor.cpp 
     ${NEROSHOP_CORE_SRC_DIR}/tools/logger.cpp 
@@ -466,8 +460,7 @@ set(neroshop_core_src
     ${NEROSHOP_CORE_SRC_DIR}/listing.cpp 
     ${NEROSHOP_CORE_SRC_DIR}/order.cpp 
     ${NEROSHOP_CORE_SRC_DIR}/product.cpp 
-    ${NEROSHOP_CORE_SRC_DIR}/seller.cpp     
-    ${NEROSHOP_CORE_SRC_DIR}/serializer.cpp # TODO: move to tools or protocol/p2p
+    ${NEROSHOP_CORE_SRC_DIR}/seller.cpp 
     ${NEROSHOP_CORE_SRC_DIR}/settings.cpp  # TODO: move to tools or not?
     ${NEROSHOP_CORE_SRC_DIR}/user.cpp 
     ${NEROSHOP_CORE_SRC_DIR}/wallet.cpp 
@@ -491,7 +484,8 @@ endif()
 ######################################
 # neroshop-daemon
 set(daemon_executable "neromon")
-add_executable(${daemon_executable} src/daemon/main.cpp ${neroshop_crypto_src} ${neroshop_database_src} ${neroshop_network_src} ${neroshop_protocol_src} ${NEROSHOP_CORE_SRC_DIR}/tools/logger.cpp)#target_link_libraries(daemon ${curl_src} ${OPENSSL_LIBRARIES}) # curl requires both openssl(used in monero) and zlib(used in dokun-ui)
+set(daemon_src ${neroshop_crypto_src} ${neroshop_database_src} ${neroshop_network_src} ${NEROSHOP_CORE_SRC_DIR}/protocol/messages/msgpack.cpp ${NEROSHOP_CORE_SRC_DIR}/protocol/p2p/kademlia.cpp ${NEROSHOP_CORE_SRC_DIR}/protocol/p2p/mapper.cpp ${NEROSHOP_CORE_SRC_DIR}/protocol/p2p/node.cpp ${NEROSHOP_CORE_SRC_DIR}/protocol/p2p/routing_table.cpp ${NEROSHOP_CORE_SRC_DIR}/protocol/rpc/json_rpc.cpp ${NEROSHOP_CORE_SRC_DIR}/protocol/transport/client.cpp ${NEROSHOP_CORE_SRC_DIR}/protocol/transport/ip_address.cpp ${NEROSHOP_CORE_SRC_DIR}/protocol/transport/server.cpp ${NEROSHOP_CORE_SRC_DIR}/protocol/transport/zmq_client.cpp ${NEROSHOP_CORE_SRC_DIR}/protocol/transport/zmq_server.cpp ${NEROSHOP_CORE_SRC_DIR}/tools/base64.cpp ${NEROSHOP_CORE_SRC_DIR}/tools/logger.cpp ${NEROSHOP_CORE_SRC_DIR}/tools/timer.cpp)
+add_executable(${daemon_executable} src/daemon/main.cpp ${daemon_src})#target_link_libraries(daemon ${curl_src} ${OPENSSL_LIBRARIES}) # curl requires both openssl(used in monero) and zlib(used in dokun-ui)
 if(NEROSHOP_USE_MINIUPNP)
     target_compile_definitions(${daemon_executable} PRIVATE NEROSHOP_USE_MINIUPNP)
 endif()
@@ -506,7 +500,7 @@ if(NEROSHOP_BUILD_CLI)
     add_executable(${neroshop_console} src/console/main.cpp ${neroshop_core_src})
     target_compile_definitions(${neroshop_console} PRIVATE NEROSHOP_DEBUG)
     target_include_directories(${neroshop_console} PRIVATE #[[${CMAKE_CURRENT_SOURCE_DIR}/src/]])
-    target_link_libraries(${neroshop_console} ${monero_cpp_src} ${sqlite_src} #[[${qr_code_generator_src}]] ${raft_src} ${curl_src} ${monero_src} ${i2pd_src} ${openpgp_src} ${lua_src} ${linenoise_src})
+    target_link_libraries(${neroshop_console} ${monero_cpp_src} ${sqlite_src} #[[${qr_code_generator_src}]] ${raft_src} ${curl_src} ${monero_src} ${i2pd_src} ${lua_src} ${linenoise_src})
     message(STATUS "${BoldMagenta}NEROSHOP_BUILD_CLI option set to ON${ColourReset}")
 endif()
 
@@ -518,7 +512,7 @@ if(NEROSHOP_BUILD_GUI)
     target_sources(${neroshop_executable} PRIVATE ${neroshop_res} src/gui/main.cpp src/gui/script_controller.cpp src/gui/wallet_controller.cpp src/gui/user_controller.cpp src/gui/image_loader.cpp src/gui/image_provider.cpp src/gui/wallet_qr_provider.cpp src/gui/currency_rate_provider.cpp #[[src/gui/table_model.cpp]] src/gui/daemon_manager.cpp src/gui/backend.cpp ${neroshop_core_src})
     target_compile_definitions(${neroshop_executable} PRIVATE NEROSHOP_DEBUG)#set_target_properties(${neroshop_executable} PROPERTIES COMPILE_DEFINITIONS "NEROSHOP_DEBUG")
     target_include_directories(${neroshop_executable} PRIVATE #[[${CMAKE_CURRENT_SOURCE_DIR}/src/]])
-    target_link_libraries(${neroshop_executable} ${monero_cpp_src} ${sqlite_src} ${qr_code_generator_src} ${raft_src} ${monero_src} ${i2pd_src} ${openpgp_src} ${lua_src})
+    target_link_libraries(${neroshop_executable} ${monero_cpp_src} ${sqlite_src} ${qr_code_generator_src} ${raft_src} ${monero_src} ${i2pd_src} ${lua_src})
     message(STATUS "${BoldMagenta}NEROSHOP_BUILD_GUI option set to ON${ColourReset}")
     target_compile_definitions(${neroshop_executable} PRIVATE NEROSHOP_BUILD_GUI)
 endif()

@@ -80,7 +80,7 @@ void neroshop::Product::add_tag(const std::string& tag) {
 }
 
 void neroshop::Product::print_product() {
-    std::cout << "ID: " << get_id() << std::endl;
+    std::cout << "Product ID: " << get_id() << std::endl;
     std::cout << "Name: " << get_name() << std::endl;
     std::cout << "Description: " << get_description() << std::endl;
 
@@ -176,8 +176,18 @@ void neroshop::Product::set_code(const std::string& code) {
     this->code = code;
 }
 
+void neroshop::Product::set_category(const std::string& category) {
+    int category_id = get_category_id_by_name(category);
+    set_category_id(category_id);
+}
+
 void neroshop::Product::set_category_id(unsigned int category_id) {
     this->category_id = category_id;
+}
+
+void neroshop::Product::set_subcategory(const std::string& subcategory) {
+    int subcategory_id = get_category_id_by_name(subcategory);
+    set_subcategory_id(subcategory_id);
 }
 
 void neroshop::Product::set_subcategory_id(int subcategory_id) {
@@ -241,7 +251,9 @@ int neroshop::Product::get_subcategory_id() const {
     return subcategory_id;
 }
 
-//std::string neroshop::Product::get_subcategory_as_string() const {}
+std::string neroshop::Product::get_subcategory_as_string() const {
+    return ""; // coming soon!
+}
 
 std::vector<std::string> neroshop::Product::get_tags() const {
     return tags;

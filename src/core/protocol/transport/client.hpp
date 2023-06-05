@@ -51,8 +51,11 @@ public:
 	std::string read();
 	void send(const std::vector<uint8_t>& message); // tcp
 	void send_to(const std::vector<uint8_t>& message, const struct sockaddr_in& addr); // udp
-    void receive(std::vector<uint8_t>& message); // tcp
-    void receive_from(std::vector<uint8_t>& message, const struct sockaddr_in& addr); // udp
+    ssize_t receive(std::vector<uint8_t>& message); // tcp
+    ssize_t receive_from(std::vector<uint8_t>& message, const struct sockaddr_in& addr); // udp
+	// Interactions with the DHT node, which only exists on the client side via IPC server
+	void put(const std::string& key, const std::string& value, std::string& response);
+	void get(const std::string& key, std::string& response);
 	void close(); // kills socket
 	void shutdown(); // shuts down connection (disconnects from server)
     void disconnect(); // breaks connection to server then closes the client socket // combination of shutdown() and close()
@@ -61,6 +64,7 @@ public:
     bool is_connected() const;
     
     int get_socket() const;
+    int get_max_buffer_recv_size() const;
 
 private:
 	int sockfd;

@@ -256,6 +256,19 @@ std::vector<neroshop::Node*> neroshop::RoutingTable::find_closest_nodes(const st
     return closest_nodes;
 }
 
+
+neroshop::Node* neroshop::RoutingTable::find_node_by_id(const std::string& node_id) const {
+    for (const auto& [_, bucket] : buckets) {
+        for (const auto& node_ptr : bucket) {
+            const auto& node = *node_ptr;
+            if (node.get_id() == node_id) {
+                return node_ptr.get();
+            }
+        }
+    }
+    return nullptr; // Node with the specified ID not found
+}
+
 //-----------------------------------------------------------------------------
 
 int neroshop::RoutingTable::get_bucket_count() const {

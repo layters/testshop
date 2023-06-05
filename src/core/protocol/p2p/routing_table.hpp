@@ -39,6 +39,7 @@ public:
     std::optional<std::reference_wrapper<neroshop::Node>> get_node(const std::string& node_id);// const;
 
     std::vector<Node*> find_closest_nodes(const std::string& key, int count = NEROSHOP_DHT_MAX_CLOSEST_NODES);// const;// K or count is the maximum number of closest nodes to return
+    Node* find_node_by_id(const std::string& node_id) const;
 
     bool split_bucket(int bucket_index);
 

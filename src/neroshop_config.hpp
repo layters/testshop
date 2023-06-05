@@ -40,6 +40,7 @@
 #define NEROSHOP_DHT_MAX_ROUTING_TABLE_NODES NEROSHOP_DHT_ROUTING_TABLE_BUCKETS * NEROSHOP_DHT_MAX_BUCKET_SIZE
 #define NEROSHOP_DHT_MAX_HEALTH_CHECKS       3 // Maximum number of consecutive failed checks before marking the node as dead
 #define NEROSHOP_DHT_PERIODIC_CHECK_INTERVAL 60 // Number of seconds between each periodic health check
+#define NEROSHOP_DHT_REPUBLISH_INTERVAL      2 // Number of hours between each periodic refresh/republishing
 #define NEROSHOP_DHT_MAX_SEARCHES            3
 
 #define NEROSHOP_PUBLIC_KEY_FILENAME              "<user_id>.pub"

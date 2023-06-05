@@ -14,6 +14,8 @@ neroshop::User::User() : id(""), logged(false), account_type(UserAccountType::Gu
 ////////////////////
 neroshop::User::~User()
 {
+    // clear private key
+    private_key.clear();
     // destroy cart
     if(cart.get()) cart.reset();
     // clear orders
@@ -567,6 +569,9 @@ void neroshop::User::set_public_key(const std::string& public_key) {
     this->public_key = public_key;
 }
 ////////////////////
+void neroshop::User::set_private_key(const std::string& private_key) {
+    this->private_key = private_key;
+}
 ////////////////////
 ////////////////////
 ////////////////////
@@ -624,6 +629,10 @@ std::string neroshop::User::get_account_type_string() const {
 ////////////////////
 std::string neroshop::User::get_public_key() const {
     return public_key;
+}
+
+std::string neroshop::User::get_private_key() const {
+    return private_key;
 }
 ////////////////////
 ////////////////////

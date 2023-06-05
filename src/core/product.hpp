@@ -52,7 +52,9 @@ public:
     void set_attributes(const std::vector<Attribute>& attributes);
     void set_variants(const std::vector<Attribute>& variants);
     void set_code(const std::string& code);
+    void set_category(const std::string& category);
     void set_category_id(unsigned int category_id);
+    void set_subcategory(const std::string& subcategory);
     void set_subcategory_id(int subcategory_id);
     void set_tags(const std::vector<std::string>& tags);
 
@@ -67,7 +69,8 @@ public:
     std::string get_code() const;
     int get_category_id() const;
     std::string get_category_as_string() const;
-    int get_subcategory_id() const;//std::string get_subcategory_as_string() const;
+    int get_subcategory_id() const;
+    std::string get_subcategory_as_string() const;
     std::vector<std::string> get_tags() const;
 private:
     std::string id;

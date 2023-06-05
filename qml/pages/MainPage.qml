@@ -89,15 +89,16 @@ Page {
             walletMessageArea.messageCode = 1
             return; // exit function and do not proceed any further
         }        
-        // Close (destroy) the current monero_wallet first before re-creating a new monero_wallet (In case user decides to re-generate wallet keys)
-        if(Wallet.isOpened()) Wallet.close();
-        // Generate wallet
-        Wallet.createRandomWallet(walletPasswordField.text, walletPasswordConfirmField.text, (walletNameField.text) ? qsTr(folder + "/%1").arg(walletNameField.text) : qsTr(folder + "/%1").arg(walletNameField.placeholderText))
         // In case wallet passwords do not match, display error message
         if(walletPasswordConfirmField.text != walletPasswordField.text || !walletPasswordField.acceptableInput) {
             walletMessageArea.text = (walletPasswordConfirmField.length > 0) ? qsTr("Wallet passwords do not match") : qsTr("Wallet password must be confirmed")
             walletMessageArea.messageCode = 1
+            return;
         }
+        // Close (destroy) the current monero_wallet first before re-creating a new monero_wallet (In case user decides to re-generate wallet keys)
+        if(Wallet.isOpened()) Wallet.close();
+        // Generate wallet
+        Wallet.createRandomWallet(walletPasswordField.text, walletPasswordConfirmField.text, (walletNameField.text) ? qsTr(folder + "/%1").arg(walletNameField.text) : qsTr(folder + "/%1").arg(walletNameField.placeholderText))
         // Exit function if wallet fails to generate
         if(!Wallet.isOpened()) return;
         // Increase the number of times a wallet has been generated this session (not necessary)

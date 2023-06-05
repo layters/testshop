@@ -16,7 +16,7 @@
 
 #include "../neroshop_config.hpp"
 #include "../core/version.hpp"
-#include "../core/serializer.hpp"
+#include "../core/protocol/p2p/serializer.hpp"
 #include "daemon_manager.hpp"
 #include "../core/cart.hpp"
 #include "../core/protocol/transport/client.hpp"
@@ -33,6 +33,7 @@
 #include "../core/category.hpp"
 #include "../core/tools/regex.hpp"
 #include "../core/crypto/rsa.hpp"
+#include "../core/protocol/p2p/mapper.hpp"
 
 #include <future>
 #include <thread>
@@ -79,10 +80,6 @@ bool neroshop::Backend::isSupportedCurrency(const QString& currency) const {
     return neroshop::Converter::is_supported_currency(currency.toStdString());
 }
 //----------------------------------------------------------------
-//----------------------------------------------------------------
-void neroshop::Backend::initializeDHT() {
-    // TODO: add categories/subcategories to DHT using 'put' function
-}
 //----------------------------------------------------------------
 //----------------------------------------------------------------
 void neroshop::Backend::initializeDatabase() {
@@ -260,6 +257,11 @@ void neroshop::Backend::initializeDatabase() {
     // NOTE: Categories also act as tags to be used for filtering specific products
     }
     //-------------------------
+    if(!database->table_exists("mappings")) { 
+        database->execute("CREATE TABLE mappings(id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT, search_term TEXT NOT NULL, key TEXT NOT NULL);");
+        database->execute("CREATE UNIQUE INDEX index_mappings ON mappings (search_term, key);");
+    }
+    //-------------------------
     database->execute("COMMIT;");
 }
 //----------------------------------------------------------------
@@ -277,57 +279,38 @@ std::string neroshop::Backend::getDatabaseHash() {
 //----------------------------------------------------------------
 //----------------------------------------------------------------
 QVariantList neroshop::Backend::getCategoryList(bool sort_alphabetically) const {
-    // Do some database reading to fetch each category row (database reads do not require consensus)
-    neroshop::db::Sqlite3 * database = neroshop::get_database();
-    if(!database) throw std::runtime_error("database is NULL");
-    sqlite3_stmt * stmt = nullptr;
-    // Prepare (compile) statement
-    if(sqlite3_prepare_v2(database->get_handle(), (sort_alphabetically) ? "SELECT * FROM categories ORDER BY name ASC;" : "SELECT * FROM categories ORDER BY id ASC;", -1, &stmt, nullptr) != SQLITE_OK) {
-        neroshop::print("sqlite3_prepare_v2: " + std::string(sqlite3_errmsg(database->get_handle())), 1);
-        return {};
-    }
-    // Check whether the prepared statement returns no data (for example an UPDATE)
-    if(sqlite3_column_count(stmt) == 0) {
-        neroshop::print("No data found. Be sure to use an appropriate SELECT statement", 1);
-        return {};
-    }
-    
     QVariantList category_list;
-    // Get all table values row by row
-    while(sqlite3_step(stmt) == SQLITE_ROW) {
-        QVariantMap category_object; // Create an object for each row
-        for(int i = 0; i < sqlite3_column_count(stmt); i++) {
-            std::string column_value = (sqlite3_column_text(stmt, i) == nullptr) ? "NULL" : reinterpret_cast<const char *>(sqlite3_column_text(stmt, i));////if(sqlite3_column_text(stmt, i) == nullptr) {throw std::runtime_error("column is NULL");}
-            //std::cout << column_value << std::endl;//std::cout << sqlite3_column_name(stmt, i) << std::endl;
-            if(i == 0) category_object.insert("id", QString::fromStdString(column_value).toInt());
-            if(i == 1) category_object.insert("name", QString::fromStdString(column_value));
-            if(i == 2) category_object.insert("description", QString::fromStdString(column_value));
-            if(i == 3) category_object.insert("thumbnail", QString::fromStdString(column_value));      
-            //if(i == ) category_object.insert("", QString::fromStdString(column_value)); 
-        }
+    
+    for (const auto& category : predefined_categories) {
+        QVariantMap category_object;
+        category_object.insert("id", category.id);
+        category_object.insert("name", QString::fromStdString(category.name));
+        category_object.insert("description", QString::fromStdString(category.description));
+        category_object.insert("thumbnail", QString::fromStdString(category.thumbnail));
         category_list.append(category_object);
     }
     
-    sqlite3_finalize(stmt);
+    if(sort_alphabetically == true) {
+        std::sort(category_list.begin(), category_list.end(), [](const QVariant& a, const QVariant& b) {
+            return a.toMap()["name"].toString().compare(b.toMap()["name"].toString(), Qt::CaseInsensitive) < 0;
+        });
+    }
 
     return category_list;
 }
 
 //----------------------------------------------------------------
 int neroshop::Backend::getCategoryIdByName(const QString& category_name) const {
-    neroshop::db::Sqlite3 * database = neroshop::get_database();
-    if(!database) throw std::runtime_error("database is NULL");
-    // Execute sqlite3 statement
-    int category_id = database->get_integer_params("SELECT id FROM categories WHERE name = $1;", { category_name.toStdString() });
-    return category_id;
+    return get_category_id_by_name(category_name.toStdString());
 }
 //----------------------------------------------------------------
 int neroshop::Backend::getCategoryProductCount(int category_id) const {
-    neroshop::db::Sqlite3 * database = neroshop::get_database();
+    /*neroshop::db::Sqlite3 * database = neroshop::get_database();
     if(!database) throw std::runtime_error("database is NULL");
     // Execute sqlite3 statement
     int category_product_count = database->get_integer_params("SELECT COUNT(*) FROM products WHERE category_id = $1;", { std::to_string(category_id) });
-    return category_product_count;
+    return category_product_count;*/
+    return 0;
 }
 //----------------------------------------------------------------
 //----------------------------------------------------------------
@@ -350,6 +333,11 @@ QVariantList neroshop::Backend::registerProduct(const QString& name, const QStri
     if(product_code.isEmpty()) database->execute_params("UPDATE products SET code = NULL WHERE uuid = $1", { product_uuid.toStdString() });
     if(attributes.isEmpty()) database->execute_params("UPDATE products SET attributes = NULL WHERE uuid = $1", { product_uuid.toStdString() });
     return { true, QString::fromStdString(product_id) };
+    /*
+    neroshop::Object obj = neroshop::Product { product_uuid.toStdString(), name.toStdString(), description.toStdString(),
+        attributes, product_code.toStdString(), category_id, -1, tags
+    };
+    */
 }
 //----------------------------------------------------------------
 void neroshop::Backend::uploadProductImage(const QString& product_id, const QString& filename) {
@@ -1123,10 +1111,23 @@ QVariantList neroshop::Backend::getNodeList(const QString& coin) const {
 //----------------------------------------------------------------
 // Todo: use QProcess to check if monero daemon is running
 bool neroshop::Backend::isWalletDaemonRunning() const {
-    int monerod = Process::get_process_by_name("monerod");
+    /*int monerod = Process::get_process_by_name("monerod");
     if(monerod == -1) { return false; }
     std::cout << "\033[1;90;49m" << "monerod is running (ID:" << monerod << ")\033[0m" << std::endl; 
-    return true;
+    return true;*/
+    
+    #ifdef Q_OS_WIN
+    QString program = "monerod.exe";
+    #else
+    QString program = "monerod";
+    #endif
+    
+    QProcess process;
+    process.start("pgrep", QStringList() << program); // specific to Linux-based systems
+    process.waitForFinished();
+
+    if(process.exitCode() == 0) std::cout << "\033[1;90;49m" << program.toStdString() << " was already running in the background\033[0m" << std::endl;
+    return process.exitCode() == 0;
 }
 //----------------------------------------------------------------
 //----------------------------------------------------------------
@@ -1248,6 +1249,7 @@ QVariantList neroshop::Backend::registerUser(WalletController* wallet_controller
     QString cart_uuid = QUuid::createUuid().toString();
     cart_uuid = cart_uuid.remove("{").remove("}"); // remove brackets
     database->execute_params("INSERT INTO cart (uuid, user_id) VALUES ($1, $2)", { cart_uuid.toStdString(), user_id });
+    //---------------------------------------------
     // initialize user obj
     std::unique_ptr<neroshop::User> seller(neroshop::Seller::on_login(*wallet_controller->getWallet()));
     user_controller->_user = std::move(seller);
@@ -1256,33 +1258,23 @@ QVariantList neroshop::Backend::registerUser(WalletController* wallet_controller
     }
     user_controller->_user->set_name(display_name.toStdString());
     user_controller->_user->set_public_key(public_key);
+    user_controller->_user->set_private_key(private_key);
     //---------------------------------------------
     // Store login credentials in DHT
     Client * client = Client::get_main_client();
     // If client is not connect, return error
     if (!client->is_connected()) return { false, "Not connected to daemon server" };
     // Serialize user object
-    neroshop::Seller& seller_ref = dynamic_cast<neroshop::Seller&>(*user_controller->_user); // Create a temporary reference from the unique_ptr
-    auto data = neroshop::Serializer::serialize(seller_ref);
+    auto data = Serializer::serialize(*user_controller->_user);
     std::string key = data.first;
     std::string value = data.second;
     
-    // Send put
-    nlohmann::json args_obj = { {"key", key}, {"value", value} };
-    nlohmann::json query_object = { {"version", std::string(NEROSHOP_VERSION)}, {"query", "put"}, {"args", args_obj}, {"tid", nullptr} };
-    std::vector<uint8_t> packed_data = nlohmann::json::to_msgpack(query_object);
-    client->send(packed_data);
-    // Receive response
-    try {
-        std::vector<uint8_t> response;
-        client->receive(response);
-        // Deserialize the response from MessagePack to a JSON object
-        nlohmann::json response_object = nlohmann::json::from_msgpack(response);
-        std::cout << "Received response: " << response_object.dump() << std::endl;
-    } catch (const nlohmann::detail::parse_error& e) {
-        std::cerr << "An error occurred: " << "Server was disconnected" << std::endl;//std::cout << "Failed to parse server response: " << e.what() << std::endl;
-    }
-    //---------------------------------------------    
+    // Send put and receive response
+    std::string put_response;
+    client->put(key, value, put_response);
+    std::cout << "Received response: " << put_response << "\n";
+
+    //---------------------------------------------
     emit user_controller->userChanged();
     emit user_controller->userLogged();
     //user_controller->rateItem("3c20978b-a543-4c58-bc68-5f900027796f", 3, "This product is aiight");

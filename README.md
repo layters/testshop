@@ -91,7 +91,6 @@ The name _neroshop_ is a combination of the words _nero_, which is Italian for _
 | [stduuid](https://github.com/mariusbancila/stduuid)                | ?                  | unique id generation                                                   | :o:                                      |
 | [linenoise](https://github.com/antirez/linenoise)                  | ?                  | command line interface                                                 | :heavy_check_mark: :white_square_button: |
 | [lua](https://www.lua.org/)                                        | 5.1.5              | configuration script                                                   | :heavy_check_mark:                       |
-| [openpgp](external/openpgp)                                        | ?                  | public-key encryption and digital signatures                           | :grey_question:                          |
 | [cxxopts](https://github.com/jarro2783/cxxopts)                    | ?                  | command line option parser                                             | :heavy_check_mark:                       |
 | [libzmq](https://github.com/zeromq/libzmq)                         | ?                  | networking                                                             | :grey_question:                          |
 | [libi2pd](https://github.com/PurpleI2P/i2pd)                       | latest             | network proxy                                                          | :grey_question:                          |

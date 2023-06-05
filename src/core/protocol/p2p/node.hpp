@@ -47,6 +47,10 @@ private:
     std::string generate_node_id(const std::string& address, int port);
     // Determines if node1 is closer to the target_id than node2
     bool is_closer(const std::string& target_id, const std::string& node1_id, const std::string& node2_id);
+    //---------------------------------------------------
+    // DHT-based indexing (Inverted indexing)
+    void map(const std::string& key, const std::string& value); // Maps search terms to keys    
+    //---------------------------------------------------
 public:
     Node(const std::string& address, int port, bool local); // Binds a socket to a port and initializes the DHT
     //Node(const Node& other); // Copy constructor
@@ -80,7 +84,10 @@ public:
     void join(/*std::function<void()> on_join_callback*/); // Sends a join message to the bootstrap peer to join the network
     void run(); // Main loop that listens for incoming messages
     void run_optimized(); // Uses less CPU than run but slower to process requests
-    void periodic();
+    void periodic_check();
+    void periodic_refresh(); // Periodic republishing
+    void republish();
+    void republish(const std::string& address, int port); // republishes data to a single node
     //---------------------------------------------------
     void on_ping_callback(const std::vector<uint8_t>& buffer, const struct sockaddr_in& client_addr);
     //---------------------------------------------------
@@ -111,11 +118,11 @@ public:
     
     void set_bootstrap(bool bootstrap);
     
-    bool is_bootstrap_node();
+    bool is_bootstrap_node() const;
     static bool is_bootstrap_node(const std::string& address, uint16_t port);
     ////Server * get_server() const;
     bool has_key(const std::string& key) const;
-    bool is_dead();
+    bool is_dead() const;
 };
 /*
 This is just a basic example implementation of a DHT in C++, and there are many details that are left out, such as the message routing mechanism, the peer discovery algorithm, and the node join and leave protocols. The actual implementation of a DHT can be quite complex and involves many different components, so this code should be considered as a starting point for further development.
