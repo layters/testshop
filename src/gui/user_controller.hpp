@@ -45,7 +45,20 @@ public:
     //Q_PROPERTY(QVariantList inventoryDate READ getInventoryByDate NOTIFY productsCountChanged);
     //Q_PROPERTY(QVariantList cart READ getCart NOTIFY cartQuantityChanged);
 
-    Q_INVOKABLE void listProduct(const QString& product_id, int quantity, double price, const QString& currency, const QString& condition, const QString& location);
+    Q_INVOKABLE void listProduct(
+        const QString& name, 
+        const QString& description,
+        double weight, 
+        const QString& attributes, 
+        const QString& product_code,
+        int category_id, 
+        
+        int quantity, 
+        double price, 
+        const QString& currency, 
+        const QString& condition, 
+        const QString& location
+    );
     Q_INVOKABLE void delistProduct(const QString& product_id);
     Q_INVOKABLE void delistProducts(const QStringList& product_ids);
     Q_INVOKABLE void addToCart(const QString& product_id, int quantity);

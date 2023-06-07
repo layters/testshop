@@ -187,7 +187,7 @@ std::vector<uint8_t> neroshop::msgpack::process(const std::vector<uint8_t>& requ
 
                 std::string closest_node_value;
                 for (auto const& closest_node : closest_nodes) {
-                    closest_node_value = closest_node->find_value(key);
+                    closest_node_value = closest_node->send_get(key);
                     if (!closest_node_value.empty()) {
                         break;
                     }
@@ -248,6 +248,9 @@ std::vector<uint8_t> neroshop::msgpack::process(const std::vector<uint8_t>& requ
             code = (node.store(key, value) == false) 
                    ? static_cast<int>(KadResultCode::StoreFailed) 
                    : static_cast<int>(KadResultCode::Success);
+            
+            // Map keys to search terms for efficient search operations
+            node.map(key, value);
         
             // Return success response // TODO: error reply
             response_object["version"] = std::string(NEROSHOP_VERSION);
@@ -272,12 +275,15 @@ std::vector<uint8_t> neroshop::msgpack::process(const std::vector<uint8_t>& requ
                    
             // Store the key-value pair in your own node as well
             node.store(key, value);
+            
+            // Map keys to search terms for efficient search operations
+            node.map(key, value);
         
             // Return success response
             response_object["version"] = std::string(NEROSHOP_VERSION);
             response_object["response"]["id"] = node.get_id();
             response_object["response"]["code"] = (code != 0) ? static_cast<int>(KadResultCode::StorePartial) : code;
-            response_object["response"]["message"] = (code != 0) ? "Store partial" : "Success";
+            response_object["response"]["message"] = (code != 0) ? "Store failed" : "Success";
         }
     }
     //-----------------------------------------------------

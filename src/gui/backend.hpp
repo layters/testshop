@@ -60,8 +60,6 @@ public:
     //Q_INVOKABLE QVariantList getProducts(); // Registered products
     Q_INVOKABLE QVariantList getListingsByMostRecentLimit(int limit);    
     // Products should be registered so that sellers can list pre-existing products without the need to duplicate a product which is unnecessary and can make the database bloated
-    Q_INVOKABLE QVariantList registerProduct(const QString& name, const QString& description,
-        double weight, const QString& attributes, const QString& product_code, int category_id) const;
     Q_INVOKABLE void uploadProductImage(const QString& product_id, const QString& filename);
     Q_INVOKABLE QVariantList getProductImages(const QString& product_id);
     Q_INVOKABLE int getProductStarCount(const QString& product_id);
@@ -80,9 +78,6 @@ public:
     Q_INVOKABLE void createOrder(UserController * user_controller, const QString& shipping_address);
     
     static int deleteExpiredOrders();
-    
-    //Q_INVOKABLE void ();
-    static void testfts5();
 private:
 };
 }

@@ -14,12 +14,27 @@ neroshop::UserController::~UserController() {
     std::cout << "user controller deleted\n";
 }
 //----------------------------------------------------------------
-void neroshop::UserController::listProduct(const QString& product_id, int quantity, double price, const QString& currency, const QString& condition, const QString& location) {
+void neroshop::UserController::listProduct(const QString& name, const QString& description,
+        double weight, const QString& attributes, 
+        const QString& product_code, int category_id, 
+int quantity, double price, const QString& currency, const QString& condition, const QString& location) {
     if (!_user)
         throw std::runtime_error("neroshop::User is not initialized");
     auto seller = dynamic_cast<neroshop::Seller *>(_user.get());
-    seller->list_item(product_id.toStdString(), quantity, 
-        price, currency.toStdString(), condition.toStdString(), location.toStdString());
+    seller->list_item(
+        name.toStdString(), 
+        description.toStdString(),
+        weight, 
+        attributes.toStdString(), 
+        product_code.toStdString(),
+        category_id, 
+        
+        quantity, 
+        price, 
+        currency.toStdString(), 
+        condition.toStdString(), 
+        location.toStdString()
+    );
     emit productsCountChanged();
 }
 //----------------------------------------------------------------

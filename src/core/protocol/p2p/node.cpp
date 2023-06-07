@@ -455,7 +455,6 @@ int neroshop::Node::put(const std::string& key, const std::string& value) {
     }
     //--------------------------------------------
     data[key] = value;
-    map(key, value); // Map search terms to key for efficient retrieval of data associated with those terms
     return has_key(key); // boolean
 }
 
@@ -485,8 +484,9 @@ bool neroshop::Node::has_key(const std::string& key) const {
 }
 
 void neroshop::Node::map(const std::string& key, const std::string& value) {
-    Mapper::add(key, value);
-    auto index = Mapper::serialize();
+    Mapper mapper;
+    mapper.add(key, value); // Temporarily stores the mapping in C++ for serialization before permanently adding it to the database
+    auto index = mapper.serialize();
     data[index.first] = index.second;
 }
 

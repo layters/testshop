@@ -7,9 +7,9 @@
 neroshop::Listing::Listing() : quantity(0), price(0.00) {}
 
 neroshop::Listing::Listing(const std::string& id, const Product& product, const std::string& seller_id, unsigned int quantity,
-        double price, const std::string& currency, const std::string& condition, const std::string& location, const std::string& date)
+        double price, const std::string& currency, const std::string& condition, const std::string& location, const std::string& date, const std::string& signature)
     : id(id), product(std::make_unique<Product>(product)), seller_id(seller_id), quantity(quantity),
-      price(price), currency(currency), condition(condition), location(location), date(date)
+      price(price), currency(currency), condition(condition), location(location), date(date), signature(signature)
 {}
 
 neroshop::Listing::Listing(const Listing& other)
@@ -91,6 +91,9 @@ void neroshop::Listing::set_id(const std::string& id) {
 }
 
 void neroshop::Listing::set_product_id(const std::string& product_id) { 
+    if (product == nullptr) {
+        throw std::runtime_error("product is nullptr");
+    }
     this->product->set_id(product_id);
 }
 
@@ -126,6 +129,10 @@ void neroshop::Listing::set_product(const Product& product) {
     this->product = std::make_unique<Product>(product);
 }
 
+void neroshop::Listing::set_signature(const std::string& signature) {
+    this->signature = signature;
+}
+
 //-----------------------------------------------------------------------------
 
 std::string neroshop::Listing::get_id() const {
@@ -133,6 +140,9 @@ std::string neroshop::Listing::get_id() const {
 }
 
 std::string neroshop::Listing::get_product_id() const {
+    if (product.get() == nullptr) {
+        throw std::runtime_error("product is nullptr");
+    }
     return product->get_id();
 }
 
@@ -166,4 +176,8 @@ std::string neroshop::Listing::get_date() const {
 
 neroshop::Product * neroshop::Listing::get_product() const {
     return product.get();
+}
+
+std::string neroshop::Listing::get_signature() const {
+    return signature;
 }

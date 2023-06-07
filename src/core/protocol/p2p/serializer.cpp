@@ -54,9 +54,12 @@ std::pair<std::string, std::string/*std::vector<uint8_t>*/> neroshop::Serializer
         json_object["price"] = listing.get_price();
         json_object["currency"] = listing.get_currency();
         json_object["condition"] = listing.get_condition();
-        json_object["location"] = listing.get_location();
+        std::string location = listing.get_location();
+        if(!location.empty() && location != "Unspecified") {
+            json_object["location"] = location;
+        }
         json_object["date"] = listing.get_date();
-        //json_object["signature"] = // listings can be updated by the user that can verify the signature
+        json_object["signature"] = listing.get_signature();// listings can be updated by the user that can verify the signature
         json_object["metadata"] = "listing";
         // Include the product serialization within the listing serialization
         assert(listing.get_product() != nullptr);
@@ -245,7 +248,9 @@ std::shared_ptr<neroshop::Object> neroshop::Serializer::deserialize(const std::p
         listing.set_price(value["price"].get<double>());
         listing.set_currency(value["currency"].get<std::string>());
         listing.set_condition(value["condition"].get<std::string>());
-        listing.set_location(value["location"].get<std::string>());
+        if (value.contains("location") && value["location"].is_string()) {
+            listing.set_location(value["location"].get<std::string>());
+        }
         listing.set_date(value["date"].get<std::string>());
         // product
         assert(value["product"].is_object());
@@ -386,7 +391,10 @@ std::shared_ptr<neroshop::Object> neroshop::Serializer::deserialize(const std::p
 std::pair<std::string, std::string> neroshop::Serializer::serialize(const User& user) {
     nlohmann::json json_object = {};
     
-    json_object["display_name"] = user.get_name();
+    std::string display_name = user.get_name();
+    if(!display_name.empty()) {
+        json_object["display_name"] = display_name;
+    }
     std::string user_id = user.get_id();
     json_object["monero_address"] = user_id; // used as identifier
     std::string public_key = user.get_public_key();
@@ -437,7 +445,9 @@ std::shared_ptr<neroshop::User> neroshop::Serializer::deserialize_user(const std
     if(metadata == "user") {
         user_object = std::make_shared<User>();
         user_object->set_id(value["monero_address"].get<std::string>());
-        user_object->set_name(value["display_name"].get<std::string>());
+        if (value.contains("display_name")) {
+            user_object->set_name(value["display_name"].get<std::string>());
+        }
         user_object->set_public_key(value["public_key"].get<std::string>());
         //user_object.set_(value[""].get<std::string>());
     }
