@@ -85,6 +85,7 @@ public:
     friend class Backend;
     friend class UserController;
     friend class Serializer;
+    friend class Seller;
 protected: // can only be accessed by classes that inherit from class User (even instants of the bass class User cannot call these functions unless you dynamically cast them into a derived class)
     void set_id(const std::string& id);//void set_id(unsigned int id);
     void set_name(const std::string& name); // the same for every derived class 

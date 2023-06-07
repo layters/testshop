@@ -48,9 +48,6 @@ private:
     // Determines if node1 is closer to the target_id than node2
     bool is_closer(const std::string& target_id, const std::string& node1_id, const std::string& node2_id);
     //---------------------------------------------------
-    // DHT-based indexing (Inverted indexing)
-    void map(const std::string& key, const std::string& value); // Maps search terms to keys    
-    //---------------------------------------------------
 public:
     Node(const std::string& address, int port, bool local); // Binds a socket to a port and initializes the DHT
     //Node(const Node& other); // Copy constructor
@@ -103,6 +100,9 @@ public:
     std::string get(const std::string& key) const; // A query to get a specific value stored in the DHT.         // Retrieves the value associated with the key from the DHT
     std::string find_value(const std::string& key) const;
     int remove(const std::string& key); // Remove a key-value pair from the DHT
+    //---------------------------------------------------
+    // DHT-based indexing (Inverted indexing)
+    void map(const std::string& key, const std::string& value); // Maps search terms to keys
     //---------------------------------------------------
     std::string get_id() const; // get ID of this node
     std::string get_ip_address() const;

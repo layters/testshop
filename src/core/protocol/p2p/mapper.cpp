@@ -8,19 +8,21 @@
 
 namespace neroshop_string = neroshop::string;
 
-std::unordered_map<std::string, std::vector<std::string>> neroshop::Mapper::product_ids{};
-std::unordered_map<std::string, std::vector<std::string>> neroshop::Mapper::product_names{};
-std::unordered_map<std::string, std::vector<std::string>> neroshop::Mapper::product_categories{};
-std::unordered_map<std::string, std::vector<std::string>> neroshop::Mapper::product_tags{};
-std::unordered_map<std::string, std::vector<std::string>> neroshop::Mapper::product_codes{};
-std::unordered_map<std::string, std::vector<std::string>> neroshop::Mapper::product_sale_locations{};
-std::unordered_map<std::string, std::vector<std::string>> neroshop::Mapper::seller_ids{};
+//-----------------------------------------------------------------------------
 
-std::unordered_map<std::string, std::vector<std::string>> neroshop::Mapper::user_accounts{}; // holds both user_ids and display_names
-std::unordered_map<std::string, std::vector<std::string>> neroshop::Mapper::user_ids{};
-std::unordered_map<std::string, std::vector<std::string>> neroshop::Mapper::display_names{};
-
-std::unordered_map<std::string, std::vector<std::string>> neroshop::Mapper::order_ids{};
+neroshop::Mapper::~Mapper() {
+    product_ids.clear();
+    product_names.clear();
+    product_categories.clear();
+    product_tags.clear();
+    product_codes.clear();
+    listing_ids.clear();
+    listing_locations.clear();
+    seller_ids.clear();
+    user_ids.clear();
+    display_names.clear();
+    order_ids.clear();
+}
 
 //-----------------------------------------------------------------------------
 
@@ -40,28 +42,37 @@ void neroshop::Mapper::add(const std::string& key, const std::string& value) {
     assert(json["metadata"].is_string());
     std::string metadata = json["metadata"].get<std::string>();
     //-----------------------------------------------
+    if(metadata == "index") { // TODO: finish this and test it
+        for (const auto& [key, value] : json.items()) {
+            if (key == "product_name") {
+                // Assuming 'product_names' maps to std::unordered_map<std::string, std::vector<std::string>> product_names;
+                const auto& product_name_obj = value;
+                assert(product_name_obj.is_object());
+                for (const auto& [product_name, listing_keys] : product_name_obj.items()) {
+                    assert(listing_keys.is_array());
+                    const auto& listing_keys_array = listing_keys.get<std::vector<std::string>>();
+                    for (const auto& listing_key : listing_keys_array) {
+                        std::cout << "product_name: " << product_name << "\n";
+                        std::cout << "listing_key: " << listing_key << "\n";
+                        product_names[product_name].push_back(listing_key);
+                    }
+                }
+            }
+        }
+    }
+    //-----------------------------------------------
     // Note: As long as we have the user id, we can find the seller_ratings
     if(metadata == "user") {
         // Store user-related data in the user_ids and display_names unordered maps
         if (json.contains("monero_address") && json["monero_address"].is_string()) {
             std::string user_id = json["monero_address"].get<std::string>();
-            user_accounts[user_id].push_back(key);
             user_ids[user_id].push_back(key);
-            std::cout << "user_id (" << user_id << ") has been mapped to key (" << key << ")\n";
+            std::cout << "user_id (" << user_id << ") has been mapped to account key (" << key << ")\n";
         }
         if (json.contains("display_name") && json["display_name"].is_string()) {
             std::string display_name = json["display_name"].get<std::string>();
-            user_accounts[display_name].push_back(key);
             display_names[display_name].push_back(key);
-            std::cout << "display_name (" << display_name << ") has been mapped to key (" << key << ")\n";
-        }
-    }
-    //-----------------------------------------------    
-    if(metadata == "order") {
-        // Store order-related data in the order_ids unordered map
-        if (json.contains("id") && json["id"].is_string()) {
-            std::string order_id = json["id"].get<std::string>();
-            order_ids[order_id].push_back(key);
+            std::cout << "display_name (" << display_name << ") has been mapped to account key (" << key << ")\n";
         }
     }
     //-----------------------------------------------
@@ -95,17 +106,30 @@ void neroshop::Mapper::add(const std::string& key, const std::string& value) {
             std::string product_code = product_obj["code"].get<std::string>();
             product_codes[product_code].push_back(key);
         }
+        // Map a listing's key to listing_id
+        if (json.contains("id") && json["id"].is_string()) {
+            std::string listing_id = json["id"].get<std::string>();
+            listing_ids[listing_id].push_back(key);
+        }        
         // Map a listing's key to seller_id
         if (json.contains("seller_id") && json["seller_id"].is_string()) {
             std::string seller_id = json["seller_id"].get<std::string>();
             seller_ids[seller_id].push_back(key);
         }
-        // Map a listing's key to a product_sales_location
+        // Map a listing's key to a listing_location
         if (json.contains("location") && json["location"].is_string()) {
             std::string location = json["location"].get<std::string>();
-            product_sale_locations[location].push_back(key);
+            listing_locations[location].push_back(key);
         }
     }
+    //-----------------------------------------------    
+    if(metadata == "order") {
+        // Store order-related data in the order_ids unordered map
+        if (json.contains("id") && json["id"].is_string()) {
+            std::string order_id = json["id"].get<std::string>();
+            order_ids[order_id].push_back(key);
+        }
+    }    
     //-----------------------------------------------
     /*if(metadata == "product_rating") {
         // Map a product_rating's key to product_id
@@ -128,24 +152,29 @@ void neroshop::Mapper::add(const std::string& key, const std::string& value) {
 
 void neroshop::Mapper::sync() {
     neroshop::db::Sqlite3 * database = neroshop::get_database();
+    
+    database->execute("BEGIN TRANSACTION;");
+    //-----------------------------------------------
     // Insert data from 'user_ids'
     for (const auto& entry : user_ids) {
         const std::string& search_term = entry.first;
         const std::vector<std::string>& keys = entry.second;
+        const std::string content = "account";
 
         for (const std::string& key : keys) {
-            std::string query = "INSERT INTO mappings (search_term, key) VALUES (?, ?);";
-            database->execute_params(query, { search_term, key });
+            std::string query = "INSERT INTO mappings (search_term, key, content) VALUES (?, ?, ?);";
+            database->execute_params(query, { search_term, key, content });
         }
     }
     // Insert data from 'display_names'
     for (const auto& entry : display_names) {
         const std::string& search_term = entry.first;
         const std::vector<std::string>& keys = entry.second;
+        const std::string content = "account";
 
         for (const std::string& key : keys) {
-            std::string query = "INSERT INTO mappings (search_term, key) VALUES (?, ?);";
-            database->execute_params(query, { search_term, key });
+            std::string query = "INSERT INTO mappings (search_term, key, content) VALUES (?, ?, ?);";
+            database->execute_params(query, { search_term, key, content });
         }
     }    
     //-----------------------------------------------
@@ -153,70 +182,88 @@ void neroshop::Mapper::sync() {
     for (const auto& entry : product_ids) {
         const std::string& search_term = entry.first;
         const std::vector<std::string>& keys = entry.second;
+        const std::string content = "listing";
 
         for (const std::string& key : keys) {
-            std::string query = "INSERT INTO mappings (search_term, key) VALUES (?, ?);";
-            database->execute_params(query, { search_term, key });
+            std::string query = "INSERT INTO mappings (search_term, key, content) VALUES (?, ?, ?);";
+            database->execute_params(query, { search_term, key, content });
         }
     }
     // Insert data from 'product_names'
     for (const auto& entry : product_names) {
         const std::string& search_term = entry.first;
         const std::vector<std::string>& keys = entry.second;
+        const std::string content = "listing";
 
         for (const std::string& key : keys) {
-            std::string query = "INSERT INTO mappings (search_term, key) VALUES (?, ?);";
-            database->execute_params(query, { search_term, key });
+            std::string query = "INSERT INTO mappings (search_term, key, content) VALUES (?, ?, ?);";
+            database->execute_params(query, { search_term, key, content });
         }
     }
     // Insert data from 'product_categories'
     for (const auto& entry : product_categories) {
         const std::string& search_term = entry.first;
         const std::vector<std::string>& keys = entry.second;
+        const std::string content = "listing";
 
         for (const std::string& key : keys) {
-            std::string query = "INSERT INTO mappings (search_term, key) VALUES (?, ?);";
-            database->execute_params(query, { search_term, key });
+            std::string query = "INSERT INTO mappings (search_term, key, content) VALUES (?, ?, ?);";
+            database->execute_params(query, { search_term, key, content });
         }
     }
     // Insert data from 'product_tags'
     for (const auto& entry : product_tags) {
         const std::string& search_term = entry.first;
         const std::vector<std::string>& keys = entry.second;
+        const std::string content = "listing";
 
         for (const std::string& key : keys) {
-            std::string query = "INSERT INTO mappings (search_term, key) VALUES (?, ?);";
-            database->execute_params(query, { search_term, key });
+            std::string query = "INSERT INTO mappings (search_term, key, content) VALUES (?, ?, ?);";
+            database->execute_params(query, { search_term, key, content });
         }
     }        
     // Insert data from 'product_codes'
     for (const auto& entry : product_codes) {
         const std::string& search_term = entry.first;
         const std::vector<std::string>& keys = entry.second;
+        const std::string content = "listing";
 
         for (const std::string& key : keys) {
-            std::string query = "INSERT INTO mappings (search_term, key) VALUES (?, ?);";
-            database->execute_params(query, { search_term, key });
+            std::string query = "INSERT INTO mappings (search_term, key, content) VALUES (?, ?, ?);";
+            database->execute_params(query, { search_term, key, content });
         }
     }
-    // Insert data from 'product_sale_locations'
-    for (const auto& entry : product_sale_locations) {
+    // Insert data from 'listing_ids'
+    for (const auto& entry : listing_ids) {
         const std::string& search_term = entry.first;
         const std::vector<std::string>& keys = entry.second;
+        const std::string content = "listing";
 
         for (const std::string& key : keys) {
-            std::string query = "INSERT INTO mappings (search_term, key) VALUES (?, ?);";
-            database->execute_params(query, { search_term, key });
+            std::string query = "INSERT INTO mappings (search_term, key, content) VALUES (?, ?, ?);";
+            database->execute_params(query, { search_term, key, content });
+        }
+    }    
+    // Insert data from 'listing_locations'
+    for (const auto& entry : listing_locations) {
+        const std::string& search_term = entry.first;
+        const std::vector<std::string>& keys = entry.second;
+        const std::string content = "listing";
+
+        for (const std::string& key : keys) {
+            std::string query = "INSERT INTO mappings (search_term, key, content) VALUES (?, ?, ?);";
+            database->execute_params(query, { search_term, key, content });
         }
     }        
     // Insert data from 'seller_ids`
     for (const auto& entry : seller_ids) {
         const std::string& search_term = entry.first;
         const std::vector<std::string>& keys = entry.second;
+        const std::string content = "listing";
 
         for (const std::string& key : keys) {
-            std::string query = "INSERT INTO mappings (search_term, key) VALUES (?, ?);";
-            database->execute_params(query, { search_term, key });
+            std::string query = "INSERT INTO mappings (search_term, key, content) VALUES (?, ?, ?);";
+            database->execute_params(query, { search_term, key, content });
         }
     }
     //-----------------------------------------------
@@ -224,14 +271,16 @@ void neroshop::Mapper::sync() {
     for (const auto& entry : order_ids) {
         const std::string& search_term = entry.first;
         const std::vector<std::string>& keys = entry.second;
+        const std::string content = "order";
 
         for (const std::string& key : keys) {
-            std::string query = "INSERT INTO mappings (search_term, key) VALUES (?, ?);";
-            database->execute_params(query, { search_term, key });
+            std::string query = "INSERT INTO mappings (search_term, key, content) VALUES (?, ?, ?);";
+            database->execute_params(query, { search_term, key, content });
         }
     }    
     //-----------------------------------------------
-    // Usage: SELECT key FROM mappings WHERE search_term = 'layter';
+    database->execute("COMMIT;");
+    // Usage: SELECT key FROM mappings WHERE search_term MATCH 'layter' AND content MATCH 'account';
 }
 
 //-----------------------------------------------------------------------------
@@ -324,8 +373,20 @@ std::pair<std::string, std::string> neroshop::Mapper::serialize() {
 
         data["product_code"][search_term] = product_code_object;
     }
-    // Add product_sale_locations
-    for (const auto& entry : product_sale_locations) {
+    // Add listing_ids
+    for (const auto& entry : listing_ids) {
+        const std::string& search_term = entry.first;
+        const std::vector<std::string>& keys = entry.second;
+
+        nlohmann::json listing_id_object;
+        for (const auto& key : keys) {
+            listing_id_object.push_back(key);
+        }
+
+        data["listing_id"][search_term] = listing_id_object;
+    }    
+    // Add listing_locations
+    for (const auto& entry : listing_locations) {
         const std::string& search_term = entry.first;
         const std::vector<std::string>& keys = entry.second;
 
@@ -336,6 +397,18 @@ std::pair<std::string, std::string> neroshop::Mapper::serialize() {
 
         data["product_location"][search_term] = product_sale_location_object;
     }
+    // Add seller_ids
+    for (const auto& entry : seller_ids) {
+        const std::string& search_term = entry.first;
+        const std::vector<std::string>& keys = entry.second;
+
+        nlohmann::json seller_id_object;
+        for (const auto& key : keys) {
+            seller_id_object.push_back(key);
+        }
+
+        data["seller_id"][search_term] = seller_id_object;
+    }    
     //-----------------------------------------------
     // Add order_ids
     for (const auto& entry : order_ids) {
@@ -355,7 +428,10 @@ std::pair<std::string, std::string> neroshop::Mapper::serialize() {
     std::string value = data.dump();
     std::string key = neroshop::crypto::sha3_256(value);
     
-    //std::cout << data.dump(4) << "\n";
+    #ifdef NEROSHOP_DEBUG
+    std::cout << "index generated:\n";
+    std::cout << data.dump(4) << "\n";
+    #endif
     // Return key-value pair
     return std::make_pair(key, value);
 }

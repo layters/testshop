@@ -12,7 +12,7 @@ class Listing {
 public:
     Listing();
     Listing(const std::string& id, const Product& product, const std::string& seller_id, unsigned int quantity,
-            double price, const std::string& currency, const std::string& condition, const std::string& location, const std::string& date);
+            double price, const std::string& currency, const std::string& condition, const std::string& location, const std::string& date, const std::string& signature);
     Listing(const Listing& other);// copy constructor
     Listing(Listing&& other) noexcept; // move constructor
     
@@ -31,6 +31,7 @@ public:
     void set_location(const std::string& location);
     void set_date(const std::string& date);
     void set_product(const Product& product);
+    void set_signature(const std::string& signature);
     
     std::string get_id() const;
     std::string get_product_id() const;
@@ -42,6 +43,7 @@ public:
     std::string get_location() const;
     std::string get_date() const;
     Product * get_product() const;
+    std::string get_signature() const;
 private:
     std::string id;
     std::string seller_id;

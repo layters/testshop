@@ -6,6 +6,13 @@
 #include "database/database.hpp"
 #include "product.hpp"
 #include "wallet.hpp"
+#include "listing.hpp"
+#include "product.hpp"
+#include "protocol/transport/client.hpp"
+#include "protocol/p2p/serializer.hpp"
+#include "category.hpp"
+#include "tools/base64.hpp"
+#include "crypto/rsa.hpp"
 
 #include <cmath> // floor
 #include <random>
@@ -34,9 +41,22 @@ neroshop::Seller::~Seller() {
 ////////////////////
 ////////////////////
 ////////////////////
-void neroshop::Seller::list_item(const std::string& product_id, unsigned int quantity, double price, const std::string& currency, const std::string& condition, const std::string& location)
+void neroshop::Seller::list_item(
+    const std::string& name,
+    const std::string& description,
+    double weight,
+    const std::string& attributes,
+    const std::string& product_code,
+    int category_id,
+    
+    unsigned int quantity, 
+    double price, 
+    const std::string& currency, 
+    const std::string& condition, 
+    const std::string& location
+)
 {
-    neroshop::db::Sqlite3 * database = neroshop::get_database();
+    /*neroshop::db::Sqlite3 * database = neroshop::get_database();
     if(!database) throw std::runtime_error("database is NULL");
 
 	std::string listing_uuid = database->get_text_params("INSERT INTO listings (uuid, product_id, seller_id, quantity, price, currency, condition, location, date) " // date should always be last
@@ -52,7 +72,55 @@ void neroshop::Seller::list_item(const std::string& product_id, unsigned int qua
 #ifdef NEROSHOP_DEBUG
 	std::string item_name = database->get_text_params("SELECT name FROM products WHERE uuid = $1", { product_id });
 	std::cout << "\033[1;37m" << item_name << " (id: " << product_id << ", stock_qty: " << quantity << ") has been listed by seller \033[1;34m" << get_name() << " (id: " << get_id() << ")" << "\033[0m" << std::endl;
-#endif
+#endif*/
+    //-----------------------------------------------
+    // Transition from Sqlite to DHT:
+    Client * client = Client::get_main_client();
+    // Create product object
+    const std::string product_id = neroshop::uuid::generate();
+    Product product {
+        product_id, name, description, {}/*attributes*/, 
+        product_code, static_cast<unsigned int>(category_id), -1/*subcategory_id*/, {}/*tags*/
+    };
+    // Create listing object
+    const std::string listing_id = neroshop::uuid::generate();//std::cout << "listing id: " << listing_id << "\n";
+    const std::string seller_id = get_id();//std::cout << "seller_id: " << seller_id << "\n";
+
+    auto now = std::chrono::system_clock::now();
+    auto in_time_t = std::chrono::system_clock::to_time_t(now); // current time
+    std::stringstream date;
+    date << std::put_time(std::gmtime(&in_time_t), "%Y-%m-%d %H:%M:%S");
+    std::string utc_time = date.str();//std::cout << "utc time: " << utc_time << "\n";
+    
+    //std::cout << "public_key:\n" << public_key << "\n\n";
+    //std::cout << "private_key:\n" << private_key << "\n\n";
+    std::string signature = neroshop::crypto::rsa_private_sign(private_key, listing_id);//std::cout << "signature: " << signature << "\n\n";
+    std::string signature_encoded = neroshop::base64_encode(signature);//std::cout << "signature_encoded: " << signature_encoded << "\n\n";
+    
+    #ifdef NEROSHOP_DEBUG
+    std::string signature_decoded = neroshop::base64_decode(signature_encoded);//std::cout << "signature_decoded: " << signature_decoded << "\n\n";
+    auto result_base64 = neroshop::crypto::rsa_public_verify(public_key, listing_id, signature_decoded);
+    std::cout << "\033[1mverified (base64): " << (result_base64 == 1 ? "\033[32mpass" : "\033[91mfail") << "\033[0m\n";
+    assert(result_base64 == true);
+    
+    auto result = neroshop::crypto::rsa_public_verify(public_key, listing_id, signature);
+    std::cout << "\033[1mverified: " << (result == 1 ? "\033[32mpass" : "\033[91mfail") << "\033[0m\n";
+    assert(result == true);
+    #endif
+    
+    Listing listing { listing_id, product, seller_id,
+        quantity, price, currency,
+        condition, location, date.str(), signature_encoded
+    };//listing.print_listing();
+    
+    auto data = Serializer::serialize(listing); // error lies here ...
+    std::string key = data.first;
+    std::string value = data.second;//std::cout << "key: " << data.first << "\nvalue: " << data.second << "\n";
+    
+    // Send put request to neighboring nodes (and your node too JIC)
+    std::string put_response;
+    client->put(key, value, put_response);
+    std::cout << "Received response: " << put_response << "\n";
 }
 ////////////////////
 /*void neroshop::Seller::list_item(const neroshop::Product& item, unsigned int stock_qty, double sales_price, std::string currency, double discount, unsigned int discounted_items, unsigned int discount_times, std::string discount_expiry, std::string condition) { // ex. 5% off 10 balls

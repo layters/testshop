@@ -638,9 +638,7 @@ Popup {
                                 // Attributes will be in JSON format
                                 // Todo: check whether its a product or service
                                 // Register product to database
-                                let register_result = Backend.registerProduct(productNameField.text, productDescriptionEdit.text, 
-                                    productWeightField.text, ""/*attributes*/, productCodeField.text,
-                                    Backend.getCategoryIdByName(productCategoryBox.currentText))
+                                /*let register_result = Backend.registerProduct()
                                 // Upload product images to database
                                 let product_uuid = register_result[1]                                
                                 if(register_result[0] == true) {
@@ -651,9 +649,22 @@ Popup {
                                             Backend.uploadProductImage(product_uuid, Backend.urlToLocalFile(productImage.source))
                                         }
                                     }
-                                }
+                                }*/
                                 // List product
-                                User.listProduct(product_uuid, productQuantityField.text, productPriceField.text, selectedCurrencyText.text, productConditionBox.currentText, productLocationBox.currentText)                       
+                                User.listProduct(
+                                    productNameField.text, 
+                                    productDescriptionEdit.text, 
+                                    productWeightField.text, 
+                                    ""/*attributes*/, 
+                                    productCodeField.text,
+                                    Backend.getCategoryIdByName(productCategoryBox.currentText),
+                                    
+                                    productQuantityField.text, 
+                                    productPriceField.text, 
+                                    selectedCurrencyText.text, 
+                                    productConditionBox.currentText, 
+                                    productLocationBox.currentText
+                                )                       
                                 // Clear input fields after listing product
                                 productNameField.text = ""
                                 productPriceField.text = ""
