@@ -23,7 +23,7 @@ std::vector<uint8_t> neroshop::msgpack::process(const std::vector<uint8_t>& requ
     }
     catch(nlohmann::json::parse_error& exception) {
         neroshop::print("Error parsing client request", 1);
-        response_object["version"] = std::string(NEROSHOP_VERSION);//"0.1.0"; // neroshop version
+        response_object["version"] = std::string(NEROSHOP_DHT_VERSION);//"0.1.0"; // neroshop version
         response_object["error"]["code"] = static_cast<int>(KadResultCode::ParseError); // "code" MUST be an integer
         response_object["error"]["message"] = "Parse error";
         response_object["error"]["data"] = exception.what(); // A Primitive (non-object) or Structured (array) value which may be omitted
@@ -38,7 +38,7 @@ std::vector<uint8_t> neroshop::msgpack::process(const std::vector<uint8_t>& requ
     assert(request_object.is_object());
     assert(request_object["version"].is_string());
     std::string neroshop_version = request_object["version"];
-    assert(neroshop_version == std::string(NEROSHOP_VERSION));
+    assert(neroshop_version == std::string(NEROSHOP_DHT_VERSION));
     assert(request_object["query"].is_string());
     std::string method = request_object["query"];
     // "args" must contain the querying node's ID 
@@ -55,7 +55,7 @@ std::vector<uint8_t> neroshop::msgpack::process(const std::vector<uint8_t>& requ
     int code = 0;
     //-----------------------------------------------------
     if(method == "ping") {
-        response_object["version"] = std::string(NEROSHOP_VERSION);
+        response_object["version"] = std::string(NEROSHOP_DHT_VERSION);
         response_object["response"]["id"] = node.get_id();
     }
     //-----------------------------------------------------
@@ -65,7 +65,7 @@ std::vector<uint8_t> neroshop::msgpack::process(const std::vector<uint8_t>& requ
         assert(params_object["target"].is_string()); // target node id sought after by the querying node
         std::string target = params_object["target"];
         
-        response_object["version"] = std::string(NEROSHOP_VERSION);
+        response_object["version"] = std::string(NEROSHOP_DHT_VERSION);
         response_object["response"]["id"] = node.get_id();
         std::vector<Node*> nodes = node.find_node(target, NEROSHOP_DHT_MAX_CLOSEST_NODES);
         if(nodes.empty()) {
@@ -90,7 +90,7 @@ std::vector<uint8_t> neroshop::msgpack::process(const std::vector<uint8_t>& requ
         assert(params_object["info_hash"].is_string()); // info hash
         std::string info_hash = params_object["info_hash"];
         
-        response_object["version"] = std::string(NEROSHOP_VERSION);
+        response_object["version"] = std::string(NEROSHOP_DHT_VERSION);
         response_object["response"]["id"] = node.get_id();
         // Check if the queried node has peers for the requested infohash
         std::vector<Peer> peers = node.get_peers(info_hash);
@@ -155,7 +155,7 @@ std::vector<uint8_t> neroshop::msgpack::process(const std::vector<uint8_t>& requ
         node.add_peer(info_hash, {/*ip_address*/"", port});
         
         // Return success response
-        response_object["version"] = std::string(NEROSHOP_VERSION);
+        response_object["version"] = std::string(NEROSHOP_DHT_VERSION);
         response_object["response"]["id"] = node.get_id();
         response_object["response"]["code"] = code;
         response_object["response"]["message"] = "Peer announced"; // not needed
@@ -174,7 +174,7 @@ std::vector<uint8_t> neroshop::msgpack::process(const std::vector<uint8_t>& requ
                     
             if (!value.empty()) {
                 // Key found, return success response with value
-                response_object["version"] = std::string(NEROSHOP_VERSION);
+                response_object["version"] = std::string(NEROSHOP_DHT_VERSION);
                 response_object["response"]["id"] = node.get_id();
                 response_object["response"]["value"] = value;
             } else {
@@ -194,7 +194,7 @@ std::vector<uint8_t> neroshop::msgpack::process(const std::vector<uint8_t>& requ
                 }
 
                 if (!closest_node_value.empty()) {
-                    response_object["version"] = std::string(NEROSHOP_VERSION);
+                    response_object["version"] = std::string(NEROSHOP_DHT_VERSION);
                     response_object["response"]["id"] = node.get_id();
                     response_object["response"]["value"] = closest_node_value;
                 } else {
@@ -228,7 +228,7 @@ std::vector<uint8_t> neroshop::msgpack::process(const std::vector<uint8_t>& requ
                 return response;
             }
             // Key found, return success response with value
-            response_object["version"] = std::string(NEROSHOP_VERSION);
+            response_object["version"] = std::string(NEROSHOP_DHT_VERSION);
             response_object["response"]["id"] = node.get_id();
             response_object["response"]["value"] = value;
         }
@@ -253,7 +253,7 @@ std::vector<uint8_t> neroshop::msgpack::process(const std::vector<uint8_t>& requ
             node.map(key, value);
         
             // Return success response // TODO: error reply
-            response_object["version"] = std::string(NEROSHOP_VERSION);
+            response_object["version"] = std::string(NEROSHOP_DHT_VERSION);
             response_object["response"]["id"] = node.get_id();
             response_object["response"]["code"] = code;
             response_object["response"]["message"] = (code != 0) ? "Store failed" : "Success";
@@ -280,7 +280,7 @@ std::vector<uint8_t> neroshop::msgpack::process(const std::vector<uint8_t>& requ
             node.map(key, value);
         
             // Return success response
-            response_object["version"] = std::string(NEROSHOP_VERSION);
+            response_object["version"] = std::string(NEROSHOP_DHT_VERSION);
             response_object["response"]["id"] = node.get_id();
             response_object["response"]["code"] = (code != 0) ? static_cast<int>(KadResultCode::StorePartial) : code;
             response_object["response"]["message"] = (code != 0) ? "Store failed" : "Success";
@@ -302,7 +302,7 @@ std::vector<uint8_t> neroshop::msgpack::process(const std::vector<uint8_t>& requ
             
         std::vector<std::pair<std::string, std::string>> node_data = node.get_data();
         if(node_data.empty()) {
-            response_object["version"] = std::string(NEROSHOP_VERSION);
+            response_object["version"] = std::string(NEROSHOP_DHT_VERSION);
             response_object["response"]["id"] = node.get_id();
             response_object["response"]["result"] = nullptr;
         }
@@ -323,11 +323,11 @@ std::vector<uint8_t> neroshop::msgpack::process(const std::vector<uint8_t>& requ
                     std::string metadata = json["metadata"];
                     if (metadata == from) { // user, product, etc.
                         if(what == "*" || what == "all") {
-                            response_object["version"] = std::string(NEROSHOP_VERSION);
+                            response_object["version"] = std::string(NEROSHOP_DHT_VERSION);
                             response_object["response"]["id"] = node.get_id();
                             result_array.push_back(json); //json=entire object
                         } else {
-                            response_object["version"] = std::string(NEROSHOP_VERSION);
+                            response_object["version"] = std::string(NEROSHOP_DHT_VERSION);
                             response_object["response"]["id"] = node.get_id();
                             result_array.push_back(json[what]); // what=name, id, etc.
                         }

@@ -148,8 +148,6 @@ void ipc_server(Node& node) {
 //-----------------------------------------------------------------------------
 
 void dht_server(Node& node) {
-    /*Server server("127.0.0.1", NEROSHOP_P2P_DEFAULT_PORT, SocketType::Socket_UDP);
-    server.set_nonblocking(true);*/
     std::cout << "******************************************************\n";
     std::cout << "Node ID: " << node.get_id() << "\n";
     std::cout << "IP address: " << node.get_ip_address() << /*" (" << node.get_public_ip_address() << ")*/"\n";

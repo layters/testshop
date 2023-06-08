@@ -58,7 +58,10 @@ public:
     //Q_INVOKABLE QVariantList getListingsByMostFavorited();
     //Q_INVOKABLE QVariantList getListingsByMostSales();
     //Q_INVOKABLE QVariantList getProducts(); // Registered products
-    Q_INVOKABLE QVariantList getListingsByMostRecentLimit(int limit);    
+    Q_INVOKABLE QVariantList getListingsByMostRecentLimit(int limit);
+    
+    Q_INVOKABLE QVariantList getSearchResults(const QString& search_term);
+    
     // Products should be registered so that sellers can list pre-existing products without the need to duplicate a product which is unnecessary and can make the database bloated
     Q_INVOKABLE void uploadProductImage(const QString& product_id, const QString& filename);
     Q_INVOKABLE QVariantList getProductImages(const QString& product_id);

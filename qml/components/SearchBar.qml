@@ -49,7 +49,7 @@ Item {
             ////if(searchField.length < 1) return;
             console.log("Searching for " + searchField.text)
             navBar.uncheckAllButtons()
-            pageLoader.setSource("qrc:/qml/pages/CatalogPage.qml", {"model": Backend.getListings()})//, {"model": [""]})
+            pageLoader.setSource("qrc:/qml/pages/CatalogPage.qml", {"model": (searchField.text.length < 1) ? Backend.getListings() : Backend.getSearchResults(searchField.text)})//, {"model": [""]})
             //console.log("page Loader Item (CatalogPage):", pageLoader.item)
             //console.log("page Loader Item (CatalogPage.catalog):", pageLoader.catalog)//.item)
         
