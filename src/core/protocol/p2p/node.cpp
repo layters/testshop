@@ -573,7 +573,7 @@ bool neroshop::Node::send_ping(const std::string& address, int port) {
     query_object["query"] = "ping";
     query_object["args"]["id"] = this->id;
     query_object["args"]["ephemeral_port"] = get_port(); // for testing on local network
-    query_object["version"] = std::string(NEROSHOP_VERSION);
+    query_object["version"] = std::string(NEROSHOP_DHT_VERSION);
     
     auto ping_message = nlohmann::json::to_msgpack(query_object);
     //--------------------------------------------
@@ -610,7 +610,7 @@ std::vector<neroshop::Node*> neroshop::Node::send_find_node(const std::string& t
     query_object["query"] = "find_node";
     query_object["args"]["id"] = this->id;
     query_object["args"]["target"] = target_id;
-    query_object["version"] = std::string(NEROSHOP_VERSION);
+    query_object["version"] = std::string(NEROSHOP_DHT_VERSION);
     
     auto find_node_message = nlohmann::json::to_msgpack(query_object);
     //---------------------------------------------------------
@@ -658,7 +658,7 @@ void neroshop::Node::send_get_peers(const std::string& info_hash) {
     query_object["query"] = "get_peers";
     query_object["args"]["id"] = this->id;
     query_object["args"]["info_hash"] = info_hash;
-    query_object["version"] = std::string(NEROSHOP_VERSION);
+    query_object["version"] = std::string(NEROSHOP_DHT_VERSION);
     //-----------------------------------------------
     // socket sendto and recvfrom here
     //auto receive_buffer = send_query(address, port, _message);
@@ -691,7 +691,7 @@ void neroshop::Node::send_announce_peer(const std::string& info_hash, int port, 
     query_object["args"]["port"] = port; // the port of the peer that is announcing itself
     query_object["args"]["token"] = token;
     query_object["args"]["implied_port"] = (port != 0);//implied_port; // optional // set to 1 if the port number is included in the peer list, and 0 otherwise. // refers to the port of the peer that is announcing itself, not the port of the node that receives the announcement // the value of implied_port should be set based on whether the port number is included in the peer list or not, and it should not be set to this->port.
-    query_object["version"] = std::string(NEROSHOP_VERSION);
+    query_object["version"] = std::string(NEROSHOP_DHT_VERSION);
     //-----------------------------------------------    
     // send the query to the nodes in the routing table
     //auto receive_buffer = send_query(address, port, _message);  
@@ -714,7 +714,7 @@ int neroshop::Node::send_put(const std::string& key, const std::string& value) {
     query_object["args"]["id"] = this->id;
     query_object["args"]["key"] = key;
     query_object["args"]["value"] = value;
-    query_object["version"] = std::string(NEROSHOP_VERSION);
+    query_object["version"] = std::string(NEROSHOP_DHT_VERSION);
     //-----------------------------------------------
     // Determine which nodes get to put the key-value data in their hash table
     std::vector<Node *> closest_nodes = find_node(key, NEROSHOP_DHT_REPLICATION_FACTOR); // 5=replication factor
@@ -822,7 +822,7 @@ std::string neroshop::Node::send_get(const std::string& key) {
     query_object["query"] = "get";
     query_object["args"]["id"] = this->id;
     query_object["args"]["key"] = key;
-    query_object["version"] = std::string(NEROSHOP_VERSION);
+    query_object["version"] = std::string(NEROSHOP_DHT_VERSION);
     
     std::vector<uint8_t> get_message = nlohmann::json::to_msgpack(query_object);
     //-----------------------------------------------
@@ -882,7 +882,7 @@ void neroshop::Node::send_remove(const std::string& key) {
     query_object["tid"] = transaction_id;
     query_object["query"] = "remove";////query_object["method"] = "remove";
     query_object["args"]["key"] = key;
-    query_object["version"] = std::string(NEROSHOP_VERSION);
+    query_object["version"] = std::string(NEROSHOP_DHT_VERSION);
     
     //std::string _message = bencode::encode(query);
 }
@@ -903,8 +903,9 @@ void neroshop::Node::republish(const std::string& address, int port) {
     nlohmann::json query_object;
     query_object["query"] = "put";
     query_object["args"]["id"] = this->id;
-    query_object["version"] = std::string(NEROSHOP_VERSION);
+    query_object["version"] = std::string(NEROSHOP_DHT_VERSION);
     
+    bool put_sent = false;
     for (const auto& pair : data) {
         const std::string& key = pair.first;
         const std::string& value = pair.second;
@@ -920,11 +921,12 @@ void neroshop::Node::republish(const std::string& address, int port) {
         nlohmann::json put_response_message;
         try {
             put_response_message = nlohmann::json::from_msgpack(receive_buffer);
+            put_sent = true;
         } catch (const std::exception& e) {
             std::cerr << "Node \033[91m" << address << ":" << port << "\033[0m did not respond" << std::endl;
         }
     }
-    if(!data.empty()) std::cout << "\033[93mData republished to " << address << ":" << port << "\033[0m\n";
+    if(put_sent && !data.empty()) std::cout << "\033[93mData republished to " << address << ":" << port << "\033[0m\n";
 }
 
 //-----------------------------------------------------------------------------

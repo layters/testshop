@@ -41,25 +41,7 @@ void neroshop::Mapper::add(const std::string& key, const std::string& value) {
     }
     assert(json["metadata"].is_string());
     std::string metadata = json["metadata"].get<std::string>();
-    //-----------------------------------------------
-    if(metadata == "index") { // TODO: finish this and test it
-        for (const auto& [key, value] : json.items()) {
-            if (key == "product_name") {
-                // Assuming 'product_names' maps to std::unordered_map<std::string, std::vector<std::string>> product_names;
-                const auto& product_name_obj = value;
-                assert(product_name_obj.is_object());
-                for (const auto& [product_name, listing_keys] : product_name_obj.items()) {
-                    assert(listing_keys.is_array());
-                    const auto& listing_keys_array = listing_keys.get<std::vector<std::string>>();
-                    for (const auto& listing_key : listing_keys_array) {
-                        std::cout << "product_name: " << product_name << "\n";
-                        std::cout << "listing_key: " << listing_key << "\n";
-                        product_names[product_name].push_back(listing_key);
-                    }
-                }
-            }
-        }
-    }
+
     //-----------------------------------------------
     // Note: As long as we have the user id, we can find the seller_ratings
     if(metadata == "user") {
@@ -162,8 +144,15 @@ void neroshop::Mapper::sync() {
         const std::string content = "account";
 
         for (const std::string& key : keys) {
-            std::string query = "INSERT INTO mappings (search_term, key, content) VALUES (?, ?, ?);";
-            database->execute_params(query, { search_term, key, content });
+            // Check if the record already exists
+            std::string select_query = "SELECT COUNT(*) FROM mappings WHERE search_term = ? AND key = ?;";
+            bool exists = database->get_integer_params(select_query, { search_term, key });
+            
+            // If no duplicate record found, perform insertion
+            if(!exists) {
+                std::string insert_query = "INSERT INTO mappings (search_term, key, content) VALUES (?, ?, ?);";
+                database->execute_params(insert_query, { search_term, key, content });
+            }
         }
     }
     // Insert data from 'display_names'
@@ -173,8 +162,15 @@ void neroshop::Mapper::sync() {
         const std::string content = "account";
 
         for (const std::string& key : keys) {
-            std::string query = "INSERT INTO mappings (search_term, key, content) VALUES (?, ?, ?);";
-            database->execute_params(query, { search_term, key, content });
+            // Check if the record already exists
+            std::string select_query = "SELECT COUNT(*) FROM mappings WHERE search_term = ? AND key = ?;";
+            bool exists = database->get_integer_params(select_query, { search_term, key });
+            
+            // If no duplicate record found, perform insertion
+            if(!exists) {
+                std::string insert_query = "INSERT INTO mappings (search_term, key, content) VALUES (?, ?, ?);";
+                database->execute_params(insert_query, { search_term, key, content });
+            }
         }
     }    
     //-----------------------------------------------
@@ -185,8 +181,15 @@ void neroshop::Mapper::sync() {
         const std::string content = "listing";
 
         for (const std::string& key : keys) {
-            std::string query = "INSERT INTO mappings (search_term, key, content) VALUES (?, ?, ?);";
-            database->execute_params(query, { search_term, key, content });
+            // Check if the record already exists
+            std::string select_query = "SELECT COUNT(*) FROM mappings WHERE search_term = ? AND key = ?;";
+            bool exists = database->get_integer_params(select_query, { search_term, key });
+            
+            // If no duplicate record found, perform insertion
+            if(!exists) {
+                std::string insert_query = "INSERT INTO mappings (search_term, key, content) VALUES (?, ?, ?);";
+                database->execute_params(insert_query, { search_term, key, content });
+            }
         }
     }
     // Insert data from 'product_names'
@@ -196,8 +199,15 @@ void neroshop::Mapper::sync() {
         const std::string content = "listing";
 
         for (const std::string& key : keys) {
-            std::string query = "INSERT INTO mappings (search_term, key, content) VALUES (?, ?, ?);";
-            database->execute_params(query, { search_term, key, content });
+            // Check if the record already exists
+            std::string select_query = "SELECT COUNT(*) FROM mappings WHERE search_term = ? AND key = ?;";
+            bool exists = database->get_integer_params(select_query, { search_term, key });
+            
+            // If no duplicate record found, perform insertion
+            if(!exists) {
+                std::string insert_query = "INSERT INTO mappings (search_term, key, content) VALUES (?, ?, ?);";
+                database->execute_params(insert_query, { search_term, key, content });
+            }
         }
     }
     // Insert data from 'product_categories'
@@ -207,8 +217,15 @@ void neroshop::Mapper::sync() {
         const std::string content = "listing";
 
         for (const std::string& key : keys) {
-            std::string query = "INSERT INTO mappings (search_term, key, content) VALUES (?, ?, ?);";
-            database->execute_params(query, { search_term, key, content });
+            // Check if the record already exists
+            std::string select_query = "SELECT COUNT(*) FROM mappings WHERE search_term = ? AND key = ?;";
+            bool exists = database->get_integer_params(select_query, { search_term, key });
+            
+            // If no duplicate record found, perform insertion
+            if(!exists) {
+                std::string insert_query = "INSERT INTO mappings (search_term, key, content) VALUES (?, ?, ?);";
+                database->execute_params(insert_query, { search_term, key, content });
+            }
         }
     }
     // Insert data from 'product_tags'
@@ -218,8 +235,15 @@ void neroshop::Mapper::sync() {
         const std::string content = "listing";
 
         for (const std::string& key : keys) {
-            std::string query = "INSERT INTO mappings (search_term, key, content) VALUES (?, ?, ?);";
-            database->execute_params(query, { search_term, key, content });
+            // Check if the record already exists
+            std::string select_query = "SELECT COUNT(*) FROM mappings WHERE search_term = ? AND key = ?;";
+            bool exists = database->get_integer_params(select_query, { search_term, key });
+            
+            // If no duplicate record found, perform insertion
+            if(!exists) {
+                std::string insert_query = "INSERT INTO mappings (search_term, key, content) VALUES (?, ?, ?);";
+                database->execute_params(insert_query, { search_term, key, content });
+            }
         }
     }        
     // Insert data from 'product_codes'
@@ -229,8 +253,15 @@ void neroshop::Mapper::sync() {
         const std::string content = "listing";
 
         for (const std::string& key : keys) {
-            std::string query = "INSERT INTO mappings (search_term, key, content) VALUES (?, ?, ?);";
-            database->execute_params(query, { search_term, key, content });
+            // Check if the record already exists
+            std::string select_query = "SELECT COUNT(*) FROM mappings WHERE search_term = ? AND key = ?;";
+            bool exists = database->get_integer_params(select_query, { search_term, key });
+            
+            // If no duplicate record found, perform insertion
+            if(!exists) {
+                std::string insert_query = "INSERT INTO mappings (search_term, key, content) VALUES (?, ?, ?);";
+                database->execute_params(insert_query, { search_term, key, content });
+            }
         }
     }
     // Insert data from 'listing_ids'
@@ -240,8 +271,15 @@ void neroshop::Mapper::sync() {
         const std::string content = "listing";
 
         for (const std::string& key : keys) {
-            std::string query = "INSERT INTO mappings (search_term, key, content) VALUES (?, ?, ?);";
-            database->execute_params(query, { search_term, key, content });
+            // Check if the record already exists
+            std::string select_query = "SELECT COUNT(*) FROM mappings WHERE search_term = ? AND key = ?;";
+            bool exists = database->get_integer_params(select_query, { search_term, key });
+            
+            // If no duplicate record found, perform insertion
+            if(!exists) {
+                std::string insert_query = "INSERT INTO mappings (search_term, key, content) VALUES (?, ?, ?);";
+                database->execute_params(insert_query, { search_term, key, content });
+            }
         }
     }    
     // Insert data from 'listing_locations'
@@ -251,8 +289,15 @@ void neroshop::Mapper::sync() {
         const std::string content = "listing";
 
         for (const std::string& key : keys) {
-            std::string query = "INSERT INTO mappings (search_term, key, content) VALUES (?, ?, ?);";
-            database->execute_params(query, { search_term, key, content });
+            // Check if the record already exists
+            std::string select_query = "SELECT COUNT(*) FROM mappings WHERE search_term = ? AND key = ?;";
+            bool exists = database->get_integer_params(select_query, { search_term, key });
+            
+            // If no duplicate record found, perform insertion
+            if(!exists) {
+                std::string insert_query = "INSERT INTO mappings (search_term, key, content) VALUES (?, ?, ?);";
+                database->execute_params(insert_query, { search_term, key, content });
+            }
         }
     }        
     // Insert data from 'seller_ids`
@@ -262,8 +307,15 @@ void neroshop::Mapper::sync() {
         const std::string content = "listing";
 
         for (const std::string& key : keys) {
-            std::string query = "INSERT INTO mappings (search_term, key, content) VALUES (?, ?, ?);";
-            database->execute_params(query, { search_term, key, content });
+            // Check if the record already exists
+            std::string select_query = "SELECT COUNT(*) FROM mappings WHERE search_term = ? AND key = ?;";
+            bool exists = database->get_integer_params(select_query, { search_term, key });
+            
+            // If no duplicate record found, perform insertion
+            if(!exists) {
+                std::string insert_query = "INSERT INTO mappings (search_term, key, content) VALUES (?, ?, ?);";
+                database->execute_params(insert_query, { search_term, key, content });
+            }
         }
     }
     //-----------------------------------------------
@@ -274,8 +326,15 @@ void neroshop::Mapper::sync() {
         const std::string content = "order";
 
         for (const std::string& key : keys) {
-            std::string query = "INSERT INTO mappings (search_term, key, content) VALUES (?, ?, ?);";
-            database->execute_params(query, { search_term, key, content });
+            // Check if the record already exists
+            std::string select_query = "SELECT COUNT(*) FROM mappings WHERE search_term = ? AND key = ?;";
+            bool exists = database->get_integer_params(select_query, { search_term, key });
+            
+            // If no duplicate record found, perform insertion
+            if(!exists) {
+                std::string insert_query = "INSERT INTO mappings (search_term, key, content) VALUES (?, ?, ?);";
+                database->execute_params(insert_query, { search_term, key, content });
+            }
         }
     }    
     //-----------------------------------------------
@@ -429,7 +488,7 @@ std::pair<std::string, std::string> neroshop::Mapper::serialize() {
     std::string key = neroshop::crypto::sha3_256(value);
     
     #ifdef NEROSHOP_DEBUG
-    std::cout << "index generated:\n";
+    std::cout << "Index generated:\n";
     std::cout << data.dump(4) << "\n";
     #endif
     // Return key-value pair

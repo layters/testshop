@@ -1,7 +1,7 @@
 #include "client.hpp"
 
 #include "../../tools/logger.hpp"
-#include "../../version.hpp" // NEROSHOP_VERSION
+#include "../../version.hpp" // NEROSHOP_DHT_VERSION
 
 #include <cstring> // memset
 #include <cassert>
@@ -200,7 +200,7 @@ ssize_t neroshop::Client::receive_from(std::vector<uint8_t>& message, const stru
 void neroshop::Client::put(const std::string& key, const std::string& value, std::string& reply) {
     // Send put - no id or tid required for IPC client requests. The DHT server will deal with that
     nlohmann::json args_obj = { {"key", key}, {"value", value} };
-    nlohmann::json query_object = { {"version", std::string(NEROSHOP_VERSION)}, {"query", "put"}, {"args", args_obj}, {"tid", nullptr} };
+    nlohmann::json query_object = { {"version", std::string(NEROSHOP_DHT_VERSION)}, {"query", "put"}, {"args", args_obj}, {"tid", nullptr} };
     std::vector<uint8_t> packed_data = nlohmann::json::to_msgpack(query_object);
     send(packed_data);
     // Receive response
@@ -221,7 +221,7 @@ void neroshop::Client::put(const std::string& key, const std::string& value, std
 void neroshop::Client::get(const std::string& key, std::string& reply) {
     // Send get - no id or tid required for IPC client requests. The DHT server will deal with that
     nlohmann::json args_obj = { {"key", key} };
-    nlohmann::json query_object = { {"version", std::string(NEROSHOP_VERSION)}, {"query", "get"}, {"args", args_obj}, {"tid", nullptr} };
+    nlohmann::json query_object = { {"version", std::string(NEROSHOP_DHT_VERSION)}, {"query", "get"}, {"args", args_obj}, {"tid", nullptr} };
     std::vector<uint8_t> packed_data = nlohmann::json::to_msgpack(query_object);
     send(packed_data);
     // Receive response

@@ -306,9 +306,15 @@ int neroshop::Backend::getCategoryIdByName(const QString& category_name) const {
 int neroshop::Backend::getCategoryProductCount(int category_id) const {
     neroshop::db::Sqlite3 * database = neroshop::get_database();
 
-    std::string query = "SELECT COUNT(*) FROM (SELECT DISTINCT search_term, key FROM mappings WHERE search_term MATCH ?);";
+    std::string query = "SELECT COUNT(*) FROM (SELECT DISTINCT search_term, key FROM mappings WHERE search_term MATCH ?";//"SELECT COUNT(*) FROM (SELECT DISTINCT search_term, key FROM mappings WHERE search_term MATCH ?);";
     std::string category = get_category_name_by_id(category_id);
+    
+    // Replace ampersands with wildcard (*)
     std::replace(category.begin(), category.end(), '&', '*');
+    // Add double quotes around the category for phrase matching
+    category = "\"" + category + "\"";
+
+    query += ")";
 
     int category_product_count = database->get_integer_params(query, { category });
     return category_product_count;
@@ -552,6 +558,109 @@ QVariantList neroshop::Backend::getInventory(const QString& user_id) {
 }
 //----------------------------------------------------------------
 //----------------------------------------------------------------
+QVariantList neroshop::Backend::getSearchResults(const QString& searchTerm) {
+    // Transition from Sqlite to DHT:
+    Client * client = Client::get_main_client();
+    neroshop::db::Sqlite3 * database = neroshop::get_database();
+    if(!database) throw std::runtime_error("database is NULL");
+    
+    std::string command = "SELECT DISTINCT key FROM mappings WHERE (search_term MATCH ? AND content MATCH 'listing');";//"SELECT DISTINCT key FROM mappings WHERE (search_term MATCH ? OR search_term LIKE '%' || ? || '%' COLLATE NOCASE) AND (content MATCH 'listing');";//"SELECT DISTINCT key FROM mappings WHERE search_term MATCH ? AND content MATCH 'listing';";
+    sqlite3_stmt * stmt = nullptr;
+    // Prepare (compile) statement
+    if(sqlite3_prepare_v2(database->get_handle(), command.c_str(), -1, &stmt, nullptr) != SQLITE_OK) {
+        neroshop::print("sqlite3_prepare_v2: " + std::string(sqlite3_errmsg(database->get_handle())), 1);
+        return {};
+    }
+    //-------------------------------------------------------
+    // Bind value to parameter arguments
+    QByteArray searchTermByteArray = searchTerm.toUtf8(); // Convert QString to std::string equivalent
+    if(sqlite3_bind_text(stmt, 1, searchTermByteArray.constData(), searchTermByteArray.length(), SQLITE_STATIC) != SQLITE_OK) {
+        neroshop::print("sqlite3_bind_text: " + std::string(sqlite3_errmsg(database->get_handle())), 1);
+        sqlite3_finalize(stmt);
+        return {};//database->execute("ROLLBACK;"); return {};
+    }        
+    
+    /*// Bind value to parameter arguments
+    QByteArray searchTermByteArray = searchTerm.toUtf8();
+    if (sqlite3_bind_text(stmt, 1, searchTermByteArray.constData(), searchTermByteArray.length(), SQLITE_STATIC) != SQLITE_OK ||
+        sqlite3_bind_text(stmt, 2, searchTermByteArray.constData(), searchTermByteArray.length(), SQLITE_STATIC) != SQLITE_OK) {
+        neroshop::print("sqlite3_bind_text: " + std::string(sqlite3_errmsg(database->get_handle())), 1);
+        sqlite3_finalize(stmt);
+        return {};
+    }*/
+    //-------------------------------------------------------
+    // Check whether the prepared statement returns no data (for example an UPDATE)
+    if(sqlite3_column_count(stmt) == 0) {
+        neroshop::print("No data found. Be sure to use an appropriate SELECT statement", 1);
+        return {};
+    }
+    
+    QVariantList catalog;
+    // Get all table values row by row
+    while(sqlite3_step(stmt) == SQLITE_ROW) {
+        QVariantMap listing; // Create an object for each row
+
+        for(int i = 0; i < sqlite3_column_count(stmt); i++) {
+            std::string column_value = (sqlite3_column_text(stmt, i) == nullptr) ? "NULL" : reinterpret_cast<const char *>(sqlite3_column_text(stmt, i));//std::cout << column_value  << " (" << i << ")" << std::endl;
+            QString key = QString::fromStdString(column_value);
+            // Get the value of the corresponding key from the DHT
+            std::string response;
+            client->get(key.toStdString(), response); // TODO: error handling
+            std::cout << "Received response (get): " << response << "\n";
+            // Parse the response
+            nlohmann::json json = nlohmann::json::parse(response);
+            if(json.contains("error")) {
+                continue; // Key is lost or missing from DHT, skip to next iteration
+            }
+            
+            const auto& response_obj = json["response"];
+            assert(response_obj.is_object());
+            if (response_obj.contains("value") && response_obj["value"].is_string()) {
+                const auto& value = response_obj["value"].get<std::string>();
+                nlohmann::json value_obj = nlohmann::json::parse(value);
+                assert(value_obj.is_object());//std::cout << value_obj.dump(4) << "\n";
+                listing.insert("listing_uuid", QString::fromStdString(value_obj["id"].get<std::string>()));
+                listing.insert("seller_id", QString::fromStdString(value_obj["seller_id"].get<std::string>()));
+                listing.insert("quantity", value_obj["quantity"].get<int>());
+                listing.insert("price", value_obj["price"].get<double>());
+                listing.insert("currency", QString::fromStdString(value_obj["currency"].get<std::string>()));
+                listing.insert("condition", QString::fromStdString(value_obj["condition"].get<std::string>()));
+                if(value_obj.contains("location") && value_obj["location"].is_string()) {
+                    listing.insert("location", QString::fromStdString(value_obj["location"].get<std::string>()));
+                }
+                listing.insert("date", QString::fromStdString(value_obj["date"].get<std::string>()));
+                assert(value_obj["product"].is_object());
+                const auto& product_obj = value_obj["product"];
+                listing.insert("product_uuid", QString::fromStdString(product_obj["id"].get<std::string>()));
+                listing.insert("product_name", QString::fromStdString(product_obj["name"].get<std::string>()));
+                listing.insert("product_description", QString::fromStdString(product_obj["description"].get<std::string>()));
+                listing.insert("product_category_id", get_category_id_by_name(product_obj["category"].get<std::string>()));
+                //listing.insert("", QString::fromStdString(product_obj[""].get<std::string>()));
+                //listing.insert("", QString::fromStdString(product_obj[""].get<std::string>()));
+            }
+            ////assert(value.is_object());
+            /*// products table
+            if(i == 9) listing.insert("product_uuid", QString::fromStdString(column_value)); 
+            if(i == 10) listing.insert("product_name", QString::fromStdString(column_value)); 
+            if(i == 11) listing.insert("product_description", QString::fromStdString(column_value)); 
+            if(i == 12) listing.insert("weight", QString::fromStdString(column_value).toDouble()); 
+            if(i == 13) listing.insert("product_attributes", QString::fromStdString(column_value)); 
+            if(i == 14) listing.insert("product_code", QString::fromStdString(column_value)); 
+            if(i == 15) listing.insert("product_category_id", QString::fromStdString(column_value).toInt()); 
+            // images table
+            //if(i == 16) listing.insert("image_id", QString::fromStdString(column_value)); 
+            //if(i == 17) listing.insert("product_uuid", QString::fromStdString(column_value)); 
+            if(i == 18) listing.insert("product_image_file", QString::fromStdString(column_value)); */
+            //if(i == 19) listing.insert("product_image_data", QString::fromStdString(column_value));
+            catalog.append(listing);
+        }
+    }
+    
+    sqlite3_finalize(stmt);
+
+    return catalog;
+}
+//----------------------------------------------------------------
 QVariantList neroshop::Backend::getListings() {
     // Transition from Sqlite to DHT:
     Client * client = Client::get_main_client();
@@ -638,47 +747,84 @@ QVariantList neroshop::Backend::getListings() {
 }
 //----------------------------------------------------------------
 QVariantList neroshop::Backend::getListingsByCategory(int category_id) {
+    // Transition from Sqlite to DHT:
+    Client * client = Client::get_main_client();
     neroshop::db::Sqlite3 * database = neroshop::get_database();
     if(!database) throw std::runtime_error("database is NULL");
     
-    //std::string command = "SELECT DISTINCT * FROM listings ORDER BY date ASC;";// LIMIT $1;";//WHERE stock_qty > 0;";
-    std::string command = "SELECT DISTINCT * FROM listings JOIN products ON products.uuid = listings.product_id JOIN images ON images.product_id = listings.product_id WHERE category_id = $1 GROUP BY images.product_id;";
+    std::string command = "SELECT DISTINCT key FROM mappings WHERE search_term MATCH ? AND content MATCH 'listing';";
     sqlite3_stmt * stmt = nullptr;
     // Prepare (compile) statement
     if(sqlite3_prepare_v2(database->get_handle(), command.c_str(), -1, &stmt, nullptr) != SQLITE_OK) {
         neroshop::print("sqlite3_prepare_v2: " + std::string(sqlite3_errmsg(database->get_handle())), 1);
         return {};
     }
+    //-------------------------------------------------------
+    std::string category = get_category_name_by_id(category_id);
+    
+    // Replace ampersands with wildcard (*)
+    std::replace(category.begin(), category.end(), '&', '*');
+    // Add double quotes around the category for phrase matching
+    category = "\"" + category + "\"";
+    //-------------------------------------------------------
     // Bind value to parameter arguments
-    if(sqlite3_bind_int(stmt, 1, category_id) != SQLITE_OK) {
-        neroshop::print("sqlite3_bind_int: " + std::string(sqlite3_errmsg(database->get_handle())), 1);
+    if(sqlite3_bind_text(stmt, 1, category.c_str(), category.length(), SQLITE_STATIC) != SQLITE_OK) {
+        neroshop::print("sqlite3_bind_text: " + std::string(sqlite3_errmsg(database->get_handle())), 1);
         sqlite3_finalize(stmt);
         return {};//database->execute("ROLLBACK;"); return {};
-    }    
+    }        
+    //-------------------------------------------------------
     // Check whether the prepared statement returns no data (for example an UPDATE)
     if(sqlite3_column_count(stmt) == 0) {
         neroshop::print("No data found. Be sure to use an appropriate SELECT statement", 1);
         return {};
     }
     
-    QVariantList catalog_array;
+    QVariantList catalog;
     // Get all table values row by row
     while(sqlite3_step(stmt) == SQLITE_ROW) {
         QVariantMap listing; // Create an object for each row
+
         for(int i = 0; i < sqlite3_column_count(stmt); i++) {
-            std::string column_value = (sqlite3_column_text(stmt, i) == nullptr) ? "NULL" : reinterpret_cast<const char *>(sqlite3_column_text(stmt, i));////if(sqlite3_column_text(stmt, i) == nullptr) {throw std::runtime_error("column is NULL");}
-            ////std::cout << column_value  << " (" << i << ")" << std::endl;//std::cout << sqlite3_column_name(stmt, i) << std::endl;
-            // listings table
-            if(i == 0) listing.insert("listing_uuid", QString::fromStdString(column_value));
-            if(i == 1) listing.insert("product_id", QString::fromStdString(column_value));
-            if(i == 2) listing.insert("seller_id", QString::fromStdString(column_value));
-            if(i == 3) listing.insert("quantity", QString::fromStdString(column_value).toInt());
-            if(i == 4) listing.insert("price", QString::fromStdString(column_value).toDouble());
-            if(i == 5) listing.insert("currency", QString::fromStdString(column_value));
-            if(i == 6) listing.insert("condition", QString::fromStdString(column_value));
-            if(i == 7) listing.insert("location", QString::fromStdString(column_value));
-            if(i == 8) listing.insert("date", QString::fromStdString(column_value));
-            // products table
+            std::string column_value = (sqlite3_column_text(stmt, i) == nullptr) ? "NULL" : reinterpret_cast<const char *>(sqlite3_column_text(stmt, i));//std::cout << column_value  << " (" << i << ")" << std::endl;
+            QString key = QString::fromStdString(column_value);
+            // Get the value of the corresponding key from the DHT
+            std::string response;
+            client->get(key.toStdString(), response); // TODO: error handling
+            std::cout << "Received response (get): " << response << "\n";
+            // Parse the response
+            nlohmann::json json = nlohmann::json::parse(response);
+            if(json.contains("error")) {
+                continue; // Key is lost or missing from DHT, skip to next iteration
+            }
+            
+            const auto& response_obj = json["response"];
+            assert(response_obj.is_object());
+            if (response_obj.contains("value") && response_obj["value"].is_string()) {
+                const auto& value = response_obj["value"].get<std::string>();
+                nlohmann::json value_obj = nlohmann::json::parse(value);
+                assert(value_obj.is_object());//std::cout << value_obj.dump(4) << "\n";
+                listing.insert("listing_uuid", QString::fromStdString(value_obj["id"].get<std::string>()));
+                listing.insert("seller_id", QString::fromStdString(value_obj["seller_id"].get<std::string>()));
+                listing.insert("quantity", value_obj["quantity"].get<int>());
+                listing.insert("price", value_obj["price"].get<double>());
+                listing.insert("currency", QString::fromStdString(value_obj["currency"].get<std::string>()));
+                listing.insert("condition", QString::fromStdString(value_obj["condition"].get<std::string>()));
+                if(value_obj.contains("location") && value_obj["location"].is_string()) {
+                    listing.insert("location", QString::fromStdString(value_obj["location"].get<std::string>()));
+                }
+                listing.insert("date", QString::fromStdString(value_obj["date"].get<std::string>()));
+                assert(value_obj["product"].is_object());
+                const auto& product_obj = value_obj["product"];
+                listing.insert("product_uuid", QString::fromStdString(product_obj["id"].get<std::string>()));
+                listing.insert("product_name", QString::fromStdString(product_obj["name"].get<std::string>()));
+                listing.insert("product_description", QString::fromStdString(product_obj["description"].get<std::string>()));
+                listing.insert("product_category_id", get_category_id_by_name(product_obj["category"].get<std::string>()));
+                //listing.insert("", QString::fromStdString(product_obj[""].get<std::string>()));
+                //listing.insert("", QString::fromStdString(product_obj[""].get<std::string>()));
+            }
+            ////assert(value.is_object());
+            /*// products table
             if(i == 9) listing.insert("product_uuid", QString::fromStdString(column_value)); 
             if(i == 10) listing.insert("product_name", QString::fromStdString(column_value)); 
             if(i == 11) listing.insert("product_description", QString::fromStdString(column_value)); 
@@ -689,15 +835,15 @@ QVariantList neroshop::Backend::getListingsByCategory(int category_id) {
             // images table
             //if(i == 16) listing.insert("image_id", QString::fromStdString(column_value)); 
             //if(i == 17) listing.insert("product_uuid", QString::fromStdString(column_value)); 
-            if(i == 18) listing.insert("product_image_file", QString::fromStdString(column_value)); 
+            if(i == 18) listing.insert("product_image_file", QString::fromStdString(column_value)); */
             //if(i == 19) listing.insert("product_image_data", QString::fromStdString(column_value));
+            catalog.append(listing);
         }
-        catalog_array.append(listing);
     }
     
     sqlite3_finalize(stmt);
 
-    return catalog_array;
+    return catalog;
 }
 //----------------------------------------------------------------
 QVariantList neroshop::Backend::getListingsByMostRecent() {
