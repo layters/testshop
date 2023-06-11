@@ -881,6 +881,36 @@ void neroshop::Node::send_remove(const std::string& key) {
     //std::string _message = bencode::encode(query);
 }
 
+void neroshop::Node::send_map(const std::string& address, int port) {
+    nlohmann::json query_object;
+    query_object["query"] = "map";
+    query_object["args"]["id"] = this->id;
+    query_object["version"] = std::string(NEROSHOP_DHT_VERSION);
+    
+    bool map_sent = false;
+    for (const auto& pair : data) {
+        const std::string& key = pair.first;
+        const std::string& value = pair.second;
+        
+        query_object["args"]["key"] = key;
+        query_object["args"]["value"] = value;
+        std::string transaction_id = msgpack::generate_transaction_id();
+        query_object["tid"] = transaction_id; // tid should be unique for each put message
+        std::vector<uint8_t> map_message = nlohmann::json::to_msgpack(query_object);
+
+        auto receive_buffer = send_query(address, port, map_message);
+        // Process the response here
+        nlohmann::json map_response_message;
+        try {
+            map_response_message = nlohmann::json::from_msgpack(receive_buffer);
+            map_sent = true;
+        } catch (const std::exception& e) {
+            std::cerr << "Node \033[91m" << address << ":" << port << "\033[0m did not respond" << std::endl;
+        }
+    }
+    if(map_sent && !data.empty()) std::cout << "\033[93mIndexing data distributed to " << address << ":" << port << "\033[0m\n";
+}
+
 //-----------------------------------------------------------------------------
 
 void neroshop::Node::republish() {
@@ -891,36 +921,6 @@ void neroshop::Node::republish() {
         send_put(key, value);
     }
     if(!data.empty()) std::cout << "\033[93mData republished\033[0m\n";
-}
-
-void neroshop::Node::republish(const std::string& address, int port) {
-    nlohmann::json query_object;
-    query_object["query"] = "put";
-    query_object["args"]["id"] = this->id;
-    query_object["version"] = std::string(NEROSHOP_DHT_VERSION);
-    
-    bool put_sent = false;
-    for (const auto& pair : data) {
-        const std::string& key = pair.first;
-        const std::string& value = pair.second;
-        
-        query_object["args"]["key"] = key;
-        query_object["args"]["value"] = value;
-        std::string transaction_id = msgpack::generate_transaction_id();
-        query_object["tid"] = transaction_id; // tid should be unique for each put message
-        std::vector<uint8_t> put_message = nlohmann::json::to_msgpack(query_object);
-
-        auto receive_buffer = send_query(address, port, put_message);
-        // Process the response here
-        nlohmann::json put_response_message;
-        try {
-            put_response_message = nlohmann::json::from_msgpack(receive_buffer);
-            put_sent = true;
-        } catch (const std::exception& e) {
-            std::cerr << "Node \033[91m" << address << ":" << port << "\033[0m did not respond" << std::endl;
-        }
-    }
-    if(put_sent && !data.empty()) std::cout << "\033[93mData republished to " << address << ":" << port << "\033[0m\n";
 }
 
 //-----------------------------------------------------------------------------
@@ -1085,7 +1085,8 @@ void neroshop::Node::on_ping_callback(const std::vector<uint8_t>& buffer, const 
                 auto node_that_pinged = std::make_unique<Node>((sender_ip == "127.0.0.1") ? this->public_ip_address : sender_ip, sender_port, false);
                 routing_table->add_node(std::move(node_that_pinged)); // Already has internal write_lock
                 routing_table->print_table();
-                republish(sender_ip, sender_port); // Republish your data to the new node that recently joined the network
+                // TODO: Rather than republishing to every new node that pings, get the new node to map existing data. That even if the new node isn't responsible for the data, it can always have access to it. [x]
+                send_map(sender_ip, sender_port); // Redistribute your indexing data to the new node that recently joined the network
             }
         }
     }

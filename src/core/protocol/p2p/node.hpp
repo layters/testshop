@@ -76,17 +76,17 @@ public:
     std::string send_get(const std::string& key);
     std::string send_find_value(const std::string& key);
     void send_remove(const std::string& key);
+    void send_map(const std::string& address, int port); // Distributes indexing data to a single node
     // announce_peer, get_peers are specific to Bittorent and are not used in standard Kademlia
     //---------------------------------------------------
     std::vector<Node*> lookup(const std::string& key); // In Kademlia, the primary purpose of the lookup function is to find the nodes responsible for storing a particular key in the DHT, rather than retrieving the actual value of the key. The lookup function helps in locating the nodes that are likely to have the key or be able to provide information about it.
-    //---------------------------------------------------    
+    //---------------------------------------------------
     void join(/*std::function<void()> on_join_callback*/); // Sends a join message to the bootstrap peer to join the network
     void run(); // Main loop that listens for incoming messages
     void run_optimized(); // Uses less CPU than run but slower to process requests
     void periodic_check();
     void periodic_refresh(); // Periodic republishing
     void republish();
-    void republish(const std::string& address, int port); // Republishes data to a single node
     bool validate(const std::string& key, const std::string& value); // Validates data before storing it
     //---------------------------------------------------
     void on_ping_callback(const std::vector<uint8_t>& buffer, const struct sockaddr_in& client_addr);
