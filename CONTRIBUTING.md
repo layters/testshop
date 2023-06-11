@@ -17,7 +17,7 @@ To run the GUI application, use the following command:
 ```
 ./neroshop
 ```
-By default, the GUI runs the daemon in a separate detached process so there's no need to worry about that unless you're using `neroshop-console`, but if you really need to observe what is going on behind the scenes, you can still launch the daemon in a separate tab or window within the terminal before launching the GUI application.
+By default, the GUI runs the daemon in a separate detached process so there's no need to worry about that unless you're using `neroshop-console`, but if you really need to observe what is going on behind the scenes, you can still launch the daemon from within the terminal before launching the GUI application.
 
 The GUI should automatically detect whether the daemon is running in the background or not.
 
