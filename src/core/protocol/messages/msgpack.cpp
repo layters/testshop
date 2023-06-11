@@ -287,6 +287,22 @@ std::vector<uint8_t> neroshop::msgpack::process(const std::vector<uint8_t>& requ
         }
     }
     //-----------------------------------------------------
+    if(method == "map") {
+        assert(request_object["args"].is_object());
+        auto params_object = request_object["args"];
+        assert(params_object["key"].is_string());
+        std::string key = params_object["key"];
+        assert(params_object["value"].is_string());
+        std::string value = params_object["value"];
+        
+        // Store indexing data in database on receiving a "map" request
+        node.map(key, value);
+    
+        // Return success response
+        response_object["version"] = std::string(NEROSHOP_DHT_VERSION);
+        response_object["response"]["id"] = node.get_id();
+    }
+    //-----------------------------------------------------
     if(method == "search" && ipc_mode) { // For value-based DHT lookups, but only works on data that your node has
         assert(request_object["args"].is_object());
         auto params_object = request_object["args"];

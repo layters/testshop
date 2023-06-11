@@ -4,7 +4,7 @@ There are many ways that you can contribute.
 - Making a [donation](https://github.com/larteyoh/testshop#donations) to fund the development of the project
 - Help us [test](#testing) the software and report any bugs or vulnerabilities found in the code as a GitHub [issue](https://github.com/larteyoh/testshop/issues)
 - Sharing this project so more people can learn about its existence
-- Support the neroshop network by running your own neroshop node
+- Support the neroshop network by running your own neroshop node or volunteering to become a bootstrap node
 
 **Please refer to [the wiki](https://github.com/larteyoh/testshop/wiki/FAQ#how-can-i-contribute-to-neroshop-if-i-dont-know-c-or-c) for more information on how to contribute.**
 
@@ -18,6 +18,7 @@ To run the GUI application, use the following command:
 ./neroshop
 ```
 By default, the GUI runs the daemon in a separate detached process so there's no need to worry about that unless you're using `neroshop-console`, but if you really need to observe what is going on behind the scenes, you can still launch the daemon in a separate tab or window within the terminal before launching the GUI application.
+
 The GUI should automatically detect whether the daemon is running in the background or not.
 
 **Both `neroshop` and `neroshop-console` cannot be opened simultaneously as the IPC server only accepts a single client connection at a time.**
@@ -77,8 +78,6 @@ To run a public node, you must include the `--public` flag when starting the dae
 ./neromon --public
 ```
 
-**Be sure that port forwarding is enabled on your machine in order for other nodes to find your node.**
-
-**Edit: As of May 26 2023, automatic port forwarding now works on UPnP-enabled routers and the `--public` flag is no longer required to participate in the neroshop DHT network.**
+**Be sure that port forwarding is enabled on your machine in order for other nodes to find your node on port `50881`.**
 
 Another thing: You can also run a public RPC server by combining the `--rpc` and `--public` flags.

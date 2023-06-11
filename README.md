@@ -65,13 +65,13 @@ The name _neroshop_ is a combination of the words _nero_, which is Italian for _
 - [ ] Subaddress generator for direct payments without an escrow (a unique subaddress will be generated from a seller's synced wallet account for each order placed by a customer)
 - [x] Built-in Monero wallet with basic functionalities (transaction history, send, and receive)
 - [x] Option to run a local Monero node or connect to remote Monero nodes
-- [x] Payment address QR codes containing Monero URIs
+- [ ] Payment address QR codes containing Monero URIs
 - [ ] Option to choose between sending funds directly to a seller or by using a multisignature escrow.
 - [ ] Native Tor and I2P support (tor daemon will be bundled with each release and i2pd will be built-in)
 - [x] Seller reputation system
 - [x] Product rating system
 - [ ] Wishlists
-- [ ] Built-in SQLite-powered search engine that can find any products or sellers
+- [x] Built-in SQLite-powered search engine that can find any products or sellers
 - [ ] Full-featured and user-friendly GUI application (WIP)
 
 ## Building neroshop
