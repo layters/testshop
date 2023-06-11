@@ -974,8 +974,12 @@ void neroshop::Node::periodic_refresh() {
             // Acquire the lock before accessing the data
             std::shared_lock<std::shared_mutex> read_lock(node_read_mutex);
             
+            if(data.empty()) {
+                continue;
+            }
             // Perform periodic republishing here
             // This code will run concurrently with the listen/receive loop
+            std::cout << "\033[35mPerforming periodic refresh\033[0m\n";
             
             republish();
             
@@ -1099,8 +1103,9 @@ void neroshop::Node::run() {
     run_optimized();
     return;
     
-    // Start a separate thread for periodic checks
+    // Start a separate thread for periodic checks and republishing
     std::thread periodic_check_thread([this]() { periodic_check(); });
+    std::thread periodic_refresh_thread([this]() { periodic_refresh(); });
     
     while (true) {
         std::vector<uint8_t> buffer(4096);
@@ -1143,14 +1148,16 @@ void neroshop::Node::run() {
         std::thread request_thread(handle_request_fn);
         request_thread.detach();
     }
-    // Wait for the periodic check thread to finish
+    // Wait for the periodic threads to finish
     periodic_check_thread.join();
+    periodic_refresh_thread.join();
 }
 
 // This uses less CPU
 void neroshop::Node::run_optimized() {
-    // Start a separate thread for periodic checks
+    // Start a separate thread for periodic checks and republishing
     std::thread periodic_check_thread([this]() { periodic_check(); });
+    std::thread periodic_refresh_thread([this]() { periodic_refresh(); });
 
     while (true) {
         fd_set read_set;
@@ -1216,8 +1223,9 @@ void neroshop::Node::run_optimized() {
             }
         }
     }         
-    // Wait for the periodic check thread to finish
+    // Wait for the periodic threads to finish
     periodic_check_thread.join();    
+    periodic_refresh_thread.join();
 }
 
 //-----------------------------------------------------------------------------
