@@ -64,6 +64,7 @@ public:
     
     // Products should be registered so that sellers can list pre-existing products without the need to duplicate a product which is unnecessary and can make the database bloated
     Q_INVOKABLE void uploadProductImage(const QString& product_id, const QString& filename);
+    Q_INVOKABLE void uploadProductImageDHT(const QString& filename);
     Q_INVOKABLE QVariantList getProductImages(const QString& product_id);
     Q_INVOKABLE int getProductStarCount(const QString& product_id);
     Q_INVOKABLE int getProductStarCount(const QString& product_id, int star_number);

@@ -2,9 +2,9 @@ There are many ways that you can contribute.
 
 - Creating [pull requests](https://github.com/larteyoh/testshop/pulls) that solve issues found on the [issues page](https://github.com/larteyoh/testshop/issues)
 - Making a [donation](https://github.com/larteyoh/testshop#donations) to fund the development of the project
-- Reporting any bugs or vulnerabilities found in the code as a GitHub [issue](https://github.com/larteyoh/testshop/issues)
+- Help us [test](#testing) the software and report any bugs or vulnerabilities found in the code as a GitHub [issue](https://github.com/larteyoh/testshop/issues)
 - Sharing this project so more people can learn about its existence
-- Help us [test](#testing) the software for any bugs or vulnerabilities
+- Support the neroshop network by running your own neroshop node
 
 **Please refer to [the wiki](https://github.com/larteyoh/testshop/wiki/FAQ#how-can-i-contribute-to-neroshop-if-i-dont-know-c-or-c) for more information on how to contribute.**
 
@@ -12,14 +12,19 @@ There are many ways that you can contribute.
 # Testing
 Also, If you would like to help test the P2P network, you can skip to this [section](#testing-dht)
 
-### Testing GUI
+## Testing GUI
 To run the GUI application, use the following command:
 ```
 ./neroshop
 ```
+By default, the GUI runs the daemon in a separate detached process so there's no need to worry about that unless you're using `neroshop-console`, but if you really need to observe what is going on behind the scenes, you can still launch the daemon in a separate tab or window within the terminal before launching the GUI application.
+The GUI should automatically detect whether the daemon is running in the background or not.
+
+**Both `neroshop` and `neroshop-console` cannot be opened simultaneously as the IPC server only accepts a single client connection at a time.**
 
 
-### Testing RPC
+
+## Testing RPC
 
 To run the RPC server, use the following command:
 ```
@@ -32,7 +37,7 @@ A JSON-RPC error response should appear.
 
 
 
-### Testing IPC
+## Testing IPC
 
 To run the IPC server normally, use the following command:
 ```
@@ -46,7 +51,9 @@ This should start up the IPC server. Then you can proceed to launch neroshop-con
 
 From there, you should receive a pong message back from the server.
 
-### Testing DHT
+
+
+## Testing DHT
 
 To start the network, you must run your node as a bootstrap node:
 ```

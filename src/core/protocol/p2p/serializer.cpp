@@ -446,6 +446,7 @@ std::shared_ptr<neroshop::User> neroshop::Serializer::deserialize_user(const std
         user_object = std::make_shared<User>();
         user_object->set_id(value["monero_address"].get<std::string>());
         if (value.contains("display_name")) {
+            assert(value["display_name"].is_string());
             user_object->set_name(value["display_name"].get<std::string>());
         }
         user_object->set_public_key(value["public_key"].get<std::string>());

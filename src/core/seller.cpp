@@ -56,24 +56,6 @@ void neroshop::Seller::list_item(
     const std::string& location
 )
 {
-    /*neroshop::db::Sqlite3 * database = neroshop::get_database();
-    if(!database) throw std::runtime_error("database is NULL");
-
-	std::string listing_uuid = database->get_text_params("INSERT INTO listings (uuid, product_id, seller_id, quantity, price, currency, condition, location, date) " // date should always be last
-	    "VALUES ($1, $2, $3, $4, $5, $6, $7, $8, strftime('%Y-%m-%d %H:%M:%S')) "
-	    "RETURNING uuid;", { neroshop::uuid::generate(), product_id, get_id(), std::to_string(quantity), std::to_string(price), currency, condition, location });// end transaction////database->execute("COMMIT;");
-
-    if(listing_uuid.empty()) { neroshop::print("Failed to create listing", 1); return; }
-    // If location is unspecified or empty then set it to NULL to save space in DB
-    if(location == "Unspecified" || location.empty()) {
-        database->execute_params("UPDATE listings SET location = NULL WHERE uuid = $1", { listing_uuid });
-        std::cout << "Location set to NULL due to being Unspecified\n";
-    }
-#ifdef NEROSHOP_DEBUG
-	std::string item_name = database->get_text_params("SELECT name FROM products WHERE uuid = $1", { product_id });
-	std::cout << "\033[1;37m" << item_name << " (id: " << product_id << ", stock_qty: " << quantity << ") has been listed by seller \033[1;34m" << get_name() << " (id: " << get_id() << ")" << "\033[0m" << std::endl;
-#endif*/
-    //-----------------------------------------------
     // Transition from Sqlite to DHT:
     Client * client = Client::get_main_client();
     // Create product object
@@ -113,7 +95,7 @@ void neroshop::Seller::list_item(
         condition, location, date.str(), signature_encoded
     };//listing.print_listing();
     
-    auto data = Serializer::serialize(listing); // error lies here ...
+    auto data = Serializer::serialize(listing);
     std::string key = data.first;
     std::string value = data.second;//std::cout << "key: " << data.first << "\nvalue: " << data.second << "\n";
     

@@ -258,7 +258,7 @@ void neroshop::Backend::initializeDatabase() {
     }
     //-------------------------
     if(!database->table_exists("mappings")) { 
-        database->execute("CREATE VIRTUAL TABLE mappings USING fts5(search_term, key, content);");
+        database->execute("CREATE VIRTUAL TABLE mappings USING fts5(search_term, key, content, tokenize='porter unicode61');");
     }
     //-------------------------
     database->execute("COMMIT;");
@@ -320,6 +320,10 @@ int neroshop::Backend::getCategoryProductCount(int category_id) const {
     return category_product_count;
 }
 //----------------------------------------------------------------
+//----------------------------------------------------------------
+void neroshop::Backend::uploadProductImageDHT(const QString& filename) {
+
+}
 //----------------------------------------------------------------
 void neroshop::Backend::uploadProductImage(const QString& product_id, const QString& filename) {
     neroshop::db::Sqlite3 * database = neroshop::get_database();
@@ -564,7 +568,7 @@ QVariantList neroshop::Backend::getSearchResults(const QString& searchTerm) {
     neroshop::db::Sqlite3 * database = neroshop::get_database();
     if(!database) throw std::runtime_error("database is NULL");
     
-    std::string command = "SELECT DISTINCT key FROM mappings WHERE (search_term MATCH ? AND content MATCH 'listing');";//"SELECT DISTINCT key FROM mappings WHERE (search_term MATCH ? OR search_term LIKE '%' || ? || '%' COLLATE NOCASE) AND (content MATCH 'listing');";//"SELECT DISTINCT key FROM mappings WHERE search_term MATCH ? AND content MATCH 'listing';";
+    std::string command = "SELECT DISTINCT key FROM mappings WHERE (search_term MATCH ? AND content = 'listing');";//"SELECT DISTINCT key FROM mappings WHERE (search_term MATCH ? OR search_term LIKE '%' || ? || '%' COLLATE NOCASE) AND (content MATCH 'listing');";//"SELECT DISTINCT key FROM mappings WHERE search_term MATCH ? AND content MATCH 'listing';";
     sqlite3_stmt * stmt = nullptr;
     // Prepare (compile) statement
     if(sqlite3_prepare_v2(database->get_handle(), command.c_str(), -1, &stmt, nullptr) != SQLITE_OK) {
@@ -1452,6 +1456,10 @@ bool neroshop::Backend::loginWithWalletFile(WalletController* wallet_controller,
     if(!wallet_opened) return false;
     // Get the primary address
     std::string primary_address = wallet_controller->getPrimaryAddress().toStdString();
+    //----------------------------------------
+    // First, check the DHT for user account info
+    ////bool dht_account_found = database->get_integer_params("SELECT EXISTS(SELECT DISTINCT key FROM mappings WHERE search_term MATCH ? AND content MATCH 'listing')", { primary_address });
+    //----------------------------------------
     // Check database to see if user key (hash of primary address) exists
     bool user_found = database->get_integer_params("SELECT EXISTS(SELECT * FROM users WHERE monero_address = $1)", { primary_address });
     // If user key is not found in the database, then create one. This is like registering for an account

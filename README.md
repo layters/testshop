@@ -55,7 +55,7 @@ The name _neroshop_ is a combination of the words _nero_, which is Italian for _
 -->
 
 ## Feature Status
-- [ ] Distributed P2P network
+- [x] Distributed P2P network (no bootstrap nodes yet)
 - [ ] Buy and sell products and services with Monero
 - [x] No KYC
 - [ ] No censorship (censorship-resistant)
@@ -72,6 +72,7 @@ The name _neroshop_ is a combination of the words _nero_, which is Italian for _
 - [x] Product rating system
 - [ ] Wishlists
 - [ ] Built-in SQLite-powered search engine that can find any products or sellers
+- [ ] Full-featured and user-friendly GUI application (WIP)
 
 ## Building neroshop
 
@@ -225,8 +226,7 @@ This project is licensed under the [GNU General Public License v3.0 (GPLv3)](LIC
 
 
 ## Donations
-~~You may support the neroshop project directly by donating to any of the addresses below. Received payments will be used to reward developers for their contributions to the project (mostly by completing bounties) and will also be used to fund our official website domain name.~~
-Don't donate please.
+You may support the neroshop project directly by donating to any of the addresses below. Received payments will be used to reward developers for their contributions to the project (mostly by completing bounties) and will also be used to fund our official website domain name.
 
 **Monero (XMR):**
 ```

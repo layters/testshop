@@ -174,7 +174,12 @@ neroshop::Node::Node(const std::string& address, int port, bool local) : sockfd(
     if(!routing_table.get()) {
         routing_table = std::make_unique<RoutingTable>(std::vector<Node*>{});
         routing_table->my_node_id = this->id;
-    }    
+    } 
+       
+    // Initialize key mapper
+    if(!mapper.get()) {
+        mapper = std::make_unique<Mapper>();
+    }
 }
 
 /*neroshop::Node::Node(const Node& other)
@@ -423,37 +428,16 @@ void neroshop::Node::remove_peer(const std::string& info_hash) {
 }
 
 int neroshop::Node::put(const std::string& key, const std::string& value) {
-    // TODO: return error code/enum rather than boolean
-    assert(!value.empty() && "Value is empty");
-    // TODO: If key already exists, require verification in order to update it - only required for account data and listing data
-    if(has_key(key)) {
-        std::cout << "Key already exists. Verifying ...\n";
-        std::string preexisting_value = find_value(key);//std::cout << "pre-value: " << preexisting_value << std::endl;
-        nlohmann::json json;
-        try {
-            json = nlohmann::json::parse(preexisting_value);
-        } catch (const nlohmann::json::parse_error& e) {
-              std::cerr << "JSON parsing error: " << e.what() << std::endl;
-              return false; // Invalid value, return false
-        }
-            
-        // Verify signature using user's public key
-        if (json.contains("signature")) {
-            assert(json["signature"].is_string());
-            std::string signature = neroshop::base64_decode(json["signature"].get<std::string>());
-            
-            // Get the public key and other account data from the user
-            /////std::string public_key = user.get_public_key(); // Get the public key from the user object
-            ////std::string user_id = user.get_id(); // Get the user ID from the user object
-        
-            /*bool verified = neroshop_crypto::rsa_public_verify(public_key, user_id, signature);
-            if(!verified) {
-                std::cerr << "Verification failed." << std::endl;
-                return false; // Verification failed, return false
-            }*/
-        }
+    if(!validate(key, value)) {
+        return false;
     }
-    //--------------------------------------------
+    
+    // If data is a duplicate, skip it
+    if (has_key(key) && get(key) == value) {
+        std::cout << "Data already exists. Skipping ...\n";
+        return true;
+    }
+
     data[key] = value;
     return has_key(key); // boolean
 }
@@ -483,11 +467,21 @@ bool neroshop::Node::has_key(const std::string& key) const {
     return (data.count(key) > 0);
 }
 
+bool neroshop::Node::has_value(const std::string& value) const {
+    for (const auto& pair : data) {
+        if (pair.second == value) {
+            return true;
+        }
+    }
+    return false;
+}
+
 void neroshop::Node::map(const std::string& key, const std::string& value) {
-    Mapper mapper;
-    mapper.add(key, value); // Temporarily stores the mapping in C++ for serialization before permanently adding it to the database
-    auto index = mapper.serialize();
-    data[index.first] = index.second;
+    if(!validate(key, value)) {
+        return;
+    }
+    
+    mapper->add(key, value); // Temporarily stores the mapping in C++ for serialization before permanently adding it to the database
 }
 
 //-------------------------------------------------------------------------------------
@@ -931,6 +925,49 @@ void neroshop::Node::republish(const std::string& address, int port) {
 
 //-----------------------------------------------------------------------------
 
+bool neroshop::Node::validate(const std::string& key, const std::string& value) {
+    assert(!value.empty() && "Value is empty");
+    // Ensure that the value is a valid JSON
+    nlohmann::json json;
+    try {
+        json = nlohmann::json::parse(value);
+    } catch (const nlohmann::json::parse_error& e) {
+        std::cerr << "JSON parsing error: " << e.what() << std::endl;
+        return false; // Invalid value, return false
+    }
+
+    // Detect when key is the same but the value has changed
+    if(has_key(key)) {
+        std::string preexisting_value = find_value(key);//std::cout << "preexisting_value: " << preexisting_value << std::endl;
+            
+        // Compare the preexisting value with the new value
+        if (preexisting_value != value) {
+            std::cout << "Value modification detected. Performing signature verification ...\n";//std::cout << "Value mismatch. Skipping ...\n";//return false;}
+            
+            // Verify signature using user's public key (required for account data and listing data)
+            if (json.contains("signature")) {
+                assert(json["signature"].is_string());
+                std::string signature = neroshop::base64_decode(json["signature"].get<std::string>());
+            
+                // Get the public key and other account data from the user
+                /////std::string public_key = json["public_key"].get<std::string>();//user.get_public_key(); // Get the public key from the user object
+                ////std::string user_id = json["monero_address"].get<std::string>();//user.get_id(); // Get the user ID from the user object
+        
+                ////std::cout << "Verifying existing key's signature ...\n";
+                /*bool verified = neroshop_crypto::rsa_public_verify(public_key, user_id, signature);
+                if(!verified) {
+                    std::cerr << "Verification failed." << std::endl;
+                    return false; // Verification failed, return false
+                }*/
+            }
+        }
+    }
+    
+    return true;
+}
+
+//-----------------------------------------------------------------------------
+
 void neroshop::Node::periodic_refresh() {
     while (true) {
         {
@@ -993,6 +1030,46 @@ void neroshop::Node::periodic_check() {
         std::this_thread::sleep_for(std::chrono::seconds(NEROSHOP_DHT_PERIODIC_CHECK_INTERVAL));
     }
 }
+
+//-----------------------------------------------------------------------------
+
+/*bool neroshop::Node::on_keyword_blocked(const nlohmann::json& value) {
+    // Note: This code is in the testing stage
+    // Block certain keywords/search terms from listings
+    assert(json.contains("metadata"));
+    if(json["metadata"] == "listing") {
+        //--------------------------------------------
+        // Block categories marked as "Illegal"
+        if(json["product"]["category"] == "Illegal" ||
+            json["product"]["subcategory"] == "Illegal") {
+            std::cout << "Illegal product blocked\n";
+            return true; // The category is blocked, do not insert the data
+        }
+        //--------------------------------------------
+        // Block certain tags
+        std::vector<std::string> blocked_tags = { "heroin", "meth", "cp", "child porn" };
+        
+        if(json["product"].contains("tags")) {
+            assert(json["product"]["tags"].is_array());
+            std::vector<std::string> product_tags = json["product"]["tags"].get<std::vector<std::string>>();
+            // Check if any of the product tags match the blocked tags
+            bool has_blocked_tag = std::any_of(product_tags.begin(), product_tags.end(), [&](const std::string& tag) {
+                return std::find(blocked_tags.begin(), blocked_tags.end(), tag) != blocked_tags.end();
+            });
+            // Print the result
+            if (has_blocked_tag) {
+                std::cout << "Product contains a blocked tag." << std::endl;
+                return true;
+            } else {
+                std::cout << "Product does not contain any blocked tags." << std::endl;
+            }
+        }
+        //--------------------------------------------
+        // Block other search terms
+        //--------------------------------------------
+    }
+    return false;
+}*/
 
 //-----------------------------------------------------------------------------
 
