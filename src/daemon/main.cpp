@@ -241,7 +241,11 @@ int main(int argc, char** argv)
                     neroshop::print("UPNP_AddPortMapping: failed to open RPC port", 1);
                 }
             }
+        } else {
+            neroshop::print("UPNP_GetValidIGD: failed to obtain UPnP context", 1);
         }
+    } else {
+        neroshop::print("upnpDiscover: failed to discover UPnP devices", 1);
     }
     #endif
     //-------------------------------------------------------

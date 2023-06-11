@@ -15,6 +15,7 @@ const int NUM_BITS = 256;
 namespace neroshop {
 
 class RoutingTable; // forward declaration
+class Mapper;
 
 struct Peer {
     std::string address;
@@ -43,6 +44,7 @@ private:
     // Declare a mutex to protect access to the routing table
     std::shared_mutex node_read_mutex; // Shared mutex for routing table access
     std::shared_mutex node_write_mutex; // Shared mutex for routing table access
+    std::unique_ptr<Mapper> mapper;
     // Generates a node id from address and port combination
     std::string generate_node_id(const std::string& address, int port);
     // Determines if node1 is closer to the target_id than node2
@@ -84,9 +86,13 @@ public:
     void periodic_check();
     void periodic_refresh(); // Periodic republishing
     void republish();
-    void republish(const std::string& address, int port); // republishes data to a single node
+    void republish(const std::string& address, int port); // Republishes data to a single node
+    bool validate(const std::string& key, const std::string& value); // Validates data before storing it
     //---------------------------------------------------
     void on_ping_callback(const std::vector<uint8_t>& buffer, const struct sockaddr_in& client_addr);
+    ////bool on_keyword_blocked(const std::string& keyword);
+    ////bool on_node_blacklisted(const std::string& address);
+    ////bool on_data_expired();
     //---------------------------------------------------
     // DHT Query Types
     bool ping(const std::string& address, int port); // A simple query to check if a node is online and responsive.
@@ -103,6 +109,7 @@ public:
     //---------------------------------------------------
     // DHT-based indexing (Inverted indexing)
     void map(const std::string& key, const std::string& value); // Maps search terms to keys
+    //void persist(); // Backs up hash_table data to disk
     //---------------------------------------------------
     std::string get_id() const; // get ID of this node
     std::string get_ip_address() const;
@@ -115,13 +122,14 @@ public:
     std::string get_status_as_string() const;
     std::vector<std::string> get_keys() const;
     std::vector<std::pair<std::string, std::string>> get_data() const;
+    ////Server * get_server() const;
     
     void set_bootstrap(bool bootstrap);
     
     bool is_bootstrap_node() const;
     static bool is_bootstrap_node(const std::string& address, uint16_t port);
-    ////Server * get_server() const;
     bool has_key(const std::string& key) const;
+    bool has_value(const std::string& value) const;
     bool is_dead() const;
 };
 /*

@@ -339,7 +339,6 @@ void neroshop::Mapper::sync() {
     }    
     //-----------------------------------------------
     database->execute("COMMIT;");
-    // Usage: SELECT key FROM mappings WHERE search_term MATCH 'layter' AND content MATCH 'account';
 }
 
 //-----------------------------------------------------------------------------

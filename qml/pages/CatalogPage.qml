@@ -44,7 +44,7 @@ Page {
         return catalogStack.pages.currentIndex;
     }
     function getItemsCount() {
-        // ... boxesPerGrid * pageCount
+        return catalogPage.model.length;// ... boxesPerGrid * pageCount
     }    
     //property alias catalogIndex: catalogStack.currentIndex
     property var model: null
