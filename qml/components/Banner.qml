@@ -7,6 +7,8 @@ Item {
     implicitWidth: 300
     implicitHeight: 300//150
 
+    property int rotationInterval: 3000 // Rotation interval in milliseconds
+
     default property alias content: view.contentData
 
     SwipeView {
@@ -28,4 +30,16 @@ Item {
         count: view.count
         currentIndex: view.currentIndex
     }
+    
+    Timer {
+        id: rotationTimer
+        interval: banner.rotationInterval
+        repeat: true
+        running: true
+
+        onTriggered: {
+            // Increment the currentIndex to rotate the banner
+            view.currentIndex = (view.currentIndex + 1) % view.count;
+        }
+    }    
 }
