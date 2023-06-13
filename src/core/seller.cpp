@@ -74,25 +74,17 @@ void neroshop::Seller::list_item(
     date << std::put_time(std::gmtime(&in_time_t), "%Y-%m-%d %H:%M:%S");
     std::string utc_time = date.str();//std::cout << "utc time: " << utc_time << "\n";
     
-    //std::cout << "public_key:\n" << public_key << "\n\n";
-    //std::cout << "private_key:\n" << private_key << "\n\n";
-    std::string signature = neroshop::crypto::rsa_private_sign(private_key, listing_id);//std::cout << "signature: " << signature << "\n\n";
-    std::string signature_encoded = neroshop::base64_encode(signature);//std::cout << "signature_encoded: " << signature_encoded << "\n\n";
+    std::string signature = wallet->sign_message(listing_id, monero_message_signature_type::SIGN_WITH_SPEND_KEY);//std::cout << "signature: " << signature << "\n\n";
     
     #ifdef NEROSHOP_DEBUG
-    std::string signature_decoded = neroshop::base64_decode(signature_encoded);//std::cout << "signature_decoded: " << signature_decoded << "\n\n";
-    auto result_base64 = neroshop::crypto::rsa_public_verify(public_key, listing_id, signature_decoded);
-    std::cout << "\033[1mverified (base64): " << (result_base64 == 1 ? "\033[32mpass" : "\033[91mfail") << "\033[0m\n";
-    assert(result_base64 == true);
-    
-    auto result = neroshop::crypto::rsa_public_verify(public_key, listing_id, signature);
+    auto result = wallet->verify_message(listing_id, signature);
     std::cout << "\033[1mverified: " << (result == 1 ? "\033[32mpass" : "\033[91mfail") << "\033[0m\n";
     assert(result == true);
     #endif
     
     Listing listing { listing_id, product, seller_id,
         quantity, price, currency,
-        condition, location, date.str(), signature_encoded
+        condition, location, date.str(), signature
     };//listing.print_listing();
     
     auto data = Serializer::serialize(listing);

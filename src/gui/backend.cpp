@@ -602,9 +602,9 @@ QVariantList neroshop::Backend::getSearchResults(const QString& searchTerm) {
     QVariantList catalog;
     // Get all table values row by row
     while(sqlite3_step(stmt) == SQLITE_ROW) {
-        QVariantMap listing; // Create an object for each row
-
         for(int i = 0; i < sqlite3_column_count(stmt); i++) {
+            QVariantMap listing; // Create an object for each row
+            
             std::string column_value = (sqlite3_column_text(stmt, i) == nullptr) ? "NULL" : reinterpret_cast<const char *>(sqlite3_column_text(stmt, i));//std::cout << column_value  << " (" << i << ")" << std::endl;
             QString key = QString::fromStdString(column_value);
             // Get the value of the corresponding key from the DHT
@@ -613,7 +613,7 @@ QVariantList neroshop::Backend::getSearchResults(const QString& searchTerm) {
             std::cout << "Received response (get): " << response << "\n";
             // Parse the response
             nlohmann::json json = nlohmann::json::parse(response);
-            if(json.contains("error")) {
+            if(json.contains("error")) { 
                 continue; // Key is lost or missing from DHT, skip to next iteration
             }
             
@@ -656,6 +656,8 @@ QVariantList neroshop::Backend::getSearchResults(const QString& searchTerm) {
             //if(i == 17) listing.insert("product_uuid", QString::fromStdString(column_value)); 
             if(i == 18) listing.insert("product_image_file", QString::fromStdString(column_value)); */
             //if(i == 19) listing.insert("product_image_data", QString::fromStdString(column_value));
+            
+            // Append to catalog only if the key was found successfully
             catalog.append(listing);
         }
     }
@@ -1378,7 +1380,7 @@ QVariantList neroshop::Backend::registerUser(WalletController* wallet_controller
         return { false, "Invalid monero address" };
     }
     //---------------------------------------------
-    // Generate RSA key pair
+    // Generate RSA key pair (this is for sending/receiving encrypted messages)
     std::string config_path = NEROSHOP_DEFAULT_CONFIGURATION_PATH;
     std::string public_key_filename = config_path + "/" + primary_address + ".pub";
     std::string private_key_filename = config_path + "/" + primary_address + ".key";

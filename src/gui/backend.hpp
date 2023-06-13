@@ -18,6 +18,8 @@ class Backend : public QObject { // This class was created for storing utility f
     Q_OBJECT 
 public:
     Backend(QObject *parent = nullptr);
+    
+    //Q_PROPERTY(int categoryProductCount READ getCategoryProductCount NOTIFY categoryProductCountChanged)
 
     Q_INVOKABLE QString urlToLocalFile(const QUrl& url) const;
     Q_INVOKABLE void copyTextToClipboard(const QString& text);
@@ -82,6 +84,9 @@ public:
     Q_INVOKABLE void createOrder(UserController * user_controller, const QString& shipping_address);
     
     static int deleteExpiredOrders();
+
+/*signals:
+    void categoryProductCountChanged();//(int category_id);*/   
 private:
 };
 }
