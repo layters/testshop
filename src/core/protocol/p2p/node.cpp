@@ -974,12 +974,11 @@ void neroshop::Node::periodic_refresh() {
             // Acquire the lock before accessing the data
             std::shared_lock<std::shared_mutex> read_lock(node_read_mutex);
             
-            if(data.empty()) {
-                continue;
-            }
             // Perform periodic republishing here
             // This code will run concurrently with the listen/receive loop
-            std::cout << "\033[35mPerforming periodic refresh\033[0m\n";
+            if(!data.empty()) {
+                std::cout << "\033[34;1mPerforming periodic refresh\033[0m\n";
+            }
             
             republish();
             
@@ -1089,8 +1088,8 @@ void neroshop::Node::on_ping_callback(const std::vector<uint8_t>& buffer, const 
                 auto node_that_pinged = std::make_unique<Node>((sender_ip == "127.0.0.1") ? this->public_ip_address : sender_ip, sender_port, false);
                 routing_table->add_node(std::move(node_that_pinged)); // Already has internal write_lock
                 routing_table->print_table();
-                // TODO: Rather than republishing to every new node that pings, get the new node to map existing data. That even if the new node isn't responsible for the data, it can always have access to it. [x]
-                send_map(sender_ip, sender_port); // Redistribute your indexing data to the new node that recently joined the network
+                // Redistribute your indexing data to the new node that recently joined the network to make product/service listings more easily discoverable by the new node
+                send_map(sender_ip, sender_port);
             }
         }
     }

@@ -1,9 +1,10 @@
 #include "serializer.hpp"
 
 #include "../../crypto/sha3.hpp"
-#include "../../crypto/rsa.hpp" // for signing and verifying data
+//#include "../../crypto/rsa.hpp" // for signing and verifying data
 #include "../../tools/string.hpp"
-#include "../../tools/base64.hpp"
+//#include "../../tools/base64.hpp"
+#include "../../wallet.hpp"
 
 #include <nlohmann/json.hpp>
 
@@ -43,6 +44,7 @@ std::pair<std::string, std::string/*std::vector<uint8_t>*/> neroshop::Serializer
         std::string public_key = seller.get_public_key();
         if(!public_key.empty()) json_object["public_key"] = public_key;
         //json_object["avatar"] = ; // TODO: Avatars
+        //json_object["signature"] = seller.get_wallet()->sign_message(user_id, monero_message_signature_type::SIGN_WITH_SPEND_KEY);
         json_object["metadata"] = "user";
     }
     
@@ -390,6 +392,7 @@ std::shared_ptr<neroshop::Object> neroshop::Serializer::deserialize(const std::p
 
 std::pair<std::string, std::string> neroshop::Serializer::serialize(const User& user) {
     nlohmann::json json_object = {};
+    const Seller* seller = dynamic_cast<const Seller*>(&user);
     
     std::string display_name = user.get_name();
     if(!display_name.empty()) {
@@ -401,11 +404,8 @@ std::pair<std::string, std::string> neroshop::Serializer::serialize(const User& 
     assert(!public_key.empty());
     json_object["public_key"] = public_key;
     json_object["avatar"] = {}; // TODO: Avatars
-    std::string private_key = user.get_private_key();
-    assert(!private_key.empty());
-    auto signature = neroshop_crypto::rsa_private_sign(private_key, user_id);//std::cout << "signature: " << signature << "\n";
-    std::string encoded = neroshop::base64_encode(signature);//std::cout << "signature (base64 encoded): " << encoded << "\n";
-    json_object["signature"] = encoded; // cannot store binary signature in JSON :(
+    std::string signature = seller->get_wallet()->sign_message(user_id, monero_message_signature_type::SIGN_WITH_SPEND_KEY);
+    json_object["signature"] = signature;
     json_object["metadata"] = "user";
     
     // Generate key-value pair
@@ -414,12 +414,7 @@ std::pair<std::string, std::string> neroshop::Serializer::serialize(const User& 
     
     // Data verification tests
     #ifdef NEROSHOP_DEBUG
-    std::string decoded = neroshop::base64_decode(encoded);//std::cout << "signature (base64 decoded): " << decoded << "\n";
-    auto result_base64 = neroshop_crypto::rsa_public_verify(public_key, user_id, decoded);
-    std::cout << "\033[1mverified (base64): " << (result_base64 == 1 ? "\033[32mpass" : "\033[91mfail") << "\033[0m\n";
-    assert(result_base64 == true);
-    
-    auto result = neroshop_crypto::rsa_public_verify(public_key, user_id, signature);
+    auto result = seller->get_wallet()->verify_message(user_id, signature);
     std::cout << "\033[1mverified: " << (result == 1 ? "\033[32mpass" : "\033[91mfail") << "\033[0m\n";
     assert(result == true);
     
