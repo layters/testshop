@@ -49,9 +49,11 @@ public:
         const QString& name, 
         const QString& description,
         double weight, 
-        const QString& attributes, 
+        const QList<QVariantMap>& attributes, 
         const QString& product_code,
         int category_id, 
+        int subcategory_id, 
+        const QStringList& tags,
         
         int quantity, 
         double price, 

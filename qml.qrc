@@ -25,6 +25,7 @@
         <file>qml/components/Style.qml</file>
         <file>qml/components/Switch.qml</file>
         <file>qml/components/TabBar.qml</file>
+        <file>qml/components/TagField.qml</file>
         <file>qml/components/ThemeSwitch.qml</file>
         <file>qml/components/Triangle.qml</file>
         <file>qml/components/ViewToggle.qml</file>

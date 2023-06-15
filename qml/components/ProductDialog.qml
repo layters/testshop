@@ -483,6 +483,36 @@ Popup {
                             }
                         }
                     }         
+                    // Product tags
+                    Item {
+                        //Layout.row: 
+                        Layout.alignment: Qt.AlignHCenter
+                        Layout.preferredWidth: childrenRect.width
+                        Layout.preferredHeight: childrenRect.height
+                        
+                        Column {
+                            spacing: productDialog.titleSpacing
+                            Text {
+                                text: "Tags"
+                                color: productDialog.palette.text
+                                font.bold: true
+                            }
+                        
+                            NeroshopComponents.TagField {
+                                id: productTagsField
+                                width: 500
+                                
+                                textField.color: productDialog.inputTextColor
+                                textField.selectByMouse: true
+                                textField.background: Rectangle { 
+                                    color: "transparent"
+                                    border.color: productDialog.inputBorderColor
+                                    border.width: parent.activeFocus ? 2 : 1
+                                    radius: productDialog.inputRadius
+                                }
+                            }
+                        }
+                    }
                     //Product images
                     Item {
                         Layout.alignment: Qt.AlignHCenter//Qt.AlignRight
@@ -655,9 +685,11 @@ Popup {
                                     productNameField.text, 
                                     productDescriptionEdit.text, 
                                     productWeightField.text, 
-                                    ""/*attributes*/, 
+                                    []/*attributes*/, 
                                     productCodeField.text,
                                     Backend.getCategoryIdByName(productCategoryBox.currentText),
+                                    -1, // subcategoryId
+                                    productTagsField.tags(),//productTagsField.tagList,
                                     
                                     productQuantityField.text, 
                                     productPriceField.text, 

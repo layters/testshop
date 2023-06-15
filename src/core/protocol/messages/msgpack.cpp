@@ -163,7 +163,6 @@ std::vector<uint8_t> neroshop::msgpack::process(const std::vector<uint8_t>& requ
     //-----------------------------------------------------
     if(method == "get") {
         if(ipc_mode == false) { // For Processing Get Requests from Other Nodes:
-            std::cout << "message type is a get\n";
             assert(request_object["args"].is_object());
             auto params_object = request_object["args"];
             assert(params_object["key"].is_string());
@@ -209,7 +208,6 @@ std::vector<uint8_t> neroshop::msgpack::process(const std::vector<uint8_t>& requ
             }
 
         } else { // For Sending Get Requests to Other Nodes
-            std::cout << "message type is a send_get\n";
             assert(request_object["args"].is_object());
             auto params_object = request_object["args"];
             assert(params_object["key"].is_string());
@@ -301,6 +299,21 @@ std::vector<uint8_t> neroshop::msgpack::process(const std::vector<uint8_t>& requ
         // Return success response
         response_object["version"] = std::string(NEROSHOP_DHT_VERSION);
         response_object["response"]["id"] = node.get_id();
+    }
+    //-----------------------------------------------------
+    if(method == "set" && ipc_mode) { // modify/update data
+        assert(request_object["args"].is_object());
+        auto params_object = request_object["args"];
+        assert(params_object["key"].is_string());
+        std::string key = params_object["key"];
+        assert(params_object["value"].is_string());
+        std::string value = params_object["value"];
+        
+        // Retrieve the original data from the DHT
+        std::string current_value = node.send_get(key);
+        
+        // Verify signature
+        // ...
     }
     //-----------------------------------------------------
     if(method == "search" && ipc_mode) { // For value-based DHT lookups, but only works on data that your node has
