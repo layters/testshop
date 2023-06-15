@@ -55,7 +55,7 @@ The name _neroshop_ is a combination of the words _nero_, which is Italian for _
 -->
 
 ## Feature Status
-- [x] Distributed P2P network (no bootstrap nodes yet)
+- [x] Distributed P2P network (bootstrap nodes needed!!!)
 - [ ] Buy and sell products and services with Monero
 - [x] No KYC
 - [ ] No censorship (censorship-resistant)

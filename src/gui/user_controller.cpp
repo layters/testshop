@@ -15,19 +15,75 @@ neroshop::UserController::~UserController() {
 }
 //----------------------------------------------------------------
 void neroshop::UserController::listProduct(const QString& name, const QString& description,
-        double weight, const QString& attributes, 
-        const QString& product_code, int category_id, 
+        double weight, const QList<QVariantMap>& attributes, 
+        const QString& product_code, int category_id, int subcategory_id, const QStringList& tags,
 int quantity, double price, const QString& currency, const QString& condition, const QString& location) {
     if (!_user)
         throw std::runtime_error("neroshop::User is not initialized");
     auto seller = dynamic_cast<neroshop::Seller *>(_user.get());
+    
+    std::vector<Attribute> attributesVector;
+    for (const QVariantMap& attributeMap : attributes) {
+        Attribute attribute;
+
+        // Extract values from QVariantMap and assign them to the corresponding members of the Attribute struct
+        if (attributeMap.contains("color")) attribute.color = attributeMap.value("color").toString().toStdString();
+        if (attributeMap.contains("size")) attribute.size = attributeMap.value("size").toString().toStdString();
+        if (attributeMap.contains("weight")) attribute.weight = attributeMap.value("weight").toDouble();
+        if (attributeMap.contains("material")) attribute.material = attributeMap.value("material").toString().toStdString();
+
+        /*// Extract and parse the dimensions value
+        QVariant dimensionsVariant = attributeMap.value("dimensions");
+        if (dimensionsVariant.canConvert<QString>()) {
+            QString dimensionsString = dimensionsVariant.toString();
+            // Parse the dimensions string and assign the values to the dimensions member
+            // You need to implement the parsing logic based on the possible string formats
+            attribute.dimensions = parseDimensions(dimensionsString.toStdString());
+        }
+
+        attribute.brand = attributeMap.value("brand").toString().toStdString();
+        attribute.model = attributeMap.value("model").toString().toStdString();
+        attribute.manufacturer = attributeMap.value("manufacturer").toString().toStdString();
+        attribute.country_of_origin = attributeMap.value("country_of_origin").toString().toStdString();
+        attribute.warranty_information = attributeMap.value("warranty_information").toString().toStdString();
+        attribute.product_code = attributeMap.value("product_code").toString().toStdString();
+        attribute.style = attributeMap.value("style").toString().toStdString();
+        attribute.gender = attributeMap.value("gender").toString().toStdString();
+
+        // Extract and parse the age_range value
+        QVariant ageRangeVariant = attributeMap.value("age_range");
+        if (ageRangeVariant.canConvert<QVariantList>()) {
+            QVariantList ageRangeList = ageRangeVariant.toList();
+            if (ageRangeList.size() >= 2) {
+                attribute.age_range.first = ageRangeList.at(0).toInt();
+                attribute.age_range.second = ageRangeList.at(1).toInt();
+            }
+        }
+
+        attribute.energy_efficiency_rating = attributeMap.value("energy_efficiency_rating").toString().toStdString();
+        attribute.safety_features = attributeMap.value("safety_features").toStringList().toVector();//.toStdVector();
+        attribute.quantity_per_package = attributeMap.value("quantity_per_package").toUInt();
+        attribute.release_date = attributeMap.value("release_date").toString().toStdString();*/
+
+        // Add the attribute to the vector
+        attributesVector.push_back(attribute);
+    }
+    //return attributesVector;
+    
+    std::vector<std::string> tagsVector;
+    for (const QString& tag : tags) {
+        tagsVector.push_back(tag.toStdString());
+    }
+    
     seller->list_item(
         name.toStdString(), 
         description.toStdString(),
         weight, 
-        attributes.toStdString(), 
+        attributesVector, 
         product_code.toStdString(),
         category_id, 
+        subcategory_id,
+        tagsVector,
         
         quantity, 
         price, 

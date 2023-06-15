@@ -25,9 +25,11 @@ public:
 	    const std::string& name,
         const std::string& description,
         double weight,
-        const std::string& attributes,
+        const std::vector<Attribute>& attributes,
         const std::string& product_code,
         int category_id, 
+        int subcategory_id,
+        const std::vector<std::string>& tags,
         
 	    unsigned int quantity, 
 	    double sales_price, 
