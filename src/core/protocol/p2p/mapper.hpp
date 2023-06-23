@@ -23,7 +23,9 @@ struct Mapper { // maps search terms to DHT keys
     std::unordered_map<std::string, std::vector<std::string>> user_ids; // maps a monero address (ID) to the corresponding account key
     std::unordered_map<std::string, std::vector<std::string>> display_names; // maps a display name to a list of corresponding account keys
     std::unordered_map<std::string, std::vector<std::string>> order_ids; // maps a order uuid to the corresponding order key.
-
+    std::unordered_map<std::string, std::vector<std::string>> product_ratings;
+    std::unordered_map<std::string, std::vector<std::string>> seller_ratings;
+    
     void add(const std::string& key, const std::string& value); // must be JSON value
     void sync(); // syncs mapping data to local database
     std::pair<std::string, std::string> serialize(); // Converts mapping data to JSON format

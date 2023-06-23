@@ -689,7 +689,7 @@ Popup {
                                     productCodeField.text,
                                     Backend.getCategoryIdByName(productCategoryBox.currentText),
                                     -1, // subcategoryId
-                                    productTagsField.tags(),//productTagsField.tagList,
+                                    productTagsField.tags(),
                                     
                                     productQuantityField.text, 
                                     productPriceField.text, 
@@ -707,6 +707,7 @@ Popup {
                                 productWeightField.text = ""
                                 productLocationBox.currentIndex = productLocationBox.find("Unspecified")//find("Worldwide")
                                 productDescriptionEdit.text = ""
+                                productTagsField.clearTags()
                                 // Clear upload images as well
                                 for(let i = 0; i < productImageRepeater.count; i++) {
                                     let productImage = productImageRepeater.itemAt(i).children[0].children[0]

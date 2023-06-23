@@ -6,11 +6,6 @@ set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ../build)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ../build)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ../build)
 
-option(NEROSHOP_USE_OPENPGP "Build neroshop with PGP support" OFF)
-if(NEROSHOP_USE_OPENPGP)
-    add_subdirectory(openpgp)
-endif()
-
 # compile the source code of external dependencies into static libraries so there won't be a need to recompile each time there's a change in the makefile
 set(monero_include_dirs monero-cpp/external/monero-project/contrib/epee/include/ 
     monero-cpp/external/monero-project/external/easylogging++/ 
@@ -70,6 +65,8 @@ add_library(${i2pd_client_target} STATIC ${i2pd_client_srcs})
 target_include_directories(${i2pd_client_target} PUBLIC i2pd/i18n/ i2pd/libi2pd/ i2pd/libi2pd_client/)
 
 add_subdirectory(miniupnp/miniupnpc)
+
+add_subdirectory(libnatpmp)
 
 #[[
 set(_target "")

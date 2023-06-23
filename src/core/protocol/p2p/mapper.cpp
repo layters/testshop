@@ -22,6 +22,8 @@ neroshop::Mapper::~Mapper() {
     user_ids.clear();
     display_names.clear();
     order_ids.clear();
+    product_ratings.clear();
+    seller_ratings.clear();
 }
 
 //-----------------------------------------------------------------------------
@@ -113,11 +115,11 @@ void neroshop::Mapper::add(const std::string& key, const std::string& value) {
         }
     }    
     //-----------------------------------------------
-    /*if(metadata == "product_rating") {
+    if(metadata == "product_rating") {
         // Map a product_rating's key to product_id
         if (json.contains("product_id") && json["product_id"].is_string()) {
             std::string product_id = json["product_id"].get<std::string>();
-            product_ids[product_id].push_back(key);
+            product_ratings[product_id].push_back(key);
         }
     }
     //-----------------------------------------------
@@ -125,9 +127,9 @@ void neroshop::Mapper::add(const std::string& key, const std::string& value) {
         // Map a seller_rating's key to user_id
         if (json.contains("seller_id") && json["seller_id"].is_string()) {
             std::string seller_id = json["seller_id"].get<std::string>();
-            user_ids[seller_id].push_back(key);
+            seller_ratings[seller_id].push_back(key);
         }    
-    }*/
+    }
     //-----------------------------------------------
     sync(); // Sync to database
 }
@@ -337,6 +339,44 @@ void neroshop::Mapper::sync() {
             }
         }
     }    
+    //-----------------------------------------------
+    // Insert data from 'product_ratings'
+    for (const auto& entry : product_ratings) {
+        const std::string& search_term = entry.first;
+        const std::vector<std::string>& keys = entry.second;
+        const std::string content = "product_rating";
+
+        for (const std::string& key : keys) {
+            // Check if the record already exists
+            std::string select_query = "SELECT COUNT(*) FROM mappings WHERE search_term = ? AND key = ?;";
+            bool exists = database->get_integer_params(select_query, { search_term, key });
+            
+            // If no duplicate record found, perform insertion
+            if(!exists) {
+                std::string insert_query = "INSERT INTO mappings (search_term, key, content) VALUES (?, ?, ?);";
+                database->execute_params(insert_query, { search_term, key, content });
+            }
+        }
+    }    
+    //-----------------------------------------------
+    // Insert data from 'seller_ratings'
+    for (const auto& entry : seller_ratings) {
+        const std::string& search_term = entry.first;
+        const std::vector<std::string>& keys = entry.second;
+        const std::string content = "seller_rating";
+
+        for (const std::string& key : keys) {
+            // Check if the record already exists
+            std::string select_query = "SELECT COUNT(*) FROM mappings WHERE search_term = ? AND key = ?;";
+            bool exists = database->get_integer_params(select_query, { search_term, key });
+            
+            // If no duplicate record found, perform insertion
+            if(!exists) {
+                std::string insert_query = "INSERT INTO mappings (search_term, key, content) VALUES (?, ?, ?);";
+                database->execute_params(insert_query, { search_term, key, content });
+            }
+        }
+    }            
     //-----------------------------------------------
     database->execute("COMMIT;");
 }

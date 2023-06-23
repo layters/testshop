@@ -50,6 +50,7 @@ private:
     // Determines if node1 is closer to the target_id than node2
     bool is_closer(const std::string& target_id, const std::string& node1_id, const std::string& node2_id);
     //---------------------------------------------------
+    int set(const std::string& key, const std::string& value); // Updates the value without changing the key. set cannot be accessed directly but only through put
 public:
     Node(const std::string& address, int port, bool local); // Binds a socket to a port and initializes the DHT
     //Node(const Node& other); // Copy constructor
@@ -109,7 +110,6 @@ public:
     //---------------------------------------------------
     // DHT-based indexing (Inverted indexing)
     void map(const std::string& key, const std::string& value); // Maps search terms to keys
-    //void persist(); // Backs up hash_table data to disk
     //---------------------------------------------------
     std::string get_id() const; // get ID of this node
     std::string get_ip_address() const;
