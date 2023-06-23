@@ -14,6 +14,10 @@ Page {
         color: "transparent"
     }
     property var model: null//property string productId: ""
+    function openSellerPage() {
+        pageLoader.setSource("qrc:/qml/pages/ProfilePage.qml");//, {"model": [""]})
+    }
+    
     Flickable {
         anchors.fill: parent
         anchors.margins: 20

@@ -18,8 +18,10 @@ class Backend : public QObject { // This class was created for storing utility f
     Q_OBJECT 
 public:
     Backend(QObject *parent = nullptr);
+    ~Backend();
     
     //Q_PROPERTY(int categoryProductCount READ getCategoryProductCount NOTIFY categoryProductCountChanged)
+    //Q_PROPERTY(QVariantList searchResults READ getSearchResults NOTIFY searchResultsChanged)
 
     Q_INVOKABLE QString urlToLocalFile(const QUrl& url) const;
     Q_INVOKABLE void copyTextToClipboard(const QString& text);
@@ -62,7 +64,7 @@ public:
     //Q_INVOKABLE QVariantList getProducts(); // Registered products
     Q_INVOKABLE QVariantList getListingsByMostRecentLimit(int limit);
     
-    Q_INVOKABLE QVariantList getSearchResults(const QString& search_term);
+    Q_INVOKABLE QVariantList getSearchResults(const QString& search_term, int count = 1000); // count is the maximum number of search results (total). The search results (per page) can be between 10-100 or 50-100
     
     // Products should be registered so that sellers can list pre-existing products without the need to duplicate a product which is unnecessary and can make the database bloated
     Q_INVOKABLE void uploadProductImage(const QString& product_id, const QString& filename);
@@ -85,8 +87,9 @@ public:
     
     static int deleteExpiredOrders();
 
-/*signals:
-    void categoryProductCountChanged();//(int category_id);*/   
+signals:
+    //void categoryProductCountChanged();//(int category_id);
+    //void searchResultsChanged();
 private:
 };
 }

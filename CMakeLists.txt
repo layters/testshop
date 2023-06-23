@@ -396,6 +396,15 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/external/miniupnp/build/libminiupnpc.a")
 endif()
 
 ######################################
+# libnatpmp
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/external/libnatpmp/)
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/external/build/libnatpmp.a")
+    option(NEROSHOP_USE_LIBNATPMP "Build neroshop with libnatpmp" ON)
+    message(STATUS "Using libnatpmp")
+    set(natpmp_src ${CMAKE_CURRENT_SOURCE_DIR}/external/build/libnatpmp.a)
+endif()
+
+######################################
 # neroshop link directories
 link_directories(${CMAKE_CURRENT_SOURCE_DIR}/build) # target_link_directories only available in CMake version 3.13 :(
 
@@ -489,9 +498,12 @@ add_executable(${daemon_executable} src/daemon/main.cpp ${daemon_src})#target_li
 if(NEROSHOP_USE_MINIUPNP)
     target_compile_definitions(${daemon_executable} PRIVATE NEROSHOP_USE_MINIUPNP)
 endif()
+if(NEROSHOP_USE_LIBNATPMP)
+    target_compile_definitions(${daemon_executable} PRIVATE NEROSHOP_USE_LIBNATPMP)
+endif()
 target_compile_definitions(${daemon_executable} PRIVATE NEROSHOP_DEBUG)
 target_include_directories(${daemon_executable} PRIVATE #[[${CMAKE_CURRENT_SOURCE_DIR}/src/]])
-target_link_libraries(${daemon_executable} ${monero_cpp_src} ${sqlite_src} ${raft_src} ${monero_src} ${i2pd_src} ${miniupnp_src})#set(CMAKE_CXX_LINK_EXECUTABLE "${CMAKE_CXX_LINK_EXECUTABLE} -ldl") # fixes undefined reference to symbol 'dlsym@@GLIBC_2.2.5' error
+target_link_libraries(${daemon_executable} ${monero_cpp_src} ${sqlite_src} ${raft_src} ${monero_src} ${i2pd_src} ${miniupnp_src} ${natpmp_src})#set(CMAKE_CXX_LINK_EXECUTABLE "${CMAKE_CXX_LINK_EXECUTABLE} -ldl") # fixes undefined reference to symbol 'dlsym@@GLIBC_2.2.5' error
 
 ######################################
 # neroshop-console

@@ -96,6 +96,7 @@ The name _neroshop_ is a combination of the words _nero_, which is Italian for _
 | [libzmq](https://github.com/zeromq/libzmq)                         | ?                  | networking                                                             | :grey_question:                          |
 | [libi2pd](https://github.com/PurpleI2P/i2pd)                       | latest             | network proxy                                                          | :grey_question:                          |
 | [miniupnp](https://github.com/miniupnp/miniupnp)                   | ?                  | automatic port forwarding                                              | :o:                                      |
+| [libnatpmp](https://github.com/miniupnp/libnatpmp)                 | ?                  | automatic port forwarding                                              | :o:                                      |
 
 ### Compiling neroshop from source
 **0. Install prerequisites**

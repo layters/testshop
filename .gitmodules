@@ -22,3 +22,6 @@
 [submodule "external/miniupnp"]
 	path = external/miniupnp
 	url = https://github.com/miniupnp/miniupnp.git
+[submodule "external/libnatpmp"]
+	path = external/libnatpmp
+	url = https://github.com/miniupnp/libnatpmp.git

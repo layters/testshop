@@ -40,6 +40,13 @@
 
 neroshop::Backend::Backend(QObject *parent) : QObject(parent) {}
 
+neroshop::Backend::~Backend() {
+    #ifdef NEROSHOP_DEBUG
+    std::cout << "backend deleted\n";
+    #endif
+}
+//----------------------------------------------------------------
+//----------------------------------------------------------------
 QString neroshop::Backend::urlToLocalFile(const QUrl &url) const
 {
     return url.toLocalFile();
@@ -562,13 +569,13 @@ QVariantList neroshop::Backend::getInventory(const QString& user_id) {
 }
 //----------------------------------------------------------------
 //----------------------------------------------------------------
-QVariantList neroshop::Backend::getSearchResults(const QString& searchTerm) {
+QVariantList neroshop::Backend::getSearchResults(const QString& searchTerm, int count) {
     // Transition from Sqlite to DHT:
     Client * client = Client::get_main_client();
     neroshop::db::Sqlite3 * database = neroshop::get_database();
     if(!database) throw std::runtime_error("database is NULL");
     
-    std::string command = "SELECT DISTINCT key FROM mappings WHERE (search_term MATCH ? AND content = 'listing');";//"SELECT DISTINCT key FROM mappings WHERE (search_term MATCH ? OR search_term LIKE '%' || ? || '%' COLLATE NOCASE) AND (content MATCH 'listing');";//"SELECT DISTINCT key FROM mappings WHERE search_term MATCH ? AND content MATCH 'listing';";
+    std::string command = "SELECT DISTINCT key FROM mappings WHERE (search_term MATCH ?1 OR search_term MATCH ?1 || '*') AND (content = 'listing') LIMIT ?2;";//"SELECT DISTINCT key FROM mappings WHERE (search_term MATCH ? OR search_term LIKE '%' || ? || '%' COLLATE NOCASE) AND (content MATCH 'listing');";//"SELECT DISTINCT key FROM mappings WHERE search_term MATCH ? AND content MATCH 'listing';";
     sqlite3_stmt * stmt = nullptr;
     // Prepare (compile) statement
     if(sqlite3_prepare_v2(database->get_handle(), command.c_str(), -1, &stmt, nullptr) != SQLITE_OK) {
@@ -584,14 +591,11 @@ QVariantList neroshop::Backend::getSearchResults(const QString& searchTerm) {
         return {};//database->execute("ROLLBACK;"); return {};
     }        
     
-    /*// Bind value to parameter arguments
-    QByteArray searchTermByteArray = searchTerm.toUtf8();
-    if (sqlite3_bind_text(stmt, 1, searchTermByteArray.constData(), searchTermByteArray.length(), SQLITE_STATIC) != SQLITE_OK ||
-        sqlite3_bind_text(stmt, 2, searchTermByteArray.constData(), searchTermByteArray.length(), SQLITE_STATIC) != SQLITE_OK) {
-        neroshop::print("sqlite3_bind_text: " + std::string(sqlite3_errmsg(database->get_handle())), 1);
+    if(sqlite3_bind_int(stmt, 2, count) != SQLITE_OK) {
+        neroshop::print("sqlite3_bind_int: " + std::string(sqlite3_errmsg(database->get_handle())), 1);
         sqlite3_finalize(stmt);
-        return {};
-    }*/
+        return {};//database->execute("ROLLBACK;"); return {};
+    }            
     //-------------------------------------------------------
     // Check whether the prepared statement returns no data (for example an UPDATE)
     if(sqlite3_column_count(stmt) == 0) {
@@ -614,6 +618,10 @@ QVariantList neroshop::Backend::getSearchResults(const QString& searchTerm) {
             // Parse the response
             nlohmann::json json = nlohmann::json::parse(response);
             if(json.contains("error")) { 
+                int rescode = database->execute_params("DELETE FROM mappings WHERE key = ?1", { key.toStdString() });
+                if(rescode != SQLITE_OK) neroshop::print("sqlite error: DELETE failed", 1);
+                //emit categoryProductCountChanged();//(category_id);
+                //emit searchResultsChanged();
                 continue; // Key is lost or missing from DHT, skip to next iteration
             }
             
@@ -701,6 +709,10 @@ QVariantList neroshop::Backend::getListings() {
             // Parse the response
             nlohmann::json json = nlohmann::json::parse(response);
             if(json.contains("error")) {
+                int rescode = database->execute_params("DELETE FROM mappings WHERE key = ?1", { key.toStdString() });
+                if(rescode != SQLITE_OK) neroshop::print("sqlite error: DELETE failed", 1);
+                //emit categoryProductCountChanged();//(category_id);
+                //emit searchResultsChanged();
                 continue; // Key is lost or missing from DHT, skip to next iteration
             }
             
@@ -801,6 +813,10 @@ QVariantList neroshop::Backend::getListingsByCategory(int category_id) {
             // Parse the response
             nlohmann::json json = nlohmann::json::parse(response);
             if(json.contains("error")) {
+                int rescode = database->execute_params("DELETE FROM mappings WHERE key = ?1", { key.toStdString() });
+                if(rescode != SQLITE_OK) neroshop::print("sqlite error: DELETE failed", 1);
+                //emit categoryProductCountChanged();//(category_id);
+                //emit searchResultsChanged();
                 continue; // Key is lost or missing from DHT, skip to next iteration
             }
             

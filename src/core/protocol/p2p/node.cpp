@@ -318,7 +318,6 @@ std::vector<neroshop::Node*> neroshop::Node::lookup(const std::string& key) {
 
 // Define the list of bootstrap nodes
 std::vector<neroshop::Peer> bootstrap_nodes = {
-    {"127.0.0.1", NEROSHOP_P2P_DEFAULT_PORT},
     {"node.neroshop.org", NEROSHOP_P2P_DEFAULT_PORT}, // $ ping neroshop.org # or nslookup neroshop.org
 };
 
@@ -432,10 +431,16 @@ int neroshop::Node::put(const std::string& key, const std::string& value) {
         return false;
     }
     
-    // If data is a duplicate, skip it
+    // If data is a duplicate, skip it and return success (true)
     if (has_key(key) && get(key) == value) {
         std::cout << "Data already exists. Skipping ...\n";
         return true;
+    }
+    
+    // If node has the key but the value has been altered, verify data integrity or ownership then update the data
+    if (has_key(key) && get(key) != value) {
+        std::cout << "Updating value for key (" << key << ")\n";
+        return set(key, value);
     }
 
     data[key] = value;
@@ -463,25 +468,45 @@ int neroshop::Node::remove(const std::string& key) {
     return (data.count(key) == 0); // boolean
 }
 
-bool neroshop::Node::has_key(const std::string& key) const {
-    return (data.count(key) > 0);
-}
-
-bool neroshop::Node::has_value(const std::string& value) const {
-    for (const auto& pair : data) {
-        if (pair.second == value) {
-            return true;
-        }
-    }
-    return false;
-}
-
 void neroshop::Node::map(const std::string& key, const std::string& value) {
     if(!validate(key, value)) {
         return;
     }
     
     mapper->add(key, value); // Temporarily stores the mapping in C++ for serialization before permanently adding it to the database
+}
+
+int neroshop::Node::set(const std::string& key, const std::string& value) {
+    nlohmann::json json = nlohmann::json::parse(value); // Already validated so we just need to parse it without checking for errors
+    // Detect when key is the same but the value has changed
+    if(has_key(key)) {
+        std::string preexisting_value = find_value(key);//std::cout << "preexisting_value: " << preexisting_value << std::endl;
+            
+        // Compare the preexisting value with the new value
+        if (preexisting_value != value) {
+            std::cout << "Value modification detected. Performing signature verification ...\n";//std::cout << "Value mismatch. Skipping ...\n";//return false;}
+            
+            // Verify signature using user's public key (required for account data and listing data)
+            if (json.contains("signature")) {
+                assert(json["signature"].is_string());
+                std::string signature = json["signature"].get<std::string>();//neroshop::base64_decode(json["signature"].get<std::string>());
+            
+                // Get the public key and other account data from the user
+                /////std::string public_key = json["public_key"].get<std::string>();//user.get_public_key(); // Get the public key from the user object
+                ////std::string user_id = json["monero_address"].get<std::string>();//user.get_id(); // Get the user ID from the user object
+        
+                ////std::cout << "Verifying existing key's signature ...\n";
+                /*bool verified = neroshop_crypto::rsa_public_verify(public_key, user_id, signature);
+                if(!verified) {
+                    std::cerr << "Verification failed." << std::endl;
+                    return false; // Verification failed, return false
+                }*/
+            }
+        }
+    }
+    
+    data[key] = value;
+    return has_key(key); // boolean
 }
 
 //-------------------------------------------------------------------------------------
@@ -748,7 +773,7 @@ int neroshop::Node::send_put(const std::string& key, const std::string& value) {
         nodes_sent_count++;
     }
     //-----------------------------------------------
-    // Handle the case when there are fewer closest nodes than NEROSHOP_DHT_REPLICATION_FACTOR - this most likely means that the size of the network is tiny
+    // Handle the case when there are fewer closest nodes than NEROSHOP_DHT_REPLICATION_FACTOR - this most likely means that there are not enough nodes in the network
     if (closest_nodes.size() < NEROSHOP_DHT_REPLICATION_FACTOR) return nodes_sent_count;
     //-----------------------------------------------
     // If the desired number of nodes is not reached due to non-responses, replace failed nodes with new nodes and continue sending put messages
@@ -895,7 +920,7 @@ void neroshop::Node::send_map(const std::string& address, int port) {
         query_object["args"]["key"] = key;
         query_object["args"]["value"] = value;
         std::string transaction_id = msgpack::generate_transaction_id();
-        query_object["tid"] = transaction_id; // tid should be unique for each put message
+        query_object["tid"] = transaction_id; // tid should be unique for each map message
         std::vector<uint8_t> map_message = nlohmann::json::to_msgpack(query_object);
 
         auto receive_buffer = send_query(address, port, map_message);
@@ -935,32 +960,10 @@ bool neroshop::Node::validate(const std::string& key, const std::string& value) 
         std::cerr << "JSON parsing error: " << e.what() << std::endl;
         return false; // Invalid value, return false
     }
-
-    // Detect when key is the same but the value has changed
-    if(has_key(key)) {
-        std::string preexisting_value = find_value(key);//std::cout << "preexisting_value: " << preexisting_value << std::endl;
-            
-        // Compare the preexisting value with the new value
-        if (preexisting_value != value) {
-            std::cout << "Value modification detected. Performing signature verification ...\n";//std::cout << "Value mismatch. Skipping ...\n";//return false;}
-            
-            // Verify signature using user's public key (required for account data and listing data)
-            if (json.contains("signature")) {
-                assert(json["signature"].is_string());
-                std::string signature = neroshop::base64_decode(json["signature"].get<std::string>());
-            
-                // Get the public key and other account data from the user
-                /////std::string public_key = json["public_key"].get<std::string>();//user.get_public_key(); // Get the public key from the user object
-                ////std::string user_id = json["monero_address"].get<std::string>();//user.get_id(); // Get the user ID from the user object
-        
-                ////std::cout << "Verifying existing key's signature ...\n";
-                /*bool verified = neroshop_crypto::rsa_public_verify(public_key, user_id, signature);
-                if(!verified) {
-                    std::cerr << "Verification failed." << std::endl;
-                    return false; // Verification failed, return false
-                }*/
-            }
-        }
+    // Make sure value contains a metadata field
+    if(!json.contains("metadata")) {
+        std::cerr << "No metadata found\n";
+        return false;
     }
     
     return true;
@@ -1327,6 +1330,19 @@ std::vector<std::pair<std::string, std::string>> neroshop::Node::get_data() cons
 }*/
 
 //-----------------------------------------------------------------------------
+
+bool neroshop::Node::has_key(const std::string& key) const {
+    return (data.count(key) > 0);
+}
+
+bool neroshop::Node::has_value(const std::string& value) const {
+    for (const auto& pair : data) {
+        if (pair.second == value) {
+            return true;
+        }
+    }
+    return false;
+}
 
 bool neroshop::Node::is_bootstrap_node(const std::string& address, uint16_t port) {
     for (const auto& bootstrap : bootstrap_nodes) {

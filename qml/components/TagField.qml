@@ -9,7 +9,6 @@ Item {
     implicitWidth: 500
     implicitHeight: childrenRect.height
 
-    property string tagText: ""
     property var tagList: ListModel {}//[]
     property int maxTagCount: 12 // Maximum number of tags allowed
     
@@ -23,6 +22,10 @@ Item {
             stringList.push(text)
         }
         return stringList
+    }
+    
+    function clearTags() {
+        tagList.clear()
     }
 
     ColumnLayout {
@@ -110,12 +113,21 @@ Item {
                     let tagsToAdd = Math.min(tags.length, maxTagCount - tagList.count)
                     
                     for (let i = 0; i < tagsToAdd; i++) {
-                        if (tags[i] !== "") { // Skip empty tags after comment
+                        if (tags[i] !== "" && !isTagDuplicate(tags[i])) { // Skip duplicate tags and empty tags after comma
                             tagList.append({ text: tags[i] })
                         }
                     }
                     tagInput.text = ""
                 }
+            }
+            
+            function isTagDuplicate(tag) {
+                for (let i = 0; i < tagList.count; i++) {
+                    if (tagList.get(i).text === tag) {
+                        return true; // Found a duplicate tag
+                    }
+                }
+                return false; // No duplicate tag found
             }
         }
     } // ColumnLayout
