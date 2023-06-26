@@ -59,15 +59,19 @@ The name _neroshop_ is a combination of the words _nero_, which is Italian for _
 - [ ] Buy and sell products and services with Monero
 - [x] No KYC
 - [ ] No censorship (censorship-resistant)
-- [ ] No listing fees, sales tax, or any other fees (except for miner transaction fees and shipping costs and a 0.5% fee for using the optional built-in 2-of-3 escrow system)
-- [x] Pseudonymous identities (sellers and buyers are identified by their unique ids and/or optional display names)
+- [ ] No listing fees, sales tax, or any other fees (except for miner transaction fees and shipping costs)
+    - there will be 0.5% fee for using one of the three payment options, specifically the 2-of-3 escrow system.
+- [x] Pseudonymous identities 
+    - sellers and buyers are identified by their unique ids and/or optional display names
 - [ ] End-to-end encrypted messaging system for communications between sellers and buyers via matrix.org
-- [ ] Subaddress generator for direct payments without an escrow (a unique subaddress will be generated from a seller's synced wallet account for each order placed by a customer)
-- [x] Built-in Monero wallet with basic functionalities (transaction history, send, and receive)
+- [ ] Subaddress generator for direct payments without an escrow 
+    - a unique subaddress will be generated from a seller's synced wallet account for each order placed by a customer
+- [x] Built-in Monero wallet with basic functionalities (`transaction history`, `send`, and `receive`)
 - [x] Option to run a local Monero node or connect to remote Monero nodes
 - [ ] Payment address QR codes containing Monero URIs
 - [ ] Option to choose between sending funds directly to a seller or by using a multisignature escrow.
-- [ ] Native Tor and I2P support (tor daemon will be bundled with each release and i2pd will be built-in)
+- [ ] Native Tor and I2P support 
+    - tor daemon can be installed manually and i2pd will be built-in
 - [x] Seller reputation system
 - [x] Product rating system
 - [ ] Wishlists

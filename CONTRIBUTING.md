@@ -116,9 +116,14 @@ make -j$(nproc)
 make install DESTDIR=neromon.AppDir
 make install DESTDIR=neroshop.AppDir
 make install DESTDIR=neroshop-console.AppDir
+
+# remove all excess/unnecessary files
+sudo rm 'neromon.AppDir/usr/bin/neroshop' 'neromon.AppDir/usr/bin/neroshop-console' 'neromon.AppDir/usr/share/applications/neroshop.desktop' 'neromon.AppDir/usr/share/applications/neroshop-console.desktop'
+sudo rm 'neroshop.AppDir/usr/bin/neromon' 'neroshop.AppDir/usr/bin/neroshop-console' 'neroshop.AppDir/usr/share/applications/neromon.desktop' 'neroshop.AppDir/usr/share/applications/neroshop-console.desktop'
+sudo rm 'neroshop-console.AppDir/usr/bin/neromon' 'neroshop-console.AppDir/usr/bin/neroshop' 'neroshop-console.AppDir/usr/share/applications/neromon.desktop' 'neroshop-console.AppDir/usr/share/applications/neroshop.desktop'
 ```
 
-Run the following command to generate an AppDir:
+Run the following command to copy the required shared libraries to AppDir:
 ```sh
 ./linuxdeploy-x86_64.AppImage --appdir ./neromon.AppDir --desktop-file=../assets/neromon.desktop
 ./linuxdeploy-x86_64.AppImage --appdir ./neroshop.AppDir --desktop-file=../assets/neroshop.desktop
