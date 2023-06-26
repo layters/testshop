@@ -86,14 +86,16 @@ Another thing: You can also run a public RPC server by combining the `--rpc` and
 
 
 # Releasing
-## Prerequisites
+## AppImage
+### Prerequisites
 In order to generate AppImage files for use on all Linux distributions, the following is required:
 - [`linuxdeploy`](https://github.com/linuxdeploy/linuxdeploy/releases)
 - [`AppImageKit`](https://github.com/AppImage/AppImageKit/releases)
 
 
-## Generating AppImages from native binaries
+### Generating AppImages from native binaries
 Assuming you've already built all of the external libraries from `external/`, you can proceed to build neroshop
+
 If you have already built the neroshop binaries, you may need to `clean` the Makefile and remove the CMake files before we can proceed.
 
 First, lets make sure we are inside the `build` directory within the project's root directory:
