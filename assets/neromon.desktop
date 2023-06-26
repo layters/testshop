@@ -4,4 +4,4 @@ Comment=Daemon server for neroshop
 Icon=neroshop
 Exec=neromon
 Type=Application
-Categories=Utility;
+Categories=Network;

@@ -3,32 +3,10 @@ Type=Application
 Name=neroshop
 GenericName=Monero Marketplace
 Comment=Decentralized P2P marketplace for Monero users
-Exec=neroshop
+Exec=neroshop %u
 Icon=neroshop
 Terminal=false
-MimeType=x-scheme-handler/monero;
+MimeType=x-scheme-handler/neroshop;
 Categories=Network;Office;Utility;
-#X-AdditionalCategories=Finance;P2P;Qt;
 StartupNotify=false
 StartupWMClass=neroshop
-
-#/usr/bin/neroshop
-#StartupNotify=true
-#Terminal=true
-
-# Categories=Cryptocurrency;Monero;Marketplace;Ecommerce;Shopping;
-# Exec=/media/sid/Elements/sid/media/other/code/more/neroshop/neroshop
-# Version=1.0
-# cd neroshop/res 
-# sudo cp neroshop-logo-32.png /usr/share/icons/hicolor/32x32/apps/neroshop.png
-# sudo cp neroshop-logo-64.png /usr/share/icons/hicolor/64x64/apps/neroshop.png
-# sudo cp neroshop.desktop /usr/share/applications
-# sudo mv ../neroshop /usr/bin/neroshop
-# Exec=/usr/bin/neroshop
-# files produced by neroshop executable are stored in /home/
-# Icon=neroshop
-# Icons are found in /usr/share/icons/hicolor
-# sudo gedit /usr/share/applications/neroshop.desktop
-
-# creating an appimage:
-# ARCH=x86_64 ./appimagetool-x86_64.AppImage '/media/sid/Elements/sid/media/other/code/more/neroshop.AppDir'

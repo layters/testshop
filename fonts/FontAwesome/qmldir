@@ -1,2 +1,0 @@
-module FontAwesome
-singleton FontAwesome 1.0 FontAwesome.qml
