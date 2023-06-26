@@ -1,5 +1,5 @@
 # neroshop - WORK IN PROGRESS
-[![banner](images/appicons/LogoLight250x250.png)](https://github.com/larteyoh/testshop "neroshop logo")
+[![banner](assets/images/appicons/LogoLight250x250.png)](https://github.com/larteyoh/testshop "neroshop logo")
 
 
 A decentralized P2P (peer-to-peer) marketplace for [**Monero**](https://getmonero.org/) users (PoC)
@@ -28,20 +28,20 @@ https://user-images.githubusercontent.com/58671384/219222567-f170f728-be31-43d5-
 <details>
 <summary>Click to load images</summary>
     
-![Wallet_Keys_Generation](https://github.com/larteyoh/testshop/blob/main/images/screenshots/Wallet_Keys_Generation.png)
-![Registration](https://github.com/larteyoh/testshop/blob/main/images/screenshots/Registration.png)
-![CatalogGrid_Top](https://github.com/larteyoh/testshop/blob/main/images/screenshots/CatalogGrid_Top.png)
-![CatalogGrid_Bottom](https://github.com/larteyoh/testshop/blob/main/images/screenshots/CatalogGrid_Bottom.png)
-![CatalogGrid](https://github.com/larteyoh/testshop/blob/main/images/screenshots/CatalogGrid.png)
-![SettingsDialog_Monero](https://github.com/larteyoh/testshop/blob/main/images/screenshots/SettingsDialog_Monero.png)
-![HomePage](https://github.com/larteyoh/testshop/blob/main/images/screenshots/HomePage.png)
-![HomePage_Recent_Listings](https://github.com/larteyoh/testshop/blob/main/images/screenshots/HomePage_Recent_Listings.png)
-![Dashboard](https://github.com/larteyoh/testshop/blob/main/images/screenshots/Dashboard_Overview.png)
-![Product_Listing_Top](https://github.com/larteyoh/testshop/blob/main/images/screenshots/Product_Listing_Top.png)
-![Product_Listing_Bottom](https://github.com/larteyoh/testshop/blob/main/images/screenshots/Product_Listing_Bottom.png)
-![WalletPage_Send](https://github.com/larteyoh/testshop/blob/main/images/screenshots/WalletPage_BalanceSend.png)
-![WalletPage_Receive](https://github.com/larteyoh/testshop/blob/main/images/screenshots/WalletPage_BalanceReceive.png)
-![WalletPage_Transactions](https://github.com/larteyoh/testshop/blob/main/images/screenshots/WalletPage_BalanceTxs.png)
+![Wallet_Keys_Generation](https://github.com/larteyoh/testshop/blob/main/assets/images/screenshots/Wallet_Keys_Generation.png)
+![Registration](https://github.com/larteyoh/testshop/blob/main/assets/images/screenshots/Registration.png)
+![CatalogGrid_Top](https://github.com/larteyoh/testshop/blob/main/assets/images/screenshots/CatalogGrid_Top.png)
+![CatalogGrid_Bottom](https://github.com/larteyoh/testshop/blob/main/assets/images/screenshots/CatalogGrid_Bottom.png)
+![CatalogGrid](https://github.com/larteyoh/testshop/blob/main/assets/images/screenshots/CatalogGrid.png)
+![SettingsDialog_Monero](https://github.com/larteyoh/testshop/blob/main/assets/images/screenshots/SettingsDialog_Monero.png)
+![HomePage](https://github.com/larteyoh/testshop/blob/main/assets/images/screenshots/HomePage.png)
+![HomePage_Recent_Listings](https://github.com/larteyoh/testshop/blob/main/assets/images/screenshots/HomePage_Recent_Listings.png)
+![Dashboard](https://github.com/larteyoh/testshop/blob/main/assets/images/screenshots/Dashboard_Overview.png)
+![Product_Listing_Top](https://github.com/larteyoh/testshop/blob/main/assets/images/screenshots/Product_Listing_Top.png)
+![Product_Listing_Bottom](https://github.com/larteyoh/testshop/blob/main/assets/images/screenshots/Product_Listing_Bottom.png)
+![WalletPage_Send](https://github.com/larteyoh/testshop/blob/main/assets/images/screenshots/WalletPage_BalanceSend.png)
+![WalletPage_Receive](https://github.com/larteyoh/testshop/blob/main/assets/images/screenshots/WalletPage_BalanceReceive.png)
+![WalletPage_Transactions](https://github.com/larteyoh/testshop/blob/main/assets/images/screenshots/WalletPage_BalanceTxs.png)
 
 </details>
 
@@ -238,7 +238,7 @@ You may support the neroshop project directly by donating to any of the addresse
 83QbQvnnyo7515rEnW8XwF1hbP5qMab6sHXFzP6pg3EKGscgXCbVjbt1FX5SF7AV9p4Ur1tiommuQSzrQQRHkZicVYu6j8Y
 ```
 <p align="center">
-    <a href="monero:83QbQvnnyo7515rEnW8XwF1hbP5qMab6sHXFzP6pg3EKGscgXCbVjbt1FX5SF7AV9p4Ur1tiommuQSzrQQRHkZicVYu6j8Y" target="_blank"><img src="images/donate_xmr.png" width="128" height="128"></img></a>
+    <a href="monero:83QbQvnnyo7515rEnW8XwF1hbP5qMab6sHXFzP6pg3EKGscgXCbVjbt1FX5SF7AV9p4Ur1tiommuQSzrQQRHkZicVYu6j8Y" target="_blank"><img src="assets/images/donate_xmr.png" width="128" height="128"></img></a>
 </p>
 
 **Wownero (WOW):**
@@ -246,7 +246,7 @@ You may support the neroshop project directly by donating to any of the addresse
 WW2pQTQWHpyJf2CHrCmZG7Tn3zBnYRZTH8g4U3pSZf5s6xsTXrZc9odDWmrWzjRc9MMQWrKXxjHsRdzH5JpJ7kzx1jZuSVSfi
 ```
 <p align="center">
-    <a href="wownero:WW2pQTQWHpyJf2CHrCmZG7Tn3zBnYRZTH8g4U3pSZf5s6xsTXrZc9odDWmrWzjRc9MMQWrKXxjHsRdzH5JpJ7kzx1jZuSVSfi" target="_blank"><img src="images/donate_wow.png" width="128" height="128"></img></a>
+    <a href="wownero:WW2pQTQWHpyJf2CHrCmZG7Tn3zBnYRZTH8g4U3pSZf5s6xsTXrZc9odDWmrWzjRc9MMQWrKXxjHsRdzH5JpJ7kzx1jZuSVSfi" target="_blank"><img src="assets/images/donate_wow.png" width="128" height="128"></img></a>
 </p>
 
 [**OpenAlias**](https://openalias.org/):
