@@ -49,7 +49,7 @@ RowLayout {
         //checkable: true
         hoverEnabled: true
         
-        icon.source: "qrc:/images/wallet.png"
+        icon.source: "qrc:/assets/images/wallet.png"
         icon.color: (!checked && this.hovered) ? NeroshopComponents.Style.moneroOrangeColor : "#ffffff"
         //property string reservedColor: NeroshopComponents.Style.moneroOrangeColor
                         
@@ -83,7 +83,7 @@ RowLayout {
         display: AbstractButton.IconOnly//AbstractButton.TextBesideIcon
         hoverEnabled: true
         
-        icon.source: "qrc:/images/shop.png"
+        icon.source: "qrc:/assets/images/shop.png"
         icon.color: (!checked && this.hovered) ? reservedColor : "#ffffff"
         property string reservedColor: (useDefaultButtonColor) ? defaultButtonColor : "royalblue"
                         
@@ -117,7 +117,7 @@ RowLayout {
         hoverEnabled: true
         property int dummy_count: 0
         
-        icon.source: "qrc:/images/mailbox.png"
+        icon.source: "qrc:/assets/images/mailbox.png"
         icon.color: (!checked && this.hovered) ? reservedColor : "#ffffff"
         property string reservedColor: (useDefaultButtonColor) ? defaultButtonColor : "#524656"
                         
@@ -150,7 +150,7 @@ RowLayout {
         display: AbstractButton.IconOnly//AbstractButton.TextBesideIcon
         hoverEnabled: true
         
-        icon.source: "qrc:/images/order.png"
+        icon.source: "qrc:/assets/images/order.png"
         icon.color: (!checked && this.hovered) ? reservedColor : "#ffffff"
         property string reservedColor: (useDefaultButtonColor) ? defaultButtonColor : "#607848"
                         
@@ -183,7 +183,7 @@ RowLayout {
         display: AbstractButton.IconOnly//AbstractButton.TextBesideIcon
         hoverEnabled: true
         
-        icon.source: "qrc:/images/user.png"
+        icon.source: "qrc:/assets/images/user.png"
         icon.color: (!checked && this.hovered) ? reservedColor : "#ffffff"
         property string reservedColor: (useDefaultButtonColor) ? defaultButtonColor : "#cd8500"
                         
@@ -242,7 +242,7 @@ RowLayout {
                 
         Image {
             id: cartButtonIcon
-            source: "qrc:/images/cart.png"
+            source: "qrc:/assets/images/cart.png"
             height: 24; width: 24
             anchors.left: cartButtonText.right
             anchors.leftMargin: 10

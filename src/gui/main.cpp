@@ -83,7 +83,7 @@ int main(int argc, char *argv[])
     // testing
     //Backend::testfts5();//std::cout << neroshop::Wallet::generate_uri("83Qb...6j8Y", 0.000000000001, "donation to my friend", "Jack Kinnof") << "\n";
     // import paths
-    engine.addImportPath(":/fonts"); // import FontAwesome 1.0
+    engine.addImportPath(":/assets/fonts"); // import FontAwesome 1.0
     // platform macros
     engine.rootContext()->setContextProperty("isLinux", isLinux);
     engine.rootContext()->setContextProperty("isWindows", isWindows);

@@ -79,7 +79,7 @@ Page {
                                     radius: 50
                                     Image {
                                         id: productIcon
-                                        source: "qrc:/images/open_parcel.png"
+                                        source: "qrc:/assets/images/open_parcel.png"
                                         width: 32; height: 32
                                         anchors.centerIn: parent
                                     }
@@ -132,7 +132,7 @@ Page {
                                     radius: 50
                                     Image {
                                         id: salesIcon
-                                        source: "qrc:/images/increase.png"
+                                        source: "qrc:/assets/images/increase.png"
                                         width: 32; height: 32
                                         anchors.centerIn: parent
                                     }
@@ -185,7 +185,7 @@ Page {
                                     radius: 50
                                     Image {
                                         id: ratingIcon
-                                        source: "qrc:/images/rating.png"
+                                        source: "qrc:/assets/images/rating.png"
                                         width: 32; height: 32
                                         anchors.centerIn: parent
                                     }
@@ -316,7 +316,7 @@ Page {
                                         display: AbstractButton.IconOnly
                                         hoverEnabled: true
         
-                                        icon.source: "qrc:/images/trash.png"
+                                        icon.source: "qrc:/assets/images/trash.png"
                                         icon.color: "#b22222"
                                         background: Rectangle {
                                             color: parent.hovered ? ((NeroshopComponents.Style.darkTheme) ? (NeroshopComponents.Style.themeName == "PurpleDust" ? "#17171c" : "#181a1b") : "#c9c9cd") : "transparent"

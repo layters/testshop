@@ -35,7 +35,7 @@ Item {
         width: 50; height: searchField.height
         property alias cursorShape: mouseArea.cursorShape
         
-        icon.source: "qrc:/images/search.png"//neroshopResourceDir + "/search.png"
+        icon.source: "qrc:/assets/images/search.png"//neroshopResourceDir + "/search.png"
         icon.color: "#ffffff"
                         
         background: Rectangle {

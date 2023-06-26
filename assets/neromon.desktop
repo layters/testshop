@@ -1,0 +1,7 @@
+[Desktop Entry]
+Name=Neroshop Daemon
+Comment=Daemon server for neroshop
+Icon=neroshop
+Exec=neromon
+Type=Application
+Categories=Utility;

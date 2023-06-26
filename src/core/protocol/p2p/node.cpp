@@ -1354,7 +1354,7 @@ bool neroshop::Node::is_bootstrap_node(const std::string& address, uint16_t port
 }
 
 bool neroshop::Node::is_bootstrap_node() const {
-    return (bootstrap == true);
+    return (bootstrap == true) || is_bootstrap_node(this->public_ip_address, this->get_port());
 }
 
 bool neroshop::Node::is_dead() const {

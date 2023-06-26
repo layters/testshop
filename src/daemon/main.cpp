@@ -22,6 +22,10 @@
 #include <upnpcommands.h>
 #endif
 
+#if defined(NEROSHOP_USE_LIBNATPMP)
+#include <natpmp.h>
+#endif
+
 #define NEROMON_TAG "\033[1;95m[neromon]:\033[0m "
 
 using namespace neroshop;
@@ -249,6 +253,13 @@ int main(int argc, char** argv)
     }
     #endif
     //-------------------------------------------------------
+    #if defined(NEROSHOP_USE_LIBNATPMP)
+    int r;
+    natpmp_t natpmp;
+    natpmpresp_t response;
+    // ...
+    #endif
+    //-------------------------------------------------------
     neroshop::Node node("0.0.0.0"/*ip_address*/, NEROSHOP_P2P_DEFAULT_PORT, true);
     
     if(result.count("bootstrap")) {   
@@ -278,6 +289,10 @@ int main(int argc, char** argv)
     // Release the UPnP context and free resources
     FreeUPNPUrls(&urls);
     freeUPNPDevlist(devlist);
+    #endif
+    
+    #if defined(NEROSHOP_USE_LIBNATPMP)
+    ////closenatpmp(&natpmp);
     #endif
 
 	return 0;

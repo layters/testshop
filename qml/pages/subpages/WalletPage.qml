@@ -82,7 +82,7 @@ Page {
                         id: lockedIcon
                         anchors.verticalCenter: parent.children[1].verticalCenter
                         width: 32; height: width
-                        source: "qrc:/images/lock.png"
+                        source: "qrc:/assets/images/lock.png"
                         mipmap: true
                     }*/
                     /*ColorOverlay {
@@ -401,7 +401,7 @@ Page {
                                 width: 50; height: primaryAddressField.height
                                 text: qsTr("Copy")
                                 display: AbstractButton.IconOnly
-                                icon.source: "qrc:/images/copy.png"
+                                icon.source: "qrc:/assets/images/copy.png"
                                 icon.color: (NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000"
                                 background: Rectangle {
                                     color: "transparent"//"#808080"

@@ -132,7 +132,7 @@ Page {
             messageBox.open()
             return; // exit function and do not proceed any further
         }
-        //User.uploadAvatar("../images/appicons/LogoLight250x250.png");
+        //User.uploadAvatar("../assets/images/appicons/LogoLight250x250.png");
         // Switch to HomePage
         pageLoader.source = "HomePage.qml"//stack.push(home_page)
         //console.log("Primary address: ", Wallet.getPrimaryAddress())
@@ -262,7 +262,7 @@ Page {
                         Layout.preferredHeight: parent.buttonHeight
                         Layout.preferredWidth: parent.buttonWidth//hovered ? 180 : parent.buttonWidth
                         //Layout.maximumWidth: 180//contentWidth + 20
-                        icon.source: "qrc:/images/file.png" // keys (key.png), seed (sprout.png), file, hardware
+                        icon.source: "qrc:/assets/images/file.png" // keys (key.png), seed (sprout.png), file, hardware
                         //icon.color: "#ffffff"
                         display: AbstractButton.IconOnly//hovered ? AbstractButton.TextBesideIcon : AbstractButton.IconOnly//AbstractButton.TextUnderIcon
                         hoverEnabled: true
@@ -295,7 +295,7 @@ Page {
                      text: qsTr("Restore from seed")//.arg("\uf8e9")
                      Layout.preferredWidth: parent.buttonWidth//width: contentWidth + 20;
                      Layout.preferredHeight: parent.buttonHeight
-                     icon.source: "qrc:/images/sprout.png" // keys (key.png), seed (sprout.png), file, hardware
+                     icon.source: "qrc:/assets/images/sprout.png" // keys (key.png), seed (sprout.png), file, hardware
                      //icon.color: "#ffffff"
                      display: AbstractButton.IconOnly
                      hoverEnabled: true
@@ -319,7 +319,7 @@ Page {
                     text: qsTr("Restore from keys")//.arg("\uf8e9")
                     Layout.preferredWidth: parent.buttonWidth//width: contentWidth + 20;
                     Layout.preferredHeight: parent.buttonHeight
-                    icon.source: "qrc:/images/key.png" // keys (key.png), seed (sprout.png), file, hardware
+                    icon.source: "qrc:/assets/images/key.png" // keys (key.png), seed (sprout.png), file, hardware
                     //icon.color: "#ffffff"
                     display: AbstractButton.IconOnly
                     hoverEnabled: true
@@ -344,7 +344,7 @@ Page {
                     Layout.preferredWidth: parent.buttonWidth//hovered ? Layout.maximumWidth : parent.buttonWidth//width: contentWidth + 20;
                     Layout.preferredHeight: parent.buttonHeight
                     //Layout.maximumWidth: 180//280
-                    icon.source: "qrc:/images/usb.png" // keys (key.png), seed (sprout.png), file, hardware
+                    icon.source: "qrc:/assets/images/usb.png" // keys (key.png), seed (sprout.png), file, hardware
                     //icon.color: "#ffffff"
                     display: AbstractButton.IconOnly
                     hoverEnabled: true
@@ -424,7 +424,7 @@ Page {
                 Layout.topMargin: 20
                 text: qsTr("Browse")
                 //display: AbstractButton.IconOnly//AbstractButton.TextBesideIcon//AbstractButton.TextOnly//AbstractButton.TextUnderIcon
-                //icon.source: "qrc:/images/ellipsis.png"//"/upload.png"
+                //icon.source: "qrc:/assets/images/ellipsis.png"//"/upload.png"
                 //icon.color: "#ffffff"
                 hoverEnabled: true
                 onClicked: walletFileDialog.open()
@@ -834,7 +834,7 @@ Page {
                 Layout.preferredHeight: 50//walletPathField.Layout.preferredHeight
                 text: qsTr("Change")
                 //display: AbstractButton.IconOnly//AbstractButton.TextBesideIcon//AbstractButton.TextOnly
-                //icon.source: "qrc:/images/change.png"
+                //icon.source: "qrc:/assets/images/change.png"
                 //icon.color: "#ffffff"
                 hoverEnabled: true                
                 onClicked: walletFolderDialog.open()
@@ -996,7 +996,7 @@ Page {
                     Layout.fillWidth: true////width: contentWidth + 20; height: 40
                     visible: (walletSeedRepeater.model != null)
                     text: qsTr("Copy")
-                    icon.source: "qrc:/images/copy.png"
+                    icon.source: "qrc:/assets/images/copy.png"
                     icon.color: "#ffffff"
                     display: AbstractButton.IconOnly//AbstractButton.TextBesideIcon//AbstractButton.TextOnly//AbstractButton.TextUnderIcon
                     hoverEnabled: true

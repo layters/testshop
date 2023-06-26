@@ -27,8 +27,8 @@ Item {
         width: container.width
         height: container.height
         // For Qt5
-        fragmentShader: "qrc:/shaders/opacity_mask_qt5.fsh"
+        fragmentShader: "qrc:/assets/shaders/opacity_mask_qt5.fsh"
         // For Qt6
-        // fragmentShader: "qrc:/shaders/opacity_mask_qt6.frag.qsb"
+        // fragmentShader: "qrc:/assets/shaders/opacity_mask_qt6.frag.qsb"
     }
 }

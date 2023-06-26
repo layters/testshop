@@ -131,7 +131,7 @@ Page {
                                 
                             Image {
                                 id: moneroSymbol
-                                source: "qrc:/images/monero_symbol_white.png"
+                                source: "qrc:/assets/images/monero_symbol_white.png"
                                 visible: priceMonero.visible
                                 width: 24; height: 24
                                 fillMode:Image.PreserveAspectFit

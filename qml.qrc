@@ -44,71 +44,71 @@
         <file>qml/pages/subpages/OrdersPage.qml</file>
         <file>qml/pages/subpages/WalletPage.qml</file>
         <!-- fonts -->
-        <file>fonts/FiraCode-Bold.ttf</file>
-        <file>fonts/FiraCode-Light.ttf</file>
-        <file>fonts/FiraCode-Medium.ttf</file>
-        <file>fonts/FiraCode-Regular.ttf</file>
-        <file>fonts/FiraCode-Retina.ttf</file>
-        <file>fonts/FiraCode-SemiBold.ttf</file>
-        <file>fonts/FontAwesome/FontAwesome.qml</file>
-        <file>fonts/FontAwesome/Object.qml</file>
-        <file>fonts/FontAwesome/otfs/Font Awesome 6 Brands-Regular-400.otf</file>
-        <file>fonts/FontAwesome/otfs/Font Awesome 6 Free-Regular-400.otf</file>
-        <file>fonts/FontAwesome/otfs/Font Awesome 6 Free-Solid-900.otf</file>
-        <file>fonts/FontAwesome/qmldir</file>
-        <!--<file>fonts/FontAwesome/svgs/</file>-->
+        <file>assets/fonts/FiraCode-Bold.ttf</file>
+        <file>assets/fonts/FiraCode-Light.ttf</file>
+        <file>assets/fonts/FiraCode-Medium.ttf</file>
+        <file>assets/fonts/FiraCode-Regular.ttf</file>
+        <file>assets/fonts/FiraCode-Retina.ttf</file>
+        <file>assets/fonts/FiraCode-SemiBold.ttf</file>
+        <file>assets/fonts/FontAwesome/FontAwesome.qml</file>
+        <file>assets/fonts/FontAwesome/Object.qml</file>
+        <file>assets/fonts/FontAwesome/otfs/Font Awesome 6 Brands-Regular-400.otf</file>
+        <file>assets/fonts/FontAwesome/otfs/Font Awesome 6 Free-Regular-400.otf</file>
+        <file>assets/fonts/FontAwesome/otfs/Font Awesome 6 Free-Solid-900.otf</file>
+        <file>assets/fonts/FontAwesome/qmldir</file>
+        <!--<file>assets/fonts/FontAwesome/svgs/</file>-->
         <!-- images -->
-        <file>images/appicons/LogoLight250x250.png</file>
-        <file>images/appicons/LogoLight375x375.png</file>
-        <file>images/appicons/LogoLight500x500.png</file>
-        <file>images/appicons/LogoLight1000x1000.png</file>
-        <file>images/appicons/LogoLight1500x1500.png</file>
-        <file>images/appicons/LogoDark250x250.png</file>
-        <file>images/appicons/LogoDark375x375.png</file>
-        <file>images/appicons/LogoDark500x500.png</file>
-        <file>images/appicons/LogoDark1000x1000.png</file>
-        <file>images/appicons/LogoDark1500x1500.png</file>
-        <file>images/appicons/Vector_Illustrator Files/LogoDark.svg</file>
-        <file>images/appicons/Vector_Illustrator Files/LogoLight.svg</file>
-        <file>images/cart.png</file>
-        <file>images/clipboard.png</file>
-        <file>images/cog.png</file>
-        <file>images/copy.png</file>
-        <file>images/eye.png</file>
-        <file>images/eye_slash.png</file>
-        <file>images/file.png</file>
-        <file>images/grid.png</file>
-        <file>images/heart.png</file>
-        <file>images/image.png</file>
-        <file>images/image_gallery.png</file>
-        <file>images/increase.png</file>
-        <file>images/key.png</file>
-        <file>images/list.png</file>
-        <file>images/lock.png</file>
-        <file>images/mail.png</file> <!-- not in used -->
-        <file>images/mailbox.png</file>
-        <file>images/mask.png</file>
-        <file>images/monero_symbol.png</file>
-        <file>images/monero_symbol_white.png</file>
-        <file>images/open_parcel.png</file>
-        <file>images/order.png</file>
-        <file>images/paid.png</file>
-        <file>images/rating.png</file>
-        <file>images/search.png</file>
-        <file>images/send.png</file>
-        <file>images/shop.png</file>        
-        <file>images/sprout.png</file>
-        <file>images/star.png</file>
-        <file>images/star_half.png</file>        
-        <file>images/trash.png</file>
-        <file>images/usb.png</file>
-        <file>images/user.png</file>
-        <file>images/wallet.png</file>
-        <file>images/wownero_logo.png</file>        
-        <!--<file>images/</file> -->
+        <file>assets/images/appicons/LogoLight250x250.png</file>
+        <file>assets/images/appicons/LogoLight375x375.png</file>
+        <file>assets/images/appicons/LogoLight500x500.png</file>
+        <file>assets/images/appicons/LogoLight1000x1000.png</file>
+        <file>assets/images/appicons/LogoLight1500x1500.png</file>
+        <file>assets/images/appicons/LogoDark250x250.png</file>
+        <file>assets/images/appicons/LogoDark375x375.png</file>
+        <file>assets/images/appicons/LogoDark500x500.png</file>
+        <file>assets/images/appicons/LogoDark1000x1000.png</file>
+        <file>assets/images/appicons/LogoDark1500x1500.png</file>
+        <file>assets/images/appicons/Vector_Illustrator Files/LogoDark.svg</file>
+        <file>assets/images/appicons/Vector_Illustrator Files/LogoLight.svg</file>
+        <file>assets/images/cart.png</file>
+        <file>assets/images/clipboard.png</file>
+        <file>assets/images/cog.png</file>
+        <file>assets/images/copy.png</file>
+        <file>assets/images/eye.png</file>
+        <file>assets/images/eye_slash.png</file>
+        <file>assets/images/file.png</file>
+        <file>assets/images/grid.png</file>
+        <file>assets/images/heart.png</file>
+        <file>assets/images/image.png</file>
+        <file>assets/images/image_gallery.png</file>
+        <file>assets/images/increase.png</file>
+        <file>assets/images/key.png</file>
+        <file>assets/images/list.png</file>
+        <file>assets/images/lock.png</file>
+        <file>assets/images/mail.png</file> <!-- not in used -->
+        <file>assets/images/mailbox.png</file>
+        <file>assets/images/mask.png</file>
+        <file>assets/images/monero_symbol.png</file>
+        <file>assets/images/monero_symbol_white.png</file>
+        <file>assets/images/open_parcel.png</file>
+        <file>assets/images/order.png</file>
+        <file>assets/images/paid.png</file>
+        <file>assets/images/rating.png</file>
+        <file>assets/images/search.png</file>
+        <file>assets/images/send.png</file>
+        <file>assets/images/shop.png</file>        
+        <file>assets/images/sprout.png</file>
+        <file>assets/images/star.png</file>
+        <file>assets/images/star_half.png</file>        
+        <file>assets/images/trash.png</file>
+        <file>assets/images/usb.png</file>
+        <file>assets/images/user.png</file>
+        <file>assets/images/wallet.png</file>
+        <file>assets/images/wownero_logo.png</file>        
+        <!--<file>assets/images/</file> -->
         <!-- shaders -->
-        <file>shaders/opacity_mask_qt5.fsh</file>
-        <file>shaders/opacity_mask_qt6.frag</file>
-        <file>shaders/opacity_mask_qt6.frag.qsb</file>
+        <file>assets/shaders/opacity_mask_qt5.fsh</file>
+        <file>assets/shaders/opacity_mask_qt6.frag</file>
+        <file>assets/shaders/opacity_mask_qt6.frag.qsb</file>
     </qresource>
 </RCC>

@@ -34,7 +34,7 @@ ApplicationWindow {
             id: neroshopLogoImageButton
             visible: !settingsDialog.hideHomepageButton
             property real iconSize: 30
-            icon.source: (NeroshopComponents.Style.darkTheme) ? "qrc:/images/appicons/Vector_Illustrator Files/LogoLight.svg" : "qrc:/images/appicons/Vector_Illustrator Files/LogoDark.svg"
+            icon.source: (NeroshopComponents.Style.darkTheme) ? "qrc:/assets/images/appicons/Vector_Illustrator Files/LogoLight.svg" : "qrc:/assets/images/appicons/Vector_Illustrator Files/LogoDark.svg"
             icon.color: icon.color
             icon.width: iconSize; icon.height: iconSize
             display: AbstractButton.IconOnly
@@ -160,7 +160,7 @@ ApplicationWindow {
                     display: AbstractButton.IconOnly
                     checkable: true
                     checked: settingsDialog.visible
-                    icon.source: "qrc:/images/cog.png"//"/tools.png"
+                    icon.source: "qrc:/assets/images/cog.png"//"/tools.png"
                     icon.color: (NeroshopComponents.Style.darkTheme) ? "#8fa4ff" : "#001677"////hovered ? "#001677" : "#ffffff"//(!checked && hovered) ? "#001677" : "#ffffff"
                     //icon.width: parent.width//footer.height
                     //icon.height: parent.height//32//footer.height

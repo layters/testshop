@@ -9,6 +9,7 @@ There are many ways that you can contribute.
 **Please refer to [the wiki](https://github.com/larteyoh/testshop/wiki/FAQ#how-can-i-contribute-to-neroshop-if-i-dont-know-c-or-c) for more information on how to contribute.**
 
 
+
 # Testing
 Also, If you would like to help test the P2P network, you can skip to this [section](#testing-dht)
 
@@ -56,7 +57,7 @@ From there, you should receive a pong message back from the server.
 
 ## Testing DHT
 
-To start the network, you must run your node as a bootstrap node:
+To start the network, you must run your node as a bootstrap node (assuming your node's IP is hard-coded into the software):
 ```
 ./neromon --bootstrap
 ```
@@ -81,3 +82,57 @@ To run a public node, you must include the `--public` flag when starting the dae
 **Be sure that port forwarding is enabled on your machine in order for other nodes to find your node on port `50881`.**
 
 Another thing: You can also run a public RPC server by combining the `--rpc` and `--public` flags.
+
+
+
+# Releasing
+## AppImage
+### Prerequisites
+In order to generate AppImage files for use on all Linux distributions, the following is required:
+- [`linuxdeploy`](https://github.com/linuxdeploy/linuxdeploy/releases)
+- [`AppImageKit`](https://github.com/AppImage/AppImageKit/releases)
+
+
+### Generating AppImages from native binaries
+Assuming you've already built all of the external libraries from `external/`, you can proceed to build neroshop
+
+If you have already built the neroshop binaries, you may need to `clean` the Makefile and remove the CMake files before we can proceed.
+
+First, lets make sure we are inside the `build` directory within the project's root directory:
+```
+cd build
+```
+
+Now we can build neroshop in preparation for the AppImage generation:
+```sh
+# configure build system
+# the flags below are the bare minimum that is needed, the app might define additional variables that might have to be set
+cmake .. -DCMAKE_INSTALL_PREFIX=/usr -DNEROSHOP_BUILD_CLI=1
+ 
+# build the application on all CPU cores
+make -j$(nproc)
+ 
+# now "install" resources into future AppDir
+make install DESTDIR=neromon.AppDir
+make install DESTDIR=neroshop.AppDir
+make install DESTDIR=neroshop-console.AppDir
+```
+
+Run the following command to generate an AppDir:
+```sh
+./linuxdeploy-x86_64.AppImage --appdir ./neromon.AppDir --desktop-file=../assets/neromon.desktop
+./linuxdeploy-x86_64.AppImage --appdir ./neroshop.AppDir --desktop-file=../assets/neroshop.desktop
+./linuxdeploy-x86_64.AppImage --appdir ./neroshop-console.AppDir --desktop-file=../assets/neroshop-console.desktop
+```
+
+Finally, we generate an AppImage from the AppDir:
+```sh
+./appimagetool-x86_64.AppImage neromon.AppDir neromon.AppImage
+./appimagetool-x86_64.AppImage neroshop.AppDir neroshop.AppImage
+./appimagetool-x86_64.AppImage neroshop-console.AppDir neroshop-console.AppImage
+```
+
+### References
+https://docs.appimage.org/packaging-guide/from-source/native-binaries.html
+
+

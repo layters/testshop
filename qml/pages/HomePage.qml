@@ -107,7 +107,7 @@ Page {
                         }
                         Image {
                             id: categoryThumbnail
-                            source: (modelData.thumbnail == "NULL") ? "qrc:/images/image_gallery.png" : modelData.thumbnail
+                            source: (modelData.thumbnail == "NULL") ? "qrc:/assets/images/image_gallery.png" : modelData.thumbnail
                             anchors.horizontalCenter: parent.horizontalCenter
                             anchors.top: parent.top//anchors.bottom: categoryNameText.bottom
                             anchors.topMargin: 10//anchors.bottomMargin: 20////anchors.centerIn: parent
@@ -176,7 +176,7 @@ Page {
                                 color: NeroshopComponents.Style.getColorsFromTheme()[1]
                                 radius: 3
                                 Image {
-                                    source: "file:///" + modelData.product_image_file//"qrc:/images/image_gallery.png"
+                                    source: "file:///" + modelData.product_image_file//"qrc:/assets/images/image_gallery.png"
                                     anchors.centerIn: parent
                                     width: parent.width - 10; height: parent.height - 10//width: 128; height: 128
                                     fillMode: Image.PreserveAspectFit
@@ -227,7 +227,7 @@ Page {
                                 color: NeroshopComponents.Style.getColorsFromTheme()[1]
                                 radius: 3
                                 Image {
-                                    source: "qrc:/images/image_gallery.png"
+                                    source: "qrc:/assets/images/image_gallery.png"
                                     anchors.centerIn: parent
                                 }
                             }

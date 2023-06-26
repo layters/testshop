@@ -252,7 +252,7 @@ Item {
                         display: AbstractButton.IconOnly
                         hoverEnabled: true
         
-                        icon.source: "qrc:/images/trash.png"
+                        icon.source: "qrc:/assets/images/trash.png"
                         icon.color: "#b22222"//this.hovered ? "#b22222" : "#ffffff"
                         background: Rectangle {
                             color: "transparent"
