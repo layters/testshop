@@ -53,7 +53,7 @@ ListView {
                              
             Image {
                 id: productImage
-                source: "file:///" + modelData.product_image_file//"qrc:/images/image_gallery.png"
+                source: "file:///" + modelData.product_image_file//"qrc:/assets/images/image_gallery.png"
                 anchors.centerIn: parent
                 width: 192; height: 192
                 fillMode: Image.PreserveAspectFit

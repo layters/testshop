@@ -31,7 +31,7 @@ Item {
             ButtonGroup.group: viewButtonGroup // attaches a button to a button group
             property int buttonIndex: 0
             display: AbstractButton.IconOnly
-            icon.source: "qrc:/images/grid.png"
+            icon.source: "qrc:/assets/images/grid.png"
             icon.color: !this.checked ? "#39304f" : "#ffffff"// icon color is set automatically unless we set it ourselves, which we do here
             background: Rectangle {
                 radius: viewToggle.radius
@@ -50,7 +50,7 @@ Item {
             ButtonGroup.group: viewButtonGroup
             property int buttonIndex: 1
             display: AbstractButton.IconOnly
-            icon.source: "qrc:/images/list.png"
+            icon.source: "qrc:/assets/images/list.png"
             icon.color: !this.checked ? "#39304f" : "#ffffff"
             background: Rectangle {
                 radius: viewToggle.radius

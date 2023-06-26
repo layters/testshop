@@ -71,7 +71,7 @@ GridView {
                              
             Image {
                 id: productImage
-                source: "file:///" + modelData.product_image_file//"qrc:/images/image_gallery.png"
+                source: "file:///" + modelData.product_image_file//"qrc:/assets/images/image_gallery.png"
                 anchors.centerIn: parent
                 width: 192; height: width
                 fillMode: Image.PreserveAspectFit//Image.Stretch
@@ -99,7 +99,7 @@ GridView {
             
         Image {
             id: verifiedPurchaseIcon
-            source: "qrc:/images/paid.png"//neroshopResourceDir + "/paid.png"
+            source: "qrc:/assets/images/paid.png"//neroshopResourceDir + "/paid.png"
             visible: false // TODO: only show this icon if item has been purchased previously (since orders are encrypted, only the user can see this)
             anchors.left: parent.left
             anchors.leftMargin: 10
@@ -142,7 +142,7 @@ GridView {
             anchors.top: parent.top
             anchors.topMargin: 5//10
             property bool disabled: true
-            icon.source: "qrc:/images/heart.png"
+            icon.source: "qrc:/assets/images/heart.png"
             icon.color: NeroshopComponents.Style.disabledColor//"#ffffff"
             icon.height: 24; icon.width: 24
             background: Rectangle {
@@ -202,7 +202,7 @@ GridView {
                                 
                     Image {
                         id: moneroSymbol
-                        source: "qrc:/images/monero_symbol_white.png"
+                        source: "qrc:/assets/images/monero_symbol_white.png"
                         visible: priceMonero.visible
                         width: 24; height: 24
                         fillMode:Image.PreserveAspectFit

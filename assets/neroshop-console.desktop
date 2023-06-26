@@ -1,0 +1,8 @@
+[Desktop Entry]
+Name=Neroshop Console
+Comment=Command line interface for neroshop
+Icon=neroshop
+Exec=neroshop-console
+Terminal=true
+Type=Application
+Categories=Utility;

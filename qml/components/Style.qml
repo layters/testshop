@@ -4,13 +4,13 @@ import QtQuick 2.12 //import QtQml
 
 QtObject {
     // Fonts
-    property QtObject fontFiraCodeBold: FontLoader { id: _fontFiraCodeBold; source: "qrc:/fonts/FiraCode-Bold.ttf" }
-    property QtObject fontFiraCodeLight: FontLoader { id: _fontFiraCodeLight; source: "qrc:/fonts/FiraCode-Light.ttf" }
-    property QtObject fontFiraCodeMedium: FontLoader { id: _fontFiraCodeMedium; source: "qrc:/fonts/FiraCode-Medium.ttf" }
-    property QtObject fontFiraCodeRegular: FontLoader { id: _fontFiraCodeRegular; source: "qrc:/fonts/FiraCode-Regular.ttf" }
-    property QtObject fontFiraCodeRetina: FontLoader { id: _fontFiraCodeRetina; source: "qrc:/fonts/FiraCode-Retina.ttf" }
-    property QtObject fontFiraCodeSemiBold: FontLoader { id: _fontFiraCodeSemiBold; source: "qrc:/fonts/FiraCode-SemiBold.ttf" }
-    ////readonly property QtObject font<name><style>: FontLoader { id: _font<name><style>; source: "qrc:/fonts/" }
+    property QtObject fontFiraCodeBold: FontLoader { id: _fontFiraCodeBold; source: "qrc:/assets/fonts/FiraCode-Bold.ttf" }
+    property QtObject fontFiraCodeLight: FontLoader { id: _fontFiraCodeLight; source: "qrc:/assets/fonts/FiraCode-Light.ttf" }
+    property QtObject fontFiraCodeMedium: FontLoader { id: _fontFiraCodeMedium; source: "qrc:/assets/fonts/FiraCode-Medium.ttf" }
+    property QtObject fontFiraCodeRegular: FontLoader { id: _fontFiraCodeRegular; source: "qrc:/assets/fonts/FiraCode-Regular.ttf" }
+    property QtObject fontFiraCodeRetina: FontLoader { id: _fontFiraCodeRetina; source: "qrc:/assets/fonts/FiraCode-Retina.ttf" }
+    property QtObject fontFiraCodeSemiBold: FontLoader { id: _fontFiraCodeSemiBold; source: "qrc:/assets/fonts/FiraCode-SemiBold.ttf" }
+    ////readonly property QtObject font<name><style>: FontLoader { id: _font<name><style>; source: "qrc:/assets/fonts/" }
     // General settings
     property bool darkTheme: Script.getJsonBool("dark_theme")//true
     property string themeName: Script.getJsonString("theme")//"DefaultDark"
