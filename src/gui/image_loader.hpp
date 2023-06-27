@@ -15,6 +15,9 @@ public:
     
     QPair<unsigned char*, int> getProductImage(const QString &product_id) const;
     QImage loadAvatar(const QString &user_id) const;
+    
+    QString getProductImagePath(const QString& listing_key, const QString& image_name/*or image index? index wont need a parameter*/) const;
+    QString getAvatarImagePath(const QString& user_key) const;
 };
 
 #endif // IMAGELOADER_H

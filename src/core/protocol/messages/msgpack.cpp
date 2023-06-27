@@ -316,62 +316,6 @@ std::vector<uint8_t> neroshop::msgpack::process(const std::vector<uint8_t>& requ
         // ...
     }
     //-----------------------------------------------------
-    if(method == "search" && ipc_mode) { // For value-based DHT lookups, but only works on data that your node has
-        assert(request_object["args"].is_object());
-        auto params_object = request_object["args"];
-        assert(params_object["what"].is_string());
-        std::string what = params_object["what"].get<std::string>(); // what field=id, name, etc.
-        assert(params_object["from"].is_string());
-        std::string from = params_object["from"]; // from=user,product
-        std::string condition; // condition=order by name ASC
-        if(params_object.contains("condition")) {
-            assert(params_object["condition"].is_string());
-            condition = params_object["condition"];
-        }
-            
-        std::vector<std::pair<std::string, std::string>> node_data = node.get_data();
-        if(node_data.empty()) {
-            response_object["version"] = std::string(NEROSHOP_DHT_VERSION);
-            response_object["response"]["id"] = node.get_id();
-            response_object["response"]["result"] = nullptr;
-        }
-        
-        if(!node_data.empty()) {
-            std::vector<nlohmann::json> result_array;
-            for (const auto& data : node_data) { 
-                std::string value = data.second;
-                nlohmann::json json;
-                try {
-                    json = nlohmann::json::parse(value);
-                } catch (const nlohmann::json::parse_error& e) {
-                    std::cerr << "JSON parsing error: " << e.what() << std::endl;
-                    continue; // Skip to the next data if parsing fails
-                }
-                if (json.contains("metadata")) {
-                    assert(json["metadata"].is_string());
-                    std::string metadata = json["metadata"];
-                    if (metadata == from) { // user, product, etc.
-                        if(what == "*" || what == "all") {
-                            response_object["version"] = std::string(NEROSHOP_DHT_VERSION);
-                            response_object["response"]["id"] = node.get_id();
-                            result_array.push_back(json); //json=entire object
-                        } else {
-                            response_object["version"] = std::string(NEROSHOP_DHT_VERSION);
-                            response_object["response"]["id"] = node.get_id();
-                            result_array.push_back(json[what]); // what=name, id, etc.
-                        }
-                        // Apply additional conditions or perform desired operations
-                        // based on the matching metadata
-                        // ...
-                        // Example: Print the matched value
-                        //std::cout << "Matched value: " << value << std::endl;
-                    }
-                }
-            }
-            response_object["response"]["result"] = result_array;
-        }
-    }
-    //-----------------------------------------------------
     response_object["tid"] = tid; // transaction id - MUST be the same as the request object's id
     response = nlohmann::json::to_msgpack(response_object);
     return response;

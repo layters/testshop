@@ -5,6 +5,8 @@
 #include <vector>
 #include <tuple>
 
+#include "image.hpp"
+
 namespace neroshop {
 
 struct Attribute {
@@ -31,7 +33,7 @@ struct Attribute {
 class Product { // can also be used for Services
 public:
     Product();
-    Product(const std::string& id, const std::string& name, const std::string& description, const std::vector<Attribute>& attributes, const std::string& code, unsigned int category_id, int subcategory_id, const std::vector<std::string>& tags);
+    Product(const std::string& id, const std::string& name, const std::string& description, const std::vector<Attribute>& attributes, const std::string& code, unsigned int category_id, int subcategory_id, const std::vector<std::string>& tags, const std::vector<Image>& images);
     Product(const Product& other);// copy constructor
     Product(Product&& other) noexcept; // move constructor
     
@@ -41,6 +43,7 @@ public:
     void add_attribute(const Attribute& attribute);
     void add_variant(const Attribute& variant);
     void add_tag(const std::string& tag);
+    void add_image(const Image& image);
     void print_product();
     
     void set_id(const std::string& id);
@@ -72,6 +75,8 @@ public:
     int get_subcategory_id() const;
     std::string get_subcategory_as_string() const;
     std::vector<std::string> get_tags() const;
+    Image get_image(int index) const;
+    std::vector<Image> get_images() const;
 private:
     std::string id;
     std::string name;
@@ -81,6 +86,7 @@ private:
     unsigned int category_id;
     int subcategory_id; // optional
     std::vector<std::string> tags; // optional
+    std::vector<Image> images;
 };
 
 }

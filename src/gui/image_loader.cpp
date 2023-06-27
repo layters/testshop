@@ -1582,7 +1582,7 @@ QImage ImageLoader::load(const QString &id) const
     // You can use https://doc.qt.io/qt-5/qurlquery.html for parsing id
 
     QImage result;
-    // Sample test - delete soon
+    /*// Sample test - delete soon
     if (id == QStringLiteral("avatar/404")) {
         result.loadFromData(QByteArray::fromBase64(dummyBase64Image));
     } else if (id == QStringLiteral("catalog/item/200/0")) {
@@ -1592,15 +1592,15 @@ QImage ImageLoader::load(const QString &id) const
         if (file.open(QFile::ReadOnly)) {
             result.loadFromData(file.readAll());
         }
-    }
+    }*/
     /////////////////////////////////////////////
-    if(id.contains(QStringLiteral("catalog"))) {
+    if(id.contains(QStringLiteral("listing"))) {
         // Copy id text to a url (image://catalog?id=%1&index=%2)
         QUrl url(QString(id).replace('/', '?'));
         // Construct query object and parse the query string found in the url, using the default query delimiters (=, &)
         QUrlQuery query(url);////query.setQueryDelimiters('=', '&'); // Default delimiters
         /*QString queryString = query.query();
-        std::cout << "queryString: " << queryString.toStdString() << std::endl;*/        
+        std::cout << "queryString: " << queryString.toStdString() << std::endl;*/
         if(query.isEmpty()) {
             std::cout << "query contains no key-value pairs\n";
         }
@@ -1611,8 +1611,8 @@ QImage ImageLoader::load(const QString &id) const
             std::cout << "key 'image_id' not found in query. Using default image\n";
         }        
         // Get key-value pair
-        QString product_id = query.queryItemValue("id");
-        std::cout << "id: " << product_id.toStdString() << std::endl;
+        QString listing_id = query.queryItemValue("id");//QString listing_key = query.queryItemValue("key");
+        std::cout << "id: " << listing_id.toStdString() << std::endl;
         QString image_id = query.queryItemValue(QString("image_id"));
         std::cout << "image_id: " << image_id.toStdString() << std::endl;
         // Load product image from BLOB - causes segfault :(
@@ -1621,7 +1621,8 @@ QImage ImageLoader::load(const QString &id) const
         if(!result.loadFromData(image_pair.first, image_pair.second)) {
             std::cout << "failed to load image sorry\n";
         }*/
-        // Load product image from file (TEXT) - crashes on certain images
+        
+        /*// Load product image from file (TEXT) - crashes on certain images
         neroshop::db::Sqlite3 * database = neroshop::get_database();
         if(!database) throw std::runtime_error("database is NULL");
         std::string command = (!query.hasQueryItem(QString("image_id"))) ? 
@@ -1632,6 +1633,14 @@ QImage ImageLoader::load(const QString &id) const
         QFile file(QString::fromStdString(filename));
         if(file.open(QFile::ReadOnly)) {
             result.loadFromData(file.readAll());
+        }*/
+        
+        // Load listing from file - crashes on certain images
+        QString filename = getProductImagePath(listing_id, image_id);//std::string filename = getProductImagePath(listing_id, image_id); // Replace this with your function to get the image file path
+        std::cout << "LOADING IMAGE FROM: " << filename.toStdString() << "\n";
+
+        if (!filename.isEmpty()) {//if (!filename.empty()) {
+            result.load(filename);//result.load(QString::fromStdString(filename));
         }
     }
 
@@ -1675,6 +1684,24 @@ QImage ImageLoader::loadAvatar(const QString &user_id) const {
     
     
     return image;
+}
+
+#include "../neroshop_config.hpp"
+
+QString ImageLoader::getProductImagePath(const QString& listing_key, const QString& image_name) const {
+    std::string config_path = NEROSHOP_DEFAULT_CONFIGURATION_PATH;
+    std::string cache_folder = config_path + "/" + NEROSHOP_CACHE_FOLDER_NAME;
+    std::string listing_folder = cache_folder + "/" + NEROSHOP_CATALOG_FOLDER_NAME;
+    
+    ////std::string listing_key_folder = listing_folder + "/" + listing_key;
+    
+    std::string product_image = listing_folder + "/" + image_name.toStdString();
+    
+    return QString::fromStdString(product_image);
+}
+
+QString ImageLoader::getAvatarImagePath(const QString& user_key) const {
+    return "";
 }
 
 static void preload()

@@ -15,6 +15,7 @@ namespace neroshop {
 // forward declarations
 class Wallet;
 class Product;
+class Image;
 
 class Seller : public User { 
 public:
@@ -30,6 +31,7 @@ public:
         int category_id, 
         int subcategory_id,
         const std::vector<std::string>& tags,
+        const std::vector<Image>& images,
         
 	    unsigned int quantity, 
 	    double sales_price, 

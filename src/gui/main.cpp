@@ -10,13 +10,14 @@
 #endif
 
 // neroshop (includes both the core headers and the gui headers)
+#include "../neroshop_config.hpp"
 #include "../neroshop.hpp"
 using namespace neroshop;
 namespace neroshop_tools = neroshop::tools;
 
 static const QString WALLET_QR_PROVIDER {"wallet_qr"};
 static const QString AVATAR_IMAGE_PROVIDER {"avatar"};
-static const QString CATALOG_IMAGE_PROVIDER {"catalog"};
+static const QString CATALOG_IMAGE_PROVIDER {"listing"};
 
 bool isIOS = false;
 bool isAndroid = false;
