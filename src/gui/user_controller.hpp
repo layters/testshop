@@ -54,6 +54,7 @@ public:
         int category_id, 
         int subcategory_id, 
         const QStringList& tags,
+        const QList<QVariantMap>& images,
         
         int quantity, 
         double price, 

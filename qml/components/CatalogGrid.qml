@@ -71,7 +71,7 @@ GridView {
                              
             Image {
                 id: productImage
-                source: "file:///" + modelData.product_image_file//"qrc:/assets/images/image_gallery.png"
+                source: "image://listing?id=%1&image_id=%2".arg(modelData.key).arg(modelData.product_image_name)//"file:///" + modelData.product_image_file//"qrc:/assets/images/image_gallery.png"
                 anchors.centerIn: parent
                 width: 192; height: width
                 fillMode: Image.PreserveAspectFit//Image.Stretch

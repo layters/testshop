@@ -136,7 +136,23 @@ std::pair<std::string, std::string/*std::vector<uint8_t>*/> neroshop::Serializer
             }
             product_obj["tags"] = tags_array;
         }
-        //product_obj["images"] = // TODO: Product Images
+        std::vector<Image> images = product.get_images();
+        if (!images.empty()) {
+            nlohmann::json images_array = {};
+            for (const auto& image : images) {
+                nlohmann::json image_obj = {};
+                image_obj["name"] = image.name;
+                image_obj["size"] = image.size;
+                image_obj["id"] = image.id;
+                bool is_thumbnail = ((images.size() == 1) || (image.id == 0));
+                if(is_thumbnail) { // TODO: store only thumbnail images in DHT
+                    std::cout << image.name << " \033[35mis a thumbnail\033[0m\n";
+                }
+                
+                images_array.push_back(image_obj);
+            }
+            product_obj["images"] = images_array;
+        }
         //------------------------------
         json_object["product"] = product_obj;
     }

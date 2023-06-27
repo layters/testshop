@@ -663,23 +663,18 @@ Popup {
                                     messageBox.open()
                                     return; // exit function
                                 }
-                                ////User.listProduct()//TODO:
                                 // TODO: add weight and product_code to attributes list instead
                                 // Attributes will be in JSON format
                                 // Todo: check whether its a product or service
-                                // Register product to database
-                                ////let register_result = Backend.registerProduct()
-                                // Upload product images to database
-                                ////let product_uuid = register_result[1]                                
-                                ////if(register_result[0] == true) {
-                                    for(let i = 0; i < productImageRepeater.count; i++) {
-                                        let productImage = productImageRepeater.itemAt(i).children[0].children[0]
-                                        if(productImage.status == Image.Ready) { // If image loaded
-                                            console.log("uploading " + Backend.urlToLocalFile(productImage.source) + " to the database")
-                                            ////Backend.uploadProductImage(product_uuid, Backend.urlToLocalFile(productImage.source))
-                                        }
+                                let productImages = []
+                                for(let i = 0; i < productImageRepeater.count; i++) {
+                                    let productImage = productImageRepeater.itemAt(i).children[0].children[0]
+                                    if(productImage.status == Image.Ready) { // If image loaded
+                                        console.log("uploading " + Backend.urlToLocalFile(productImage.source) + " to the database")
+                                        let image = Backend.uploadProductImageDHT(Backend.urlToLocalFile(productImage.source), i)
+                                        productImages.push(image);
                                     }
-                                ////}
+                                }
                                 // List product
                                 User.listProduct(
                                     productNameField.text, 
@@ -690,6 +685,7 @@ Popup {
                                     Backend.getCategoryIdByName(productCategoryBox.currentText),
                                     -1, // subcategoryId
                                     productTagsField.tags(),
+                                    productImages,
                                     
                                     productQuantityField.text, 
                                     productPriceField.text, 

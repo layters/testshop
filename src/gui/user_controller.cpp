@@ -16,7 +16,7 @@ neroshop::UserController::~UserController() {
 //----------------------------------------------------------------
 void neroshop::UserController::listProduct(const QString& name, const QString& description,
         double weight, const QList<QVariantMap>& attributes, 
-        const QString& product_code, int category_id, int subcategory_id, const QStringList& tags,
+        const QString& product_code, int category_id, int subcategory_id, const QStringList& tags, const QList<QVariantMap>& images,
 int quantity, double price, const QString& currency, const QString& condition, const QString& location) {
     if (!_user)
         throw std::runtime_error("neroshop::User is not initialized");
@@ -75,6 +75,17 @@ int quantity, double price, const QString& currency, const QString& condition, c
         tagsVector.push_back(tag.toStdString());
     }
     
+    std::vector<Image> imagesVector;
+    for (const QVariantMap& imageMap : images) {
+        Image image;
+        
+        if(imageMap.contains("name")) image.name = imageMap.value("name").toString().toStdString();
+        if(imageMap.contains("size")) image.size = imageMap.value("size").toInt();
+        //if(imageMap.contains(""))
+        
+        imagesVector.push_back(image);
+    }
+    
     seller->list_item(
         name.toStdString(), 
         description.toStdString(),
@@ -84,6 +95,7 @@ int quantity, double price, const QString& currency, const QString& condition, c
         category_id, 
         subcategory_id,
         tagsVector,
+        imagesVector,
         
         quantity, 
         price, 

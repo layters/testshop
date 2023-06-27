@@ -45,7 +45,7 @@ namespace filesystem {
     static bool make_directory(const std::string& path) {
         if(is_directory(path)) {
             std::cout << "\033[1;93mDirectory \"" << path << "\" already exists\033[0m" << std::endl;
-            return false;
+            return true;
         }
         #if defined(__cplusplus) && (__cplusplus >= 201703L)
         return std::filesystem::create_directories(path.c_str());

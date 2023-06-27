@@ -66,6 +66,10 @@
 #define NEROSHOP_LOG_FILENAME           "log"
 #endif
 
+#define NEROSHOP_CACHE_FOLDER_NAME   "datastore"
+#define NEROSHOP_CATALOG_FOLDER_NAME "listings"
+#define NEROSHOP_AVATAR_FOLDER_NAME  "avatars"
+
 #if defined(NEROSHOP_USE_QT)
 #define NEROSHOP_DATA_DIRECTORY_PATH           QStandardPaths::writableLocation(QStandardPaths::AppConfigLocation).toStdString()//(QStandardPaths::AppLocalDataLocation).toStdString()
 #define NEROSHOP_DEFAULT_CONFIGURATION_PATH    NEROSHOP_DATA_DIRECTORY_PATH
