@@ -67,8 +67,9 @@ public:
     Q_INVOKABLE QVariantList getSearchResults(const QString& search_term, int count = 1000); // count is the maximum number of search results (total). The search results (per page) can be between 10-100 or 50-100
     
     // Products should be registered so that sellers can list pre-existing products without the need to duplicate a product which is unnecessary and can make the database bloated
-    Q_INVOKABLE void uploadProductImage(const QString& product_id, const QString& filename);
-    Q_INVOKABLE QVariantMap uploadProductImageDHT(const QString& filename, int image_id);
+    Q_INVOKABLE bool createFolders();
+    Q_INVOKABLE QVariantMap uploadProductImage(const QString& filename, int image_id);
+    Q_INVOKABLE bool saveProductImage(const QString& fileName, const QString& listingKey);    
     Q_INVOKABLE QVariantList getProductImages(const QString& product_id);
     Q_INVOKABLE int getProductStarCount(const QString& product_id);
     Q_INVOKABLE int getProductStarCount(const QString& product_id, int star_number);

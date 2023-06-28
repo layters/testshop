@@ -14,7 +14,7 @@ neroshop::UserController::~UserController() {
     std::cout << "user controller deleted\n";
 }
 //----------------------------------------------------------------
-void neroshop::UserController::listProduct(const QString& name, const QString& description,
+QString neroshop::UserController::listProduct(const QString& name, const QString& description,
         double weight, const QList<QVariantMap>& attributes, 
         const QString& product_code, int category_id, int subcategory_id, const QStringList& tags, const QList<QVariantMap>& images,
 int quantity, double price, const QString& currency, const QString& condition, const QString& location) {
@@ -86,7 +86,7 @@ int quantity, double price, const QString& currency, const QString& condition, c
         imagesVector.push_back(image);
     }
     
-    seller->list_item(
+    auto listing_key = seller->list_item(
         name.toStdString(), 
         description.toStdString(),
         weight, 
@@ -104,6 +104,8 @@ int quantity, double price, const QString& currency, const QString& condition, c
         location.toStdString()
     );
     emit productsCountChanged();
+    
+    return QString::fromStdString(listing_key);
 }
 //----------------------------------------------------------------
 void neroshop::UserController::delistProduct(const QString& product_id) {

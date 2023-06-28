@@ -329,8 +329,107 @@ int neroshop::Backend::getCategoryProductCount(int category_id) const {
     return category_product_count;
 }
 //----------------------------------------------------------------
+bool neroshop::Backend::createFolders() {
+    // Save the image file to a specific location
+    std::string config_path = NEROSHOP_DEFAULT_CONFIGURATION_PATH;
+    std::string cache_folder = config_path + "/" + NEROSHOP_CACHE_FOLDER_NAME;
+    
+    // /datastore/
+    if(!neroshop_filesystem::is_directory(cache_folder)) {
+        neroshop::print("Creating directory \"" + cache_folder + "\" (^_^) ...", 2);
+        if(!neroshop_filesystem::make_directory(cache_folder)) {
+            neroshop::print("Failed to create folder \"" + cache_folder + "\" (ᵕ人ᵕ)!", 1);
+            return false;
+        }
+        neroshop::print("\033[1;97;49mcreated path \"" + cache_folder + "\"");
+    }    
+    //--------------------------------
+    std::string products_folder = cache_folder + "/" + NEROSHOP_CATALOG_FOLDER_NAME;
+    // folder with the name <listing_id> should contain all product images for particular listing
+
+    // datastore/listings/
+    if (!neroshop_filesystem::is_directory(products_folder)) {
+        neroshop::print("Creating directory \"" + products_folder + "\" (^_^) ...", 2);
+        if (!neroshop_filesystem::make_directory(products_folder)) {
+            neroshop::print("Failed to create folder \"" + products_folder + "\" (ᵕ人ᵕ)!", 1);
+            return false;
+        }
+        neroshop::print("\033[1;97;49mcreated path \"" + products_folder + "\"");
+    }
+    //--------------------------------
+    // TODO: uncomment this
+    /*std::string avatars_folder = cache_folder + "/" + NEROSHOP_AVATAR_FOLDER_NAME;
+    
+    // datastore/avatars/
+    if (!neroshop_filesystem::is_directory(avatars_folder)) {
+        neroshop::print("Creating directory \"" + avatars_folder + "\" (^_^) ...", 2);
+        if (!neroshop_filesystem::make_directory(avatars_folder)) {
+            neroshop::print("Failed to create folder \"" + avatars_folder + "\" (ᵕ人ᵕ)!", 1);
+            return false;
+        }
+        neroshop::print("\033[1;97;49mcreated path \"" + avatars_folder + "\"");
+    }*/
+    //--------------------------------
+    return true;
+}
 //----------------------------------------------------------------
-QVariantMap neroshop::Backend::uploadProductImageDHT(const QString& fileName, int image_id) {
+#include <QImage>
+#include <QPixmap>
+//----------------------------------------------------------------
+bool neroshop::Backend::saveProductImage(const QString& fileName, const QString& listingKey) {
+    std::string config_path = NEROSHOP_DEFAULT_CONFIGURATION_PATH;
+    std::string cache_folder = config_path + "/" + NEROSHOP_CACHE_FOLDER_NAME;
+    std::string listings_folder = cache_folder + "/" + NEROSHOP_CATALOG_FOLDER_NAME;
+    //----------------------------------------
+    std::string image_file = fileName.toStdString(); // Full path with file name
+    std::string image_name = image_file.substr(image_file.find_last_of("\\/") + 1);// get filename from path (complete base name)
+    //----------------------------------------    
+    // datastore/listings/<listing_key>
+    std::string products_folder = listings_folder + "/" + listingKey.toStdString();
+    if (!neroshop_filesystem::is_directory(products_folder)) {
+        neroshop::print("Creating directory \"" + products_folder + "\" (^_^) ...", 2);
+        if (!neroshop_filesystem::make_directory(products_folder)) {
+            neroshop::print("Failed to create folder \"" + products_folder + "\" (ᵕ人ᵕ)!", 1);
+            return false;
+        }
+        neroshop::print("\033[1;97;49mcreated path \"" + products_folder + "\"");
+    }
+    //----------------------------------------
+    // Generate the final destination path
+    std::string destinationPath = products_folder + "/" + image_name;
+    // Check if image already exists in cache so that we do not export the same image more than once
+    if(!neroshop_filesystem::is_file(destinationPath)) {
+        // Image Loader crashes when image resolution is too large (ex. 4096 pixels wide) so we need to scale it!!
+        QImage sourceImage;
+        sourceImage.load(fileName);
+        QSize imageSize = sourceImage.size();
+        int maxWidth = 1200; // Set the maximum width for the resized image
+        int maxHeight = 1200; // Set the maximum height for the resized image
+
+        // Check if the image size is smaller than the maximum size
+        if (imageSize.width() <= maxWidth && imageSize.height() <= maxHeight) {
+            // Keep the original image since it's already within the size limits
+        } else {
+            // Calculate the new size while maintaining the aspect ratio
+            QSize newSize = imageSize.scaled(maxWidth, maxHeight, Qt::KeepAspectRatio);
+
+            // Resize the image if it exceeds the maximum dimensions
+            if (imageSize != newSize) {
+                sourceImage = sourceImage.scaled(newSize, Qt::KeepAspectRatio, Qt::SmoothTransformation);
+            }
+        }
+
+        // Convert the QImage to QPixmap for further processing or saving
+        QPixmap resizedPixmap = QPixmap::fromImage(sourceImage);
+
+        // Save the resized image
+        resizedPixmap.save(QString::fromStdString(destinationPath));
+    }
+    neroshop::print("exported \"" + fileName.toStdString() + "\" to \"" + cache_folder + "\"", 3);
+    return true;
+}
+//----------------------------------------------------------------
+QVariantMap neroshop::Backend::uploadProductImage(const QString& fileName, int image_id) {
     QVariantMap image;
     //----------------------------------------
     // Read image from file and retrieve its contents
@@ -345,8 +444,9 @@ QVariantMap neroshop::Backend::uploadProductImageDHT(const QString& fileName, in
     // Todo: Database cannot scale to billions of users if I am storing blobs so I'll have to switch to text later
     const int max_bytes = 12582912;
     double kilobytes = max_bytes / 1024.0;
+    double megabytes = kilobytes / 1024.0;
     if(size >= max_bytes) {
-        neroshop::print("Product upload image cannot exceed 12 MB (twelve megabyte)", 1);
+        neroshop::print("Product upload image cannot exceed " + std::to_string(megabytes) + " MB (twelve megabyte)", 1);
         return {};
     }
     product_image_file.seekg(0);
@@ -357,132 +457,21 @@ QVariantMap neroshop::Backend::uploadProductImageDHT(const QString& fileName, in
     }
     product_image_file.close();
     //----------------------------------------
-    std::string image_file = fileName.toStdString(); // Full path with file name
-    std::string image_name = image_file.substr(image_file.find_last_of("\\/") + 1);// get filename from path (complete base name)
-    std::string image_base_name = image_name.substr(0, image_name.find_last_of(".")); // remove ext (base name)
-    std::string image_ext = image_file.substr(image_file.find_last_of(".") + 1);
-    
-    std::cout << "image name: " << image_name << std::endl;
-    std::cout << "image base_name: " << image_base_name << std::endl;
-    std::cout << "image file: " << image_file << std::endl;
-    std::cout << "image extension: " << image_ext << std::endl;
-    //----------------------------------------
-    // Save the image file to a specific location
-    std::string config_path = NEROSHOP_DEFAULT_CONFIGURATION_PATH;
-
-    std::string cache_folder = config_path + "/" + NEROSHOP_CACHE_FOLDER_NAME;
-    std::string products_folder = cache_folder + "/" + NEROSHOP_CATALOG_FOLDER_NAME;
-    // folder with the name <listing_id> should contain all product images for particular listing
-    // /datastore/
-    if(!neroshop_filesystem::is_directory(cache_folder)) {
-        neroshop::print("Creating directory \"" + cache_folder + "\" (^_^) ...", 2);
-        if(!neroshop_filesystem::make_directory(cache_folder)) {
-            neroshop::print("Failed to create folder \"" + cache_folder + "\" (ᵕ人ᵕ)!", 1);
-            return {};
-        }
-        neroshop::print("\033[1;97;49mcreated path \"" + cache_folder + "\"");
+    if(!createFolders()) {
+        return {};
     }
-    // datastore/listings/
-    if (!neroshop_filesystem::is_directory(products_folder)) {
-        neroshop::print("Creating directory \"" + products_folder + "\" (^_^) ...", 2);
-        if (!neroshop_filesystem::make_directory(products_folder)) {
-            neroshop::print("Failed to create folder \"" + products_folder + "\" (ᵕ人ᵕ)!", 1);
-            return {};
-        }
-        neroshop::print("\033[1;97;49mcreated path \"" + products_folder + "\"");
-    }
-    // datastore/listings/<listing_id>
-    // ...
-    // Generate the final destination path
-    std::string destinationPath = products_folder + "/" + image_name;
-    // Check if image already exists in cache so that we do not export the same image more than once
-    if(!neroshop_filesystem::is_file(destinationPath)) {
-
-        std::ofstream destinationFile(destinationPath, std::ios::binary);
-        if (!destinationFile.is_open()) {
-            std::cout << NEROSHOP_TAG "failed to save image file to " << destinationPath << std::endl;
-            return {};
-        }
-        destinationFile.write(reinterpret_cast<const char*>(&buffer[0]), size);
-        destinationFile.close();
-    }
-    neroshop::print("exported \"" + destinationPath + "\" to \"" + cache_folder + "\"", 3);
     //----------------------------------------
     // Create the image VariantMap (object)
+    std::string image_file = fileName.toStdString(); // Full path with file name
+    std::string image_name = image_file.substr(image_file.find_last_of("\\/") + 1);
     image["name"] = QString::fromStdString(image_name);//fileName;
     qint64 imageSize64 = static_cast<qint64>(size);
-    image["size"] = QVariant::fromValue(imageSize64);//image["extension"] = QString::fromStdString(image_ext);
+    image["size"] = QVariant::fromValue(imageSize64);
     image["id"] = image_id;
+    image["source"] = fileName;
     //----------------------------------------
     return image;
 }
-//----------------------------------------------------------------
-void neroshop::Backend::uploadProductImage(const QString& product_id, const QString& filename) {
-    neroshop::db::Sqlite3 * database = neroshop::get_database();
-    if(!database) throw std::runtime_error("database is NULL");
-    
-    database->execute("BEGIN;");
-    // Read image from file and retrieve its contents
-    std::ifstream product_image_file(filename.toStdString(), std::ios::binary); // std::ios::binary is the same as std::ifstream::binary
-    if(!product_image_file.good()) {
-        std::cout << NEROSHOP_TAG "failed to load " << filename.toStdString() << std::endl; 
-        database->execute("ROLLBACK;"); return;
-    }
-    product_image_file.seekg(0, std::ios::end);
-    size_t size = static_cast<int>(product_image_file.tellg()); // in bytes
-    // Limit product image size to 12582912 bytes (12 megabyte)
-    // Todo: Database cannot scale to billions of users if I am storing blobs so I'll have to switch to text later
-    if(size >= 12582912) {
-        neroshop::print("Product upload image cannot exceed 12 MB (twelve megabyte)", 1);
-        database->execute("ROLLBACK;"); return;
-    }
-    product_image_file.seekg(0);
-    std::vector<unsigned char> buffer(size);
-    if(!product_image_file.read(reinterpret_cast<char *>(&buffer[0]), size)) {
-        std::cout << NEROSHOP_TAG "error: only " << product_image_file.gcount() << " could be read";
-        database->execute("ROLLBACK;"); // abort transaction
-        return; // exit function
-    }
-    product_image_file.close();
-    // Store image in database as BLOB
-    std::string command = "INSERT INTO images (product_id, name, data) VALUES ($1, $2, $3);";
-    sqlite3_stmt * statement = nullptr;
-    int result = sqlite3_prepare_v2(database->get_handle(), command.c_str(), -1, &statement, nullptr);
-    if(result != SQLITE_OK) {
-        neroshop::print("sqlite3_prepare_v2: " + std::string(sqlite3_errmsg(database->get_handle())), 1);
-        database->execute("ROLLBACK;"); return;
-    }
-    
-    std::string product_uuid = product_id.toStdString();
-    result = sqlite3_bind_text(statement, 1, product_uuid.c_str(), product_uuid.length(), SQLITE_STATIC);
-    if(result != SQLITE_OK) {
-        neroshop::print("sqlite3_bind_text (arg: 1): " + std::string(sqlite3_errmsg(database->get_handle())), 1);
-        sqlite3_finalize(statement);
-        database->execute("ROLLBACK;"); return;
-    }    
-    std::string product_image_filename = filename.toStdString();
-    result = sqlite3_bind_text(statement, 2, product_image_filename.c_str(), product_image_filename.length(), SQLITE_STATIC);
-    if(result != SQLITE_OK) {
-        neroshop::print("sqlite3_bind_text (arg: 2): " + std::string(sqlite3_errmsg(database->get_handle())), 1);
-        sqlite3_finalize(statement);
-        database->execute("ROLLBACK;"); return;
-    }        
-    result = sqlite3_bind_blob(statement, 3, buffer.data(), size, SQLITE_STATIC);
-    if(result != SQLITE_OK) {
-        neroshop::print("sqlite3_bind_blob (arg: 3): " + std::string(sqlite3_errmsg(database->get_handle())), 1);
-        sqlite3_finalize(statement);
-        database->execute("ROLLBACK;"); return;// nullptr;
-    }    
-    
-    result = sqlite3_step(statement);
-    if (result != SQLITE_DONE) {
-        neroshop::print("sqlite3_step: " + std::string(sqlite3_errmsg(database->get_handle())), 1);
-    }
-    sqlite3_finalize(statement);
-    
-    database->execute("COMMIT;");
-}
-
 //----------------------------------------------------------------
 QVariantList neroshop::Backend::getProductImages(const QString& product_id) {
     // Do some database reading to fetch each category row (database reads do not require consensus)
@@ -716,6 +705,7 @@ QVariantList neroshop::Backend::getSearchResults(const QString& searchTerm, int 
                 const auto& value = response_obj["value"].get<std::string>();
                 nlohmann::json value_obj = nlohmann::json::parse(value);
                 assert(value_obj.is_object());//std::cout << value_obj.dump(4) << "\n";
+                listing.insert("key", key);
                 listing.insert("listing_uuid", QString::fromStdString(value_obj["id"].get<std::string>()));
                 listing.insert("seller_id", QString::fromStdString(value_obj["seller_id"].get<std::string>()));
                 listing.insert("quantity", value_obj["quantity"].get<int>());
@@ -734,6 +724,14 @@ QVariantList neroshop::Backend::getSearchResults(const QString& searchTerm, int 
                 listing.insert("product_category_id", get_category_id_by_name(product_obj["category"].get<std::string>()));
                 //listing.insert("", QString::fromStdString(product_obj[""].get<std::string>()));
                 //listing.insert("", QString::fromStdString(product_obj[""].get<std::string>()));
+                if (product_obj.contains("images") && product_obj["images"].is_array()) {
+                    const auto& images_array = product_obj["images"];
+                    // we only need the first image object in the array
+                    if (!images_array.empty() && images_array[0].contains("name") && images_array[0]["name"].is_string()) {
+                        const auto& image_name = images_array[0]["name"].get<std::string>();//int image_id = images_array[0]["id"].get<int>();
+                        listing.insert("product_image_name", QString::fromStdString(image_name));//listing.insert("product_image_id", image_id);
+                    }
+                }
             }
             ////assert(value.is_object());
             /*// products table
@@ -920,6 +918,7 @@ QVariantList neroshop::Backend::getListingsByCategory(int category_id) {
                 const auto& value = response_obj["value"].get<std::string>();
                 nlohmann::json value_obj = nlohmann::json::parse(value);
                 assert(value_obj.is_object());//std::cout << value_obj.dump(4) << "\n";
+                listing.insert("key", key);
                 listing.insert("listing_uuid", QString::fromStdString(value_obj["id"].get<std::string>()));
                 listing.insert("seller_id", QString::fromStdString(value_obj["seller_id"].get<std::string>()));
                 listing.insert("quantity", value_obj["quantity"].get<int>());
@@ -938,6 +937,14 @@ QVariantList neroshop::Backend::getListingsByCategory(int category_id) {
                 listing.insert("product_category_id", get_category_id_by_name(product_obj["category"].get<std::string>()));
                 //listing.insert("", QString::fromStdString(product_obj[""].get<std::string>()));
                 //listing.insert("", QString::fromStdString(product_obj[""].get<std::string>()));
+                if (product_obj.contains("images") && product_obj["images"].is_array()) {
+                    const auto& images_array = product_obj["images"];
+                    // we only need the first image object in the array
+                    if (!images_array.empty() && images_array[0].contains("name") && images_array[0]["name"].is_string()) {
+                        const auto& image_name = images_array[0]["name"].get<std::string>();//int image_id = images_array[0]["id"].get<int>();
+                        listing.insert("product_image_name", QString::fromStdString(image_name));//listing.insert("product_image_id", image_id);
+                    }
+                }
             }
             ////assert(value.is_object());
             /*// products table

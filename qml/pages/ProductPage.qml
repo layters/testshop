@@ -49,7 +49,7 @@ Page {
                         // Product image
                         Image {
                             id: productImage
-                            source: "file:///" + productPage.model.product_image_file////"image://catalog?id=%1".arg(productPage.model.product_id)
+                            source: "image://listing?id=%1&image_id=%2".arg(productPage.model.key).arg(productPage.model.product_image_name)
                             anchors.centerIn: parent
                             width: productImage.minImageSize; height: width
                             fillMode: Image.PreserveAspectFit

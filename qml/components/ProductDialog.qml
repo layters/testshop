@@ -671,12 +671,12 @@ Popup {
                                     let productImage = productImageRepeater.itemAt(i).children[0].children[0]
                                     if(productImage.status == Image.Ready) { // If image loaded
                                         console.log("uploading " + Backend.urlToLocalFile(productImage.source) + " to the database")
-                                        let image = Backend.uploadProductImageDHT(Backend.urlToLocalFile(productImage.source), i)
+                                        let image = Backend.uploadProductImage(Backend.urlToLocalFile(productImage.source), i)
                                         productImages.push(image);
                                     }
                                 }
                                 // List product
-                                User.listProduct(
+                                let listing_key = User.listProduct(
                                     productNameField.text, 
                                     productDescriptionEdit.text, 
                                     productWeightField.text, 
@@ -693,6 +693,10 @@ Popup {
                                     productConditionBox.currentText, 
                                     productLocationBox.currentText
                                 )                       
+                                // Save product image(s) in cache
+                                for (let i = 0; i < productImages.length; i++) {
+                                    Backend.saveProductImage(productImages[i].source, listing_key)
+                                }
                                 // Clear input fields after listing product
                                 productNameField.text = ""
                                 productPriceField.text = ""

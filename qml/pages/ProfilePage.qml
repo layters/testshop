@@ -160,7 +160,7 @@ Page {
                                         Item {
                                             Image {
                                                 id: ratingIcon
-                                                source: "qrc:/images/rating.png"
+                                                source: "qrc:/assets/images/rating.png"
                                                 width: statsRow.iconSize; height: width
                                                 mipmap: true
                                             }
@@ -200,7 +200,7 @@ Page {
                                     radius: 3
                                     Image {
                                         id: productIcon
-                                        source: "qrc:/images/open_parcel.png"
+                                        source: "qrc:/assets/images/open_parcel.png"
                                         width: statsRow.iconSize; height: width
                                         mipmap: true
                                     }
@@ -224,7 +224,7 @@ Page {
                                     //radius: 3//50
                                     Image {
                                         id: ratingIcon
-                                        source: "qrc:/images/rating.png"
+                                        source: "qrc:/assets/images/rating.png"
                                         width: 32; height: 32
                                         anchors.centerIn: parent
                                     }
