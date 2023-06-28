@@ -41,7 +41,7 @@ neroshop::Seller::~Seller() {
 ////////////////////
 ////////////////////
 ////////////////////
-void neroshop::Seller::list_item(
+std::string neroshop::Seller::list_item(
     const std::string& name,
     const std::string& description,
     double weight,
@@ -57,7 +57,7 @@ void neroshop::Seller::list_item(
     const std::string& currency, 
     const std::string& condition, 
     const std::string& location
-)
+) const
 {
     // Transition from Sqlite to DHT:
     Client * client = Client::get_main_client();
@@ -99,6 +99,9 @@ void neroshop::Seller::list_item(
     std::string put_response;
     client->put(key, value, put_response);
     std::cout << "Received response: " << put_response << "\n";
+    
+    // Return listing key
+    return key;
 }
 ////////////////////
 /*void neroshop::Seller::list_item(const neroshop::Product& item, unsigned int stock_qty, double sales_price, std::string currency, double discount, unsigned int discounted_items, unsigned int discount_times, std::string discount_expiry, std::string condition) { // ex. 5% off 10 balls

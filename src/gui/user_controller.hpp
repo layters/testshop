@@ -45,7 +45,7 @@ public:
     //Q_PROPERTY(QVariantList inventoryDate READ getInventoryByDate NOTIFY productsCountChanged);
     //Q_PROPERTY(QVariantList cart READ getCart NOTIFY cartQuantityChanged);
 
-    Q_INVOKABLE void listProduct(
+    Q_INVOKABLE QString listProduct(
         const QString& name, 
         const QString& description,
         double weight, 
