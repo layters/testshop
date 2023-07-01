@@ -79,6 +79,15 @@ int main(int argc, char *argv[])
         neroshop::print("\033[1;91mnetwork_type \"" + network_type + "\" is not valid");
         return 1;
     }
+    // create neroshop config directory
+    std::string data_dir = NEROSHOP_DATA_DIRECTORY_PATH;
+    if(!neroshop::filesystem::is_directory(data_dir)) {
+        neroshop::print(std::string("Creating directory \"") + data_dir + "\"", 3);
+        if(!neroshop::filesystem::make_directory(data_dir)) {
+            throw std::runtime_error("Failed to create neroshop data dir");
+            return 1;
+        }
+    }
     // start database
     Backend::initializeDatabase();
     // testing
@@ -103,7 +112,7 @@ int main(int argc, char *argv[])
     if(!neroshop::filesystem::is_directory(defaultWalletDirPath.toStdString())) {
         neroshop::print(std::string("Creating directory \"") + defaultWalletDirPath.toStdString() + "\"", 3);
         if(!neroshop::filesystem::make_directory(defaultWalletDirPath.toStdString())) {
-            throw std::runtime_error("Failed to create neroshop datadir");
+            throw std::runtime_error("Failed to create neroshop wallet dir");
             return 1;
         }
     }    
