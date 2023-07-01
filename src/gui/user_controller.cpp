@@ -81,6 +81,7 @@ int quantity, double price, const QString& currency, const QString& condition, c
         
         if(imageMap.contains("name")) image.name = imageMap.value("name").toString().toStdString();
         if(imageMap.contains("size")) image.size = imageMap.value("size").toInt();
+        if(imageMap.contains("id")) image.id = imageMap.value("id").toInt();
         //if(imageMap.contains(""))
         
         imagesVector.push_back(image);

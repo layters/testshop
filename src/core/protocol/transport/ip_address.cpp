@@ -9,6 +9,7 @@
 #include <fstream>
 #include <stdexcept>
 #include <string>
+#include <cstring>
 
 std::vector<std::string> IP_SOURCES = {
     "http://httpbin.org/ip", 

@@ -13,14 +13,6 @@
     2. Performance: Retrieving data from a local database file can be faster than accessing data stored in a DHT, since it does not require network communication. This can help to improve the performance of your application and provide a better user experience.
     3. Ease of implementation: Storing data locally in a database file can be easier to implement and maintain than using a DHT. You can use a variety of database technologies and libraries to store and manage your data, and you may be able to take advantage of existing tools and frameworks to simplify development.
 
-Suggestions from ChatGPT:
-If each product has a unique UUID, then you can use the UUID as the key in your DHT. This will ensure that each product can be easily and efficiently retrieved by its UUID, without having to hash the entire product dictionary or the product image metadata. Using the UUID as the key also has the added advantage of making the key more human-readable and easier to work with, since UUIDs are usually represented as strings.
-
-However, if you still want to use a hash as the key, you can use a hash of the UUID. This will ensure that each product still has a unique key, while also keeping the size of the key relatively small.
-
-Using a hash of the entire product dictionary or the product image metadata as the key may be less efficient, as it will require more processing power to compute the hash and may result in larger keys. Additionally, it may not be necessary to hash the entire dictionary or image metadata if the UUID already provides a unique identifier for the product.
-
-
 
 Yes, you are correct. In a DHT, it's important that the keys for storing and retrieving data are consistent with the key used for routing. The node ID is typically a cryptographic hash and is used for routing, so the key used for storing and retrieving data should also be a hash to ensure that the DHT functions properly.
 
@@ -146,7 +138,7 @@ std::pair<std::string, std::string/*std::vector<uint8_t>*/> neroshop::Serializer
                 image_obj["id"] = image.id;
                 bool is_thumbnail = ((images.size() == 1) || (image.id == 0));
                 if(is_thumbnail) { // TODO: store only thumbnail images in DHT
-                    std::cout << image.name << " (" << image.id << ") \033[35mis a thumbnail\033[0m\n";
+                    std::cout << image.name << " (id: " << image.id << ") \033[1;35mwill be used for thumbnail\033[0m\n";
                 }
                 
                 images_array.push_back(image_obj);

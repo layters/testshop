@@ -26,7 +26,6 @@ Item {
     Button {
         id: searchButton
         text: qsTr("Search")
-        //onClicked: 
         display: AbstractButton.IconOnly//AbstractButton.TextBesideIcon
         hoverEnabled: true
         anchors.left: searchField.right
@@ -45,6 +44,7 @@ Item {
         
         function activate() { // causes crash if pressed multiple times at a fast pace (this is probably due to the while loop in Backend.getListings())
             ////if(searchField.length < 1) return;
+            searchButton.forceActiveFocus()
             console.log("Searching for " + searchField.text)
             navBar.uncheckAllButtons()
             suggestionsPopup.close()

@@ -559,7 +559,7 @@ std::vector<uint8_t> neroshop::Node::send_query(const std::string& address, uint
     }
     //--------------------------------------------
     // Step 4: Receive the pong message from the server
-    std::vector<uint8_t> receive_buffer(4096);
+    std::vector<uint8_t> receive_buffer(NEROSHOP_RECV_BUFFER_SIZE);
     socklen_t fromlen = sizeof(struct sockaddr_in);
     int bytes_received = recvfrom(socket_fd/*sockfd*/, receive_buffer.data(), receive_buffer.size(), 0,
                                   (struct sockaddr*)&dest_addr, &fromlen);
@@ -769,7 +769,7 @@ int neroshop::Node::send_put(const std::string& key, const std::string& value) {
         // Add the node to the sent_nodes set
         sent_nodes.insert(node);
         // Show response and increase count
-        std::cout << "\033[32m" << put_response_message.dump() << "\033[0m\n";
+        std::cout << ((put_response_message.contains("error")) ? ("\033[91m") : ("\033[32m")) << put_response_message.dump() << "\033[0m\n";
         nodes_sent_count++;
     }
     //-----------------------------------------------
@@ -821,7 +821,7 @@ int neroshop::Node::send_put(const std::string& key, const std::string& value) {
                     continue; // Continue with the next replacement node if this one fails
                 }   
                 // Show response and increase count
-                std::cout << "\033[32m" << put_response_message.dump() << "\033[0m\n";
+                std::cout << ((put_response_message.contains("error")) ? ("\033[91m") : ("\033[32m")) << put_response_message.dump() << "\033[0m\n";
                 nodes_sent_count++;
             }
         }
@@ -899,11 +899,11 @@ void neroshop::Node::send_remove(const std::string& key) {
     
     nlohmann::json query_object;
     query_object["tid"] = transaction_id;
-    query_object["query"] = "remove";////query_object["method"] = "remove";
+    query_object["query"] = "remove";
     query_object["args"]["key"] = key;
     query_object["version"] = std::string(NEROSHOP_DHT_VERSION);
     
-    //std::string _message = bencode::encode(query);
+    // ...
 }
 
 void neroshop::Node::send_map(const std::string& address, int port) {
@@ -930,8 +930,10 @@ void neroshop::Node::send_map(const std::string& address, int port) {
             map_response_message = nlohmann::json::from_msgpack(receive_buffer);
             map_sent = true;
         } catch (const std::exception& e) {
-            std::cerr << "Node \033[91m" << address << ":" << port << "\033[0m did not respond" << std::endl;
+            std::cerr << "Node \033[91m" << address << ":" << port << "\033[0m did not respond to send_map" << std::endl;
         }
+        // Show response
+        std::cout << ((map_response_message.contains("error")) ? ("\033[91m") : ("\033[92m")) << map_response_message.dump() << "\033[0m\n";
     }
     if(map_sent && !data.empty()) std::cout << "\033[93mIndexing data distributed to " << address << ":" << port << "\033[0m\n";
 }
@@ -1009,7 +1011,7 @@ void neroshop::Node::periodic_check() {
                 uint16_t node_port = node->get_port();
                 
                 // Skip the bootstrap nodes from the periodic checks
-                if (is_bootstrap_node(node->public_ip_address, node_port) || node->is_bootstrap_node()) continue;
+                if (node->is_bootstrap_node()) continue;
                 
                 std::cout << "Performing periodic check on \033[34m" << node_ip << ":" << node_port << "\033[0m\n";
                 
@@ -1092,7 +1094,7 @@ void neroshop::Node::on_ping_callback(const std::vector<uint8_t>& buffer, const 
                 routing_table->add_node(std::move(node_that_pinged)); // Already has internal write_lock
                 routing_table->print_table();
                 // Redistribute your indexing data to the new node that recently joined the network to make product/service listings more easily discoverable by the new node
-                send_map(sender_ip, sender_port);
+                send_map((sender_ip == this->public_ip_address) ? "127.0.0.1" : sender_ip, sender_port);
             }
         }
     }
@@ -1110,7 +1112,7 @@ void neroshop::Node::run() {
     std::thread periodic_refresh_thread([this]() { periodic_refresh(); });
     
     while (true) {
-        std::vector<uint8_t> buffer(4096);
+        std::vector<uint8_t> buffer(NEROSHOP_RECV_BUFFER_SIZE);
         struct sockaddr_in client_addr;
         socklen_t client_addr_len = sizeof(client_addr);
         int bytes_received = recvfrom(sockfd, buffer.data(), buffer.size(), 0,
@@ -1133,7 +1135,7 @@ void neroshop::Node::run() {
             // Acquire the lock before accessing the routing table
             std::shared_lock<std::shared_mutex> read_lock(node_read_mutex);
             // Process the message
-            std::vector<uint8_t> response = neroshop::msgpack::process(buffer, *this);
+            std::vector<uint8_t> response = neroshop::msgpack::process(buffer, *this, false);
 
             // Send the response
             int bytes_sent = sendto(sockfd, response.data(), response.size(), 0,
@@ -1182,7 +1184,7 @@ void neroshop::Node::run_optimized() {
         }
 
         if (FD_ISSET(sockfd, &read_set)) {
-            std::vector<uint8_t> buffer(4096);
+            std::vector<uint8_t> buffer(NEROSHOP_RECV_BUFFER_SIZE);
             struct sockaddr_in client_addr;
             socklen_t client_addr_len = sizeof(client_addr);
             int bytes_received = recvfrom(sockfd, buffer.data(), buffer.size(), MSG_DONTWAIT,
@@ -1206,7 +1208,7 @@ void neroshop::Node::run_optimized() {
                     // Acquire the lock before accessing the routing table
                     std::shared_lock<std::shared_mutex> read_lock(node_read_mutex);
                     // Process the message
-                    std::vector<uint8_t> response = neroshop::msgpack::process(buffer, *this);
+                    std::vector<uint8_t> response = neroshop::msgpack::process(buffer, *this, false);
 
                     // Send the response
                     int bytes_sent = sendto(sockfd, response.data(), response.size(), 0,

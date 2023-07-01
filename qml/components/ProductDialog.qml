@@ -693,7 +693,7 @@ Popup {
                                     productConditionBox.currentText, 
                                     productLocationBox.currentText
                                 )                       
-                                // Save product image(s) in cache
+                                // Save product image(s) to cache folder
                                 for (let i = 0; i < productImages.length; i++) {
                                     Backend.saveProductImage(productImages[i].source, listing_key)
                                 }

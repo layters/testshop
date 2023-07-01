@@ -6,7 +6,6 @@ set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ../build)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ../build)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ../build)
 
-# compile the source code of external dependencies into static libraries so there won't be a need to recompile each time there's a change in the makefile
 set(monero_include_dirs monero-cpp/external/monero-project/contrib/epee/include/ 
     monero-cpp/external/monero-project/external/easylogging++/ 
     monero-cpp/external/monero-project/src/ 
@@ -67,6 +66,8 @@ target_include_directories(${i2pd_client_target} PUBLIC i2pd/i18n/ i2pd/libi2pd/
 add_subdirectory(miniupnp/miniupnpc)
 
 add_subdirectory(libnatpmp)
+
+add_subdirectory(libjuice)
 
 #[[
 set(_target "")
