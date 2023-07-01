@@ -13,7 +13,7 @@ Page {
     background: Rectangle {
         color: "transparent"
     }
-    property var model: null//property string productId: ""
+    property var model: null
     function openSellerPage() {
         pageLoader.setSource("qrc:/qml/pages/ProfilePage.qml");//, {"model": [""]})
     }
@@ -49,7 +49,7 @@ Page {
                         // Product image
                         Image {
                             id: productImage
-                            source: "image://listing?id=%1&image_id=%2".arg(productPage.model.key).arg(productPage.model.product_image_name)
+                            source: "image://listing?id=%1&image_id=%2".arg(productPage.model.key).arg(productPage.model.product_images[0].name)
                             anchors.centerIn: parent
                             width: productImage.minImageSize; height: width
                             fillMode: Image.PreserveAspectFit
@@ -73,12 +73,12 @@ Page {
                         spacing: 5
                         Repeater {
                             id: productImageRepeater
-                            model: Backend.getProductImages(productPage.model.product_id)//6
+                            model: productPage.model.product_images
                             delegate: Rectangle {
                                 color: "transparent"; border.color: "#ffffff"
                                 width: 100/*Math.min((parent.width / productImageRepeater.count) - (productImageGallery.spacing * (productImageRepeater.count - 1)), 100)*/; height: parent.height
                                 Image {
-                                    source: "file:///" + modelData.name////"image://catalog?id=%1&image_id=%2".arg(productPage.model.product_id).arg(modelData.image_id)
+                                    source: "image://listing?id=%1&image_id=%2".arg(productPage.model.key).arg(modelData.name)
                                     anchors.fill: parent
                                     fillMode: Image.PreserveAspectFit
                                     mipmap: true
@@ -194,7 +194,7 @@ Page {
                     Text {
                         id: stockStatusText
                         property bool status: (stock_available > 0)
-                        property int stock_available: Backend.getStockAvailable(productPage.model.product_id)
+                        property int stock_available: productPage.model.quantity//Backend.getStockAvailable(productPage.model.product_id)
                         text: qsTr(status ? "In stock" : "Out of stock")
                         color: status ? "#31652c" : "#d61f1f"
                         font.bold: true

@@ -26,6 +26,10 @@
 #include <natpmp.h>
 #endif
 
+#if defined(NEROSHOP_USE_LIBJUICE)
+#include <juice/juice.h>
+#endif
+
 #define NEROMON_TAG "\033[1;95m[neromon]:\033[0m "
 
 using namespace neroshop;
@@ -210,6 +214,7 @@ int main(int argc, char** argv)
         ip_address = NEROSHOP_ANY_ADDRESS;
     }
     //-------------------------------------------------------
+    ////neroshop::Node node("0.0.0.0"/*ip_address*/, NEROSHOP_P2P_DEFAULT_PORT, true);
     #if defined(NEROSHOP_USE_MINIUPNP)
     // Initialize the miniupnpc library and obtain a UPnP context
     UPNPUrls urls;
@@ -218,7 +223,7 @@ int main(int argc, char** argv)
     char lanaddr[INET_ADDRSTRLEN];
 
     // Initialize miniupnpc
-    struct UPNPDev* devlist = upnpDiscover(2000, NULL, NULL, 0, 0, 2, &error);
+    UPNPDev* devlist = upnpDiscover(2000, NULL, NULL, 0, 0, 2, &error);
     if (devlist != NULL) {
         // Obtain the UPnP context
         error = UPNP_GetValidIGD(devlist, &urls, &data, lanaddr, sizeof(lanaddr));
@@ -260,6 +265,28 @@ int main(int argc, char** argv)
     // ...
     #endif
     //-------------------------------------------------------
+    #if defined(NEROSHOP_USE_LIBJUICE)
+    /*juice_log_level_t log_level = JUICE_LOG_LEVEL_VERBOSE;//JUICE_LOG_LEVEL_INFO;
+	juice_server_config_t config;
+	memset(&config, 0, sizeof(config)); // ?
+	config.port = NEROSHOP_P2P_DEFAULT_PORT;////node.get_port();
+	//config.credentials_count
+	//config.credentials	
+	//config.bind_address = "0.0.0.0";
+	//config.external_address
+	//config.relay_port_range_begin
+	//config.relay_port_range_end
+	//config.max_allocations
+	
+	//juice_set_log_handler(log_handler);
+	juice_set_log_level(log_level);
+	
+	juice_server_t *server = juice_server_create(&config);
+	if (!server) {
+		fprintf(stderr, "Server initialization failed\n");
+	}*/
+	#endif
+    //-------------------------------------------------------
     neroshop::Node node("0.0.0.0"/*ip_address*/, NEROSHOP_P2P_DEFAULT_PORT, true);
     
     if(result.count("bootstrap")) {   
@@ -293,6 +320,10 @@ int main(int argc, char** argv)
     
     #if defined(NEROSHOP_USE_LIBNATPMP)
     ////closenatpmp(&natpmp);
+    #endif
+    
+    #if defined(NEROSHOP_USE_LIBJUICE)
+    ////juice_server_destroy(server);
     #endif
 
 	return 0;

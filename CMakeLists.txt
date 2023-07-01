@@ -405,6 +405,15 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/external/build/libnatpmp.a")
 endif()
 
 ######################################
+# libjuice
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/external/libjuice/include/)
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/external/build/libjuice-static.a")
+    option(NEROSHOP_USE_LIBJUICE "Build neroshop with libjuice" ON)
+    message(STATUS "Using libjuice")
+    set(juice_src ${CMAKE_CURRENT_SOURCE_DIR}/external/build/libjuice-static.a)
+endif()
+
+######################################
 # neroshop link directories
 link_directories(${CMAKE_CURRENT_SOURCE_DIR}/build) # target_link_directories only available in CMake version 3.13 :(
 
@@ -502,9 +511,12 @@ endif()
 if(NEROSHOP_USE_LIBNATPMP)
     target_compile_definitions(${daemon_executable} PRIVATE NEROSHOP_USE_LIBNATPMP)
 endif()
+if(NEROSHOP_USE_LIBJUICE)
+    target_compile_definitions(${daemon_executable} PRIVATE NEROSHOP_USE_LIBJUICE)
+endif()
 target_compile_definitions(${daemon_executable} PRIVATE NEROSHOP_DEBUG)
 target_include_directories(${daemon_executable} PRIVATE #[[${CMAKE_CURRENT_SOURCE_DIR}/src/]])
-target_link_libraries(${daemon_executable} ${monero_cpp_src} ${sqlite_src} ${raft_src} ${monero_src} ${i2pd_src} ${miniupnp_src} ${natpmp_src})#set(CMAKE_CXX_LINK_EXECUTABLE "${CMAKE_CXX_LINK_EXECUTABLE} -ldl") # fixes undefined reference to symbol 'dlsym@@GLIBC_2.2.5' error
+target_link_libraries(${daemon_executable} ${monero_cpp_src} ${sqlite_src} ${raft_src} ${monero_src} ${i2pd_src} ${miniupnp_src} ${natpmp_src} ${juice_src})#set(CMAKE_CXX_LINK_EXECUTABLE "${CMAKE_CXX_LINK_EXECUTABLE} -ldl") # fixes undefined reference to symbol 'dlsym@@GLIBC_2.2.5' error
 
 ######################################
 # neroshop-console

@@ -28,7 +28,7 @@
 #define NEROSHOP_LOOPBACK_ADDRESS            "127.0.0.1"
 #define NEROSHOP_ANY_ADDRESS                 "0.0.0.0"
 
-#define NEROSHOP_RECV_BUFFER_SIZE            4096
+#define NEROSHOP_RECV_BUFFER_SIZE            4096//8192// no IP packet can be above 64000 (64 KB), not even with fragmentation, thus recv on an UDP socket can at most return 64 KB (and what is not returned is discarded for the current packet!)
 
 #define NEROSHOP_DHT_REPLICATION_FACTOR      10 // 10 to 20 (or even higher) // Usually 3 or 5 but a higher number would improve fault tolerant, mitigating the risk of data loss even if multiple nodes go offline simultaneously. It also helps distribute the load across more nodes, potentially improving read performance by allowing concurrent access from multiple replicas.
 #define NEROSHOP_DHT_MAX_CLOSEST_NODES       10 // 50 to 100 (or even higher) // Default is 8 in most Kademlia DHTs

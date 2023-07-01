@@ -135,7 +135,7 @@ void neroshop::Mapper::add(const std::string& key, const std::string& value) {
 }
 
 void neroshop::Mapper::sync() {
-    neroshop::db::Sqlite3 * database = neroshop::get_database();
+    db::Sqlite3 * database = neroshop::get_database();
     
     database->execute("BEGIN TRANSACTION;");
     //-----------------------------------------------

@@ -11,6 +11,9 @@ Page {
     background: Rectangle {
         color: "transparent"
     }
+    property var sellerModel: null // accountModel
+    property var listingModel: null
+    property var ratingsModel: null
 
     ColumnLayout {
         width: parent.width

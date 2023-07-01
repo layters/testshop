@@ -99,8 +99,9 @@ The name _neroshop_ is a combination of the words _nero_, which is Italian for _
 | [cxxopts](https://github.com/jarro2783/cxxopts)                    | ?                  | command line option parser                                             | :heavy_check_mark:                       |
 | [libzmq](https://github.com/zeromq/libzmq)                         | ?                  | networking                                                             | :grey_question:                          |
 | [libi2pd](https://github.com/PurpleI2P/i2pd)                       | latest             | network proxy                                                          | :grey_question:                          |
-| [miniupnp](https://github.com/miniupnp/miniupnp)                   | ?                  | automatic port forwarding                                              | :o:                                      |
-| [libnatpmp](https://github.com/miniupnp/libnatpmp)                 | ?                  | automatic port forwarding                                              | :o:                                      |
+| [miniupnp](https://github.com/miniupnp/miniupnp)                   | ?                  | NAT traversal                                                          | :o:                                      |
+| [libnatpmp](https://github.com/miniupnp/libnatpmp)                 | ?                  | NAT traversal                                                          | :o:                                      |
+| [libjuice](https://github.com/paullouisageneau/libjuice)           | ?                  | NAT traversal                                                          | :o:                                      |
 
 ### Compiling neroshop from source
 **0. Install prerequisites**
@@ -139,7 +140,7 @@ sudo apt update && sudo apt install pkg-config libssl-dev libzmq3-dev libsodium-
 Arch (missing Qt/QML libraries)
 ```bash
 # neroshop
-sudo pacman -Sy --needed curl openssl
+sudo pacman -Sy --needed curl openssl qt5-declarative
 # monero-cpp (monero)
 sudo pacman -Syu --needed boost openssl zeromq libpgm unbound libsodium libunwind xz readline gtest python3 ccache qt5-tools hidapi libusb protobuf systemd
 ```
@@ -204,7 +205,7 @@ To build with [**CMake**](https://cmake.org/):
 ```bash
 # Build external libraries
 cd external/
-cmake -G"Unix Makefiles"
+cmake . && cmake --build . --target juice-static
 make -j$(nproc)
 cd ..
 ```

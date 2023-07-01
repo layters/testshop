@@ -3,6 +3,7 @@
 #include <iostream>
 #include <string>
 #include <vector>
+#include <cstdint> // uint8_t
 
 namespace neroshop {
 
