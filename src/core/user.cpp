@@ -1,9 +1,12 @@
 #include "user.hpp"
 
 #include "cart.hpp"
-#include "protocol/transport/client.hpp"
 #include "database/database.hpp"
 #include "tools/logger.hpp"
+
+#include "protocol/p2p/serializer.hpp"
+#include "protocol/transport/client.hpp"
+#include "rating.hpp"
 
 #include <fstream>
 
@@ -31,21 +34,21 @@ neroshop::User::~User()
 ////////////////////
 // buyers can only rate seller they have purchased from!!
 void neroshop::User::rate_seller(const std::string& seller_id, int score, const std::string& comments, const std::string& signature) { // perfected 99.9%!!
-    neroshop::db::Sqlite3 * database = neroshop::get_database();
-    if(!database) throw std::runtime_error("database is NULL");    
+    /*neroshop::db::Sqlite3 * database = neroshop::get_database();
+    if(!database) throw std::runtime_error("database is NULL");*/
     // seller_id cannot be 0 (0 = invalid id)
     if(seller_id.empty()) return;
     // score must be between 0 and 1
     if(score >= 1) score = 1;
     if(score <= 0) score = 0;
-    /*int account_type_id = database->get_integer_params("SELECT account_type_id FROM users WHERE id = $1", { seller_id });//std::string account_type = db.get_column_text("users", "account_type", "id = " + seller_id);
-    if(account_type_id != 2) {neroshop::print("This user (id: " + seller_id + ") is not a seller, so they cannot be rated", 2); return;}//if(String::lower(account_type) != "seller") {neroshop::print("You cannot rate a non-seller");return;}*/
+    ////int account_type_id = database->get_integer_params("SELECT account_type_id FROM users WHERE id = $1", { seller_id });//std::string account_type = db.get_column_text("users", "account_type", "id = " + seller_id);
+    ////if(account_type_id != 2) {neroshop::print("This user (id: " + seller_id + ") is not a seller, so they cannot be rated", 2); return;}//if(String::lower(account_type) != "seller") {neroshop::print("You cannot rate a non-seller");return;}
     // Prevent seller from rating him/herself
-    if(seller_id == get_id()) {
+    if(seller_id == this->id) {
         neroshop::print("You cannot rate yourself", 2);
         return; // exit function
     }
-    // To prevent duplicating seller_id that is has already been rated by this user_id (a user cannot rate the same seller twice, except update his or her score rating for a specific seller_id
+    /*// To prevent duplicating seller_id that is has already been rated by this user_id (a user cannot rate the same seller twice, except update his or her score rating for a specific seller_id
     std::string rated_seller = database->get_text_params("SELECT seller_id FROM seller_ratings "
         "WHERE seller_id = $1 AND user_id = $2", { seller_id, get_id() });
 	if(rated_seller == seller_id) { 
@@ -74,7 +77,21 @@ void neroshop::User::rate_seller(const std::string& seller_id, int score, const 
     // Calculate seller reputation
     double reputation = (good_ratings / static_cast<double>(total_seller_ratings)) * 100;
     std::cout << "reputation of seller (id: " << seller_id << "):\033[0;93m " << static_cast<int>(reputation) << "%\033[0m" << std::endl;
-    #endif  
+    #endif  */
+    //----------------------------------------------------------------------------------------------------------
+    // Transition from Sqlite to DHT:
+    Client * client = Client::get_main_client();
+    
+    SellerRating seller_rating = { this->id, comments, signature, seller_id, static_cast<unsigned int>(score) };
+    
+    auto data = Serializer::serialize(seller_rating);
+    std::string key = data.first;
+    std::string value = data.second;//std::cout << "key: " << data.first << "\nvalue: " << data.second << "\n";
+    
+    // Send put request to neighboring nodes (and your node too JIC)
+    std::string response;
+    client->put(key, value, response);
+    std::cout << "Received response: " << response << "\n";
 } 
 // int seller_id = 2;
 // user->rate_seller(seller_id, 1, "This seller rocks!");
@@ -101,7 +118,7 @@ void neroshop::User::rate_item(const std::string& product_id, int stars, const s
     }
     if(!purchased) {neroshop::print("You must purchase this item (id: " + product_id + ") before rating it");  return;}*/
     // To prevent duplicating product_id that is has already been rated by this user_id (a user cannot rate (insert star ratings) for the same item twice, except update his or her star rating for a specific item)
-    std::string rated_item = database->get_text_params("SELECT product_id FROM product_ratings " 
+    /*std::string rated_item = database->get_text_params("SELECT product_id FROM product_ratings " 
         "WHERE product_id = $1 AND user_id = $2", { product_id, get_id() });
 	if(rated_item == product_id) { 
 	    neroshop::print("You have previously rated this item (id: " + product_id + ")", 2);
@@ -143,7 +160,21 @@ void neroshop::User::rate_item(const std::string& product_id, int stars, const s
         (5 * static_cast<double>(five_star_count))) / total_star_ratings;
     std::cout << "calculated average stars for item (id: " << product_id << "):\033[1;33m " << average_stars << "\033[0m" << std::endl;
     // Test average at: https://calculator.academy/average-rating-calculator-star-rating/#f1p1|f2p0
-    #endif
+    #endif*/
+    //----------------------------------------------------------------------------------------------------------
+    // Transition from Sqlite to DHT:
+    Client * client = Client::get_main_client();
+    
+    ProductRating product_rating = { this->id, comments, signature, product_id, static_cast<unsigned int>(stars) };
+    
+    auto data = Serializer::serialize(product_rating);
+    std::string key = data.first;
+    std::string value = data.second;//std::cout << "key: " << data.first << "\nvalue: " << data.second << "\n";
+    
+    // Send put request to neighboring nodes (and your node too JIC)
+    std::string response;
+    client->put(key, value, response);
+    std::cout << "Received response: " << response << "\n";
 } 
 // user->rate_item(ball.get_id(), 5, "Definitely not a Dragon ball!");
 ////////////////////

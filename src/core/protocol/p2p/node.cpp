@@ -27,24 +27,10 @@ neroshop::Node::Node(const std::string& address, int port, bool local) : sockfd(
     // Generate a random node ID - use public ip address for uniqueness
     public_ip_address = (local) ? get_public_ip_address() : ip_address;
     id = generate_node_id(public_ip_address, port);
-    // TODO: maybe shorten the sha3-256 256-bit (32 bytes or 64 hex characters) node id to a 160-bit (20 bytes or 40 hex characters) node id to conform to the 160-bit requirement of Kademlia or not?
     //---------------------------------------------------------------------------
     memset(&storage, 0, sizeof(storage));
     if(is_ipv4(ip_address)) storage.ss_family = AF_INET;
     if(is_ipv6(ip_address)) storage.ss_family = AF_INET6;
-    ////std::cout << "Socket IP Type: " << ((storage.ss_family == AF_INET6) ? "IPv6" : "IPv4\n");
-    //---------------------------------------------------------------------------
-    
-    /*server = std::make_unique<Server>(SocketType::Socket_UDP);//(ip_address, port, SocketType::Socket_UDP);
-    if(!server.bind(address, port)) {
-	    throw std::runtime_error("Failed to bound to port");
-	}
-	std::cout << "bound to port " << port << "\n";//std::cout << NEROMON_TAG "\033[1;97mServer " + "(TCP)" + " bound to port " + std::to_string(port) + "\033[0m\n";
-	
-	
-	if(!listen()) {
-	    throw std::runtime_error("Failed to listen for connection");
-	}*/
     //---------------------------------------------------------------------------
     // If this node is a local node that you own
     if(local == true) {
@@ -54,17 +40,6 @@ neroshop::Node::Node(const std::string& address, int port, bool local) : sockfd(
             perror("socket");
             throw std::runtime_error("::socket failed");
         }
-
-        // Set socket options with setsockopt
-        /*int optval = 1;
-        setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &optval, sizeof(optval));*/
-        // Set to broadcast mode - will broadcast a message to other nodes within the local network/to all devices on the local network, but it does not send the message beyond the network
-        // This is good for testing multiple local nodes
-        // In general, the first node or bootstrap node is the one that initiates the network and starts the communication. It can use broadcasting to announce its presence and make itself discoverable to other nodes. Once other nodes join the network, they can use other means, such as peer-to-peer discovery or querying a directory service, to find other nodes.
-        /*if(is_bootstrap_node()) {
-            int enable_broadcast = 1;
-            setsockopt(sockfd, SOL_SOCKET, SO_BROADCAST, &enable_broadcast, sizeof(enable_broadcast));
-        }*/
 
         // set a timeout of TIMEOUT_VALUE seconds for recvfrom
         struct timeval tv;
@@ -182,29 +157,6 @@ neroshop::Node::Node(const std::string& address, int port, bool local) : sockfd(
     }
 }
 
-/*neroshop::Node::Node(const Node& other)
-    : id(other.id),
-      version(other.version),
-      data(other.data),
-      info_hash_peers(other.info_hash_peers),
-      //server(nullptr),
-      sockfd(other.sockfd),
-      sockin(other.sockin),
-      sockin6(other.sockin6),
-      storage(other.storage),
-      routing_table(nullptr),
-      public_ip_address(other.public_ip_address),
-      bootstrap(other.bootstrap),
-      check_counter(other.check_counter)
-{
-    //if (other.server)
-    //    server = std::make_unique<Server>(*other.server);
-
-    if (other.routing_table)
-        routing_table = std::make_unique<RoutingTable>(*other.routing_table);
-}*/
-
-
 neroshop::Node::Node(Node&& other) noexcept
     : id(std::move(other.id)),
       version(std::move(other.version)),
@@ -234,36 +186,6 @@ neroshop::Node::~Node() {
 
 //-----------------------------------------------------------------------------
 
-/*neroshop::Node& neroshop::Node::operator=(const Node& other)
-{
-    if (this != &other) {
-        id = other.id;
-        version = other.version;
-        data = other.data;
-        info_hash_peers = other.info_hash_peers;
-        sockfd = other.sockfd;
-        sockin = other.sockin;
-        sockin6 = other.sockin6;
-        storage = other.storage;
-        public_ip_address = other.public_ip_address;
-        bootstrap = other.bootstrap;
-
-        //if (other.server)
-        //    server = std::make_unique<Server>(*other.server);
-        //else
-        //    server.reset();
-
-        if (other.routing_table)
-            routing_table = std::make_unique<RoutingTable>(*other.routing_table);
-        else
-            routing_table.reset();
-    }
-
-    return *this;
-}*/
-
-//-----------------------------------------------------------------------------
-
 std::string neroshop::Node::generate_node_id(const std::string& address, int port) {
     // TODO: increase randomness by using a hardware identifier while maintaining a stable node id
     std::string node_info = address + ":" + std::to_string(port);
@@ -273,52 +195,9 @@ std::string neroshop::Node::generate_node_id(const std::string& address, int por
 
 //-----------------------------------------------------------------------------
 
-std::vector<neroshop::Node*> neroshop::Node::lookup(const std::string& key) {
-    // Perform iterative lookup to find nodes or peers based on the key
-    
-    // Start by finding the closest nodes to the key in the local routing table
-    std::vector<Node*> closest_nodes = find_node(key, NEROSHOP_DHT_MAX_CLOSEST_NODES);
-    
-    // Perform iterative lookup to refine the search and find more nodes or peers
-    // Repeat the process until the desired number of nodes or peers is found or a termination condition is met
-    /*
-    std::set<std::string> queried_nodes; // To keep track of already queried nodes
-    const int MAX_QUERIES = 3; // Maximum number of queries per node
-
-    // Repeat until a sufficient number of nodes are found or a stopping condition is met
-    while (!closest_nodes.empty() && queried_nodes.size() < MAX_QUERIES) {
-        std::vector<Node*> queried;
-        for (Node* node : closest_nodes) {
-            if (queried_nodes.find(node->get_id()) != queried_nodes.end()) {
-                // Skip nodes that have already been queried
-                continue;
-            }
-            queried.push_back(node);
-            queried_nodes.insert(node->get_id());
-
-            // Send find_node requests to the node
-            send_find_node(node->get_id(), node->get_ip_address(), node->get_port());
-        }
-
-        // Wait for responses and update routing table
-        for (Node* node : queried) {
-            std::vector<Node*> response_nodes = receive_find_node_response(node->get_id());
-            for (Node* response_node : response_nodes) {
-                routing_table->add_node(std::unique_ptr<Node>(response_node));
-            }
-        }
-
-        // Get the updated closest nodes
-        closest_nodes = find_node(target_id, NEROSHOP_DHT_MAX_CLOSEST_NODES);
-    }    
-    */
-    // Return the list of nodes or peers found during the lookup
-    return closest_nodes;
-}
-
 // Define the list of bootstrap nodes
 std::vector<neroshop::Peer> bootstrap_nodes = {
-    {"node.neroshop.org", NEROSHOP_P2P_DEFAULT_PORT}, // $ ping neroshop.org # or nslookup neroshop.org
+    {"node.neroshop.org", NEROSHOP_P2P_DEFAULT_PORT},
 };
 
 void neroshop::Node::join() {
@@ -613,7 +492,7 @@ bool neroshop::Node::send_ping(const std::string& address, int port) {
     std::string response_id = response_object["id"].get<std::string>();
     
     // Check that the pong message corresponds to the ping message
-    if (received_transaction_id != transaction_id) {//assert(received_transaction_id == transaction_id && "Transaction IDs do not match");
+    if (received_transaction_id != transaction_id) {
         std::cerr << "Received pong message with incorrect transaction ID" << std::endl;
         return false;
     }
@@ -1368,21 +1247,4 @@ bool neroshop::Node::is_dead() const {
 void neroshop::Node::set_bootstrap(bool bootstrap) {
     this->bootstrap = bootstrap;
 }
-/*int main() {
-    // Create a new DHT instance and join the bootstrap node
-    neroshop::Node dht_node("127.0.0.1", NEROSHOP_P2P_DEFAULT_PORT);
-    neroshop::Peer bootstrap_peer = {"bootstrap.example.com", 5678}; // can be a randomly chosen existing node that provides the initial information to the new node that connects to it
-    dht_node.join(bootstrap_peer);
-    // Add some key-value pairs to the DHT
-    dht_node.store("key1", "value1");
-    dht_node.store("key2", "value2");
-    // Retrieve a value from the DHT
-    std::string value = dht_node.get("key1");
-    std::cout << "Value: " << value << std::endl;
-    // Remove a key-value pair from the DHT
-    dht_node.remove("key2");
-    // Find a node
-    node.find_node("target_id", NEROSHOP_DHT_MAX_CLOSEST_NODES);
-    return 0;
-} // g++ node.cpp ../../../crypto/sha3.cpp ../../../util/logger.cpp -I"../../../crypto/" -o node -lcrypto -lssl
-*/
+
