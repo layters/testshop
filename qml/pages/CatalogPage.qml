@@ -5,6 +5,8 @@ import QtQuick.Layouts 1.12 // GridLayout
 import QtQuick.Shapes 1.3 // (since Qt 5.10) // Shape
 import QtGraphicalEffects 1.12//Qt5Compat.GraphicalEffects 1.15//= Qt6// ColorOverlay
 
+import neroshop.ListingSorting 1.0
+
 import "../components" as NeroshopComponents
 
 Page {
@@ -87,20 +89,20 @@ Page {
                         catalogPage.model = Backend.getListings()
                     }
                     if(currentIndex == find("Oldest")) {
-                        catalogPage.model = Backend.getListingsByOldest()
+                        catalogPage.model = Backend.getListings(Listing.SortByOldest)
                     }
                     if(currentIndex == find("Latest")) {
                         console.log("Showing most recent items")
-                        catalogPage.model = Backend.getListingsByMostRecent()
+                        catalogPage.model = Backend.getListings(Listing.SortByMostRecent)
                     }
                     if(currentIndex == find("Alphabetical order")) {
-                        catalogPage.model = Backend.getListingsByAlphabeticalOrder()
+                        catalogPage.model = Backend.getListings(Listing.SortByAlphabeticalOrder)
                     }
                     if(currentIndex == find("Price - Lowest")) {
-                        catalogPage.model = Backend.getListingsByPriceLowest()
+                        catalogPage.model = Backend.getListings(Listing.SortByPriceLowest)
                     }
                     if(currentIndex == find("Price - Highest")) {
-                        catalogPage.model = Backend.getListingsByPriceHighest()
+                        catalogPage.model = Backend.getListings(Listing.SortByPriceHighest)
                     }
                     /*if(currentIndex == find("")) {
                         catalogPage.model = Backend.

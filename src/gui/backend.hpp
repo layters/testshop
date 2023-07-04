@@ -16,10 +16,22 @@
 namespace neroshop {
 class Backend : public QObject { // This class was created for storing utility functions and backend implementations // Maybe I should rename this to BackendTools?
     Q_OBJECT 
+    Q_ENUMS(ListingSorting)
 public:
     Backend(QObject *parent = nullptr);
     ~Backend();
     
+    enum ListingSorting {
+        SortNone = 0,
+        SortByCategory,
+        SortByMostRecent,//SortByLatest = SortByMostRecent,
+        SortByOldest,
+        SortByAlphabeticalOrder,
+        SortByPriceLowest,
+        SortByPriceHighest,
+        SortByMostFavorited,
+        SortByMostSales,
+    };
     //Q_PROPERTY(int categoryProductCount READ getCategoryProductCount NOTIFY categoryProductCountChanged)
     //Q_PROPERTY(QVariantList searchResults READ getSearchResults NOTIFY searchResultsChanged)
 
@@ -52,16 +64,8 @@ public:
     Q_INVOKABLE bool loginWithKeys(WalletController* wallet_controller, UserController * user_controller);
     Q_INVOKABLE bool loginWithHW(WalletController* wallet_controller, UserController * user_controller);
     
-    Q_INVOKABLE QVariantList getListings(); // Products listed by sellers
+    Q_INVOKABLE QVariantList getListings(ListingSorting sorting = SortNone); // Products listed by sellers
     Q_INVOKABLE QVariantList getListingsByCategory(int category_id);
-    Q_INVOKABLE QVariantList getListingsByMostRecent();
-    Q_INVOKABLE QVariantList getListingsByOldest();
-    Q_INVOKABLE QVariantList getListingsByAlphabeticalOrder();
-    Q_INVOKABLE QVariantList getListingsByPriceLowest();
-    Q_INVOKABLE QVariantList getListingsByPriceHighest();
-    //Q_INVOKABLE QVariantList getListingsByMostFavorited();
-    //Q_INVOKABLE QVariantList getListingsByMostSales();
-    //Q_INVOKABLE QVariantList getProducts(); // Registered products
     Q_INVOKABLE QVariantList getListingsByMostRecentLimit(int limit);
     
     Q_INVOKABLE QVariantList getSearchResults(const QString& search_term, int count = 1000); // count is the maximum number of search results (total). The search results (per page) can be between 10-100 or 50-100

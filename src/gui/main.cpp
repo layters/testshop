@@ -137,6 +137,8 @@ int main(int argc, char *argv[])
     ////qmlRegisterUncreatableMetaObject(neroshop::staticMetaObject, "neroshop.namespace", 1, 0, "Neroshop", "Error: only enums");
     // TableModel
     ////qmlRegisterType<TableModel>("neroshop.TableModel", 1, 0, "TableModel"); // Usage: import neroshop.TableModel  ...  TableModel { id: tableModel }
+    // Register the ListingSorting type
+    qmlRegisterUncreatableType<Backend>("neroshop.ListingSorting", 1, 0, "Listing", "Enums cannot be created."); // Usage: import neroshop.ListingSorting 1.0 ... console.log("SortByCategory",Listing.SortByCategory);
 
     engine.addImageProvider(WALLET_QR_PROVIDER, new WalletQrProvider(WALLET_QR_PROVIDER));
     engine.addImageProvider(AVATAR_IMAGE_PROVIDER, new ImageProvider(AVATAR_IMAGE_PROVIDER));
