@@ -173,8 +173,8 @@ Page {
                     Row { 
                         id: starsRow
                         //spacing: 5
-                        property real avg_stars: Backend.getProductAverageStars(productPage.model.product_id)
-                        property int star_ratings_count: Backend.getProductStarCount(productPage.model.product_id)
+                        property real avg_stars: Backend.getProductAverageStars(productPage.model.product_uuid)
+                        property int star_ratings_count: Backend.getProductStarCount(productPage.model.product_uuid)
                         //Component.onCompleted: console.log("avg stars", starsRow.avg_stars)
                         Repeater {
                             model: 5
@@ -212,7 +212,7 @@ Page {
                         // Seller name
                         TextArea {
                             id: sellerNameText
-                            property string displayName: Backend.getDisplayNameById(productPage.model.seller_id)
+                            property string displayName: Backend.getDisplayNameByUserId(productPage.model.seller_id)
                             text: qsTr(displayName.length > 0 ? displayName : productPage.model.seller_id)
                             color: "#4169e1"//royalblue
                             font.bold: true

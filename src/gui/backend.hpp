@@ -69,13 +69,24 @@ public:
     // Products should be registered so that sellers can list pre-existing products without the need to duplicate a product which is unnecessary and can make the database bloated
     Q_INVOKABLE bool createFolders();
     Q_INVOKABLE QVariantMap uploadProductImage(const QString& filename, int image_id);
-    Q_INVOKABLE bool saveProductImage(const QString& fileName, const QString& listingKey);    
-    Q_INVOKABLE QVariantList getProductImages(const QString& product_id);
-    Q_INVOKABLE int getProductStarCount(const QString& product_id);
+    Q_INVOKABLE bool saveProductImage(const QString& fileName, const QString& listingKey);
+    
+    
+    Q_INVOKABLE int getProductStarCount(const QString& product_id); // getProductRatingsCount
     Q_INVOKABLE int getProductStarCount(const QString& product_id, int star_number);
     Q_INVOKABLE float getProductAverageStars(const QString& product_id);
     
-    Q_INVOKABLE QString getDisplayNameById(const QString& user_id);
+    Q_INVOKABLE int getSellerGoodRatings(const QString& user_id);
+    Q_INVOKABLE int getSellerBadRatings(const QString& user_id);
+    Q_INVOKABLE int getSellerRatingsCount(const QString& user_id);
+    Q_INVOKABLE int getSellerReputation(const QString& user_id);
+    // Rating models
+    Q_INVOKABLE QVariantList getProductRatings(const QString& product_id/*listing_id*/); // or do I use user account key?
+    Q_INVOKABLE QVariantList getSellerRatings(const QString& user_id); // or do I use user account key?
+    
+    
+    Q_INVOKABLE QString getDisplayNameByUserId(const QString& user_id);
+    Q_INVOKABLE QString getKeyByUserId(const QString& user_id);
     
     Q_INVOKABLE int getCartMaximumItems();
     Q_INVOKABLE int getCartMaximumQuantity();

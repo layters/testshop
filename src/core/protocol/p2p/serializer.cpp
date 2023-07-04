@@ -138,7 +138,7 @@ std::pair<std::string, std::string/*std::vector<uint8_t>*/> neroshop::Serializer
                 image_obj["id"] = image.id;
                 bool is_thumbnail = ((images.size() == 1) || (image.id == 0));
                 if(is_thumbnail) { // TODO: store only thumbnail images in DHT
-                    std::cout << image.name << " (id: " << image.id << ") \033[1;35mwill be used for thumbnail\033[0m\n";
+                    std::cout << image.name << " \033[1;35mwill be used as thumbnail\033[0m\n";
                 }
                 
                 images_array.push_back(image_obj);

@@ -80,7 +80,7 @@ public:
     void send_map(const std::string& address, int port); // Distributes indexing data to a single node
     // announce_peer, get_peers are specific to Bittorent and are not used in standard Kademlia
     //---------------------------------------------------
-    std::vector<Node*> lookup(const std::string& key); // In Kademlia, the primary purpose of the lookup function is to find the nodes responsible for storing a particular key in the DHT, rather than retrieving the actual value of the key. The lookup function helps in locating the nodes that are likely to have the key or be able to provide information about it.
+    ////std::vector<Node*> lookup(const std::string& key); // In Kademlia, the primary purpose of the lookup function is to find the nodes responsible for storing a particular key in the DHT, rather than retrieving the actual value of the key. The lookup function helps in locating the nodes that are likely to have the key or be able to provide information about it.
     //---------------------------------------------------
     void join(/*std::function<void()> on_join_callback*/); // Sends a join message to the bootstrap peer to join the network
     void run(); // Main loop that listens for incoming messages
@@ -132,7 +132,5 @@ public:
     bool has_value(const std::string& value) const;
     bool is_dead() const;
 };
-/*
-This is just a basic example implementation of a DHT in C++, and there are many details that are left out, such as the message routing mechanism, the peer discovery algorithm, and the node join and leave protocols. The actual implementation of a DHT can be quite complex and involves many different components, so this code should be considered as a starting point for further development.
-*/
+
 }

@@ -263,8 +263,8 @@ GridView {
                 id: starsRow
                 Layout.alignment: (!settingsDialog.gridDetailsAlignCenter) ? 0 : Qt.AlignHCenter
                 //spacing: 5
-                property real avg_stars: Backend.getProductAverageStars(modelData.product_id)
-                property int star_ratings_count: Backend.getProductStarCount(modelData.product_id)
+                property real avg_stars: Backend.getProductAverageStars(modelData.product_uuid)
+                property int star_ratings_count: Backend.getProductStarCount(modelData.product_uuid)
                 //Component.onCompleted: console.log("avg stars", starsRow.avg_stars)
                 Repeater {
                     model: 5
