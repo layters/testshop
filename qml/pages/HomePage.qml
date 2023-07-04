@@ -176,7 +176,7 @@ Page {
                                 color: NeroshopComponents.Style.getColorsFromTheme()[1]
                                 radius: 3
                                 Image {
-                                    source: "file:///" + modelData.product_image_file//"qrc:/assets/images/image_gallery.png"
+                                    source: "image://listing?id=%1&image_id=%2".arg(modelData.key).arg(modelData.product_images[0].name)//"qrc:/assets/images/image_gallery.png"
                                     anchors.centerIn: parent
                                     width: parent.width - 10; height: parent.height - 10//width: 128; height: 128
                                     fillMode: Image.PreserveAspectFit
