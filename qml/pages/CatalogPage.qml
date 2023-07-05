@@ -87,22 +87,28 @@ Page {
                 onActivated: {
                     if(currentIndex == find("None")) {
                         catalogPage.model = Backend.getListings()
+                        settingsDialog.lastUsedListingSorting = Listing.SortNone
                     }
                     if(currentIndex == find("Oldest")) {
                         catalogPage.model = Backend.getListings(Listing.SortByOldest)
+                        settingsDialog.lastUsedListingSorting = Listing.SortByOldest
                     }
                     if(currentIndex == find("Latest")) {
                         console.log("Showing most recent items")
                         catalogPage.model = Backend.getListings(Listing.SortByMostRecent)
+                        settingsDialog.lastUsedListingSorting = Listing.SortByMostRecent
                     }
                     if(currentIndex == find("Alphabetical order")) {
                         catalogPage.model = Backend.getListings(Listing.SortByAlphabeticalOrder)
+                        settingsDialog.lastUsedListingSorting = Listing.SortByAlphabeticalOrder
                     }
                     if(currentIndex == find("Price - Lowest")) {
                         catalogPage.model = Backend.getListings(Listing.SortByPriceLowest)
+                        settingsDialog.lastUsedListingSorting = Listing.SortByPriceLowest
                     }
                     if(currentIndex == find("Price - Highest")) {
                         catalogPage.model = Backend.getListings(Listing.SortByPriceHighest)
+                        settingsDialog.lastUsedListingSorting = Listing.SortByPriceHighest
                     }
                     /*if(currentIndex == find("")) {
                         catalogPage.model = Backend.
