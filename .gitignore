@@ -14,6 +14,8 @@ external/openpgp/CMakeCache.txt.tmpfdb34
 external/openpgp/cmake_install.cmake
 external/openpgp/Makefile
 
+external/LibJuiceConfigVersion.cmake
+
 # copied from https://gist.github.com/Yousha/3830712334ac30a90eb6041b932b68d7#file-gitignore-L952
 ##### Windows
 # Windows thumbnail cache files
