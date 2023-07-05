@@ -1,5 +1,7 @@
 #include "daemon_manager.hpp"
 
+#include <QFile>
+
 #include <iostream>
 #include <chrono>
 #include <thread>
@@ -60,7 +62,12 @@ void neroshop::DaemonManager::startDaemonProcessDetached() {
     #ifdef Q_OS_WIN
     QString program = "neromon.exe";
     #else
-    QString program = "./neromon";
+    QString program;
+    if (QFile::exists("neromon.AppImage")) {
+        program = "./neromon.AppImage";
+    } else {
+        program = "./neromon";
+    }
     #endif
 
     if(isDaemonRunningAlready()) {
@@ -201,7 +208,7 @@ bool neroshop::DaemonManager::isDaemonRunningAlready()
     #ifdef Q_OS_WIN
     QString program = "neromon.exe";
     #else
-    QString program = "neromon";
+    QString program = "neromon"; // will work with AppImage as well
     #endif
     
     QProcess process;

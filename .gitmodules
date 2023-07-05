@@ -19,12 +19,6 @@
 [submodule "external/i2pd"]
 	path = external/i2pd
 	url = https://github.com/PurpleI2P/i2pd.git
-[submodule "external/miniupnp"]
-	path = external/miniupnp
-	url = https://github.com/miniupnp/miniupnp.git
-[submodule "external/libnatpmp"]
-	path = external/libnatpmp
-	url = https://github.com/miniupnp/libnatpmp.git
 [submodule "external/libjuice"]
     path = external/libjuice
     url = https://github.com/paullouisageneau/libjuice.git

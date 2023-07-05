@@ -852,6 +852,7 @@ QVariantList neroshop::Backend::getSearchResults(const QString& searchTerm, int 
             QVariantList product_images;
             
             std::string column_value = (sqlite3_column_text(stmt, i) == nullptr) ? "NULL" : reinterpret_cast<const char *>(sqlite3_column_text(stmt, i));//std::cout << column_value  << " (" << i << ")" << std::endl;
+            if(column_value == "NULL") continue; // Skip invalid columns
             QString key = QString::fromStdString(column_value);
             // Get the value of the corresponding key from the DHT
             std::string response;
@@ -873,6 +874,7 @@ QVariantList neroshop::Backend::getSearchResults(const QString& searchTerm, int 
                 const auto& value = response_obj["value"].get<std::string>();
                 nlohmann::json value_obj = nlohmann::json::parse(value);
                 assert(value_obj.is_object());//std::cout << value_obj.dump(4) << "\n";
+                std::string metadata = value_obj["metadata"].get<std::string>();
                 listing.insert("key", key);
                 listing.insert("listing_uuid", QString::fromStdString(value_obj["id"].get<std::string>()));
                 listing.insert("seller_id", QString::fromStdString(value_obj["seller_id"].get<std::string>()));

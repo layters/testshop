@@ -4,8 +4,10 @@ import QtQuick.Layouts 1.12
 //import QtGraphicalEffects 1.12
 import Qt.labs.platform 1.1 // FileDialog (since Qt 5.8) // change to "import QtQuick.Dialogs" if using Qt 6.2
 
-import neroshop.CurrencyExchangeRates 1.0
 import FontAwesome 1.0
+
+import neroshop.CurrencyExchangeRates 1.0
+
 import "." as NeroshopComponents
 // This page provides an interface for modifying the configuration file, "settings.lua"
 // Stuff like themes, preferred currency, language, etc. will go here and will not be associated with an account but with the application config itself. This is to preserve privacy and reduce the size of the database
@@ -49,6 +51,8 @@ Popup {
     property bool moneroDaemonAutoSync: (nodeTypeStackLayout.currentIndex == remoteNodeButton.stackLayoutIndex) ? autoNodeSyncSwitch.checked : autoDaemonSyncSwitch.checked
     property Button moneroDaemonConnectButton: (nodeTypeStackLayout.currentIndex == remoteNodeButton.stackLayoutIndex) ? remoteNodeConnectButton : localNodeConnectButton
     property string lastSelectedNode: Script.getJsonRootObject()["monero"]["daemon"]["last_selected_node"]
+    // Listing properties
+    property int lastUsedListingSorting: 0
     
     function resetScrollBar() {
         scrollView.ScrollBar.vertical.position = 0.0

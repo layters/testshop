@@ -582,6 +582,41 @@ Page {
                 	onClicked: {
                         loginButton.activate()
                 	}     
+                }
+                
+                Button {
+                    id: newUserButton
+                    Layout.row: 4
+                    Layout.column: 0
+                    Layout.fillWidth: true
+                    Layout.preferredWidth: 500
+                    Layout.preferredHeight: 50
+                    Layout.topMargin: 15
+                    text: qsTr("New user?")
+                	hoverEnabled: true
+                	////onClicked: login()
+                	background: Rectangle {
+                    	color: NeroshopComponents.Style.moneroOrangeColor
+                    	radius: 5
+                	}
+                	                
+                	contentItem: Text {  
+                    	//font.family: "Consolas"; //font.family: NeroshopComponents.Style.fontFiraCodeLight.name
+                    	//font.pointSize: 10
+                    	font.bold: true
+                    	text: newUserButton.text
+                    	color: "#ffffff" // white
+                    	horizontalAlignment: Text.AlignHCenter
+                    	verticalAlignment: Text.AlignVCenter                    
+                	}               
+                	
+                	function activate() {
+                	    mainPageStack.currentIndex = mainPageStack.currentIndex + 1
+                	}
+                	
+                	onClicked: {
+                        newUserButton.activate()
+                	}
                 }            
             } // GridLayout
         } // eof wallet_file_authentication_page

@@ -17,15 +17,6 @@
 
 #include <cxxopts.hpp>
 
-#if defined(NEROSHOP_USE_MINIUPNP)
-#include <miniupnpc.h>
-#include <upnpcommands.h>
-#endif
-
-#if defined(NEROSHOP_USE_LIBNATPMP)
-#include <natpmp.h>
-#endif
-
 #if defined(NEROSHOP_USE_LIBJUICE)
 #include <juice/juice.h>
 #endif
@@ -214,57 +205,6 @@ int main(int argc, char** argv)
         ip_address = NEROSHOP_ANY_ADDRESS;
     }
     //-------------------------------------------------------
-    ////neroshop::Node node("0.0.0.0"/*ip_address*/, NEROSHOP_P2P_DEFAULT_PORT, true);
-    #if defined(NEROSHOP_USE_MINIUPNP)
-    // Initialize the miniupnpc library and obtain a UPnP context
-    UPNPUrls urls;
-    IGDdatas data;
-    int error = 0;
-    char lanaddr[INET_ADDRSTRLEN];
-
-    // Initialize miniupnpc
-    UPNPDev* devlist = upnpDiscover(2000, NULL, NULL, 0, 0, 2, &error);
-    if (devlist != NULL) {
-        // Obtain the UPnP context
-        error = UPNP_GetValidIGD(devlist, &urls, &data, lanaddr, sizeof(lanaddr));
-        if (error == 1) {
-            // UPnP context obtained successfully. You can now use the UPnP functions to open ports
-            // Open the first port
-            int p2p_port = NEROSHOP_P2P_DEFAULT_PORT;
-            const char* protocol1 = "UDP";
-            const char* description1 = "Neroshop P2P Port";
-            const char* remoteHost1 = NULL;
-            error = UPNP_AddPortMapping(urls.controlURL, data.first.servicetype, std::to_string(p2p_port).c_str(), std::to_string(p2p_port).c_str(), lanaddr, description1, protocol1, remoteHost1, NULL);
-            if (error != UPNPCOMMAND_SUCCESS) {
-                neroshop::print("UPNP_AddPortMapping: failed to open P2P port", 1);
-            }
-            
-            // Open the second port
-            if(result.count("rpc")) {
-                int rpc_port = NEROSHOP_RPC_DEFAULT_PORT;
-                const char* protocol2 = "TCP";
-                const char* description2 = "Neroshop RPC Port";
-                const char* remoteHost2 = NULL;
-                error = UPNP_AddPortMapping(urls.controlURL, data.first.servicetype, std::to_string(rpc_port).c_str(), std::to_string(rpc_port).c_str(), lanaddr, description2, protocol2, remoteHost2, NULL);
-                if (error != UPNPCOMMAND_SUCCESS) {
-                    neroshop::print("UPNP_AddPortMapping: failed to open RPC port", 1);
-                }
-            }
-        } else {
-            neroshop::print("UPNP_GetValidIGD: failed to obtain UPnP context", 1);
-        }
-    } else {
-        neroshop::print("upnpDiscover: failed to discover UPnP devices", 1);
-    }
-    #endif
-    //-------------------------------------------------------
-    #if defined(NEROSHOP_USE_LIBNATPMP)
-    int r;
-    natpmp_t natpmp;
-    natpmpresp_t response;
-    // ...
-    #endif
-    //-------------------------------------------------------
     #if defined(NEROSHOP_USE_LIBJUICE)
     /*juice_log_level_t log_level = JUICE_LOG_LEVEL_VERBOSE;//JUICE_LOG_LEVEL_INFO;
 	juice_server_config_t config;
@@ -311,16 +251,6 @@ int main(int argc, char** argv)
     }
     ipc_thread.join();
     dht_thread.join();
-    
-    #if defined(NEROSHOP_USE_MINIUPNP)
-    // Release the UPnP context and free resources
-    FreeUPNPUrls(&urls);
-    freeUPNPDevlist(devlist);
-    #endif
-    
-    #if defined(NEROSHOP_USE_LIBNATPMP)
-    ////closenatpmp(&natpmp);
-    #endif
     
     #if defined(NEROSHOP_USE_LIBJUICE)
     ////juice_server_destroy(server);
