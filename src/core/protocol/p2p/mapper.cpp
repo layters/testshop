@@ -77,6 +77,10 @@ void neroshop::Mapper::add(const std::string& key, const std::string& value) {
             std::string product_category = product_obj["category"].get<std::string>();
             product_categories[product_category].push_back(key);
         }
+        if (product_obj.contains("subcategory") && product_obj["subcategory"].is_string()) {
+            std::string product_subcategory = product_obj["subcategory"].get<std::string>();
+            product_categories[product_subcategory].push_back(key);
+        }        
         if (product_obj.contains("tags") && product_obj["tags"].is_array()) {
             const auto& tags = product_obj["tags"];
             for (const auto& tag : tags) {

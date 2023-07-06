@@ -47,6 +47,25 @@ const std::vector<Category> predefined_categories = {
     { 24, "Illegal", "Banned and/or prohibited items", "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAYAAACqaXHeAAAABmJLR0QA/wD/AP+gvaeTAAAFDUlEQVR4nO2bzW9WRRTGn2ljEaVFSghl40fStC5cYcNOSXVjQmo0fqAsWGI1oWyQmFQihkDUFQQ2xqVGoqa6smGPfwENkmoMpUHBapR+CG2I/bmYt0rrmfs5975NeJ/lvTPnOee5c+ecOzNXaqGFFlq4h+HqIgK2S3pCUr+kRyQ9JGlT4/aCpD8lXZX0g6QJ59xMXb5VAqANeAY4C3xPflwCzgCDQFuz48kMYCvwHjBdIOgQrjZsdjc7viCAzcBHwHzEwNdiHvgQ6Gp2vKsA7AOuVxj4WvwCvB7D91KTYONJfCLp1RzdFiRNSbohaV5Sm6QHJfVI6pV0fw5b5yS94Zybz9EnDoDHgR8zPK1FYBw4DOwkYULDT5z9wAFgrNE3DZNAX52xC9gF/Jbi2AzwPj79FeXZAozgJ8E0roGYMSY5tYvkie4WcATIM5TTODuAg8DNBN65ykXAD/ukJ3+BCocj0IN/nZJGQjX8QBfJ7/wyMFQJ+Wo/HDDa4LMwCXRWQfxFQvArWAT2RCe3/dkP3An48Xlssn0Zgm+WCKGRsDcWyWbCRU6IvE4RRgM+/EyMVwFf3lq4AAwRztW1iICvHUIT48myxrdip7xbNGZbYM86EKEHO0XOUeYDCjgWCOztNe3WgwgjAf6jRQ22YX/SzgAbjfbPAbcDTiwBz5eOMtnf+4Apg3uKIusJwLOBYI4l9GnqSAAOBbh3FzF21jB0m5TavpkiAN0B7tNFjFnLWOMZ+zZThG8Mzom8RrZj5/jDOWw0RQRg2OBbBrblMRJ6/3fmdKZ2EfAfbBYG8xh5yzAwT4HZtG4RgHbsbDRstQ8F9Khxbco5t5zXIefct5JekrRk3N4gaSymCM65vyX9ZNyyYgoKYK26Xi/hVK0iSLI2VTZbDUMCbDKu/VXYHf0rwguSFo3bGyR9TbxiyVoktWIKCmCh9Daac+68pBdli9Ah6atIIpC1YUiABeNalFWWhggvy34dOiR9GeF1sJ62FVNQgDnjWvY8moIa5oQdxrVZq2FIgCnjWm+RNBhCVSIA7QpksTxGQoVQf16HMnBFrROAgYCtXIVQqBQ+kDvCbHzRRMDvSaxFvlK4YeiSYWgsd3TZ+aKIAJw3+l8s4tCZgCNbchvLzllKBPzSmNX/VBFnBgOOjBSOMBtvYRGA44F+TxdxxAFXDGPTQEepKNO5cy+vAQ9gb9tNAcWKOPyxFAsHS0eZzp1rJADvBNoWWxRtGO3GLy2vxU2gp3SU6fyZRMCfKbBGzCxl5yzgg4AD49RweiuDCEPAd4H7J2I40IU/k2NhNEKMWXxIEiG0PXeNWLvEwGsJ5PujkKT7kCSChVdiO3AuQHRnHYrwaRXknfjDB6GRMErRdJPPjyHCwx7gMmAufsQg78NvjYUwToXZAT/bhyY8gF+B3qr4V5wYwE6NK7iJ36iMViwBG/F5PlQcgU95T8biTHNoIGUkgK8YD1Fiexpf2x8n/UjejdqCv8u5PsJzwt1YxG9XDeM3LdoTbLY3xD2C/6rLMuFdpsSwL3tUtlPSx5LynNtdkl+3Xzkqi/x64w5Jj0n639Z7Aj6T9KZzzlzvqw3AXvyZnLpwjdh5vizwafIkyRNkWcwCJ6jiHGAs4D+gjmKf1iiKK8C7VLgYEx349YTdwGlgguTiZS2WgYvAKeApKiyw6vxpapv++2nqYUndWv3T1B+SpiVNyv809XtdvrXQQgst3LP4B1dCXq0t0BR7AAAAAElFTkSuQmCC"},
 };
 
+const std::vector<Subcategory> predefined_subcategories = { 
+    // For each category is a subcategory (for example, the books, movies, and music categories can have the digital goods subcategory if they are digital rather than physical)
+    // Digital Goods
+    { static_cast<unsigned int>(predefined_categories.size() + 1), predefined_categories[5].name, predefined_categories[5].description, predefined_categories[5].thumbnail, 7 },
+    { 26, predefined_categories[5].name, predefined_categories[5].description, predefined_categories[5].thumbnail, 8 },
+    { 27, predefined_categories[5].name, predefined_categories[5].description, predefined_categories[5].thumbnail, 9 },
+    
+    // Illegal
+    { 28, predefined_categories[24].name, predefined_categories[24].description, predefined_categories[24].thumbnail, 0 },
+    { 29, predefined_categories[24].name, predefined_categories[24].description, predefined_categories[24].thumbnail, 5 },
+    { 30, predefined_categories[24].name, predefined_categories[24].description, predefined_categories[24].thumbnail, 6 },
+    { 31, predefined_categories[24].name, predefined_categories[24].description, predefined_categories[24].thumbnail, 7 },
+    { 32, predefined_categories[24].name, predefined_categories[24].description, predefined_categories[24].thumbnail, 8 },
+    { 33, predefined_categories[24].name, predefined_categories[24].description, predefined_categories[24].thumbnail, 23 },
+    { 34, predefined_categories[24].name, predefined_categories[24].description, predefined_categories[24].thumbnail, 19 },
+    
+    //{ 0, , <category_id_goes_here> },
+};
+
 //-----------------------------------------------------------------------------
 
 inline const Category& get_category_by_id(unsigned int id) {
@@ -92,6 +111,36 @@ inline int get_category_id_by_name(const std::string& name) {
         }
     }
     return -1;
+}
+
+inline std::vector<Subcategory> get_subcategories_by_category_id(unsigned int category_id) {
+    std::vector<Subcategory> matching_subcategories;
+
+    for (const Subcategory& subcategory : predefined_subcategories) {
+        if (subcategory.category_id == category_id) {
+            matching_subcategories.push_back(subcategory);
+        }
+    }
+
+    return matching_subcategories;
+}
+
+inline int get_subcategory_id_by_name(const std::string& name) {
+    for (const auto& subcategory : predefined_subcategories) {
+        if (subcategory.name == name) {
+            return subcategory.id;
+        }
+    }
+    return -1;
+}
+
+inline std::string get_subcategory_name_by_id(unsigned int id) {
+    for (const auto& subcategory : predefined_subcategories) {
+        if (subcategory.id == id) {
+            return subcategory.name;
+        }
+    }
+    return "";
 }
 
 }

@@ -304,19 +304,111 @@ Popup {
                                 spacing: 5
                                 NeroshopComponents.ComboBox {
                                     id: productCategoryBox
-                                    width: 500; height: 50
+                                    width: addSubCategoryButton.visible ? (500 - addSubCategoryButton.width - parent.spacing) : 500; height: 50
                                     model: parent.parent.parent.getCategoryStringList()
                                     Component.onCompleted: {
                                         currentIndex = find("Miscellaneous")
+                                    }
+                                    function reset() {
+                                        let subcategories = Backend.getSubCategoryList(Backend.getCategoryIdByName(productCategoryBox.currentText))
+                                        addSubCategoryButton.visible = (subcategories.length > 0)
+                                        subCategoryRepeater.model = 0 // reset
+                                    }
+                                    onActivated: {
+                                        productCategoryBox.reset()
                                     }
                                     radius: productDialog.inputRadius
                                     color: productDialog.inputBaseColor
                                     textColor: productDialog.inputTextColor
                                 }
+                                Button {
+                                    id: addSubCategoryButton
+                                    width: 50; height: 50
+                                    text: qsTr("+")
+                                    visible: Backend.hasSubCategory(Backend.getCategoryIdByName(productCategoryBox.currentText))
+                                    background: Rectangle {
+                                        color: parent.hovered ? "#698b22" : "#506a1a"//"#605185"
+                                        radius: productDialog.inputRadius
+                                    }
+                                    contentItem: Text {
+                                        text: parent.text
+                                        color: "#ffffff"
+                                        verticalAlignment: Text.AlignVCenter
+                                        horizontalAlignment: Text.AlignHCenter
+                                    }
+                                    onClicked: {
+                                        let subcategories = Backend.getSubCategoryList(Backend.getCategoryIdByName(productCategoryBox.currentText))
+                                        if(subCategoryRepeater.count == 1) {
+                                            console.log("Cannot add no more than 1 subcategories")
+                                            return
+                                        }
+                                        subCategoryRepeater.model = subCategoryRepeater.model + 1
+                                    }
+                                }
                             }
                         }
                     }                    
-                    // Subcategories (will be determined based on selected categories)            
+                    // Subcategories (will be determined based on selected categories)
+                    Item {
+                        id: subCategoryItem
+                        Layout.alignment: Qt.AlignHCenter
+                        Layout.preferredWidth: childrenRect.width
+                        Layout.preferredHeight: childrenRect.height
+                        visible: (subCategoryRepeater.count > 0)//Backend.hasSubCategory(Backend.getCategoryIdByName(productCategoryBox.currentText))
+                        
+                        function getSubCategoryStringList() {
+                            let subCategoryStringList = []
+                            let subcategories = Backend.getSubCategoryList(Backend.getCategoryIdByName(productCategoryBox.currentText))
+                            for(let i = 0; i < subcategories.length; i++) {
+                                subCategoryStringList[i] = subcategories[i].name//console.log(parent.parent.parent.categoryStringList[i])//console.log(categories[i].name)
+                            }       
+                            return subCategoryStringList;
+                        }
+                        
+                        Column {
+                            spacing: productDialog.titleSpacing
+                            Text {
+                                text: "Subcategory"
+                                color: productDialog.palette.text
+                                font.bold: true
+                            }
+                            
+                            Repeater {
+                                id: subCategoryRepeater
+                                model: 0
+                                delegate: Row {
+                                    spacing: 5
+                                    NeroshopComponents.ComboBox {
+                                        id: productSubCategoryBox
+                                        width: removeSubCategoryButton.visible ? (500 - removeSubCategoryButton.width - parent.spacing) : 500; height: 50
+                                        model: parent.parent.parent.getSubCategoryStringList()
+                                        currentIndex: 0
+                                        radius: productDialog.inputRadius
+                                        color: productDialog.inputBaseColor
+                                        textColor: productDialog.inputTextColor
+                                    }
+                                    Button {
+                                        id: removeSubCategoryButton
+                                        width: 50; height: 50
+                                        text: qsTr("x")
+                                        background: Rectangle {
+                                            color: parent.hovered ? "#b22222" : "#921c1c"
+                                            radius: productDialog.inputRadius
+                                        }
+                                        contentItem: Text {
+                                            text: parent.text
+                                            color: "#ffffff"
+                                            verticalAlignment: Text.AlignVCenter
+                                            horizontalAlignment: Text.AlignHCenter
+                                        }
+                                        onClicked: {
+                                            subCategoryRepeater.model = subCategoryRepeater.model - 1
+                                        }
+                                    }
+                                } // Row
+                            }
+                        }
+                    }
                     // Weight
                     Item {
                         //Layout.row: 
@@ -683,7 +775,7 @@ Popup {
                                     []/*attributes*/, 
                                     productCodeField.text,
                                     Backend.getCategoryIdByName(productCategoryBox.currentText),
-                                    -1, // subcategoryId
+                                    (subCategoryRepeater.count > 0) ? Backend.getSubCategoryIdByName(subCategoryRepeater.itemAt(0).children[0].currentText) : -1, // subcategoryId
                                     productTagsField.tags(),
                                     productImages,
                                     
@@ -693,7 +785,7 @@ Popup {
                                     productConditionBox.currentText, 
                                     productLocationBox.currentText
                                 )                       
-                                // Save product image(s) to cache folder
+                                // Save product image(s) to datastore folder
                                 for (let i = 0; i < productImages.length; i++) {
                                     Backend.saveProductImage(productImages[i].source, listing_key)
                                 }
@@ -704,6 +796,7 @@ Popup {
                                 productConditionBox.currentIndex = productConditionBox.find("New")
                                 productCodeField.text = ""
                                 productCategoryBox.currentIndex = productCategoryBox.find("Miscellaneous")
+                                productCategoryBox.reset() // resets subcategories
                                 productWeightField.text = ""
                                 productLocationBox.currentIndex = productLocationBox.find("Unspecified")//find("Worldwide")
                                 productDescriptionEdit.text = ""
