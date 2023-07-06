@@ -309,8 +309,30 @@ QVariantList neroshop::Backend::getCategoryList(bool sort_alphabetically) const 
 }
 
 //----------------------------------------------------------------
+QVariantList neroshop::Backend::getSubCategoryList(int category_id) const {
+    QVariantList subcategory_list;
+    
+    std::vector<Subcategory> subcategories = get_subcategories_by_category_id(category_id);
+    for (const Subcategory& subcategory : subcategories) {
+        QVariantMap subcategory_obj;
+        subcategory_obj.insert("id", subcategory.id);
+        subcategory_obj.insert("name", QString::fromStdString(subcategory.name));
+        subcategory_obj.insert("description", QString::fromStdString(subcategory.description));
+        subcategory_obj.insert("thumbnail", QString::fromStdString(subcategory.thumbnail));
+        subcategory_obj.insert("category_id", subcategory.category_id);
+        
+        subcategory_list.append(subcategory_obj);
+    }
+    
+    return subcategory_list;
+}
+//----------------------------------------------------------------
 int neroshop::Backend::getCategoryIdByName(const QString& category_name) const {
     return get_category_id_by_name(category_name.toStdString());
+}
+//----------------------------------------------------------------
+int neroshop::Backend::getSubCategoryIdByName(const QString& subcategory_name) const {
+    return get_subcategory_id_by_name(subcategory_name.toStdString());
 }
 //----------------------------------------------------------------
 int neroshop::Backend::getCategoryProductCount(int category_id) const {
@@ -329,6 +351,12 @@ int neroshop::Backend::getCategoryProductCount(int category_id) const {
     int category_product_count = database->get_integer_params(query, { category });
     return category_product_count;
 }
+//----------------------------------------------------------------
+bool neroshop::Backend::hasSubCategory(int category_id) const {
+    std::vector<Subcategory> subcategories = get_subcategories_by_category_id(category_id);
+    return (!subcategories.empty());
+}
+//----------------------------------------------------------------
 //----------------------------------------------------------------
 bool neroshop::Backend::createFolders() {
     // Save the image file to a specific location

@@ -45,11 +45,14 @@ public:
     
     /*Q_INVOKABLE */static void initializeDatabase(); // Cannot be a Q_INVOKABLE since it will only be used in C++
     static std::string getDatabaseHash();
+    
     // TODO: Use Q_ENUM for sorting in order by a specific column (e.e Sort.Name, Sort.Id)
     Q_INVOKABLE QVariantList getCategoryList(bool sort_alphabetically = false) const;
-    //Q_INVOKABLE QStringList getSubCategoryList(int category_id);
+    Q_INVOKABLE QVariantList getSubCategoryList(int category_id) const;
     Q_INVOKABLE int getCategoryIdByName(const QString& category_name) const;
+    Q_INVOKABLE int getSubCategoryIdByName(const QString& subcategory_name) const;
     Q_INVOKABLE int getCategoryProductCount(int category_id) const; // returns number of products that fall under a specific category
+    Q_INVOKABLE bool hasSubCategory(int category_id) const;
     
     Q_INVOKABLE QVariantList getNodeList(const QString& coin) const;
     Q_INVOKABLE QVariantList getNodeListDefault(const QString& coin) const;

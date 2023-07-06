@@ -260,7 +260,7 @@ int neroshop::Product::get_subcategory_id() const {
 }
 
 std::string neroshop::Product::get_subcategory_as_string() const {
-    return ""; // coming soon!
+    return get_subcategory_name_by_id(subcategory_id);
 }
 
 std::vector<std::string> neroshop::Product::get_tags() const {
