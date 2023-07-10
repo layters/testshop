@@ -310,7 +310,7 @@ Popup {
                                         currentIndex = find("Miscellaneous")
                                     }
                                     function reset() {
-                                        let subcategories = Backend.getSubCategoryList(Backend.getCategoryIdByName(productCategoryBox.currentText))
+                                        let subcategories = Backend.getSubCategoryList(Backend.getCategoryIdByName(productCategoryBox.currentText), true)
                                         addSubCategoryButton.visible = (subcategories.length > 0)
                                         subCategoryRepeater.model = 0 // reset
                                     }
@@ -337,7 +337,7 @@ Popup {
                                         horizontalAlignment: Text.AlignHCenter
                                     }
                                     onClicked: {
-                                        let subcategories = Backend.getSubCategoryList(Backend.getCategoryIdByName(productCategoryBox.currentText))
+                                        let subcategories = Backend.getSubCategoryList(Backend.getCategoryIdByName(productCategoryBox.currentText), true)
                                         if(subCategoryRepeater.count == 1) {
                                             console.log("Cannot add no more than 1 subcategories")
                                             return
@@ -358,7 +358,7 @@ Popup {
                         
                         function getSubCategoryStringList() {
                             let subCategoryStringList = []
-                            let subcategories = Backend.getSubCategoryList(Backend.getCategoryIdByName(productCategoryBox.currentText))
+                            let subcategories = Backend.getSubCategoryList(Backend.getCategoryIdByName(productCategoryBox.currentText), true)
                             for(let i = 0; i < subcategories.length; i++) {
                                 subCategoryStringList[i] = subcategories[i].name//console.log(parent.parent.parent.categoryStringList[i])//console.log(categories[i].name)
                             }       
@@ -785,6 +785,8 @@ Popup {
                                     productConditionBox.currentText, 
                                     productLocationBox.currentText
                                 )                       
+                                // Save product thumbnail
+                                Backend.saveProductThumbnail(productImages[0].source, listing_key)
                                 // Save product image(s) to datastore folder
                                 for (let i = 0; i < productImages.length; i++) {
                                     Backend.saveProductImage(productImages[i].source, listing_key)

@@ -23,7 +23,7 @@ int main() {
         "jsonrpc": "2.0",
         "method": "query",
         "params": {
-            "sql": "SELECT * FROM categories WHERE name = 'Food & Beverages';"
+            "sql": "SELECT * FROM mappings;"
         }
     })";//"{\"id\": \"5135958352\", \"jsonrpc\": \"2.0\", \"method\": \"query\", \"params\": {\"sql\": \"SELECT * FROM users WHERE name = 'layter'\"}}";
 

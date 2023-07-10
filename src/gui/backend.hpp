@@ -37,6 +37,9 @@ public:
 
     Q_INVOKABLE QString urlToLocalFile(const QUrl& url) const;
     Q_INVOKABLE void copyTextToClipboard(const QString& text);
+    
+    QString imageToBase64(const QImage& image); // un-tested
+    QImage base64ToImage(const QString& base64Data); // un-tested
 
     Q_INVOKABLE QStringList getCurrencyList() const;
     Q_INVOKABLE int getCurrencyDecimals(const QString& currency) const;
@@ -48,7 +51,7 @@ public:
     
     // TODO: Use Q_ENUM for sorting in order by a specific column (e.e Sort.Name, Sort.Id)
     Q_INVOKABLE QVariantList getCategoryList(bool sort_alphabetically = false) const;
-    Q_INVOKABLE QVariantList getSubCategoryList(int category_id) const;
+    Q_INVOKABLE QVariantList getSubCategoryList(int category_id, bool sort_alphabetically = false) const;
     Q_INVOKABLE int getCategoryIdByName(const QString& category_name) const;
     Q_INVOKABLE int getSubCategoryIdByName(const QString& subcategory_name) const;
     Q_INVOKABLE int getCategoryProductCount(int category_id) const; // returns number of products that fall under a specific category
@@ -75,9 +78,9 @@ public:
     
     // Products should be registered so that sellers can list pre-existing products without the need to duplicate a product which is unnecessary and can make the database bloated
     Q_INVOKABLE bool createFolders();
-    Q_INVOKABLE QVariantMap uploadProductImage(const QString& filename, int image_id);
+    Q_INVOKABLE QVariantMap uploadProductImage(const QString& filename, int image_id); // constructs image object rather than upload it
     Q_INVOKABLE bool saveProductImage(const QString& fileName, const QString& listingKey);
-    
+    Q_INVOKABLE bool saveProductThumbnail(const QString& fileName, const QString& listingKey);
     
     Q_INVOKABLE int getProductStarCount(const QString& product_id); // getProductRatingsCount
     Q_INVOKABLE int getProductStarCount(const QString& product_id, int star_number);

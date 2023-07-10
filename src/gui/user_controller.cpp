@@ -82,6 +82,7 @@ int quantity, double price, const QString& currency, const QString& condition, c
         if(imageMap.contains("name")) image.name = imageMap.value("name").toString().toStdString();
         if(imageMap.contains("size")) image.size = imageMap.value("size").toInt();
         if(imageMap.contains("id")) image.id = imageMap.value("id").toInt();
+        if(imageMap.contains("source")) image.source = imageMap.value("source").toString().toStdString();
         //if(imageMap.contains(""))
         
         imagesVector.push_back(image);
@@ -166,6 +167,22 @@ void neroshop::UserController::rateSeller(const QString& seller_id, int score, c
     std::cout << "Is verified: " << ((verified == "true") ? "\033[32m" : "\033[31m") << verified << "\033[0m" << std::endl;
     
     _user->rate_seller(seller_id.toStdString(), score, comments.toStdString(), signature);//signature.toStdString());
+}
+//----------------------------------------------------------------
+//----------------------------------------------------------------
+void neroshop::UserController::addToFavorites(const QString& listing_key) {
+    if (!_user) throw std::runtime_error("neroshop::User is not initialized");
+    _user->add_to_favorites(listing_key.toStdString());
+}
+//----------------------------------------------------------------
+void neroshop::UserController::removeFromFavorites(const QString& listing_key) {
+    if (!_user) throw std::runtime_error("neroshop::User is not initialized");
+    _user->remove_from_favorites(listing_key.toStdString());
+}
+//----------------------------------------------------------------
+bool neroshop::UserController::hasFavorited(const QString& listing_key) {
+    if (!_user) throw std::runtime_error("neroshop::User is not initialized");
+    return _user->has_favorited(listing_key.toStdString());
 }
 //----------------------------------------------------------------
 //----------------------------------------------------------------

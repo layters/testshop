@@ -668,10 +668,10 @@ neroshop::User * neroshop::Seller::on_login(const neroshop::Wallet& wallet) { //
     dynamic_cast<Seller *>(user)->set_account_type(UserAccountType::Seller);
     //-------------------------------
     /*// load orders
-    dynamic_cast<Seller *>(user)->load_orders();
+    dynamic_cast<Seller *>(user)->load_orders();*/
     // load wishlists
     dynamic_cast<Seller *>(user)->load_favorites();    
-    // load customer_orders
+    /*// load customer_orders
     static_cast<Seller *>(user)->load_customer_orders();*/
     // Load cart (into memory)
     user->get_cart()->load(user->get_id());
