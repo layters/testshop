@@ -11,7 +11,7 @@
 #include <fstream>
 
 ////////////////////
-neroshop::User::User() : id(""), logged(false), account_type(UserAccountType::Guest), cart(nullptr), order_list({}), favorites_list({}) {
+neroshop::User::User() : id(""), logged(false), account_type(UserAccountType::Guest), cart(nullptr), order_list({}), favorites({}) {
     cart = std::unique_ptr<Cart>(new Cart());
 }
 ////////////////////
@@ -24,7 +24,7 @@ neroshop::User::~User()
     // clear orders
     order_list.clear(); // this should reset (delete) all orders
     // clear favorites
-    favorites_list.clear(); // this should reset (delete) all favorites
+    favorites.clear(); // this should reset (delete) all favorites
 #ifdef NEROSHOP_DEBUG
     std::cout << "user deleted\n";
 #endif    
@@ -239,16 +239,8 @@ void neroshop::User::add_to_cart(const std::string& product_id, int quantity) {
     cart->add(this->id, product_id, quantity);
 }
 ////////////////////
-void neroshop::User::add_to_cart(const neroshop::Product& item, int quantity) {
-    add_to_cart(item.get_id(), quantity);
-}
-////////////////////
 void neroshop::User::remove_from_cart(const std::string& product_id, int quantity) {
     cart->remove(this->id, product_id, quantity);
-}
-////////////////////
-void neroshop::User::remove_from_cart(const neroshop::Product& item, int quantity) {
-    remove_from_cart(item.get_id(), quantity);
 }
 ////////////////////
 void neroshop::User::clear_cart() {
@@ -331,78 +323,92 @@ void neroshop::User::load_orders() {
 ////////////////////
 // favorite-or-wishlist-related stuff
 ////////////////////
-void neroshop::User::add_to_favorites(const std::string& product_id) {
-#if defined(NEROSHOP_USE_POSTGRESQL)
+void neroshop::User::add_to_favorites(const std::string& listing_key) {
+    db::Sqlite3 * database = neroshop::get_database();
+
     // check if item is already in favorites so that we do not add the same item more than once
-    std::string item_name = database->get_text_params("SELECT name FROM item WHERE id = $1", { product_id });
-    bool favorited = (database->get_text_params("SELECT EXISTS(SELECT product_ids FROM favorites WHERE $1 = ANY(product_ids) AND user_id = $2)", { product_id, std::to_string(this->id) }) == "t") ? true : false;
-    if(favorited) { neroshop::print("\"" + item_name + "\" is already in your favorites", 2); return; /* exit function */}
+    bool favorited = database->get_integer_params("SELECT EXISTS(SELECT listing_key FROM favorites WHERE listing_key = ?1 AND user_id = ?2)", { listing_key, this->id });
+    if(favorited) { neroshop::print("\"" + listing_key + "\" is already in your favorites", 2); return; }
     // add item to favorites
-    database->execute_params("UPDATE favorites SET product_ids = array_append(product_ids, $1::integer) WHERE user_id = $2", { product_id, std::to_string(this->id) });
-    // store in vector as well
-    favorites_list.push_back(std::make_shared<neroshop::Product>(product_id));//(std::unique_ptr<neroshop::Product>(new neroshop::Product(product_id)));
-    neroshop::print("\"" + item_name + "\" has been added to your favorites", 3);//if(std::find(favorites_list.begin(), favorites_list.end(), product_id) == favorites_list.end()) { favorites_list.push_back(product_id); neroshop::print("\"" + item_name + "\" has been added to your favorites", 3); }// this works for a favorite_list that stores integers (product_ids) rather than the item object itself
-#endif    
+    int rescode = database->execute_params("INSERT INTO favorites (user_id, listing_key) VALUES (?1, ?2);", { this->id, listing_key });
+    if(rescode != SQLITE_OK) {
+        neroshop::print("failed to add item to favorites", 1);
+        return;
+    }
+    // store in memory as well
+    favorites.push_back(listing_key);
+    if(std::find(favorites.begin(), favorites.end(), listing_key) != favorites.end()) {
+        neroshop::print("\"" + listing_key + "\" has been added to your favorites", 3);
+    }
 }
 ////////////////////
-void neroshop::User::add_to_favorites(const neroshop::Product& item) {
-    add_to_favorites(item.get_id());
-}
-////////////////////
-void neroshop::User::remove_from_favorites(const std::string& product_id) {
-#if defined(NEROSHOP_USE_POSTGRESQL)
+void neroshop::User::remove_from_favorites(const std::string& listing_key) {
+    db::Sqlite3 * database = neroshop::get_database();
+    
     // check if item has already been removed from favorites so that we don't have to remove it more than once
-    std::string item_name = database->get_text_params("SELECT name FROM item WHERE id = $1", { product_id });
-    bool favorited = (database->get_text_params("SELECT EXISTS(SELECT product_ids FROM favorites WHERE $1 = ANY(product_ids) AND user_id = $2)", { product_id, std::to_string(this->id) }) == "t") ? true : false;
-    if(!favorited) return; // exit function ////{ neroshop::print("\"" + item_name + "\" was not found in your favorites list", 2); return; }
-    // remove item from favorites
-    database->execute_params("UPDATE favorites SET product_ids = array_remove(product_ids, $1::integer) WHERE user_id = $2", { product_id, std::to_string(this->id) });
+    bool favorited = database->get_integer_params("SELECT EXISTS(SELECT listing_key FROM favorites WHERE listing_key = ?1 AND user_id = ?2)", { listing_key, this->id });
+    if(!favorited) {
+        auto it = std::find(favorites.begin(), favorites.end(), listing_key);
+        if (it != favorites.end()) { favorites.erase(it); } // remove from vector if found in-memory, but not found in database
+        neroshop::print("\"" + listing_key + "\" is not in your favorites", 2);
+        return;
+    }
+    // remove item from favorites (database)
+    int rescode = database->execute_params("DELETE FROM favorites WHERE listing_key = ?1 AND user_id = ?2;", { listing_key, this->id });
+    if (rescode != SQLITE_OK) {
+        neroshop::print("failed to remove item from favorites", 1);
+        return;
+    }
     // remove from vector as well
-    for(const auto & favorites : favorites_list) {
-        if(favorites->get_id() != product_id) continue; // skip items whose ids do the match the product_id to be deleted
-        auto it = std::find(favorites_list.begin(), favorites_list.end(), favorites);
-        int item_index = it - favorites_list.begin();//std::cout << "favorites_list item index: " << item_index << std::endl;
-        favorites_list.erase(favorites_list.begin() + item_index);
-        if(std::find(favorites_list.begin(), favorites_list.end(), favorites) == favorites_list.end()) neroshop::print("\"" + item_name + "\" has been removed from your favorites", 1); // confirm that item has been removed from favorites_list
-    }    
-#endif        
-}
-////////////////////
-void neroshop::User::remove_from_favorites(const neroshop::Product& item) {
-    remove_from_favorites(item.get_id());
+    auto it = std::find(favorites.begin(), favorites.end(), listing_key);
+    if (it != favorites.end()) {
+        favorites.erase(it);
+        if(std::find(favorites.begin(), favorites.end(), listing_key) == favorites.end()) neroshop::print("\"" + listing_key + "\" has been removed from your favorites", 1); // confirm that item has been removed from favorites
+    }
 }
 ////////////////////
 void neroshop::User::clear_favorites() {
-#if defined(NEROSHOP_USE_POSTGRESQL)
-    // first check if array is empty
-    int is_empty = database->get_integer_params("SELECT COUNT(*) FROM favorites WHERE product_ids = '{}' AND user_id = $1", { std::to_string(this->id) });
-    if(is_empty) return; // array is empty so that means there is nothing to delete, exit function
+    db::Sqlite3 * database = neroshop::get_database();
+    
+    // first check if favorites (database table) is empty
+    int favorites_count = database->get_integer_params("SELECT COUNT(*) FROM favorites WHERE user_id = ?1", { this->id });
+    if(favorites_count <= 0) return; // table is empty so that means there is nothing to delete, exit function
     // clear all items from favorites
-    database->execute_params("UPDATE favorites SET product_ids = '{}' WHERE user_id = $1", { std::to_string(this->id) });
+    database->execute_params("DELETE FROM favorites WHERE user_id = ?1", { this->id });
     // clear favorites from vector as well
-    favorites_list.clear();
-    if(favorites_list.empty()) neroshop::print("your favorites have been cleared");// confirm that favorites_list has been cleared
-#endif        
+    favorites.clear();
+    if(favorites.empty()) neroshop::print("your favorites have been cleared"); // confirm that favorites has been cleared
 }
 ////////////////////
 void neroshop::User::load_favorites() {
-#if defined(NEROSHOP_USE_POSTGRESQL)
-    std::string command = "SELECT unnest(product_ids) FROM favorites WHERE user_id = $1";
-    std::vector<const char *> param_values = { std::to_string(this->id).c_str() };
-    PGresult * result = PQexecParams(database->get_handle(), command.c_str(), 1, nullptr, param_values.data(), nullptr, nullptr, 0);
-    int rows = PQntuples(result);//if(rows < 1) { PQclear(result); return; }
-    if (PQresultStatus(result) != PGRES_TUPLES_OK) {
-        neroshop::print("User::load_favorites(): Your favorites list is empty", 2);        
-        PQclear(result);//exit(1);
-        return; // exit so that we don't double free "result"
+    favorites.clear();    
+    db::Sqlite3 * database = neroshop::get_database();
+    std::string command = "SELECT DISTINCT listing_key FROM favorites WHERE user_id = ?1;";
+    sqlite3_stmt * stmt = nullptr;
+    // Prepare (compile) statement
+    if(sqlite3_prepare_v2(database->get_handle(), command.c_str(), -1, &stmt, nullptr) != SQLITE_OK) {
+        neroshop::print("sqlite3_prepare_v2: " + std::string(sqlite3_errmsg(database->get_handle())), 1);
+        return;
     }
-    for(int i = 0; i < rows; i++) {
-        int product_id = std::stoi(PQgetvalue(result, i, 0));
-        favorites_list.push_back(std::make_shared<neroshop::Product>(product_id));//(std::unique_ptr<neroshop::Product>(new neroshop::Product(product_id))); // store favorited_items for later use
-        neroshop::print("Favorited item (id: " + product_id + ") has been loaded");
+    // Bind this->id to first argument
+    if(sqlite3_bind_text(stmt, 1, this->id.c_str(), this->id.length(), SQLITE_STATIC) != SQLITE_OK) {
+        neroshop::print("sqlite3_bind_text (arg: 1): " + std::string(sqlite3_errmsg(database->get_handle())), 1);
+        sqlite3_finalize(stmt);
+        return;
+    }    
+    
+    while(sqlite3_step(stmt) == SQLITE_ROW) {
+        for(int i = 0; i < sqlite3_column_count(stmt); i++) {
+            std::string listing_key = (sqlite3_column_text(stmt, i) == nullptr) ? "NULL" : reinterpret_cast<const char *>(sqlite3_column_text(stmt, i));
+            if(listing_key == "NULL") continue; // Skip invalid columns            
+            favorites.push_back(listing_key); // store favorited listings for later use
+            if(std::find(favorites.begin(), favorites.end(), listing_key) != favorites.end()) {
+                neroshop::print("Favorited item (" + listing_key + ") has been loaded");
+            }
+        }
     }
-    PQclear(result);
-#endif    
+    
+    sqlite3_finalize(stmt);
 }
 ////////////////////
 ////////////////////
@@ -690,20 +696,16 @@ std::vector<neroshop::Order *> neroshop::User::get_order_list() const {
 }
 ////////////////////
 ////////////////////
-neroshop::Product * neroshop::User::get_favorite(unsigned int index) const {
-    if(index > (favorites_list.size() - 1)) throw std::out_of_range("neroshop::User::get_favorites(): attempt to access invalid index");
-    return favorites_list[index].get();
+std::string neroshop::User::get_favorite(unsigned int index) const {
+    if(index > (favorites.size() - 1)) throw std::out_of_range("neroshop::User::get_favorites(): attempt to access invalid index");
+    return favorites[index];
 }
 ////////////////////
 unsigned int neroshop::User::get_favorites_count() const {
-    return favorites_list.size();
+    return favorites.size();
 }
 ////////////////////
-std::vector<neroshop::Product *> neroshop::User::get_favorites_list() const {
-    std::vector<neroshop::Product *> favorites = {};
-    for(const auto & item : favorites_list) {//for(int f = 0; f < favorites_list.size(); f++) {
-        favorites.push_back(item.get());//(favorites_list[f].get());
-    }
+std::vector<std::string> neroshop::User::get_favorites() const {
     return favorites;
 }
 ////////////////////
@@ -906,21 +908,13 @@ bool neroshop::User::has_purchased(const std::string& product_id) { // for regis
     return false;    
 }
 ////////////////////
-bool neroshop::User::has_purchased(const neroshop::Product& item) {
-    return has_purchased(item.get_id());
-}
-////////////////////
-bool neroshop::User::has_favorited(const std::string& product_id) {
+bool neroshop::User::has_favorited(const std::string& listing_key_or_id) {
     // since we loaded the favorites into memory when the app launched, we should be able to access the pre-loaded favorites and any newly added favorites in the current session without performing any database queries/operations
-    for(const auto & favorites : favorites_list) {
-        // if any favorites_list items' ids matches "product_id" then return true
-        if(favorites->get_id() == product_id) return true;
+    for(const auto & favorite : favorites) {
+        // if any favorites items' ids matches "product_id" then return true
+        if(favorite == listing_key_or_id) return true;
     }
-    return false;////return (std::find(favorites_list.begin(), favorites_list.end(), product_id) != favorites_list.end()); // this is good for when storing favorites as integers (product_ids)
-}
-////////////////////
-bool neroshop::User::has_favorited(const neroshop::Product& item) {
-    return has_favorited(item.get_id());
+    return false;////return (std::find(favorites.begin(), favorites.end(), product_id) != favorites.end()); // this is good for when storing favorites as integers (product_ids)
 }
 ////////////////////
 ////////////////////

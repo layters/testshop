@@ -141,9 +141,9 @@ GridView {
             anchors.rightMargin: 5//10
             anchors.top: parent.top
             anchors.topMargin: 5//10
-            property bool disabled: true
+            property bool disabled: !User.hasFavorited(modelData.key)
             icon.source: "qrc:/assets/images/heart.png"
-            icon.color: NeroshopComponents.Style.disabledColor//"#ffffff"
+            icon.color: heartIconButton.disabled ? "#808080" : "#e05d5d"
             icon.height: 24; icon.width: 24
             background: Rectangle {
                 color: "transparent"
@@ -154,10 +154,12 @@ GridView {
                 if(disabled) {
                     disabled = false
                     icon.color = "#e05d5d"
+                    User.addToFavorites(modelData.key)
                 }
                 else {
                     disabled = true
-                    icon.color = NeroshopComponents.Style.disabledColor
+                    icon.color = "#808080"
+                    User.removeFromFavorites(modelData.key)
                 }
             }
             MouseArea {

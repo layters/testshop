@@ -69,8 +69,10 @@ public:
     Q_INVOKABLE void createOrder(const QString& shipping_address);
     Q_INVOKABLE void rateItem(const QString& product_id, int stars, const QString& comments);//, const QString& signature);
     Q_INVOKABLE void rateSeller(const QString& seller_id, int score, const QString& comments);//, const QString& signature);
-    //Q_INVOKABLE void addToFavorites();
-    //Q_INVOKABLE void removeFromFavorites();
+    
+    Q_INVOKABLE void addToFavorites(const QString& listing_key);
+    Q_INVOKABLE void removeFromFavorites(const QString& listing_key);
+    Q_INVOKABLE bool hasFavorited(const QString& listing_key);
     
     //Q_INVOKABLE void setID(const QString& id);
     //Q_INVOKABLE void setWallet(neroshop::WalletController * wallet); // get the actual wallet from the controller then set it as the wallet

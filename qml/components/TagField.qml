@@ -104,7 +104,7 @@ Item {
             Layout.preferredHeight: 50//height: 30
             placeholderText: "Add tags (comma-separated)"
     
-            onAccepted: {
+            onEditingFinished: {
                 if (tagInput.text.trim() !== "") {
                     let tags = tagInput.text.split(",")
                     tags = tags.map(function(tag) { return tag.trim() })
