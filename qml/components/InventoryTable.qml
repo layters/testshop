@@ -4,7 +4,7 @@ import QtQuick.Layouts 1.12
 
 import FontAwesome 1.0
 
-//import neroshop.namespace 1.0
+import neroshop.InventorySorting 1.0
 
 import "." as NeroshopComponents
 
@@ -142,6 +142,7 @@ Item {
             property real cellHeight: 100
             property real cellRadius: 0////table.titleBoxRadius
             property string cellColor: (NeroshopComponents.Style.darkTheme) ? (NeroshopComponents.Style.themeName == "PurpleDust" ? "#17171c" : "#181a1b") : "#c9c9cd"//"transparent"//table.columnColor
+            //property int currentSorting: Inventory.SortNone
             ////contentHeight: childrenRect.height
             ////Component.onCompleted: console.log(Neroshop.InventorySorting) // C++ enum
             ScrollBar.vertical: ScrollBar { } // ?
@@ -157,33 +158,33 @@ Item {
                 }
                 return selectedItems
             }
-            function getSelectedItemsProductIds() {
-                let selectedItemsProductIds = []
+            function getSelectedItemsListingKeys() {
+                let selectedItemsListingKeys = []
                 for(let index = 0; index < listView.count; ++index) {
                     let listItem = listView.itemAtIndex(index)
                     if(listItem == null || listItem == undefined) continue; // skip invalid values
                     if(listItem.checked) {
-                        selectedItemsProductIds[index] = listItem.productId
-                        console.log((listItem.children[1].children[2].text) + (" (" + listItem.productId + ")"), " selected")
+                        selectedItemsListingKeys[index] = listItem.listingKey
+                        console.log((listItem.children[1].children[2].text) + (" (" + listItem.listingKey + ")"), " selected")
                     }
                 }
-                return selectedItemsProductIds
+                return selectedItemsListingKeys
             }
             function removeSelectedItems() {
-                const selectedItemsProductIds = getSelectedItemsProductIds()
-                User.delistProducts(selectedItemsProductIds)
+                const selectedItemsListingKeys = getSelectedItemsListingKeys()
+                User.delistProducts(selectedItemsListingKeys)
                 // User.delistProduct fails to delete all selected items and only deletes one of the selected item (at the top of list)
                 // This is due to the model changing every time we emit the signal
                 // Hence the creation of User.delistProducts (notice the s) which solves the issue
             }
-            model: showOutOfStockProductsBox.checked ? User.inventory : User.inventoryInStock
+            model: showOutOfStockProductsBox.checked ? User.inventory : User.getInventory(Inventory.SortByAvailability)
             delegate: Rectangle {
                 width: listView.width
                 height: listView.cellHeight
                 color: listView.cellColor
                 border.color: "transparent"//table.columnBorderColor
                 radius: listView.cellRadius
-                property string productId: modelData.product_id
+                property string listingKey: modelData.key
                 property alias rowItem: delegateRow
                 property bool checked: delegateRow.children[0].checked
                 Rectangle {
@@ -209,11 +210,28 @@ Item {
                         color: "transparent"
                         //border.color: "royalblue"
                         Image {
-                            source: "file:///" + modelData.product_image_file
+                            id: productImage
                             anchors.verticalCenter: parent.verticalCenter
                             width: parent.width; height: parent.height - 10
                             fillMode: Image.PreserveAspectFit
                             mipmap: true
+                            asynchronous: true
+                            onStatusChanged: {
+                                if (productImage.status === Image.Error) {
+                                    // Handle the error by displaying a fallback or placeholder image
+                                    source = "image://listing?id=%1&image_id=%2".arg(modelData.key).arg("thumbnail.jpg")
+                                }
+                            }
+                            // Wait for a short delay before attempting to load the actual image (which is created after its source is loaded :X)
+                            Timer {
+                                id: imageTimer
+                                interval: 200
+                                running: true
+                                repeat: false
+                                onTriggered: {
+                                    productImage.source = "image://listing?id=%1&image_id=%2".arg(modelData.key).arg(modelData.product_images[0].name)
+                                }
+                            }
                         }
                     }     
                     Label {
@@ -235,15 +253,52 @@ Item {
                         font.bold: true
                         elide: Label.ElideRight
                     }
-                    Label {
+                    Item {
                         x: productStockQtyColumn.x + (productStockQtyColumn.width - this.width) / 2//productStockQtyColumn.x
                         anchors.verticalCenter: parent.verticalCenter
+                    Label {
+                        ////x: productStockQtyColumn.x + (productStockQtyColumn.width - this.width) / 2//productStockQtyColumn.x
+                        ////anchors.verticalCenter: parent.verticalCenter
                         text: modelData.quantity
-                        ////Layout.fillWidth: true
+                        visible: true
+                        //Layout.fillWidth: true
                         color: (NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000"
                         font.bold: true
                         elide: Label.ElideRight
                     }
+                    TextField {//
+                        ////x: productStockQtyColumn.x + (productStockQtyColumn.width - this.width) / 2//productStockQtyColumn.x
+                        ////anchors.verticalCenter: parent.verticalCenter
+                        text: modelData.quantity
+                        visible: false
+                        //Layout.fillWidth: true
+                        color: (NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000"
+                        font.bold: true
+                        // TextField properties
+                        width: contentWidth + 20
+                        selectByMouse: true
+                        inputMethodHints: Qt.ImhDigitsOnly
+                        validator: RegExpValidator{ regExp: /[0-9]*/ }
+                        background: Rectangle { 
+                            color: "transparent"
+                            border.color: "#ffffff"
+                            border.width: parent.activeFocus ? 2 : 1
+                        }
+                        function adjustQuantity() {
+                            if(Number(this.text) >= 999999999) {
+                                this.text = 999999999
+                            }
+                            if(Number(this.text) <= 0) {
+                                this.text = 0
+                            }
+                        }
+                        onEditingFinished: {
+                            adjustQuantity()
+                            User.setStockQuantity(modelData.key, this.text);
+                            parent.forceActiveFocus()
+                        }
+                    }
+                    } // Item
                     Button {
                         x: actionsColumn.x + (actionsColumn.width - this.width) / 2//actions.x
                         anchors.verticalCenter: parent.verticalCenter
@@ -272,7 +327,7 @@ Item {
                             onPressed: mouse.accepted = false // without this, Button.onClicked won't work
                             cursorShape: Qt.PointingHandCursor
                         }
-                        onClicked: User.delistProduct(modelData.product_id)
+                        onClicked: User.delistProduct(modelData.key)
                     }
                     /*Label {
                         x: ?Column.x + (?Column.width - this.width) / 2//?.x

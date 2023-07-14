@@ -194,7 +194,7 @@ Page {
                     Text {
                         id: stockStatusText
                         property bool status: (stock_available > 0)
-                        property int stock_available: productPage.model.quantity//Backend.getStockAvailable(productPage.model.product_id)
+                        property int stock_available: productPage.model.quantity
                         text: qsTr(status ? "In stock" : "Out of stock")
                         color: status ? "#31652c" : "#d61f1f"
                         font.bold: true

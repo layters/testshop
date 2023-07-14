@@ -316,7 +316,7 @@ int neroshop::Node::put(const std::string& key, const std::string& value) {
         return true;
     }
     
-    // If node has the key but the value has been altered, verify data integrity or ownership then update the data
+    // If node has the key but the value has been altered, verify data integrity and ownership then update the data
     if (has_key(key) && get(key) != value) {
         std::cout << "Updating value for key (" << key << ")\n";
         return set(key, value);
@@ -359,17 +359,21 @@ int neroshop::Node::set(const std::string& key, const std::string& value) {
     nlohmann::json json = nlohmann::json::parse(value); // Already validated so we just need to parse it without checking for errors
     // Detect when key is the same but the value has changed
     if(has_key(key)) {
-        std::string preexisting_value = find_value(key);//std::cout << "preexisting_value: " << preexisting_value << std::endl;
+        std::string current_value = find_value(key);//std::cout << "preexisting_value: " << preexisting_value << std::endl;
             
         // Compare the preexisting value with the new value
-        if (preexisting_value != value) {
-            std::cout << "Value modification detected. Performing signature verification ...\n";//std::cout << "Value mismatch. Skipping ...\n";//return false;}
+        if (current_value != value) {
+            ////std::cout << "Value modification detected. Performing signature verification ...\n";//std::cout << "Value mismatch. Skipping ...\n";//return false;}
             
             // Verify signature using user's public key (required for account data and listing data)
             if (json.contains("signature")) {
                 assert(json["signature"].is_string());
                 std::string signature = json["signature"].get<std::string>();//neroshop::base64_decode(json["signature"].get<std::string>());
-            
+                
+                // READ THIS!!
+                // Unfortunately data verification can only be done on the client side since the wallet is used for verification and it only exists on the client side
+                // The only way to verify from the daemon backend would be to use the RSA keys instead of Monero keys for signing/verifying
+                
                 // Get the public key and other account data from the user
                 /////std::string public_key = json["public_key"].get<std::string>();//user.get_public_key(); // Get the public key from the user object
                 ////std::string user_id = json["monero_address"].get<std::string>();//user.get_id(); // Get the user ID from the user object
@@ -831,9 +835,25 @@ void neroshop::Node::republish() {
 
 //-----------------------------------------------------------------------------
 
+static bool is_expired(const std::string& expiration_date) {
+    // Get the current UTC time
+    std::time_t current_time = std::time(nullptr);
+    std::tm* current_tm = std::gmtime(&current_time);
+
+    // Parse the expiration date string
+    std::tm expiration_tm{};
+    std::istringstream ss(expiration_date);
+    ss >> std::get_time(&expiration_tm, "%Y-%m-%d %H:%M:%S");
+
+    // Compare the expiration time with the current time
+    return (std::mktime(&expiration_tm) <= std::mktime(current_tm));
+}
+
 bool neroshop::Node::validate(const std::string& key, const std::string& value) {
+    assert(key.length() == 64 && "Key length is not 64 characters");
     assert(!value.empty() && "Value is empty");
-    // Ensure that the value is a valid JSON
+    
+    // Ensure that the value is valid JSON
     nlohmann::json json;
     try {
         json = nlohmann::json::parse(value);
@@ -841,10 +861,27 @@ bool neroshop::Node::validate(const std::string& key, const std::string& value) 
         std::cerr << "JSON parsing error: " << e.what() << std::endl;
         return false; // Invalid value, return false
     }
+    
     // Make sure value contains a metadata field
     if(!json.contains("metadata")) {
         std::cerr << "No metadata found\n";
         return false;
+    }
+    
+    // Check whether data is expired so we don't store it
+    if(json.contains("expiration_date")) {
+        assert(json["expiration_date"].is_string());
+        std::string expiration_date = json["expiration_date"].get<std::string>();
+        if(is_expired(expiration_date)) {
+            std::cerr << "Data has expired (exp date: " << expiration_date << " UTC)\n";
+            // Remove the data from hash table if it was previously stored
+            if(has_key(key)) {
+                if(remove(key) == true) {
+                    std::cout << "Expired data with key (" << key << ") has been removed from hash table\n";
+                }
+            }
+            return false;
+        }
     }
     
     return true;
@@ -877,6 +914,7 @@ void neroshop::Node::periodic_refresh() {
 //-----------------------------------------------------------------------------
 
 void neroshop::Node::periodic_check() {
+    std::vector<std::string> dead_node_ids {};
     while(true) {
         {
         // Acquire the lock before accessing the routing table
@@ -905,6 +943,7 @@ void neroshop::Node::periodic_check() {
                 if(node->is_dead()) {
                     std::cout << "\033[0;91m" << node->public_ip_address << ":" << node_port << "\033[0m marked as dead\n";
                     if(routing_table->has_node(node->public_ip_address, node_port)) {
+                        dead_node_ids.push_back(node->get_id());
                         routing_table->remove_node(node->public_ip_address, node_port); // Already has internal write_lock
                     }
                 }
@@ -913,6 +952,9 @@ void neroshop::Node::periodic_check() {
             // read_lock is released here
         }
         
+        on_dead_node(dead_node_ids);
+        // Clear the vector for the next iteration
+        dead_node_ids.clear();
         // Sleep for a specified interval
         std::this_thread::sleep_for(std::chrono::seconds(NEROSHOP_DHT_PERIODIC_CHECK_INTERVAL));
     }
@@ -960,7 +1002,7 @@ void neroshop::Node::periodic_check() {
 
 //-----------------------------------------------------------------------------
 
-void neroshop::Node::on_ping_callback(const std::vector<uint8_t>& buffer, const struct sockaddr_in& client_addr) {
+void neroshop::Node::on_ping(const std::vector<uint8_t>& buffer, const struct sockaddr_in& client_addr) {
     if (buffer.size() > 0) {
         nlohmann::json message = nlohmann::json::from_msgpack(buffer);
         if (message.contains("query") && message["query"] == "ping") {
@@ -975,6 +1017,47 @@ void neroshop::Node::on_ping_callback(const std::vector<uint8_t>& buffer, const 
                 // Redistribute your indexing data to the new node that recently joined the network to make product/service listings more easily discoverable by the new node
                 send_map((sender_ip == this->public_ip_address) ? "127.0.0.1" : sender_ip, sender_port);
             }
+        }
+    }
+}
+
+//-----------------------------------------------------------------------------
+
+void neroshop::Node::on_dead_node(const std::vector<std::string>& node_ids) {
+    for (const auto& dead_node_id : node_ids) {
+        //std::cout << "Processing dead node ID: " << dead_node_id << std::endl;
+
+        auto closest_nodes = find_node(dead_node_id, NEROSHOP_DHT_REPLICATION_FACTOR);
+        
+        for (auto& routing_table_node : closest_nodes) {
+            if (routing_table_node == nullptr) continue;
+            std::string routing_table_node_ip = (routing_table_node->get_ip_address() == this->public_ip_address) ? "127.0.0.1" : routing_table_node->get_ip_address();
+            uint16_t routing_table_node_port = routing_table_node->get_port();
+            
+            // Skip the bootstrap nodes (as they are not involved in the replacement of dead nodes)
+            if (routing_table_node->is_bootstrap_node()) continue;
+                
+            // Send find_node to make up for dead nodes
+            auto nodes = send_find_node(dead_node_id, routing_table_node_ip, routing_table_node_port);
+            if(nodes.empty()) {
+                std::cerr << "find_node: No nodes found\n"; continue;
+            }
+                
+            // Then add nodes to the routing table
+            for (auto node : nodes) {
+                if (node->get_id() == dead_node_id) continue; // ignore the dead node
+                // Ping the received nodes before adding them
+                std::string node_ip = (node->get_ip_address() == this->public_ip_address) ? "127.0.0.1" : node->get_ip_address();
+                uint16_t node_port = node->get_port();
+                if(!ping(node_ip, node_port)) {
+                    node->check_counter++;
+                    continue; // Skip the node and continue with the next iteration
+                }
+                // Update the routing table with the received nodes
+                if(!routing_table->has_node(node->public_ip_address, node_port)) {
+                    routing_table->add_node(std::unique_ptr<neroshop::Node>(node));
+                }
+            }    
         }
     }
 }
@@ -1024,7 +1107,7 @@ void neroshop::Node::run() {
             }
         
             // Add the node that pinged this node to the routing table
-            on_ping_callback(buffer, client_addr);
+            on_ping(buffer, client_addr);
         };
         
         // Create a detached thread to handle the request
@@ -1097,7 +1180,7 @@ void neroshop::Node::run_optimized() {
                     }
                 
                     // Add the node that pinged this node to the routing table
-                    on_ping_callback(buffer, client_addr);
+                    on_ping(buffer, client_addr);
                 };
                 
                 // Create a detached thread to handle the request

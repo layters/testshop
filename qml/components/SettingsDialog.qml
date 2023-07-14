@@ -221,7 +221,7 @@ Popup {
             }
             
             TabButton { 
-                text: (hideTabText) ? qsTr(FontAwesome.monero) : qsTr("Node")//.arg(FontAwesome.monero)
+                text: (hideTabText) ? qsTr(FontAwesome.monero) : qsTr("Network")//.arg(FontAwesome.monero)
                 width: implicitWidth + 20
                 onClicked: {
                     settingsStack.currentIndex = 1

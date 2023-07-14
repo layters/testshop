@@ -1,4 +1,4 @@
-# neroshop - WORK IN PROGRESS
+# neroshop - WORK IN PROGRESS / ON HOLD
 [![banner](assets/images/appicons/LogoLight250x250.png)](https://github.com/larteyoh/testshop "neroshop logo")
 
 
@@ -55,7 +55,7 @@ The name _neroshop_ is a combination of the words _nero_, which is Italian for _
 -->
 
 ## Feature Status
-- [x] Distributed P2P network (bootstrap nodes needed!!!)
+- [x] Distributed P2P network (need help with I2P integration!!!)
 - [ ] Buy and sell products and services with Monero
 - [x] No KYC
 - [ ] No censorship (censorship-resistant)
@@ -70,11 +70,11 @@ The name _neroshop_ is a combination of the words _nero_, which is Italian for _
 - [x] Option to run a local Monero node or connect to remote Monero nodes
 - [ ] Payment address QR codes containing Monero URIs
 - [ ] Option to choose between sending funds directly to a seller or by using a multisignature escrow.
-- [ ] Native Tor and I2P support 
-    - tor daemon can be installed manually and i2pd will be built-in
+- [ ] Native I2P support 
+    - i2pd will be built-in (statically linked)
 - [x] Seller reputation system
 - [x] Product rating system
-- [ ] Wishlists
+- [x] Wishlists
 - [x] Built-in SQLite-powered search engine that can find any products or sellers
 - [ ] Full-featured and user-friendly GUI application (WIP)
 
@@ -230,7 +230,7 @@ This project is licensed under the [GNU General Public License v3.0 (GPLv3)](LIC
 
 
 ## Donations
-You may support the neroshop project directly by donating to any of the addresses below. Received payments will be used to reward developers for their contributions to the project (mostly by completing bounties) and will also be used to fund our official website domain name.
+Donate if you like, to any of the addresses below. Received payments will be used to reward developers for their contributions to the project (mostly by completing bounties) and will also be used to keep the `neroshop.org` domain running.
 
 **Monero (XMR):**
 ```

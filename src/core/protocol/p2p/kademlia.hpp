@@ -3,7 +3,7 @@
 #include "node.hpp"
 #include "routing_table.hpp"
 
-// TODO: DHT blacklisted nodes and probably callbacks/periodic node liveliness checks
+// TODO: DHT blacklisted nodes
 
 namespace neroshop {
 
@@ -25,6 +25,7 @@ enum class KadResultCode {
     NetworkError, // A network error occurred during the operation.
     InvalidRequest,
     ParseError,
+    DataVerificationFailed,
 };
 
 namespace kademlia {

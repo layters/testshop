@@ -50,13 +50,11 @@ void neroshop::Mapper::add(const std::string& key, const std::string& value) {
         // Store user-related data in the user_ids and display_names unordered maps
         if (json.contains("monero_address") && json["monero_address"].is_string()) {
             std::string user_id = json["monero_address"].get<std::string>();
-            user_ids[user_id].push_back(key);
-            std::cout << "user_id (" << user_id << ") has been mapped to account key (" << key << ")\n";
+            user_ids[user_id].push_back(key);//std::cout << "user_id (" << user_id << ") has been mapped to account key (" << key << ")\n";
         }
         if (json.contains("display_name") && json["display_name"].is_string()) {
             std::string display_name = json["display_name"].get<std::string>();
-            display_names[display_name].push_back(key);
-            std::cout << "display_name (" << display_name << ") has been mapped to account key (" << key << ")\n";
+            display_names[display_name].push_back(key);//std::cout << "display_name (" << display_name << ") has been mapped to account key (" << key << ")\n";
         }
     }
     //-----------------------------------------------

@@ -730,18 +730,48 @@ QVariantList neroshop::Backend::getSellerRatings(const QString& user_id) {
 //----------------------------------------------------------------
 //----------------------------------------------------------------
 QString neroshop::Backend::getDisplayNameByUserId(const QString& user_id) {
+    Client * client = Client::get_main_client();
+    
     db::Sqlite3 * database = neroshop::get_database();
     if(!database) throw std::runtime_error("database is NULL");
-    std::string display_name = database->get_text_params("SELECT name FROM users WHERE monero_address = $1", { user_id.toStdString() });
-    return QString::fromStdString(display_name);
+    std::string display_name = "";
+    std::string key = database->get_text_params("SELECT key FROM mappings WHERE search_term = $1 AND content = 'account' LIMIT 1;", { user_id.toStdString() });
+    if(key.empty()) return user_id;
+    // Get the value of the corresponding key from the DHT
+    std::string response;
+    client->get(key, response); // TODO: error handling
+    std::cout << "Received response (get): " << response << "\n";
+    // Parse the response
+    nlohmann::json json = nlohmann::json::parse(response);
+    if(json.contains("error")) {
+        int rescode = database->execute_params("DELETE FROM mappings WHERE key = ?1", { key });
+        if(rescode != SQLITE_OK) neroshop::print("sqlite error: DELETE failed", 1);
+        return user_id; // Key is lost or missing from DHT, skip to next iteration
+    }
+            
+    const auto& response_obj = json["response"];
+    assert(response_obj.is_object());
+    if (response_obj.contains("value") && response_obj["value"].is_string()) {
+        const auto& value = response_obj["value"].get<std::string>();
+        nlohmann::json value_obj = nlohmann::json::parse(value);
+        assert(value_obj.is_object());//std::cout << value_obj.dump(4) << "\n";
+        std::string metadata = value_obj["metadata"].get<std::string>();
+        if (metadata != "user") { std::cerr << "Invalid metadata. \"user\" expected, got \"" << metadata << "\" instead\n"; return user_id; }
+        if(value_obj.contains("display_name") && value_obj["display_name"].is_string()) {
+            display_name = value_obj["display_name"].get<std::string>();
+        }
+        return (display_name.empty()) ? user_id : QString::fromStdString(display_name);
+    }
+    
+    return user_id;
 }
 
 // un-tested
 QString neroshop::Backend::getKeyByUserId(const QString& user_id) {
     db::Sqlite3 * database = neroshop::get_database();
     if(!database) throw std::runtime_error("database is NULL");
-    std::string display_name = database->get_text_params("SELECT key FROM mappings WHERE search_term = $1 AND content = 'account' LIMIT 1;", { user_id.toStdString() });
-    return QString::fromStdString(display_name);
+    std::string key = database->get_text_params("SELECT key FROM mappings WHERE search_term = $1 AND content = 'account' LIMIT 1;", { user_id.toStdString() });
+    return QString::fromStdString(key);
 }
 //----------------------------------------------------------------
 //----------------------------------------------------------------
@@ -753,11 +783,39 @@ int neroshop::Backend::getCartMaximumQuantity() {
     return neroshop::Cart::get_max_quantity();
 }
 //----------------------------------------------------------------
+// not really used at the moment
 int neroshop::Backend::getStockAvailable(const QString& product_id) {
+    Client * client = Client::get_main_client();
+
     db::Sqlite3 * database = neroshop::get_database();
     if(!database) throw std::runtime_error("database is NULL");
-    int quantity = database->get_integer_params("SELECT quantity FROM listings WHERE product_id = $1 AND quantity > 0", { product_id.toStdString() });
-    return quantity;
+    std::string key = database->get_text_params("SELECT key FROM mappings WHERE search_term = $1 AND content = 'listing'", { product_id.toStdString() });
+    if(key.empty()) return 0;
+    // Get the value of the corresponding key from the DHT
+    std::string response;
+    client->get(key, response); // TODO: error handling
+    std::cout << "Received response (get): " << response << "\n";
+    // Parse the response
+    nlohmann::json json = nlohmann::json::parse(response);
+    if(json.contains("error")) {
+        int rescode = database->execute_params("DELETE FROM mappings WHERE key = ?1", { key });
+        if(rescode != SQLITE_OK) neroshop::print("sqlite error: DELETE failed", 1);
+        return 0; // Key is lost or missing from DHT, return 
+    }    
+    
+    const auto& response_obj = json["response"];
+    assert(response_obj.is_object());
+    if (response_obj.contains("value") && response_obj["value"].is_string()) {
+        const auto& value = response_obj["value"].get<std::string>();
+        nlohmann::json value_obj = nlohmann::json::parse(value);
+        assert(value_obj.is_object());//std::cout << value_obj.dump(4) << "\n";
+        std::string metadata = value_obj["metadata"].get<std::string>();
+        if (metadata != "listing") { std::cerr << "Invalid metadata. \"listing\" expected, got \"" << metadata << "\" instead\n"; return 0; }
+        int quantity = value_obj["quantity"].get<int>();
+        return quantity;
+    }
+    
+    return 0;
 }
 //----------------------------------------------------------------
 //----------------------------------------------------------------
@@ -825,7 +883,7 @@ QVariantList neroshop::Backend::getInventory(const QString& user_id) {
 }
 //----------------------------------------------------------------
 //----------------------------------------------------------------
-QVariantList neroshop::Backend::getSearchResults(const QString& searchTerm, int count) {
+QVariantList neroshop::Backend::getListingsBySearchTerm(const QString& searchTerm, int count) {
     // Transition from Sqlite to DHT:
     Client * client = Client::get_main_client();
     db::Sqlite3 * database = neroshop::get_database();
@@ -1027,6 +1085,8 @@ QVariantList neroshop::Backend::getListings(ListingSorting sorting) {
         }
     }
     
+    sqlite3_finalize(stmt);
+    
     switch(sorting) {
         case SortNone:
             // Code for sorting by none - do nothing
@@ -1095,8 +1155,6 @@ QVariantList neroshop::Backend::getListings(ListingSorting sorting) {
             // Code for handling unknown sorting value - do nothing
             break;
     }
-    
-    sqlite3_finalize(stmt);
 
     return catalog;    
 }
@@ -1226,16 +1284,6 @@ void neroshop::Backend::createOrder(UserController * user_controller, const QStr
     user_controller->createOrder(shipping_address);
 }
 //----------------------------------------------------------------
-// TODO: run this function periodically
-int neroshop::Backend::deleteExpiredOrders() {
-    db::Sqlite3 * database = neroshop::get_database();
-    if(!database) throw std::runtime_error("database is NULL");
-    // If order is at least 2 years old or older, then it is considered expired. Therefore it must be deleted
-    std::string modifier = "+" + std::to_string(2) + " years";//std::cout << modifier << std::endl;
-    std::string command = "DELETE FROM orders WHERE datetime(created_at, $1) <= datetime('now');";
-    return database->execute_params(command, { modifier }); // 0 = success
-}
-//----------------------------------------------------------------
 //----------------------------------------------------------------
 QVariantList neroshop::Backend::getNodeListDefault(const QString& coin) const {
     QVariantList node_list;
@@ -1349,40 +1397,15 @@ QVariantList neroshop::Backend::validateDisplayName(const QString& display_name)
         }
         return { false, QString::fromStdString(default_message) };
     }
-    
-    // Check database to see if display name is available - might not be necessary as user ids are unique
-    auto name_check_result = checkDisplayName(display_name);
-    if(!name_check_result[0].toBool()) {////if(!Validator::validate_display_name(display_name.toStdString())) return false;
-        bool boolean_result = name_check_result[0].toBool();
-        QString message_result = name_check_result[1].toString();
-        return { boolean_result, message_result };
-    }    
+
     return { true, "" };
-}
-//----------------------------------------------------------------
-// TODO: replace function return type with enum
-QVariantList neroshop::Backend::checkDisplayName(const QString& display_name) const {    
-    db::Sqlite3 * database = neroshop::get_database();
-    if(!database->table_exists("users")) { return {true, ""}; } 
-    std::string name = database->get_text_params("SELECT name FROM users WHERE name = $1 COLLATE NOCASE;", { display_name.toStdString() });
-    if(name.empty()) return { true, "Display name is available for use" };// Name is not taken which means that the user is good to go!
-    // Empty display names are acceptable
-    bool is_name_empty = display_name.isEmpty();
-    if(is_name_empty) return { true, "No display name set" };
-    // Note: both database and input display names are converted to lowercase strings and then compared within the app
-    std::string name_lowercase = QString::fromStdString(name).toLower().toStdString();//QString::fromUtf8(name.data(), name.size()).toLower();
-    std::string display_name_lowercase = display_name.toLower().toStdString();
-    if(name_lowercase == display_name_lowercase) { 
-	    return { false, "This username is already taken" };////result_list << false << QString("This username is already taken");return result_list;
-	}   
-	return { true, "" };
 }
 //----------------------------------------------------------------
 // TODO: replace function return type with enum
 QVariantList neroshop::Backend::registerUser(WalletController* wallet_controller, const QString& display_name, UserController * user_controller) {
     // TODO: Make sure daemon is connected first
     if(!DaemonManager::isDaemonServerBound()) {
-        return { false, "Please wait for the daemon IPC server to connect first" };
+        return { false, "Please wait for the daemon LIPC server to connect first" };
     }
     //---------------------------------------------
     db::Sqlite3 * database = neroshop::get_database();
@@ -1441,16 +1464,16 @@ QVariantList neroshop::Backend::registerUser(WalletController* wallet_controller
     // Store login credentials in DHT
     Client * client = Client::get_main_client();
     // If client is not connect, return error
-    if (!client->is_connected()) return { false, "Not connected to daemon server" };
+    if (!client->is_connected()) return { false, "Not connected to daemon LIPC server" };
     // Serialize user object
     auto data = Serializer::serialize(*user_controller->_user);
     std::string key = data.first;
     std::string value = data.second;
     
     // Send put and receive response
-    std::string put_response;
-    client->put(key, value, put_response);
-    std::cout << "Received response: " << put_response << "\n";
+    std::string response;
+    client->put(key, value, response);
+    std::cout << "Received response (put): " << response << "\n";
 
     //---------------------------------------------
     emit user_controller->userChanged();

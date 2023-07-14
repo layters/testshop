@@ -33,7 +33,7 @@ public:
         SortByMostSales,
     };
     //Q_PROPERTY(int categoryProductCount READ getCategoryProductCount NOTIFY categoryProductCountChanged)
-    //Q_PROPERTY(QVariantList searchResults READ getSearchResults NOTIFY searchResultsChanged)
+    //Q_PROPERTY(QVariantList searchResults READ getListingsBySearchTerm NOTIFY searchResultsChanged)
 
     Q_INVOKABLE QString urlToLocalFile(const QUrl& url) const;
     Q_INVOKABLE void copyTextToClipboard(const QString& text);
@@ -62,7 +62,6 @@ public:
     Q_INVOKABLE bool isWalletDaemonRunning() const;
 
     QVariantList validateDisplayName(const QString& display_name) const; // Validates display name based on regex requirements
-    QVariantList checkDisplayName(const QString& display_name) const; // Checks database for display name availability
     
     Q_INVOKABLE QVariantList registerUser(WalletController* wallet_controller, const QString& display_name, UserController * user_controller);
     Q_INVOKABLE bool loginWithWalletFile(WalletController* wallet_controller, const QString& path, const QString& password, UserController * user_controller);
@@ -74,7 +73,7 @@ public:
     Q_INVOKABLE QVariantList getListingsByCategory(int category_id);
     Q_INVOKABLE QVariantList getListingsByMostRecentLimit(int limit);
     
-    Q_INVOKABLE QVariantList getSearchResults(const QString& search_term, int count = 1000); // count is the maximum number of search results (total). The search results (per page) can be between 10-100 or 50-100
+    Q_INVOKABLE QVariantList getListingsBySearchTerm(const QString& search_term, int count = 1000); // count is the maximum number of search results (total). The search results (per page) can be between 10-100 or 50-100
     
     // Products should be registered so that sellers can list pre-existing products without the need to duplicate a product which is unnecessary and can make the database bloated
     Q_INVOKABLE bool createFolders();
@@ -106,8 +105,6 @@ public:
     Q_INVOKABLE QVariantList getInventory(const QString& user_id);
     
     Q_INVOKABLE void createOrder(UserController * user_controller, const QString& shipping_address);
-    
-    static int deleteExpiredOrders();
 
 signals:
     //void categoryProductCountChanged();//(int category_id);
