@@ -7,7 +7,7 @@ import "." as NeroshopComponents
 Item {
     id: searchBar
     width: childrenRect.width; height: childrenRect.height
-    property var model: Backend.getSearchResults(searchField.text)
+    property var model: Backend.getListingsBySearchTerm(searchField.text)
     TextField {
         id: searchField
         color: (NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000"// textColor

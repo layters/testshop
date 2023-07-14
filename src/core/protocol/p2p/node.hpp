@@ -90,7 +90,8 @@ public:
     void republish();
     bool validate(const std::string& key, const std::string& value); // Validates data before storing it
     //---------------------------------------------------
-    void on_ping_callback(const std::vector<uint8_t>& buffer, const struct sockaddr_in& client_addr);
+    void on_ping(const std::vector<uint8_t>& buffer, const struct sockaddr_in& client_addr);
+    void on_dead_node(const std::vector<std::string>& node_ids);
     ////bool on_keyword_blocked(const std::string& keyword);
     ////bool on_node_blacklisted(const std::string& address);
     ////bool on_data_expired();

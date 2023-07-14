@@ -41,11 +41,9 @@ public:
 	    const std::string& location
 	) const; // adds an item to the inventory
 	////void list_item(const neroshop::Product& item, unsigned int stock_qty, double sales_price = 0.00, std::string currency = "usd", double discount = 0.00, unsigned int discounted_items = 1, unsigned int discount_times = 1, std::string discount_expiry = ""/*"0000-00-00 00:00:00"*/, std::string condition = "new");
-	void delist_item(const std::string& product_id); // deletes an item from the inventory
-	void delist_item(const neroshop::Product& item);
+	void delist_item(const std::string& listing_key); // deletes an item from the inventory
 	// setters - item and inventory-related stuff
-	void set_stock_quantity(const std::string& product_id, unsigned int stock_qty);
-	void set_stock_quantity(const neroshop::Product& item, unsigned int stock_qty);
+	void set_stock_quantity(const std::string& listing_key, int quantity);
 	// setters - wallet-related stuff
 	void set_wallet(const neroshop::Wallet& wallet);// temporary - delete ASAP
 	// getters - seller rating system

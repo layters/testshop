@@ -15,34 +15,36 @@
 #include "../core/seller.hpp"////"../core/user.hpp"
 
 namespace neroshop {
-/*    Q_NAMESPACE // required for meta object creation
+
+class UserController : public QObject, public neroshop::Seller {
+    Q_OBJECT
+    Q_ENUMS(InventorySorting)
+public:
+    UserController(QObject *parent = nullptr);
+    ~UserController();
+    
     enum InventorySorting {
         SortNone = 0,
-        SortByDate,
+        SortByAvailability, // If item is in stock        
+        SortByDateOldest,
+        SortByDateNewest,
         SortByName,
-        SortByQuantity,
-        SortByPrice,
+        SortByQuantitySmallest,
+        SortByQuantityBiggest,
+        SortByPriceLowest,
+        SortByPriceHighest,
         SortByProductCode,
         SortByCategory,
         SortByCondition,
         //TODO: productid, currency, location, color, size, weight, imagefilesize, desc
     };
-    Q_ENUMS(InventorySorting) // register the enum in meta object data
-*/
-class UserController : public QObject, public neroshop::Seller {
-    Q_OBJECT
-public:
-    UserController(QObject *parent = nullptr);
-    ~UserController();
     
     Q_PROPERTY(neroshop::User* user READ getUser NOTIFY userChanged);
     Q_PROPERTY(bool logged READ isUserLogged NOTIFY userLogged);
     Q_PROPERTY(int productsCount READ getProductsCount NOTIFY productsCountChanged);
     Q_PROPERTY(int cartQuantity READ getCartQuantity NOTIFY cartQuantityChanged);
 
-    Q_PROPERTY(QVariantList inventory READ getInventory NOTIFY productsCountChanged);
-    Q_PROPERTY(QVariantList inventoryInStock READ getInventoryInStock NOTIFY productsCountChanged);
-    //Q_PROPERTY(QVariantList inventoryDate READ getInventoryByDate NOTIFY productsCountChanged);
+    Q_PROPERTY(QVariantList inventory READ getInventory NOTIFY inventoryChanged);
     //Q_PROPERTY(QVariantList cart READ getCart NOTIFY cartQuantityChanged);
 
     Q_INVOKABLE QString listProduct(
@@ -62,8 +64,8 @@ public:
         const QString& condition, 
         const QString& location
     );
-    Q_INVOKABLE void delistProduct(const QString& product_id);
-    Q_INVOKABLE void delistProducts(const QStringList& product_ids);
+    Q_INVOKABLE void delistProduct(const QString& listing_key);
+    Q_INVOKABLE void delistProducts(const QStringList& listing_keys);
     Q_INVOKABLE void addToCart(const QString& product_id, int quantity);
     //Q_INVOKABLE void removeFromCart(const QString& product_id, int quantity);
     Q_INVOKABLE void createOrder(const QString& shipping_address);
@@ -74,8 +76,12 @@ public:
     Q_INVOKABLE void removeFromFavorites(const QString& listing_key);
     Q_INVOKABLE bool hasFavorited(const QString& listing_key);
     
+    //Q_INVOKABLE void exportCartData();
+    //Q_INVOKABLE void exportFavoritesData();
+    
     //Q_INVOKABLE void setID(const QString& id);
     //Q_INVOKABLE void setWallet(neroshop::WalletController * wallet); // get the actual wallet from the controller then set it as the wallet
+    Q_INVOKABLE void setStockQuantity(const QString& listing_id, int quantity);
     
     Q_INVOKABLE void uploadAvatar(const QString& filename);
     Q_INVOKABLE bool exportAvatar();
@@ -86,9 +92,7 @@ public:
     //Q_INVOKABLE <type> <function_name>() const;
     Q_INVOKABLE int getCartQuantity() const;
     
-    Q_INVOKABLE QVariantList getInventory() const;
-    Q_INVOKABLE QVariantList getInventoryInStock() const;
-    Q_INVOKABLE QVariantList getInventoryByDate() const;
+    Q_INVOKABLE QVariantList getInventory(InventorySorting sorting = SortNone) const;
 
     Q_INVOKABLE neroshop::User * getUser() const;
     neroshop::Seller * getSeller() const;    
@@ -99,6 +103,7 @@ public:
 signals:
     void userChanged();
     void userLogged();
+    void inventoryChanged(); // for inventory sorting
     void productsCountChanged();
     void cartQuantityChanged();
 private:

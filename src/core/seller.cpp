@@ -96,9 +96,9 @@ std::string neroshop::Seller::list_item(
     std::string value = data.second;//std::cout << "key: " << data.first << "\nvalue: " << data.second << "\n";
     
     // Send put request to neighboring nodes (and your node too JIC)
-    std::string put_response;
-    client->put(key, value, put_response);
-    std::cout << "Received response: " << put_response << "\n";
+    std::string response;
+    client->put(key, value, response);
+    std::cout << "Received response (put): " << response << "\n";
     
     // Return listing key
     return key;
@@ -109,15 +109,54 @@ std::string neroshop::Seller::list_item(
 }*/
 // static_cast<Seller *>(user)->list_item(ball, 50, 8.50, "usd", 0.00, 0, 0, "", "new"); // $0.50 cents off every 2 balls
 ////////////////////
-void neroshop::Seller::delist_item(const std::string& product_id) {
-    neroshop::db::Sqlite3 * database = neroshop::get_database();
-    if(!database) throw std::runtime_error("database is NULL");
-    database->execute_params("DELETE FROM listings WHERE product_id = $1 AND seller_id = $2", { product_id, get_id() }); // update item stock to 0 beforehand or nah?
+void neroshop::Seller::delist_item(const std::string& listing_key) {
+    // Transition from Sqlite to DHT:
+    Client * client = Client::get_main_client();
     // TODO: remove product from table cart_item, table images, table products, and table product_ratings as well
-}
-////////////////////
-void neroshop::Seller::delist_item(const neroshop::Product& item) {
-    delist_item(item.get_id());
+    // Get the value of the corresponding key from the DHT
+    std::string response;
+    client->get(listing_key, response); // TODO: error handling
+    std::cout << "Received response (get): " << response << "\n";
+    // Parse the response
+    nlohmann::json json = nlohmann::json::parse(response);
+    if(json.contains("error")) {
+        neroshop::print("set_stock_quantity: key is lost or missing from DHT", 1);
+        return; // Key is lost or missing from DHT, return
+    }    
+    
+    const auto& response_obj = json["response"];
+    assert(response_obj.is_object());
+    if (response_obj.contains("value") && response_obj["value"].is_string()) {
+        const auto& value = response_obj["value"].get<std::string>();
+        nlohmann::json value_obj = nlohmann::json::parse(value);
+        assert(value_obj.is_object());//std::cout << value_obj.dump(4) << "\n";
+        std::string metadata = value_obj["metadata"].get<std::string>();
+        if (metadata != "listing") { std::cerr << "Invalid metadata. \"listing\" expected, got \"" << metadata << "\" instead\n"; return; }
+        // Verify ownership
+        std::string seller_id = value_obj["seller_id"].get<std::string>();
+        if(seller_id != wallet->get_primary_address()) {
+            neroshop::print("delist_item: you cannot delist this since you are not the listing's creator", 1);
+            return;
+        }
+        // Verify the signature
+        std::string listing_id = value_obj["id"].get<std::string>();
+        std::string signature = value_obj["signature"].get<std::string>();
+        bool verified = wallet->verify_message(listing_id, signature);
+        // Might be a good idea to set the stock quantity to zero beforehand or nah?
+        ////value_obj["quantity"] = 0;
+        // Finally, set the expiration date
+        auto now = std::chrono::system_clock::now();
+        auto in_time_t = std::chrono::system_clock::to_time_t(now); // current time
+        std::stringstream datetime;
+        datetime << std::put_time(std::gmtime(&in_time_t), "%Y-%m-%d %H:%M:%S");
+        std::string utc_time = datetime.str();
+        value_obj["expiration_date"] = utc_time;//value_obj["valid_until"] = utc_time;
+        // Send set request containing the updated value with the same key as before
+        std::string modified_value = value_obj.dump();
+        std::string response;
+        client->set(listing_key, modified_value, verified, response);
+        std::cout << "Received response (set): " << response << "\n";
+    }
 }
 ////////////////////
 ////////////////////
@@ -284,34 +323,47 @@ void neroshop::Seller::update_customer_orders() { // this function is faster (I 
 ////////////////////
 // setters - item and inventory-related stuff
 ////////////////////
-void neroshop::Seller::set_stock_quantity(const std::string& product_id, unsigned int stock_qty) {
-    // seller must be logged in
-    if(!is_logged()) {NEROSHOP_TAG_OUT std::cout << "\033[0;91m" << "You must be logged in to set stock" << "\033[0m" << std::endl; return;}
-    // user must be an actual seller, not a buyer
-    if(!is_seller()) {neroshop::print("Must be a seller to set stock (id: " + product_id + ")", 2); return;}    
-    // a seller can create an item and then register it to the database
-    ////if(product_id <= 0) {NEROSHOP_TAG_OUT std::cout << "\033[0;91m" << "Could not set stock_qty (invalid Product id)" << "\033[0m" << std::endl; return;}
-    /*// update stock_qty in database
-    db::Sqlite3 db("neroshop.db");
-	//db.execute("PRAGMA journal_mode = WAL;"); // this may reduce the incidence of SQLITE_BUSY errors (such as database being locked)
-	if(db.table_exists("inventory"))
-	    db.update("inventory", "stock_qty", std::to_string(stock_qty), "product_id = " + product_id + " AND seller_id = " + get_id());
-	db.close();*/
-    ////////////////////////////////
-    // postgresql
-    ////////////////////////////////
-#if defined(NEROSHOP_USE_POSTGRESQL)    
-    //database->connect("host=127.0.0.1 port=5432 user=postgres password=postgres dbname=neroshoptest"); 
-    database->execute_params("UPDATE inventory SET stock_qty = $1 WHERE product_id = $2 AND seller_id = $3", { std::to_string(stock_qty), product_id, get_id() });
-    std::string item_name = database->get_text_params("SELECT name FROM item WHERE id = $1", { product_id });
-    neroshop::print("\"" + item_name + "\"'s stock has been updated", 3);
+void neroshop::Seller::set_stock_quantity(const std::string& listing_key, int quantity) {
+    // Transition from Sqlite to DHT:
+    Client * client = Client::get_main_client();
+
+    // Get the value of the corresponding key from the DHT
+    std::string response;
+    client->get(listing_key, response); // TODO: error handling
+    std::cout << "Received response (get): " << response << "\n";
+    // Parse the response
+    nlohmann::json json = nlohmann::json::parse(response);
+    if(json.contains("error")) {
+        neroshop::print("set_stock_quantity: key is lost or missing from DHT", 1);
+        return; // Key is lost or missing from DHT, return 
+    }    
     
-    ////////////////////////////////
-#endif    
-}
-////////////////////
-void neroshop::Seller::set_stock_quantity(const neroshop::Product& item, unsigned int stock_qty) {
-    set_stock_quantity(item.get_id(), stock_qty);
+    const auto& response_obj = json["response"];
+    assert(response_obj.is_object());
+    if (response_obj.contains("value") && response_obj["value"].is_string()) {
+        const auto& value = response_obj["value"].get<std::string>();
+        nlohmann::json value_obj = nlohmann::json::parse(value);
+        assert(value_obj.is_object());//std::cout << value_obj.dump(4) << "\n";
+        std::string metadata = value_obj["metadata"].get<std::string>();
+        if (metadata != "listing") { std::cerr << "Invalid metadata. \"listing\" expected, got \"" << metadata << "\" instead\n"; return; }
+        // Verify ownership of the data (listing)
+        std::string seller_id = value_obj["seller_id"].get<std::string>();
+        if(seller_id != wallet->get_primary_address()) {
+            neroshop::print("set_stock_quantity: you cannot modify this listing since you are not the listing's creator", 1);
+            return;
+        }
+        // Verify the signature
+        std::string listing_id = value_obj["id"].get<std::string>();
+        std::string signature = value_obj["signature"].get<std::string>();
+        bool verified = wallet->verify_message(listing_id, signature);
+        // Finally, modify the quantity
+        value_obj["quantity"] = quantity;
+        // Send set request containing the updated value with the same key as before
+        std::string modified_value = value_obj.dump();
+        std::string response;
+        client->set(listing_key, modified_value, verified, response);
+        std::cout << "Received response (set): " << response << "\n";
+    }
 }
 ////////////////////
 ////////////////////
@@ -530,7 +582,7 @@ unsigned int neroshop::Seller::get_products_count() const {
     neroshop::db::Sqlite3 * database = neroshop::get_database();
     if(!database) throw std::runtime_error("database is NULL");
     
-    int products_listed = database->get_integer_params("SELECT COUNT(product_id) FROM listings WHERE seller_id = $1;", { get_id() });
+    int products_listed = database->get_integer_params("SELECT COUNT(key) FROM mappings WHERE search_term = $1 AND content = 'listing';", { get_id() });
     return products_listed;
 }
 ////////////////////

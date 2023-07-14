@@ -374,7 +374,11 @@ void neroshop::User::clear_favorites() {
     int favorites_count = database->get_integer_params("SELECT COUNT(*) FROM favorites WHERE user_id = ?1", { this->id });
     if(favorites_count <= 0) return; // table is empty so that means there is nothing to delete, exit function
     // clear all items from favorites
-    database->execute_params("DELETE FROM favorites WHERE user_id = ?1", { this->id });
+    int rescode = database->execute_params("DELETE FROM favorites WHERE user_id = ?1", { this->id });
+    if (rescode != SQLITE_OK) {
+        neroshop::print("failed to clear favorites", 1);
+        return;
+    }
     // clear favorites from vector as well
     favorites.clear();
     if(favorites.empty()) neroshop::print("your favorites have been cleared"); // confirm that favorites has been cleared

@@ -308,12 +308,33 @@ std::vector<uint8_t> neroshop::msgpack::process(const std::vector<uint8_t>& requ
         std::string key = params_object["key"];
         assert(params_object["value"].is_string());
         std::string value = params_object["value"];
+        assert(params_object["verified"].is_boolean());
+        bool verified = params_object["verified"].get<bool>();
         
-        // Retrieve the original data from the DHT
-        std::string current_value = node.send_get(key);
+        if(verified == false) {
+            code = static_cast<int>(KadResultCode::DataVerificationFailed);
+            response_object["error"]["code"] = code;
+            response_object["error"]["message"] = "Data verification failed";
+            response_object["tid"] = tid;
+            response = nlohmann::json::to_msgpack(response_object);
+            return response;
+        }
         
-        // Verify signature
-        // ...
+        // Send put messages to the closest nodes in your routing table (IPC mode)
+        int put_messages_sent = node.send_put(key, value);
+        code = (put_messages_sent <= 0) 
+               ? static_cast<int>(KadResultCode::StoreFailed) 
+               : static_cast<int>(KadResultCode::Success);
+        std::cout << "Number of nodes you've sent a put message to: " << put_messages_sent << "\n";
+                   
+        // Store the key-value pair in your own node as well
+        node.store(key, value);
+        // Mapping data already exists in database so no need to call node.map()
+        // Return success response
+        response_object["version"] = std::string(NEROSHOP_DHT_VERSION);
+        response_object["response"]["id"] = node.get_id();
+        response_object["response"]["code"] = (code != 0) ? static_cast<int>(KadResultCode::StorePartial) : code;
+        response_object["response"]["message"] = (code != 0) ? "Store failed" : "Success";
     }
     //-----------------------------------------------------
     response_object["tid"] = tid; // transaction id - MUST be the same as the request object's id
