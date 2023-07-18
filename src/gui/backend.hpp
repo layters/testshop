@@ -63,7 +63,7 @@ public:
 
     QVariantList validateDisplayName(const QString& display_name) const; // Validates display name based on regex requirements
     
-    Q_INVOKABLE QVariantList registerUser(WalletController* wallet_controller, const QString& display_name, UserController * user_controller);
+    Q_INVOKABLE QVariantList registerUser(WalletController* wallet_controller, const QString& display_name, UserController * user_controller, const QString& avatar);
     Q_INVOKABLE bool loginWithWalletFile(WalletController* wallet_controller, const QString& path, const QString& password, UserController * user_controller);
     Q_INVOKABLE bool loginWithMnemonic(WalletController* wallet_controller, const QString& mnemonic, UserController * user_controller);
     Q_INVOKABLE bool loginWithKeys(WalletController* wallet_controller, UserController * user_controller);
@@ -72,15 +72,15 @@ public:
     Q_INVOKABLE QVariantList getListings(ListingSorting sorting = SortNone); // Products listed by sellers
     Q_INVOKABLE QVariantList getListingsByCategory(int category_id);
     Q_INVOKABLE QVariantList getListingsByMostRecentLimit(int limit);
-    
     Q_INVOKABLE QVariantList getListingsBySearchTerm(const QString& search_term, int count = 1000); // count is the maximum number of search results (total). The search results (per page) can be between 10-100 or 50-100
-    
+
+    Q_INVOKABLE bool saveAvatarImage(const QString& fileName, const QString& userAccountKey);
+        
     // Products should be registered so that sellers can list pre-existing products without the need to duplicate a product which is unnecessary and can make the database bloated
-    Q_INVOKABLE bool createFolders();
     Q_INVOKABLE QVariantMap uploadProductImage(const QString& filename, int image_id); // constructs image object rather than upload it
     Q_INVOKABLE bool saveProductImage(const QString& fileName, const QString& listingKey);
     Q_INVOKABLE bool saveProductThumbnail(const QString& fileName, const QString& listingKey);
-    
+
     Q_INVOKABLE int getProductStarCount(const QString& product_id); // getProductRatingsCount
     Q_INVOKABLE int getProductStarCount(const QString& product_id, int star_number);
     Q_INVOKABLE float getProductAverageStars(const QString& product_id);
@@ -92,7 +92,6 @@ public:
     // Rating models
     Q_INVOKABLE QVariantList getProductRatings(const QString& product_id/*listing_id*/); // or do I use user account key?
     Q_INVOKABLE QVariantList getSellerRatings(const QString& user_id); // or do I use user account key?
-    
     
     Q_INVOKABLE QString getDisplayNameByUserId(const QString& user_id);
     Q_INVOKABLE QString getKeyByUserId(const QString& user_id);

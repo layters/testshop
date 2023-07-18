@@ -6,7 +6,7 @@ A decentralized P2P (peer-to-peer) marketplace for [**Monero**](https://getmoner
 
 
 __Disclaimer: This is an experimental/hobbyist project that is not ready for production use. Use at your own risk.__
-
+__The neroshop team is comprised of a single developer that operates independently and is not affiliated, associated, authorized, endorsed by, or in any way officially connected with the Monero project, Monero team or any other organization.__
 
 ## Table of contents
 <!-- - [The history behind neroshop](#about)-->
@@ -58,7 +58,7 @@ The name _neroshop_ is a combination of the words _nero_, which is Italian for _
 - [x] Distributed P2P network (need help with I2P integration!!!)
 - [ ] Buy and sell products and services with Monero
 - [x] No KYC
-- [ ] No censorship (censorship-resistant)
+- [x] No censorship (censorship-resistant)
 - [ ] No listing fees, sales tax, or any other fees (except for miner transaction fees and shipping costs)
     - there will be 0.5% fee for using one of the three payment options, specifically the 2-of-3 escrow system.
 - [x] Pseudonymous identities 
@@ -230,7 +230,7 @@ This project is licensed under the [GNU General Public License v3.0 (GPLv3)](LIC
 
 
 ## Donations
-Donate if you like, to any of the addresses below. Received payments will be used to reward developers for their contributions to the project (mostly by completing bounties) and will also be used to keep the `neroshop.org` domain running.
+Donate if you like, to any of the addresses below. Received payments will be used to reward developers for completing bounties and will also be used to keep the `neroshop.org` domain up and running.
 
 **Monero (XMR):**
 ```
@@ -282,7 +282,7 @@ amount     sender     timestamp
 ```
 u/EchoingCat — for the revision of the official neroshop logo
 woodser — for his guidance and for his work on the monero-cpp library which has made the development of this app possible
-yuriio147 — for his work on various QML components, the currency converter, wallet address qr provider, fixing a major bug in the RSA encryption code, the RSA signing and verifying functions, and for teaching me some Qt/Quick techniques
+yuriio147 — for his work on various QML components, the currency converter, wallet address qr provider, fixing a major bug in the RSA encryption code, the RSA signing and verifying functions, and for teaching me some Qt/QML techniques
 lza_menace — for his help on creating the new monero.fail JSON API endpoint
 everyone in our matrix room — for sharing many great ideas that could be used to improve the project
 ```

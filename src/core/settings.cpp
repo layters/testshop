@@ -175,8 +175,8 @@ bool neroshop::create_json() {
         // Create JSON
         QJsonObject root_obj;
         root_obj.insert(QString("preferred_currency"), QJsonValue("USD"));
-        root_obj.insert(QString("dark_theme"), QJsonValue(false));
-        root_obj.insert(QString("theme"), QJsonValue("DefaultLight"));
+        root_obj.insert(QString("dark_theme"), QJsonValue(true));
+        root_obj.insert(QString("theme"), QJsonValue("PurpleDust"));
         root_obj.insert(QString("language"), QJsonValue("English"));
         root_obj.insert(QString("hide_homepage_button"), QJsonValue(false));
         root_obj.insert(QString("hide_price_display"), QJsonValue(false));
@@ -246,8 +246,8 @@ bool neroshop::create_json() {
         // Create JSON
         nlohmann::json settings_json;
         settings_json["preferred_currency"] = "USD";
-        settings_json["dark_theme"] = false;
-        settings_json["theme"] = "DefaultLight";
+        settings_json["dark_theme"] = true;
+        settings_json["theme"] = "PurpleDust";
         settings_json["language"] = "English";
         settings_json["hide_homepage_button"] = false;
         settings_json["hide_price_display"] = false;

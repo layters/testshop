@@ -338,8 +338,9 @@ Popup {
                                     }
                                     onClicked: {
                                         let subcategories = Backend.getSubCategoryList(Backend.getCategoryIdByName(productCategoryBox.currentText), true)
-                                        if(subCategoryRepeater.count == 1) {
-                                            console.log("Cannot add no more than 1 subcategories")
+                                        let max_subcategories = Math.min(2, subcategories.length)
+                                        if(subCategoryRepeater.count == max_subcategories) {
+                                            console.log("Cannot add no more than " + max_subcategories + " subcategories")
                                             return
                                         }
                                         subCategoryRepeater.model = subCategoryRepeater.model + 1
@@ -748,13 +749,39 @@ Popup {
                             onClicked: {
                                 // Check input fields to see if entered info is valid
                                 // ...
-                                // TODO: product must have a minimum of 1 image
+                                //---------------------------------------
+                                let subcategory_ids = []//let subcategories = []
+                                for (let i = 0; i < subCategoryRepeater.count; i++) {
+                                    subcategory_ids.push(Backend.getSubCategoryIdByName(subCategoryRepeater.itemAt(i).children[0].currentText))//subcategories.push(subCategoryRepeater.itemAt(i).children[0].currentText)//console.log("Added subcategory: ", subcategories[i])
+                                }
+                                // Product subcategories cannot be duplicated
+                                if(subCategoryRepeater.count >= 2) {    
+                                    if((new Set(subcategory_ids)).size !== subcategory_ids.length) {
+                                        messageBox.text = "Product cannot have duplicate subcategories"
+                                        messageBox.open()
+                                        return; // exit function
+                                    }
+                                }
+                                //---------------------------------------
+                                // Product attributes (each attribute object represents a variant of the product)
+                                let attributes = [];
+                                let attribute_object = {};
+                                if(productWeightField.text.length > 0 && Number(productWeightField.text) > 0.00) {
+                                    attribute_object.weight = productWeightField.text
+                                }
+                                // Add attribute obj to list as long as its filled with properties
+                                if (Object.keys(attribute_object).length > 0) {
+                                    attributes.push(attribute_object)
+                                }
+                                //---------------------------------------
+                                // Product must have a minimum of 1 image
                                 let productThumbnail = productImageRepeater.itemAt(0).children[0].children[0]
                                 if(productThumbnail.status == Image.Null) {
                                     messageBox.text = "Product must have at least 1 image"
                                     messageBox.open()
                                     return; // exit function
                                 }
+                                //---------------------------------------
                                 // TODO: add weight and product_code to attributes list instead
                                 // Attributes will be in JSON format
                                 // Todo: check whether its a product or service
@@ -772,10 +799,10 @@ Popup {
                                     productNameField.text, 
                                     productDescriptionEdit.text, 
                                     productWeightField.text, 
-                                    []/*attributes*/, 
+                                    attributes, 
                                     productCodeField.text,
                                     Backend.getCategoryIdByName(productCategoryBox.currentText),
-                                    (subCategoryRepeater.count > 0) ? Backend.getSubCategoryIdByName(subCategoryRepeater.itemAt(0).children[0].currentText) : -1, // subcategoryId
+                                    (subCategoryRepeater.count > 0) ? subcategory_ids : [], // subcategoryIds
                                     productTagsField.tags(),
                                     productImages,
                                     

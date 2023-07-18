@@ -118,17 +118,6 @@ bool neroshop::Backend::isSupportedCurrency(const QString& currency) const {
 void neroshop::Backend::initializeDatabase() {
     db::Sqlite3 * database = neroshop::get_database();
     database->execute("BEGIN;");
-
-    // table users
-    if(!database->table_exists("users")) { 
-        database->execute("CREATE TABLE users(name TEXT, monero_address TEXT NOT NULL PRIMARY KEY"//, UNIQUE"
-        ");");
-        database->execute("ALTER TABLE users ADD COLUMN public_key TEXT DEFAULT NULL;"); // encrypt_key - public_key used for encryption of messages
-        database->execute("ALTER TABLE users ADD COLUMN avatar BLOB DEFAULT NULL;"); // encrypt_key - public_key used for encryption of messages
-        
-        // Notes: Display names are optional which means they can be an empty string but making the "name" column UNIQUE will not allow empty strings on multiple names
-        ////database->execute("CREATE UNIQUE INDEX index_public_keys ON users (public_key);"); // This is commented out to allow multiple users to use the same public key, in the case of a user having two neroshop accounts?
-    }    
     
     // mappings
     if(!database->table_exists("mappings")) { 
@@ -138,7 +127,7 @@ void neroshop::Backend::initializeDatabase() {
     // favorites (wishlists)
     if(!database->table_exists("favorites")) {
         database->execute("CREATE TABLE favorites("
-        "user_id TEXT REFERENCES users(monero_address), "
+        "user_id TEXT, "
         "listing_key TEXT, "
         "UNIQUE(user_id, listing_key)"
         ");");
@@ -147,7 +136,7 @@ void neroshop::Backend::initializeDatabase() {
     // cart
     if(!database->table_exists("cart")) {
         database->execute("CREATE TABLE cart(uuid TEXT NOT NULL PRIMARY KEY, "
-        "user_id TEXT REFERENCES users(monero_address) ON DELETE CASCADE"
+        "user_id TEXT"
         ");");
         // cart_items
         database->execute("CREATE TABLE cart_item(id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT, "
@@ -286,48 +275,56 @@ bool neroshop::Backend::hasSubCategory(int category_id) const {
 }
 //----------------------------------------------------------------
 //----------------------------------------------------------------
-bool neroshop::Backend::createFolders() {
-    // Save the image file to a specific location
+bool neroshop::Backend::saveAvatarImage(const QString& fileName, const QString& userAccountKey) {
     std::string config_path = NEROSHOP_DEFAULT_CONFIGURATION_PATH;
     std::string cache_folder = config_path + "/" + NEROSHOP_CACHE_FOLDER_NAME;
-    
-    // /datastore/
-    if(!neroshop_filesystem::is_directory(cache_folder)) {
-        neroshop::print("Creating directory \"" + cache_folder + "\" (^_^) ...", 2);
-        if(!neroshop_filesystem::make_directory(cache_folder)) {
-            neroshop::print("Failed to create folder \"" + cache_folder + "\" (ᵕ人ᵕ)!", 1);
+    std::string avatars_folder = cache_folder + "/" + NEROSHOP_AVATAR_FOLDER_NAME;
+    //----------------------------------------
+    std::string image_file = fileName.toStdString(); // Full path with file name
+    std::string image_name = image_file.substr(image_file.find_last_of("\\/") + 1);// get filename from path (complete base name)
+    //----------------------------------------
+    // datastore/avatars/<account_key>
+    std::string key_folder = avatars_folder + "/" + userAccountKey.toStdString();
+    if (!neroshop_filesystem::is_directory(key_folder)) {
+        if (!neroshop_filesystem::make_directory(key_folder)) {
+            neroshop::print("Failed to create folder \"" + key_folder + "\" (ᵕ人ᵕ)!", 1);
             return false;
         }
-        neroshop::print("\033[1;97;49mcreated path \"" + cache_folder + "\"");
-    }    
-    //--------------------------------
-    std::string listings_folder = cache_folder + "/" + NEROSHOP_CATALOG_FOLDER_NAME;
-    // folder with the name <listing_id> should contain all product images for particular listing
-
-    // datastore/listings/
-    if (!neroshop_filesystem::is_directory(listings_folder)) {
-        neroshop::print("Creating directory \"" + listings_folder + "\" (^_^) ...", 2);
-        if (!neroshop_filesystem::make_directory(listings_folder)) {
-            neroshop::print("Failed to create folder \"" + listings_folder + "\" (ᵕ人ᵕ)!", 1);
-            return false;
-        }
-        neroshop::print("\033[1;97;49mcreated path \"" + listings_folder + "\"");
+        neroshop::print("\033[1;97;49mcreated path \"" + key_folder + "\"");
     }
-    //--------------------------------
-    // TODO: uncomment this
-    /*std::string avatars_folder = cache_folder + "/" + NEROSHOP_AVATAR_FOLDER_NAME;
-    
-    // datastore/avatars/
-    if (!neroshop_filesystem::is_directory(avatars_folder)) {
-        neroshop::print("Creating directory \"" + avatars_folder + "\" (^_^) ...", 2);
-        if (!neroshop_filesystem::make_directory(avatars_folder)) {
-            neroshop::print("Failed to create folder \"" + avatars_folder + "\" (ᵕ人ᵕ)!", 1);
-            return false;
+    //----------------------------------------
+    // Generate the final destination path
+    std::string destinationPath = key_folder + "/" + image_name;
+    // Check if image already exists in cache so that we do not export the same image more than once
+    if(!neroshop_filesystem::is_file(destinationPath)) {
+        // Image Loader crashes when image resolution is too large (ex. 4096 pixels wide) so we need to scale it!!
+        QImage sourceImage;
+        sourceImage.load(fileName);
+        QSize imageSize = sourceImage.size();
+        int maxWidth = 200; // Set the maximum width for the resized image
+        int maxHeight = 200; // Set the maximum height for the resized image
+
+        // Check if the image size is smaller than the maximum size
+        if (imageSize.width() <= maxWidth && imageSize.height() <= maxHeight) {
+            // Keep the original image since it's already within the size limits
+        } else {
+            // Calculate the new size while maintaining the aspect ratio
+            QSize newSize = imageSize.scaled(maxWidth, maxHeight, Qt::KeepAspectRatio);
+
+            // Resize the image if it exceeds the maximum dimensions
+            if (imageSize != newSize) {
+                sourceImage = sourceImage.scaled(newSize, Qt::KeepAspectRatio, Qt::SmoothTransformation);
+            }
         }
-        neroshop::print("\033[1;97;49mcreated path \"" + avatars_folder + "\"");
-    }*/
-    //--------------------------------
-    return true;
+
+        // Convert the QImage to QPixmap for further processing or saving
+        QPixmap resizedPixmap = QPixmap::fromImage(sourceImage);
+
+        // Save the resized image
+        resizedPixmap.save(QString::fromStdString(destinationPath));
+    }
+    neroshop::print("exported \"" + fileName.toStdString() + "\" to \"" + key_folder + "\"", 3);
+    return true;    
 }
 //----------------------------------------------------------------
 //----------------------------------------------------------------
@@ -339,7 +336,6 @@ bool neroshop::Backend::saveProductThumbnail(const QString& fileName, const QStr
     // datastore/listings/<listing_key>
     std::string key_folder = listings_folder + "/" + listingKey.toStdString();
     if (!neroshop_filesystem::is_directory(key_folder)) {
-        neroshop::print("Creating directory \"" + key_folder + "\" (^_^) ...", 2);
         if (!neroshop_filesystem::make_directory(key_folder)) {
             neroshop::print("Failed to create folder \"" + key_folder + "\" (ᵕ人ᵕ)!", 1);
             return false;
@@ -389,7 +385,7 @@ bool neroshop::Backend::saveProductThumbnail(const QString& fileName, const QStr
         resizedPixmap.save(QString::fromStdString(destinationPath), "JPEG");
     }
     
-    neroshop::print("exported \"" + thumbnail_image + "\" to \"" + cache_folder + "\"", 3);
+    neroshop::print("exported \"" + thumbnail_image + "\" to \"" + key_folder + "\"", 3);
     return true;
 }
 //----------------------------------------------------------------
@@ -404,7 +400,6 @@ bool neroshop::Backend::saveProductImage(const QString& fileName, const QString&
     // datastore/listings/<listing_key>
     std::string key_folder = listings_folder + "/" + listingKey.toStdString();
     if (!neroshop_filesystem::is_directory(key_folder)) {
-        neroshop::print("Creating directory \"" + key_folder + "\" (^_^) ...", 2);
         if (!neroshop_filesystem::make_directory(key_folder)) {
             neroshop::print("Failed to create folder \"" + key_folder + "\" (ᵕ人ᵕ)!", 1);
             return false;
@@ -442,7 +437,7 @@ bool neroshop::Backend::saveProductImage(const QString& fileName, const QString&
         // Save the resized image
         resizedPixmap.save(QString::fromStdString(destinationPath));
     }
-    neroshop::print("exported \"" + fileName.toStdString() + "\" to \"" + cache_folder + "\"", 3);
+    neroshop::print("exported \"" + fileName.toStdString() + "\" to \"" + key_folder + "\"", 3);
     return true;
 }
 //----------------------------------------------------------------
@@ -472,10 +467,6 @@ QVariantMap neroshop::Backend::uploadProductImage(const QString& fileName, int i
         return {}; // exit function
     }
     product_image_file.close();
-    //----------------------------------------
-    if(!createFolders()) {
-        return {};
-    }
     //----------------------------------------
     // Create the image VariantMap (object)
     std::string image_file = fileName.toStdString(); // Full path with file name
@@ -1402,8 +1393,8 @@ QVariantList neroshop::Backend::validateDisplayName(const QString& display_name)
 }
 //----------------------------------------------------------------
 // TODO: replace function return type with enum
-QVariantList neroshop::Backend::registerUser(WalletController* wallet_controller, const QString& display_name, UserController * user_controller) {
-    // TODO: Make sure daemon is connected first
+QVariantList neroshop::Backend::registerUser(WalletController* wallet_controller, const QString& display_name, UserController * user_controller, const QString& avatar) {
+    // Make sure daemon is connected first
     if(!DaemonManager::isDaemonServerBound()) {
         return { false, "Please wait for the daemon LIPC server to connect first" };
     }
@@ -1441,16 +1432,7 @@ QVariantList neroshop::Backend::registerUser(WalletController* wallet_controller
         return { false, "Failed to save RSA key pair" };
     }
     //---------------------------------------------
-    // Store login credentials in database
-    // Todo: make this command (DB entry) a client request that the server must respond to and the consensus must agree with
-    // Note: Multiple users cannot have the same display_name. Each display_name must be unique!
-    std::string user_id = database->get_text_params("INSERT INTO users(name, monero_address, public_key) VALUES($1, $2, $3) RETURNING monero_address;", { display_name.toStdString(), primary_address, public_key });//int user_id = database->get_integer_params("INSERT INTO users(name, monero_address) VALUES($1, $2) RETURNING id;", { display_name.toStdString(), primary_address.toStdString() });
-    if(user_id.empty()) { return { false, "Account registration failed (due to database error)" }; }//if(user_id == 0) { return { false, "Account registration failed (due to database error)" }; }
-    // Create cart for user
-    QString cart_uuid = QUuid::createUuid().toString();
-    cart_uuid = cart_uuid.remove("{").remove("}"); // remove brackets
-    database->execute_params("INSERT INTO cart (uuid, user_id) VALUES ($1, $2)", { cart_uuid.toStdString(), user_id });
-    //---------------------------------------------
+    // Note: Multiple users can have the same display_name as long as the id is unique!
     // initialize user obj
     std::unique_ptr<neroshop::User> seller(neroshop::Seller::on_login(*wallet_controller->getWallet()));
     user_controller->_user = std::move(seller);
@@ -1460,6 +1442,9 @@ QVariantList neroshop::Backend::registerUser(WalletController* wallet_controller
     user_controller->_user->set_name(display_name.toStdString());
     user_controller->_user->set_public_key(public_key);
     user_controller->_user->set_private_key(private_key);
+    if(!avatar.isEmpty()) {
+        user_controller->_user->upload_avatar(avatar.toStdString()); // will initialize avatar obj
+    }
     //---------------------------------------------
     // Store login credentials in DHT
     Client * client = Client::get_main_client();
@@ -1474,7 +1459,11 @@ QVariantList neroshop::Backend::registerUser(WalletController* wallet_controller
     std::string response;
     client->put(key, value, response);
     std::cout << "Received response (put): " << response << "\n";
-
+    //---------------------------------------------
+    // Create cart for user
+    QString cart_uuid = QUuid::createUuid().toString();
+    cart_uuid = cart_uuid.remove("{").remove("}"); // remove brackets
+    database->execute_params("INSERT INTO cart (uuid, user_id) VALUES ($1, $2)", { cart_uuid.toStdString(), user_controller->_user->get_id() });
     //---------------------------------------------
     emit user_controller->userChanged();
     emit user_controller->userLogged();
@@ -1483,12 +1472,18 @@ QVariantList neroshop::Backend::registerUser(WalletController* wallet_controller
     //user_controller->rateSeller("5AncSFWauoN8bfA68uYpWJRM8fFxEqztuhXSGkeQn5Xd9yU6XqJPW7cZmtYETUAjTK1fCfYQX1CP3Dnmy5a8eUSM5n3C6aL", 1, "This seller rocks");
     // Display registration message
     neroshop::print(((!display_name.isEmpty()) ? "Welcome to neroshop, " : "Welcome to neroshop") + display_name.toStdString(), 4);
-    return { true, "" };
+    return { true, QString::fromStdString(key) };
 }
 //----------------------------------------------------------------
 bool neroshop::Backend::loginWithWalletFile(WalletController* wallet_controller, const QString& path, const QString& password, UserController * user_controller) { 
     db::Sqlite3 * database = neroshop::get_database();
     if(!database) throw std::runtime_error("database is NULL");
+    
+    // Make sure daemon is connected first
+    if(!DaemonManager::isDaemonServerBound()) {
+        neroshop::print("Please wait for the daemon LIPC server to connect first", 1);
+        return false;//{ false, "Please wait for the daemon LIPC server to connect first" };
+    }    
     // Open wallet file
     std::packaged_task<bool(void)> open_wallet_task([wallet_controller, path, password]() -> bool {
         if(!wallet_controller->open(path, password)) {
@@ -1506,20 +1501,19 @@ bool neroshop::Backend::loginWithWalletFile(WalletController* wallet_controller,
     // Get the primary address
     std::string primary_address = wallet_controller->getPrimaryAddress().toStdString();
     //----------------------------------------
-    // First, check the DHT for user account info
-    ////bool dht_account_found = database->get_integer_params("SELECT EXISTS(SELECT DISTINCT key FROM mappings WHERE search_term MATCH ? AND content MATCH 'listing')", { primary_address });
-    //----------------------------------------
     // Check database to see if user key (hash of primary address) exists
-    bool user_found = database->get_integer_params("SELECT EXISTS(SELECT * FROM users WHERE monero_address = $1)", { primary_address });
+    bool user_found = database->get_integer_params("SELECT EXISTS(SELECT * FROM mappings WHERE search_term = ?1 AND content = 'account')", { primary_address });
     // If user key is not found in the database, then create one. This is like registering for an account
     if(!user_found) {
         // In reality, this function will return false if user key is not registered in the database
-        neroshop::print("user not found in database. Please try again or register", 1);
+        neroshop::print("Account not found in database. Please try again or register", 1);
         wallet_controller->close();
         return false;
     }
+    // Get the account DHT key
+    std::string account_key = database->get_text_params("SELECT key FROM mappings WHERE search_term = ?1 AND content = 'account'", { primary_address });
     // Save user information in memory
-    std::string display_name = database->get_text_params("SELECT name FROM users WHERE monero_address = $1", { primary_address });
+    std::string display_name = database->get_text_params("SELECT search_term FROM mappings WHERE key = ?1 AND LENGTH(search_term) <= 30 AND content = 'account'", { account_key });
     std::unique_ptr<neroshop::User> seller(neroshop::Seller::on_login(*wallet_controller->getWallet()));
     user_controller->_user = std::move(seller);
     if(user_controller->getUser() == nullptr) {
