@@ -420,165 +420,23 @@ void neroshop::User::load_favorites() {
 // avatar-related stuff here
 ////////////////////
 void neroshop::User::upload_avatar(const std::string& filename) {
-    neroshop::db::Sqlite3 * database = neroshop::get_database();
-    if(!database) throw std::runtime_error("database is NULL");
-    //----------------------------
-    //unsigned int user_id = 1;
-    //----------------------------
-    std::string image_file = filename;
-    std::string image_name = image_file.substr(image_file.find_last_of("\\/") + 1);// get filename from path
-    image_name = image_name.substr(0, image_name.find_last_of(".")); // remove ext
-    std::string image_ext = image_file.substr(image_file.find_last_of(".") + 1);
-    
-    std::cout << "image name: " << image_name << std::endl;
-    std::cout << "image file: " << image_file << std::endl;
-    std::cout << "image extension: " << image_ext << std::endl;    
-    ///////////////////////////
-    // Todo: replace user id with monero_address
-    //////////////////////////
-    database->execute("BEGIN;");
-    //////////////////////////
-    // Todo: check if column exists first
-    bool row_exists = database->get_integer_params("SELECT EXISTS(SELECT * FROM users WHERE monero_address = $1);", { this->id });
-    if(!row_exists) {
-        std::cout << "User with id " << this->id << " does not exist\n";
-        database->execute("ROLLBACK;"); // abort transaction
+    // Get image size
+    std::ifstream image_file(filename, std::ios::binary);
+    if(!image_file.good()) {
+        std::cout << "failed to load " << filename << std::endl; 
         return;
     }
-    //////////////////////////
-    //static char lo_content[] = "Lorem ipsum dolor sit amet, fabulas conclusionemque ius ad.";//std::cout << "lo_content size: " << sizeof(lo_content) << std::endl;//60
-    std::ifstream image_file_r(image_file, std::ios::binary); // std::ios::binary is the same as std::ifstream::binary
-    if(!image_file_r.good()) {
-        std::cout << NEROSHOP_TAG "failed to load " << image_file << std::endl; 
-        database->execute("ROLLBACK;"); return;
-    }
-    image_file_r.seekg(0, std::ios::end); // std::ios::end is the same as image_file_r.end
-    size_t size = static_cast<int>(image_file_r.tellg()); // in bytes
-    // Limit avatar image size to 262144 bytes (256 kilobytes)
-    const int max_bytes = 262144;
-    double kilobytes = max_bytes / 1024.0;//std::cout << max_bytes << " bytes is equal to " << kilobytes << " kilobytes." << std::endl;
-    // Todo: Database cannot scale to billions of users if I am storing blobs so I'll have to switch to text later
-    if(size >= max_bytes) {
-        neroshop::print("Avatar upload image cannot exceed " + std::to_string(kilobytes) + " KB", 1);
-        database->execute("ROLLBACK;"); return;
-    }
-    image_file_r.seekg(0); // image_file_r.seekg(0, image_file_r.beg);
-    std::vector<unsigned char> buffer(size); // or unsigned char buffer[size];// or unsigned char * buffer = new unsigned char[size];
-    if(!image_file_r.read(reinterpret_cast<char *>(&buffer[0]), size)) {// read data as a block
-        std::cout << NEROSHOP_TAG "error: only " << image_file_r.gcount() << " could be read";
-        database->execute("ROLLBACK;"); // abort transaction
-        return; // exit function
-    }    
-    ////for(auto content : buffer) std::cout << content << std::endl; // temp
-    image_file_r.close();
-    ///////////////////////////
-    std::string command = "UPDATE users SET avatar = $1 WHERE monero_address = $2;";
-    sqlite3_stmt * statement = nullptr;
-    int result = sqlite3_prepare_v2(database->get_handle(), command.c_str(), -1, &statement, nullptr);
-    if(result != SQLITE_OK) {
-        neroshop::print("sqlite3_prepare_v2: " + std::string(sqlite3_errmsg(database->get_handle())), 1);
-        database->execute("ROLLBACK;"); return;// nullptr;
-    }
-    // Bind user-defined parameter arguments
-    result = sqlite3_bind_blob(statement, 1, buffer.data(), size, SQLITE_STATIC);
-    if(result != SQLITE_OK) {
-        neroshop::print("sqlite3_bind_blob: " + std::string(sqlite3_errmsg(database->get_handle())), 1);
-        sqlite3_finalize(statement);
-        database->execute("ROLLBACK;"); return;// nullptr;
-    }  
+    image_file.seekg(0, std::ios::end);
+    size_t size = static_cast<int>(image_file.tellg()); // in bytes
+    image_file.close();
     
-    result = sqlite3_bind_text(statement, 2, this->id.c_str(), this->id.length(), SQLITE_STATIC);
-    if(result != SQLITE_OK) {
-        neroshop::print("sqlite3_bind_text: " + std::string(sqlite3_errmsg(database->get_handle())), 1);
-        sqlite3_finalize(statement);
-        database->execute("ROLLBACK;"); return;// nullptr;
-    }  
+    // Construct image object
+    Image image;
+    image.name = filename.substr(filename.find_last_of("\\/") + 1);
+    image.size = size;
+    image.source = filename;
     
-    result = sqlite3_step(statement);
-    if (result != SQLITE_DONE) {
-        neroshop::print("sqlite3_step: " + std::string(sqlite3_errmsg(database->get_handle())), 1);
-    }
-        
-    sqlite3_finalize(statement);
-    ///////////////////////////
-    database->execute("COMMIT;");
-    std::cout << "uploadImage succeeded\n";
-}
-////////////////////
-bool neroshop::User::export_avatar() {
-    neroshop::db::Sqlite3 * database = neroshop::get_database();
-    if(!database) throw std::runtime_error("database is NULL");
-    //----------------------------
-    // Check if avatar column exists first and that its not null
-    bool has_avatar = database->get_integer_params("SELECT EXISTS(SELECT avatar FROM users WHERE monero_address = $1 AND avatar IS NOT NULL);", { this->id });
-    if(!has_avatar) {
-        neroshop::print("No avatar found", 2);
-        return false;//database->execute("ROLLBACK;"); return false;
-    }    
-    //----------------------------
-    // Check if default appdata path exists
-    std::string data_path = NEROSHOP_DEFAULT_DATABASE_PATH;
-    if(!std::filesystem::is_directory(data_path)) { 
-        neroshop::print("directory \"" + data_path + "\" not found", 1); 
-        return false; 
-    }
-    // Create cache folder within the default appdata path
-    std::string cache_folder = data_path + "/cache";
-    if(!std::filesystem::is_directory(cache_folder)) { 
-        neroshop::print("Creating directory \"" + cache_folder + "\" (^_^) ...", 2);
-        if(!std::filesystem::create_directories(cache_folder)) {
-            neroshop::print("Failed to create folder \"" + cache_folder + "\" (ᵕ人ᵕ)!", 1);
-            return false;
-        }
-        neroshop::print("\033[1;97;49mcreated path \"" + cache_folder + "\""); // bold bright white
-    }
-    // Generate a name for the avatar (to save to a file)
-    std::string image_filename = cache_folder + "/avatar_" + this->id;
-    // Check if image already exists in cache so that we do not export the same image more than once
-    if(std::filesystem::is_regular_file(image_filename)) {
-        neroshop::print(image_filename + " already exists", 2);
-        return true;
-    }
-    // Open file for writing
-    std::ofstream image_file_w(image_filename.c_str(), std::ios::binary);    
-    if(!image_file_w.is_open()) {
-        neroshop::print("Failed to open " + image_filename, 1); 
-        return false;
-    }
-    //----------------------------
-    // Get the avatar's image data (blob) from the database
-    std::string command = "SELECT avatar FROM users WHERE monero_address = $1";
-    sqlite3_stmt * statement = nullptr;
-    int bytes = 0;
-    // Prepare (compile) the statement
-    int result = sqlite3_prepare_v2(database->get_handle(), command.c_str(), -1, &statement, nullptr);
-    if(result != SQLITE_OK) {
-        neroshop::print("sqlite3_prepare_v2: " + std::string(sqlite3_errmsg(database->get_handle())), 1);
-        return false;
-    }
-    // Bind text to user id (1st arg)
-    result = sqlite3_bind_text(statement, 1, this->id.c_str(), this->id.length(), SQLITE_STATIC);
-    if(result != SQLITE_OK) {
-        neroshop::print("sqlite3_bind_text: " + std::string(sqlite3_errmsg(database->get_handle())), 1);
-        sqlite3_finalize(statement);
-        return false;
-    }      
-    // Execute the statement
-    result = sqlite3_step(statement);
-    // Get image size in bytes
-    if(result == SQLITE_ROW) {
-        bytes = sqlite3_column_bytes(statement, 0);//std::cout << "bytes: " << bytes << std::endl;
-    }    
-    // Write (export) to file
-    image_file_w.write(reinterpret_cast<const char*>(static_cast<const unsigned char *>(sqlite3_column_blob(statement, 0))), bytes);//reinterpret_cast<unsigned char*>(const_cast<const void *>(sqlite3_column_blob(statement, 0)));
-    // close file
-    image_file_w.close();
-    // Finalize the statement    
-    sqlite3_finalize(statement);    
-    //printf("Autocommit: %d\n", sqlite3_get_autocommit(database->get_handle()));
-    //----------------------------    
-    neroshop::print("exported \"" + image_filename + "\" to \"" + cache_folder + "\"", 3);
-    return true;
+    avatar = std::make_unique<Image>(std::move(image));
 }
 ////////////////////
 void neroshop::User::delete_avatar() {
@@ -668,6 +526,10 @@ std::string neroshop::User::get_account_type_string() const {
     }
 }
 ////////////////////
+neroshop::Image * neroshop::User::get_avatar() const {
+    return avatar.get();
+}
+
 std::string neroshop::User::get_public_key() const {
     return public_key;
 }

@@ -37,7 +37,6 @@ public:
     void clear_favorites();
     // avatar-related stuff (10% complete)
     void upload_avatar(const std::string& filename);
-    bool export_avatar();
     void delete_avatar();
     // setters
     void set_public_key(const std::string& public_key);
@@ -49,6 +48,7 @@ public:
     std::string get_name() const;
     UserAccountType get_account_type() const;
     std::string get_account_type_string() const;
+    Image * get_avatar() const;
     // buyer-related stuff - getters
     neroshop::Cart * get_cart() const;
     neroshop::Order * get_order(unsigned int index) const;
@@ -101,6 +101,7 @@ private:
     std::vector<std::shared_ptr<neroshop::Order>> order_list;
     std::vector<std::string> favorites;
     std::string get_private_key() const;
+    std::unique_ptr<Image> avatar;
 };
 }
 #endif

@@ -126,13 +126,16 @@ Page {
         // Make sure username is not taken (requires a database check)
         // ...
         // Register the wallet primary key to the database
-        let register_result = Backend.registerUser(Wallet, optNameField.text, User)
+        let register_result = Backend.registerUser(Wallet, optNameField.text, User, (avatarImage.status === Image.Ready) ? Backend.urlToLocalFile(avatarImage.source) : "")
         if(!register_result [0] ) {
             messageBox.text = register_result [1];
             messageBox.open()
             return; // exit function and do not proceed any further
         }
-        //User.uploadAvatar("../assets/images/appicons/LogoLight250x250.png");
+        let account_key = register_result[1];
+        if(avatarImage.status === Image.Ready) {
+            Backend.saveAvatarImage(Backend.urlToLocalFile(avatarImage.source), account_key)
+        }
         // Switch to HomePage
         pageLoader.source = "HomePage.qml"//stack.push(home_page)
         //console.log("Primary address: ", Wallet.getPrimaryAddress())
@@ -1084,13 +1087,91 @@ Page {
                 }
             }
             
-            GridLayout {
+            ColumnLayout {
                 anchors.centerIn: parent
+                // avatar image rect
+                Rectangle {
+                    id: avatarImageRect
+                    Layout.preferredWidth: 192; Layout.preferredHeight: width
+                    Layout.alignment: Qt.AlignHCenter
+                    Layout.bottomMargin: 10
+                    border.color: "#6b5b95"
+                    border.width: 3
+                    radius: 5
+                    Image {
+                        id: avatarImage
+                        anchors.centerIn: parent
+                        width: parent.width - (parent.border.width * 2); height: width
+                        //source: avatarImageFileDialog.file//"https://api.dicebear.com/6.x/identicon/svg?seed=%1".arg(optNameField.text)
+                        fillMode: Image.PreserveAspectFit
+                        mipmap: true
+                        asynchronous: true
+                        // Apply rounded rectangle mask (radius)
+                        layer.enabled: true
+                        layer.effect: OpacityMask {
+                            maskSource: avatarImageRect
+                        }
+                    }
+                    Button {
+                        text: qsTr("Choose")
+                        visible: (avatarImage.status !== Image.Ready)
+                        width: parent.width - 20
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        anchors.bottom: parent.bottom
+                        anchors.bottomMargin: parent.border.width + 7
+                        onClicked: {
+                            avatarImageFileDialog.open()
+                        }
+                    }
+                    FileDialog {
+                        id: avatarImageFileDialog
+                        fileMode: FileDialog.OpenFile
+                        folder: (isWindows) ? StandardPaths.writableLocation(StandardPaths.DocumentsLocation) + "/neroshop" : StandardPaths.writableLocation(StandardPaths.HomeLocation) + "/neroshop"//StandardPaths.writableLocation(StandardPaths.AppDataLocation) // refer to https://doc.qt.io/qt-5/qstandardpaths.html#StandardLocation-enum
+                        nameFilters: ["Image files (*.bmp *.gif *.jpeg *.jpg *.png *.tif *.tiff *.svg)"]
+                        onAccepted: avatarImage.source = currentFile
+                    }
+                    // Position the close button
+                    Button {
+                        id: removeAvatarImageButton
+                        anchors.right: parent.right
+                        anchors.top: parent.top
+                        anchors.margins: 8
+                         
+                        width: 20; height: 20//32
+                        text: qsTr(FontAwesome.xmark)
+                        hoverEnabled: true
+                        visible: (avatarImage.status === Image.Ready)
+                            
+                        contentItem: Text {
+                            horizontalAlignment: Text.AlignHCenter
+                            verticalAlignment: Text.AlignVCenter
+                            text: removeAvatarImageButton.text
+                            color: removeAvatarImageButton.hovered ? "#ffffff" : "#000000"
+                            font.bold: true
+                            font.family: FontAwesome.fontFamily
+                        }
+                        
+                        background: Rectangle {
+                            width: parent.width
+                            height: parent.height
+                            radius: 5//50
+                            color: removeAvatarImageButton.hovered ? "firebrick" : "transparent"
+                            opacity: 0.7
+                        }
+                         
+                         onClicked: {
+                             avatarImage.source = ""
+                         }
+                         MouseArea {
+                            anchors.fill: parent
+                            onPressed: mouse.accepted = false
+                            cursorShape: Qt.PointingHandCursor
+                        }
+                    }
+                }
             	// optional pseudonym edit
             	TextField {
                 	id: optNameField
-                	Layout.row: 0
-                	Layout.column: 0
                 	Layout.preferredWidth: 500
                 	Layout.preferredHeight: 50
                 	placeholderText: qsTr("Display name (optional)")
@@ -1111,9 +1192,7 @@ Page {
             	}
             	// register button
             	Button {
-                	id: registerButton
-                	Layout.row: 1
-                	Layout.column: 0         
+                	id: registerButton    
                 	Layout.fillWidth: true
                 	Layout.preferredHeight: 50
                 	Layout.topMargin: 15

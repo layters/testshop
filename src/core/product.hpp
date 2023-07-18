@@ -12,7 +12,7 @@ namespace neroshop {
 struct Attribute {
     std::string color;
     std::string size; // ex. small, medium, large, etc.
-    double weight;
+    double weight = 0.00;
     std::string material;
     std::tuple<double, double, double, std::string> dimensions; // the string can be in any of the following formats: "lxwxh" / "lwh", or "wxdxh" / "wdh", or "diameter x height" / "dh"
     std::string brand;
@@ -26,14 +26,14 @@ struct Attribute {
     std::pair<int, int> age_range;
     std::string energy_efficiency_rating; // A++, A+, A, B, C, ... G etc.
     std::vector<std::string> safety_features;
-    unsigned int quantity_per_package;
+    unsigned int quantity_per_package = 0;
     std::string release_date;
 };
 
 class Product { // can also be used for Services
 public:
     Product();
-    Product(const std::string& id, const std::string& name, const std::string& description, const std::vector<Attribute>& attributes, const std::string& code, unsigned int category_id, int subcategory_id, const std::vector<std::string>& tags, const std::vector<Image>& images);
+    Product(const std::string& id, const std::string& name, const std::string& description, const std::vector<Attribute>& attributes, const std::string& code, unsigned int category_id, const std::vector<int>& subcategory_ids, const std::vector<std::string>& tags, const std::vector<Image>& images);
     Product(const Product& other);// copy constructor
     Product(Product&& other) noexcept; // move constructor
     
@@ -57,8 +57,8 @@ public:
     void set_code(const std::string& code);
     void set_category(const std::string& category);
     void set_category_id(unsigned int category_id);
-    void set_subcategory(const std::string& subcategory);
-    void set_subcategory_id(int subcategory_id);
+    void set_subcategories(const std::vector<std::string>& subcategories);
+    void set_subcategory_ids(const std::vector<int>& subcategory_ids);
     void set_tags(const std::vector<std::string>& tags);
 
     std::string get_id() const;
@@ -72,8 +72,8 @@ public:
     std::string get_code() const;
     int get_category_id() const;
     std::string get_category_as_string() const;
-    int get_subcategory_id() const;
-    std::string get_subcategory_as_string() const;
+    std::vector<int> get_subcategory_ids() const;
+    std::vector<std::string> get_subcategories_as_string() const;
     std::vector<std::string> get_tags() const;
     Image get_image(int index) const;
     std::vector<Image> get_images() const;
@@ -84,7 +84,7 @@ private:
     std::vector<Attribute> attributes;
     std::string code; // optional - main product code
     unsigned int category_id;
-    int subcategory_id; // optional
+    std::vector<int> subcategory_ids; // optional
     std::vector<std::string> tags; // optional
     std::vector<Image> images;
 };

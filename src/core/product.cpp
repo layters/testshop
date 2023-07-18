@@ -2,16 +2,16 @@
 
 #include "category.hpp"
 
-neroshop::Product::Product() : id(""), name(""), description(""), code(""), category_id(0), subcategory_id(-1) {}
+neroshop::Product::Product() : id(""), name(""), description(""), code(""), category_id(0)/*, subcategory_id(-1)*/ {}
 
-neroshop::Product::Product(const std::string& id, const std::string& name, const std::string& description, const std::vector<neroshop::Attribute>& attributes, const std::string& code, unsigned int category_id, int subcategory_id, const std::vector<std::string>& tags, const std::vector<Image>& images)
-    : id(id), name(name), description(description), attributes(attributes), code(code), category_id(category_id), subcategory_id(subcategory_id), tags(tags), images(images)
+neroshop::Product::Product(const std::string& id, const std::string& name, const std::string& description, const std::vector<neroshop::Attribute>& attributes, const std::string& code, unsigned int category_id, const std::vector<int>& subcategory_ids, const std::vector<std::string>& tags, const std::vector<Image>& images)
+    : id(id), name(name), description(description), attributes(attributes), code(code), category_id(category_id), subcategory_ids(subcategory_ids), tags(tags), images(images)
 {}
 
 neroshop::Product::Product(const Product& other)
     : id(other.id), name(other.name), description(other.description), 
       attributes(other.attributes), code(other.code), category_id(other.category_id), 
-      subcategory_id(other.subcategory_id), tags(other.tags), images(other.images)
+      subcategory_ids(other.subcategory_ids), tags(other.tags), images(other.images)
 {}
 
 neroshop::Product::Product(Product&& other) noexcept
@@ -21,7 +21,7 @@ neroshop::Product::Product(Product&& other) noexcept
       attributes(std::move(other.attributes)),
       code(std::move(other.code)),
       category_id(std::move(other.category_id)),
-      subcategory_id(std::move(other.subcategory_id)),
+      subcategory_ids(std::move(other.subcategory_ids)),
       tags(std::move(other.tags)),
       images(std::move(other.images))
 {}
@@ -36,7 +36,7 @@ neroshop::Product& neroshop::Product::operator=(const neroshop::Product& other) 
         attributes = other.attributes;
         code = other.code;
         category_id = other.category_id;
-        subcategory_id = other.subcategory_id;
+        subcategory_ids = other.subcategory_ids;
         tags = other.tags;
         images = other.images;
     }
@@ -51,7 +51,7 @@ neroshop::Product& neroshop::Product::operator=(neroshop::Product&& other) noexc
         attributes = std::move(other.attributes);
         code = std::move(other.code);
         category_id = std::move(other.category_id);
-        subcategory_id = std::move(other.subcategory_id);
+        subcategory_ids = std::move(other.subcategory_ids);
         tags = std::move(other.tags);
         images = std::move(other.images);
 
@@ -62,7 +62,7 @@ neroshop::Product& neroshop::Product::operator=(neroshop::Product&& other) noexc
         other.attributes = {};
         other.code = "";
         other.category_id = 0;
-        other.subcategory_id = 0;
+        other.subcategory_ids = {};
         other.tags = {};
         other.images = {};
     }
@@ -123,7 +123,11 @@ void neroshop::Product::print_product() {
     }
     std::cout << "Main Product Code: " << get_code() << std::endl;
     std::cout << "Category: " << get_category_as_string() << std::endl;//std::cout << "Category ID: " << get_category_id() << std::endl;
-    if(subcategory_id != -1) std::cout << "Subcategory ID: " << get_subcategory_id() << std::endl;
+    for (int subcategory_id : subcategory_ids) {
+        if (subcategory_id != -1) {
+            std::cout << "Subcategory ID: " << subcategory_id << std::endl;
+        }
+    }
     std::cout << "Tags: ";
     for (const auto& tags : get_tags()) {
         std::cout << tags << ", ";
@@ -193,13 +197,17 @@ void neroshop::Product::set_category_id(unsigned int category_id) {
     this->category_id = category_id;
 }
 
-void neroshop::Product::set_subcategory(const std::string& subcategory) {
-    int subcategory_id = get_category_id_by_name(subcategory);
-    set_subcategory_id(subcategory_id);
+void neroshop::Product::set_subcategories(const std::vector<std::string>& subcategories) {
+    std::vector<int> subcategory_id_vector {};
+    for (const std::string& subcategory : subcategories) {
+        int subcategory_id = get_category_id_by_name(subcategory);
+        subcategory_id_vector.push_back(subcategory_id);
+    }
+    set_subcategory_ids(subcategory_id_vector);
 }
 
-void neroshop::Product::set_subcategory_id(int subcategory_id) {
-    this->subcategory_id = subcategory_id;
+void neroshop::Product::set_subcategory_ids(const std::vector<int>& subcategory_ids) {
+    this->subcategory_ids = subcategory_ids;
 }
 
 void neroshop::Product::set_tags(const std::vector<std::string>& tags) {
@@ -255,12 +263,17 @@ std::string neroshop::Product::get_category_as_string() const {
     return get_category_name_by_id(category_id);
 }
 
-int neroshop::Product::get_subcategory_id() const {
-    return subcategory_id;
+std::vector<int> neroshop::Product::get_subcategory_ids() const {
+    return subcategory_ids;
 }
 
-std::string neroshop::Product::get_subcategory_as_string() const {
-    return get_subcategory_name_by_id(subcategory_id);
+std::vector<std::string> neroshop::Product::get_subcategories_as_string() const {
+    std::vector<std::string> subcategory_str_vector {};
+    for (int subcategory_id : this->subcategory_ids) {
+        std::string subcategory = get_subcategory_name_by_id(subcategory_id);
+        subcategory_str_vector.push_back(subcategory);
+    }
+    return subcategory_str_vector;
 }
 
 std::vector<std::string> neroshop::Product::get_tags() const {

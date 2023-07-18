@@ -54,7 +54,7 @@ public:
         const QList<QVariantMap>& attributes, 
         const QString& product_code,
         int category_id, 
-        int subcategory_id, 
+        const QList<int>& subcategory_ids, 
         const QStringList& tags,
         const QList<QVariantMap>& images,
         
@@ -81,12 +81,11 @@ public:
     
     //Q_INVOKABLE void setID(const QString& id);
     //Q_INVOKABLE void setWallet(neroshop::WalletController * wallet); // get the actual wallet from the controller then set it as the wallet
-    Q_INVOKABLE void setStockQuantity(const QString& listing_id, int quantity);
+    Q_INVOKABLE void setStockQuantity(const QString& listing_key, int quantity);
     
     Q_INVOKABLE void uploadAvatar(const QString& filename);
-    Q_INVOKABLE bool exportAvatar();
         
-    Q_INVOKABLE QString getID() const;//Q_INVOKABLE neroshop::WalletController * getWallet() const;
+    Q_INVOKABLE QString getId() const;//Q_INVOKABLE neroshop::WalletController * getWallet() const;
     Q_INVOKABLE int getProductsCount() const;
     Q_INVOKABLE int getReputation() const;
     //Q_INVOKABLE <type> <function_name>() const;

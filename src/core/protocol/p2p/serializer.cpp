@@ -118,8 +118,14 @@ std::pair<std::string, std::string/*std::vector<uint8_t>*/> neroshop::Serializer
         std::string product_code = product.get_code();
         if(!product_code.empty()) product_obj["code"] = product_code; // can be left empty esp. if variants have their own product codes
         product_obj["category"] = product.get_category_as_string();
-        std::string subcategory = product.get_subcategory_as_string();
-        if(!subcategory.empty()) product_obj["subcategory"] = subcategory;
+        std::vector<std::string> subcategories = product.get_subcategories_as_string();
+        if(!subcategories.empty()) {
+            nlohmann::json subcategory_array = {};
+            for (const auto& subcategory : subcategories) {
+                subcategory_array.push_back(subcategory);
+            }
+            product_obj["subcategories"] = subcategory_array;
+        }
         std::vector<std::string> tags = product.get_tags();
         if (!tags.empty()) {
             nlohmann::json tags_array = {};
@@ -324,7 +330,7 @@ std::shared_ptr<neroshop::Object> neroshop::Serializer::deserialize(const std::p
         }
         if (product_value.contains("code")) product.set_code(product_value["code"].get<std::string>());
         product.set_category(product_value["category"].get<std::string>());
-        if (product_value.contains("subcategory")) product.set_subcategory(product_value["subcategory"].get<std::string>());
+        if (product_value.contains("subcategories")) product.set_subcategories(product_value["subcategories"].get<std::vector<std::string>>());
         if (product_value.contains("tags")) product.set_tags(product_value["tags"].get<std::vector<std::string>>());
         
         listing.set_product(product); // move the object into the shared_ptr
@@ -411,7 +417,13 @@ std::pair<std::string, std::string> neroshop::Serializer::serialize(const User& 
     std::string public_key = user.get_public_key();
     assert(!public_key.empty());
     json_object["public_key"] = public_key;
-    json_object["avatar"] = {}; // TODO: Avatars
+    Image * avatar = user.get_avatar();
+    if(avatar != nullptr) {
+        nlohmann::json avatar_obj = {};
+        avatar_obj["name"] = avatar->name;
+        avatar_obj["size"] = avatar->size;
+        json_object["avatar"] = avatar_obj;
+    }
     std::string signature = seller->get_wallet()->sign_message(user_id, monero_message_signature_type::SIGN_WITH_SPEND_KEY);
     json_object["signature"] = signature;
     json_object["metadata"] = "user";

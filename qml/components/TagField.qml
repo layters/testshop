@@ -10,7 +10,7 @@ Item {
     implicitHeight: childrenRect.height
 
     property var tagList: ListModel {}//[]
-    property int maxTagCount: 12 // Maximum number of tags allowed
+    property int maxTagCount: 9 // Maximum number of tags allowed
     
     property alias textField: tagInput
     

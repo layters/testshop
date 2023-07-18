@@ -29,7 +29,7 @@ public:
         const std::vector<Attribute>& attributes,
         const std::string& product_code,
         int category_id, 
-        int subcategory_id,
+        const std::vector<int>& subcategory_ids,
         const std::vector<std::string>& tags,
         const std::vector<Image>& images,
         
