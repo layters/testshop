@@ -14,7 +14,7 @@ public:
     QImage load(const QString &id) const;
     
     QString getProductImagePath(const QString& listing_key, const QString& image_name/*or image id/index? index wont need a parameter*/) const;
-    QString getAvatarImagePath(const QString& user_key) const;
+    QString getAvatarImagePath(const QString& user_key, const QString& image_name) const;
 };
 
 #endif // IMAGELOADER_H

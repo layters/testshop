@@ -132,6 +132,7 @@ Page {
             messageBox.open()
             return; // exit function and do not proceed any further
         }
+        // Save the avatar image to datastore folder for later use
         let account_key = register_result[1];
         if(avatarImage.status === Image.Ready) {
             Backend.saveAvatarImage(Backend.urlToLocalFile(avatarImage.source), account_key)

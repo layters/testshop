@@ -4,6 +4,8 @@ import QtQuick.Controls 2.12
 import QtQuick.Layouts 1.12
 import QtGraphicalEffects 1.12 // ColorOverlay
 
+import FontAwesome 1.0
+
 import "../components" as NeroshopComponents
 
 Page {
@@ -11,25 +13,53 @@ Page {
     background: Rectangle {
         color: "transparent"
     }
-    property var sellerModel: null // accountModel
-    property var listingModel: null
-    property var ratingsModel: null
+    property var userModel: Backend.getUser(productModel.seller_id) // accountModel
+    property var productModel: null // <- the product listing that redirected user to this profile page
+    property var ratingsModel: Backend.getSellerRatings(productModel.seller_id)
+    property var listingsModel: null//Backend.getListingsBySearchTerm(productModel.seller_id)// or Backend.getInventory(productModel.seller_id)
 
     ColumnLayout {
         width: parent.width
         spacing: 0//10 - topMargin already set for profilePictureRect
-                
-        RowLayout {
-            spacing: 24
         
-            Column {
+        // Back button
+        Button {
+            id: backButton
+            Layout.alignment: Qt.AlignTop | Qt.AlignLeft
+            Layout.leftMargin: 24; Layout.topMargin: 20
+            implicitWidth: contentItem.contentWidth + 40; implicitHeight: contentItem.contentHeight + 20
+            text: qsTr("←  Back")//"⇦  Back")
+            hoverEnabled: true
+            contentItem: Text {
+                horizontalAlignment: Text.AlignHCenter
+                verticalAlignment: Text.AlignVCenter
+                text: backButton.text
+                color: "#ffffff"
+            }
+            background: Rectangle {
+                radius: 5
+                color: backButton.hovered ? NeroshopComponents.Style.neroshopPurpleColor : "#50446f"
+            }
+            onClicked: {
+                pageLoader.setSource("qrc:/qml/pages/ProductPage.qml", {"model": productModel})
+            }
+            MouseArea {
+                anchors.fill: parent
+                onPressed: mouse.accepted = false
+                cursorShape: Qt.PointingHandCursor
+            }
+        }        
+        
+            ColumnLayout {
                 Layout.alignment: Qt.AlignTop | Qt.AlignLeft
-                Layout.leftMargin: 24; Layout.topMargin: 20
+                Layout.leftMargin: 24; Layout.rightMargin: Layout.leftMargin
+                Layout.topMargin: 20 
+                Layout.fillWidth: true
                 
                 Rectangle {
                     id: profileCard
-                    width: 400//Layout.fillWidth: true//width: parent.width
-                    height: 500//Layout.preferredHeight: 200
+                    Layout.fillWidth: true//width: parent.width//width: 400//
+                    Layout.preferredHeight: 300//height: 500//
                     color: (bannerImage.status != Image.Ready) ? "royalblue" : "transparent"
                     radius: 7
 
@@ -80,17 +110,19 @@ Page {
                     
                         width: 128//Layout.preferredWidth: 128
                         height: width//Layout.preferredHeight: Layout.preferredWidth
+                        color: infoRect.color// originally no color was set for this so the default was white
                         radius: 5
                         border.width: 7
                         border.color: NeroshopComponents.Style.getColorsFromTheme()[1]//"#343434"//"#808080"//"#0e0e11"//"#000000"//"#ffffff"
 
                         Image {
                             id: profilePicture
-                            source: "file:///" + "/home/sid/Downloads/monero-geometric-logo-800x800.png"//"path/to/profile_picture.jpg"
+                            source: !userModel.hasOwnProperty("avatar") ? "qrc:/assets/images/appicons/LogoLight250x250.png" : "image://avatar?id=%1&image_id=%2".arg(userModel.key).arg(userModel.avatar.name)
                             anchors.centerIn: parent
-                            width: parent.width - profilePictureRect.border.width; height: width
+                            width: parent.width - (profilePictureRect.border.width * 2); height: width
                             fillMode: Image.PreserveAspectFit
                             mipmap: true
+                            asynchronous: true
                             // Apply rounded rectangle mask (radius)
                             layer.enabled: true
                             layer.effect: OpacityMask {
@@ -103,28 +135,79 @@ Page {
                         id: nameIdColumn
                         anchors.top: profilePictureRect.bottom
                         anchors.left: profilePictureRect.left
-                        anchors.leftMargin: 3
-                        //anchors.horizontalCenter: profilePictureRect.horizontalCenter
-                        //anchors.top: parent.top; anchors.topMargin: 10//20//anchors.verticalCenter: parent.verticalCenter
+                        anchors.leftMargin: profilePictureRect.border.width
                         // display name
                         Text {
-                            text: "layter" // Replace with actual user name
+                            text: userModel.hasOwnProperty("display_name") ? userModel.display_name : ""
                             font.pixelSize: 16//32
-                            //font.bold: true
+                            font.bold: true
                             color: (NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000"
                         }
                         // user id
                         TextArea {
-                            text: "5AWjbNUBf2EbbCw2v6ChrJUCdeRjfpcH5Y63wpWz37X6ZEiU9gvGeFqQpZczeVtZnd479FE4SDvKy7yF8ozj99QTRzcTY3a" // Replace with actual user ID
+                            text: userModel.monero_address
                             font.pixelSize: 16
                             //font.bold: true
-                            color: "dimgray"
+                            color: (NeroshopComponents.Style.darkTheme) ? "#d0d0d0" : "#464646"
                             readOnly: true
                             wrapMode: Text.Wrap //Text.Wrap moves text to the newline when it reaches the width
                             selectByMouse: true
                             //background: Rectangle { color: "transparent" }
                             padding: 0; leftPadding: 0
-                            width: 200
+                            width: Math.min(infoRect.width, mainWindow.minimumWidth)//200
+                        }
+                    }
+                    // buttonsRow
+                    Row {
+                        id: buttonsRow
+                        layoutDirection: Qt.RightToLeft
+                        anchors.right: parent.right; anchors.rightMargin: 24
+                        anchors.top: profilePictureRect.top
+                        anchors.topMargin: profilePicture.height / 3
+                        spacing: 10
+                        property real buttonRadius: 6
+                        property string buttonColor: infoRect.color//NeroshopComponents.Style.neroshopPurpleColor
+                
+                        Button {
+                            width: contentItem.contentWidth + 30; height: contentItem.contentHeight + 20
+                            text: qsTr("Message")
+                            background: Rectangle {
+                                color: buttonsRow.buttonColor
+                                radius: buttonsRow.buttonRadius
+                            }
+                            contentItem: Text {
+                                text: parent.text
+                                color: "#ffffff"
+                                horizontalAlignment: Text.AlignHCenter
+                                verticalAlignment: Text.AlignVCenter
+                            }
+                            onClicked: {}
+                            MouseArea {
+                                anchors.fill: parent
+                                onPressed: mouse.accepted = false
+                                cursorShape: Qt.PointingHandCursor
+                            }
+                        }
+                        
+                        Button {
+                            width: contentItem.contentWidth + 30; height: contentItem.contentHeight + 20
+                            text: qsTr("Rate")
+                            background: Rectangle {
+                                color: buttonsRow.buttonColor
+                                radius: buttonsRow.buttonRadius
+                            }
+                            contentItem: Text {
+                                text: parent.text
+                                color: "#ffffff"
+                                horizontalAlignment: Text.AlignHCenter
+                                verticalAlignment: Text.AlignVCenter
+                            }
+                            onClicked: {}
+                            MouseArea {
+                                anchors.fill: parent
+                                onPressed: mouse.accepted = false
+                                cursorShape: Qt.PointingHandCursor
+                            }
                         }
                     }
                     // stats column
@@ -133,34 +216,45 @@ Page {
                         anchors.top: nameIdColumn.bottom
                         anchors.topMargin: 10
                         anchors.left: profilePictureRect.left
-                        anchors.leftMargin: 1
+                        anchors.leftMargin: profilePictureRect.border.width
                         property int textIconSpacing: 5
                         property real iconSize: 24
+                        width: profileCard.width
                         // stats row
                         Row {
+                            id: statsRowActual
                             spacing: 100
                             // reputation
                             Column {
                                 spacing: statsRow.textIconSpacing
-                                Text {
+                                // Deprecated/Replaced with hint (tooltip). Remove this soon!
+                                /*Text {
                                     text: "Reputation"
                                     font.pixelSize: 16//32
-                                    //font.bold: true
                                     color: (NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000"
-                                }
+                                }*/
                                 
+                                Row { // place thumbs in this row
+                                    spacing: 5
                                 Rectangle {
                                     //anchors.verticalCenter: parent.verticalCenter
                                     //anchors.left: parent.left; anchors.leftMargin: width / 2
-                                    width: 100; height: 26
+                                    id: reputationRect
+                                    width: 100; height: 32
                                     color: "transparent"
                                     border.color: "#ffffff"
                                     radius: 3
+                                    property bool hovered: false
                                     
                                     Row {
-                                        anchors.fill: parent
+                                        anchors.centerIn: parent
                                         spacing: 5
                                         Item {
+                                            id: ratingIconRect
+                                            anchors.verticalCenter: parent.verticalCenter
+                                            width: childrenRect.width
+                                            height: childrenRect.height
+                                    
                                             Image {
                                                 id: ratingIcon
                                                 source: "qrc:/assets/images/rating.png"
@@ -177,147 +271,258 @@ Page {
                                         }
                                     
                                         Text {
-                                            text: "97%"
+                                            anchors.verticalCenter: parent.verticalCenter
+                                            text: Backend.getSellerReputation(ratingsModel) + "%"
                                             font.pixelSize: 16
                                             color: (NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000"
                                         }
                                     }
+                                    
+                                    NeroshopComponents.Hint {
+                                        visible: parent.hovered
+                                        height: contentHeight + 20; width: contentWidth + 20
+                                        text: qsTr("Reputation")
+                                        pointer.visible: false;// delay: 0
+                                    }
+                                    
+                                    MouseArea { 
+                                        anchors.fill: parent
+                                        hoverEnabled: true
+                                        onEntered: parent.hovered = true
+                                        onExited: parent.hovered = false
+                                    }
                                 }
-                            }
-                        // products
-                        Column {
-                            spacing: statsRow.textIconSpacing
-                            Text {
-                                text: "Products" // Replace with actual user name
-                                font.pixelSize: 16//32
-                                //font.bold: true
-                                color: (NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000"
-                            }
-                            
-                            Rectangle {
-                                    //anchors.verticalCenter: parent.verticalCenter
-                                    //anchors.left: parent.left; anchors.leftMargin: width / 2
-                                    width: 64; height: 26
-                                    color: "transparent"
-                                    border.color: "#ffffff"
-                                    radius: 3
+                                // thumbs up/thumbs down
+                        Rectangle {
+                            anchors.top: parent.children[0].top
+                            width: 50 + thumbsUpCountText.contentWidth; height: reputationRect.height
+                            color: "transparent"
+                            border.color: "#ffffff"
+                            radius: 3
+                            Row {
+                                anchors.centerIn: parent
+                                spacing: 5
+                                Item {
+                                    id: thumbsUpImageItem
+                                            anchors.verticalCenter: parent.verticalCenter
+                                            width: childrenRect.width//statsRow.iconSize
+                                            height: childrenRect.height
+                                            visible: (thumbsUpImage.status === Image.Ready)
                                     Image {
-                                        id: productIcon
-                                        source: "qrc:/assets/images/open_parcel.png"
+                                        id: thumbsUpImage
+                                        source: "qrc:/assets/images/thumbs_up.png"
                                         width: statsRow.iconSize; height: width
-                                        mipmap: true
+                                        //mipmap: true
                                     }
                             
                                     ColorOverlay {
-                                        anchors.fill: productIcon
-                                        source: productIcon
-                                        color: "#4169e1"
-                                        visible: productIcon.visible
+                                        id: thumbsUpImageOverlayer
+                                        anchors.fill: thumbsUpImage
+                                        source: thumbsUpImage
+                                        color: "green"//"#506a1a"
+                                        visible: thumbsUpImage.visible
                                     }
+                                }
+                                Text {
+                                    id: fallbackThumbsUpIcon
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    text:qsTr(FontAwesome.thumbsUp)
+                                    visible: !thumbsUpImageItem.visible
+                                    font.bold: true
+                                    color: thumbsUpImageOverlayer.color
+                                }
+                                Text {
+                                    id: thumbsUpCountText
+                                            anchors.verticalCenter: parent.verticalCenter
+                                            text: Backend.getSellerGoodRatings(ratingsModel)
+                                            font.pixelSize: 16
+                                            color: (NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000"
+                                        }
                             }
-                        }
-                    }
-                }
-                    /*Column {
-                        Row {
-                                    ////anchors.verticalCenter: parent.verticalCenter
-                                    anchors.left: parent.left; anchors.leftMargin: width / 2
-                                    //width: 32; height: 32
-                                    //color: "#fffbe5"
-                                    //radius: 3//50
+                          } // thumbsUp Rect
+                          // thumbs down rect
+                          Rectangle {
+                            anchors.top: parent.children[0].top
+                            width: 50 + thumbsDownCountText.contentWidth; height: reputationRect.height
+                            color: "transparent"
+                            border.color: "#ffffff"
+                            radius: 3
+                            Row {
+                                anchors.centerIn: parent
+                                spacing: 5
+                                Item {
+                                    id: thumbsDownImageItem
+                                            anchors.verticalCenter: parent.verticalCenter
+                                            width: childrenRect.width//statsRow.iconSize
+                                            height: childrenRect.height
+                                            visible: (thumbsDownImage.status === Image.Ready)
                                     Image {
-                                        id: ratingIcon
-                                        source: "qrc:/assets/images/rating.png"
-                                        width: 32; height: 32
-                                        anchors.centerIn: parent
+                                        id: thumbsDownImage
+                                        source: "qrc:/assets/images/thumbs_down.png"
+                                        width: statsRow.iconSize + 2; height: width
+                                        //mipmap: true
                                     }
                             
                                     ColorOverlay {
-                                        anchors.fill: ratingIcon
-                                        source: ratingIcon
-                                        color: "#ffd700"//"#e6c200"
-                                        visible: ratingIcon.visible
+                                        id: thumbsDownImageOverlayer
+                                        anchors.fill: thumbsDownImage
+                                        source: thumbsDownImage
+                                        color: "red"//"firebrick"
+                                        visible: thumbsDownImage.visible
                                     }
-                        }
-                    }*/
-                ////}
+                                }
+                                Text {
+                                    id: fallbackThumbsDownIcon
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    text:qsTr(FontAwesome.thumbsDown)
+                                    visible: !thumbsDownImageItem.visible
+                                    font.bold: true
+                                    color: thumbsDownImageOverlayer.color
+                                }
+                                Text {
+                                    id: thumbsDownCountText
+                                            anchors.verticalCenter: parent.verticalCenter
+                                            text: Backend.getSellerBadRatings(ratingsModel)
+                                            font.pixelSize: 16
+                                            color: (NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000"
+                                        }
+                            }
+                          } // thumbsDown Rect
+                                
+                                } // row containing both thumbs and reputation
+                            } // column for reputation text/reputation stats (can be safely removed)
+                            
+                        } // end of statsRow
+                    } // end of statsCol
             
-            /*Row {
-                layoutDirection: Qt.RightToLeft
-                anchors.right: parent.right; anchors.rightMargin: 30
-                anchors.verticalCenter: parent.verticalCenter // TODO: make this bottom/bottomPadding
-                
-                Button {
-                    width: contentItem.contentWidth + 20; height: contentItem.contentHeight + 20
-                    text: qsTr("Message")
-                    background: Rectangle {
-                        color: NeroshopComponents.Style.neroshopPurpleColor
-                        radius: 3
-                    }
-                    contentItem: Text {
-                        text: parent.text
-                        color: "#ffffff"
-                        horizontalAlignment: Text.AlignHCenter
-                        verticalAlignment: Text.AlignVCenter
-                        font.bold: true
-                    }
-                    onClicked: {}
-                }
-            }*/ // Row 2
-            // TODO: show stats and reputation like good ratings(thumbs up), bad ratings (thumbs down)
-            // Mail letter icon for email, location icon for location, Link icon for website
-            } // Rectangle
-        } // Column
+                    // TODO: show mail letter icon for email, location icon for location, Link icon for website
+                } // profileCard (Rectangle)
+            } // ColumnLayout
         
             // Tabs
             Rectangle {
                 id: tabsRect
                 Layout.alignment: Qt.AlignTop | Qt.AlignRight
-                Layout.topMargin: 20; Layout.rightMargin: 24;
+                Layout.topMargin: 20; 
+                Layout.leftMargin: 24; Layout.rightMargin: Layout.leftMargin
                 Layout.fillWidth: true
                 Layout.preferredHeight: 50
-                color: "#343434"
-                radius: profileCard.radius
+                color: "royalblue"//NeroshopComponents.Style.neroshopPurpleColor//infoRect.color
+                radius: 0//profileCard.radius
                 Row {       
-                    anchors.verticalCenter: parent.verticalCenter
+                    id: tabButtonRow
+                    anchors.bottom: parent.bottom//anchors.verticalCenter: parent.verticalCenter
                     anchors.left: parent.left; anchors.leftMargin: 10
-                    spacing: 15
+                    spacing: 0////15
+                    property real buttonRadius: 5
+                    property string buttonCheckedColor: NeroshopComponents.Style.getColorsFromTheme()[0]//"transparent"//TODO: this should be the same color as the stacklayout/tabpage
+                    property string buttonUncheckedColor: tabsRect.color
                     Button {
-                        width: contentItem.contentWidth + 20; height: contentItem.contentHeight + 20
-                        text: qsTr("Listing")
+                        id: listingsTabButton
+                        width: (tabsRect.width / tabButtonRow.children.length) - tabButtonRow.anchors.leftMargin/*!listingsCountRect.visible ? 100 : 100 + listingsCountText.contentWidth*/; height: 40
+                        text: qsTr("Listings")
+                        autoExclusive: true
+                        checkable: true
+                        checked: true // default
                         background: Rectangle {
-                            color: NeroshopComponents.Style.neroshopPurpleColor
-                            radius: 3
+                            color: parent.checked ? tabButtonRow.buttonCheckedColor : tabButtonRow.buttonUncheckedColor
+                            radius: tabButtonRow.buttonRadius
+                            
+                            // To hide bottom radius
+                            Rectangle {
+                                anchors.left: parent.left
+                                anchors.bottom: parent.bottom
+                                width: parent.width
+                                height: 5
+                                color: parent.color//"pink"// <- for testing
+                            }
                         }
-                        contentItem: Text {
-                            text: parent.text
-                            color: "#ffffff"
-                            horizontalAlignment: Text.AlignHCenter
-                            verticalAlignment: Text.AlignVCenter
-                            font.bold: true
+                        contentItem: Item {
+                            anchors.fill: parent
+                            Row { 
+                                anchors.centerIn: parent
+                                spacing: 10
+                                Text {
+                                    text: listingsTabButton.text
+                                    color: "#ffffff"
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    font.bold: true
+                                }
+                            
+                                Rectangle {
+                                    id: listingsCountRect
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    width: listingsCountText.contentWidth + 15; height: 20
+                                    color: "#101010"
+                                    radius: 3
+                                    visible: Number(listingsCountText.text) > 0 && !listingsTabButton.checked
+                                    Text {
+                                        id: listingsCountText
+                                        anchors.horizontalCenter: parent.horizontalCenter
+                                        anchors.verticalCenter: parent.verticalCenter
+                                        text: "0"
+                                        color: "#ffffff"
+                                        font.pixelSize: 12
+                                    }
+                                }
+                            }
                         }
                         onClicked: {}
                     }
                     
                     Button {
-                        width: contentItem.contentWidth + 20; height: contentItem.contentHeight + 20
+                        id: ratingsTabButton
+                        width: (tabsRect.width / tabButtonRow.children.length) - tabButtonRow.anchors.leftMargin/*!ratingsCountRect.visible ? 100 : 100 + ratingsCountText.contentWidth*/; height: 40
                         text: qsTr("Ratings")
+                        autoExclusive: true
+                        checkable: true
                         background: Rectangle {
-                            color: NeroshopComponents.Style.neroshopPurpleColor
-                            radius: 3
+                            color: parent.checked ? tabButtonRow.buttonCheckedColor : tabButtonRow.buttonUncheckedColor
+                            radius: tabButtonRow.buttonRadius
+                            
+                            // To hide bottom radius
+                            Rectangle {
+                                anchors.left: parent.left
+                                anchors.bottom: parent.bottom
+                                width: parent.width
+                                height: 5
+                                color: parent.color
+                            }
                         }
-                        contentItem: Text {
-                            text: parent.text
-                            color: "#ffffff"
-                            horizontalAlignment: Text.AlignHCenter
-                            verticalAlignment: Text.AlignVCenter
-                            font.bold: true
+                        contentItem: Item {
+                            anchors.fill: parent
+                            Row {
+                                anchors.centerIn: parent
+                                spacing: 10
+                                Text {
+                                    text: ratingsTabButton.text
+                                    color: "#ffffff"
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    font.bold: true
+                                }
+                            
+                                Rectangle {
+                                    id: ratingsCountRect
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    width: ratingsCountText.contentWidth + 15; height: 20
+                                    color: "#101010"
+                                    radius: 3
+                                    visible: Number(ratingsCountText.text) > 0 && !ratingsTabButton.checked
+                                    Text {
+                                        id: ratingsCountText
+                                        anchors.horizontalCenter: parent.horizontalCenter
+                                        anchors.verticalCenter: parent.verticalCenter
+                                        text: Backend.getSellerRatingsCount(ratingsModel)
+                                        color: "#ffffff"
+                                        font.pixelSize: 12
+                                    }
+                                }
+                            }
                         }
                         onClicked: {}
                     }
                 }
             }
-        } // RowLayout
         
         /*NeroshopComponents.TabBar {
             id: tabBar

@@ -62,6 +62,8 @@ Object {
     property string tag: "\uf02b"
     property string tags: "\uf02c"
     property string truck: "\uf0d1"
+    property string thumbsUp: "\uf164"
+    property string thumbsDown: "\uf165"
     property string dolly: "\uf472"
     property string personDolly: "\uf4d0" // use this icon for item pickup option
     property string paperPlane: "\uf1d8"

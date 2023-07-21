@@ -1,12 +1,12 @@
-# neroshop - WORK IN PROGRESS / ON HOLD
+# neroshop - WORK IN PROGRESS
 [![banner](assets/images/appicons/LogoLight250x250.png)](https://github.com/larteyoh/testshop "neroshop logo")
 
 
 A decentralized P2P (peer-to-peer) marketplace for [**Monero**](https://getmonero.org/) users (PoC)
 
 
-__Disclaimer: This is an experimental/hobbyist project that is not ready for production use. Use at your own risk.__
-__The neroshop team is comprised of a single developer that operates independently and is not affiliated, associated, authorized, endorsed by, or in any way officially connected with the Monero project, Monero team or any other organization.__
+__Disclaimer: The neroshop team is comprised of a single developer that operates independently and is not affiliated, associated, authorized, endorsed by, or in any way officially connected with the Monero project, Monero team or any other organization.__
+__Also, this is an experimental/hobbyist project that is not ready for production use. Use at your own risk.__
 
 ## Table of contents
 <!-- - [The history behind neroshop](#about)-->
@@ -55,7 +55,7 @@ The name _neroshop_ is a combination of the words _nero_, which is Italian for _
 -->
 
 ## Feature Status
-- [x] Distributed P2P network (need help with I2P integration!!!)
+- [x] Distributed P2P network (need help with I2P integration or NAT traversal!!!)
 - [ ] Buy and sell products and services with Monero
 - [x] No KYC
 - [x] No censorship (censorship-resistant)
@@ -264,6 +264,8 @@ amount     sender     timestamp
 
 ## Resources
 * Website: [neroshop.org](https://neroshop.org/)
+
+* Neroshop DHT Specification: [specs](https://github.com/larteyoh/specs)
 
 * Wiki: [Wikipage](https://github.com/larteyoh/testshop/wiki)
 
