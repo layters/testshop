@@ -34,7 +34,7 @@ QImage ImageLoader::load(const QString &id) const
     // You can use https://doc.qt.io/qt-5/qurlquery.html for parsing id
 
     QImage result;
-
+    // listings
     if(id.contains(QStringLiteral("listing"))) {
         // Copy id text to a url (image://catalog?id=%1&index=%2)
         QUrl url(QString(id).replace('/', '?'));
@@ -44,23 +44,60 @@ QImage ImageLoader::load(const QString &id) const
             if(!query.hasQueryItem(QString("id"))) {
                 std::cout << "key 'id' not found in query\n";
             }
+            
             if(!query.hasQueryItem(QString("image_id"))) {
                 std::cout << "key 'image_id' not found in query. Using default image\n";
             }        
-            // Get key-value pair
-            QString listing_key = query.queryItemValue("id");//std::cout << "id: " << listing_key.toStdString() << std::endl;
-            QString image_name = query.queryItemValue(QString("image_id"));//std::cout << "image_id: " << image_id.toStdString() << std::endl;
+            
+            if(query.hasQueryItem(QString("image_id"))) {
+                // Get key-value pair
+                QString listing_key = query.queryItemValue("id");//std::cout << "id: " << listing_key.toStdString() << std::endl;
+                QString image_name = query.queryItemValue(QString("image_id"));//std::cout << "image_id: " << image_id.toStdString() << std::endl;
 
-            // Note: Images with large resolutions (ex. 4000 pixels) will crash this code for some reason
+                // Note: Images with large resolutions (ex. 4000 pixels) will crash this code for some reason
         
-            QString filename = getProductImagePath(listing_key, image_name);//std::cout << "Loading image from: " << filename.toStdString() << "\n";
+                QString filename = getProductImagePath(listing_key, image_name);//std::cout << "Loading image from: " << filename.toStdString() << "\n";
 
-            if (!filename.isEmpty()) {
-                QFile file(filename);
-                if (file.open(QFile::ReadOnly)) {
-                    result.loadFromData(file.readAll());
+                if (!filename.isEmpty()) {
+                    QFile file(filename);
+                    if (file.open(QFile::ReadOnly)) {
+                        result.loadFromData(file.readAll());
+                    }
                 }
             }
+        }
+    }
+    // avatars
+    if(id.contains(QStringLiteral("avatar"))) {
+        // Copy id text to a url
+        QUrl url(QString(id).replace('/', '?'));
+        // Construct query object and parse the query string found in the url, using the default query delimiters (=, &)
+        QUrlQuery query(url);
+        if(!query.isEmpty()) {
+            if(!query.hasQueryItem(QString("id"))) {
+                std::cout << "key 'id' not found in query\n";
+            }
+            
+            if(!query.hasQueryItem(QString("image_id"))) {
+                std::cout << "key 'image_id' not found in query. Using default image\n";
+            }        
+            
+            if(query.hasQueryItem(QString("image_id"))) {
+                // Get key-value pair
+                QString user_key = query.queryItemValue("id");//std::cout << "id: " << user_key.toStdString() << std::endl;
+                QString image_name = query.queryItemValue(QString("image_id"));//std::cout << "image_id: " << image_id.toStdString() << std::endl;
+
+                // Note: Images with large resolutions (ex. 4000 pixels) will crash this code for some reason
+        
+                QString filename = getAvatarImagePath(user_key, image_name);//std::cout << "Loading image from: " << filename.toStdString() << "\n";
+
+                if (!filename.isEmpty()) {
+                    QFile file(filename);
+                    if (file.open(QFile::ReadOnly)) {
+                        result.loadFromData(file.readAll());
+                    }
+                }
+            }    
         }
     }
 
@@ -78,15 +115,15 @@ QString ImageLoader::getProductImagePath(const QString& listing_key, const QStri
     return QString::fromStdString(product_image);
 }
 
-QString ImageLoader::getAvatarImagePath(const QString& user_key) const {
+QString ImageLoader::getAvatarImagePath(const QString& user_key, const QString& image_name) const {
     std::string config_path = NEROSHOP_DEFAULT_CONFIGURATION_PATH;
     std::string cache_folder = config_path + "/" + NEROSHOP_CACHE_FOLDER_NAME;
     std::string avatars_folder = cache_folder + "/" + NEROSHOP_AVATAR_FOLDER_NAME;
     std::string user_key_folder = avatars_folder + "/" + user_key.toStdString();
     
-    //std::string avatar_image = 
+    std::string avatar_image = user_key_folder + "/" + image_name.toStdString();
     
-    return "";//QString::fromStdString(avatar_image);
+    return QString::fromStdString(avatar_image);
 }
 
 static void preload()

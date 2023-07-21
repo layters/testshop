@@ -358,6 +358,13 @@ void neroshop::Seller::set_stock_quantity(const std::string& listing_key, int qu
         bool verified = wallet->verify_message(listing_id, signature);
         // Finally, modify the quantity
         value_obj["quantity"] = quantity;
+        // Add a last_modified or last_updated field so nodes can compare dates and choose the most recent listing
+        auto now = std::chrono::system_clock::now();
+        auto in_time_t = std::chrono::system_clock::to_time_t(now); // current time
+        std::stringstream datetime;
+        datetime << std::put_time(std::gmtime(&in_time_t), "%Y-%m-%d %H:%M:%S");
+        std::string utc_time = datetime.str();
+        value_obj["last_modified"] = utc_time;
         // Send set request containing the updated value with the same key as before
         std::string modified_value = value_obj.dump();
         std::string response;

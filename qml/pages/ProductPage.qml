@@ -15,7 +15,7 @@ Page {
     }
     property var model: null
     function openSellerPage() {
-        pageLoader.setSource("qrc:/qml/pages/ProfilePage.qml");//, {"model": [""]})
+        pageLoader.setSource("qrc:/qml/pages/ProfilePage.qml", {"productModel": productPage.model})
     }
     
     Flickable {

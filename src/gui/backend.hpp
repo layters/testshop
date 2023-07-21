@@ -85,9 +85,13 @@ public:
     Q_INVOKABLE int getProductStarCount(const QString& product_id, int star_number);
     Q_INVOKABLE float getProductAverageStars(const QString& product_id);
     
+    Q_INVOKABLE int getSellerGoodRatings(const QVariantList& seller_ratings);
     Q_INVOKABLE int getSellerGoodRatings(const QString& user_id);
+    Q_INVOKABLE int getSellerBadRatings(const QVariantList& seller_ratings);
     Q_INVOKABLE int getSellerBadRatings(const QString& user_id);
+    Q_INVOKABLE int getSellerRatingsCount(const QVariantList& seller_ratings);
     Q_INVOKABLE int getSellerRatingsCount(const QString& user_id);
+    Q_INVOKABLE int getSellerReputation(const QVariantList& seller_ratings);
     Q_INVOKABLE int getSellerReputation(const QString& user_id);
     // Rating models
     Q_INVOKABLE QVariantList getProductRatings(const QString& product_id/*listing_id*/); // or do I use user account key?
@@ -95,12 +99,14 @@ public:
     
     Q_INVOKABLE QString getDisplayNameByUserId(const QString& user_id);
     Q_INVOKABLE QString getKeyByUserId(const QString& user_id);
+    // User model
+    Q_INVOKABLE QVariantMap getUser(const QString& user_id);
     
     Q_INVOKABLE int getCartMaximumItems();
     Q_INVOKABLE int getCartMaximumQuantity();
     
     Q_INVOKABLE int getStockAvailable(const QString& product_id);
-    
+    // Inventory model
     Q_INVOKABLE QVariantList getInventory(const QString& user_id);
     
     Q_INVOKABLE void createOrder(UserController * user_controller, const QString& shipping_address);

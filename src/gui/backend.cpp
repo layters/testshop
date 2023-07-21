@@ -602,9 +602,8 @@ QVariantList neroshop::Backend::getProductRatings(const QString& product_id) {
 }
 //----------------------------------------------------------------
 //----------------------------------------------------------------
-int neroshop::Backend::getSellerGoodRatings(const QString& user_id) {
+int neroshop::Backend::getSellerGoodRatings(const QVariantList& seller_ratings) {
     int good_ratings_count = 0;
-    QVariantList seller_ratings = getSellerRatings(user_id);
     // Get seller's good (positive) ratings
     for (const QVariant& variant : seller_ratings) {
         QVariantMap rating_obj = variant.toMap();
@@ -616,9 +615,13 @@ int neroshop::Backend::getSellerGoodRatings(const QString& user_id) {
     return good_ratings_count;
 }
 //----------------------------------------------------------------
-int neroshop::Backend::getSellerBadRatings(const QString& user_id) {
-    int bad_ratings_count = 0;
+int neroshop::Backend::getSellerGoodRatings(const QString& user_id) {
     QVariantList seller_ratings = getSellerRatings(user_id);
+    return getSellerGoodRatings(seller_ratings);
+}
+//----------------------------------------------------------------
+int neroshop::Backend::getSellerBadRatings(const QVariantList& seller_ratings) {
+    int bad_ratings_count = 0;
     // Get seller's bad (negative) ratings
     for (const QVariant& variant : seller_ratings) {
         QVariantMap rating_obj = variant.toMap();
@@ -630,15 +633,22 @@ int neroshop::Backend::getSellerBadRatings(const QString& user_id) {
     return bad_ratings_count;
 }
 //----------------------------------------------------------------
-int neroshop::Backend::getSellerRatingsCount(const QString& user_id) {
+int neroshop::Backend::getSellerBadRatings(const QString& user_id) {
     QVariantList seller_ratings = getSellerRatings(user_id);
-    int ratings_count = seller_ratings.size();
-    return ratings_count;
+    return getSellerBadRatings(seller_ratings);
 }
 //----------------------------------------------------------------
-int neroshop::Backend::getSellerReputation(const QString& user_id) {
-    int good_ratings_count = 0, bad_ratings_count = 0;
+int neroshop::Backend::getSellerRatingsCount(const QVariantList& seller_ratings) {
+    return seller_ratings.size();
+}
+//----------------------------------------------------------------
+int neroshop::Backend::getSellerRatingsCount(const QString& user_id) {
     QVariantList seller_ratings = getSellerRatings(user_id);
+    return getSellerRatingsCount(seller_ratings);
+}
+//----------------------------------------------------------------
+int neroshop::Backend::getSellerReputation(const QVariantList& seller_ratings) {
+    int good_ratings_count = 0, bad_ratings_count = 0;
     int ratings_count = seller_ratings.size();
     if(ratings_count <= 0) return 0; // seller has not yet been rated so his or her reputation will be 0%
     // Get seller's good (positive) ratings
@@ -652,6 +662,11 @@ int neroshop::Backend::getSellerReputation(const QString& user_id) {
     // Calculate seller reputation
     double reputation = (good_ratings_count / static_cast<double>(ratings_count)) * 100;
     return static_cast<int>(reputation); // convert reputation to an integer (for easier readability)
+}
+//----------------------------------------------------------------
+int neroshop::Backend::getSellerReputation(const QString& user_id) {
+    QVariantList seller_ratings = getSellerRatings(user_id);
+    return getSellerReputation(seller_ratings);
 }
 //----------------------------------------------------------------
 // returns an array of ratings objects
@@ -721,13 +736,39 @@ QVariantList neroshop::Backend::getSellerRatings(const QString& user_id) {
 //----------------------------------------------------------------
 //----------------------------------------------------------------
 QString neroshop::Backend::getDisplayNameByUserId(const QString& user_id) {
+    db::Sqlite3 * database = neroshop::get_database();
+    if(!database) throw std::runtime_error("database is NULL");
+    std::string key = database->get_text_params("SELECT key FROM mappings WHERE search_term = ?1 AND content = 'account' LIMIT 1;", { user_id.toStdString() });
+    if(key.empty()) return user_id; // Key will never be empty as long as it exists in DHT
+
+    std::string display_name = database->get_text_params("SELECT search_term FROM mappings WHERE key = ?1 AND LENGTH(search_term) <= 30 AND content = 'account'", { key });
+    if(!display_name.empty()) {
+        return QString::fromStdString(display_name);
+    }
+    // If the display name happens to be empty then it means the user's account (DHT) key is lost or missing
+    if(display_name.empty()) {
+        std::cout << "Account key is lost or missing\n";
+        // Remove account key from database
+        int rescode = database->execute_params("DELETE FROM mappings WHERE key = ?1", { key });
+        if(rescode != SQLITE_OK) neroshop::print("sqlite error: DELETE failed", 1);
+    }
+    return user_id;
+}
+
+QString neroshop::Backend::getKeyByUserId(const QString& user_id) { // not currently in use
+    db::Sqlite3 * database = neroshop::get_database();
+    if(!database) throw std::runtime_error("database is NULL");
+    std::string key = database->get_text_params("SELECT key FROM mappings WHERE search_term = $1 AND content = 'account' LIMIT 1;", { user_id.toStdString() });
+    return QString::fromStdString(key);
+}
+//----------------------------------------------------------------
+QVariantMap neroshop::Backend::getUser(const QString& user_id) {
     Client * client = Client::get_main_client();
     
     db::Sqlite3 * database = neroshop::get_database();
     if(!database) throw std::runtime_error("database is NULL");
-    std::string display_name = "";
     std::string key = database->get_text_params("SELECT key FROM mappings WHERE search_term = $1 AND content = 'account' LIMIT 1;", { user_id.toStdString() });
-    if(key.empty()) return user_id;
+    if(key.empty()) return {};
     // Get the value of the corresponding key from the DHT
     std::string response;
     client->get(key, response); // TODO: error handling
@@ -737,8 +778,10 @@ QString neroshop::Backend::getDisplayNameByUserId(const QString& user_id) {
     if(json.contains("error")) {
         int rescode = database->execute_params("DELETE FROM mappings WHERE key = ?1", { key });
         if(rescode != SQLITE_OK) neroshop::print("sqlite error: DELETE failed", 1);
-        return user_id; // Key is lost or missing from DHT, skip to next iteration
+        return {}; // Key is lost or missing from DHT, skip to next iteration
     }
+    
+    QVariantMap user_object;
             
     const auto& response_obj = json["response"];
     assert(response_obj.is_object());
@@ -747,22 +790,25 @@ QString neroshop::Backend::getDisplayNameByUserId(const QString& user_id) {
         nlohmann::json value_obj = nlohmann::json::parse(value);
         assert(value_obj.is_object());//std::cout << value_obj.dump(4) << "\n";
         std::string metadata = value_obj["metadata"].get<std::string>();
-        if (metadata != "user") { std::cerr << "Invalid metadata. \"user\" expected, got \"" << metadata << "\" instead\n"; return user_id; }
+        if (metadata != "user") { std::cerr << "Invalid metadata. \"user\" expected, got \"" << metadata << "\" instead\n"; return {}; }
+        user_object.insert("key", QString::fromStdString(key));
         if(value_obj.contains("display_name") && value_obj["display_name"].is_string()) {
-            display_name = value_obj["display_name"].get<std::string>();
+            std::string display_name = value_obj["display_name"].get<std::string>();
+            user_object.insert("display_name", QString::fromStdString(display_name));
         }
-        return (display_name.empty()) ? user_id : QString::fromStdString(display_name);
+        user_object.insert("monero_address", QString::fromStdString(value_obj["monero_address"].get<std::string>()));
+        user_object.insert("user_id", QString::fromStdString(value_obj["monero_address"].get<std::string>())); // alias
+        user_object.insert("public_key", QString::fromStdString(value_obj["public_key"].get<std::string>()));
+        if(value_obj.contains("avatar") && value_obj["avatar"].is_object()) {
+            const auto& avatar_obj = value_obj["avatar"];
+            QVariantMap avatar;
+            avatar.insert("name", QString::fromStdString(avatar_obj["name"].get<std::string>()));
+            user_object.insert("avatar", avatar);
+        }
+        user_object.insert("signature", QString::fromStdString(value_obj["signature"].get<std::string>()));
     }
-    
-    return user_id;
-}
 
-// un-tested
-QString neroshop::Backend::getKeyByUserId(const QString& user_id) {
-    db::Sqlite3 * database = neroshop::get_database();
-    if(!database) throw std::runtime_error("database is NULL");
-    std::string key = database->get_text_params("SELECT key FROM mappings WHERE search_term = $1 AND content = 'account' LIMIT 1;", { user_id.toStdString() });
-    return QString::fromStdString(key);
+    return user_object;
 }
 //----------------------------------------------------------------
 //----------------------------------------------------------------
