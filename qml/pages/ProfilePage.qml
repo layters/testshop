@@ -118,12 +118,17 @@ Page {
 
                         Image {
                             id: profilePicture
-                            source: !userModel.hasOwnProperty("avatar") ? "qrc:/assets/images/mask.png" : "image://avatar?id=%1&image_id=%2".arg(userModel.key).arg(userModel.avatar.name)
+                            source: !userModel.hasOwnProperty("avatar") ? "https://api.dicebear.com/6.x/identicon/png?seed=%1".arg(userModel.monero_address) : "image://avatar?id=%1&image_id=%2".arg(userModel.key).arg(userModel.avatar.name)
                             anchors.centerIn: parent
                             width: parent.width - (profilePictureRect.border.width * 2); height: width
                             fillMode: Image.PreserveAspectFit
                             mipmap: true
                             asynchronous: true
+                            onStatusChanged: {
+                                if (profilePicture.status === Image.Error) {
+                                    profilePicture.source = "https://api.dicebear.com/6.x/identicon/png?seed=%1".arg(userModel.monero_address)
+                                }
+                            }
                             // Apply rounded rectangle mask (radius)
                             layer.enabled: true
                             layer.effect: OpacityMask {
