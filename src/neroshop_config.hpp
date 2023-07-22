@@ -31,7 +31,7 @@
 #define NEROSHOP_RECV_BUFFER_SIZE            4096//8192// no IP packet can be above 64000 (64 KB), not even with fragmentation, thus recv on an UDP socket can at most return 64 KB (and what is not returned is discarded for the current packet!)
 
 #define NEROSHOP_DHT_REPLICATION_FACTOR      10 // 10 to 20 (or even higher) // Usually 3 or 5 but a higher number would improve fault tolerant, mitigating the risk of data loss even if multiple nodes go offline simultaneously. It also helps distribute the load across more nodes, potentially improving read performance by allowing concurrent access from multiple replicas.
-#define NEROSHOP_DHT_MAX_CLOSEST_NODES       10 // 50 to 100 (or even higher) // Default is 8 in most Kademlia DHTs
+#define NEROSHOP_DHT_MAX_CLOSEST_NODES       20 // 50 to 100 (or even higher)
 #define NEROSHOP_DHT_QUERY_RECV_TIMEOUT      5 // A reasonable timeout value for a DHT node could be between 5 to 30 seconds.
 #define NEROSHOP_DHT_PING_MESSAGE_TIMEOUT    2
 #define NEROSHOP_DHT_ROUTING_TABLE_BUCKETS   256 // recommended to use a number of buckets that is equal to the number of bits in the node id (in this case, sha-3-256 so 256 bits)

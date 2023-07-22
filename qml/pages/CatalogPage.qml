@@ -122,6 +122,8 @@ Page {
             width: childrenRect.width; height: parent.height//width: currentItem.childrenRect.width; height: currentItem.contentHeight//currentItem.childrenRect.height + 400
             anchors.horizontalCenter: parent.horizontalCenter// only works when width = childrenRect.width ////viewToggle.horizontalCenter
             anchors.top: topPanel.bottom; anchors.topMargin: 15
+            anchors.bottom: parent.bottom
+            anchors.bottomMargin: 10
             currentIndex: viewToggle.currentIndex
             property int pagesCount: 1//10////pages.count// Number of page results from search
             property var currentItem: this.itemAt(this.currentIndex)
