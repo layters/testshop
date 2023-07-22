@@ -739,18 +739,17 @@ QString neroshop::Backend::getDisplayNameByUserId(const QString& user_id) {
     db::Sqlite3 * database = neroshop::get_database();
     if(!database) throw std::runtime_error("database is NULL");
     std::string key = database->get_text_params("SELECT key FROM mappings WHERE search_term = ?1 AND content = 'account' LIMIT 1;", { user_id.toStdString() });
-    if(key.empty()) return user_id; // Key will never be empty as long as it exists in DHT
+    if(key.empty()) return user_id; // Key will never be empty as long as it exists in DHT + database
 
     std::string display_name = database->get_text_params("SELECT search_term FROM mappings WHERE key = ?1 AND LENGTH(search_term) <= 30 AND content = 'account'", { key });
     if(!display_name.empty()) {
         return QString::fromStdString(display_name);
     }
     // If the display name happens to be empty then it means the user's account (DHT) key is lost or missing
+    // or more often than not it is because the user did not set a display name, so deleting the key from the database for this reason is stupid, dangerous, and will have unintended consequences
+    // so its best to just return the user_id
     if(display_name.empty()) {
-        std::cout << "Account key is lost or missing\n";
-        // Remove account key from database
-        int rescode = database->execute_params("DELETE FROM mappings WHERE key = ?1", { key });
-        if(rescode != SQLITE_OK) neroshop::print("sqlite error: DELETE failed", 1);
+        // do nothing
     }
     return user_id;
 }
@@ -857,19 +856,20 @@ int neroshop::Backend::getStockAvailable(const QString& product_id) {
 //----------------------------------------------------------------
 //----------------------------------------------------------------
 QVariantList neroshop::Backend::getInventory(const QString& user_id) {
-    db::Sqlite3 * database = neroshop::get_database();
-    if(!database) throw std::runtime_error("database is NULL");
+    Client * client = Client::get_main_client();
     
-    std::string command = "SELECT DISTINCT * FROM listings JOIN products ON products.uuid = listings.product_id JOIN images ON images.product_id = listings.product_id WHERE seller_id = $1 GROUP BY images.product_id;";
+    neroshop::db::Sqlite3 * database = neroshop::get_database();
+    if(!database) throw std::runtime_error("database is NULL");
+    std::string command = "SELECT DISTINCT key FROM mappings WHERE search_term = ?1 AND content = 'listing'";
     sqlite3_stmt * stmt = nullptr;
     // Prepare (compile) statement
     if(sqlite3_prepare_v2(database->get_handle(), command.c_str(), -1, &stmt, nullptr) != SQLITE_OK) {
         neroshop::print("sqlite3_prepare_v2: " + std::string(sqlite3_errmsg(database->get_handle())), 1);
         return {};
     }
-    // Bind seller_id to TEXT
-    std::string seller_uuid = user_id.toStdString();
-    if(sqlite3_bind_text(stmt, 1, seller_uuid.c_str(), seller_uuid.length(), SQLITE_STATIC) != SQLITE_OK) {
+    // Bind user_id to TEXT
+    QByteArray userIdByteArray = user_id.toUtf8();
+    if(sqlite3_bind_text(stmt, 1, userIdByteArray.constData(), userIdByteArray.length(), SQLITE_STATIC) != SQLITE_OK) {
         neroshop::print("sqlite3_bind_text (arg: 1): " + std::string(sqlite3_errmsg(database->get_handle())), 1);
         sqlite3_finalize(stmt);
         return {};
@@ -884,36 +884,73 @@ QVariantList neroshop::Backend::getInventory(const QString& user_id) {
     // Get all table values row by row
     while(sqlite3_step(stmt) == SQLITE_ROW) {
         QVariantMap inventory_object; // Create an object for each row
+        QVariantList product_images;
+
         for(int i = 0; i < sqlite3_column_count(stmt); i++) {
-            std::string column_value = (sqlite3_column_text(stmt, i) == nullptr) ? "NULL" : reinterpret_cast<const char *>(sqlite3_column_text(stmt, i));////if(sqlite3_column_text(stmt, i) == nullptr) {throw std::runtime_error("column is NULL");}
-            ////std::cout << column_value  << " (" << i << ")" << std::endl;//std::cout << sqlite3_column_name(stmt, i) << std::endl;
-            // listings table
-            if(i == 0) inventory_object.insert("listing_uuid", QString::fromStdString(column_value));
-            if(i == 1) inventory_object.insert("product_id", QString::fromStdString(column_value));
-            if(i == 2) inventory_object.insert("seller_id", QString::fromStdString(column_value));
-            if(i == 3) inventory_object.insert("quantity", QString::fromStdString(column_value).toInt());
-            if(i == 4) inventory_object.insert("price", QString::fromStdString(column_value).toDouble());
-            if(i == 5) inventory_object.insert("currency", QString::fromStdString(column_value));
-            if(i == 6) inventory_object.insert("condition", QString::fromStdString(column_value));
-            if(i == 7) inventory_object.insert("location", QString::fromStdString(column_value));
-            if(i == 8) inventory_object.insert("date", QString::fromStdString(column_value));
-            // products table
-            if(i == 9) inventory_object.insert("product_uuid", QString::fromStdString(column_value)); 
-            if(i == 10) inventory_object.insert("product_name", QString::fromStdString(column_value)); 
-            if(i == 11) inventory_object.insert("product_description", QString::fromStdString(column_value)); 
-            if(i == 12) inventory_object.insert("weight", QString::fromStdString(column_value).toDouble()); 
-            if(i == 13) inventory_object.insert("product_attributes", QString::fromStdString(column_value)); 
-            if(i == 14) inventory_object.insert("product_code", QString::fromStdString(column_value)); 
-            if(i == 15) inventory_object.insert("product_category_id", QString::fromStdString(column_value).toInt()); 
-            // images table
-            //if(i == 16) inventory_object.insert("image_id", QString::fromStdString(column_value)); 
-            //if(i == 17) inventory_object.insert("product_uuid", QString::fromStdString(column_value)); 
-            if(i == 18) inventory_object.insert("product_image_file", QString::fromStdString(column_value)); 
-            //if(i == 19) inventory_object.insert("product_image_data", QString::fromStdString(column_value));        
+            std::string column_value = (sqlite3_column_text(stmt, i) == nullptr) ? "NULL" : reinterpret_cast<const char *>(sqlite3_column_text(stmt, i));//std::cout << column_value  << " (" << i << ")" << std::endl;
+            if(column_value == "NULL") continue; // Skip invalid columns
+            QString key = QString::fromStdString(column_value);
+            // Get the value of the corresponding key from the DHT
+            std::string response;
+            client->get(key.toStdString(), response); // TODO: error handling
+            std::cout << "Received response (get): " << response << "\n";
+            // Parse the response
+            nlohmann::json json = nlohmann::json::parse(response);
+            if(json.contains("error")) {
+                int rescode = database->execute_params("DELETE FROM mappings WHERE key = ?1", { key.toStdString() });
+                if(rescode != SQLITE_OK) neroshop::print("sqlite error: DELETE failed", 1);
+                continue; // Key is lost or missing from DHT, skip to next iteration
+            }
+            
+            const auto& response_obj = json["response"];
+            assert(response_obj.is_object());
+            if (response_obj.contains("value") && response_obj["value"].is_string()) {
+                const auto& value = response_obj["value"].get<std::string>();
+                nlohmann::json value_obj = nlohmann::json::parse(value);
+                assert(value_obj.is_object());//std::cout << value_obj.dump(4) << "\n";
+                std::string metadata = value_obj["metadata"].get<std::string>();
+                if (metadata != "listing") { std::cerr << "Invalid metadata. \"listing\" expected, got \"" << metadata << "\" instead\n"; continue; }
+                inventory_object.insert("key", key);
+                inventory_object.insert("listing_uuid", QString::fromStdString(value_obj["id"].get<std::string>()));
+                inventory_object.insert("seller_id", QString::fromStdString(value_obj["seller_id"].get<std::string>()));
+                inventory_object.insert("quantity", value_obj["quantity"].get<int>());
+                inventory_object.insert("price", value_obj["price"].get<double>());
+                inventory_object.insert("currency", QString::fromStdString(value_obj["currency"].get<std::string>()));
+                inventory_object.insert("condition", QString::fromStdString(value_obj["condition"].get<std::string>()));
+                if(value_obj.contains("location") && value_obj["location"].is_string()) {
+                    inventory_object.insert("location", QString::fromStdString(value_obj["location"].get<std::string>()));
+                }
+                inventory_object.insert("date", QString::fromStdString(value_obj["date"].get<std::string>()));
+                assert(value_obj["product"].is_object());
+                const auto& product_obj = value_obj["product"];
+                inventory_object.insert("product_uuid", QString::fromStdString(product_obj["id"].get<std::string>()));
+                inventory_object.insert("product_name", QString::fromStdString(product_obj["name"].get<std::string>()));
+                inventory_object.insert("product_description", QString::fromStdString(product_obj["description"].get<std::string>()));
+                inventory_object.insert("product_category_id", get_category_id_by_name(product_obj["category"].get<std::string>()));
+                //inventory_object.insert("", QString::fromStdString(product_obj[""].get<std::string>()));
+                if (product_obj.contains("images") && product_obj["images"].is_array()) {
+                    const auto& images_array = product_obj["images"];
+                    for (const auto& image : images_array) {
+                        if (image.contains("name") && image.contains("id")) {
+                            const auto& image_name = image["name"].get<std::string>();
+                            const auto& image_id = image["id"].get<int>();
+                            
+                            QVariantMap image_map;
+                            image_map.insert("name", QString::fromStdString(image_name));
+                            image_map.insert("id", image_id);
+                            product_images.append(image_map);
+                        }
+                    }
+                    inventory_object.insert("product_images", product_images);
+                }
+                if (product_obj.contains("thumbnail") && product_obj["thumbnail"].is_string()) {
+                    inventory_object.insert("product_thumbnail", QString::fromStdString(product_obj["thumbnail"].get<std::string>()));
+                }
+            }
+            inventory_array.append(inventory_object);
         }
-        inventory_array.append(inventory_object);
     }
-    
+        
     sqlite3_finalize(stmt);
 
     return inventory_array;

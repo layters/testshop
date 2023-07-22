@@ -364,7 +364,7 @@ void neroshop::Seller::set_stock_quantity(const std::string& listing_key, int qu
         std::stringstream datetime;
         datetime << std::put_time(std::gmtime(&in_time_t), "%Y-%m-%d %H:%M:%S");
         std::string utc_time = datetime.str();
-        value_obj["last_modified"] = utc_time;
+        value_obj["last_updated"] = utc_time;
         // Send set request containing the updated value with the same key as before
         std::string modified_value = value_obj.dump();
         std::string response;

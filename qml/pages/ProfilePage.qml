@@ -13,13 +13,14 @@ Page {
     background: Rectangle {
         color: "transparent"
     }
-    property var userModel: Backend.getUser(productModel.seller_id) // accountModel
+    property var userModel: Backend.getUser(productModel.seller_id)
     property var productModel: null // <- the product listing that redirected user to this profile page
     property var ratingsModel: Backend.getSellerRatings(productModel.seller_id)
-    property var listingsModel: null//Backend.getListingsBySearchTerm(productModel.seller_id)// or Backend.getInventory(productModel.seller_id)
+    property var listingsModel: Backend.getInventory(productModel.seller_id)//Backend.getListingsBySearchTerm(productModel.seller_id)
 
     ColumnLayout {
-        width: parent.width
+        anchors.fill: parent
+        anchors.bottomMargin: 10
         spacing: 0//10 - topMargin already set for profilePictureRect
         
         // Back button
@@ -117,7 +118,7 @@ Page {
 
                         Image {
                             id: profilePicture
-                            source: !userModel.hasOwnProperty("avatar") ? "qrc:/assets/images/appicons/LogoLight250x250.png" : "image://avatar?id=%1&image_id=%2".arg(userModel.key).arg(userModel.avatar.name)
+                            source: !userModel.hasOwnProperty("avatar") ? "qrc:/assets/images/mask.png" : "image://avatar?id=%1&image_id=%2".arg(userModel.key).arg(userModel.avatar.name)
                             anchors.centerIn: parent
                             width: parent.width - (profilePictureRect.border.width * 2); height: width
                             fillMode: Image.PreserveAspectFit
@@ -311,8 +312,8 @@ Page {
                                     Image {
                                         id: thumbsUpImage
                                         source: "qrc:/assets/images/thumbs_up.png"
-                                        width: statsRow.iconSize; height: width
-                                        //mipmap: true
+                                        width: 18; height: width
+                                        mipmap: true
                                     }
                             
                                     ColorOverlay {
@@ -359,8 +360,8 @@ Page {
                                     Image {
                                         id: thumbsDownImage
                                         source: "qrc:/assets/images/thumbs_down.png"
-                                        width: statsRow.iconSize + 2; height: width
-                                        //mipmap: true
+                                        width: 18 + 2; height: width
+                                        mipmap: true
                                     }
                             
                                     ColorOverlay {
@@ -402,7 +403,7 @@ Page {
             // Tabs
             Rectangle {
                 id: tabsRect
-                Layout.alignment: Qt.AlignTop | Qt.AlignRight
+                Layout.alignment: Qt.AlignTop | Qt.AlignLeft
                 Layout.topMargin: 20; 
                 Layout.leftMargin: 24; Layout.rightMargin: Layout.leftMargin
                 Layout.fillWidth: true
@@ -415,7 +416,7 @@ Page {
                     anchors.left: parent.left; anchors.leftMargin: 10
                     spacing: 0////15
                     property real buttonRadius: 5
-                    property string buttonCheckedColor: NeroshopComponents.Style.getColorsFromTheme()[0]//"transparent"//TODO: this should be the same color as the stacklayout/tabpage
+                    property string buttonCheckedColor: tabLayout.tabItemColor
                     property string buttonUncheckedColor: tabsRect.color
                     Button {
                         id: listingsTabButton
@@ -453,21 +454,23 @@ Page {
                                     id: listingsCountRect
                                     anchors.verticalCenter: parent.verticalCenter
                                     width: listingsCountText.contentWidth + 15; height: 20
-                                    color: "#101010"
+                                    color: "#101010"//tabLayout.tabItemColor
                                     radius: 3
                                     visible: Number(listingsCountText.text) > 0 && !listingsTabButton.checked
                                     Text {
                                         id: listingsCountText
                                         anchors.horizontalCenter: parent.horizontalCenter
                                         anchors.verticalCenter: parent.verticalCenter
-                                        text: "0"
+                                        text: (profilePage.listingsModel != null) ? profilePage.listingsModel.length : "0"
                                         color: "#ffffff"
                                         font.pixelSize: 12
                                     }
                                 }
                             }
                         }
-                        onClicked: {}
+                        onClicked: {
+                            tabLayout.currentIndex = 0
+                        }
                     }
                     
                     Button {
@@ -505,7 +508,7 @@ Page {
                                     id: ratingsCountRect
                                     anchors.verticalCenter: parent.verticalCenter
                                     width: ratingsCountText.contentWidth + 15; height: 20
-                                    color: "#101010"
+                                    color: "#101010"//tabLayout.tabItemColor
                                     radius: 3
                                     visible: Number(ratingsCountText.text) > 0 && !ratingsTabButton.checked
                                     Text {
@@ -519,37 +522,79 @@ Page {
                                 }
                             }
                         }
-                        onClicked: {}
+                        onClicked: {
+                            tabLayout.currentIndex = 1
+                        }
                     }
                 }
             }
-        
-        /*NeroshopComponents.TabBar {
-            id: tabBar
-            Layout.alignment: Qt.AlignLeft | Qt.AlignTop
-            model: ["Store", "Ratings", "Details"]
-            color0: NeroshopComponents.Style.neroshopPurpleColor
-            Component.onCompleted: {
-                buttonAt(0).checked = true
+        // StackLayout
+        StackLayout {
+            id: tabLayout
+            Layout.alignment: Qt.AlignTop | Qt.AlignLeft
+            Layout.leftMargin: 24; Layout.rightMargin: Layout.leftMargin
+            Layout.preferredWidth: tabsRect.width; Layout.fillHeight: true
+            currentIndex: 0
+            property string tabItemColor: NeroshopComponents.Style.getColorsFromTheme()[1]//"#101010"//NeroshopComponents.Style.getColorsFromTheme()[0]//"transparent"//""
+            Rectangle {
+                id: listingsTabItem
+                color: tabLayout.tabItemColor
+                // StackLayout child Items' Layout.fillWidth and Layout.fillHeight properties default to true
             }
-        }*/
-        /*TabBar {
-            id: tabBar
-            width: parent.width
-            TabButton {
-                text: qsTr("Store") // Listings
-                width: text.length * 10
+            Rectangle {
+                id: ratingsTabItem
+                color: tabLayout.tabItemColor
+                // StackLayout child Items' Layout.fillWidth and Layout.fillHeight properties default to true
+                
+                Flickable {
+                    anchors.fill: parent
+                    contentWidth: parent.width; contentHeight: (ratingsList.delegateHeight * ratingsList.count) + (ratingsList.spacing * (ratingsList.count - 1))
+                    clip: true
+                    /*ScrollBar.vertical: ScrollBar {
+                        policy: ScrollBar.AsNeeded
+                    }*/
+                ListView {
+                    id: ratingsList
+                    /*property int margins: 10
+                    anchors.left: parent.left; anchors.top: parent.top
+                    anchors.margins: margins*/
+                    anchors.fill: parent//width: parent.width
+                    property real margins: 15
+                    anchors.topMargin: ratingsList.margins; anchors.bottomMargin: anchors.topMargin
+                    //height: childrenRect.height
+                    model: profilePage.ratingsModel
+                    spacing: 10
+                    property real delegateHeight: 100
+                    delegate: Rectangle {
+                        anchors.left: parent.left; anchors.right: parent.right
+                        anchors.leftMargin: ratingsList.margins; anchors.rightMargin: anchors.leftMargin
+                        width: parent.width; height: ratingsList.delegateHeight
+                        color: index % 2 === 0 ? "#f0f0f0" : "#e0e0e0"
+                        radius: 3
+                        // Display review data using Text elements
+                        Text {
+                            id: commentsLabel
+                            anchors.left: parent.left
+                            anchors.leftMargin: 10
+                            text: "Comments: " + modelData.comments
+                        }
+                        Text {
+                            id: scoreLabel
+                            anchors.right: parent.right
+                            anchors.rightMargin: 10
+                            anchors.top: parent.top
+                            text: "Score: " + modelData.score
+                        }
+                        Text {
+                            anchors.right: parent.right
+                            anchors.rightMargin: 10
+                            anchors.top: scoreLabel.bottom
+                            text: "Rater ID: " + modelData.rater_id
+                        }
+                    }
+                }
+                } // ScrollView
             }
-            TabButton {
-                text: qsTr("Ratings")
-            }
-            TabButton {
-                text: qsTr("Details") // About
-            }
-        }*/
-
-        /*StackView {
-
-        }*/
-    }    
-}
+        }
+    } // root ColumnLayout
+} // end of Page
