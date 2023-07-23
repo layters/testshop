@@ -222,7 +222,7 @@ make -j$(nproc)
 
 
 ## Contributing
-See [CONTRIBUTING.md](CONTRIBUTING.md)
+See [Wiki](https://github.com/larteyoh/testshop/wiki/Contributing)
 
 
 ## License
@@ -291,7 +291,7 @@ everyone in our matrix room — for sharing many great ideas that could be used 
 
 [//]: # (./clean.sh)
 [//]: # (git checkout -b main)
-[//]: # (git add .gitignore .gitmodules assets/ cmake/ CMakeLists.txt CONTRIBUTING.md external/ LICENSE qml/ qml.qrc README.md src/ tests/)
+[//]: # (git add .gitignore .gitmodules assets/ cmake/ CMakeLists.txt external/ LICENSE qml/ qml.qrc README.md src/ tests/)
 [//]: # (git commit -m"..."    or    git commit -a --allow-empty-message -m "")
 [//]: # (git push -u origin backup --force)
 [//]: # (https://git.slipfox.xyz/larteyoh/testshop/settings => Mirror Settings => Synchronize Now)
