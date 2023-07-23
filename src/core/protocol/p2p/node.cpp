@@ -195,6 +195,26 @@ std::string neroshop::Node::generate_node_id(const std::string& address, int por
 
 //-----------------------------------------------------------------------------
 
+static std::string get_most_recent_timestamp(const std::string& timestamp1, const std::string& timestamp2) {
+    std::tm tm1{};
+    std::istringstream ss1(timestamp1);
+    ss1 >> std::get_time(&tm1, "%Y-%m-%d %H:%M:%S");
+    std::time_t time1 = std::mktime(&tm1);
+
+    std::tm tm2{};
+    std::istringstream ss2(timestamp2);
+    ss2 >> std::get_time(&tm2, "%Y-%m-%d %H:%M:%S");
+    std::time_t time2 = std::mktime(&tm2);
+
+    if (time1 > time2) {
+        return timestamp1;
+    } else {
+        return timestamp2;
+    }
+}
+
+//-----------------------------------------------------------------------------
+
 // Define the list of bootstrap nodes
 std::vector<neroshop::Peer> bootstrap_nodes = {
     {"node.neroshop.org", NEROSHOP_P2P_DEFAULT_PORT},
@@ -364,6 +384,7 @@ int neroshop::Node::set(const std::string& key, const std::string& value) {
         // Compare the preexisting value with the new value
         if (current_value != value) {
             ////std::cout << "Value modification detected. Performing signature verification ...\n";//std::cout << "Value mismatch. Skipping ...\n";//return false;}
+            nlohmann::json current_json = nlohmann::json::parse(current_value);
             
             // Verify signature using user's public key (required for account data and listing data)
             if (json.contains("signature")) {
@@ -384,6 +405,30 @@ int neroshop::Node::set(const std::string& key, const std::string& value) {
                     std::cerr << "Verification failed." << std::endl;
                     return false; // Verification failed, return false
                 }*/
+            }
+            
+            // Compare dates of new data and old (pre-existing) data - untested
+            if(json.contains("last_updated")) {
+                assert(json["last_updated"].is_string());
+                std::string last_updated = json["last_updated"].get<std::string>();
+                
+                // Check if current value has a last_updated field too
+                if(current_json.contains("last_updated")) {
+                    assert(current_json["last_updated"].is_string());
+                    std::string current_last_updated = current_json["last_updated"].get<std::string>();
+                    // Compare the new json's last_updated timestamp with the current json's own
+                    // And choose whichever has the most recent timestamp then exit the function
+                    std::string most_recent_timestamp = get_most_recent_timestamp(last_updated, current_last_updated);
+                    // If this node has the up-to-date value, return true as there is no need to update
+                    if(most_recent_timestamp == current_last_updated) {
+                        std::cout << "Value for key (" << key << ") is already up-to-date" << std::endl;
+                        return has_key(key);//true
+                    }
+                } else {
+                    // If current value does not have a last_updated field 
+                    // then it means it's probably outdated, so do nothing.
+                    // It will be replaced with the new value at the end of the scope
+                }
             }
         }
     }
