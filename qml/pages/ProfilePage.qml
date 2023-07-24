@@ -553,53 +553,92 @@ Page {
                 
                 Flickable {
                     anchors.fill: parent
-                    contentWidth: parent.width; contentHeight: (ratingsList.delegateHeight * ratingsList.count) + (ratingsList.spacing * (ratingsList.count - 1))
+                    contentWidth: parent.width; contentHeight: ratingsList.contentHeight + (ratingsList.margins * 2) // to fill the top + bottom padding
                     clip: true
-                    /*ScrollBar.vertical: ScrollBar {
+                    ScrollBar.vertical: ScrollBar {
                         policy: ScrollBar.AsNeeded
-                    }*/
-                ListView {
-                    id: ratingsList
-                    /*property int margins: 10
-                    anchors.left: parent.left; anchors.top: parent.top
-                    anchors.margins: margins*/
-                    anchors.fill: parent//width: parent.width
-                    property real margins: 15
-                    anchors.topMargin: ratingsList.margins; anchors.bottomMargin: anchors.topMargin
-                    //height: childrenRect.height
-                    model: profilePage.ratingsModel
-                    spacing: 10
-                    property real delegateHeight: 100
-                    delegate: Rectangle {
-                        anchors.left: parent.left; anchors.right: parent.right
-                        anchors.leftMargin: ratingsList.margins; anchors.rightMargin: anchors.leftMargin
-                        width: parent.width; height: ratingsList.delegateHeight
-                        color: index % 2 === 0 ? "#f0f0f0" : "#e0e0e0"
-                        radius: 3
-                        // Display review data using Text elements
-                        Text {
-                            id: commentsLabel
-                            anchors.left: parent.left
-                            anchors.leftMargin: 10
-                            text: "Comments: " + modelData.comments
-                        }
-                        Text {
-                            id: scoreLabel
-                            anchors.right: parent.right
-                            anchors.rightMargin: 10
-                            anchors.top: parent.top
-                            text: "Score: " + modelData.score
-                        }
-                        Text {
-                            anchors.right: parent.right
-                            anchors.rightMargin: 10
-                            anchors.top: scoreLabel.bottom
-                            text: "Rater ID: " + modelData.rater_id
-                        }
                     }
-                }
-                } // ScrollView
-            }
-        }
+                    ListView {
+                        id: ratingsList
+                        /*property int margins: 10
+                        anchors.left: parent.left; anchors.top: parent.top
+                        anchors.margins: margins*/
+                        anchors.fill: parent//width: parent.width
+                        property real margins: 15
+                        anchors.topMargin: ratingsList.margins; anchors.bottomMargin: anchors.topMargin
+                        model: profilePage.ratingsModel
+                        spacing: 10
+                        property real delegateHeight: 100
+                        delegate: Rectangle {
+                            anchors.left: parent.left; anchors.right: parent.right
+                            anchors.leftMargin: ratingsList.margins; anchors.rightMargin: anchors.leftMargin
+                            width: parent.width; height: Math.max(ratingsList.delegateHeight, ratingsList.delegateHeight + commentsLabel.height)
+                            color: "transparent"//(NeroshopComponents.Style.darkTheme) ? "#101010" : "#efefef"//index % 2 === 0 ? "#f0f0f0" : "#e0e0e0"
+                            radius: 6
+                            property string textColor: (NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000"
+                            // Display review data using Text elements
+                            Component.onCompleted: console.log("commentsLabel.height",commentsLabel.height)
+                            Rectangle {
+                                id: avatarRect
+                                anchors.left: parent.left
+                                anchors.leftMargin: 10
+                                anchors.verticalCenter: parent.verticalCenter
+                                width: parent.height - 20; height: width
+                                Image {
+                                    anchors.centerIn: parent
+                                    width: parent.width - (avatarRect.border.width * 2); height: width
+                                    fillMode: Image.PreserveAspectCrop
+                                    mipmap: true
+                                    source: "https://api.dicebear.com/6.x/identicon/png?seed=%1".arg(modelData.rater_id)
+                                }
+                            }
+                            Column {
+                                anchors.left: avatarRect.right
+                                anchors.leftMargin: 10
+                                anchors.top: avatarRect.top
+                                width: parent.width - (avatarRect.anchors.leftMargin + avatarRect.width + anchors.leftMargin + parent.anchors.rightMargin)
+                                //height: parent.height
+                                spacing: 30//15
+                                Text {
+                                    anchors.left: parent.left
+                                    anchors.leftMargin: 0
+                                    text: modelData.rater_id
+                                    color: parent.parent.textColor
+                                    font.bold: true
+                                    wrapMode: Text.WordWrap
+                                    elide: Text.ElideRight
+                                    width: parent.width
+                                }
+                            
+                                Text {//TextArea {
+                                    id: commentsLabel
+                                    //anchors.left: parent.left
+                                    //anchors.leftMargin: 0
+                                    text: modelData.comments// reviews cannot surpass 1024 bytes
+                                    color: parent.parent.textColor
+                                    ////readOnly: true
+                                    wrapMode: Text.WordWrap////Text.Wrap//
+                                    width: parent.width
+                                    height: (text.length >= 1024) ? 200 : 100//Math.min(100, (text.length * 10) / parent.height)//200
+                                    ////background: Rectangle { color: "transparent" }
+                                    elide: Text.ElideRight
+                                }
+                            } // Column
+                            // TODO: add timestamp too                    
+                            Text {
+                                id: scoreLabel
+                                anchors.right: parent.right
+                                anchors.rightMargin: 10
+                                //anchors.top: parent.top
+                                anchors.bottom: parent.bottom
+                                anchors.bottomMargin: 10
+                                text: "Score: " + modelData.score
+                                color: parent.textColor
+                            }
+                        } // delegate
+                    } // ListView
+                } // Flickable
+            } // StackLayout Item
+        } // StackLayout
     } // root ColumnLayout
 } // end of Page

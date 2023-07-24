@@ -75,7 +75,7 @@ std::string neroshop::Seller::list_item(
     auto now = std::chrono::system_clock::now();
     auto in_time_t = std::chrono::system_clock::to_time_t(now); // current time
     std::stringstream date;
-    date << std::put_time(std::gmtime(&in_time_t), "%Y-%m-%d %H:%M:%S");
+    date << std::put_time(std::gmtime(&in_time_t), "%Y-%m-%dT%H:%M:%SZ");
     std::string utc_time = date.str();//std::cout << "utc time: " << utc_time << "\n";
     
     std::string signature = wallet->sign_message(listing_id, monero_message_signature_type::SIGN_WITH_SPEND_KEY);//std::cout << "signature: " << signature << "\n\n";
@@ -148,7 +148,7 @@ void neroshop::Seller::delist_item(const std::string& listing_key) {
         auto now = std::chrono::system_clock::now();
         auto in_time_t = std::chrono::system_clock::to_time_t(now); // current time
         std::stringstream datetime;
-        datetime << std::put_time(std::gmtime(&in_time_t), "%Y-%m-%d %H:%M:%S");
+        datetime << std::put_time(std::gmtime(&in_time_t), "%Y-%m-%dT%H:%M:%SZ");
         std::string utc_time = datetime.str();
         value_obj["expiration_date"] = utc_time;//value_obj["valid_until"] = utc_time;
         // Send set request containing the updated value with the same key as before
@@ -362,7 +362,7 @@ void neroshop::Seller::set_stock_quantity(const std::string& listing_key, int qu
         auto now = std::chrono::system_clock::now();
         auto in_time_t = std::chrono::system_clock::to_time_t(now); // current time
         std::stringstream datetime;
-        datetime << std::put_time(std::gmtime(&in_time_t), "%Y-%m-%d %H:%M:%S");
+        datetime << std::put_time(std::gmtime(&in_time_t), "%Y-%m-%dT%H:%M:%SZ");
         std::string utc_time = datetime.str();
         value_obj["last_updated"] = utc_time;
         // Send set request containing the updated value with the same key as before
