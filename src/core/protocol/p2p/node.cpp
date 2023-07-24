@@ -9,6 +9,7 @@
 #include "../../version.hpp"
 #include "../../tools/base64.hpp"
 #include "mapper.hpp"
+#include "../../tools/timestamp.hpp"
 
 #include <nlohmann/json.hpp>
 
@@ -20,6 +21,7 @@
 #include <unordered_set>
 
 namespace neroshop_crypto = neroshop::crypto;
+namespace neroshop_timestamp = neroshop::timestamp;
 
 neroshop::Node::Node(const std::string& address, int port, bool local) : sockfd(-1), bootstrap(false), check_counter(0) { 
     // Convert URL to IP (in case it happens to be a url)
@@ -191,26 +193,6 @@ std::string neroshop::Node::generate_node_id(const std::string& address, int por
     std::string node_info = address + ":" + std::to_string(port);
     std::string hash = neroshop_crypto::sha3_256(node_info);
     return hash.substr(0, NUM_BITS / 4);
-}
-
-//-----------------------------------------------------------------------------
-
-static std::string get_most_recent_timestamp(const std::string& timestamp1, const std::string& timestamp2) {
-    std::tm tm1{};
-    std::istringstream ss1(timestamp1);
-    ss1 >> std::get_time(&tm1, "%Y-%m-%d %H:%M:%S");
-    std::time_t time1 = std::mktime(&tm1);
-
-    std::tm tm2{};
-    std::istringstream ss2(timestamp2);
-    ss2 >> std::get_time(&tm2, "%Y-%m-%d %H:%M:%S");
-    std::time_t time2 = std::mktime(&tm2);
-
-    if (time1 > time2) {
-        return timestamp1;
-    } else {
-        return timestamp2;
-    }
 }
 
 //-----------------------------------------------------------------------------
@@ -418,7 +400,7 @@ int neroshop::Node::set(const std::string& key, const std::string& value) {
                     std::string current_last_updated = current_json["last_updated"].get<std::string>();
                     // Compare the new json's last_updated timestamp with the current json's own
                     // And choose whichever has the most recent timestamp then exit the function
-                    std::string most_recent_timestamp = get_most_recent_timestamp(last_updated, current_last_updated);
+                    std::string most_recent_timestamp = neroshop_timestamp::get_most_recent_timestamp(last_updated, current_last_updated);
                     // If this node has the up-to-date value, return true as there is no need to update
                     if(most_recent_timestamp == current_last_updated) {
                         std::cout << "Value for key (" << key << ") is already up-to-date" << std::endl;
@@ -880,20 +862,6 @@ void neroshop::Node::republish() {
 
 //-----------------------------------------------------------------------------
 
-static bool is_expired(const std::string& expiration_date) {
-    // Get the current UTC time
-    std::time_t current_time = std::time(nullptr);
-    std::tm* current_tm = std::gmtime(&current_time);
-
-    // Parse the expiration date string
-    std::tm expiration_tm{};
-    std::istringstream ss(expiration_date);
-    ss >> std::get_time(&expiration_tm, "%Y-%m-%d %H:%M:%S");
-
-    // Compare the expiration time with the current time
-    return (std::mktime(&expiration_tm) <= std::mktime(current_tm));
-}
-
 bool neroshop::Node::validate(const std::string& key, const std::string& value) {
     assert(key.length() == 64 && "Key length is not 64 characters");
     assert(!value.empty() && "Value is empty");
@@ -917,7 +885,7 @@ bool neroshop::Node::validate(const std::string& key, const std::string& value) 
     if(json.contains("expiration_date")) {
         assert(json["expiration_date"].is_string());
         std::string expiration_date = json["expiration_date"].get<std::string>();
-        if(is_expired(expiration_date)) {
+        if(neroshop_timestamp::is_expired(expiration_date)) {
             std::cerr << "Data has expired (exp date: " << expiration_date << " UTC)\n";
             // Remove the data from hash table if it was previously stored
             if(has_key(key)) {

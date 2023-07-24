@@ -452,6 +452,7 @@ set(neroshop_tools_src
     ${NEROSHOP_CORE_SRC_DIR}/tools/process.cpp     
     ${NEROSHOP_CORE_SRC_DIR}/tools/regex.cpp 
     ${NEROSHOP_CORE_SRC_DIR}/tools/script.cpp 
+    ${NEROSHOP_CORE_SRC_DIR}/tools/timestamp.cpp 
     ${NEROSHOP_CORE_SRC_DIR}/tools/updater.cpp
 )
 
@@ -484,7 +485,7 @@ endif()
 ######################################
 # neroshop-daemon
 set(daemon_executable "neromon")
-set(daemon_src ${neroshop_crypto_src} ${neroshop_database_src} ${neroshop_network_src} ${NEROSHOP_CORE_SRC_DIR}/protocol/messages/msgpack.cpp ${NEROSHOP_CORE_SRC_DIR}/protocol/p2p/kademlia.cpp ${NEROSHOP_CORE_SRC_DIR}/protocol/p2p/mapper.cpp ${NEROSHOP_CORE_SRC_DIR}/protocol/p2p/node.cpp ${NEROSHOP_CORE_SRC_DIR}/protocol/p2p/routing_table.cpp ${NEROSHOP_CORE_SRC_DIR}/protocol/rpc/json_rpc.cpp ${NEROSHOP_CORE_SRC_DIR}/protocol/transport/client.cpp ${NEROSHOP_CORE_SRC_DIR}/protocol/transport/ip_address.cpp ${NEROSHOP_CORE_SRC_DIR}/protocol/transport/server.cpp ${NEROSHOP_CORE_SRC_DIR}/protocol/transport/zmq_client.cpp ${NEROSHOP_CORE_SRC_DIR}/protocol/transport/zmq_server.cpp ${NEROSHOP_CORE_SRC_DIR}/tools/base64.cpp ${NEROSHOP_CORE_SRC_DIR}/tools/logger.cpp ${NEROSHOP_CORE_SRC_DIR}/tools/timer.cpp)
+set(daemon_src ${neroshop_crypto_src} ${neroshop_database_src} ${neroshop_network_src} ${NEROSHOP_CORE_SRC_DIR}/protocol/messages/msgpack.cpp ${NEROSHOP_CORE_SRC_DIR}/protocol/p2p/kademlia.cpp ${NEROSHOP_CORE_SRC_DIR}/protocol/p2p/mapper.cpp ${NEROSHOP_CORE_SRC_DIR}/protocol/p2p/node.cpp ${NEROSHOP_CORE_SRC_DIR}/protocol/p2p/routing_table.cpp ${NEROSHOP_CORE_SRC_DIR}/protocol/rpc/json_rpc.cpp ${NEROSHOP_CORE_SRC_DIR}/protocol/transport/client.cpp ${NEROSHOP_CORE_SRC_DIR}/protocol/transport/ip_address.cpp ${NEROSHOP_CORE_SRC_DIR}/protocol/transport/server.cpp ${NEROSHOP_CORE_SRC_DIR}/protocol/transport/zmq_client.cpp ${NEROSHOP_CORE_SRC_DIR}/protocol/transport/zmq_server.cpp ${NEROSHOP_CORE_SRC_DIR}/tools/base64.cpp ${NEROSHOP_CORE_SRC_DIR}/tools/logger.cpp ${NEROSHOP_CORE_SRC_DIR}/tools/timer.cpp ${NEROSHOP_CORE_SRC_DIR}/tools/timestamp.cpp)
 add_executable(${daemon_executable} src/daemon/main.cpp ${daemon_src})#target_link_libraries(daemon ${curl_src} ${OPENSSL_LIBRARIES}) # curl requires both openssl(used in monero) and zlib(used in dokun-ui)
 install(TARGETS ${daemon_executable} DESTINATION bin)
 if(NEROSHOP_USE_LIBJUICE)
