@@ -104,7 +104,7 @@ Page {
         // Increase the number of times a wallet has been generated this session (not necessary)
         walletGenerationCount = walletGenerationCount + 1
         // Display seed phrase in Repeater model
-        walletSeedRepeater.model = Wallet.getMnemonicList()
+        walletSeedRepeater.model = Wallet.getSeedList()
         // Show wallet-related message(s)
         walletMessageArea.text = qsTr("\"%1\" has been created successfully.").arg((walletNameField.text) ? qsTr(folder + "/%1.keys").arg(walletNameField.text) : qsTr(folder + "/%1.keys").arg(walletNameField.placeholderText))
         walletMessageArea.messageCode = 0
@@ -477,7 +477,7 @@ Page {
                 }                    
                 }
                Rectangle {//ColumnLayout {
-                    id: restoreFromMnemonicSeed
+                    id: restoreFromSeed
                     Layout.fillWidth: true
                     Layout.fillHeight: true
                     border.color: "blue"
@@ -486,7 +486,7 @@ Page {
                         //Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
                         anchors.fill: parent//width: 500; height: 500
                         TextArea {
-                            id: mnemonicSeedInput
+                            id: seedInput
                             wrapMode: TextEdit.Wrap
                             selectByMouse: true      
                             color: (NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000"                  
@@ -565,16 +565,16 @@ Page {
                             onAutoSync();
                             // Switch to HomePage
                             pageLoader.source = "HomePage.qml"
-                            //console.log("Mnemonic:", Wallet.getMnemonic())
+                            //console.log("Seed:", Wallet.getSeed())
                 	    }
                 	    // restore from seed
                 	    if(walletRestoreStack.currentIndex == 1) {
-                	        if(mnemonicSeedInput.text.length == 0) {
-                	            messageBox.text = qsTr("No mnemonic was entered")
+                	        if(seedInput.text.length == 0) {
+                	            messageBox.text = qsTr("No seed phrase was entered")
                 	            messageBox.open()
                 	            return;                	        
                 	        }
-                	        Wallet.restoreFromMnemonic(mnemonicSeedInput.text, User)
+                	        Wallet.restoreFromSeed(seedInput.text, User)
                 	        // Process login credentials
                 	        // ...
                 	        onAutoSync();
@@ -1039,7 +1039,7 @@ Page {
                     icon.color: "#ffffff"
                     display: AbstractButton.IconOnly//AbstractButton.TextBesideIcon//AbstractButton.TextOnly//AbstractButton.TextUnderIcon
                     hoverEnabled: true
-                    onClicked: Backend.copyTextToClipboard(Wallet.getMnemonic())
+                    onClicked: Backend.copyTextToClipboard(Wallet.getSeed())
                 
                     background: Rectangle {
                         color: "#404040"

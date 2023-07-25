@@ -259,6 +259,7 @@ amount     sender     timestamp
 0.50 xmr   anonymous  2022-11-15
 0.02 xmr   anonymous  2022-11-22
 0.003 xmr  anonymous  2023-01-03
+1.00 xmr   anonymous  2023-07-23
 ```
 
 

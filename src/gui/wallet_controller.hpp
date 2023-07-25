@@ -36,7 +36,7 @@ public:
     Q_ENUM(KeyfileStatus)
     // functions (for use in QML)
     Q_INVOKABLE int createRandomWallet(const QString& password, const QString& confirm_pwd, const QString& path);
-    Q_INVOKABLE bool restoreFromMnemonic(const QString& mnemonic);
+    Q_INVOKABLE bool restoreFromSeed(const QString& seed);
     Q_INVOKABLE bool restoreFromKeys(const QString& primary_address, const QString& private_view_key, const QString& private_spend_key);
     Q_INVOKABLE bool open(const QString& path, const QString& password);
     Q_INVOKABLE void close(bool save = false);
@@ -53,8 +53,8 @@ public:
     Q_INVOKABLE QString getSyncMessage() const;
     Q_INVOKABLE int getNetworkType() const;
     Q_INVOKABLE QString getNetworkTypeString() const;
-    Q_INVOKABLE QString getMnemonic() const;
-    Q_INVOKABLE QStringList getMnemonicList() const;
+    Q_INVOKABLE QString getSeed() const;
+    Q_INVOKABLE QStringList getSeedList() const;
     Q_INVOKABLE QString getPrimaryAddress() const;
     // todo: change getAddresses* functions to return a QVariantList (array) containing QVariantMaps (objects) that represent a monero subaddress
     Q_INVOKABLE QStringList getAddressesAll() const;

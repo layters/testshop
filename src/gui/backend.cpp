@@ -142,11 +142,9 @@ void neroshop::Backend::initializeDatabase() {
         database->execute("CREATE TABLE cart_item(id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT, "
         "cart_id TEXT REFERENCES cart(uuid) ON DELETE CASCADE"
         ");");
-        database->execute("ALTER TABLE cart_item ADD COLUMN product_id TEXT REFERENCES products(uuid);");
-        database->execute("ALTER TABLE cart_item ADD COLUMN quantity INTEGER;");
-        database->execute("ALTER TABLE cart_item ADD COLUMN seller_id TEXT REFERENCES users(monero_address);"); // for a multi-vendor cart, specifying the seller_id is important!
-        //database->execute("ALTER TABLE cart_item ADD COLUMN item_weight REAL;");//database->execute("CREATE TABLE cart_item(id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT, cart_id TEXT REFERENCES cart(id), product_id TEXT REFERENCES products(id), item_qty INTEGER, item_price NUMERIC, item_weight REAL);");
-        database->execute("CREATE UNIQUE INDEX index_cart_item ON cart_item (cart_id, product_id);"); // cart_id and product_id duo MUST be unqiue for each row
+        database->execute("ALTER TABLE cart_item ADD COLUMN listing_key TEXT;");
+        database->execute("ALTER TABLE cart_item ADD COLUMN quantity INTEGER;");//database->execute("ALTER TABLE cart_item ADD COLUMN seller_id TEXT;"); // for a multi-vendor cart, specifying the seller_id is important!//database->execute("ALTER TABLE cart_item ADD COLUMN item_weight REAL;");
+        database->execute("CREATE UNIQUE INDEX index_cart_item ON cart_item (cart_id, listing_key);"); // cart_id and listing_key duo MUST be unique for each row
     }
     
     // orders (purchase_orders)
@@ -573,8 +571,8 @@ QVariantList neroshop::Backend::getProductRatings(const QString& product_id) {
             // Parse the response
             nlohmann::json json = nlohmann::json::parse(response);
             if(json.contains("error")) {
-                /*int rescode = database->execute_params("DELETE FROM mappings WHERE key = ?1", { key.toStdString() });
-                if(rescode != SQLITE_OK) neroshop::print("sqlite error: DELETE failed", 1);*/
+                int rescode = database->execute_params("DELETE FROM mappings WHERE key = ?1", { key.toStdString() });
+                if(rescode != SQLITE_OK) neroshop::print("sqlite error: DELETE failed", 1);
                 //emit productRatingsChanged();
                 continue; // Key is lost or missing from DHT, skip to next iteration
             }
@@ -706,8 +704,8 @@ QVariantList neroshop::Backend::getSellerRatings(const QString& user_id) {
             // Parse the response
             nlohmann::json json = nlohmann::json::parse(response);
             if(json.contains("error")) {
-                /*int rescode = database->execute_params("DELETE FROM mappings WHERE key = ?1", { key.toStdString() });
-                if(rescode != SQLITE_OK) neroshop::print("sqlite error: DELETE failed", 1);*/
+                int rescode = database->execute_params("DELETE FROM mappings WHERE key = ?1", { key.toStdString() });
+                if(rescode != SQLITE_OK) neroshop::print("sqlite error: DELETE failed", 1);
                 //emit sellerRatingsChanged();
                 continue; // Key is lost or missing from DHT, skip to next iteration
             }
@@ -1136,6 +1134,17 @@ QVariantList neroshop::Backend::getListings(ListingSorting sorting) {
                 listing.insert("product_description", QString::fromStdString(product_obj["description"].get<std::string>()));
                 listing.insert("product_category_id", get_category_id_by_name(product_obj["category"].get<std::string>()));
                 //listing.insert("", QString::fromStdString(product_obj[""].get<std::string>()));
+                // product attributes
+                if (product_obj.contains("attributes") && product_obj["attributes"].is_array()) {
+                    const auto& attributes_array = product_obj["attributes"];
+                    for (const auto& attribute : attributes_array) {
+                        if (attribute.is_object() && attribute.contains("weight")) { // attributes is an array of objects
+                            double weight = attribute["weight"].get<double>();
+                            listing.insert("product_weight", weight);
+                        }
+                    }
+                }
+                // product images
                 if (product_obj.contains("images") && product_obj["images"].is_array()) {
                     const auto& images_array = product_obj["images"];
                     for (const auto& image : images_array) {
@@ -1151,6 +1160,7 @@ QVariantList neroshop::Backend::getListings(ListingSorting sorting) {
                     }
                     listing.insert("product_images", product_images);
                 }
+                // product thumbnail
                 if (product_obj.contains("thumbnail") && product_obj["thumbnail"].is_string()) {
                     listing.insert("product_thumbnail", QString::fromStdString(product_obj["thumbnail"].get<std::string>()));
                 }
@@ -1176,8 +1186,16 @@ QVariantList neroshop::Backend::getListings(ListingSorting sorting) {
                 QString dateA = listingA["date"].toString();
                 QString dateB = listingB["date"].toString();
                 
-                QDateTime dateTimeA = QDateTime::fromString(dateA, "yyyy-MM-dd HH:mm:ss");
-                QDateTime dateTimeB = QDateTime::fromString(dateB, "yyyy-MM-dd HH:mm:ss");
+                // Convert 'Z' to UTC+0 offset
+                if (dateA.endsWith("Z")) {
+                    dateA.replace(dateA.length() - 1, 1, "+00:00");
+                }
+                if (dateB.endsWith("Z")) {
+                    dateB.replace(dateB.length() - 1, 1, "+00:00");
+                }
+                
+                QDateTime dateTimeA = QDateTime::fromString(dateA, Qt::ISODateWithMs);
+                QDateTime dateTimeB = QDateTime::fromString(dateB, Qt::ISODateWithMs);
 
                 return dateTimeA > dateTimeB;
             });
@@ -1189,8 +1207,16 @@ QVariantList neroshop::Backend::getListings(ListingSorting sorting) {
                 QString dateA = listingA["date"].toString();
                 QString dateB = listingB["date"].toString();
                 
-                QDateTime dateTimeA = QDateTime::fromString(dateA, "yyyy-MM-dd HH:mm:ss");
-                QDateTime dateTimeB = QDateTime::fromString(dateB, "yyyy-MM-dd HH:mm:ss");
+                // Convert 'Z' to UTC+0 offset
+                if (dateA.endsWith("Z")) {
+                    dateA.replace(dateA.length() - 1, 1, "+00:00");
+                }
+                if (dateB.endsWith("Z")) {
+                    dateB.replace(dateB.length() - 1, 1, "+00:00");
+                }
+                
+                QDateTime dateTimeA = QDateTime::fromString(dateA, Qt::ISODateWithMs);
+                QDateTime dateTimeB = QDateTime::fromString(dateB, Qt::ISODateWithMs);
 
                 return dateTimeA < dateTimeB;
             });
@@ -1657,7 +1683,7 @@ bool neroshop::Backend::loginWithMnemonic(WalletController* wallet_controller, c
     db::Sqlite3 * database = neroshop::get_database();
     if(!database) throw std::runtime_error("database is NULL");
     // Initialize monero wallet with existing wallet mnemonic
-    if(!wallet_controller->restoreFromMnemonic(mnemonic)) {
+    if(!wallet_controller->restoreFromSeed(mnemonic)) {
         throw std::runtime_error("Invalid mnemonic or wallet network type");
         return false;    
     }
