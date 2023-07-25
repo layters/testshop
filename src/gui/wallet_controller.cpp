@@ -29,10 +29,10 @@ int neroshop::WalletController::createRandomWallet(const QString& password, cons
     return static_cast<int>(error);
 }
 
-bool neroshop::WalletController::restoreFromMnemonic(const QString& mnemonic) {
+bool neroshop::WalletController::restoreFromSeed(const QString& seed) {
     if (!_wallet)
         throw std::runtime_error("neroshop::Wallet is not initialized");
-    bool restored = _wallet->restore_from_mnemonic(mnemonic.toStdString());
+    bool restored = _wallet->restore_from_seed(seed.toStdString());
     emit walletChanged();
     if(restored) emit isOpenedChanged();
     return restored;
@@ -128,18 +128,18 @@ QString neroshop::WalletController::getNetworkTypeString() const {
     return QString::fromStdString(_wallet->get_network_type_string());
 }
 
-QString neroshop::WalletController::getMnemonic() const {
+QString neroshop::WalletController::getSeed() const {
     if (!_wallet)
         throw std::runtime_error("neroshop::Wallet is not initialized");
     if (!_wallet->get_monero_wallet())
         return "";
-    return QString::fromStdString(_wallet->get_monero_wallet()->get_mnemonic());
+    return QString::fromStdString(_wallet->get_monero_wallet()->get_seed());
 }
 
-QStringList neroshop::WalletController::getMnemonicList() const {
+QStringList neroshop::WalletController::getSeedList() const {
     if (!_wallet)
         throw std::runtime_error("neroshop::Wallet is not initialized");
-    QStringList seed_phrase = QString::fromStdString(_wallet->get_monero_wallet()->get_mnemonic())
+    QStringList seed_phrase = QString::fromStdString(_wallet->get_monero_wallet()->get_seed())
                                   .split(' ');
     return seed_phrase;
 }

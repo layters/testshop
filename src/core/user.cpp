@@ -235,12 +235,12 @@ void neroshop::User::delete_account() {
 ////////////////////
 // cart-related stuff here
 ////////////////////
-void neroshop::User::add_to_cart(const std::string& product_id, int quantity) {
-    cart->add(this->id, product_id, quantity);
+void neroshop::User::add_to_cart(const std::string& listing_key, int quantity) {
+    cart->add(this->id, listing_key, quantity);
 }
 ////////////////////
-void neroshop::User::remove_from_cart(const std::string& product_id, int quantity) {
-    cart->remove(this->id, product_id, quantity);
+void neroshop::User::remove_from_cart(const std::string& listing_key, int quantity) {
+    cart->remove(this->id, listing_key, quantity);
 }
 ////////////////////
 void neroshop::User::clear_cart() {

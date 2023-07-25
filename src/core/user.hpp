@@ -26,14 +26,14 @@ public:
     void delete_account();
     void logout();
     // cart-related stuff (50% complete - cart class still needs some more work)
-    void add_to_cart(const std::string& product_id, int quantity = 1);
-    void remove_from_cart(const std::string& product_id, int quantity = 1);
+    void add_to_cart(const std::string& listing_key, int quantity = 1);
+    void remove_from_cart(const std::string& listing_key, int quantity = 1);
     void clear_cart();
     // order-related stuff (50% complete - order class still needs some more work)
     void create_order(const std::string& shipping_address);// const;//void create_order();
     // favorite-or-wishlist-related stuff (100% complete)
-    void add_to_favorites(const std::string& product_id);
-    void remove_from_favorites(const std::string& product_id);
+    void add_to_favorites(const std::string& listing_key);
+    void remove_from_favorites(const std::string& listing_key);
     void clear_favorites();
     // avatar-related stuff (10% complete)
     void upload_avatar(const std::string& filename);
@@ -68,8 +68,8 @@ public:
     bool has_email() const;
     bool has_avatar() const;
     // item-related stuff - boolean
-    bool has_purchased(const std::string& product_id); // checks if an item was previously purchased or not
-    bool has_favorited(const std::string& product_id); // checks if an item is in a user's favorites or wishlist
+    bool has_purchased(const std::string& listing_key); // checks if an item was previously purchased or not
+    bool has_favorited(const std::string& listing_key); // checks if an item is in a user's favorites or wishlist
     // callbacks
     void on_registration(const std::string& name); // on registering an account
     //virtual User * on_login(const std::string& username);// = 0; // load all data: orders, reputation/ratings, settings // for all users

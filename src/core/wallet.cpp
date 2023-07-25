@@ -67,7 +67,7 @@ int neroshop::Wallet::create_random(const std::string& password, const std::stri
     return static_cast<int>(WalletResult::Wallet_Ok);
 }
 //-------------------------------------------------------
-bool neroshop::Wallet::create_from_mnemonic(const std::string& mnemonic, const std::string& password, const std::string& confirm_pwd, const std::string& path) {
+bool neroshop::Wallet::create_from_seed(const std::string& seed, const std::string& password, const std::string& confirm_pwd, const std::string& path) {
     if(confirm_pwd != password) {
         neroshop::print("Wallet passwords do not match", 1);
         return false;
@@ -84,11 +84,11 @@ bool neroshop::Wallet::create_from_mnemonic(const std::string& mnemonic, const s
     wallet_config_obj.m_path = path;
     wallet_config_obj.m_password = password;
     wallet_config_obj.m_network_type = this->network_type;
-    wallet_config_obj.m_mnemonic = mnemonic;
+    wallet_config_obj.m_seed = seed;
     
     monero_wallet_obj = std::unique_ptr<monero_wallet_full>(monero_wallet_full::create_wallet (wallet_config_obj, nullptr));
     if(!monero_wallet_obj.get()) return false;
-    std::cout << "\033[1;35;49m" << "created wallet \"" << path << ".keys\" (from mnemonic)" << "\033[0m" << std::endl;
+    std::cout << "\033[1;35;49m" << "created wallet \"" << path << ".keys\" (from seed)" << "\033[0m" << std::endl;
     // Sign password to generate a temporary password hash (signature) that will be used to verify password whenever user inactivity is detected or when user attempts to withdraw funds
     password_hash = sign_message(password, monero_message_signature_type::SIGN_WITH_SPEND_KEY);
     std::cout << "password hash generated: " << password_hash << "\n";
@@ -128,7 +128,7 @@ bool neroshop::Wallet::create_from_keys(const std::string& primary_address, cons
     return true;
 }
 //-------------------------------------------------------
-bool neroshop::Wallet::restore_from_mnemonic(const std::string& mnemonic) 
+bool neroshop::Wallet::restore_from_seed(const std::string& seed) 
 {
     // This is deprecated :(
     //monero_wallet_obj = std::unique_ptr<monero_wallet_full>(monero_wallet_full::create_wallet_from_mnemonic("", "", network_type, mnemonic)); // set path to "" for an in-memory wallet
@@ -137,12 +137,12 @@ bool neroshop::Wallet::restore_from_mnemonic(const std::string& mnemonic)
     wallet_config_obj.m_path = "";
     wallet_config_obj.m_password = "";
     wallet_config_obj.m_network_type = this->network_type;
-    wallet_config_obj.m_mnemonic = mnemonic;
+    wallet_config_obj.m_seed = seed;
     wallet_config_obj.m_restore_height = 0;
     
     monero_wallet_obj = std::unique_ptr<monero_wallet_full>(monero_wallet_full::create_wallet (wallet_config_obj, nullptr));
     if(!monero_wallet_obj.get()) return false;
-    std::cout << "\033[1;35;49m" << "restored in-memory wallet (from mnemonic)" << "\033[0m" << std::endl;    
+    std::cout << "\033[1;35;49m" << "restored in-memory wallet (from seed)" << "\033[0m" << std::endl;    
     return true;
 }
 //-------------------------------------------------------
@@ -822,9 +822,9 @@ std::pair<std::string, std::string> neroshop::Wallet::get_spend_keys() const {
     return std::make_pair(monero_wallet_obj->get_private_spend_key(), monero_wallet_obj->get_public_spend_key());
 }
 //-------------------------------------------------------
-std::string neroshop::Wallet::get_mnemonic() const {
+std::string neroshop::Wallet::get_seed() const {
     if(!monero_wallet_obj.get()) throw std::runtime_error("monero_wallet_full is not opened");
-    return monero_wallet_obj->get_mnemonic();
+    return monero_wallet_obj->get_seed();
 }
 //-Image *  neroshop::Wallet::get_qr_code() const {} // returns address qrcode // "show_qr_code"
 //-Image *  neroshop::Wallet::get_qr_code(unsigned int address_index) const {} // returns the qrcode of the address at "index"

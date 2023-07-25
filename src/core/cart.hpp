@@ -15,9 +15,9 @@ class Cart {
 public:
     Cart();
     ~Cart();
-    void add(const std::string& user_id, const std::string& product_id, int quantity = 1);
+    void add(const std::string& user_id, const std::string& listing_key, int quantity = 1);
     void add(const std::string& user_id, const neroshop::Product& item, int quantity = 1);
-    void remove(const std::string& user_id, const std::string& product_id, int quantity = 1);
+    void remove(const std::string& user_id, const std::string& listing_key, int quantity = 1);
     void remove(const std::string& user_id, const neroshop::Product& item, int quantity = 1);
 
     void empty(); // remove all items from cart
@@ -51,11 +51,11 @@ public:
     std::string get_id() const;
 	std::string get_owner_id() const; // returns the id of the user who owns this cart
 	static unsigned int get_owner_id(unsigned int cart_id); // returns the id of the user who owns this cart	
-	std::size_t get_product_index(const std::string& product_id);
+	std::size_t get_listing_index(const std::string& listing_key);
 	// boolean
 	bool is_empty() const;
     bool is_full() const; // cart is full (has reached max items)
-	bool in_cart(const std::string& product_id) const;
+	bool in_cart(const std::string& listing_key) const;
 	bool in_cart(const neroshop::Product& item) const;
 	//bool validate_item(const neroshop::Product& item) const;
 	// friends - can access cart's private members

@@ -304,7 +304,7 @@ Page {
                                     verticalAlignment: Text.AlignVCenter
                                 }
                                 onClicked: {
-                                    User.addToCart(productPage.model.product_id, quantityBox.value)
+                                    User.addToCart(productPage.model.key, quantityBox.value)
                                 }
                                 MouseArea {
                                     anchors.fill: parent

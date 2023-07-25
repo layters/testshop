@@ -28,10 +28,10 @@ public:
     ~Wallet();
 
     int create_random(const std::string& password, const std::string& confirm_pwd, const std::string& path);
-    bool create_from_mnemonic(const std::string& mnemonic, const std::string& password, const std::string& confirm_pwd, const std::string& path);
+    bool create_from_seed(const std::string& seed, const std::string& password, const std::string& confirm_pwd, const std::string& path);
     bool create_from_keys(const std::string& address, const std::string& view_key, const std::string& spend_key, const std::string& password, const std::string &confirm_pwd, const std::string& path);
     
-    bool restore_from_mnemonic(const std::string& mnemonic); // In-memory wallet
+    bool restore_from_seed(const std::string& seed); // In-memory wallet
     bool restore_from_keys(const std::string& primary_address, const std::string& view_key, const std::string& spend_key); // In-memory wallet
     bool open(const std::string& path, const std::string& password); // Password-protected wallet file
     
@@ -104,7 +104,7 @@ public:
     std::string get_private_spend_key() const; // secret spend key
     std::string get_public_spend_key() const;
     std::pair<std::string, std::string> get_spend_keys() const; // secret, public // "spendkey"
-    std::string get_mnemonic() const; // "seed"
+    std::string get_seed() const; // "seed"
     //-Image * get_qr_code() const; // returns address qrcode // "show_qr_code"
     //-Image * get_qr_code(unsigned int address_index) const; // returns the qrcode of the address at "index"
     std::string get_path() const; // "wallet_info"

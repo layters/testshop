@@ -139,13 +139,13 @@ void neroshop::UserController::delistProducts(const QStringList& listing_keys) {
 }
 //----------------------------------------------------------------
 //----------------------------------------------------------------
-void neroshop::UserController::addToCart(const QString& product_id, int quantity) {
+void neroshop::UserController::addToCart(const QString& listing_key, int quantity) {
     if (!_user) throw std::runtime_error("neroshop::User is not initialized");
-    _user->add_to_cart(product_id.toStdString(), quantity);
+    _user->add_to_cart(listing_key.toStdString(), quantity);
     emit cartQuantityChanged(); // TODO: emit this when removing an item from the cart as well
 }
 //----------------------------------------------------------------
-//void removeFromCart(const QString& product_id, int quantity) {}
+//void removeFromCart(const QString& listing_key, int quantity) {}
 //----------------------------------------------------------------
 //----------------------------------------------------------------
 Q_INVOKABLE void neroshop::UserController::createOrder(const QString& shipping_address) {
@@ -383,8 +383,16 @@ QVariantList neroshop::UserController::getInventory(InventorySorting sorting) co
                 QString dateA = listingA["date"].toString();
                 QString dateB = listingB["date"].toString();
                 
-                QDateTime dateTimeA = QDateTime::fromString(dateA, "yyyy-MM-dd HH:mm:ss");
-                QDateTime dateTimeB = QDateTime::fromString(dateB, "yyyy-MM-dd HH:mm:ss");
+                // Convert 'Z' to UTC+0 offset
+                if (dateA.endsWith("Z")) {
+                    dateA.replace(dateA.length() - 1, 1, "+00:00");
+                }
+                if (dateB.endsWith("Z")) {
+                    dateB.replace(dateB.length() - 1, 1, "+00:00");
+                }
+                
+                QDateTime dateTimeA = QDateTime::fromString(dateA, Qt::ISODateWithMs);
+                QDateTime dateTimeB = QDateTime::fromString(dateB, Qt::ISODateWithMs);
 
                 return dateTimeA < dateTimeB;
             });
@@ -396,8 +404,16 @@ QVariantList neroshop::UserController::getInventory(InventorySorting sorting) co
                 QString dateA = listingA["date"].toString();
                 QString dateB = listingB["date"].toString();
                 
-                QDateTime dateTimeA = QDateTime::fromString(dateA, "yyyy-MM-dd HH:mm:ss");
-                QDateTime dateTimeB = QDateTime::fromString(dateB, "yyyy-MM-dd HH:mm:ss");
+                // Convert 'Z' to UTC+0 offset
+                if (dateA.endsWith("Z")) {
+                    dateA.replace(dateA.length() - 1, 1, "+00:00");
+                }
+                if (dateB.endsWith("Z")) {
+                    dateB.replace(dateB.length() - 1, 1, "+00:00");
+                }
+                
+                QDateTime dateTimeA = QDateTime::fromString(dateA, Qt::ISODateWithMs);
+                QDateTime dateTimeB = QDateTime::fromString(dateB, Qt::ISODateWithMs);
 
                 return dateTimeA > dateTimeB;
             });
