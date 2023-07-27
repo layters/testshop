@@ -86,28 +86,28 @@ Page {
                 displayText: "Sort: " + currentText
                 onActivated: {
                     if(currentIndex == find("None")) {
-                        catalogPage.model = Backend.getListings()
+                        catalogPage.model = Backend.getListings(Listing.SortNone, settingsDialog.hideIllegalProducts)
                         settingsDialog.lastUsedListingSorting = Listing.SortNone
                     }
                     if(currentIndex == find("Oldest")) {
-                        catalogPage.model = Backend.getListings(Listing.SortByOldest)
+                        catalogPage.model = Backend.getListings(Listing.SortByOldest, settingsDialog.hideIllegalProducts)
                         settingsDialog.lastUsedListingSorting = Listing.SortByOldest
                     }
                     if(currentIndex == find("Latest")) {
                         console.log("Showing most recent items")
-                        catalogPage.model = Backend.getListings(Listing.SortByMostRecent)
+                        catalogPage.model = Backend.getListings(Listing.SortByMostRecent, settingsDialog.hideIllegalProducts)
                         settingsDialog.lastUsedListingSorting = Listing.SortByMostRecent
                     }
                     if(currentIndex == find("Alphabetical order")) {
-                        catalogPage.model = Backend.getListings(Listing.SortByAlphabeticalOrder)
+                        catalogPage.model = Backend.getListings(Listing.SortByAlphabeticalOrder, settingsDialog.hideIllegalProducts)
                         settingsDialog.lastUsedListingSorting = Listing.SortByAlphabeticalOrder
                     }
                     if(currentIndex == find("Price - Lowest")) {
-                        catalogPage.model = Backend.getListings(Listing.SortByPriceLowest)
+                        catalogPage.model = Backend.getListings(Listing.SortByPriceLowest, settingsDialog.hideIllegalProducts)
                         settingsDialog.lastUsedListingSorting = Listing.SortByPriceLowest
                     }
                     if(currentIndex == find("Price - Highest")) {
-                        catalogPage.model = Backend.getListings(Listing.SortByPriceHighest)
+                        catalogPage.model = Backend.getListings(Listing.SortByPriceHighest, settingsDialog.hideIllegalProducts)
                         settingsDialog.lastUsedListingSorting = Listing.SortByPriceHighest
                     }
                     /*if(currentIndex == find("")) {

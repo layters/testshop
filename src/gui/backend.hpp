@@ -69,10 +69,10 @@ public:
     Q_INVOKABLE bool loginWithKeys(WalletController* wallet_controller, UserController * user_controller);
     Q_INVOKABLE bool loginWithHW(WalletController* wallet_controller, UserController * user_controller);
     
-    Q_INVOKABLE QVariantList getListings(ListingSorting sorting = SortNone); // Products listed by sellers
-    Q_INVOKABLE QVariantList getListingsByCategory(int category_id);
-    Q_INVOKABLE QVariantList getListingsByMostRecentLimit(int limit);
-    Q_INVOKABLE QVariantList getListingsBySearchTerm(const QString& search_term, int count = 1000); // count is the maximum number of search results (total). The search results (per page) can be between 10-100 or 50-100
+    Q_INVOKABLE QVariantList getListings(ListingSorting sorting = SortNone, bool hide_illicit_items = true); // Products listed by sellers
+    Q_INVOKABLE QVariantList getListingsByCategory(int category_id, bool hide_illicit_items = true);
+    Q_INVOKABLE QVariantList getListingsByMostRecentLimit(int limit, bool hide_illicit_items = true);
+    Q_INVOKABLE QVariantList getListingsBySearchTerm(const QString& search_term, int count = 1000, bool hide_illicit_items = true); // count is the maximum number of search results (total). The search results (per page) can be between 10-100 or 50-100
 
     Q_INVOKABLE bool saveAvatarImage(const QString& fileName, const QString& userAccountKey);
         
@@ -113,6 +113,8 @@ public:
     Q_INVOKABLE QVariantList getInventory(const QString& user_id);
     
     Q_INVOKABLE void createOrder(UserController * user_controller, const QString& shipping_address);
+
+    bool isIllicitItem(const QVariantMap& listing_obj);
 
 signals:
     //void categoryProductCountChanged();//(int category_id);

@@ -966,7 +966,7 @@ QVariantList neroshop::Backend::getInventory(const QString& user_id) {
 }
 //----------------------------------------------------------------
 //----------------------------------------------------------------
-QVariantList neroshop::Backend::getListingsBySearchTerm(const QString& searchTerm, int count) {
+QVariantList neroshop::Backend::getListingsBySearchTerm(const QString& searchTerm, int count, bool hide_illicit_items) {
     // Transition from Sqlite to DHT:
     Client * client = Client::get_main_client();
     db::Sqlite3 * database = neroshop::get_database();
@@ -1006,6 +1006,7 @@ QVariantList neroshop::Backend::getListingsBySearchTerm(const QString& searchTer
         for(int i = 0; i < sqlite3_column_count(stmt); i++) {
             QVariantMap listing; // Create an object for each row
             QVariantList product_images;
+            QStringList product_categories;
             
             std::string column_value = (sqlite3_column_text(stmt, i) == nullptr) ? "NULL" : reinterpret_cast<const char *>(sqlite3_column_text(stmt, i));//std::cout << column_value  << " (" << i << ")" << std::endl;
             if(column_value == "NULL") continue; // Skip invalid columns
@@ -1047,7 +1048,18 @@ QVariantList neroshop::Backend::getListingsBySearchTerm(const QString& searchTer
                 listing.insert("product_uuid", QString::fromStdString(product_obj["id"].get<std::string>()));
                 listing.insert("product_name", QString::fromStdString(product_obj["name"].get<std::string>()));
                 listing.insert("product_description", QString::fromStdString(product_obj["description"].get<std::string>()));
-                listing.insert("product_category_id", get_category_id_by_name(product_obj["category"].get<std::string>()));
+                // product category and subcategories
+                std::string category = product_obj["category"].get<std::string>();
+                product_categories.append(QString::fromStdString(category));
+                if (product_obj.contains("subcategories") && product_obj["subcategories"].is_array()) {
+                    const auto& subcategories_array = product_obj["subcategories"];
+                    for (const auto& subcategory : subcategories_array) {
+                        if (subcategory.is_string()) {
+                            product_categories.append(QString::fromStdString(subcategory.get<std::string>()));
+                        }
+                    }
+                    listing.insert("product_categories", product_categories);
+                }
                 //listing.insert("", QString::fromStdString(product_obj[""].get<std::string>()));
                 //listing.insert("", QString::fromStdString(product_obj[""].get<std::string>()));
                 if (product_obj.contains("images") && product_obj["images"].is_array()) {
@@ -1065,6 +1077,12 @@ QVariantList neroshop::Backend::getListingsBySearchTerm(const QString& searchTer
                     }
                     listing.insert("product_images", product_images);
                 }
+                // Skip products with illegal categories/subcategories
+                if (hide_illicit_items) {
+                    if(isIllicitItem(listing)) {
+                        continue;
+                    }
+                }
             }
             // Append to catalog only if the key was found successfully
             catalog.append(listing);
@@ -1076,7 +1094,7 @@ QVariantList neroshop::Backend::getListingsBySearchTerm(const QString& searchTer
     return catalog;
 }
 //----------------------------------------------------------------
-QVariantList neroshop::Backend::getListings(ListingSorting sorting) {
+QVariantList neroshop::Backend::getListings(ListingSorting sorting, bool hide_illicit_items) {
     // Transition from Sqlite to DHT:
     Client * client = Client::get_main_client();
     db::Sqlite3 * database = neroshop::get_database();
@@ -1100,6 +1118,7 @@ QVariantList neroshop::Backend::getListings(ListingSorting sorting) {
     while(sqlite3_step(stmt) == SQLITE_ROW) {
         QVariantMap listing; // Create an object for each row
         QVariantList product_images;
+        QStringList product_categories;
 
         for(int i = 0; i < sqlite3_column_count(stmt); i++) {
             std::string column_value = (sqlite3_column_text(stmt, i) == nullptr) ? "NULL" : reinterpret_cast<const char *>(sqlite3_column_text(stmt, i));//std::cout << column_value  << " (" << i << ")" << std::endl;
@@ -1143,7 +1162,18 @@ QVariantList neroshop::Backend::getListings(ListingSorting sorting) {
                 listing.insert("product_uuid", QString::fromStdString(product_obj["id"].get<std::string>()));
                 listing.insert("product_name", QString::fromStdString(product_obj["name"].get<std::string>()));
                 listing.insert("product_description", QString::fromStdString(product_obj["description"].get<std::string>()));
-                listing.insert("product_category_id", get_category_id_by_name(product_obj["category"].get<std::string>()));
+                // product category and subcategories
+                std::string category = product_obj["category"].get<std::string>();//int product_category_id = get_category_id_by_name(product_category_name);
+                product_categories.append(QString::fromStdString(category));
+                if (product_obj.contains("subcategories") && product_obj["subcategories"].is_array()) {
+                    const auto& subcategories_array = product_obj["subcategories"];
+                    for (const auto& subcategory : subcategories_array) {
+                        if (subcategory.is_string()) {
+                            product_categories.append(QString::fromStdString(subcategory.get<std::string>()));
+                        }
+                    }
+                    listing.insert("product_categories", product_categories);
+                }
                 //listing.insert("", QString::fromStdString(product_obj[""].get<std::string>()));
                 // product attributes
                 if (product_obj.contains("attributes") && product_obj["attributes"].is_array()) {
@@ -1162,7 +1192,6 @@ QVariantList neroshop::Backend::getListings(ListingSorting sorting) {
                         if (image.contains("name") && image.contains("id")) {
                             const auto& image_name = image["name"].get<std::string>();
                             const auto& image_id = image["id"].get<int>();
-                            
                             QVariantMap image_map;
                             image_map.insert("name", QString::fromStdString(image_name));
                             image_map.insert("id", image_id);
@@ -1174,6 +1203,12 @@ QVariantList neroshop::Backend::getListings(ListingSorting sorting) {
                 // product thumbnail
                 if (product_obj.contains("thumbnail") && product_obj["thumbnail"].is_string()) {
                     listing.insert("product_thumbnail", QString::fromStdString(product_obj["thumbnail"].get<std::string>()));
+                }
+                // Skip products with illegal categories/subcategories
+                if (hide_illicit_items) {
+                    if(isIllicitItem(listing)) {
+                        continue;
+                    }
                 }
             }
             catalog.append(listing);
@@ -1270,7 +1305,7 @@ QVariantList neroshop::Backend::getListings(ListingSorting sorting) {
     return catalog;    
 }
 //----------------------------------------------------------------
-QVariantList neroshop::Backend::getListingsByCategory(int category_id) {
+QVariantList neroshop::Backend::getListingsByCategory(int category_id, bool hide_illicit_items) {
     // Transition from Sqlite to DHT:
     Client * client = Client::get_main_client();
     db::Sqlite3 * database = neroshop::get_database();
@@ -1309,6 +1344,7 @@ QVariantList neroshop::Backend::getListingsByCategory(int category_id) {
     while(sqlite3_step(stmt) == SQLITE_ROW) {
         QVariantMap listing; // Create an object for each row
         QVariantList product_images;
+        QStringList product_categories;
 
         for(int i = 0; i < sqlite3_column_count(stmt); i++) {
             std::string column_value = (sqlite3_column_text(stmt, i) == nullptr) ? "NULL" : reinterpret_cast<const char *>(sqlite3_column_text(stmt, i));//std::cout << column_value  << " (" << i << ")" << std::endl;
@@ -1352,7 +1388,18 @@ QVariantList neroshop::Backend::getListingsByCategory(int category_id) {
                 listing.insert("product_uuid", QString::fromStdString(product_obj["id"].get<std::string>()));
                 listing.insert("product_name", QString::fromStdString(product_obj["name"].get<std::string>()));
                 listing.insert("product_description", QString::fromStdString(product_obj["description"].get<std::string>()));
-                listing.insert("product_category_id", get_category_id_by_name(product_obj["category"].get<std::string>()));
+                // product category and subcategories
+                std::string category = product_obj["category"].get<std::string>();
+                product_categories.append(QString::fromStdString(category));
+                if (product_obj.contains("subcategories") && product_obj["subcategories"].is_array()) {
+                    const auto& subcategories_array = product_obj["subcategories"];
+                    for (const auto& subcategory : subcategories_array) {
+                        if (subcategory.is_string()) {
+                            product_categories.append(QString::fromStdString(subcategory.get<std::string>()));
+                        }
+                    }
+                    listing.insert("product_categories", product_categories);
+                }
                 //listing.insert("weight", QString::fromStdString(product_obj[""].get<std::string>()));
                 //listing.insert("other_attr", QString::fromStdString(product_obj[""].get<std::string>()));
                 //listing.insert("code", QString::fromStdString(product_obj[""].get<std::string>()));
@@ -1372,6 +1419,12 @@ QVariantList neroshop::Backend::getListingsByCategory(int category_id) {
                     }
                     listing.insert("product_images", product_images);
                 }
+                // Skip products with illegal categories/subcategories
+                if (hide_illicit_items) {
+                    if(isIllicitItem(listing)) {
+                        continue;
+                    }
+                }
             }
             catalog.append(listing);
         }
@@ -1382,12 +1435,29 @@ QVariantList neroshop::Backend::getListingsByCategory(int category_id) {
     return catalog;
 }
 //----------------------------------------------------------------
-QVariantList neroshop::Backend::getListingsByMostRecentLimit(int limit) {
-    auto catalog = getListings(SortByMostRecent);
+QVariantList neroshop::Backend::getListingsByMostRecentLimit(int limit, bool hide_illicit_items) {
+    auto catalog = getListings(SortByMostRecent, hide_illicit_items);
     if (catalog.size() > limit) {
         catalog = catalog.mid(0, limit);
     }
     return catalog;
+}
+//----------------------------------------------------------------
+//----------------------------------------------------------------
+bool neroshop::Backend::isIllicitItem(const QVariantMap& listing_obj) {
+    std::string illegal_category_name = "Illicit Goods & Services";
+    
+    if (!listing_obj.contains("product_categories")) {
+        std::cerr << "No product categories found\n";
+        return false;
+    }
+    
+    QStringList product_categories = listing_obj["product_categories"].toStringList();
+    if(product_categories.contains(QString::fromStdString(illegal_category_name))) {
+        std::cout << listing_obj["product_name"].toString().toStdString() << " contains illegal content so it has been excluded from listings" << "\n";
+        return true;
+    }
+    return false;
 }
 //----------------------------------------------------------------
 //----------------------------------------------------------------
