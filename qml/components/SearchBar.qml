@@ -2,12 +2,14 @@ import QtQuick 2.12
 import QtQuick.Controls 2.12
 //import QtQuick.Layouts 1.12
 
+import neroshop.ListingSorting 1.0
+
 import "." as NeroshopComponents
 
 Item {
     id: searchBar
     width: childrenRect.width; height: childrenRect.height
-    property var model: Backend.getListingsBySearchTerm(searchField.text)
+    property var model: Backend.getListingsBySearchTerm(searchField.text, 1000, settingsDialog.hideIllegalProducts)
     TextField {
         id: searchField
         color: (NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000"// textColor
@@ -42,13 +44,13 @@ Item {
             radius: searchField.background.radius
         }     
         
-        function activate() { // causes crash if pressed multiple times at a fast pace (this is probably due to the while loop in Backend.getListings())
+        function activate() { 
             ////if(searchField.length < 1) return;
             searchButton.forceActiveFocus()
             console.log("Searching for " + searchField.text)
             navBar.uncheckAllButtons()
             suggestionsPopup.close()
-            pageLoader.setSource("qrc:/qml/pages/CatalogPage.qml", {"model": (searchField.text.length < 1) ? Backend.getListings() : searchBar.model })//, {"model": [""]})
+            pageLoader.setSource("qrc:/qml/pages/CatalogPage.qml", {"model": (searchField.text.length < 1) ? Backend.getListings(Listing.SortNone, settingsDialog.hideIllegalProducts) : searchBar.model })//, {"model": [""]})
             //console.log("page Loader Item (CatalogPage):", pageLoader.item)
             //console.log("page Loader Item (CatalogPage.catalog):", pageLoader.catalog)//.item)
         

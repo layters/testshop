@@ -282,8 +282,6 @@ void neroshop::Order::create_order_batch(const neroshop::Cart& cart, const std::
             order_items.emplace_back(listing_key, listing_qty, seller_id);
             // Only the seller can reduce stock quantity of each purchased item
         }
-
-        // Print or process the order for the current seller
         //----------------------------------------------------------------------------
         // Calculate total
         // Convert price to Monero (XMR)
