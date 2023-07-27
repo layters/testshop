@@ -59,7 +59,7 @@ void neroshop::Cart::load(const std::string& user_id) {
     // Set the cart's owner id
     this->owner_id = user_id;
     // Prepare (compile) statement
-    std::string command = "SELECT listing_key, quantity FROM cart_item WHERE cart_id = $1";
+    std::string command = "SELECT listing_key, quantity, seller_id FROM cart_item WHERE cart_id = $1";
     sqlite3_stmt * stmt = nullptr;
     if(sqlite3_prepare_v2(database->get_handle(), command.c_str(), -1, &stmt, nullptr) != SQLITE_OK) {
         neroshop::print("sqlite3_prepare_v2: " + std::string(sqlite3_errmsg(database->get_handle())), 1);
@@ -81,7 +81,8 @@ void neroshop::Cart::load(const std::string& user_id) {
         std::tuple<std::string, int, std::string> cart_item; // Create a tuple object for each row
         for(int i = 0; i < sqlite3_column_count(stmt); i++) {
             std::string column_value = (sqlite3_column_text(stmt, i) == nullptr) ? "NULL" : reinterpret_cast<const char *>(sqlite3_column_text(stmt, i));
-            if(i == 0) std::get<0>(cart_item) = column_value; // product id
+            if(column_value == "NULL") { std::cout << "NULL cart_item column skipped"; continue; }
+            if(i == 0) std::get<0>(cart_item) = column_value; // listing key
             if(i == 1) std::get<1>(cart_item) = std::stoi(column_value); // quantity
             if(i == 2) std::get<2>(cart_item) = column_value; // seller id
         }
@@ -135,8 +136,9 @@ void neroshop::Cart::add(const std::string& user_id, const std::string& listing_
         item_name = product_obj["name"].get<std::string>();
     }    
     // Make sure the user adding the item in the cart isn't the seller itself ... lol
+    std::string seller_id = "";
     if(listing_obj.contains("seller_id")) {
-        std::string seller_id = listing_obj["seller_id"].get<std::string>();
+        seller_id = listing_obj["seller_id"].get<std::string>();
         if(seller_id == user_id) {
             neroshop::print("Bruh WTF. You can't add your own listings to your cart lol", 1); return;
         }
@@ -181,9 +183,9 @@ void neroshop::Cart::add(const std::string& user_id, const std::string& listing_
         std::get<1>(contents[listing_index]) = new_quantity; print_cart(); return;
     }
     // Add item to cart (cart_item)
-    database->execute_params("INSERT INTO cart_item (cart_id, listing_key, quantity) "
-                             "VALUES ($1, $2, $3)", 
-    { cart_id, listing_key, std::to_string(quantity) });
+    database->execute_params("INSERT INTO cart_item (cart_id, listing_key, quantity, seller_id) "
+                             "VALUES ($1, $2, $3, $4)", 
+    { cart_id, listing_key, std::to_string(quantity), seller_id });
     contents.emplace_back(listing_key, quantity, ""); // Save in memory as well
     neroshop::print(item_name + " (" + std::to_string(quantity) + ") added to cart", 3);
     print_cart();

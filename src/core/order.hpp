@@ -83,6 +83,7 @@ public:
 	    const std::vector<std::tuple<std::string, int, std::string>>& items);
 	~Order();
 	void create_order(const neroshop::Cart& cart, const std::string& shipping_address);
+	void create_order_batch(const neroshop::Cart& cart, const std::string& shipping_address);
 	void cancel_order(); // revoke the order
 	void change_order(); // edit the order info such as: shipping_address, contact_info, removing individual items from order or item_qty, or adding a note, applying coupon
 	void download_order(); // order details will be in JSON format
