@@ -81,8 +81,11 @@ public:
     Q_INVOKABLE bool saveProductImage(const QString& fileName, const QString& listingKey);
     Q_INVOKABLE bool saveProductThumbnail(const QString& fileName, const QString& listingKey);
 
+    Q_INVOKABLE int getProductStarCount(const QVariantList& product_ratings);
     Q_INVOKABLE int getProductStarCount(const QString& product_id); // getProductRatingsCount
+    Q_INVOKABLE int getProductStarCount(const QVariantList& product_ratings, int star_number);
     Q_INVOKABLE int getProductStarCount(const QString& product_id, int star_number);
+    Q_INVOKABLE float getProductAverageStars(const QVariantList& product_ratings);
     Q_INVOKABLE float getProductAverageStars(const QString& product_id);
     
     Q_INVOKABLE int getSellerGoodRatings(const QVariantList& seller_ratings);

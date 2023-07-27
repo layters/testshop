@@ -143,7 +143,8 @@ void neroshop::Backend::initializeDatabase() {
         "cart_id TEXT REFERENCES cart(uuid) ON DELETE CASCADE"
         ");");
         database->execute("ALTER TABLE cart_item ADD COLUMN listing_key TEXT;");
-        database->execute("ALTER TABLE cart_item ADD COLUMN quantity INTEGER;");//database->execute("ALTER TABLE cart_item ADD COLUMN seller_id TEXT;"); // for a multi-vendor cart, specifying the seller_id is important!//database->execute("ALTER TABLE cart_item ADD COLUMN item_weight REAL;");
+        database->execute("ALTER TABLE cart_item ADD COLUMN quantity INTEGER;");
+        database->execute("ALTER TABLE cart_item ADD COLUMN seller_id TEXT;"); // for a multi-vendor cart, specifying the seller_id is important!//database->execute("ALTER TABLE cart_item ADD COLUMN item_weight REAL;");
         database->execute("CREATE UNIQUE INDEX index_cart_item ON cart_item (cart_id, listing_key);"); // cart_id and listing_key duo MUST be unique for each row
     }
     
@@ -479,19 +480,21 @@ QVariantMap neroshop::Backend::uploadProductImage(const QString& fileName, int i
 }
 //----------------------------------------------------------------
 //----------------------------------------------------------------
-int neroshop::Backend::getProductStarCount(const QString& product_id) {
+int neroshop::Backend::getProductStarCount(const QVariantList& product_ratings) {
     // Get total number of star ratings for a specific product
-    QVariantList product_ratings = getProductRatings(product_id);
-    int ratings_count = product_ratings.size();
-    return ratings_count;
+    return product_ratings.size();
 }
 //----------------------------------------------------------------
-int neroshop::Backend::getProductStarCount(const QString& product_id, int star_number) {
+int neroshop::Backend::getProductStarCount(const QString& product_id) {    
+    QVariantList product_ratings = getProductRatings(product_id);
+    return getProductStarCount(product_ratings);
+}
+//----------------------------------------------------------------
+int neroshop::Backend::getProductStarCount(const QVariantList& product_ratings, int star_number) {
     // Get total number of N star ratings for a specific product
     if(star_number > 5) star_number = 5;
     if(star_number < 1) star_number = 1;
     int star_count = 0;
-    QVariantList product_ratings = getProductRatings(product_id);
     for (const QVariant& variant : product_ratings) {
         QVariantMap rating_obj = variant.toMap();
         int rating_stars = rating_obj["stars"].toInt();
@@ -502,9 +505,13 @@ int neroshop::Backend::getProductStarCount(const QString& product_id, int star_n
     return star_count;
 }
 //----------------------------------------------------------------
-float neroshop::Backend::getProductAverageStars(const QString& product_id) {
-    // Get number of star ratings for a specific product
+int neroshop::Backend::getProductStarCount(const QString& product_id, int star_number) {
     QVariantList product_ratings = getProductRatings(product_id);
+    return getProductStarCount(product_id, star_number);
+}
+//----------------------------------------------------------------
+float neroshop::Backend::getProductAverageStars(const QVariantList& product_ratings) {
+    // Get number of star ratings for a specific product
     int total_star_ratings = product_ratings.size();
     if(total_star_ratings == 0) return 0.0f;
     // Get number of 1, 2, 3, 4, and 5 star_ratings
@@ -533,7 +540,11 @@ float neroshop::Backend::getProductAverageStars(const QString& product_id) {
         (5 * static_cast<float>(five_star_count))) / total_star_ratings;
     return average_stars;
 }
-    
+//----------------------------------------------------------------
+float neroshop::Backend::getProductAverageStars(const QString& product_id) {
+    QVariantList product_ratings = getProductRatings(product_id);
+    return getProductAverageStars(product_ratings);
+}
 //----------------------------------------------------------------
 QVariantList neroshop::Backend::getProductRatings(const QString& product_id) {
     Client * client = Client::get_main_client();
@@ -1577,8 +1588,8 @@ QVariantList neroshop::Backend::registerUser(WalletController* wallet_controller
     emit user_controller->userChanged();
     emit user_controller->userLogged();
     // temp - remove soon
-    //user_controller->rateItem("2b715653-da61-4ea0-8b5a-ad2754d78ba1", 3, "This product is aiight");
-    //user_controller->rateSeller("5AncSFWauoN8bfA68uYpWJRM8fFxEqztuhXSGkeQn5Xd9yU6XqJPW7cZmtYETUAjTK1fCfYQX1CP3Dnmy5a8eUSM5n3C6aL", 1, "This seller rocks");
+    //user_controller->rateItem("8e12c9e7-7017-4bd0-95fe-9abbcd82c1ff", 3, "This product is aiight");
+    //user_controller->rateSeller("5AQFFwoqqBWMYCh6b2V6RyEKZS5ozqfCP1uLnf5FTHiqjk9qyDGoj62Vva2jz71nFGPsDgXAfv2q4GGaWyV2EQ2xTfgFPCw", 1, "This seller rocks");
     // Display registration message
     neroshop::print(((!display_name.isEmpty()) ? "Welcome to neroshop, " : "Welcome to neroshop") + display_name.toStdString(), 4);
     return { true, QString::fromStdString(key) };
@@ -1674,6 +1685,7 @@ bool neroshop::Backend::loginWithWalletFile(WalletController* wallet_controller,
     getProductStarCount("2b715653-da61-4ea0-8b5a-ad2754d78ba1", 2);
     getProductStarCount("2b715653-da61-4ea0-8b5a-ad2754d78ba1", 1);
     getProductAverageStars("2b715653-da61-4ea0-8b5a-ad2754d78ba1");*/
+    //user_controller->createOrder("12 Robot Dr. Boston MA 02115");
     // Display message
     neroshop::print("Welcome back, user " + ((!display_name.empty()) ? (display_name + " (id: " + primary_address + ")") : primary_address), 4);
     return true;

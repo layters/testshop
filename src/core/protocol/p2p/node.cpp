@@ -404,13 +404,12 @@ int neroshop::Node::set(const std::string& key, const std::string& value) {
                     // If this node has the up-to-date value, return true as there is no need to update
                     if(most_recent_timestamp == current_last_updated) {
                         std::cout << "Value for key (" << key << ") is already up-to-date" << std::endl;
-                        return has_key(key);//true
+                        return true;
                     }
-                } else {
-                    // If current value does not have a last_updated field 
-                    // then it means it's probably outdated, so do nothing.
-                    // It will be replaced with the new value at the end of the scope
                 }
+                // If current value does not have a last_updated field 
+                // then it means it's probably outdated, so do nothing.
+                // It will be replaced with the new value at the end of the scope
             }
         }
     }
@@ -887,6 +886,8 @@ bool neroshop::Node::validate(const std::string& key, const std::string& value) 
         std::string expiration_date = json["expiration_date"].get<std::string>();
         if(neroshop_timestamp::is_expired(expiration_date)) {
             std::cerr << "Data has expired (exp date: " << expiration_date << " UTC)\n";
+            // Notify the other nodes that this data has expired (so that once they receive a put with the expired data, it will be removed from their local hash table as soon as it goes through the validate function)
+            send_put(key, value); // this should propagate the expiration information to other nodes in the DHT until the expired data is removed once and for all. Hmmm this could cause an endless loop ...
             // Remove the data from hash table if it was previously stored
             if(has_key(key)) {
                 if(remove(key) == true) {
@@ -1025,10 +1026,12 @@ void neroshop::Node::on_ping(const std::vector<uint8_t>& buffer, const struct so
             bool node_exists = routing_table->has_node((sender_ip == "127.0.0.1") ? this->public_ip_address : sender_ip, sender_port);
             if (!node_exists) {
                 auto node_that_pinged = std::make_unique<Node>((sender_ip == "127.0.0.1") ? this->public_ip_address : sender_ip, sender_port, false);
-                routing_table->add_node(std::move(node_that_pinged)); // Already has internal write_lock
-                routing_table->print_table();
-                // Redistribute your indexing data to the new node that recently joined the network to make product/service listings more easily discoverable by the new node
-                send_map((sender_ip == this->public_ip_address) ? "127.0.0.1" : sender_ip, sender_port);
+                if(!node_that_pinged->is_bootstrap_node()) { // To prevent the bootstrap node from being stored in the routing table
+                    routing_table->add_node(std::move(node_that_pinged)); // Already has internal write_lock
+                    routing_table->print_table();
+                    // Redistribute your indexing data to the new node that recently joined the network to make product/service listings more easily discoverable by the new node
+                    send_map((sender_ip == this->public_ip_address) ? "127.0.0.1" : sender_ip, sender_port);
+                }
             }
         }
     }

@@ -93,9 +93,6 @@ void neroshop::User::rate_seller(const std::string& seller_id, int score, const 
     client->put(key, value, response);
     std::cout << "Received response: " << response << "\n";
 } 
-// int seller_id = 2;
-// user->rate_seller(seller_id, 1, "This seller rocks!");
-// user->rate_seller(seller_id, 0, "This seller sucks!");
 ////////////////////
 ////////////////////
 void neroshop::User::rate_item(const std::string& product_id, int stars, const std::string& comments, const std::string& signature) { // perfected 99%!!!
@@ -176,7 +173,6 @@ void neroshop::User::rate_item(const std::string& product_id, int stars, const s
     client->put(key, value, response);
     std::cout << "Received response: " << response << "\n";
 } 
-// user->rate_item(ball.get_id(), 5, "Definitely not a Dragon ball!");
 ////////////////////
 ////////////////////
 // account-related stuff here
