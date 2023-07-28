@@ -7,6 +7,10 @@
 #include "protocol/p2p/serializer.hpp"
 #include "protocol/transport/client.hpp"
 #include "rating.hpp"
+#include "crypto/rsa.hpp"
+#include "crypto/sha3.hpp"
+#include "tools/base64.hpp"
+#include "tools/timestamp.hpp"
 
 #include <fstream>
 
@@ -456,6 +460,91 @@ void neroshop::User::delete_avatar() {
     database->execute("COMMIT;");
     //return true;
 #endif    
+}
+////////////////////
+////////////////////
+void neroshop::User::send_message(const std::string& recipient_id, const std::string& content, const std::string& public_key) {
+    if(recipient_id == this->id) {
+        neroshop::print("You cannot message yourself", 1);
+        return;
+    }
+    
+    // Construct message
+    nlohmann::json data;
+    //----------------------------------------------------
+    int padding_overhead = 42; // only an estimate - probably accurate since I tested it once
+    int MAX_DATA_LENGTH_BYTES = (NEROSHOP_RSA_DEFAULT_BITS / 8) - padding_overhead; // RSA-OAEP padding reduces the max data size by 41 to 66 bytes :(
+    // Encrypt sender
+    std::string sender_encrypted = neroshop::crypto::rsa_public_encrypt(public_key, this->id);//std::cout << "sender (encrypted): " << sender_encrypted << std::endl;
+    
+    // Convert to base64 (for transmission)
+    std::string sender_encoded = neroshop::base64_encode(sender_encrypted);
+    data["sender_id"] = sender_encoded;
+    
+    #ifdef NEROSHOP_DEBUG0
+    std::cout << "sender (base64 encoded): " << sender_encoded << std::endl;
+    std::string sender_decoded = neroshop::base64_decode(sender_encoded);
+    std::cout << "sender (base64 decoded): " << sender_decoded << std::endl << std::endl;
+    #endif
+    //----------------------------------------------------
+    // Encrypt message
+    std::string message_encrypted = neroshop::crypto::rsa_public_encrypt(public_key, content);//std::cout << "message (encrypted): " << message_encrypted << std::endl;
+    if(message_encrypted.empty()) {
+        neroshop::print("Error encrypting message", 1);
+        return;
+    }
+    
+    // Convert to base64 (for transmission)
+    std::string message_encoded = neroshop::base64_encode(message_encrypted);
+    data["content"] = message_encoded;
+
+    #ifdef NEROSHOP_DEBUG0
+    std::cout << "message (base64 encoded): " << message_encoded << std::endl;
+    std::string message_decoded = neroshop::base64_decode(message_encoded);
+    std::cout << "message (base64 decoded): " << message_decoded << std::endl << std::endl;
+    #endif
+    //----------------------------------------------------
+    data["recipient_id"] = recipient_id;
+    data["timestamp"] = neroshop::timestamp::get_current_utc_timestamp();
+    data["metadata"] = "message";
+    
+    std::string value = data.dump();
+    std::string key = neroshop::crypto::sha3_256(value);
+    std::cout << "key: " << key << "\nvalue: " << value << "\n";
+    
+    // Send put request to neighboring nodes (and your node too JIC)
+    Client * client = Client::get_main_client();
+    std::string response;
+    client->put(key, value, response);
+    #ifdef NEROSHOP_DEBUG
+    std::cout << "Received response: " << response << "\n";
+    #endif
+}
+////////////////////
+std::pair<std::string, std::string> neroshop::User::decrypt_message(const std::string& content_encoded, const std::string& sender_encoded) {
+    // Decode encoded sender
+    std::string sender_decoded = neroshop::base64_decode(sender_encoded);
+    
+    // Decrypt sender using your own private keys
+    std::string sender = neroshop::crypto::rsa_private_decrypt(this->private_key, sender_decoded);
+    
+    #ifdef NEROSHOP_DEBUG0
+    std::cout << "sender (base64 decoded): " << sender_decoded << std::endl;
+    std::cout << "sender (decrypted): " << sender << std::endl << std::endl; 
+    #endif
+    //----------------------------------------------------
+    // Decode encoded message
+    std::string message_decoded = neroshop::base64_decode(content_encoded);
+    
+    // Decrypt message using your own private keys
+    std::string message = neroshop::crypto::rsa_private_decrypt(this->private_key, message_decoded);
+    
+    #ifdef NEROSHOP_DEBUG0
+    std::cout << "message (base64 decoded): " << message_decoded << std::endl;
+    std::cout << "message (decrypted): " << message << std::endl << std::endl;
+    #endif
+    //----------------------------------------------------
+    return std::make_pair(message, sender);
 }
 ////////////////////
 ////////////////////

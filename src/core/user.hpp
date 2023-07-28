@@ -5,6 +5,7 @@
 #include <memory> // std::unique_ptr
 #include <string>
 #include <vector>
+#include <utility> // std::pair
 
 #include "product.hpp"
 #include "order.hpp"
@@ -38,6 +39,9 @@ public:
     // avatar-related stuff (10% complete)
     void upload_avatar(const std::string& filename);
     void delete_avatar();
+    // private messages
+    void send_message(const std::string& recipient_id, const std::string& content, const std::string& recipient_public_key);
+    std::pair<std::string, std::string> decrypt_message(const std::string& content_encoded, const std::string& sender_encoded);
     // setters
     void set_public_key(const std::string& public_key);
     void set_private_key(const std::string& private_key);

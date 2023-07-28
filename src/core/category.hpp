@@ -129,6 +129,8 @@ inline int get_category_id_by_name(const std::string& name) {
     return -1;
 }
 
+//-----------------------------------------------------------------------------
+
 inline std::vector<Subcategory> get_subcategories_by_category_id(unsigned int category_id) {
     std::vector<Subcategory> matching_subcategories;
 

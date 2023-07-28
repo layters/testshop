@@ -24,6 +24,7 @@ neroshop::Mapper::~Mapper() {
     order_ids.clear();
     product_ratings.clear();
     seller_ratings.clear();
+    messages.clear();
 }
 
 //-----------------------------------------------------------------------------
@@ -133,6 +134,14 @@ void neroshop::Mapper::add(const std::string& key, const std::string& value) {
             std::string seller_id = json["seller_id"].get<std::string>();
             seller_ratings[seller_id].push_back(key);
         }    
+    }
+    //-----------------------------------------------
+    if(metadata == "message") {
+        // Map a message's key to a recipient_id
+        if (json.contains("recipient_id") && json["recipient_id"].is_string()) {
+            std::string recipient_id = json["recipient_id"].get<std::string>();
+            messages[recipient_id].push_back(key);
+        }
     }
     //-----------------------------------------------
     sync(); // Sync to database
@@ -382,12 +391,31 @@ void neroshop::Mapper::sync() {
         }
     }            
     //-----------------------------------------------
+    // Insert data from 'messages'
+    for (const auto& entry : messages) {
+        const std::string& search_term = entry.first;
+        const std::vector<std::string>& keys = entry.second;
+        const std::string content = "message";
+
+        for (const std::string& key : keys) {
+            // Check if the record already exists
+            std::string select_query = "SELECT COUNT(*) FROM mappings WHERE search_term = ?1 AND key = ?2;";
+            bool exists = database->get_integer_params(select_query, { search_term, key });
+            
+            // If no duplicate record found, perform insertion
+            if(!exists) {
+                std::string insert_query = "INSERT INTO mappings (search_term, key, content) VALUES (?1, ?2, ?3);";
+                database->execute_params(insert_query, { search_term, key, content });
+            }
+        }
+    }
+    //-----------------------------------------------
     database->execute("COMMIT;");
 }
 
 //-----------------------------------------------------------------------------
 
-std::pair<std::string, std::string> neroshop::Mapper::serialize() {
+std::pair<std::string, std::string> neroshop::Mapper::serialize() { // no longer in use
     nlohmann::json data;
     //-----------------------------------------------
     // Add user_ids

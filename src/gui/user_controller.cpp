@@ -204,6 +204,22 @@ void neroshop::UserController::uploadAvatar(const QString& filename) {
     _user->upload_avatar(filename.toStdString());
 }
 //----------------------------------------------------------------
+void neroshop::UserController::sendMessage(const QString& recipient_id, const QString& content, 
+    const QString& public_key) {
+    if (!_user) throw std::runtime_error("neroshop::User is not initialized");
+    _user->send_message(recipient_id.toStdString(), content.toStdString(), public_key.toStdString());
+}
+//----------------------------------------------------------------
+QVariantMap neroshop::UserController::decryptMessage(const QString& content_encoded, const QString& sender_encoded) {
+    if (!_user) throw std::runtime_error("neroshop::User is not initialized");
+    std::pair<std::string, std::string> message_decrypted = _user->decrypt_message(content_encoded.toStdString(), sender_encoded.toStdString());
+    
+    QVariantMap message;
+    message["content"] = QString::fromStdString(message_decrypted.first);
+    message["sender_id"] = QString::fromStdString(message_decrypted.second);
+    return message;
+}
+//----------------------------------------------------------------
 //----------------------------------------------------------------
 void neroshop::UserController::setStockQuantity(const QString& listing_key, int quantity) {
     if (!_user) throw std::runtime_error("neroshop::User is not initialized");
@@ -281,6 +297,7 @@ QVariantList neroshop::UserController::getInventory(InventorySorting sorting) co
     while(sqlite3_step(stmt) == SQLITE_ROW) {
         QVariantMap inventory_object; // Create an object for each row
         QVariantList product_images;
+        QStringList product_categories;
 
         for(int i = 0; i < sqlite3_column_count(stmt); i++) {
             std::string column_value = (sqlite3_column_text(stmt, i) == nullptr) ? "NULL" : reinterpret_cast<const char *>(sqlite3_column_text(stmt, i));//std::cout << column_value  << " (" << i << ")" << std::endl;
@@ -324,7 +341,18 @@ QVariantList neroshop::UserController::getInventory(InventorySorting sorting) co
                 inventory_object.insert("product_uuid", QString::fromStdString(product_obj["id"].get<std::string>()));
                 inventory_object.insert("product_name", QString::fromStdString(product_obj["name"].get<std::string>()));
                 inventory_object.insert("product_description", QString::fromStdString(product_obj["description"].get<std::string>()));
-                inventory_object.insert("product_category_id", get_category_id_by_name(product_obj["category"].get<std::string>()));
+                // product category and subcategories
+                std::string category = product_obj["category"].get<std::string>();
+                product_categories.append(QString::fromStdString(category));
+                if (product_obj.contains("subcategories") && product_obj["subcategories"].is_array()) {
+                    const auto& subcategories_array = product_obj["subcategories"];
+                    for (const auto& subcategory : subcategories_array) {
+                        if (subcategory.is_string()) {
+                            product_categories.append(QString::fromStdString(subcategory.get<std::string>()));
+                        }
+                    }
+                    inventory_object.insert("product_categories", product_categories);
+                }
                 //inventory_object.insert("", QString::fromStdString(product_obj[""].get<std::string>()));
                 if (product_obj.contains("images") && product_obj["images"].is_array()) {
                     const auto& images_array = product_obj["images"];
@@ -332,7 +360,6 @@ QVariantList neroshop::UserController::getInventory(InventorySorting sorting) co
                         if (image.contains("name") && image.contains("id")) {
                             const auto& image_name = image["name"].get<std::string>();
                             const auto& image_id = image["id"].get<int>();
-                            
                             QVariantMap image_map;
                             image_map.insert("name", QString::fromStdString(image_name));
                             image_map.insert("id", image_id);
@@ -445,6 +472,75 @@ QVariantList neroshop::UserController::getInventory(InventorySorting sorting) co
     }
 
     return inventory_array;
+}
+//----------------------------------------------------------------
+//----------------------------------------------------------------
+QVariantList neroshop::UserController::getMessages() const {
+    if (!_user) throw std::runtime_error("neroshop::User is not initialized");
+    Client * client = Client::get_main_client();
+    
+    neroshop::db::Sqlite3 * database = neroshop::get_database();
+    if(!database) throw std::runtime_error("database is NULL");
+    std::string command = "SELECT DISTINCT key FROM mappings WHERE search_term = ?1 AND content = 'message'";
+    sqlite3_stmt * stmt = nullptr;
+    // Prepare (compile) statement
+    if(sqlite3_prepare_v2(database->get_handle(), command.c_str(), -1, &stmt, nullptr) != SQLITE_OK) {
+        neroshop::print("sqlite3_prepare_v2: " + std::string(sqlite3_errmsg(database->get_handle())), 1);
+        return {};
+    }
+    // Bind user_id to TEXT
+    std::string user_id = _user->get_id();
+    if(sqlite3_bind_text(stmt, 1, user_id.c_str(), user_id.length(), SQLITE_STATIC) != SQLITE_OK) {
+        neroshop::print("sqlite3_bind_text (arg: 1): " + std::string(sqlite3_errmsg(database->get_handle())), 1);
+        sqlite3_finalize(stmt);
+        return {};
+    }    
+    
+    QVariantList messages_array;
+    // Get all table values row by row
+    while(sqlite3_step(stmt) == SQLITE_ROW) {
+        QVariantMap message_object; // Create an object for each row
+
+        for(int i = 0; i < sqlite3_column_count(stmt); i++) {
+            std::string column_value = (sqlite3_column_text(stmt, i) == nullptr) ? "NULL" : reinterpret_cast<const char *>(sqlite3_column_text(stmt, i));//std::cout << column_value  << " (" << i << ")" << std::endl;
+            if(column_value == "NULL") continue; // Skip invalid columns
+            QString key = QString::fromStdString(column_value);
+            // Get the value of the corresponding key from the DHT
+            std::string response;
+            client->get(key.toStdString(), response); // TODO: error handling
+            std::cout << "Received response (get): " << response << "\n";
+            // Parse the response
+            nlohmann::json json = nlohmann::json::parse(response);
+            if(json.contains("error")) {
+                int rescode = database->execute_params("DELETE FROM mappings WHERE key = ?1", { key.toStdString() });
+                if(rescode != SQLITE_OK) neroshop::print("sqlite error: DELETE failed", 1);
+                continue; // Key is lost or missing from DHT, skip to next iteration
+            }
+            
+            const auto& response_obj = json["response"];
+            assert(response_obj.is_object());
+            if (response_obj.contains("value") && response_obj["value"].is_string()) {
+                const auto& value = response_obj["value"].get<std::string>();
+                nlohmann::json value_obj = nlohmann::json::parse(value);
+                assert(value_obj.is_object());//std::cout << value_obj.dump(4) << "\n";
+                std::string metadata = value_obj["metadata"].get<std::string>();
+                if (metadata != "message") { std::cerr << "Invalid metadata. \"message\" expected, got \"" << metadata << "\" instead\n"; continue; }
+                message_object.insert("key", key);
+                std::string content = value_obj["content"].get<std::string>();
+                std::string sender_id = value_obj["sender_id"].get<std::string>();
+                auto message_decrypted = _user->decrypt_message(content, sender_id);
+                message_object.insert("content", QString::fromStdString(message_decrypted.first));
+                message_object.insert("sender_id", QString::fromStdString(message_decrypted.second));
+                message_object.insert("recipient_id", QString::fromStdString(value_obj["recipient_id"].get<std::string>()));
+                if(message_object.contains("timestamp")) message_object.insert("timestamp", QString::fromStdString(value_obj["timestamp"].get<std::string>()));
+            }
+            messages_array.append(message_object);
+        }
+    }
+    
+    sqlite3_finalize(stmt);
+    
+    return messages_array;
 }
 //----------------------------------------------------------------
 //----------------------------------------------------------------

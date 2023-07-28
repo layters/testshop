@@ -155,6 +155,7 @@ Page {
         folder: (isWindows) ? StandardPaths.writableLocation(StandardPaths.DocumentsLocation) + "/neroshop" : StandardPaths.writableLocation(StandardPaths.HomeLocation) + "/neroshop"//StandardPaths.writableLocation(StandardPaths.AppDataLocation) // refer to https://doc.qt.io/qt-5/qstandardpaths.html#StandardLocation-enum
         nameFilters: ["Wallet files (*.keys)"]
         ////options: FileDialog.ReadOnly // will not allow you to create folders while file dialog is opened
+        onAccepted: walletPasswordRestoreField.forceActiveFocus()
     }
     ///////////////////////////
     // for registration page
