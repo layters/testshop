@@ -25,6 +25,7 @@ struct Mapper { // maps search terms to DHT keys
     std::unordered_map<std::string, std::vector<std::string>> order_ids; // maps a order uuid to the corresponding order key.
     std::unordered_map<std::string, std::vector<std::string>> product_ratings;
     std::unordered_map<std::string, std::vector<std::string>> seller_ratings;
+    std::unordered_map<std::string, std::vector<std::string>> messages;
     
     void add(const std::string& key, const std::string& value); // must be JSON value
     void sync(); // syncs mapping data to local database

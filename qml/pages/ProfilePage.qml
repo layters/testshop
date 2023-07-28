@@ -23,6 +23,145 @@ Page {
         anchors.bottomMargin: 10
         spacing: 0//10 - topMargin already set for profilePictureRect
         
+        // Message dialog
+        Dialog {
+            id: messageDialog
+            anchors.centerIn: parent
+            width: 700; height: 500
+            visible: false
+            modal: true
+            closePolicy: Popup.NoAutoClose | Popup.CloseOnEscape
+            focus: true // The Popup will receive focus when it is shown
+            
+            onAccepted: {
+                console.log("Ok clicked")
+                if(messageTextArea.text.length > 0) {
+                    User.sendMessage(userModel.monero_address, messageTextArea.text, userModel.public_key)
+                    messageTextArea.text = "" // clear message after sending it
+                }
+            }
+            onRejected: {
+                console.log("Cancel clicked")
+                messageTextArea.text = ""
+            }
+            // header
+            header: Rectangle {
+                id: titleBar
+                color: "#323232"
+                height: 40
+                width: parent.width
+                anchors.left: parent.left
+                anchors.right: parent.right
+                radius: 6
+                // Rounded top corners
+                Rectangle {
+                    anchors.left: parent.left
+                    anchors.right: parent.right
+                    anchors.bottom: parent.bottom
+                    height: parent.height / 2
+                    color: parent.color
+                }
+            
+                Label {
+                    text: "Message seller"
+                    color: "#ffffff"
+                    font.bold: true
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    anchors.verticalCenter: parent.verticalCenter
+                }
+            
+                Button {
+                    id: closeButton
+                    width: 25//20
+                    height: this.width
+
+                    anchors.verticalCenter: titleBar.verticalCenter
+                    anchors.right: titleBar.right
+                    anchors.rightMargin: 10
+                    text: qsTr(FontAwesome.xmark)
+                    contentItem: Text {  
+                        text: closeButton.text
+                        color: "#ffffff"
+                        font.bold: true
+                        font.family: FontAwesome.fontFamily
+                        horizontalAlignment: Text.AlignHCenter
+                        verticalAlignment: Text.AlignVCenter
+                    }
+                    background: Rectangle {
+                        color: "#ff4d4d"
+                        radius: 100
+                    }
+                    onClicked: {
+                        messageDialog.reject() // manually trigger onRejected signal and close dialog too
+                    }
+                }
+            }
+            // footer
+            footer: Rectangle { // footer cant have margins cuz it is an integral part of the dialog
+                width: parent.width; height: 50
+                color: "transparent"
+                //border.color: "red" // <- for debug purposes
+                RowLayout {
+                    id: standardButtonsRow
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    width: dialogContent.width - spacing
+                    Button {
+                        Layout.fillWidth: true
+                        text: "Cancel"
+                        onClicked: {
+                            messageDialog.reject()
+                        }
+                    }
+                
+                    Button {
+                        Layout.fillWidth: true
+                        text: "Send"
+                        onClicked: {
+                            messageDialog.accept()
+                        }
+                    }
+                }
+            }
+            // background
+            background: Rectangle {
+                color: "white" // Change this based on theme later
+                radius: 10
+            }
+            
+            // Dialog content
+            Rectangle {
+                id: dialogContent
+                anchors.centerIn: parent
+                anchors.margins: 20
+                width: parent.width; height: parent.height
+                color: "transparent"
+                //border.color: "red" // <- for debug purposes
+                
+                ColumnLayout {
+                    anchors.fill: parent
+                    TextArea {
+                        id: messageTextArea
+                        Layout.fillWidth: true
+                        Layout.fillHeight: true
+                        wrapMode: Text.Wrap
+                        selectByMouse: true
+                        focus: true // will receive focus when the Popup is shown (messageDialog must have focus set to true as well for this to work)
+                        property int maximumLength: 470
+                    
+                        background: Rectangle {
+                            color: "lightblue"
+                            radius: 5
+                        }
+                    }
+                    
+                    Label {
+                        id: characterCountLabel
+                        text: "Characters: " + messageTextArea.text.length
+                        color: (messageTextArea.text.length > messageTextArea.maximumLength) ? "red" : "black"
+                    }
+                }
+            }
+        }
         // Back button
         Button {
             id: backButton
@@ -187,7 +326,9 @@ Page {
                                 horizontalAlignment: Text.AlignHCenter
                                 verticalAlignment: Text.AlignVCenter
                             }
-                            onClicked: {}
+                            onClicked: {
+                                messageDialog.open()
+                            }
                             MouseArea {
                                 anchors.fill: parent
                                 onPressed: mouse.accepted = false

@@ -84,6 +84,9 @@ public:
     Q_INVOKABLE void setStockQuantity(const QString& listing_key, int quantity);
     
     Q_INVOKABLE void uploadAvatar(const QString& filename);
+    
+    Q_INVOKABLE void sendMessage(const QString& recipient_id, const QString& content, const QString& recipient_public_key);
+    Q_INVOKABLE QVariantMap decryptMessage(const QString& content_encoded, const QString& sender_encoded);
         
     Q_INVOKABLE QString getId() const;//Q_INVOKABLE neroshop::WalletController * getWallet() const;
     Q_INVOKABLE int getProductsCount() const;
@@ -92,6 +95,8 @@ public:
     Q_INVOKABLE int getCartQuantity() const;
     
     Q_INVOKABLE QVariantList getInventory(InventorySorting sorting = SortNone) const;
+
+    Q_INVOKABLE QVariantList getMessages() const;
 
     Q_INVOKABLE neroshop::User * getUser() const;
     neroshop::Seller * getSeller() const;    

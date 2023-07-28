@@ -9,4 +9,16 @@ Page {
     background: Rectangle {
         color: "transparent"
     }
+    property var model: User.getMessages()
+    
+    ColumnLayout {
+        Text {
+            id: content
+            text: messagesPage.model[0].content
+        }
+        Text {
+            id: sender_id
+            text: messagesPage.model[0].sender_id
+        }
+    }
 }
