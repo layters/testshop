@@ -110,7 +110,7 @@ public:
     
     Q_INVOKABLE int getStockAvailable(const QString& product_id);
     // Inventory model
-    Q_INVOKABLE QVariantList getInventory(const QString& user_id);
+    Q_INVOKABLE QVariantList getInventory(const QString& user_id, bool hide_illicit_items = true);
     
     Q_INVOKABLE void createOrder(UserController * user_controller, const QString& shipping_address);
 

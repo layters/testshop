@@ -215,13 +215,13 @@ void neroshop::Node::join() {
         }
         
         // Add the bootstrap node to routing table (optional) - stores the node in the routing table for later use.
-        auto new_node = std::make_unique<Node>((bootstrap_node.address == "127.0.0.1") ? this->public_ip_address : bootstrap_node.address, bootstrap_node.port, false);
-        new_node->set_bootstrap(true);
-        Node& new_node_ref = *new_node; // take a reference to the Node object (to avoid segfault)
-        routing_table->add_node(std::move(new_node)); // new_node becomes invalid after we move ownership to routing table so it cannot be used
+        auto seed_node = std::make_unique<Node>((bootstrap_node.address == "127.0.0.1") ? this->public_ip_address : bootstrap_node.address, bootstrap_node.port, false);
+        seed_node->set_bootstrap(true);
+        Node& seed_node_ref = *seed_node; // take a reference to the Node object (to avoid segfault)
+        //routing_table->add_node(std::move(seed_node)); // seed_node becomes invalid after we move ownership to routing table so it cannot be used
         
         // Send a "find_node" message to the bootstrap node and wait for a response message
-        auto nodes = send_find_node(this->id, (bootstrap_node.address == "127.0.0.1") ? "127.0.0.1" : new_node_ref.get_ip_address(), new_node_ref.get_port());//std::cout << "Sending find_node message to " << new_node_ref.get_ip_address() << ":" << new_node_ref.get_port() << "\n";
+        auto nodes = send_find_node(this->id, (bootstrap_node.address == "127.0.0.1") ? "127.0.0.1" : seed_node_ref.get_ip_address(), seed_node_ref.get_port());//std::cout << "Sending find_node message to " << seed_node_ref.get_ip_address() << ":" << seed_node_ref.get_port() << "\n";
         if(nodes.empty()) {
             std::cerr << "find_node: No nodes found\n"; continue;
         }

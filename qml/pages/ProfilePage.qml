@@ -6,6 +6,8 @@ import QtGraphicalEffects 1.12 // ColorOverlay
 
 import FontAwesome 1.0
 
+import neroshop.CurrencyExchangeRates 1.0
+
 import "../components" as NeroshopComponents
 
 Page {
@@ -16,7 +18,7 @@ Page {
     property var userModel: Backend.getUser(productModel.seller_id)
     property var productModel: null // <- the product listing that redirected user to this profile page
     property var ratingsModel: Backend.getSellerRatings(productModel.seller_id)
-    property var listingsModel: Backend.getInventory(productModel.seller_id)//Backend.getListingsBySearchTerm(productModel.seller_id)
+    property var listingsModel: Backend.getInventory(productModel.seller_id, settingsDialog.hideIllegalProducts)//Backend.getListingsBySearchTerm(productModel.seller_id)
 
     ColumnLayout {
         anchors.fill: parent
@@ -686,6 +688,64 @@ Page {
                 id: listingsTabItem
                 color: tabLayout.tabItemColor
                 // StackLayout child Items' Layout.fillWidth and Layout.fillHeight properties default to true
+                clip: true
+                
+                GridView {
+                    id: listingsGrid
+                    anchors.fill: parent
+                    property real margins: 15
+                    anchors.topMargin: listingsGrid.margins; anchors.bottomMargin: anchors.topMargin
+                    anchors.leftMargin: listingsGrid.margins; anchors.rightMargin: anchors.leftMargin
+                    cellWidth: 200; cellHeight: 128//200
+                    property int spacing: 5
+                    model: profilePage.listingsModel
+                    ScrollBar.vertical: ScrollBar {
+                        policy: ScrollBar.AsNeeded
+                    }
+                    delegate: Rectangle {
+                        id: productBox
+                        width: listingsGrid.cellWidth - listingsGrid.spacing
+                        height: listingsGrid.cellHeight - listingsGrid.spacing
+                        color: (NeroshopComponents.Style.darkTheme) ? (NeroshopComponents.Style.themeName == "PurpleDust" ? "#17171c" : "#181a1b") : "#c9c9cd"//"transparent"
+                        border.color: (NeroshopComponents.Style.darkTheme) ? "#404040" : "#4d4d4d"
+                        border.width: 0
+                        radius: 5
+                        
+                        Rectangle {
+                            id: productImageRect
+                            anchors.fill: parent
+                            anchors.margins: parent.border.width
+                            color: "#ffffff"
+                            radius: parent.radius
+                             
+                            Image {
+                                id: productImage
+                                source: "image://listing?id=%1&image_id=%2".arg(modelData.key).arg(modelData.product_images[0].name)//"file:///" + modelData.product_image_file//"qrc:/assets/images/image_gallery.png"
+                                anchors.fill: parent
+                                fillMode: Image.PreserveAspectFit
+                                mipmap: true
+                                asynchronous: true                    
+                            }
+                            
+                            MouseArea {
+                                anchors.fill: parent
+                                hoverEnabled: true
+                                acceptedButtons: Qt.LeftButton
+                                onEntered: {
+                                    productBox.border.width = 1
+                                }
+                                onExited: {
+                                    productBox.border.width = 0
+                                }
+                                onClicked: { 
+                                    navBar.uncheckAllButtons() // Uncheck all navigational buttons
+                                    pageLoader.setSource("qrc:/qml/pages/ProductPage.qml", { "model": modelData })
+                                }
+                                cursorShape: Qt.PointingHandCursor
+                            }
+                        }
+                    }
+                }
             }
             Rectangle {
                 id: ratingsTabItem

@@ -181,6 +181,7 @@ GridView {
             TextArea {
                 id: productNameText
                 Layout.alignment: (!settingsDialog.gridDetailsAlignCenter) ? 0 : Qt.AlignHCenter
+                width: parent.width
                 text: qsTr(modelData.product_name)//qsTr("Product name")
                 color: (NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000"
                 visible: !settingsDialog.hideProductDetails
