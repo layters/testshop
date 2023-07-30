@@ -864,7 +864,7 @@ int neroshop::Backend::getStockAvailable(const QString& product_id) {
 }
 //----------------------------------------------------------------
 //----------------------------------------------------------------
-QVariantList neroshop::Backend::getInventory(const QString& user_id) {
+QVariantList neroshop::Backend::getInventory(const QString& user_id, bool hide_illicit_items) {
     Client * client = Client::get_main_client();
     
     neroshop::db::Sqlite3 * database = neroshop::get_database();
@@ -894,6 +894,7 @@ QVariantList neroshop::Backend::getInventory(const QString& user_id) {
     while(sqlite3_step(stmt) == SQLITE_ROW) {
         QVariantMap inventory_object; // Create an object for each row
         QVariantList product_images;
+        QStringList product_categories;
 
         for(int i = 0; i < sqlite3_column_count(stmt); i++) {
             std::string column_value = (sqlite3_column_text(stmt, i) == nullptr) ? "NULL" : reinterpret_cast<const char *>(sqlite3_column_text(stmt, i));//std::cout << column_value  << " (" << i << ")" << std::endl;
@@ -935,7 +936,18 @@ QVariantList neroshop::Backend::getInventory(const QString& user_id) {
                 inventory_object.insert("product_uuid", QString::fromStdString(product_obj["id"].get<std::string>()));
                 inventory_object.insert("product_name", QString::fromStdString(product_obj["name"].get<std::string>()));
                 inventory_object.insert("product_description", QString::fromStdString(product_obj["description"].get<std::string>()));
-                inventory_object.insert("product_category_id", get_category_id_by_name(product_obj["category"].get<std::string>()));
+                // product category and subcategories
+                std::string category = product_obj["category"].get<std::string>();
+                product_categories.append(QString::fromStdString(category));
+                if (product_obj.contains("subcategories") && product_obj["subcategories"].is_array()) {
+                    const auto& subcategories_array = product_obj["subcategories"];
+                    for (const auto& subcategory : subcategories_array) {
+                        if (subcategory.is_string()) {
+                            product_categories.append(QString::fromStdString(subcategory.get<std::string>()));
+                        }
+                    }
+                    inventory_object.insert("product_categories", product_categories);
+                }
                 //inventory_object.insert("", QString::fromStdString(product_obj[""].get<std::string>()));
                 if (product_obj.contains("images") && product_obj["images"].is_array()) {
                     const auto& images_array = product_obj["images"];
@@ -954,6 +966,12 @@ QVariantList neroshop::Backend::getInventory(const QString& user_id) {
                 }
                 if (product_obj.contains("thumbnail") && product_obj["thumbnail"].is_string()) {
                     inventory_object.insert("product_thumbnail", QString::fromStdString(product_obj["thumbnail"].get<std::string>()));
+                }
+                // Skip products with illegal categories/subcategories
+                if (hide_illicit_items) {
+                    if(isIllicitItem(inventory_object)) {
+                        continue;
+                    }
                 }
             }
             inventory_array.append(inventory_object);

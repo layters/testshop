@@ -52,7 +52,7 @@ Popup {
                         placeholderText: qsTr("Enter name")
                         color: productDialog.inputTextColor
                         selectByMouse: true
-                        maximumLength: 200
+                        maximumLength: 120
                         background: Rectangle { 
                             color: "transparent"
                             border.color: productDialog.inputBorderColor

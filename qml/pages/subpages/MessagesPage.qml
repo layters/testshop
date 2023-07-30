@@ -9,16 +9,34 @@ Page {
     background: Rectangle {
         color: "transparent"
     }
-    property var model: User.getMessages()
     
     ColumnLayout {
-        Text {
-            id: content
-            text: messagesPage.model[0].content
-        }
-        Text {
-            id: sender_id
-            text: messagesPage.model[0].sender_id
+        anchors.fill: parent
+        ListView {
+            Layout.fillWidth: true
+            Layout.fillHeight: true
+            model: User.getMessages()
+            delegate: Rectangle {
+                width: parent.width
+                height: 250
+                color: index % 2 === 0 ? "#f0f0f0" : "#e0e0e0"
+                ColumnLayout {
+                    anchors.fill: parent
+                    Text {
+                        id: senderText
+                        text: modelData.sender_id
+                    }
+                    TextArea {
+                        id: contentText
+                        Layout.fillWidth: true
+                        Layout.fillHeight: true
+                        text: modelData.content
+                        wrapMode: Text.Wrap
+                        readOnly: true
+                        selectByMouse: true
+                    }
+                }
+            }
         }
     }
 }
