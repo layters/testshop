@@ -25,6 +25,186 @@ Page {
         anchors.bottomMargin: 10
         spacing: 0//10 - topMargin already set for profilePictureRect
         
+        // Rating dialog
+        Dialog {
+            id: rateDialog
+            anchors.centerIn: parent
+            width: 700; height: 500
+            visible: false
+            modal: true
+            closePolicy: Popup.NoAutoClose | Popup.CloseOnEscape
+            focus: true // The Popup will receive focus when it is shown
+            
+            onAccepted: {
+                console.log("Ok clicked")
+                if(commentTextArea.text.length > 0 && rateButtonGroup.checkedButton != null) {
+                    User.rateSeller(userModel.monero_address, rateButtonGroup.checkedButton.buttonValue, commentTextArea.text)
+                    commentTextArea.text = "" // clear message after sending it
+                }
+            }
+            onRejected: {
+                console.log("Cancel clicked")
+                commentTextArea.text = ""
+            }
+            // header
+            header: Rectangle {
+                id: titleBar1
+                color: "#323232"
+                height: 40
+                width: parent.width
+                anchors.left: parent.left
+                anchors.right: parent.right
+                radius: 6
+                // Rounded top corners
+                Rectangle {
+                    anchors.left: parent.left
+                    anchors.right: parent.right
+                    anchors.bottom: parent.bottom
+                    height: parent.height / 2
+                    color: parent.color
+                }
+            
+                Label {
+                    text: "Rate seller"
+                    color: "#ffffff"
+                    font.bold: true
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    anchors.verticalCenter: parent.verticalCenter
+                }
+            
+                Button {
+                    id: closeButton1
+                    width: 25//20
+                    height: this.width
+
+                    anchors.verticalCenter: titleBar1.verticalCenter
+                    anchors.right: titleBar1.right
+                    anchors.rightMargin: 10
+                    text: qsTr(FontAwesome.xmark)
+                    contentItem: Text {  
+                        text: closeButton1.text
+                        color: "#ffffff"
+                        font.bold: true
+                        font.family: FontAwesome.fontFamily
+                        horizontalAlignment: Text.AlignHCenter
+                        verticalAlignment: Text.AlignVCenter
+                    }
+                    background: Rectangle {
+                        color: "#ff4d4d"
+                        radius: 100
+                    }
+                    onClicked: {
+                        rateDialog.reject() // manually trigger onRejected signal and close dialog too
+                    }
+                }
+            }
+            // footer
+            footer: Rectangle { // footer cant have margins cuz it is an integral part of the dialog
+                width: parent.width; height: 50
+                color: "transparent"
+                //border.color: "red" // <- for debug purposes
+                RowLayout {
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    width: rateDialogContent.width - spacing
+                    Button {
+                        Layout.fillWidth: true
+                        text: "Cancel"
+                        onClicked: {
+                            rateDialog.reject()
+                        }
+                    }
+                
+                    Button {
+                        Layout.fillWidth: true
+                        text: "Rate"
+                        onClicked: {
+                            rateDialog.accept()
+                        }
+                    }
+                }
+            }
+            // background
+            background: Rectangle {
+                color: "white" // Change this based on theme later
+                radius: 10
+            }
+            
+            // Dialog content
+            Rectangle {
+                id: rateDialogContent
+                anchors.centerIn: parent
+                anchors.margins: 20
+                width: parent.width; height: parent.height
+                color: "transparent"
+                //border.color: "red" // <- for debug purposes
+                
+                ColumnLayout {
+                    anchors.fill: parent
+                    Row {
+                        id: rateButtonsRow
+                        Layout.fillWidth: true
+                        spacing: 5
+                        ButtonGroup { 
+                            id: rateButtonGroup
+                            exclusive: true
+                            onClicked: { 
+                                //button.checked = true
+                            }
+                        }
+                        Button {
+                            width: commentTextArea.width / 2
+                            height: 50
+                            checkable: true
+                            ButtonGroup.group: rateButtonGroup
+                            property int buttonValue: 0
+                            text: qsTr("0")
+                            background: Rectangle {
+                                color: "red"
+                                border.color: parent.checked ? "blue" : "transparent"
+                                border.width: 2
+                                radius: 5
+                            }
+                        }
+                        Button {
+                            width: (commentTextArea.width / 2) - parent.spacing
+                            height: 50
+                            checkable: true
+                            ButtonGroup.group: rateButtonGroup
+                            property int buttonValue: 1
+                            text: qsTr("1")
+                            background: Rectangle {
+                                color: "green"
+                                border.color: parent.checked ? "blue" : "transparent"
+                                border.width: 2
+                                radius: 5
+                            }
+                        }
+                    }
+                    
+                    TextArea {
+                        id: commentTextArea
+                        Layout.fillWidth: true
+                        Layout.fillHeight: true
+                        wrapMode: Text.Wrap
+                        readOnly: (rateButtonGroup.checkedButton === null)
+                        selectByMouse: true
+                        focus: true // will receive focus when the Popup is shown (rateDialog must have focus set to true as well for this to work)
+                        property int maximumLength: 1024
+                    
+                        background: Rectangle {
+                            color: "lightblue"
+                            radius: 5
+                        }
+                    }
+                    
+                    Label {
+                        text: "Characters: " + commentTextArea.text.length
+                        color: (commentTextArea.text.length > commentTextArea.maximumLength) ? "red" : "black"
+                    }
+                }
+            }
+        }
+        
         // Message dialog
         Dialog {
             id: messageDialog
@@ -106,7 +286,7 @@ Page {
                 RowLayout {
                     id: standardButtonsRow
                     anchors.horizontalCenter: parent.horizontalCenter
-                    width: dialogContent.width - spacing
+                    width: messageDialogContent.width - spacing
                     Button {
                         Layout.fillWidth: true
                         text: "Cancel"
@@ -132,7 +312,7 @@ Page {
             
             // Dialog content
             Rectangle {
-                id: dialogContent
+                id: messageDialogContent
                 anchors.centerIn: parent
                 anchors.margins: 20
                 width: parent.width; height: parent.height
@@ -351,7 +531,9 @@ Page {
                                 horizontalAlignment: Text.AlignHCenter
                                 verticalAlignment: Text.AlignVCenter
                             }
-                            onClicked: {}
+                            onClicked: {
+                                rateDialog.open()
+                            }
                             MouseArea {
                                 anchors.fill: parent
                                 onPressed: mouse.accepted = false
@@ -390,8 +572,8 @@ Page {
                                     //anchors.left: parent.left; anchors.leftMargin: width / 2
                                     id: reputationRect
                                     width: 100; height: 32
-                                    color: "transparent"
-                                    border.color: "#ffffff"
+                                    color: (NeroshopComponents.Style.darkTheme) ? "#101010" : "#efefef"
+                                    border.color: (NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000"
                                     radius: 3
                                     property bool hovered: false
                                     
@@ -445,8 +627,8 @@ Page {
                         Rectangle {
                             anchors.top: parent.children[0].top
                             width: 50 + thumbsUpCountText.contentWidth; height: reputationRect.height
-                            color: "transparent"
-                            border.color: "#ffffff"
+                            color: (NeroshopComponents.Style.darkTheme) ? "#101010" : "#efefef"
+                            border.color: (NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000"
                             radius: 3
                             Row {
                                 anchors.centerIn: parent
@@ -493,8 +675,8 @@ Page {
                           Rectangle {
                             anchors.top: parent.children[0].top
                             width: 50 + thumbsDownCountText.contentWidth; height: reputationRect.height
-                            color: "transparent"
-                            border.color: "#ffffff"
+                            color: (NeroshopComponents.Style.darkTheme) ? "#101010" : "#efefef"
+                            border.color: (NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000"
                             radius: 3
                             Row {
                                 anchors.centerIn: parent
