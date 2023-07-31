@@ -887,7 +887,7 @@ bool neroshop::Node::validate(const std::string& key, const std::string& value) 
         if(neroshop_timestamp::is_expired(expiration_date)) {
             std::cerr << "Data has expired (exp date: " << expiration_date << " UTC)\n";
             // Notify the other nodes that this data has expired (so that once they receive a put with the expired data, it will be removed from their local hash table as soon as it goes through the validate function)
-            send_put(key, value); // this should propagate the expiration information to other nodes in the DHT until the expired data is removed once and for all. Hmmm this could cause an endless loop ...
+            ////send_put(key, value); // this should propagate the expiration information to other nodes in the DHT until the expired data is removed once and for all. Hmmm this could cause an endless loop ...
             // Remove the data from hash table if it was previously stored
             if(has_key(key)) {
                 if(remove(key) == true) {
