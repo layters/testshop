@@ -509,8 +509,7 @@ void neroshop::User::send_message(const std::string& recipient_id, const std::st
     data["metadata"] = "message";
     
     std::string value = data.dump();
-    std::string key = neroshop::crypto::sha3_256(value);
-    std::cout << "key: " << key << "\nvalue: " << value << "\n";
+    std::string key = neroshop::crypto::sha3_256(value);//std::cout << "key: " << key << "\nvalue: " << value << "\n";
     
     // Send put request to neighboring nodes (and your node too JIC)
     Client * client = Client::get_main_client();
