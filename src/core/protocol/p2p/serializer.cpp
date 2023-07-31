@@ -3,6 +3,7 @@
 #include "../../crypto/sha3.hpp"
 //#include "../../crypto/rsa.hpp" // for signing and verifying data
 #include "../../tools/string.hpp"
+#include "../../tools/timestamp.hpp"
 //#include "../../tools/base64.hpp"
 #include "../../wallet.hpp"
 
@@ -200,6 +201,7 @@ std::pair<std::string, std::string/*std::vector<uint8_t>*/> neroshop::Serializer
         json_object["rater_id"] = product_rating.rater_id;
         json_object["comments"] = product_rating.comments;
         json_object["signature"] = product_rating.signature;
+        json_object["timestamp"] = neroshop::timestamp::get_current_utc_timestamp();
         json_object["metadata"] = "product_rating";
     }
     
@@ -210,6 +212,7 @@ std::pair<std::string, std::string/*std::vector<uint8_t>*/> neroshop::Serializer
         json_object["rater_id"] = seller_rating.rater_id;
         json_object["comments"] = seller_rating.comments;
         json_object["signature"] = seller_rating.signature;
+        json_object["timestamp"] = neroshop::timestamp::get_current_utc_timestamp();
         json_object["metadata"] = "seller_rating";
     }    
     // TODO: Favorites (wishlists). EDIT: Favorites won't be stored in the DHT but will be stored locally
@@ -426,6 +429,7 @@ std::pair<std::string, std::string> neroshop::Serializer::serialize(const User& 
     }
     std::string signature = seller->get_wallet()->sign_message(user_id, monero_message_signature_type::SIGN_WITH_SPEND_KEY);
     json_object["signature"] = signature;
+    json_object["created_at"] = neroshop::timestamp::get_current_utc_timestamp();
     json_object["metadata"] = "user";
     
     // Generate key-value pair
