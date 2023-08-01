@@ -212,6 +212,14 @@ std::vector<uint8_t> neroshop::msgpack::process(const std::vector<uint8_t>& requ
             auto params_object = request_object["args"];
             assert(params_object["key"].is_string());
             std::string key = params_object["key"];
+            // To get network status
+            if(key == "status") {
+                response_object["version"] = std::string(NEROSHOP_DHT_VERSION);
+                response_object["response"]["id"] = node.get_id();
+                response_object["response"]["connected_peers"] = node.get_peer_count();
+                response = nlohmann::json::to_msgpack(response_object);
+                return response;
+            }
                         
             // Send get messages to the closest nodes in your routing table (IPC mode)
             std::string value = node.send_get(key);

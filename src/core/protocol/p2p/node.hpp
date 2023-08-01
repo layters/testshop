@@ -91,7 +91,7 @@ public:
     bool validate(const std::string& key, const std::string& value); // Validates data before storing it
     //---------------------------------------------------
     void on_ping(const std::vector<uint8_t>& buffer, const struct sockaddr_in& client_addr);
-    void on_dead_node(const std::vector<std::string>& node_ids);
+    ////void on_dead_node(const std::vector<std::string>& node_ids);
     ////bool on_keyword_blocked(const std::string& keyword);
     ////bool on_node_blacklisted(const std::string& address);
     ////bool on_data_expired();
@@ -119,6 +119,7 @@ public:
     std::string get_public_ip_address() const;
     uint16_t get_port() const;
     RoutingTable * get_routing_table() const;
+    int get_peer_count() const;
     NodeStatus get_status() const;
     std::string get_status_as_string() const;
     std::vector<std::string> get_keys() const;

@@ -38,7 +38,7 @@
         <file>qml/pages/OrderCheckoutPage.qml</file>
         <file>qml/pages/ProductPage.qml</file>
         <file>qml/pages/ProfilePage.qml</file>
-        <file>qml/pages/subpages/AccountSettingsPage.qml</file>
+        <file>qml/pages/subpages/AccountPage.qml</file>
         <file>qml/pages/subpages/DashboardPage.qml</file>
         <file>qml/pages/subpages/MessagesPage.qml</file>
         <file>qml/pages/subpages/OrdersPage.qml</file>
@@ -90,6 +90,7 @@
         <file>assets/images/mask.png</file>
         <file>assets/images/monero_symbol.png</file>
         <file>assets/images/monero_symbol_white.png</file>
+        <file>assets/images/nodes.png</file>
         <file>assets/images/open_parcel.png</file>
         <file>assets/images/order.png</file>
         <file>assets/images/paid.png</file>

@@ -15,11 +15,12 @@ Page {
     background: Rectangle {
         color: "transparent"
     }
-    property var userModel: Backend.getUser(productModel.seller_id)
+    property var userModel: Backend.getUser((productModel === null) ? messagesModel.sender_id : productModel.seller_id)
     property var productModel: null // <- the product listing that redirected user to this profile page
-    property var ratingsModel: Backend.getSellerRatings(productModel.seller_id)
-    property var listingsModel: Backend.getInventory(productModel.seller_id, settingsDialog.hideIllegalProducts)//Backend.getListingsBySearchTerm(productModel.seller_id)
-
+    property var ratingsModel: Backend.getSellerRatings((productModel === null) ? messagesModel.sender_id : productModel.seller_id)
+    property var listingsModel: Backend.getInventory((productModel === null) ? messagesModel.sender_id : productModel.seller_id, settingsDialog.hideIllegalProducts)//Backend.getListingsBySearchTerm(productModel.seller_id)
+    property var messagesModel: null
+    
     ColumnLayout {
         anchors.fill: parent
         anchors.bottomMargin: 10
@@ -158,10 +159,14 @@ Page {
                             ButtonGroup.group: rateButtonGroup
                             property int buttonValue: 0
                             text: qsTr("0")
+                            contentItem: Text {
+                                text: parent.text
+                                color: "#ffffff"
+                                horizontalAlignment: Text.AlignHCenter
+                                verticalAlignment: Text.AlignVCenter
+                            }
                             background: Rectangle {
-                                color: "red"
-                                border.color: parent.checked ? "blue" : "transparent"
-                                border.width: 2
+                                color: parent.checked ? "red" : "#808080"
                                 radius: 5
                             }
                         }
@@ -172,10 +177,14 @@ Page {
                             ButtonGroup.group: rateButtonGroup
                             property int buttonValue: 1
                             text: qsTr("1")
+                            contentItem: Text {
+                                text: parent.text
+                                color: "#ffffff"
+                                horizontalAlignment: Text.AlignHCenter
+                                verticalAlignment: Text.AlignVCenter
+                            }
                             background: Rectangle {
-                                color: "green"
-                                border.color: parent.checked ? "blue" : "transparent"
-                                border.width: 2
+                                color: parent.checked ? "green" : "#808080"
                                 radius: 5
                             }
                         }
@@ -363,7 +372,13 @@ Page {
                 color: backButton.hovered ? NeroshopComponents.Style.neroshopPurpleColor : "#50446f"
             }
             onClicked: {
-                pageLoader.setSource("qrc:/qml/pages/ProductPage.qml", {"model": productModel})
+                if(productModel !== null) {
+                    pageLoader.setSource("qrc:/qml/pages/ProductPage.qml", {"model": productModel})
+                }
+                if(messagesModel !== null) {
+                    pageLoader.setSource("qrc:/qml/pages/subpages/MessagesPage.qml")
+                    navBar.checkButtonByIndex(2)
+                }
             }
             MouseArea {
                 anchors.fill: parent

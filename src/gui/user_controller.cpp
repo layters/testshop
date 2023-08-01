@@ -532,7 +532,7 @@ QVariantList neroshop::UserController::getMessages() const {
                 message_object.insert("content", QString::fromStdString(message_decrypted.first));
                 message_object.insert("sender_id", QString::fromStdString(message_decrypted.second));
                 message_object.insert("recipient_id", QString::fromStdString(value_obj["recipient_id"].get<std::string>()));
-                if(message_object.contains("timestamp")) message_object.insert("timestamp", QString::fromStdString(value_obj["timestamp"].get<std::string>()));
+                message_object.insert("timestamp", QString::fromStdString(value_obj["timestamp"].get<std::string>()));
             }
             messages_array.append(message_object);
         }
