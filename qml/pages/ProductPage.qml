@@ -318,10 +318,11 @@ Page {
                                 anchors.horizontalCenter: parent.horizontalCenter//Layout.alignment: Qt.AlignHCenter
                                 width: 500; height: 50//Layout.preferredWidth: 500; Layout.preferredHeight: 50
                                 hoverEnabled: true
-                                text: qsTr("Add to favorites")
-                                property string color: "#d62929"
-                                property string lightColor: "#dd4b4b"
-                                property string darkColor: "#b42222"
+                                text: favorited ? qsTr("Remove from favorites") : qsTr("Add to favorites")
+                                property string color: favorited ? "#29d6d6" : "#d62929"
+                                property string lightColor: favorited ? "#34b4b4" : "#dd4b4b"
+                                property string darkColor: favorited ? "#75dddd" : "#b42222"
+                                property bool favorited: User.hasFavorited(productPage.model.key)
                                 background: Rectangle {
                                     color: parent.hovered ? favoritesButton.lightColor : favoritesButton.color////parent.hovered ? (parent.down ? favoritesButton.darkColor : favoritesButton.lightColor) : favoritesButton.color
                                     border.color: favoritesButton.darkColor//parent.hovered ? favoritesButton.color : favoritesButton.lightColor
@@ -334,7 +335,16 @@ Page {
                                     horizontalAlignment: Text.AlignHCenter
                                     verticalAlignment: Text.AlignVCenter
                                 }
-                                onClicked: {}
+                                onClicked: {
+                                    if(!favorited) {
+                                        favorited = true
+                                        User.addToFavorites(productPage.model.key)
+                                    }
+                                    else {
+                                        favorited = false
+                                        User.removeFromFavorites(productPage.model.key)
+                                    }
+                                }
                                 MouseArea {
                                     anchors.fill: parent
                                     onPressed: mouse.accepted = false
@@ -347,7 +357,7 @@ Page {
                                 anchors.horizontalCenter: parent.horizontalCenter//Layout.alignment: Qt.AlignHCenter
                                 width: 500; height: 50//Layout.preferredWidth: 500; Layout.preferredHeight: 50
                                 hoverEnabled: true
-                                text: qsTr("Chat")
+                                text: qsTr("Write a review")
                                 property string color: "#53469f"
                                 property string lightColor: "#6c60b9"
                                 property string darkColor: "#483d8b"

@@ -257,7 +257,72 @@ ApplicationWindow {
                 }
             }
             //Rectangle {
-            //}            
+            //}   
+            Rectangle {
+                id: networkMonitor
+                width: networkMonitorRow.width; height: footer.height
+                color: "transparent"
+                //border.color: "plum"
+                
+                Row {
+                    id: networkMonitorRow
+                    anchors.centerIn: parent
+                    spacing: 5
+                    Text {
+                        id: peerCounterText
+                        anchors.verticalCenter: parent.verticalCenter
+                        text: "0"
+                        color: (NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000"
+                        
+                        Timer {
+                            interval: 5000
+                            running: true
+                            repeat: true
+                            onTriggered: {
+                                peerCounterText.text = Backend.getNetworkPeerCount()
+                            }
+                        }
+                    }
+                    
+                    Rectangle {
+                        id: networkStatusIndicator
+                        anchors.verticalCenter: parent.verticalCenter
+                        width: 16; height: width
+                        color: {
+                            let nodeCount = Number(peerCounterText.text)
+                            // Apply the color-coded scale based on the number of online nodes
+                            if (nodeCount >= 1001) {
+                                return "#483d8b"
+                            } else if (nodeCount >= 501) {
+                                return "#4169e1";
+                            } else if (nodeCount >= 101) {
+                                return "#228b22";//"#2e8b57" // Darker shade of green for 101 or more nodes
+                            } else if (nodeCount >= 51) {
+                                return "#81ac2a"; // Green for 51 to 100 nodes
+                            } else if (nodeCount >= 11) {
+                                return "#ffa500"; // Orange for 11 to 50 nodes
+                            } else if (nodeCount >= 1) {
+                                return "#ff4500"; // Orangered for 0 to 10 nodes
+                            } else {
+                                 return "#b22222"; // Bright red for 0 nodes
+                            }
+                        }
+                        radius: width / 2
+                    }
+                }
+                
+                HoverHandler {
+                    id: networkMonitorHoverHandler
+                }
+                
+                NeroshopComponents.Hint {
+                    visible: networkMonitorHoverHandler.hovered
+                    height: contentHeight + 20; width: contentWidth + 20
+                    bottomMargin : footer.height + 5
+                    text: qsTr("Network peers: %1").arg(peerCounterText.text)
+                    pointer.visible: false
+                }
+            }         
         }
         /*Row {
             width: priceDisplayText.contentWidth

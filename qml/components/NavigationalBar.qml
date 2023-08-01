@@ -9,11 +9,19 @@ RowLayout {
     id: navBar
     readonly property string defaultButtonColor: "#6b5b95"
     property bool useDefaultButtonColor: false
+    
     function getCheckedButton() {
         return navBarButtonGroup.checkedButton;
     }
     function uncheckAllButtons() {
         navBarButtonGroup.checkState = Qt.Unchecked;
+    }
+    function checkButtonByIndex(buttonIndex) {
+        if(buttonIndex == 0) walletButton.checked = true
+        if(buttonIndex == 1) shopButton.checked = true
+        if(buttonIndex == 2) messagesButton.checked = true
+        if(buttonIndex == 3) ordersButton.checked = true
+        if(buttonIndex == 4) accountButton.checked = true
     }
         
     ButtonGroup {
@@ -26,7 +34,7 @@ RowLayout {
             if(button.text == walletButton.text) {
                 pageLoader.source = "../pages/subpages/WalletPage.qml"//_stackview.currentIndex = 0
             }
-            if(button.text == dashboardButton.text) {
+            if(button.text == shopButton.text) {
                 pageLoader.source = "../pages/subpages/DashboardPage.qml"
             }
             if(button.text == messagesButton.text) {
@@ -35,15 +43,15 @@ RowLayout {
             if(button.text == ordersButton.text) {
                 pageLoader.source = "../pages/subpages/OrdersPage.qml"
             }
-            if(button.text == accountSettingsButton.text) {
-                pageLoader.source = "../pages/subpages/AccountSettingsPage.qml"
+            if(button.text == accountButton.text) {
+                pageLoader.source = "../pages/subpages/AccountPage.qml"
             }                                                        
         }
     }
         
     Button {
         id: walletButton
-        text: qsTr("Wallet")
+        text: qsTr("Funds")
         ButtonGroup.group: navBarButtonGroup // attaches a button to a button group
         display: AbstractButton.IconOnly
         //checkable: true
@@ -77,8 +85,8 @@ RowLayout {
     }
                             
     Button {
-        id: dashboardButton
-        text: qsTr("Dashboard")
+        id: shopButton
+        text: qsTr("Store")
         ButtonGroup.group: navBarButtonGroup
         display: AbstractButton.IconOnly//AbstractButton.TextBesideIcon
         hoverEnabled: true
@@ -177,8 +185,8 @@ RowLayout {
     }      
 
     Button {
-        id: accountSettingsButton
-        text: qsTr("Account Settings")//qsTr("User")
+        id: accountButton
+        text: qsTr("Account")//qsTr("User")
         ButtonGroup.group: navBarButtonGroup
         display: AbstractButton.IconOnly//AbstractButton.TextBesideIcon
         hoverEnabled: true

@@ -1853,4 +1853,26 @@ bool neroshop::Backend::loginWithHW(WalletController* wallet_controller, UserCon
 }
 //----------------------------------------------------------------
 //----------------------------------------------------------------
+int neroshop::Backend::getNetworkPeerCount() const {
+    Client * client = Client::get_main_client();
+    
+    // Get network status from local node in IPC mode
+    std::string response;
+    client->get("status", response); //std::cout << "Received response (get): " << response << "\n";
+    
+    // Parse the response
+    nlohmann::json json = nlohmann::json::parse(response);
+    if(json.contains("error")) {
+        return 0;
+    }
+            
+    const auto& response_obj = json["response"];
+    assert(response_obj.is_object());
+    if (response_obj.contains("connected_peers") && response_obj["connected_peers"].is_number_integer()) {
+        int connected_peers = response_obj["connected_peers"].get<int>();
+        return connected_peers;
+    }
+    return 0;
+}
+//----------------------------------------------------------------
 

@@ -928,7 +928,7 @@ void neroshop::Node::periodic_refresh() {
 //-----------------------------------------------------------------------------
 
 void neroshop::Node::periodic_check() {
-    std::vector<std::string> dead_node_ids {};
+    ////std::vector<std::string> dead_node_ids {};
     while(true) {
         {
         // Acquire the lock before accessing the routing table
@@ -957,7 +957,7 @@ void neroshop::Node::periodic_check() {
                 if(node->is_dead()) {
                     std::cout << "\033[0;91m" << node->public_ip_address << ":" << node_port << "\033[0m marked as dead\n";
                     if(routing_table->has_node(node->public_ip_address, node_port)) {
-                        dead_node_ids.push_back(node->get_id());
+                        ////dead_node_ids.push_back(node->get_id());
                         routing_table->remove_node(node->public_ip_address, node_port); // Already has internal write_lock
                     }
                 }
@@ -966,9 +966,9 @@ void neroshop::Node::periodic_check() {
             // read_lock is released here
         }
         
-        on_dead_node(dead_node_ids);
+        /*on_dead_node(dead_node_ids);
         // Clear the vector for the next iteration
-        dead_node_ids.clear();
+        dead_node_ids.clear();*/
         // Sleep for a specified interval
         std::this_thread::sleep_for(std::chrono::seconds(NEROSHOP_DHT_PERIODIC_CHECK_INTERVAL));
     }
@@ -1039,7 +1039,7 @@ void neroshop::Node::on_ping(const std::vector<uint8_t>& buffer, const struct so
 
 //-----------------------------------------------------------------------------
 
-void neroshop::Node::on_dead_node(const std::vector<std::string>& node_ids) {
+/*void neroshop::Node::on_dead_node(const std::vector<std::string>& node_ids) {
     for (const auto& dead_node_id : node_ids) {
         //std::cout << "Processing dead node ID: " << dead_node_id << std::endl;
 
@@ -1076,7 +1076,7 @@ void neroshop::Node::on_dead_node(const std::vector<std::string>& node_ids) {
             }    
         }
     }
-}
+}*/
 
 //-----------------------------------------------------------------------------
 
@@ -1269,6 +1269,10 @@ uint16_t neroshop::Node::get_port() const {
 
 neroshop::RoutingTable * neroshop::Node::get_routing_table() const {
     return routing_table.get();
+}
+
+int neroshop::Node::get_peer_count() const {
+    return routing_table->get_node_count();
 }
 
 neroshop::NodeStatus neroshop::Node::get_status() const {

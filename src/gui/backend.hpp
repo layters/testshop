@@ -115,6 +115,8 @@ public:
     Q_INVOKABLE void createOrder(UserController * user_controller, const QString& shipping_address);
 
     bool isIllicitItem(const QVariantMap& listing_obj);
+    
+    Q_INVOKABLE int getNetworkPeerCount() const;
 
 signals:
     //void categoryProductCountChanged();//(int category_id);

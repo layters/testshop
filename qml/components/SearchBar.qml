@@ -18,7 +18,7 @@ Item {
         placeholderText: qsTr("Search")
         
         background: Rectangle { 
-            color: (NeroshopComponents.Style.darkTheme) ? "#050506" : "#f9f9fa"
+            color: (NeroshopComponents.Style.darkTheme) ? "#101010" : "#efefef"
             radius: 5
         }
         Keys.onEnterPressed: searchButton.activate()
