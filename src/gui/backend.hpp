@@ -116,7 +116,7 @@ public:
 
     bool isIllicitItem(const QVariantMap& listing_obj);
     
-    Q_INVOKABLE int getNetworkPeerCount() const;
+    Q_INVOKABLE QVariantMap getNetworkStatus() const;
 
 signals:
     //void categoryProductCountChanged();//(int category_id);

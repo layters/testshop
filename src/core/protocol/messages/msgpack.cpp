@@ -217,6 +217,8 @@ std::vector<uint8_t> neroshop::msgpack::process(const std::vector<uint8_t>& requ
                 response_object["version"] = std::string(NEROSHOP_DHT_VERSION);
                 response_object["response"]["id"] = node.get_id();
                 response_object["response"]["connected_peers"] = node.get_peer_count();
+                response_object["response"]["active_peers"] = node.get_active_peer_count();
+                response_object["response"]["idle_peers"] = node.get_idle_peer_count();
                 response = nlohmann::json::to_msgpack(response_object);
                 return response;
             }

@@ -112,7 +112,7 @@ void ipc_server(Node& node) {
     // Prevent bootstrap node from being accepted by IPC server 
     // since its only meant to act as an initial contact point for new nodes joining the network
     if (node.is_bootstrap_node()) {
-        std::cout << "Bootstrap node is not allowed to use the IPC server. Please start another daemon instance to use the GUI\n";
+        std::cout << "Bootstrap node is not allowed to use the local IPC server. Please start another daemon instance to use the GUI\n";
         return;
     }
     
@@ -169,6 +169,10 @@ void dht_server(Node& node) {
     if (!node.is_bootstrap_node()) {
         //std::shared_lock<std::shared_mutex> read_lock(node_mutex);
         node.join(); // A bootstrap node cannot join the network
+    }
+    
+    if(node.is_bootstrap_node()) {
+        node.rebuild_routing_table();
     }
 
     run_thread.join(); // Wait for the run thread to finish
@@ -238,7 +242,7 @@ int main(int argc, char** argv)
     
     if(result.count("bootstrap")) {   
         std::cout << "Switching to bootstrap mode ...\n";
-        node.set_bootstrap(true);
+        ////node.set_bootstrap(true);
         assert(node.get_ip_address() == NEROSHOP_ANY_ADDRESS && "Bootstrap node is not public");
         // ALWAYS use address "0.0.0.0" for bootstrap nodes so that it is reachable by all nodes in the network, regardless of their location.
     }

@@ -10,6 +10,7 @@
 #include "../../tools/base64.hpp"
 #include "mapper.hpp"
 #include "../../tools/timestamp.hpp"
+#include "../../database/database.hpp"
 
 #include <nlohmann/json.hpp>
 
@@ -420,6 +421,69 @@ int neroshop::Node::set(const std::string& key, const std::string& value) {
 
 //-------------------------------------------------------------------------------------
 
+void neroshop::Node::persist_routing_table(const std::string& address, int port) {
+    if(!is_bootstrap_node()) return; // Regular nodes cannot run this function
+    
+    db::Sqlite3 * database = neroshop::get_database();
+    if(!database) throw std::runtime_error("database is NULL");
+    database->execute("BEGIN;");
+    
+    if(!database->table_exists("routing_table")) { // or simply "nodes"
+        database->execute("CREATE TABLE routing_table("
+        "ip_address TEXT, port INTEGER, UNIQUE(ip_address, port));");
+    }
+    
+    database->execute_params("INSERT INTO routing_table (ip_address, port) VALUES (?1, ?2);", { address, std::to_string(port) });
+    
+    database->execute("COMMIT;");
+}
+
+void neroshop::Node::rebuild_routing_table() {
+    if(!is_bootstrap_node()) return; // Regular nodes cannot run this function
+    
+    db::Sqlite3 * database = neroshop::get_database();
+    if(!database) throw std::runtime_error("database is NULL");
+    if(!database->table_exists("routing_table")) {
+        return; // Table does not exist, exit function
+    }
+    // Prepare statement
+    std::string command = "SELECT ip_address, port FROM routing_table;";
+    sqlite3_stmt * stmt = nullptr;
+    if(sqlite3_prepare_v2(database->get_handle(), command.c_str(), -1, &stmt, nullptr) != SQLITE_OK) {
+        std::cout << "\033[91msqlite3_prepare_v2: " + std::string(sqlite3_errmsg(database->get_handle())) << "\033[0m" << std::endl;
+        return;
+    }
+    // Check if there is any data returned by the statement
+    if(sqlite3_column_count(stmt) > 0) {
+        std::cout << "\033[35;1mRebuilding routing table from backup ...\033[0m" << std::endl;
+    }
+    // Get all table values row by row
+    while(sqlite3_step(stmt) == SQLITE_ROW) {
+        std::string ip_address; int port = 0;
+        for(int i = 0; i < sqlite3_column_count(stmt); i++) {
+            std::string column_value = (sqlite3_column_text(stmt, i) == nullptr) ? "NULL" : reinterpret_cast<const char *>(sqlite3_column_text(stmt, i));
+            if(column_value == "NULL") continue;
+            if(i == 0) ip_address = column_value;
+            if(i == 1) port = sqlite3_column_int(stmt, i);//std::stoi(column_value);
+            if(port == 0) continue;
+            
+            if(!ping((ip_address == this->public_ip_address) ? "127.0.0.1" : ip_address, port)) {
+                std::cerr << "ping: failed to ping bootstrap node\n"; 
+                // Remove unresponsive nodes from database
+                database->execute_params("DELETE FROM routing_table WHERE ip_address = ?1 AND port = ?2", { ip_address, std::to_string(port) });
+                continue;
+            }
+            
+            auto node = std::make_unique<Node>(ip_address, port, false);
+            routing_table->add_node(std::move(node));
+        }
+    }
+    // Finalize statement
+    sqlite3_finalize(stmt);
+}
+
+//-------------------------------------------------------------------------------------
+
 std::vector<uint8_t> neroshop::Node::send_query(const std::string& address, uint16_t port, const std::vector<uint8_t>& message, int recv_timeout) {
     // Step 2: Resolve the hostname and construct a destination address
     struct addrinfo hints, *res;
@@ -500,7 +564,7 @@ bool neroshop::Node::send_ping(const std::string& address, int port) {
     query_object["tid"] = transaction_id;
     query_object["query"] = "ping";
     query_object["args"]["id"] = this->id;
-    query_object["args"]["ephemeral_port"] = get_port(); // for testing on local network
+    query_object["args"]["ephemeral_port"] = get_port(); // for testing on local network. This cannot be removed since the two primary sockets used in the protocol have different ports with the "ephemeral_port" being the actual port
     query_object["version"] = std::string(NEROSHOP_DHT_VERSION);
     
     auto ping_message = nlohmann::json::to_msgpack(query_object);
@@ -515,7 +579,10 @@ bool neroshop::Node::send_ping(const std::string& address, int port) {
         std::cerr << "Node \033[91m" << address << ":" << port << "\033[0m did not respond" << std::endl;
         return false;
     }
-    assert (pong_message.contains("response") && !pong_message.contains("error"));
+    if (!pong_message.contains("response") || pong_message.contains("error")) {
+        std::cerr << "Received invalid pong message" << std::endl;
+        return false;
+    }
     std::cout << "\033[32m" << pong_message.dump() << "\033[0m\n";
     std::string received_transaction_id = pong_message["tid"].get<std::string>();
     auto response_object = pong_message["response"];
@@ -1028,6 +1095,7 @@ void neroshop::Node::on_ping(const std::vector<uint8_t>& buffer, const struct so
                 auto node_that_pinged = std::make_unique<Node>((sender_ip == "127.0.0.1") ? this->public_ip_address : sender_ip, sender_port, false);
                 if(!node_that_pinged->is_bootstrap_node()) { // To prevent the bootstrap node from being stored in the routing table
                     routing_table->add_node(std::move(node_that_pinged)); // Already has internal write_lock
+                    persist_routing_table((sender_ip == "127.0.0.1") ? this->public_ip_address : sender_ip, sender_port);
                     routing_table->print_table();
                     // Redistribute your indexing data to the new node that recently joined the network to make product/service listings more easily discoverable by the new node
                     send_map((sender_ip == this->public_ip_address) ? "127.0.0.1" : sender_ip, sender_port);
@@ -1275,6 +1343,32 @@ int neroshop::Node::get_peer_count() const {
     return routing_table->get_node_count();
 }
 
+int neroshop::Node::get_active_peer_count() const {
+    int active_count = 0;
+    for (auto& bucket : routing_table->buckets) {
+        for (auto& node : bucket.second) {
+            if (node.get() == nullptr) continue;
+            if (node->get_status() == NodeStatus::Active) {
+                active_count++;
+            }
+        }
+    }
+    return active_count;
+}
+
+int neroshop::Node::get_idle_peer_count() const {
+    int idle_count = 0;
+    for (auto& bucket : routing_table->buckets) {
+        for (auto& node : bucket.second) {
+            if (node.get() == nullptr) continue;
+            if (node->get_status() == NodeStatus::Idle) {
+                idle_count++;
+            }
+        }
+    }
+    return idle_count;
+}
+
 neroshop::NodeStatus neroshop::Node::get_status() const {
     if(check_counter == 0) return NodeStatus::Active;
     if(check_counter <= (NEROSHOP_DHT_MAX_HEALTH_CHECKS - 1)) return NodeStatus::Idle;
@@ -1283,9 +1377,9 @@ neroshop::NodeStatus neroshop::Node::get_status() const {
 }
 
 std::string neroshop::Node::get_status_as_string() const {
-    if(check_counter == 0) return "Active"; // Green
-    if(check_counter <= (NEROSHOP_DHT_MAX_HEALTH_CHECKS - 1)) return "Idle"; // Yellow
-    if(check_counter >= NEROSHOP_DHT_MAX_HEALTH_CHECKS) return "Inactive"; // Red
+    if(check_counter == 0) return "Active";
+    if(check_counter <= (NEROSHOP_DHT_MAX_HEALTH_CHECKS - 1)) return "Idle";
+    if(check_counter >= NEROSHOP_DHT_MAX_HEALTH_CHECKS) return "Inactive";
     return "Unknown";
 }
 
@@ -1328,7 +1422,7 @@ bool neroshop::Node::has_value(const std::string& value) const {
     return false;
 }
 
-bool neroshop::Node::is_bootstrap_node(const std::string& address, uint16_t port) {
+bool neroshop::Node::is_hardcoded_bootstrap_node(const std::string& address, uint16_t port) {
     for (const auto& bootstrap : bootstrap_nodes) {
         if (neroshop::ip::resolve(bootstrap.address) == address && bootstrap.port == port) {
             return true;
@@ -1338,7 +1432,7 @@ bool neroshop::Node::is_bootstrap_node(const std::string& address, uint16_t port
 }
 
 bool neroshop::Node::is_bootstrap_node() const {
-    return (bootstrap == true) || is_bootstrap_node(this->public_ip_address, this->get_port());
+    return (bootstrap == true) || is_hardcoded_bootstrap_node(this->public_ip_address, this->get_port());
 }
 
 bool neroshop::Node::is_dead() const {

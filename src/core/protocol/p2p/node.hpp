@@ -90,6 +90,9 @@ public:
     void republish();
     bool validate(const std::string& key, const std::string& value); // Validates data before storing it
     //---------------------------------------------------
+    void persist_routing_table(const std::string& address, int port); // JIC bootstrap node faces outage and needs to recover
+    void rebuild_routing_table(); // Re-builds routing table from data stored on disk
+    //---------------------------------------------------
     void on_ping(const std::vector<uint8_t>& buffer, const struct sockaddr_in& client_addr);
     ////void on_dead_node(const std::vector<std::string>& node_ids);
     ////bool on_keyword_blocked(const std::string& keyword);
@@ -120,6 +123,8 @@ public:
     uint16_t get_port() const;
     RoutingTable * get_routing_table() const;
     int get_peer_count() const;
+    int get_active_peer_count() const;
+    int get_idle_peer_count() const;
     NodeStatus get_status() const;
     std::string get_status_as_string() const;
     std::vector<std::string> get_keys() const;
@@ -129,7 +134,7 @@ public:
     void set_bootstrap(bool bootstrap);
     
     bool is_bootstrap_node() const;
-    static bool is_bootstrap_node(const std::string& address, uint16_t port);
+    static bool is_hardcoded_bootstrap_node(const std::string& address, uint16_t port);
     bool has_key(const std::string& key) const;
     bool has_value(const std::string& value) const;
     bool is_dead() const;
