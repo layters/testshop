@@ -263,6 +263,7 @@ ApplicationWindow {
                 width: networkMonitorRow.width; height: footer.height
                 color: "transparent"
                 //border.color: "plum"
+                property var networkStatus: null
                 
                 Row {
                     id: networkMonitorRow
@@ -279,7 +280,11 @@ ApplicationWindow {
                             running: true
                             repeat: true
                             onTriggered: {
-                                peerCounterText.text = Backend.getNetworkPeerCount()
+                                networkMonitor.networkStatus = Backend.getNetworkStatus()
+                                if(networkMonitor.networkStatus === null) return;
+                                if(networkMonitor.networkStatus.hasOwnProperty("connected_peers")) {
+                                    peerCounterText.text = networkMonitor.networkStatus.connected_peers
+                                }
                             }
                         }
                     }
@@ -289,7 +294,7 @@ ApplicationWindow {
                         anchors.verticalCenter: parent.verticalCenter
                         width: 16; height: width
                         color: {
-                            let nodeCount = Number(peerCounterText.text)
+                            let nodeCount = Number((networkMonitor.networkStatus == null) ? "0" : (networkMonitor.networkStatus.hasOwnProperty("active_peers") ? networkMonitor.networkStatus.active_peers : "0"))//Number(peerCounterText.text)
                             // Apply the color-coded scale based on the number of online nodes
                             if (nodeCount >= 1001) {
                                 return "#483d8b"
@@ -319,7 +324,7 @@ ApplicationWindow {
                     visible: networkMonitorHoverHandler.hovered
                     height: contentHeight + 20; width: contentWidth + 20
                     bottomMargin : footer.height + 5
-                    text: qsTr("Network peers: %1").arg(peerCounterText.text)
+                    text: qsTr("Network peers: %1\nActive peers: %2\nIdle peers: %3").arg(peerCounterText.text).arg((networkMonitor.networkStatus == null) ? "0" : (networkMonitor.networkStatus.hasOwnProperty("active_peers") ? networkMonitor.networkStatus.active_peers : "0")).arg((networkMonitor.networkStatus == null) ? "0" : (networkMonitor.networkStatus.hasOwnProperty("idle_peers") ? networkMonitor.networkStatus.idle_peers : "0"))
                     pointer.visible: false
                 }
             }         

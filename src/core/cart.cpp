@@ -89,6 +89,8 @@ void neroshop::Cart::load(const std::string& user_id) {
         contents.push_back(cart_item);
         ////neroshop::print("loaded cart item (id: " + std::get<0>(cart_item) + ", qty: " + std::to_string(std::get<1>(cart_item)) + ")", 3);
     }
+    // Finalize statement
+    sqlite3_finalize(stmt);
     /////////////////////////////
     // Update item quantities based on stock available
     for (auto& cart_item : contents) {

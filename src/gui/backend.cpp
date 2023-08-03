@@ -1853,7 +1853,12 @@ bool neroshop::Backend::loginWithHW(WalletController* wallet_controller, UserCon
 }
 //----------------------------------------------------------------
 //----------------------------------------------------------------
-int neroshop::Backend::getNetworkPeerCount() const {
+QVariantMap neroshop::Backend::getNetworkStatus() const {
+    // Make sure daemon is connected first
+    if(!DaemonManager::isDaemonServerBound()) {
+        return {};
+    }
+    
     Client * client = Client::get_main_client();
     
     // Get network status from local node in IPC mode
@@ -1863,16 +1868,29 @@ int neroshop::Backend::getNetworkPeerCount() const {
     // Parse the response
     nlohmann::json json = nlohmann::json::parse(response);
     if(json.contains("error")) {
-        return 0;
+        return {};
     }
+    
+    QVariantMap network_status;
             
     const auto& response_obj = json["response"];
     assert(response_obj.is_object());
     if (response_obj.contains("connected_peers") && response_obj["connected_peers"].is_number_integer()) {
         int connected_peers = response_obj["connected_peers"].get<int>();
-        return connected_peers;
+        network_status["connected_peers"] = connected_peers;
     }
-    return 0;
+    
+    if (response_obj.contains("active_peers") && response_obj["active_peers"].is_number_integer()) {
+        int active_peers = response_obj["active_peers"].get<int>();
+        network_status["active_peers"] = active_peers;
+    }
+    
+    if (response_obj.contains("idle_peers") && response_obj["idle_peers"].is_number_integer()) {
+        int idle_peers = response_obj["idle_peers"].get<int>();
+        network_status["idle_peers"] = idle_peers;
+    }
+    
+    return network_status;
 }
 //----------------------------------------------------------------
 
