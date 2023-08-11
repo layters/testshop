@@ -63,6 +63,7 @@
 #include "gui/backend.hpp"
 #include "gui/currency_rate_provider.hpp"
 #include "gui/daemon_manager.hpp"
+#include "gui/enum_wrapper.hpp"
 #include "gui/image_loader.hpp"
 #include "gui/image_provider.hpp"
 #include "gui/script_controller.hpp"

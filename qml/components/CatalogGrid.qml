@@ -77,6 +77,12 @@ GridView {
                 fillMode: Image.PreserveAspectFit//Image.Stretch
                 mipmap: true
                 asynchronous: true
+                onStatusChanged: {
+                    if (productImage.status === Image.Error) {
+                        // Handle the error by displaying a fallback or placeholder image
+                        source = "image://listing?id=%1&image_id=%2".arg(modelData.key).arg("thumbnail.jpg")
+                    }
+                }
                     
                 MouseArea {
                     anchors.fill: parent

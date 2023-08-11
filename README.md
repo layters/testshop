@@ -63,7 +63,7 @@ The name _neroshop_ is a combination of the words _nero_, which is Italian for _
     - there will be 0.5% fee for using one of the three payment options, specifically the 2-of-3 escrow system.
 - [x] Pseudonymous identities 
     - sellers and buyers are identified by their unique ids and/or optional display names
-- [x] End-to-end encrypted messaging system for communications between sellers and buyers via matrix.org
+- [x] End-to-end encrypted messaging system for communications between sellers and buyers
     - generated RSA-4096 private keys will be used to decrypt messages so keep yours safe, secure and accessible!
 - [ ] Subaddress generator for direct payments without an escrow 
     - a unique subaddress will be generated from a seller's synced wallet account for each order placed by a customer

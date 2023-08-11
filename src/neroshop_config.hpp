@@ -60,11 +60,7 @@
 #define NEROSHOP_DATABASE_FILENAME      "data.sqlite3"
 #define NEROSHOP_SETTINGS_FILENAME      "settings.json"
 #define NEROSHOP_NODES_FILENAME         "nodes.lua"
-#if defined(_WIN32)
-#define NEROSHOP_LOG_FILENAME           "log.txt"
-#else
-#define NEROSHOP_LOG_FILENAME           "log"
-#endif
+#define NEROSHOP_LOG_FILENAME           "neroshop.log"
 
 #define NEROSHOP_CACHE_FOLDER_NAME   "datastore"
 #define NEROSHOP_CATALOG_FOLDER_NAME "listings"

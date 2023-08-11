@@ -149,8 +149,9 @@ void neroshop::Mapper::add(const std::string& key, const std::string& value) {
 
 void neroshop::Mapper::sync() {
     db::Sqlite3 * database = neroshop::get_database();
+    if(!database) throw std::runtime_error("database is NULL");
     
-    database->execute("BEGIN TRANSACTION;");
+    //database->execute("BEGIN TRANSACTION;");
     //-----------------------------------------------
     // Insert data from 'user_ids'
     for (const auto& entry : user_ids) {
@@ -159,6 +160,8 @@ void neroshop::Mapper::sync() {
         const std::string content = "account";
 
         for (const std::string& key : keys) {
+            // Ignore any empty keys
+            if(key.empty() || key.length() != 64) continue;
             // Check if the record already exists
             std::string select_query = "SELECT COUNT(*) FROM mappings WHERE search_term = ? AND key = ?;";
             bool exists = database->get_integer_params(select_query, { search_term, key });
@@ -177,6 +180,8 @@ void neroshop::Mapper::sync() {
         const std::string content = "account";
 
         for (const std::string& key : keys) {
+            // Ignore any empty keys
+            if(key.empty() || key.length() != 64) continue;
             // Check if the record already exists
             std::string select_query = "SELECT COUNT(*) FROM mappings WHERE search_term = ? AND key = ?;";
             bool exists = database->get_integer_params(select_query, { search_term, key });
@@ -196,6 +201,8 @@ void neroshop::Mapper::sync() {
         const std::string content = "listing";
 
         for (const std::string& key : keys) {
+            // Ignore any empty keys
+            if(key.empty() || key.length() != 64) continue;
             // Check if the record already exists
             std::string select_query = "SELECT COUNT(*) FROM mappings WHERE search_term = ? AND key = ?;";
             bool exists = database->get_integer_params(select_query, { search_term, key });
@@ -214,6 +221,8 @@ void neroshop::Mapper::sync() {
         const std::string content = "listing";
 
         for (const std::string& key : keys) {
+            // Ignore any empty keys
+            if(key.empty() || key.length() != 64) continue;
             // Check if the record already exists
             std::string select_query = "SELECT COUNT(*) FROM mappings WHERE search_term = ? AND key = ?;";
             bool exists = database->get_integer_params(select_query, { search_term, key });
@@ -232,6 +241,8 @@ void neroshop::Mapper::sync() {
         const std::string content = "listing";
 
         for (const std::string& key : keys) {
+            // Ignore any empty keys
+            if(key.empty() || key.length() != 64) continue;
             // Check if the record already exists
             std::string select_query = "SELECT COUNT(*) FROM mappings WHERE search_term = ? AND key = ?;";
             bool exists = database->get_integer_params(select_query, { search_term, key });
@@ -250,6 +261,8 @@ void neroshop::Mapper::sync() {
         const std::string content = "listing";
 
         for (const std::string& key : keys) {
+            // Ignore any empty keys
+            if(key.empty() || key.length() != 64) continue;
             // Check if the record already exists
             std::string select_query = "SELECT COUNT(*) FROM mappings WHERE search_term = ? AND key = ?;";
             bool exists = database->get_integer_params(select_query, { search_term, key });
@@ -268,6 +281,8 @@ void neroshop::Mapper::sync() {
         const std::string content = "listing";
 
         for (const std::string& key : keys) {
+            // Ignore any empty keys
+            if(key.empty() || key.length() != 64) continue;
             // Check if the record already exists
             std::string select_query = "SELECT COUNT(*) FROM mappings WHERE search_term = ? AND key = ?;";
             bool exists = database->get_integer_params(select_query, { search_term, key });
@@ -286,6 +301,8 @@ void neroshop::Mapper::sync() {
         const std::string content = "listing";
 
         for (const std::string& key : keys) {
+            // Ignore any empty keys
+            if(key.empty() || key.length() != 64) continue;
             // Check if the record already exists
             std::string select_query = "SELECT COUNT(*) FROM mappings WHERE search_term = ? AND key = ?;";
             bool exists = database->get_integer_params(select_query, { search_term, key });
@@ -304,6 +321,8 @@ void neroshop::Mapper::sync() {
         const std::string content = "listing";
 
         for (const std::string& key : keys) {
+            // Ignore any empty keys
+            if(key.empty() || key.length() != 64) continue;
             // Check if the record already exists
             std::string select_query = "SELECT COUNT(*) FROM mappings WHERE search_term = ? AND key = ?;";
             bool exists = database->get_integer_params(select_query, { search_term, key });
@@ -322,6 +341,8 @@ void neroshop::Mapper::sync() {
         const std::string content = "listing";
 
         for (const std::string& key : keys) {
+            // Ignore any empty keys
+            if(key.empty() || key.length() != 64) continue;
             // Check if the record already exists
             std::string select_query = "SELECT COUNT(*) FROM mappings WHERE search_term = ? AND key = ?;";
             bool exists = database->get_integer_params(select_query, { search_term, key });
@@ -341,6 +362,8 @@ void neroshop::Mapper::sync() {
         const std::string content = "order";
 
         for (const std::string& key : keys) {
+            // Ignore any empty keys
+            if(key.empty() || key.length() != 64) continue;
             // Check if the record already exists
             std::string select_query = "SELECT COUNT(*) FROM mappings WHERE search_term = ? AND key = ?;";
             bool exists = database->get_integer_params(select_query, { search_term, key });
@@ -360,6 +383,8 @@ void neroshop::Mapper::sync() {
         const std::string content = "product_rating";
 
         for (const std::string& key : keys) {
+            // Ignore any empty keys
+            if(key.empty() || key.length() != 64) continue;
             // Check if the record already exists
             std::string select_query = "SELECT COUNT(*) FROM mappings WHERE search_term = ? AND key = ?;";
             bool exists = database->get_integer_params(select_query, { search_term, key });
@@ -379,6 +404,8 @@ void neroshop::Mapper::sync() {
         const std::string content = "seller_rating";
 
         for (const std::string& key : keys) {
+            // Ignore any empty keys
+            if(key.empty() || key.length() != 64) continue;
             // Check if the record already exists
             std::string select_query = "SELECT COUNT(*) FROM mappings WHERE search_term = ? AND key = ?;";
             bool exists = database->get_integer_params(select_query, { search_term, key });
@@ -398,6 +425,8 @@ void neroshop::Mapper::sync() {
         const std::string content = "message";
 
         for (const std::string& key : keys) {
+            // Ignore any empty keys
+            if(key.empty() || key.length() != 64) continue;
             // Check if the record already exists
             std::string select_query = "SELECT COUNT(*) FROM mappings WHERE search_term = ?1 AND key = ?2;";
             bool exists = database->get_integer_params(select_query, { search_term, key });
@@ -410,7 +439,7 @@ void neroshop::Mapper::sync() {
         }
     }
     //-----------------------------------------------
-    database->execute("COMMIT;");
+    //database->execute("COMMIT;");
 }
 
 //-----------------------------------------------------------------------------

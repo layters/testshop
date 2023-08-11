@@ -839,7 +839,7 @@ std::string neroshop::Node::send_get(const std::string& key) {
         std::string node_ip = (node->get_ip_address() == this->public_ip_address) ? "127.0.0.1" : node->get_ip_address();
         int node_port = node->get_port();
         std::cout << "Sending get request to \033[36m" << node_ip << ":" << node_port << "\033[0m\n";
-        auto receive_buffer = send_query(node_ip, node_port, get_message);
+        auto receive_buffer = send_query(node_ip, node_port, get_message, 2);
         // Process the response here
         nlohmann::json get_response_message;
         try {
@@ -1422,9 +1422,9 @@ bool neroshop::Node::has_value(const std::string& value) const {
     return false;
 }
 
-bool neroshop::Node::is_hardcoded_bootstrap_node(const std::string& address, uint16_t port) {
-    for (const auto& bootstrap : bootstrap_nodes) {
-        if (neroshop::ip::resolve(bootstrap.address) == address && bootstrap.port == port) {
+bool neroshop::Node::is_hardcoded(const std::string& address, uint16_t port) {
+    for (const auto& bootstrap_node : bootstrap_nodes) {
+        if (neroshop::ip::resolve(bootstrap_node.address) == address && bootstrap_node.port == port) {
             return true;
         }
     }
@@ -1432,7 +1432,7 @@ bool neroshop::Node::is_hardcoded_bootstrap_node(const std::string& address, uin
 }
 
 bool neroshop::Node::is_bootstrap_node() const {
-    return (bootstrap == true) || is_hardcoded_bootstrap_node(this->public_ip_address, this->get_port());
+    return (bootstrap == true) || is_hardcoded(this->public_ip_address, this->get_port());
 }
 
 bool neroshop::Node::is_dead() const {

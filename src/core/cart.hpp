@@ -11,11 +11,22 @@
 #include "product.hpp"
 
 namespace neroshop {
+
+enum class CartError {
+    Ok = 0,
+    Missing,
+    Full,
+    ItemOutOfStock,
+    ItemQuantitySurpassed,
+    ItemQuantityNotSpecified,
+    SellerAddOwnItem,
+};
+
 class Cart {
 public:
     Cart();
     ~Cart();
-    void add(const std::string& user_id, const std::string& listing_key, int quantity = 1);
+    CartError add(const std::string& user_id, const std::string& listing_key, int quantity = 1);
     void add(const std::string& user_id, const neroshop::Product& item, int quantity = 1);
     void remove(const std::string& user_id, const std::string& listing_key, int quantity = 1);
     void remove(const std::string& user_id, const neroshop::Product& item, int quantity = 1);

@@ -139,10 +139,11 @@ void neroshop::UserController::delistProducts(const QStringList& listing_keys) {
 }
 //----------------------------------------------------------------
 //----------------------------------------------------------------
-void neroshop::UserController::addToCart(const QString& listing_key, int quantity) {
+int neroshop::UserController::addToCart(const QString& listing_key, int quantity) {
     if (!_user) throw std::runtime_error("neroshop::User is not initialized");
-    _user->add_to_cart(listing_key.toStdString(), quantity);
+    int error = _user->add_to_cart(listing_key.toStdString(), quantity);
     emit cartQuantityChanged(); // TODO: emit this when removing an item from the cart as well
+    return error;
 }
 //----------------------------------------------------------------
 //void removeFromCart(const QString& listing_key, int quantity) {}

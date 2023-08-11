@@ -4,7 +4,9 @@ import QtQuick.Controls 2.12
 import QtQuick.Layouts 1.12
 
 import FontAwesome 1.0
+
 import neroshop.CurrencyExchangeRates 1.0
+import neroshop.Enums 1.0
 
 import "../components" as NeroshopComponents
 
@@ -304,7 +306,38 @@ Page {
                                     verticalAlignment: Text.AlignVCenter
                                 }
                                 onClicked: {
-                                    User.addToCart(productPage.model.key, quantityBox.value)
+                                    let cartError = User.addToCart(productPage.model.key, quantityBox.value)
+                                    console.log("cartError",cartError)
+                                    if(cartError == Enum.CartError.Missing) {
+                                        messageBox.text = "Cart is missing from database"
+                                        messageBox.open()
+                                        return;
+                                    }
+                                    if(cartError == Enum.CartError.Full) {
+                                        messageBox.text = "Cart is full"
+                                        messageBox.open()
+                                        return;
+                                    }
+                                    if(cartError == Enum.CartError.ItemOutOfStock) {
+                                        messageBox.text = "%1 is out of stock"
+                                        messageBox.open()
+                                        return;
+                                    }
+                                    if(cartError == Enum.CartError.ItemQuantitySurpassed) {
+                                        messageBox.text = "Only %1 %2 left in stock".arg(stockStatusText.stock_available).arg(productNameText.text)
+                                        messageBox.open()
+                                        return;
+                                    }
+                                    if(cartError == Enum.CartError.ItemQuantityNotSpecified) {
+                                        messageBox.text = "Quantity must be greater than zero"
+                                        messageBox.open()
+                                        return;
+                                    }
+                                    if(cartError == Enum.CartError.SellerAddOwnItem) {
+                                        messageBox.text = "You can't add your own listings to your cart"
+                                        messageBox.open()
+                                        return;
+                                    }
                                 }
                                 MouseArea {
                                     anchors.fill: parent
