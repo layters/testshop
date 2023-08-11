@@ -66,7 +66,7 @@ public:
     );
     Q_INVOKABLE void delistProduct(const QString& listing_key);
     Q_INVOKABLE void delistProducts(const QStringList& listing_keys);
-    Q_INVOKABLE void addToCart(const QString& listing_key, int quantity);
+    Q_INVOKABLE int addToCart(const QString& listing_key, int quantity);
     //Q_INVOKABLE void removeFromCart(const QString& listing_key, int quantity);
     Q_INVOKABLE void createOrder(const QString& shipping_address);
     Q_INVOKABLE void rateItem(const QString& product_id, int stars, const QString& comments);//, const QString& signature);

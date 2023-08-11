@@ -66,14 +66,16 @@ bool neroshop::RoutingTable::add_node(std::unique_ptr<Node> node) {//(const Node
     std::cout << "\033[0;36m" << (bucket.back().get()->get_ip_address() + ":" + std::to_string(bucket.back().get()->get_port())) << "\033[0m added to routing table\n";
 
     // Check if bucket splitting is required and perform the split
-    if (bucket.size() > NEROSHOP_DHT_MAX_BUCKET_SIZE) { // buckets have a max size of NEROSHOP_DHT_MAX_BUCKET_SIZE nodes
+    // EDIT: The splitting is totally wrong and doesn't work. Thanks a lot ChatGPT ... NOT!
+    // Also, this function sometimes causes a segment fault when adding a node to the routing table
+    /*if (bucket.size() > NEROSHOP_DHT_MAX_BUCKET_SIZE) { // buckets have a max size of NEROSHOP_DHT_MAX_BUCKET_SIZE nodes
         bool split_success = split_bucket(bucket_index);
         if (!split_success) {
             std::cerr << "Error: unable to split bucket " << bucket_index << ".\n";
             return false;
         }
         std::cout << "Bucket " << bucket_index << " split into " << bucket_index << " and " << (bucket_index + 1) << ".\n";
-    }    
+    }*/
     
     return true;
 }
@@ -141,20 +143,37 @@ bool neroshop::RoutingTable::split_bucket(int bucket_index) {
     std::vector<std::unique_ptr<Node>> new_bucket1;
     std::vector<std::unique_ptr<Node>> new_bucket2;
 
-    // Move nodes from the original bucket to the new buckets
+    // Find the most significant differing bit position
+    int bit_position = 0;
+    while (bit_position < 256) { // Assuming SHA-3-256, which is 256 bits
+        bool bit_differs = false;
+        for (const auto& node : buckets[bucket_index]) {
+            const std::string& node_id = node->get_id();
+            if (node_id[bit_position] != buckets[bucket_index][0]->get_id()[bit_position]) {
+                bit_differs = true;
+                break;
+            }
+        }
+        if (bit_differs) {
+            break;
+        }
+        bit_position++;
+    }
+
+    // Move nodes from the original bucket to the new buckets based on the differing bit
     for (auto& node : buckets[bucket_index]) {
-        // Calculate the new bucket index for the node
-        unsigned long long new_bucket_index = find_bucket(node->get_id());
-        if (new_bucket_index == bucket_index) {
+        const std::string& node_id = node->get_id();
+        if (node_id[bit_position] == '0') {
             new_bucket1.push_back(std::move(node));
-    } else {
-          new_bucket2.push_back(std::move(node));
+        } else {
+            new_bucket2.push_back(std::move(node));
         }
     }
 
     // Update the routing table with the new bucket configuration
     buckets[bucket_index] = std::move(new_bucket1);
-    buckets[bucket_index + 1] = std::move(new_bucket2);
+    auto it = std::next(buckets.begin(), bucket_index + 1);
+    buckets.emplace_hint(it, bucket_index + 1, std::move(new_bucket2));
 
     return true;
 }

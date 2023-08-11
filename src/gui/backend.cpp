@@ -26,7 +26,7 @@
 #include "../core/version.hpp"
 #include "../core/protocol/p2p/serializer.hpp"
 #include "daemon_manager.hpp"
-#include "../core/cart.hpp"
+//#include "../core/cart.hpp"
 #include "../core/protocol/transport/client.hpp"
 #include "../core/price/currency_converter.hpp" // neroshop::Converter::is_supported_currency
 #include "../core/price/currency_map.hpp"
@@ -281,6 +281,9 @@ bool neroshop::Backend::saveAvatarImage(const QString& fileName, const QString& 
     //----------------------------------------
     std::string image_file = fileName.toStdString(); // Full path with file name
     std::string image_name = image_file.substr(image_file.find_last_of("\\/") + 1);// get filename from path (complete base name)
+    image_name = image_name.substr(0, image_name.find_last_of(".")); // remove ext
+    std::string image_name_hash = neroshop::crypto::sha256(image_name);
+    std::string image_ext = image_file.substr(image_file.find_last_of(".") + 1);
     //----------------------------------------
     // datastore/avatars/<account_key>
     std::string key_folder = avatars_folder + "/" + userAccountKey.toStdString();
@@ -293,7 +296,7 @@ bool neroshop::Backend::saveAvatarImage(const QString& fileName, const QString& 
     }
     //----------------------------------------
     // Generate the final destination path
-    std::string destinationPath = key_folder + "/" + image_name;
+    std::string destinationPath = key_folder + "/" + (image_name_hash + "." + image_ext);
     // Check if image already exists in cache so that we do not export the same image more than once
     if(!neroshop_filesystem::is_file(destinationPath)) {
         // Image Loader crashes when image resolution is too large (ex. 4096 pixels wide) so we need to scale it!!
@@ -395,6 +398,9 @@ bool neroshop::Backend::saveProductImage(const QString& fileName, const QString&
     //----------------------------------------
     std::string image_file = fileName.toStdString(); // Full path with file name
     std::string image_name = image_file.substr(image_file.find_last_of("\\/") + 1);// get filename from path (complete base name)
+    image_name = image_name.substr(0, image_name.find_last_of(".")); // remove ext
+    std::string image_name_hash = neroshop::crypto::sha256(image_name);
+    std::string image_ext = image_file.substr(image_file.find_last_of(".") + 1);
     //----------------------------------------    
     // datastore/listings/<listing_key>
     std::string key_folder = listings_folder + "/" + listingKey.toStdString();
@@ -407,7 +413,7 @@ bool neroshop::Backend::saveProductImage(const QString& fileName, const QString&
     }
     //----------------------------------------
     // Generate the final destination path
-    std::string destinationPath = key_folder + "/" + image_name;
+    std::string destinationPath = key_folder + "/" + (image_name_hash + "." + image_ext);
     // Check if image already exists in cache so that we do not export the same image more than once
     if(!neroshop_filesystem::is_file(destinationPath)) {
         // Image Loader crashes when image resolution is too large (ex. 4096 pixels wide) so we need to scale it!!
@@ -470,7 +476,10 @@ QVariantMap neroshop::Backend::uploadProductImage(const QString& fileName, int i
     // Create the image VariantMap (object)
     std::string image_file = fileName.toStdString(); // Full path with file name
     std::string image_name = image_file.substr(image_file.find_last_of("\\/") + 1);
-    image["name"] = QString::fromStdString(image_name);//fileName;
+    image_name = image_name.substr(0, image_name.find_last_of(".")); // remove ext
+    std::string image_name_hash = neroshop::crypto::sha256(image_name);
+    std::string image_ext = image_file.substr(image_file.find_last_of(".") + 1);
+    image["name"] = QString::fromStdString(image_name_hash + "." + image_ext);//fileName;
     qint64 imageSize64 = static_cast<qint64>(size);
     image["size"] = QVariant::fromValue(imageSize64);
     image["id"] = image_id;

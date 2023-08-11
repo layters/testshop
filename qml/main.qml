@@ -271,9 +271,11 @@ ApplicationWindow {
                     spacing: 5
                     Text {
                         id: peerCounterText
+                        visible: (Number(text) > 0)
                         anchors.verticalCenter: parent.verticalCenter
                         text: "0"
                         color: (NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000"
+                        font.pointSize: 10
                         
                         Timer {
                             interval: 5000
@@ -292,7 +294,7 @@ ApplicationWindow {
                     Rectangle {
                         id: networkStatusIndicator
                         anchors.verticalCenter: parent.verticalCenter
-                        width: 16; height: width
+                        width: 14; height: width
                         color: {
                             let nodeCount = Number((networkMonitor.networkStatus == null) ? "0" : (networkMonitor.networkStatus.hasOwnProperty("active_peers") ? networkMonitor.networkStatus.active_peers : "0"))//Number(peerCounterText.text)
                             // Apply the color-coded scale based on the number of online nodes

@@ -27,7 +27,7 @@ public:
     void delete_account();
     void logout();
     // cart-related stuff (50% complete - cart class still needs some more work)
-    void add_to_cart(const std::string& listing_key, int quantity = 1);
+    int add_to_cart(const std::string& listing_key, int quantity = 1);
     void remove_from_cart(const std::string& listing_key, int quantity = 1);
     void clear_cart();
     // order-related stuff (50% complete - order class still needs some more work)

@@ -137,6 +137,8 @@ int main(int argc, char *argv[])
     ////qmlRegisterUncreatableMetaObject(neroshop::staticMetaObject, "neroshop.namespace", 1, 0, "Neroshop", "Error: only enums");
     // TableModel
     ////qmlRegisterType<TableModel>("neroshop.TableModel", 1, 0, "TableModel"); // Usage: import neroshop.TableModel  ...  TableModel { id: tableModel }
+    // Register enums
+    qmlRegisterUncreatableType<EnumWrapper>("neroshop.Enums", 1, 0, "Enum", "Enums cannot be created.");//neroshop::EnumWrapper::registerEnums(&engine);
     // Register the ListingSorting enum type
     qmlRegisterUncreatableType<Backend>("neroshop.ListingSorting", 1, 0, "Listing", "Enums cannot be created."); // Usage: import neroshop.ListingSorting 1.0 ... console.log("SortByCategory",Listing.SortByCategory);
     // Register the InventorySorting enum type
