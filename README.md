@@ -6,7 +6,9 @@ A decentralized P2P (peer-to-peer) marketplace for [**Monero**](https://getmoner
 
 
 __Disclaimer: The neroshop team is comprised of a single developer that operates independently and is not affiliated, associated, authorized, endorsed by, or in any way officially connected with the Monero project, Monero team or any other organization.__
-__Also, this is an experimental/hobbyist project that is not ready for production use so use at your own risk.__
+
+__Also, this is an experimental / hobbyist project that is not ready for production use so use at your own risk.__
+
 
 ## Table of contents
 <!-- - [The history behind neroshop](#about)-->

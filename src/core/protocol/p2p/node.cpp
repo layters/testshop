@@ -215,7 +215,7 @@ void neroshop::Node::join() {
             std::cerr << "ping: failed to ping bootstrap node\n"; continue;
         }
         
-        // Add the bootstrap node to routing table (optional) - stores the node in the routing table for later use.
+        // Add the bootstrap node to routing table (optional)
         auto seed_node = std::make_unique<Node>((bootstrap_node.address == "127.0.0.1") ? this->public_ip_address : bootstrap_node.address, bootstrap_node.port, false);
         seed_node->set_bootstrap(true);
         Node& seed_node_ref = *seed_node; // take a reference to the Node object (to avoid segfault)

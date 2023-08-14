@@ -144,7 +144,7 @@ private:
 	void set_delivery_option(DeliveryOption delivery_option);
 	void set_delivery_option_by_string(const std::string& delivery_option);
 	void set_notes(const std::string& notes);		
-	void set_items(const std::vector<std::tuple<std::string, int, std::string>>& items);		
+	void set_items(const std::vector<std::tuple<std::string, int, std::string>>& items); // TODO: use struct for OrderItem maybe?
 	void create_order_batch(const neroshop::Cart& cart, const std::string& shipping_address);
 };
 

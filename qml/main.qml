@@ -112,6 +112,7 @@ ApplicationWindow {
         title: "message"
         x: mainWindow.x + (mainWindow.width - this.width) / 2
         y: mainWindow.y + (mainWindow.height - this.height) / 2
+        buttonRow.state: "centered"; buttonRow.width: 300
     }
 
     NeroshopComponents.MessageBox {
@@ -120,6 +121,7 @@ ApplicationWindow {
         x: mainWindow.x + (mainWindow.width - this.width) / 2
         y: mainWindow.y + (mainWindow.height - this.height) / 2
         buttonModel: ["Cancel", "OK"]
+        buttonRow.state: "centered"; buttonRow.width: 300
         Component.onCompleted: {
             buttonAt(0).onClickedCallback = function() { close() }
             buttonAt(1).color = "#4169e1"//"#4682b4"
@@ -260,7 +262,8 @@ ApplicationWindow {
             //}   
             Rectangle {
                 id: networkMonitor
-                width: networkMonitorRow.width; height: footer.height
+                anchors.verticalCenter: parent.verticalCenter
+                width: networkMonitorRow.width; height: networkMonitorRow.height
                 color: "transparent"
                 //border.color: "plum"
                 property var networkStatus: null
@@ -296,22 +299,20 @@ ApplicationWindow {
                         anchors.verticalCenter: parent.verticalCenter
                         width: 14; height: width
                         color: {
-                            let nodeCount = Number((networkMonitor.networkStatus == null) ? "0" : (networkMonitor.networkStatus.hasOwnProperty("active_peers") ? networkMonitor.networkStatus.active_peers : "0"))//Number(peerCounterText.text)
+                            let nodeCount = Number((networkMonitor.networkStatus == null) ? "-1" : (networkMonitor.networkStatus.hasOwnProperty("active_peers") ? networkMonitor.networkStatus.active_peers : "-1"))//Number(peerCounterText.text)
                             // Apply the color-coded scale based on the number of online nodes
-                            if (nodeCount >= 1001) {
-                                return "#483d8b"
-                            } else if (nodeCount >= 501) {
-                                return "#4169e1";
-                            } else if (nodeCount >= 101) {
-                                return "#228b22";//"#2e8b57" // Darker shade of green for 101 or more nodes
-                            } else if (nodeCount >= 51) {
-                                return "#81ac2a"; // Green for 51 to 100 nodes
-                            } else if (nodeCount >= 11) {
-                                return "#ffa500"; // Orange for 11 to 50 nodes
-                            } else if (nodeCount >= 1) {
-                                return "#ff4500"; // Orangered for 0 to 10 nodes
+                            if (nodeCount >= 30) {
+                                return "#228b22";//"#2e8b57" // Darker shade of green for 30 or more nodes
+                            } else if (nodeCount >= 20) {
+                                return "#81ac2a"; // Green for 20 to 29 nodes (Optimal network status)
+                            } else if (nodeCount >= 10) {
+                                return "#ffa500"; // Yellow for 10 to 19 nodes (Mildly compromised network status)
+                            } else if (nodeCount >= 5) {
+                                return "#ff4500"; // Orangered for 5 to 9 nodes (Moderately compromised network status)
+                            } else if (nodeCount >= 0) {
+                                return "#b22222"; // Bright red for 0-4 nodes (Severely compromised network status)
                             } else {
-                                 return "#b22222"; // Bright red for 0 nodes
+                                 return "#808080"; // Gray for -1 nodes (Unknown network status)
                             }
                         }
                         radius: width / 2
@@ -341,47 +342,50 @@ ApplicationWindow {
             Rectangle {
                 anchors.left: footer.left
                 anchors.leftMargin: 20
-                width: (priceChangePercentageText.visible) ? priceDisplayText.contentWidth + priceChangePercentageText.contentWidth + 10 : priceDisplayText.contentWidth // 10 is the spacing between the price and the price change percentage
-                height: footer.height
+                anchors.verticalCenter: parent.verticalCenter
+                width: priceDisplayRow.width
+                height: childrenRect.height
                 color: "transparent"
                 visible: !settingsDialog.hidePriceDisplay
                 //border.color: NeroshopComponents.Style.moneroOrangeColor
                 
-                Text {
-                    id: priceDisplayText
-                    property string scriptCurrency: settingsDialog.currency.currentText
-                    property string currency: Backend.isSupportedCurrency(scriptCurrency) ? scriptCurrency : "usd"
-                    readonly property double price: CurrencyExchangeRates.getXmrPrice(priceDisplayText.currency)
-                    text: qsTr(FontAwesome.monero + "  %1%2").arg(Backend.getCurrencySign(currency)).arg(price.toFixed(Backend.getCurrencyDecimals(currency)))
-                    color: (NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000"
-                    font.bold: true
-                    anchors.verticalCenter: parent.verticalCenter
-                }
+                Row {
+                    id: priceDisplayRow
+                    spacing: 10
+                    Text {
+                        id: priceDisplayText
+                        property string scriptCurrency: settingsDialog.currency.currentText
+                        property string currency: Backend.isSupportedCurrency(scriptCurrency) ? scriptCurrency : "usd"
+                        readonly property double price: CurrencyExchangeRates.getXmrPrice(priceDisplayText.currency)
+                        text: qsTr(FontAwesome.monero + "  %1%2").arg(Backend.getCurrencySign(currency)).arg(price.toFixed(Backend.getCurrencyDecimals(currency)))
+                        color: (NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000"
+                        font.bold: true
+                        anchors.verticalCenter: parent.verticalCenter
+                    }
                 
-                Text {
-                    id: priceChangePercentageText
-                    property double percent: 0.00
-                    visible: false // hide this for now until I can get the actual price change percent value
-                    text: qsTr("%1%2%").arg((percent >= 0) ? "+" : "").arg(percent.toFixed(2))
-                    color: (percent >= 0) ? "green" : "red"
-                    anchors.right: priceDisplayText.right
-                    anchors.rightMargin: -(contentWidth + 10)
-                    anchors.verticalCenter: priceDisplayText.verticalCenter
-                    font.pointSize: 10
-                    font.bold: true
-                }
+                    Text {
+                        id: priceChangePercentageText
+                        property double percent: 0.00
+                        visible: false // hide this for now until I can get the actual price change percent value
+                        text: qsTr("%1%2%").arg((percent >= 0) ? "+" : "").arg(percent.toFixed(2))
+                        color: (percent >= 0) ? "green" : "red"
+                        anchors.verticalCenter: priceDisplayText.verticalCenter
+                        font.pointSize: 10
+                        font.bold: true
+                    }
                                     
-                HoverHandler {
-                    id: priceDisplayHoverHandler
-                }
+                    HoverHandler {
+                        id: priceDisplayHoverHandler
+                    }
                                         
-                NeroshopComponents.Hint {
-                    visible: priceDisplayHoverHandler.hovered // <- uncomment this to make the tooltip visible on hover
-                    height: contentHeight + 20; width: contentWidth + 20
-                    bottomMargin : footer.height + 5
-                    text: qsTr("XMR / %1").arg(priceDisplayText.currency.toUpperCase())
-                    pointer.visible: false
-                }                             
+                    NeroshopComponents.Hint {
+                        visible: priceDisplayHoverHandler.hovered // <- uncomment this to make the tooltip visible on hover
+                        height: contentHeight + 20; width: contentWidth + 20
+                        bottomMargin : footer.height + 5
+                        text: qsTr("XMR / %1").arg(priceDisplayText.currency.toUpperCase())
+                        pointer.visible: false
+                    }      
+                }                       
             }
         //}
     }    

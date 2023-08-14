@@ -23,7 +23,7 @@ public:
     // account-related stuff (will continue adding more account features)
     void rate_seller(const std::string& seller_id, int score, const std::string& comments, const std::string& signature); // seller score (0-1) // use int and NOT unsigned int 'cause unsigned int assumes the arg will never be negative number, but when arg is negative, it converts it to some random positive number
     void rate_item(const std::string& item_id, int stars, const std::string& comments, const std::string& signature); // star ratings (1-5)    
-    void convert(); // converts buyer to seller //void revert(); // I don't see the reason for degrading your account after an upgrade hehe ... //void report_user(const User& user, const std::string& reason); // report a user
+    //void report_user(const User& user, const std::string& reason); // report a user
     void delete_account();
     void logout();
     // cart-related stuff (50% complete - cart class still needs some more work)

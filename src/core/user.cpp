@@ -182,32 +182,6 @@ void neroshop::User::rate_item(const std::string& product_id, int stars, const s
 ////////////////////
 // account-related stuff here
 ////////////////////
-void neroshop::User::convert() {
-    if(is_guest()) return;
-    if(is_seller()) { 
-        neroshop::print("You are already a seller", 2); 
-        return; 
-    }
-    ////////////////////////////////
-#if defined(NEROSHOP_USE_POSTGRESQL)    
-    //database->connect("host=127.0.0.1 port=5432 user=postgres password=postgres dbname=neroshoptest");
-    ///database->execute("BEGIN;"); // not necessary unless doing multiple operations
-    database->execute_params("UPDATE users SET account_type_id = $1 WHERE id = $2", { std::to_string(2), std::to_string(this->id) });
-    neroshop::print("You have converted from a buyer to a seller", 3);    
-    ////database->execute("COMMIT;");
-    ////////////////////////////////    
-#endif    
-}
-// if(user->is_buyer()) user->convert(); // convert buyer to seller
-////////////////////
-/*void neroshop::User::revert() {
-    // convert user from seller to buyer
-    UPDATE users SET account_type_id = 1 WHERE id = $1;
-    // remove all items listed by this user
-    DELETE FROM inventory WHERE seller_id = $1;
-}
-*/
-////////////////////
 void neroshop::User::delete_account() {
     if(!is_logged()) {neroshop::print("You are not logged in", 2);return;} // must be logged in to delete your account
     neroshop::db::Sqlite3 * database = neroshop::get_database();

@@ -18,9 +18,9 @@
 #endif
 
 #define NEROSHOP_IPC_DEFAULT_PORT 57740
-//TODO This port will be used by the daemon to establish connections with p2p network
+// This port will be used by the daemon to establish connections with p2p network
 #define NEROSHOP_P2P_DEFAULT_PORT 50881 // Use ports between 49152-65535 that are not currently registered with IANA and are rarely used
-//TODO This port will allow outside clients to interact with neroshop daemon RPC server
+// This port will allow outside clients to interact with neroshop daemon RPC server
 #define NEROSHOP_RPC_DEFAULT_PORT 50882
 
 #define NEROSHOP_DAEMON_WAIT_TIME 20 // Measured in seconds
