@@ -5,8 +5,10 @@
 #include <chrono>
 #include <iomanip> // std::put_time
 
+#include "../../neroshop_config.hpp"
+
 void neroshop::logger(log_priority priority, const std::string& message) {
-    std::ofstream file(std::string(NEROSHOP_LOG_FILE).c_str(), std::ios_base::app);
+    std::ofstream file(std::string(NEROSHOP_LOG_FILENAME).c_str(), std::ios_base::app);
 	    
 	auto now = std::chrono::system_clock::now();
     auto in_time_t = std::chrono::system_clock::to_time_t(now); // current time
@@ -15,8 +17,8 @@ void neroshop::logger(log_priority priority, const std::string& message) {
         
     switch(priority) {
         case log_priority::trace: file << ss.str() << "[Trace]: "; break;
-        //case debug: file << ss.str() << "[Debug:] "; break;
-        case log_priority::info: file << ss.str() << "[Info:] "; break;
+        //case debug: file << ss.str() << "[Debug]: "; break;
+        case log_priority::info: file << ss.str() << "[Info]: "; break;
         case log_priority::warn: file << ss.str() << "[Warn]: "; break;
         case log_priority::error: file << ss.str() << "[Error]: "; break;
         //case critical: file << ss.str() << "[Critical]: "; break;

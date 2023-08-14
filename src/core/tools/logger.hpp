@@ -1,8 +1,5 @@
 #pragma once
 
-#define NEROSHOP_LOG_PATH ""
-#define NEROSHOP_LOG_FILE "log.txt"
-
 #define NEROSHOP_TAG_OUT neroshop::io_write("");
 #define NEROSHOP_TAG_IN std::string("\033[1;35;49m[neroshop]: \033[0m") +
 #define NEROSHOP_TAG NEROSHOP_TAG_IN

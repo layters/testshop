@@ -402,7 +402,7 @@ Page {
 
                     Image {
                         id: bannerImage
-                        source: "file:///" + "/home/sid/Downloads/monero-support-your-local-cypherpunk-1920x1080.png"//"path/to/cover_art.jpg"
+                        //source: "file:///" + "/path/to/cover_art.jpg"
                         width: parent.width; height: (parent.height - infoRect.height)//parent.height////anchors.fill: parent
                         fillMode: Image.PreserveAspectCrop
                         mipmap: true
