@@ -22,18 +22,29 @@ namespace neroshop {
 
 class Process; // forward declaration
 
+enum class WalletError {
+    Ok = 0, 
+    WrongPassword, 
+    PasswordsDoNotMatch, 
+    AlreadyExists,
+    IsOpenedByAnotherProgram,
+    DoesNotExist,
+    BadNetworkType,
+    IsNotOpened, // monero_wallet_obj is nullptr
+};
+
 class Wallet : public monero_wallet_listener {
 public:
     Wallet();
     ~Wallet();
 
     int create_random(const std::string& password, const std::string& confirm_pwd, const std::string& path);
-    bool create_from_seed(const std::string& seed, const std::string& password, const std::string& confirm_pwd, const std::string& path);
-    bool create_from_keys(const std::string& address, const std::string& view_key, const std::string& spend_key, const std::string& password, const std::string &confirm_pwd, const std::string& path);
+    int create_from_seed(const std::string& seed, const std::string& password, const std::string& confirm_pwd, const std::string& path);
+    int create_from_keys(const std::string& address, const std::string& view_key, const std::string& spend_key, const std::string& password, const std::string &confirm_pwd, const std::string& path);
     
-    bool restore_from_seed(const std::string& seed); // In-memory wallet
-    bool restore_from_keys(const std::string& primary_address, const std::string& view_key, const std::string& spend_key); // In-memory wallet
-    bool open(const std::string& path, const std::string& password); // Password-protected wallet file
+    int restore_from_seed(const std::string& seed); // In-memory wallet
+    int restore_from_keys(const std::string& primary_address, const std::string& view_key, const std::string& spend_key); // In-memory wallet
+    int open(const std::string& path, const std::string& password); // Password-protected wallet file
     
     void close(bool save = false);
     

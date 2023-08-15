@@ -70,14 +70,5 @@ enum class UsernameResult {
     Username_ReservedForInternalUse,    
 };
 
-// wallet
-enum class WalletResult {
-    Wallet_Ok = 0, 
-    Wallet_WrongPassword, 
-    Wallet_PasswordsDoNotMatch, 
-    Wallet_AlreadyExists,
-    Wallet_OpenedByAnotherProgram, //Wallet_IOError,
-};
-
 } // namespace neroshop
 #endif

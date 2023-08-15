@@ -53,6 +53,7 @@
 #include "core/tools/regex.hpp"
 #include "core/tools/script.hpp"
 #include "core/tools/string.hpp"
+#include "core/tools/timestamp.hpp"
 #include "core/tools/tools.hpp"
 #include "core/tools/updater.hpp"
 #include "core/tools/uuid.hpp"

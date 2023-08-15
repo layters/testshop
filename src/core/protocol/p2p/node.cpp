@@ -871,15 +871,41 @@ std::string neroshop::Node::send_find_value(const std::string& key) {
 }
 
 void neroshop::Node::send_remove(const std::string& key) {
-    std::string transaction_id = msgpack::generate_transaction_id();
-    
     nlohmann::json query_object;
-    query_object["tid"] = transaction_id;
     query_object["query"] = "remove";
     query_object["args"]["key"] = key;
     query_object["version"] = std::string(NEROSHOP_DHT_VERSION);
+    // TODO: this should only work on expired data!!!
+    //-----------------------------------------------
+    std::vector<Node *> closest_nodes = find_node(key, NEROSHOP_DHT_MAX_CLOSEST_NODES);
     
-    // ...
+    std::random_device rd;
+    std::mt19937 rng(rd());
+    std::shuffle(closest_nodes.begin(), closest_nodes.end(), rng);
+    //-----------------------------------------------
+    // Send remove query message to the closest nodes
+    for(auto const& node : closest_nodes) {
+        std::string transaction_id = msgpack::generate_transaction_id();
+        query_object["tid"] = transaction_id; // tid should be unique for each query
+        std::vector<uint8_t> remove_query = nlohmann::json::to_msgpack(query_object);
+        // Send remove query message
+        std::string node_ip = (node->get_ip_address() == this->public_ip_address) ? "127.0.0.1" : node->get_ip_address();
+        int node_port = node->get_port();
+        std::cout << "Sending remove request to \033[36m" << node_ip << ":" << node_port << "\033[0m\n";
+        auto receive_buffer = send_query(node_ip, node_port, remove_query);
+        // Process the response here
+        nlohmann::json remove_response;
+        try {
+            remove_response = nlohmann::json::from_msgpack(receive_buffer);
+        } catch (const std::exception& e) {
+            std::cerr << "Node \033[91m" << node_ip << ":" << node_port << "\033[0m did not respond" << std::endl;
+            node->check_counter += 1;
+            continue; // Continue with the next closest node if this one fails
+        }   
+        // Show response
+        std::cout << ((remove_response.contains("error")) ? ("\033[91m") : ("\033[32m")) << remove_response.dump() << "\033[0m\n";
+    }
+    //-----------------------------------------------
 }
 
 void neroshop::Node::send_map(const std::string& address, int port) {

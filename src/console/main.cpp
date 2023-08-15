@@ -111,7 +111,7 @@ int main(int argc, char** argv) {
                 {"id", ""},
             };//nlohmann::json nested_array = {"item1", "item2", "item3"};
             nlohmann::json j = {
-                {"version", std::string(NEROSHOP_VERSION)},
+                {"version", std::string(NEROSHOP_DHT_VERSION)},
                 {"query", "ping"},
                 {"args", arguments_obj},
                 {"tid", 1234},
@@ -157,7 +157,7 @@ int main(int argc, char** argv) {
                     {"value", "{\"name\": \"Jack\"}"}, // {"name": "Jack"}
                 };
                 nlohmann::json j = {
-                    {"version", std::string(NEROSHOP_VERSION)},
+                    {"version", std::string(NEROSHOP_DHT_VERSION)},
                     {"query", "put"},
                     {"args", arguments_obj},
                     {"tid", nullptr}, // tid is not needed. DHT server will automatically deal with this
@@ -183,7 +183,7 @@ int main(int argc, char** argv) {
                     {"key", "63075a22aaed744829b33ed9e16bb3aa0f06121500861bbf8fcbdfee2e708a66"},
                 };
                 nlohmann::json j = {
-                    {"version", std::string(NEROSHOP_VERSION)},
+                    {"version", std::string(NEROSHOP_DHT_VERSION)},
                     {"query", "get"},
                     {"args", arguments_obj},
                     {"tid", nullptr},
@@ -226,7 +226,7 @@ int main(int argc, char** argv) {
                     //{"", ""},
                 };
                 nlohmann::json j = {
-                    {"version", std::string(NEROSHOP_VERSION)},
+                    {"version", std::string(NEROSHOP_DHT_VERSION)},
                     {"query", "search"},
                     {"args", arguments_obj},
                     {"tid", nullptr},

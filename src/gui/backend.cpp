@@ -41,6 +41,7 @@
 #include "../core/category.hpp"
 #include "../core/tools/regex.hpp"
 #include "../core/crypto/rsa.hpp"
+#include "enum_wrapper.hpp"
 
 #include <future>
 #include <thread>
@@ -1692,29 +1693,38 @@ QVariantList neroshop::Backend::registerUser(WalletController* wallet_controller
     return { true, QString::fromStdString(key) };
 }
 //----------------------------------------------------------------
-bool neroshop::Backend::loginWithWalletFile(WalletController* wallet_controller, const QString& path, const QString& password, UserController * user_controller) { 
+int neroshop::Backend::loginWithWalletFile(WalletController* wallet_controller, const QString& path, const QString& password, UserController * user_controller) { 
     db::Sqlite3 * database = neroshop::get_database();
     if(!database) throw std::runtime_error("database is NULL");
     
     // Make sure daemon is connected first
     if(!DaemonManager::isDaemonServerBound()) {
         neroshop::print("Please wait for the daemon LIPC server to connect first", 1);
-        return false;//{ false, "Please wait for the daemon LIPC server to connect first" };
+        return static_cast<int>(EnumWrapper::LoginError::DaemonIsNotConnected);
     }    
     // Open wallet file
-    std::packaged_task<bool(void)> open_wallet_task([wallet_controller, path, password]() -> bool {
-        if(!wallet_controller->open(path, password)) {
-            ////throw std::runtime_error("Invalid password or wallet network type");
-            return false;
+    std::packaged_task<int(void)> open_wallet_task([wallet_controller, path, password]() -> int {
+        int wallet_error = wallet_controller->open(path, password);
+        if(wallet_error != 0) {
+            if(wallet_error == static_cast<int>(WalletError::WrongPassword))
+                return static_cast<int>(EnumWrapper::LoginError::WrongPassword);
+            if(wallet_error == static_cast<int>(WalletError::IsOpenedByAnotherProgram))
+                return static_cast<int>(EnumWrapper::LoginError::WalletIsOpenedByAnotherProgram);
+            if(wallet_error == static_cast<int>(WalletError::DoesNotExist))
+                return static_cast<int>(EnumWrapper::LoginError::WalletDoesNotExist);
+            if(wallet_error == static_cast<int>(WalletError::BadNetworkType))
+                return static_cast<int>(EnumWrapper::LoginError::WalletBadNetworkType);
+            if(wallet_error == static_cast<int>(WalletError::IsNotOpened))
+                return static_cast<int>(EnumWrapper::LoginError::WalletIsNotOpened);
         }
-        return true;
+        return static_cast<int>(EnumWrapper::LoginError::Ok);
     });
-    std::future<bool> future_result = open_wallet_task.get_future();
+    std::future<int> future_result = open_wallet_task.get_future();
     // move the task (function) to a separate thread to prevent blocking of the main thread
     std::thread worker(std::move(open_wallet_task));
     worker.detach(); // join may block but detach won't
-    bool wallet_opened = future_result.get();
-    if(!wallet_opened) return false;
+    int login_error = future_result.get();
+    if(login_error != 0) return login_error;
     // Get the primary address
     std::string primary_address = wallet_controller->getPrimaryAddress().toStdString();
     //----------------------------------------
@@ -1725,7 +1735,7 @@ bool neroshop::Backend::loginWithWalletFile(WalletController* wallet_controller,
         // In reality, this function will return false if user key is not registered in the database
         neroshop::print("Account not found in database. Please try again or register", 1);
         wallet_controller->close();
-        return false;
+        return static_cast<int>(EnumWrapper::LoginError::UserNotFound);
     }
     // Get the account DHT key
     std::string account_key = database->get_text_params("SELECT key FROM mappings WHERE search_term = ?1 AND content = 'account'", { primary_address });
@@ -1734,7 +1744,7 @@ bool neroshop::Backend::loginWithWalletFile(WalletController* wallet_controller,
     std::unique_ptr<neroshop::User> seller(neroshop::Seller::on_login(*wallet_controller->getWallet()));
     user_controller->_user = std::move(seller);
     if(user_controller->getUser() == nullptr) {
-        return false;//{false, "user is NULL"};
+        return static_cast<int>(EnumWrapper::LoginError::UserIsNullPointer);
     }
     //----------------------------------------
     // Load RSA keys from file
@@ -1785,10 +1795,10 @@ bool neroshop::Backend::loginWithWalletFile(WalletController* wallet_controller,
     //user_controller->createOrder("12 Robot Dr. Boston MA 02115");
     // Display message
     neroshop::print("Welcome back, user " + ((!display_name.empty()) ? (display_name + " (id: " + primary_address + ")") : primary_address), 4);
-    return true;
+    return static_cast<int>(EnumWrapper::LoginError::Ok);
 }
 //----------------------------------------------------------------
-bool neroshop::Backend::loginWithMnemonic(WalletController* wallet_controller, const QString& mnemonic, UserController * user_controller) {
+int neroshop::Backend::loginWithMnemonic(WalletController* wallet_controller, const QString& mnemonic, UserController * user_controller) {
     db::Sqlite3 * database = neroshop::get_database();
     if(!database) throw std::runtime_error("database is NULL");
     // Initialize monero wallet with existing wallet mnemonic
@@ -1815,7 +1825,7 @@ bool neroshop::Backend::loginWithMnemonic(WalletController* wallet_controller, c
     return true;
 }
 //----------------------------------------------------------------
-bool neroshop::Backend::loginWithKeys(WalletController* wallet_controller, UserController * user_controller) {
+int neroshop::Backend::loginWithKeys(WalletController* wallet_controller, UserController * user_controller) {
 /*
     db::Sqlite3 * database = neroshop::get_database();
     if(!database) throw std::runtime_error("database is NULL");
@@ -1857,7 +1867,7 @@ bool neroshop::Backend::loginWithKeys(WalletController* wallet_controller, UserC
     return false;
 }
 //----------------------------------------------------------------
-bool neroshop::Backend::loginWithHW(WalletController* wallet_controller, UserController * user_controller) {
+int neroshop::Backend::loginWithHW(WalletController* wallet_controller, UserController * user_controller) {
     return false;
 }
 //----------------------------------------------------------------

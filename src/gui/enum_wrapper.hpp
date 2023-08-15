@@ -12,6 +12,18 @@ class EnumWrapper : public QObject {
 public:
     EnumWrapper(QObject* parent = nullptr);
     
+    enum class WalletError {
+        Ok = 0, 
+        WrongPassword, 
+        PasswordsDoNotMatch, 
+        AlreadyExists,
+        IsOpenedByAnotherProgram,
+        DoesNotExist,
+        BadNetworkType,
+        IsNotOpened, // monero_wallet_obj is nullptr
+    };    
+    Q_ENUM(WalletError)
+
     enum class CartError {
         Ok,
         Missing,
@@ -22,6 +34,22 @@ public:
         SellerAddOwnItem,
     };
     Q_ENUM(CartError)
+    
+    enum class LoginError {
+        Ok = 0,
+    
+        WrongPassword = static_cast<int>(WalletError::WrongPassword),
+        WalletIsOpenedByAnotherProgram = static_cast<int>(WalletError::IsOpenedByAnotherProgram),
+        WalletDoesNotExist = static_cast<int>(WalletError::DoesNotExist),
+        WalletBadNetworkType = static_cast<int>(WalletError::BadNetworkType),
+        WalletIsNotOpened = static_cast<int>(WalletError::IsNotOpened),
+        
+        DaemonIsNotConnected = 10,
+        
+        UserNotFound = 20,
+        UserIsNullPointer,
+    };
+    Q_ENUM(LoginError)
 
     enum class ListingSorting {
         SortNone = 0,
@@ -39,6 +67,8 @@ public:
     
 }
 
+Q_DECLARE_METATYPE(neroshop::EnumWrapper::WalletError)
 Q_DECLARE_METATYPE(neroshop::EnumWrapper::CartError)
+Q_DECLARE_METATYPE(neroshop::EnumWrapper::LoginError)
 Q_DECLARE_METATYPE(neroshop::EnumWrapper::ListingSorting)
 #endif
