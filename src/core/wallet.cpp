@@ -1,6 +1,5 @@
 #include "wallet.hpp"
 
-#include "enums.hpp"
 #include "tools/logger.hpp"
 #include "tools/tools.hpp"
 #include "tools/process.hpp" // for monerod daemon process
@@ -43,12 +42,12 @@ neroshop::Wallet::~Wallet()
 int neroshop::Wallet::create_random(const std::string& password, const std::string& confirm_pwd, const std::string& path) {
     if(confirm_pwd != password) {
         neroshop::print("Wallet passwords do not match", 1);
-        return static_cast<int>(WalletResult::Wallet_PasswordsDoNotMatch);
+        return static_cast<int>(WalletError::PasswordsDoNotMatch);
     }
     
     if(monero::monero_wallet_full::wallet_exists(path + ".keys")) {//if(std::filesystem::is_regular_file(path + ".keys")) {
         neroshop::print("Wallet file with the same name already exists", 1);
-        return static_cast<int>(WalletResult::Wallet_AlreadyExists);
+        return static_cast<int>(WalletError::AlreadyExists);
     }
     // This is deprecated :(
     ////monero_wallet_obj = std::unique_ptr<monero_wallet_full>(monero_wallet_full::create_wallet_random (path, password, network_type/*, const monero_rpc_connection &daemon_connection=monero_rpc_connection(), const std::string &language="English", std::unique_ptr< epee::net_utils::http::http_client_factory > http_client_factory=nullptr*/));
@@ -64,18 +63,18 @@ int neroshop::Wallet::create_random(const std::string& password, const std::stri
     password_hash = sign_message(password, monero_message_signature_type::SIGN_WITH_SPEND_KEY);
     std::cout << "password hash generated: " << password_hash << "\n";
     
-    return static_cast<int>(WalletResult::Wallet_Ok);
+    return static_cast<int>(WalletError::Ok);
 }
 //-------------------------------------------------------
-bool neroshop::Wallet::create_from_seed(const std::string& seed, const std::string& password, const std::string& confirm_pwd, const std::string& path) {
+int neroshop::Wallet::create_from_seed(const std::string& seed, const std::string& password, const std::string& confirm_pwd, const std::string& path) {
     if(confirm_pwd != password) {
         neroshop::print("Wallet passwords do not match", 1);
-        return false;
+        return static_cast<int>(WalletError::PasswordsDoNotMatch);
     }    
 
     if(monero::monero_wallet_full::wallet_exists(path + ".keys")) {
         neroshop::print("Wallet file with the same name already exists", 1);
-        return false;
+        return static_cast<int>(WalletError::AlreadyExists);
     }
     // This is deprecated :(    
     ////monero_wallet_obj = std::unique_ptr<monero_wallet_full>(monero_wallet_full::create_wallet_from_mnemonic (path, password, network_type, mnemonic));
@@ -87,25 +86,25 @@ bool neroshop::Wallet::create_from_seed(const std::string& seed, const std::stri
     wallet_config_obj.m_seed = seed;
     
     monero_wallet_obj = std::unique_ptr<monero_wallet_full>(monero_wallet_full::create_wallet (wallet_config_obj, nullptr));
-    if(!monero_wallet_obj.get()) return false;
+    if(!monero_wallet_obj.get()) return static_cast<int>(WalletError::IsNotOpened);
     std::cout << "\033[1;35;49m" << "created wallet \"" << path << ".keys\" (from seed)" << "\033[0m" << std::endl;
     // Sign password to generate a temporary password hash (signature) that will be used to verify password whenever user inactivity is detected or when user attempts to withdraw funds
     password_hash = sign_message(password, monero_message_signature_type::SIGN_WITH_SPEND_KEY);
     std::cout << "password hash generated: " << password_hash << "\n";
         
-    return true;
+    return static_cast<int>(WalletError::Ok);
 }
 //-------------------------------------------------------
 // To restore a view-only wallet, leave the spend key blank
-bool neroshop::Wallet::create_from_keys(const std::string& primary_address, const std::string& view_key, const std::string& spend_key, const std::string& password, const std::string &confirm_pwd, const std::string& path) {
+int neroshop::Wallet::create_from_keys(const std::string& primary_address, const std::string& view_key, const std::string& spend_key, const std::string& password, const std::string &confirm_pwd, const std::string& path) {
     if(confirm_pwd != password) {
         neroshop::print("Wallet passwords do not match", 1);
-        return false;
+        return static_cast<int>(WalletError::PasswordsDoNotMatch);
     }  
     
     if(monero::monero_wallet_full::wallet_exists(path + ".keys")) {
         neroshop::print("Wallet file with the same name already exists", 1);
-        return false;
+        return static_cast<int>(WalletError::AlreadyExists);
     }
     // This is deprecated :(    
     ////monero_wallet_obj = std::unique_ptr<monero_wallet_full>(monero_wallet_full::create_wallet_from_keys(path, password, network_type, primary_address, view_key, spend_key));
@@ -119,16 +118,16 @@ bool neroshop::Wallet::create_from_keys(const std::string& primary_address, cons
     wallet_config_obj.m_private_spend_key = spend_key;
     
     monero_wallet_obj = std::unique_ptr<monero_wallet_full>(monero_wallet_full::create_wallet (wallet_config_obj, nullptr));
-    if(!monero_wallet_obj.get()) return false;
+    if(!monero_wallet_obj.get()) return static_cast<int>(WalletError::IsNotOpened);
     std::cout << "\033[1;35;49m" << "created wallet \"" << path << ".keys\" (from keys)" << "\033[0m" << std::endl;
     // Sign password to generate a temporary password hash (signature) that will be used to verify password whenever user inactivity is detected or when user attempts to withdraw funds
     password_hash = sign_message(password, monero_message_signature_type::SIGN_WITH_SPEND_KEY);
     std::cout << "password hash generated: " << password_hash << "\n";
         
-    return true;
+    return static_cast<int>(WalletError::Ok);
 }
 //-------------------------------------------------------
-bool neroshop::Wallet::restore_from_seed(const std::string& seed) 
+int neroshop::Wallet::restore_from_seed(const std::string& seed) 
 {
     // This is deprecated :(
     //monero_wallet_obj = std::unique_ptr<monero_wallet_full>(monero_wallet_full::create_wallet_from_mnemonic("", "", network_type, mnemonic)); // set path to "" for an in-memory wallet
@@ -141,12 +140,12 @@ bool neroshop::Wallet::restore_from_seed(const std::string& seed)
     wallet_config_obj.m_restore_height = 0;
     
     monero_wallet_obj = std::unique_ptr<monero_wallet_full>(monero_wallet_full::create_wallet (wallet_config_obj, nullptr));
-    if(!monero_wallet_obj.get()) return false;
+    if(!monero_wallet_obj.get()) return static_cast<int>(WalletError::IsNotOpened);
     std::cout << "\033[1;35;49m" << "restored in-memory wallet (from seed)" << "\033[0m" << std::endl;    
-    return true;
+    return static_cast<int>(WalletError::Ok);
 }
 //-------------------------------------------------------
-bool neroshop::Wallet::restore_from_keys(const std::string& primary_address, const std::string& view_key, const std::string& spend_key)
+int neroshop::Wallet::restore_from_keys(const std::string& primary_address, const std::string& view_key, const std::string& spend_key)
 {
     // Check validity of primary address
     if(!monero_utils::is_valid_address(primary_address, this->network_type)) {
@@ -165,31 +164,38 @@ bool neroshop::Wallet::restore_from_keys(const std::string& primary_address, con
     wallet_config_obj.m_private_spend_key = spend_key;
     
     monero_wallet_obj = std::unique_ptr<monero_wallet_full>(monero_wallet_full::create_wallet (wallet_config_obj, nullptr));    
-    if(!monero_wallet_obj.get()) return false;
+    if(!monero_wallet_obj.get()) return static_cast<int>(WalletError::IsNotOpened);
     std::cout << "\033[1;35;49m" << "restored in-memory wallet (from keys)" << "\033[0m" << std::endl;
-    return true;
+    return static_cast<int>(WalletError::Ok);
 }
 //-------------------------------------------------------
-bool neroshop::Wallet::open(const std::string& path, const std::string& password) { 
+int neroshop::Wallet::open(const std::string& path, const std::string& password) { 
     if(!monero::monero_wallet_full::wallet_exists(path)) { 
-        return false; 
+        return static_cast<int>(WalletError::DoesNotExist);
     }
 
     try {
         monero_wallet_obj = std::unique_ptr<monero_wallet_full>(monero::monero_wallet_full::open_wallet(path, password, this->network_type));
     } catch (const std::exception& e) {
-        neroshop::print(e.what(), 1);//tools::error::invalid_password
-        return false;
+        std::string error_msg = e.what();
+        neroshop::print(error_msg, 1);//tools::error::invalid_password
+        if(neroshop::string::contains(error_msg, "wallet cannot be opened")) {
+            return static_cast<int>(WalletError::BadNetworkType);
+        } else if(neroshop::string::contains(error_msg, "invalid password")) {
+            return static_cast<int>(WalletError::WrongPassword);
+        } else {
+            return static_cast<int>(WalletError::IsOpenedByAnotherProgram);
+        }
     }
     if(!monero_wallet_obj.get()) { 
-        return false;
+        return static_cast<int>(WalletError::IsNotOpened);
     }
     std::cout << "\033[1;35;49m" << "opened wallet \"" << path << "\"\033[0m" << std::endl;
     // Sign password to generate a temporary password hash (signature) that will be used to verify password whenever user inactivity is detected or when user attempts to withdraw funds
     password_hash = sign_message(password, monero_message_signature_type::SIGN_WITH_SPEND_KEY);
     std::cout << "password hash generated: " << password_hash << "\n";
         
-    return true;
+    return static_cast<int>(WalletError::Ok);
 }
 //-------------------------------------------------------
 void neroshop::Wallet::close(bool save) 

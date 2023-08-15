@@ -9,8 +9,10 @@ import QtQuick.Dialogs 1.3 // MessageDialog (since Qt 5.2)
 import QtGraphicalEffects 1.12 // LinearGradient
 import Qt.labs.platform 1.1 // FileDialog (since Qt 5.8) // change to "import QtQuick.Dialogs" if using Qt 6.2
 
-//import neroshop.Wallet 1.0
 import FontAwesome 1.0
+
+import neroshop.Enums 1.0
+
 import "../components" as NeroshopComponents
 
 Page {
@@ -557,10 +559,29 @@ Page {
                 	        }
                 	        // Process login credentials
                 	        //if(!Wallet.isOpened()) {
-                	        if(!Backend.loginWithWalletFile(Wallet, Backend.urlToLocalFile(walletFileField.text), walletPasswordRestoreField.text, User)) {
-                	                messageBox.text = qsTr("Invalid password or wallet network type")
+                	        let loginError = Backend.loginWithWalletFile(Wallet, Backend.urlToLocalFile(walletFileField.text), walletPasswordRestoreField.text, User)
+                	        if(loginError != Enum.LoginError.Ok) {
+                	            console.log("loginError", loginError)
+                	            if(loginError == Enum.LoginError.WalletBadNetworkType) {
+                	                messageBox.text = qsTr("Bad network type")
                 	                messageBox.open()
-                	                return;                	        
+                	            } else if(loginError == Enum.LoginError.WrongPassword) {
+                	                messageBox.text = qsTr("Invalid password")
+                	                messageBox.open()
+                	            } else if(loginError == Enum.LoginError.WalletIsOpenedByAnotherProgram) {
+                	                messageBox.text = qsTr("Wallet is opened by another program")
+                	                messageBox.open()
+                	            } else if(loginError == Enum.LoginError.DaemonIsNotConnected) {
+                	                messageBox.text = qsTr("Daemon (neromon) is not connected")
+                	                messageBox.open()
+                	            } else if(loginError == Enum.LoginError.UserNotFound) {
+                	                messageBox.text = qsTr("User not found. Please try again or register")
+                	                messageBox.open()
+                	            } else {
+                	                messageBox.text = qsTr("Login error")
+                	                messageBox.open()
+                	            }         
+                	            return;	        
                 	        }
                             // Start synching the monero node as soon we hit the login button only sync automatically if auto-sync option is turned on (will be turned on by default)
                             onAutoSync();

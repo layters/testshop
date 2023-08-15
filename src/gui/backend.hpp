@@ -64,10 +64,10 @@ public:
     QVariantList validateDisplayName(const QString& display_name) const; // Validates display name based on regex requirements
     
     Q_INVOKABLE QVariantList registerUser(WalletController* wallet_controller, const QString& display_name, UserController * user_controller, const QString& avatar);
-    Q_INVOKABLE bool loginWithWalletFile(WalletController* wallet_controller, const QString& path, const QString& password, UserController * user_controller);
-    Q_INVOKABLE bool loginWithMnemonic(WalletController* wallet_controller, const QString& mnemonic, UserController * user_controller);
-    Q_INVOKABLE bool loginWithKeys(WalletController* wallet_controller, UserController * user_controller);
-    Q_INVOKABLE bool loginWithHW(WalletController* wallet_controller, UserController * user_controller);
+    Q_INVOKABLE int loginWithWalletFile(WalletController* wallet_controller, const QString& path, const QString& password, UserController * user_controller);
+    Q_INVOKABLE int loginWithMnemonic(WalletController* wallet_controller, const QString& mnemonic, UserController * user_controller);
+    Q_INVOKABLE int loginWithKeys(WalletController* wallet_controller, UserController * user_controller);
+    Q_INVOKABLE int loginWithHW(WalletController* wallet_controller, UserController * user_controller);
     
     Q_INVOKABLE QVariantList getListings(ListingSorting sorting = SortNone, bool hide_illicit_items = true); // Products listed by sellers
     Q_INVOKABLE QVariantList getListingsByCategory(int category_id, bool hide_illicit_items = true);

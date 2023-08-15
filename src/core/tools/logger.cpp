@@ -8,7 +8,9 @@
 #include "../../neroshop_config.hpp"
 
 void neroshop::logger(log_priority priority, const std::string& message) {
-    std::ofstream file(std::string(NEROSHOP_LOG_FILENAME).c_str(), std::ios_base::app);
+    std::string config_path = NEROSHOP_DATA_DIRECTORY_PATH;
+    std::string log_path = config_path + "/" + NEROSHOP_LOG_FILENAME;
+    std::ofstream file(std::string(log_path).c_str(), std::ios_base::app);
 	    
 	auto now = std::chrono::system_clock::now();
     auto in_time_t = std::chrono::system_clock::to_time_t(now); // current time
