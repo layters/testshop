@@ -32,19 +32,19 @@ RowLayout {
             console.log("Selected", button.text, "button")
             button.checked = true
             if(button.text == walletButton.text) {
-                pageLoader.source = "../pages/subpages/WalletPage.qml"//_stackview.currentIndex = 0
+                pageStack.pushPage("qrc:/qml/pages/subpages/WalletPage.qml", StackView.Immediate)//_stackview.currentIndex = 0
             }
             if(button.text == shopButton.text) {
-                pageLoader.source = "../pages/subpages/DashboardPage.qml"
+                pageStack.pushPage("qrc:/qml/pages/subpages/DashboardPage.qml", StackView.Immediate)
             }
             if(button.text == messagesButton.text) {
-                pageLoader.source = "../pages/subpages/MessagesPage.qml"
+                pageStack.pushPage("qrc:/qml/pages/subpages/MessagesPage.qml", StackView.Immediate)
             }
             if(button.text == ordersButton.text) {
-                pageLoader.source = "../pages/subpages/OrdersPage.qml"
+                pageStack.pushPage("qrc:/qml/pages/subpages/OrdersPage.qml", StackView.Immediate)
             }
             if(button.text == accountButton.text) {
-                pageLoader.source = "../pages/subpages/AccountPage.qml"
+                pageStack.pushPage("qrc:/qml/pages/subpages/AccountPage.qml", StackView.Immediate)
             }                                                        
         }
     }
@@ -266,7 +266,7 @@ RowLayout {
         
         onClicked: {
             navBar.uncheckAllButtons();
-            pageLoader.source = "../pages/CartPage.qml"
+            pageStack.pushPage("qrc:/qml/pages/CartPage.qml", StackView.Immediate)
         }
                 
         MouseArea {

@@ -28,7 +28,7 @@ ApplicationWindow {
     header: Rectangle {
         color: NeroshopComponents.Style.getColorsFromTheme()[1]
         height: 80//100 // width should be set automatically to the parent's width
-        visible: (!pageLoader.source.toString().match("qml/pages/MainPage.qml")) ? true : false;
+        visible: (!(pageStack.currentItem instanceof MainPage)) ? true : false;
         
         Button {
             id: neroshopLogoImageButton
@@ -49,7 +49,9 @@ ApplicationWindow {
             anchors.leftMargin: 20
             onClicked: { 
                 navBar.uncheckAllButtons()
-                pageLoader.source = "qrc:/qml/pages/HomePage.qml" 
+                pageStack.pushPage("qrc:/qml/pages/HomePage.qml", StackView.Immediate)//pageStack.push(Qt.createComponent("qrc:/qml/pages/HomePage.qml"))//pageLoader.source = "qrc:/qml/pages/HomePage.qml" 
+                console.log("Number of items in StackView: " + pageStack.depth)
+                console.log(pageStack.get(0), pageStack.get(1))
             }
             MouseArea {
                 anchors.fill: parent
@@ -74,24 +76,70 @@ ApplicationWindow {
         }
     }
     
-    Loader {
-        id: pageLoader
+    StackView {
+        id: pageStack
         anchors.fill: parent
-        source: "qrc:/qml/pages/MainPage.qml"
-        //source: "qrc:/qml/pages/HomePage.qml"
-        //source: "qrc:/qml/pages/CartPage.qml"
-        //source: "qrc:/qml/pages/CatalogPage.qml"
-        //source: "qrc:/qml/pages/ProductPage.qml"
-        //source: "qrc:/qml/pages/OrderCheckoutPage.qml"
-        //source: "qrc:/qml/pages/ProfilePage.qml"
-        //source: "qrc:/qml/pages/subpages/WalletPage.qml"
-        //source: "qrc:/qml/pages/subpages/SellerHubPage.qml"
-        ////source: "qrc:/qml/pages/Page.qml"
+        initialItem: MainPage {}
+        property bool canGoBack: (depth > 1)
+        property var lastPushedSource: ""
+        property var lastPushedProperties: {}
+        
+        function pushPage(pageUrl, operation = StackView.Transition) {            
+            if (lastPushedSource === pageUrl) {
+                console.log("Same page with same properties as the last pushed one. Not pushing.");
+                return;
+            }
+            
+            let pageComponent = Qt.createComponent(pageUrl);
+            if (pageComponent.status !== Component.Ready) {
+                console.log("Component creation error:", component.errorString());
+                return;
+            }    
+            
+            lastPushedSource = pageUrl;
+            lastPushedProperties = null;
+            
+            pageStack.push(pageComponent, null, operation);
+        }
+        
+        function pushPageWithProperties(pageUrl, properties, operation = StackView.Transition) {
+            // Check if the new page is the same as the last pushed one
+            if (lastPushedSource === pageUrl && JSON.stringify(lastPushedProperties) === JSON.stringify(properties)) {
+                console.log("Same page with same properties as the last pushed one. Not pushing.");
+                return;
+            }
+        
+            let component = Qt.createComponent(pageUrl);
+            if (component.status !== Component.Ready) {
+                console.log("Component creation error:", component.errorString());
+                return;
+            }
+            
+            lastPushedSource = pageUrl;
+            lastPushedProperties = properties;
+        
+            pageStack.push(component, properties, operation);
+        }
 
-        onSourceChanged: {
-            console.log(source);
-            if (pageLoader.status == Loader.Ready) console.log('Loaded') 
-            else console.log('Not Loaded')
+        function goBack() {
+            if(!pageStack.canGoBack) return;
+            pageStack.pop();
+            if(pageStack.currentItem instanceof HomePage) {
+                console.log("Current page is Home (on back clicked)")
+                lastPushedSource = "qrc:/qml/pages/HomePage.qml"
+                lastPushedProperties = null
+            } else if(pageStack.currentItem instanceof CatalogPage) {
+                console.log("Current page is Catalog (on back clicked)")
+                lastPushedSource = "qrc:/qml/pages/CatalogPage.qml"
+                lastPushedProperties = pageStack.get(depth - 1).model // still pushes to StackView (:/) but that's ok // Note: pageStack.currentItem.model returns false when compared to `lastPushedProperties` whereas pageStack.get(depth - 1) returns true
+            } else {
+                lastPushedSource = ""
+                lastPushedProperties = null
+            }
+        }
+        
+        function goToMain() {
+            pageStack.pop(null); // unwinding
         }
     }
     

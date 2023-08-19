@@ -17,7 +17,7 @@ Page {
     }
     property var model: null
     function openSellerPage() {
-        pageLoader.setSource("qrc:/qml/pages/ProfilePage.qml", {"productModel": productPage.model})
+        pageStack.pushPageWithProperties("qrc:/qml/pages/ProfilePage.qml", {"productModel": productPage.model})
     }
     
     Flickable {
@@ -43,6 +43,33 @@ Page {
                     id: productImageColumn
                     //width: parent.width / 2//Layout.fillWidth: true//; Layout.fillHeight: true
                     spacing: 10
+                    // Back button
+                    Button {
+                        id: backButton
+                        Layout.alignment: Qt.AlignTop | Qt.AlignLeft
+                        Layout.leftMargin: 24; Layout.topMargin: 20
+                        implicitWidth: contentItem.contentWidth + 40; implicitHeight: contentItem.contentHeight + 20
+                        text: qsTr("←  Back")//"⇦  Back")
+                        hoverEnabled: true
+                        contentItem: Text {
+                            horizontalAlignment: Text.AlignHCenter
+                            verticalAlignment: Text.AlignVCenter
+                            text: backButton.text
+                            color: "#ffffff"
+                        }
+                        background: Rectangle {
+                            radius: 5
+                            color: backButton.hovered ? NeroshopComponents.Style.neroshopPurpleColor : "#50446f"
+                        }
+                        onClicked: {
+                            pageStack.goBack()
+                        }
+                        MouseArea {
+                            anchors.fill: parent
+                            onPressed: mouse.accepted = false
+                            cursorShape: Qt.PointingHandCursor
+                        }
+                    }
                     
                     Rectangle {
                         id: productImageRect

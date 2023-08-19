@@ -372,13 +372,7 @@ Page {
                 color: backButton.hovered ? NeroshopComponents.Style.neroshopPurpleColor : "#50446f"
             }
             onClicked: {
-                if(productModel !== null) {
-                    pageLoader.setSource("qrc:/qml/pages/ProductPage.qml", {"model": productModel})
-                }
-                if(messagesModel !== null) {
-                    pageLoader.setSource("qrc:/qml/pages/subpages/MessagesPage.qml")
-                    navBar.checkButtonByIndex(2)
-                }
+                pageStack.goBack()
             }
             MouseArea {
                 anchors.fill: parent
@@ -936,7 +930,7 @@ Page {
                                 }
                                 onClicked: { 
                                     navBar.uncheckAllButtons() // Uncheck all navigational buttons
-                                    pageLoader.setSource("qrc:/qml/pages/ProductPage.qml", { "model": modelData })
+                                    pageStack.pushPageWithProperties("qrc:/qml/pages/ProductPage.qml", { "model": modelData })
                                 }
                                 cursorShape: Qt.PointingHandCursor
                             }

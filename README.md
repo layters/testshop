@@ -1,4 +1,4 @@
-# neroshop - WORK IN PROGRESS
+# neroshop - WORK IN PROGRESS (ON HOLD)
 [![banner](assets/images/appicons/LogoLight250x250.png)](https://github.com/larteyoh/testshop "neroshop logo")
 
 

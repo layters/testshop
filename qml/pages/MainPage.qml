@@ -140,7 +140,7 @@ Page {
             Backend.saveAvatarImage(Backend.urlToLocalFile(avatarImage.source), account_key)
         }
         // Switch to HomePage
-        pageLoader.source = "HomePage.qml"//stack.push(home_page)
+        pageStack.pushPage("qrc:/qml/pages/HomePage.qml", StackView.Immediate)//stack.push(home_page)
         //console.log("Primary address: ", Wallet.getPrimaryAddress())
         //console.log("Balance: ", Wallet.getBalanceLocked().toFixed(12))
         //console.log("Unlocked balance: ", Wallet.getBalanceUnlocked().toFixed(12))
@@ -586,7 +586,7 @@ Page {
                             // Start synching the monero node as soon we hit the login button only sync automatically if auto-sync option is turned on (will be turned on by default)
                             onAutoSync();
                             // Switch to HomePage
-                            pageLoader.source = "HomePage.qml"
+                            pageStack.pushPage("qrc:/qml/pages/HomePage.qml", StackView.Immediate)
                             //console.log("Seed:", Wallet.getSeed())
                 	    }
                 	    // restore from seed
@@ -601,7 +601,7 @@ Page {
                 	        // ...
                 	        onAutoSync();
                             // Switch to HomePage
-                            ////pageLoader.source = "HomePage.qml"//stack.push(home_page)                	        
+                            ////pageStack.pushPage("qrc:/qml/pages/HomePage.qml", StackView.Immediate)//stack.push(home_page)                	        
                 	    }                	
                 	}
                 	

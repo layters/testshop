@@ -9,6 +9,7 @@ import "../components" as NeroshopComponents // Tooltip
 
 Page {
     id: homePage
+    title: qsTr("Home")
     background: Rectangle {
         color: "transparent" // Make transparent to blend in with theme
     }
@@ -138,7 +139,7 @@ Page {
                             onClicked: {
                                 if(Backend.getCategoryProductCount(modelData.id) <= 0) return;
                                 navBar.uncheckAllButtons()
-                                pageLoader.setSource("qrc:/qml/pages/CatalogPage.qml", { "model": Backend.getListingsByCategory(modelData.id, settingsDialog.hideIllegalProducts) })
+                                pageStack.pushPageWithProperties("qrc:/qml/pages/CatalogPage.qml", { "model": Backend.getListingsByCategory(modelData.id, settingsDialog.hideIllegalProducts) }, StackView.Immediate)
                             }
                             cursorShape: Qt.PointingHandCursor
                         }
@@ -194,7 +195,7 @@ Page {
                                         acceptedButtons: Qt.LeftButton
                                         onClicked: { 
                                             //navBar.uncheckAllButtons()
-                                            pageLoader.setSource("qrc:/qml/pages/ProductPage.qml", { "model": modelData })
+                                            pageStack.pushPageWithProperties("qrc:/qml/pages/ProductPage.qml", { "model": modelData })
                                         }
                                         cursorShape: Qt.PointingHandCursor
                                     }
