@@ -96,7 +96,7 @@ GridView {
                     }
                     onClicked: { 
                         navBar.uncheckAllButtons() // Uncheck all navigational buttons
-                        pageLoader.setSource("qrc:/qml/pages/ProductPage.qml", { "model": modelData })
+                        pageStack.pushPageWithProperties("qrc:/qml/pages/ProductPage.qml", { "model": modelData })
                     }
                     cursorShape: Qt.PointingHandCursor
                 }                    

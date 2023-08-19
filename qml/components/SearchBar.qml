@@ -50,7 +50,7 @@ Item {
             console.log("Searching for " + searchField.text)
             navBar.uncheckAllButtons()
             suggestionsPopup.close()
-            pageLoader.setSource("qrc:/qml/pages/CatalogPage.qml", {"model": (searchField.text.length < 1) ? Backend.getListings(Listing.SortNone, settingsDialog.hideIllegalProducts) : searchBar.model })//, {"model": [""]})
+            pageStack.pushPageWithProperties("qrc:/qml/pages/CatalogPage.qml", {"model": (searchField.text.length < 1) ? Backend.getListings(Listing.SortNone, settingsDialog.hideIllegalProducts) : searchBar.model }, StackView.Immediate)//, {"model": [""]})
             //console.log("page Loader Item (CatalogPage):", pageLoader.item)
             //console.log("page Loader Item (CatalogPage.catalog):", pageLoader.catalog)//.item)
         

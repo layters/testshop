@@ -232,20 +232,23 @@ void neroshop::Wallet::transfer(const std::string& address, double amount) {
     if(!monero_wallet_obj.get()) throw std::runtime_error("monero_wallet_full is not opened");
     if(!monero_wallet_obj.get()->is_synced()) throw std::runtime_error("wallet is not synced with a daemon");
     std::packaged_task<void(void)> transfer_task([this, address, amount]() -> void {
+    // Check if address is valid
+    if(!monero_utils::is_valid_address(address, monero_wallet_obj->get_network_type())) {
+        neroshop::print("Monero address is invalid", 1); return;
+    }
     // Convert monero to piconero
     double piconero = 0.000000000001;
     uint64_t monero_to_piconero = amount / piconero; //std::cout << neroshop::string::precision(amount, 12) << " xmr to piconero: " << monero_to_piconero << "\n";
     // TODO: for the 2-of-3 escrow system, take 0.5% of order total in piconeros
+    // Check if amount is zero or too low
+    if((amount < piconero) || (monero_to_piconero == 0)) {
+        neroshop::print("Nothing to send (amount is zero)", 1); return;
+    }
     // Check if balance is sufficient
     std::cout << "Wallet balance (spendable): " << monero_wallet_obj->get_unlocked_balance() << " (picos)\n";
     std::cout << "Amount to send: " << monero_to_piconero << " (picos)\n";
-    if(monero_to_piconero == 0) return;
     if(monero_wallet_obj->get_unlocked_balance() < monero_to_piconero) {
         neroshop::print("Wallet balance is insufficient", 1); return;
-    }
-    // Check if address is valid
-    if(!monero_utils::is_valid_address(address, monero_wallet_obj->get_network_type())) {
-        neroshop::print("Monero address is invalid", 1); return;
     }
     // Send funds from this wallet to the specified address
     monero_tx_config config; // Configures a transaction to send, sweep, or create a payment URI.

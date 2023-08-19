@@ -31,7 +31,7 @@ Page {
                             hoverEnabled: true
                             onClicked: {
                                 navBar.uncheckAllButtons()
-                                pageLoader.setSource("qrc:/qml/pages/ProfilePage.qml", { "messagesModel": {"sender_id": modelData.sender_id} })
+                                pageStack.pushPageWithProperties("qrc:/qml/pages/ProfilePage.qml", { "messagesModel": {"sender_id": modelData.sender_id} })
                             }
                             onEntered: parent.color = "blue"
                             onExited: parent.color = "#4169e1"

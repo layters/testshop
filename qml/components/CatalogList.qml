@@ -79,7 +79,7 @@ ListView {
                     onClicked: { 
                         navBar.uncheckAllButtons() // Uncheck all navigational buttons
                         console.log("Loading product page ...");
-                        pageLoader.setSource("qrc:/qml/pages/ProductPage.qml", { "model": modelData })////, { "listingId": modelData.listing_uuid })
+                        pageStack.pushPageWithProperties("qrc:/qml/pages/ProductPage.qml", { "model": modelData })////, { "listingId": modelData.listing_uuid })
                     }
                     cursorShape: Qt.PointingHandCursor
                 }                    
