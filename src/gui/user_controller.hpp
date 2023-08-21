@@ -18,27 +18,10 @@ namespace neroshop {
 
 class UserController : public QObject, public neroshop::Seller {
     Q_OBJECT
-    Q_ENUMS(InventorySorting)
 public:
     UserController(QObject *parent = nullptr);
     ~UserController();
-    
-    enum InventorySorting {
-        SortNone = 0,
-        SortByAvailability, // If item is in stock        
-        SortByDateOldest,
-        SortByDateNewest,
-        SortByName,
-        SortByQuantitySmallest,
-        SortByQuantityBiggest,
-        SortByPriceLowest,
-        SortByPriceHighest,
-        SortByProductCode,
-        SortByCategory,
-        SortByCondition,
-        //TODO: productid, currency, location, color, size, weight, imagefilesize, desc
-    };
-    
+
     Q_PROPERTY(neroshop::User* user READ getUser NOTIFY userChanged);
     Q_PROPERTY(bool logged READ isUserLogged NOTIFY userLogged);
     Q_PROPERTY(int productsCount READ getProductsCount NOTIFY productsCountChanged);
@@ -94,7 +77,7 @@ public:
     //Q_INVOKABLE <type> <function_name>() const;
     Q_INVOKABLE int getCartQuantity() const;
     
-    Q_INVOKABLE QVariantList getInventory(InventorySorting sorting = SortNone) const;
+    Q_INVOKABLE QVariantList getInventory(int sorting = 0) const;
 
     Q_INVOKABLE QVariantList getMessages() const;
     Q_INVOKABLE QVariantList getMessages(const QString& sender_id) const;

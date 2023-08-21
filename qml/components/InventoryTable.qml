@@ -4,7 +4,7 @@ import QtQuick.Layouts 1.12
 
 import FontAwesome 1.0
 
-import neroshop.InventorySorting 1.0
+import neroshop.Enums 1.0
 
 import "." as NeroshopComponents
 
@@ -142,7 +142,7 @@ Item {
             property real cellHeight: 100
             property real cellRadius: 0////table.titleBoxRadius
             property string cellColor: (NeroshopComponents.Style.darkTheme) ? (NeroshopComponents.Style.themeName == "PurpleDust" ? "#17171c" : "#181a1b") : "#c9c9cd"//"transparent"//table.columnColor
-            //property int currentSorting: Inventory.SortNone
+            //property int currentSorting: 0
             ////contentHeight: childrenRect.height
             ////Component.onCompleted: console.log(Neroshop.InventorySorting) // C++ enum
             ScrollBar.vertical: ScrollBar { } // ?
@@ -177,7 +177,7 @@ Item {
                 // This is due to the model changing every time we emit the signal
                 // Hence the creation of User.delistProducts (notice the s) which solves the issue
             }
-            model: showOutOfStockProductsBox.checked ? User.inventory : User.getInventory(Inventory.SortByAvailability)
+            model: showOutOfStockProductsBox.checked ? User.inventory : User.getInventory(Enum.InventorySorting.SortByAvailability)
             delegate: Rectangle {
                 width: listView.width
                 height: listView.cellHeight

@@ -2,7 +2,7 @@ import QtQuick 2.12
 import QtQuick.Controls 2.12
 //import QtQuick.Layouts 1.12
 
-import neroshop.ListingSorting 1.0
+import neroshop.Enums 1.0
 
 import "." as NeroshopComponents
 
@@ -50,7 +50,7 @@ Item {
             console.log("Searching for " + searchField.text)
             navBar.uncheckAllButtons()
             suggestionsPopup.close()
-            pageStack.pushPageWithProperties("qrc:/qml/pages/CatalogPage.qml", {"model": (searchField.text.length < 1) ? Backend.getListings(Listing.SortNone, settingsDialog.hideIllegalProducts) : searchBar.model }, StackView.Immediate)//, {"model": [""]})
+            pageStack.pushPageWithProperties("qrc:/qml/pages/CatalogPage.qml", {"model": (searchField.text.length < 1) ? Backend.getListings(Enum.ListingSorting.SortNone, settingsDialog.hideIllegalProducts) : searchBar.model }, StackView.Immediate)//, {"model": [""]})
             //console.log("page Loader Item (CatalogPage):", pageLoader.item)
             //console.log("page Loader Item (CatalogPage.catalog):", pageLoader.catalog)//.item)
         
