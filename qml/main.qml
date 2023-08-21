@@ -13,6 +13,7 @@ import FontAwesome 1.0
 import "components"
 import "components" as NeroshopComponents
 import "pages"
+import "pages/subpages"
 
 ApplicationWindow {
     id: mainWindow
@@ -92,7 +93,7 @@ ApplicationWindow {
             
             let pageComponent = Qt.createComponent(pageUrl);
             if (pageComponent.status !== Component.Ready) {
-                console.log("Component creation error:", component.errorString());
+                console.log("Component creation error:", pageComponent.errorString());
                 return;
             }    
             
@@ -132,6 +133,10 @@ ApplicationWindow {
                 console.log("Current page is Catalog (on back clicked)")
                 lastPushedSource = "qrc:/qml/pages/CatalogPage.qml"
                 lastPushedProperties = pageStack.get(depth - 1).model // still pushes to StackView (:/) but that's ok // Note: pageStack.currentItem.model returns false when compared to `lastPushedProperties` whereas pageStack.get(depth - 1) returns true
+            } else if(pageStack.currentItem instanceof MessagesPage) {
+                console.log("Current page is Messages (on back clicked)")
+                navBar.checkButtonByIndex(2)
+                lastPushedSource = "qrc:/qml/pages/subpages/MessagesPage.qml"
             } else {
                 lastPushedSource = ""
                 lastPushedProperties = null

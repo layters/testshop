@@ -544,6 +544,35 @@ QVariantList neroshop::UserController::getMessages() const {
     return messages_array;
 }
 //----------------------------------------------------------------
+QVariantList neroshop::UserController::getMessages(const QString& sender_id) const {
+    QVariantList allMessages = getMessages();
+    QVariantList filteredMessages;
+
+    // Filter the messages based on the specified sender_id
+    for (const QVariant &message : allMessages) {
+        QVariantMap messageMap = message.toMap();
+        if (messageMap["sender_id"].toString() == sender_id) {
+            filteredMessages.append(messageMap);
+        }
+    }
+
+    return filteredMessages;
+}
+//----------------------------------------------------------------
+QVariantList neroshop::UserController::getMessages(const QString& sender_id, const QVariantList& messages) const {
+    QVariantList filteredMessages;
+
+    // Filter the messages based on the specified sender_id
+    for (const QVariant &message : messages) {
+        QVariantMap messageMap = message.toMap();
+        if (messageMap["sender_id"].toString() == sender_id) {
+            filteredMessages.append(messageMap);
+        }
+    }
+
+    return filteredMessages;
+}
+//----------------------------------------------------------------
 //----------------------------------------------------------------
 bool neroshop::UserController::isUserLogged() const {
     return (_user.get() != nullptr);
