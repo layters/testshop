@@ -36,7 +36,8 @@ https://user-images.githubusercontent.com/58671384/219222567-f170f728-be31-43d5-
 ![CatalogGrid](https://github.com/larteyoh/testshop/blob/main/assets/images/screenshots/CatalogGrid.png)
 ![CatalogList](https://github.com/larteyoh/testshop/blob/main/assets/images/screenshots/CatalogList.png)
 ![ProductPage](https://github.com/larteyoh/testshop/blob/main/assets/images/screenshots/ProductPage.png)
-![SettingsDialog_Monero](https://github.com/larteyoh/testshop/blob/main/assets/images/screenshots/SettingsDialog_Monero.png)
+![SettingsDialog_Network](https://github.com/larteyoh/testshop/blob/main/assets/images/screenshots/SettingsDialog_Monero.png)
+![SettingsDialog_General](https://github.com/larteyoh/testshop/blob/main/assets/images/screenshots/SettingsDialog_General.png)
 ![HomePage](https://github.com/larteyoh/testshop/blob/main/assets/images/screenshots/HomePage.png)
 ![HomePage_Recent_Listings](https://github.com/larteyoh/testshop/blob/main/assets/images/screenshots/HomePage_Recent_Listings.png)
 ![Dashboard](https://github.com/larteyoh/testshop/blob/main/assets/images/screenshots/Dashboard_Overview.png)
@@ -49,7 +50,7 @@ https://user-images.githubusercontent.com/58671384/219222567-f170f728-be31-43d5-
 ![WalletPage_Transactions](https://github.com/larteyoh/testshop/blob/main/assets/images/screenshots/WalletPage_BalanceTxs.png)
 ![ProfilePage_ListingsTab](https://github.com/larteyoh/testshop/blob/main/assets/images/screenshots/ProfilePage_ListingsTab.png)
 ![ProfilePage_RatingsTab](https://github.com/larteyoh/testshop/blob/main/assets/images/screenshots/ProfilePage_RatingsTab.png)
-![ProfilePage_With_Custom_Avatar](https://github.com/larteyoh/testshop/blob/main/assets/images/screenshots/ProfilePage_With_Custom_Avatar)
+![ProfilePage_With_Custom_Avatar](https://github.com/larteyoh/testshop/blob/main/assets/images/screenshots/ProfilePage_With_Custom_Avatar.png)
 ![ProfilePage_Identicon](https://github.com/larteyoh/testshop/blob/main/assets/images/screenshots/identicon.png)
 ![MessagesPage](https://github.com/larteyoh/testshop/blob/main/assets/images/screenshots/Messages_Page.png)
 
