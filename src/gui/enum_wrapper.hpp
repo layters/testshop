@@ -54,7 +54,7 @@ public:
     enum class ListingSorting {
         SortNone = 0,
         SortByCategory,
-        SortByMostRecent,
+        SortByMostRecent,//SortByLatest = SortByMostRecent,
         SortByOldest,
         SortByAlphabeticalOrder,
         SortByPriceLowest,
@@ -63,6 +63,23 @@ public:
         SortByMostSales,
     };
     Q_ENUM(ListingSorting)
+    
+    enum class InventorySorting {
+        SortNone = 0,
+        SortByAvailability, // If item is in stock        
+        SortByDateOldest,
+        SortByDateNewest,
+        SortByName,
+        SortByQuantitySmallest,
+        SortByQuantityBiggest,
+        SortByPriceLowest,
+        SortByPriceHighest,
+        SortByProductCode,
+        SortByCategory,
+        SortByCondition,
+        //TODO: productid, currency, location, color, size, weight, imagefilesize, desc
+    };
+    Q_ENUM(InventorySorting)
 };
     
 }
@@ -71,4 +88,5 @@ Q_DECLARE_METATYPE(neroshop::EnumWrapper::WalletError)
 Q_DECLARE_METATYPE(neroshop::EnumWrapper::CartError)
 Q_DECLARE_METATYPE(neroshop::EnumWrapper::LoginError)
 Q_DECLARE_METATYPE(neroshop::EnumWrapper::ListingSorting)
+Q_DECLARE_METATYPE(neroshop::EnumWrapper::InventorySorting)
 #endif

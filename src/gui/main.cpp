@@ -139,10 +139,6 @@ int main(int argc, char *argv[])
     ////qmlRegisterType<TableModel>("neroshop.TableModel", 1, 0, "TableModel"); // Usage: import neroshop.TableModel  ...  TableModel { id: tableModel }
     // Register enums
     qmlRegisterUncreatableType<EnumWrapper>("neroshop.Enums", 1, 0, "Enum", "Enums cannot be created.");//neroshop::EnumWrapper::registerEnums(&engine);
-    // Register the ListingSorting enum type
-    qmlRegisterUncreatableType<Backend>("neroshop.ListingSorting", 1, 0, "Listing", "Enums cannot be created."); // Usage: import neroshop.ListingSorting 1.0 ... console.log("SortByCategory",Listing.SortByCategory);
-    // Register the InventorySorting enum type
-    qmlRegisterUncreatableType<UserController>("neroshop.InventorySorting", 1, 0, "Inventory", "Enums cannot be created.");
 
     engine.addImageProvider(WALLET_QR_PROVIDER, new WalletQrProvider(WALLET_QR_PROVIDER));
     engine.addImageProvider(AVATAR_IMAGE_PROVIDER, new ImageProvider(AVATAR_IMAGE_PROVIDER));

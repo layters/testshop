@@ -67,7 +67,7 @@ Page {
                             anchors.leftMargin: 10; 
                             anchors.rightMargin: anchors.leftMargin
                             anchors.verticalCenter: parent.verticalCenter
-                            spacing: 5
+                            spacing: 10
                             Rectangle {
                                 id: senderAvatarRect
                                 Layout.preferredWidth: 32; Layout.preferredHeight: width
@@ -129,7 +129,7 @@ Page {
             Text {
                 visible: (senderList.count < 1)
                 anchors.centerIn: parent
-                text: "Nothing to see here ..."
+                text: "No messages found"
                 color: (NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000"
             }
             
@@ -144,7 +144,7 @@ Page {
                 spacing: 5
                 model: senderList.currentItem ? User.getMessages(senderList.currentItem.children[1].children[0].children[1].senderId, senderList.messages_model) : null
                 delegate: Rectangle {
-                    width: parent.width
+                    width: ListView.view.width
                     height: 250 // Adjust the height as needed
                     color: "transparent"//index % 2 === 0 ? "#f0f0f0" : "#e0e0e0"
                     border.color: messageList.parent.border.color

@@ -15,23 +15,11 @@
 
 namespace neroshop {
 class Backend : public QObject { // This class was created for storing utility functions and backend implementations // Maybe I should rename this to BackendTools?
-    Q_OBJECT 
-    Q_ENUMS(ListingSorting)
+    Q_OBJECT
 public:
     Backend(QObject *parent = nullptr);
     ~Backend();
-    
-    enum ListingSorting {
-        SortNone = 0,
-        SortByCategory,
-        SortByMostRecent,//SortByLatest = SortByMostRecent,
-        SortByOldest,
-        SortByAlphabeticalOrder,
-        SortByPriceLowest,
-        SortByPriceHighest,
-        SortByMostFavorited,
-        SortByMostSales,
-    };
+
     //Q_PROPERTY(int categoryProductCount READ getCategoryProductCount NOTIFY categoryProductCountChanged)
     //Q_PROPERTY(QVariantList searchResults READ getListingsBySearchTerm NOTIFY searchResultsChanged)
 
@@ -69,7 +57,7 @@ public:
     Q_INVOKABLE int loginWithKeys(WalletController* wallet_controller, UserController * user_controller);
     Q_INVOKABLE int loginWithHW(WalletController* wallet_controller, UserController * user_controller);
     
-    Q_INVOKABLE QVariantList getListings(ListingSorting sorting = SortNone, bool hide_illicit_items = true); // Products listed by sellers
+    Q_INVOKABLE QVariantList getListings(int sorting = 0, bool hide_illicit_items = true); // Products listed by sellers
     Q_INVOKABLE QVariantList getListingsByCategory(int category_id, bool hide_illicit_items = true);
     Q_INVOKABLE QVariantList getListingsByMostRecentLimit(int limit, bool hide_illicit_items = true);
     Q_INVOKABLE QVariantList getListingsBySearchTerm(const QString& search_term, int count = 1000, bool hide_illicit_items = true); // count is the maximum number of search results (total). The search results (per page) can be between 10-100 or 50-100

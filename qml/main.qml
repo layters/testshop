@@ -52,7 +52,6 @@ ApplicationWindow {
                 navBar.uncheckAllButtons()
                 pageStack.pushPage("qrc:/qml/pages/HomePage.qml", StackView.Immediate)//pageStack.push(Qt.createComponent("qrc:/qml/pages/HomePage.qml"))//pageLoader.source = "qrc:/qml/pages/HomePage.qml" 
                 console.log("Number of items in StackView: " + pageStack.depth)
-                console.log(pageStack.get(0), pageStack.get(1))
             }
             MouseArea {
                 anchors.fill: parent

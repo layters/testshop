@@ -1122,7 +1122,7 @@ QVariantList neroshop::Backend::getListingsBySearchTerm(const QString& searchTer
     return catalog;
 }
 //----------------------------------------------------------------
-QVariantList neroshop::Backend::getListings(ListingSorting sorting, bool hide_illicit_items) {
+QVariantList neroshop::Backend::getListings(int sorting, bool hide_illicit_items) {
     // Transition from Sqlite to DHT:
     Client * client = Client::get_main_client();
     db::Sqlite3 * database = neroshop::get_database();
@@ -1246,13 +1246,13 @@ QVariantList neroshop::Backend::getListings(ListingSorting sorting, bool hide_il
     sqlite3_finalize(stmt);
     
     switch(sorting) {
-        case SortNone:
+        case static_cast<int>(EnumWrapper::ListingSorting::SortNone):
             // Code for sorting by none - do nothing
             break;
-        case SortByCategory:
+        case static_cast<int>(EnumWrapper::ListingSorting::SortByCategory):
             // Code for sorting by category - unavailable. Use getListingsByCategory() instead
             break;
-        case SortByMostRecent:
+        case static_cast<int>(EnumWrapper::ListingSorting::SortByMostRecent):
             // Perform the sorting operation on the catalog based on the "most recent" criteria
             std::sort(catalog.begin(), catalog.end(), [](const QVariant& a, const QVariant& b) {
                 QVariantMap listingA = a.toMap();
@@ -1274,7 +1274,7 @@ QVariantList neroshop::Backend::getListings(ListingSorting sorting, bool hide_il
                 return dateTimeA > dateTimeB;
             });
             break;
-        case SortByOldest:
+        case static_cast<int>(EnumWrapper::ListingSorting::SortByOldest):
             std::sort(catalog.begin(), catalog.end(), [](const QVariant& a, const QVariant& b) {
                 QVariantMap listingA = a.toMap();
                 QVariantMap listingB = b.toMap();
@@ -1295,7 +1295,7 @@ QVariantList neroshop::Backend::getListings(ListingSorting sorting, bool hide_il
                 return dateTimeA < dateTimeB;
             });
             break;
-        case SortByAlphabeticalOrder:
+        case static_cast<int>(EnumWrapper::ListingSorting::SortByAlphabeticalOrder):
             // Sort the catalog list by product name (alphabetically)
             std::sort(catalog.begin(), catalog.end(), [](const QVariant& listing1, const QVariant& listing2) {
                 QString productName1 = listing1.toMap()["product_name"].toString();
@@ -1303,7 +1303,7 @@ QVariantList neroshop::Backend::getListings(ListingSorting sorting, bool hide_il
                 return productName1 < productName2;
             });
             break;
-        case SortByPriceLowest:
+        case static_cast<int>(EnumWrapper::ListingSorting::SortByPriceLowest):
             // Perform the sorting operation on the catalog based on the "price lowest" criteria
             std::sort(catalog.begin(), catalog.end(), [](const QVariant& a, const QVariant& b) {
                 QVariantMap listingA = a.toMap();
@@ -1311,7 +1311,7 @@ QVariantList neroshop::Backend::getListings(ListingSorting sorting, bool hide_il
                 return listingA["price"].toDouble() < listingB["price"].toDouble();
             });
             break;
-        case SortByPriceHighest:
+        case static_cast<int>(EnumWrapper::ListingSorting::SortByPriceHighest):
             // Perform the sorting operation on the catalog based on the "price highest" criteria
             std::sort(catalog.begin(), catalog.end(), [](const QVariant& a, const QVariant& b) {
                 QVariantMap listingA = a.toMap();
@@ -1319,10 +1319,10 @@ QVariantList neroshop::Backend::getListings(ListingSorting sorting, bool hide_il
                 return listingA["price"].toDouble() > listingB["price"].toDouble();
             });
             break;
-        case SortByMostFavorited:
+        case static_cast<int>(EnumWrapper::ListingSorting::SortByMostFavorited):
             // Code for sorting by most favorited
             break;
-        case SortByMostSales:
+        case static_cast<int>(EnumWrapper::ListingSorting::SortByMostSales):
             // Code for sorting by most sales
             break;
         default:
@@ -1464,7 +1464,7 @@ QVariantList neroshop::Backend::getListingsByCategory(int category_id, bool hide
 }
 //----------------------------------------------------------------
 QVariantList neroshop::Backend::getListingsByMostRecentLimit(int limit, bool hide_illicit_items) {
-    auto catalog = getListings(SortByMostRecent, hide_illicit_items);
+    auto catalog = getListings(static_cast<int>(EnumWrapper::ListingSorting::SortByMostRecent), hide_illicit_items);
     if (catalog.size() > limit) {
         catalog = catalog.mid(0, limit);
     }
@@ -1614,7 +1614,7 @@ QVariantList neroshop::Backend::validateDisplayName(const QString& display_name)
 QVariantList neroshop::Backend::registerUser(WalletController* wallet_controller, const QString& display_name, UserController * user_controller, const QString& avatar) {
     // Make sure daemon is connected first
     if(!DaemonManager::isDaemonServerBound()) {
-        return { false, "Please wait for the daemon LIPC server to connect first" };
+        return { false, "Please wait for the local daemon IPC server to connect first" };
     }
     //---------------------------------------------
     db::Sqlite3 * database = neroshop::get_database();
@@ -1667,7 +1667,7 @@ QVariantList neroshop::Backend::registerUser(WalletController* wallet_controller
     // Store login credentials in DHT
     Client * client = Client::get_main_client();
     // If client is not connect, return error
-    if (!client->is_connected()) return { false, "Not connected to daemon LIPC server" };
+    if (!client->is_connected()) return { false, "Not connected to local daemon IPC server" };
     // Serialize user object
     auto data = Serializer::serialize(*user_controller->_user);
     std::string key = data.first;
@@ -1699,7 +1699,7 @@ int neroshop::Backend::loginWithWalletFile(WalletController* wallet_controller, 
     
     // Make sure daemon is connected first
     if(!DaemonManager::isDaemonServerBound()) {
-        neroshop::print("Please wait for the daemon LIPC server to connect first", 1);
+        neroshop::print("Please wait for the local daemon IPC server to connect first", 1);
         return static_cast<int>(EnumWrapper::LoginError::DaemonIsNotConnected);
     }    
     // Open wallet file

@@ -5,7 +5,7 @@ import QtQuick.Layouts 1.12 // GridLayout
 import QtQuick.Shapes 1.3 // (since Qt 5.10) // Shape
 import QtGraphicalEffects 1.12//Qt5Compat.GraphicalEffects 1.15//= Qt6// ColorOverlay
 
-import neroshop.ListingSorting 1.0
+import neroshop.Enums 1.0
 
 import "../components" as NeroshopComponents
 
@@ -86,29 +86,29 @@ Page {
                 displayText: "Sort: " + currentText
                 onActivated: {
                     if(currentIndex == find("None")) {
-                        catalogPage.model = Backend.getListings(Listing.SortNone, settingsDialog.hideIllegalProducts)
-                        settingsDialog.lastUsedListingSorting = Listing.SortNone
+                        catalogPage.model = Backend.getListings(Enum.ListingSorting.SortNone, settingsDialog.hideIllegalProducts)
+                        settingsDialog.lastUsedListingSorting = Enum.ListingSorting.SortNone
                     }
                     if(currentIndex == find("Oldest")) {
-                        catalogPage.model = Backend.getListings(Listing.SortByOldest, settingsDialog.hideIllegalProducts)
-                        settingsDialog.lastUsedListingSorting = Listing.SortByOldest
+                        catalogPage.model = Backend.getListings(Enum.ListingSorting.SortByOldest, settingsDialog.hideIllegalProducts)
+                        settingsDialog.lastUsedListingSorting = Enum.ListingSorting.SortByOldest
                     }
                     if(currentIndex == find("Latest")) {
                         console.log("Showing most recent items")
-                        catalogPage.model = Backend.getListings(Listing.SortByMostRecent, settingsDialog.hideIllegalProducts)
-                        settingsDialog.lastUsedListingSorting = Listing.SortByMostRecent
+                        catalogPage.model = Backend.getListings(Enum.ListingSorting.SortByMostRecent, settingsDialog.hideIllegalProducts)
+                        settingsDialog.lastUsedListingSorting = Enum.ListingSorting.SortByMostRecent
                     }
                     if(currentIndex == find("Alphabetical order")) {
-                        catalogPage.model = Backend.getListings(Listing.SortByAlphabeticalOrder, settingsDialog.hideIllegalProducts)
-                        settingsDialog.lastUsedListingSorting = Listing.SortByAlphabeticalOrder
+                        catalogPage.model = Backend.getListings(Enum.ListingSorting.SortByAlphabeticalOrder, settingsDialog.hideIllegalProducts)
+                        settingsDialog.lastUsedListingSorting = Enum.ListingSorting.SortByAlphabeticalOrder
                     }
                     if(currentIndex == find("Price - Lowest")) {
-                        catalogPage.model = Backend.getListings(Listing.SortByPriceLowest, settingsDialog.hideIllegalProducts)
-                        settingsDialog.lastUsedListingSorting = Listing.SortByPriceLowest
+                        catalogPage.model = Backend.getListings(Enum.ListingSorting.SortByPriceLowest, settingsDialog.hideIllegalProducts)
+                        settingsDialog.lastUsedListingSorting = Enum.ListingSorting.SortByPriceLowest
                     }
                     if(currentIndex == find("Price - Highest")) {
-                        catalogPage.model = Backend.getListings(Listing.SortByPriceHighest, settingsDialog.hideIllegalProducts)
-                        settingsDialog.lastUsedListingSorting = Listing.SortByPriceHighest
+                        catalogPage.model = Backend.getListings(Enum.ListingSorting.SortByPriceHighest, settingsDialog.hideIllegalProducts)
+                        settingsDialog.lastUsedListingSorting = Enum.ListingSorting.SortByPriceHighest
                     }
                     /*if(currentIndex == find("")) {
                         catalogPage.model = Backend.
