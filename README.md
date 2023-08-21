@@ -66,7 +66,7 @@ The name _neroshop_ is a combination of the words _nero_, which is Italian for _
 - [x] Pseudonymous identities 
     - sellers and buyers are identified by their unique ids and/or optional display names
 - [x] End-to-end encrypted messaging system for communications between sellers and buyers
-    - generated RSA-4096 private keys will be used to decrypt messages so keep yours safe, secure and accessible!
+    - generated RSA-4096 private keys will be used to decrypt messages.
 - [ ] Subaddress generator for direct payments without an escrow 
     - a unique subaddress will be generated from a seller's synced wallet account for each order placed by a customer
 - [x] Built-in Monero wallet with basic functionalities (`transaction history`, `send`, and `receive`)
@@ -92,7 +92,7 @@ The name _neroshop_ is a combination of the words _nero_, which is Italian for _
 | [sqlite3](https://sqlite.org/)                                     | 3.38.0             | database management                                                    | :heavy_check_mark:                       |
 | [QR Code generator](https://github.com/nayuki/QR-Code-generator)   | ?                  | qr code generation                                                     | :heavy_check_mark:                       |
 | [json](https://github.com/nlohmann/json/)                          | ?                  | json parsing and msgpack                                               | :heavy_check_mark:                       |
-| [curl](https://github.com/curl/curl)                               | ?                  | currency conversion                                                    | :o:                                      |
+| [curl](https://github.com/curl/curl)                               | ?                  | currency conversion                                                    | :o: :white_square_button:                |
 | [openssl](https://github.com/openssl/openssl)                      | 1.1.1              | for curl, sha256 sum and message encryption                            | :heavy_check_mark:                       |
 | [Qt](https://www.qt.io/)                                           | 5.12.8             | graphical user interface                                               | :heavy_check_mark:                       |
 | [raft](https://github.com/willemt/raft)                            | ?                  | consensus mechanism                                                    | :grey_question:                          |
@@ -290,7 +290,7 @@ u/EchoingCat — for the revision of the official neroshop logo
 woodser — for his guidance and for his work on the monero-cpp library which has made the development of this app possible
 yuriio147 — for his work on various QML components, the currency converter, wallet address qr provider, fixing a major bug in the RSA encryption code, the RSA signing and verifying functions, and for teaching me some Qt/QML techniques
 lza_menace — for his help on creating the new monero.fail JSON API endpoint
-everyone in our matrix room — for sharing many great ideas that could be used to improve the project
+everyone in our matrix room — for sharing many great ideas that have been useful to the project
 ```
 
 [//]: # (./clean.sh)

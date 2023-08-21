@@ -97,6 +97,8 @@ public:
     Q_INVOKABLE QVariantList getInventory(InventorySorting sorting = SortNone) const;
 
     Q_INVOKABLE QVariantList getMessages() const;
+    Q_INVOKABLE QVariantList getMessages(const QString& sender_id) const;
+    Q_INVOKABLE QVariantList getMessages(const QString& sender_id, const QVariantList& messages) const;
 
     Q_INVOKABLE neroshop::User * getUser() const;
     neroshop::Seller * getSeller() const;    
