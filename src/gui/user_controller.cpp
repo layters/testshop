@@ -381,31 +381,31 @@ QVariantList neroshop::UserController::getInventory(int sorting) const {
     sqlite3_finalize(stmt);
         
     switch(sorting) {
-        case static_cast<int>(EnumWrapper::InventorySorting::SortNone):
-            std::cout << "SortNone (" << static_cast<int>(EnumWrapper::InventorySorting::SortNone) << ") selected\n";
+        case static_cast<int>(EnumWrapper::Sorting::SortNone):
+            std::cout << "SortNone (" << static_cast<int>(EnumWrapper::Sorting::SortNone) << ") selected\n";
             break;
-        case static_cast<int>(EnumWrapper::InventorySorting::SortByAvailability): // Filter items with quantity less than 1
-            std::cout << "SortByAvailability (" << static_cast<int>(EnumWrapper::InventorySorting::SortByAvailability) << ") selected\n";
+        case static_cast<int>(EnumWrapper::Sorting::SortByAvailability): // Filter items with quantity less than 1
+            std::cout << "SortByAvailability (" << static_cast<int>(EnumWrapper::Sorting::SortByAvailability) << ") selected\n";
             inventory_array.erase(std::remove_if(inventory_array.begin(), inventory_array.end(), [](const QVariant& variant) {
                 const QVariantMap& inventory_object = variant.toMap();
                 return inventory_object.value("quantity").toInt() < 1;
             }), inventory_array.end());
             break;
-        case static_cast<int>(EnumWrapper::InventorySorting::SortByQuantitySmallest):
+        case static_cast<int>(EnumWrapper::Sorting::SortByQuantitySmallest):
             std::sort(inventory_array.begin(), inventory_array.end(), [](const QVariant& a, const QVariant& b) {
                 const QVariantMap& itemA = a.toMap();
                 const QVariantMap& itemB = b.toMap();
                 return itemA.value("quantity").toInt() < itemB.value("quantity").toInt();
             });
             break;            
-        case static_cast<int>(EnumWrapper::InventorySorting::SortByQuantityBiggest):
+        case static_cast<int>(EnumWrapper::Sorting::SortByQuantityBiggest):
             std::sort(inventory_array.begin(), inventory_array.end(), [](const QVariant& a, const QVariant& b) {
                 const QVariantMap& itemA = a.toMap();
                 const QVariantMap& itemB = b.toMap();
                 return itemA.value("quantity").toInt() > itemB.value("quantity").toInt();
             });     
             break;
-        case static_cast<int>(EnumWrapper::InventorySorting::SortByDateOldest):
+        case static_cast<int>(EnumWrapper::Sorting::SortByDateOldest):
             std::sort(inventory_array.begin(), inventory_array.end(), [](const QVariant& a, const QVariant& b) {
                 QVariantMap listingA = a.toMap();
                 QVariantMap listingB = b.toMap();
@@ -426,7 +426,7 @@ QVariantList neroshop::UserController::getInventory(int sorting) const {
                 return dateTimeA < dateTimeB;
             });
             break;
-        case static_cast<int>(EnumWrapper::InventorySorting::SortByDateNewest):
+        case static_cast<int>(EnumWrapper::Sorting::SortByDateNewest):
             std::sort(inventory_array.begin(), inventory_array.end(), [](const QVariant& a, const QVariant& b) {
                 QVariantMap listingA = a.toMap();
                 QVariantMap listingB = b.toMap();
@@ -447,29 +447,29 @@ QVariantList neroshop::UserController::getInventory(int sorting) const {
                 return dateTimeA > dateTimeB;
             });
             break;            
-        case static_cast<int>(EnumWrapper::InventorySorting::SortByPriceLowest):
+        case static_cast<int>(EnumWrapper::Sorting::SortByPriceLowest):
             std::sort(inventory_array.begin(), inventory_array.end(), [](const QVariant& a, const QVariant& b) {
                 QVariantMap listingA = a.toMap();
                 QVariantMap listingB = b.toMap();
                 return listingA["price"].toDouble() < listingB["price"].toDouble();
             });
             break;
-        case static_cast<int>(EnumWrapper::InventorySorting::SortByPriceHighest):
+        case static_cast<int>(EnumWrapper::Sorting::SortByPriceHighest):
             std::sort(inventory_array.begin(), inventory_array.end(), [](const QVariant& a, const QVariant& b) {
                 QVariantMap listingA = a.toMap();
                 QVariantMap listingB = b.toMap();
                 return listingA["price"].toDouble() > listingB["price"].toDouble();
             });
             break;             
-        /*case static_cast<int>(EnumWrapper::InventorySorting::SortByName):
+        /*case static_cast<int>(EnumWrapper::Sorting::SortByName):
             std::cout << "SortByName (" << SortByName << ") selected\n";
             command = "SELECT DISTINCT * FROM listings JOIN products ON products.uuid = listings.product_id JOIN images ON images.product_id = listings.product_id WHERE seller_id = $1 GROUP BY images.product_id;";
             break;*/
-        /*case static_cast<int>(EnumWrapper::InventorySorting::) :
+        /*case static_cast<int>(EnumWrapper::Sorting::) :
             std::cout << "Sort? (" << ? << ") selected\n";
             break;*/
         default:
-            std::cout << "default: SortNone (" << static_cast<int>(EnumWrapper::InventorySorting::SortNone) << ") selected\n";
+            std::cout << "default: SortNone (" << static_cast<int>(EnumWrapper::Sorting::SortNone) << ") selected\n";
             break;
     }
 

@@ -177,7 +177,7 @@ Item {
                 // This is due to the model changing every time we emit the signal
                 // Hence the creation of User.delistProducts (notice the s) which solves the issue
             }
-            model: showOutOfStockProductsBox.checked ? User.inventory : User.getInventory(Enum.InventorySorting.SortByAvailability)
+            model: showOutOfStockProductsBox.checked ? User.inventory : User.getInventory(Enum.Sorting.SortByAvailability)
             delegate: Rectangle {
                 width: listView.width
                 height: listView.cellHeight

@@ -1246,13 +1246,13 @@ QVariantList neroshop::Backend::getListings(int sorting, bool hide_illicit_items
     sqlite3_finalize(stmt);
     
     switch(sorting) {
-        case static_cast<int>(EnumWrapper::ListingSorting::SortNone):
+        case static_cast<int>(EnumWrapper::Sorting::SortNone):
             // Code for sorting by none - do nothing
             break;
-        case static_cast<int>(EnumWrapper::ListingSorting::SortByCategory):
+        case static_cast<int>(EnumWrapper::Sorting::SortByCategory):
             // Code for sorting by category - unavailable. Use getListingsByCategory() instead
             break;
-        case static_cast<int>(EnumWrapper::ListingSorting::SortByMostRecent):
+        case static_cast<int>(EnumWrapper::Sorting::SortByMostRecent):
             // Perform the sorting operation on the catalog based on the "most recent" criteria
             std::sort(catalog.begin(), catalog.end(), [](const QVariant& a, const QVariant& b) {
                 QVariantMap listingA = a.toMap();
@@ -1274,7 +1274,7 @@ QVariantList neroshop::Backend::getListings(int sorting, bool hide_illicit_items
                 return dateTimeA > dateTimeB;
             });
             break;
-        case static_cast<int>(EnumWrapper::ListingSorting::SortByOldest):
+        case static_cast<int>(EnumWrapper::Sorting::SortByOldest):
             std::sort(catalog.begin(), catalog.end(), [](const QVariant& a, const QVariant& b) {
                 QVariantMap listingA = a.toMap();
                 QVariantMap listingB = b.toMap();
@@ -1295,7 +1295,7 @@ QVariantList neroshop::Backend::getListings(int sorting, bool hide_illicit_items
                 return dateTimeA < dateTimeB;
             });
             break;
-        case static_cast<int>(EnumWrapper::ListingSorting::SortByAlphabeticalOrder):
+        case static_cast<int>(EnumWrapper::Sorting::SortByAlphabeticalOrder):
             // Sort the catalog list by product name (alphabetically)
             std::sort(catalog.begin(), catalog.end(), [](const QVariant& listing1, const QVariant& listing2) {
                 QString productName1 = listing1.toMap()["product_name"].toString();
@@ -1303,7 +1303,7 @@ QVariantList neroshop::Backend::getListings(int sorting, bool hide_illicit_items
                 return productName1 < productName2;
             });
             break;
-        case static_cast<int>(EnumWrapper::ListingSorting::SortByPriceLowest):
+        case static_cast<int>(EnumWrapper::Sorting::SortByPriceLowest):
             // Perform the sorting operation on the catalog based on the "price lowest" criteria
             std::sort(catalog.begin(), catalog.end(), [](const QVariant& a, const QVariant& b) {
                 QVariantMap listingA = a.toMap();
@@ -1311,7 +1311,7 @@ QVariantList neroshop::Backend::getListings(int sorting, bool hide_illicit_items
                 return listingA["price"].toDouble() < listingB["price"].toDouble();
             });
             break;
-        case static_cast<int>(EnumWrapper::ListingSorting::SortByPriceHighest):
+        case static_cast<int>(EnumWrapper::Sorting::SortByPriceHighest):
             // Perform the sorting operation on the catalog based on the "price highest" criteria
             std::sort(catalog.begin(), catalog.end(), [](const QVariant& a, const QVariant& b) {
                 QVariantMap listingA = a.toMap();
@@ -1319,10 +1319,10 @@ QVariantList neroshop::Backend::getListings(int sorting, bool hide_illicit_items
                 return listingA["price"].toDouble() > listingB["price"].toDouble();
             });
             break;
-        case static_cast<int>(EnumWrapper::ListingSorting::SortByMostFavorited):
+        case static_cast<int>(EnumWrapper::Sorting::SortByMostFavorited):
             // Code for sorting by most favorited
             break;
-        case static_cast<int>(EnumWrapper::ListingSorting::SortByMostSales):
+        case static_cast<int>(EnumWrapper::Sorting::SortByMostSales):
             // Code for sorting by most sales
             break;
         default:
@@ -1464,7 +1464,7 @@ QVariantList neroshop::Backend::getListingsByCategory(int category_id, bool hide
 }
 //----------------------------------------------------------------
 QVariantList neroshop::Backend::getListingsByMostRecentLimit(int limit, bool hide_illicit_items) {
-    auto catalog = getListings(static_cast<int>(EnumWrapper::ListingSorting::SortByMostRecent), hide_illicit_items);
+    auto catalog = getListings(static_cast<int>(EnumWrapper::Sorting::SortByMostRecent), hide_illicit_items);
     if (catalog.size() > limit) {
         catalog = catalog.mid(0, limit);
     }
