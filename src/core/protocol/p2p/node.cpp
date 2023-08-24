@@ -475,7 +475,9 @@ void neroshop::Node::rebuild_routing_table() {
             }
             
             auto node = std::make_unique<Node>(ip_address, port, false);
-            routing_table->add_node(std::move(node));
+            if(!node->is_bootstrap_node()) {
+                routing_table->add_node(std::move(node));
+            }
         }
     }
     // Finalize statement
