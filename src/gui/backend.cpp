@@ -1300,7 +1300,7 @@ QVariantList neroshop::Backend::getListings(int sorting, bool hide_illicit_items
             std::sort(catalog.begin(), catalog.end(), [](const QVariant& listing1, const QVariant& listing2) {
                 QString productName1 = listing1.toMap()["product_name"].toString();
                 QString productName2 = listing2.toMap()["product_name"].toString();
-                return productName1 < productName2;
+                return QString::compare(productName1, productName2, Qt::CaseInsensitive) < 0;
             });
             break;
         case static_cast<int>(EnumWrapper::Sorting::SortByPriceLowest):
