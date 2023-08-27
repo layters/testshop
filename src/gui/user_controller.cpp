@@ -20,7 +20,7 @@ neroshop::UserController::~UserController() {
 }
 //----------------------------------------------------------------
 QString neroshop::UserController::listProduct(const QString& name, const QString& description,
-        double weight, const QList<QVariantMap>& attributes, 
+        const QList<QVariantMap>& attributes, 
         const QString& product_code, int category_id, const QList<int>& subcategory_ids, const QStringList& tags, const QList<QVariantMap>& images,
 int quantity, double price, const QString& currency, const QString& condition, const QString& location) {
     if (!_user)
@@ -73,7 +73,6 @@ int quantity, double price, const QString& currency, const QString& condition, c
         // Add the attribute to the vector
         attributesVector.push_back(attribute);
     }
-    //return attributesVector;
     
     std::vector<int> subcategoryIdVector;
     for(const int& subcategory_id : subcategory_ids) {
@@ -93,7 +92,6 @@ int quantity, double price, const QString& currency, const QString& condition, c
         if(imageMap.contains("size")) image.size = imageMap.value("size").toInt();
         if(imageMap.contains("id")) image.id = imageMap.value("id").toInt();
         if(imageMap.contains("source")) image.source = imageMap.value("source").toString().toStdString();
-        //if(imageMap.contains(""))
         
         imagesVector.push_back(image);
     }
@@ -101,7 +99,6 @@ int quantity, double price, const QString& currency, const QString& condition, c
     auto listing_key = seller->list_item(
         name.toStdString(), 
         description.toStdString(),
-        weight, 
         attributesVector, 
         product_code.toStdString(),
         category_id, 

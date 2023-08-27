@@ -7,9 +7,13 @@ set(neroshop_src_dir ${neroshop_root}/src)
 set(neroshop_crypto_src 
     ${NEROSHOP_CORE_SRC_DIR}/crypto/rsa.cpp
     ${NEROSHOP_CORE_SRC_DIR}/crypto/sha256.cpp
+    ${NEROSHOP_CORE_SRC_DIR}/crypto/sha3.cpp
 )
 
-set(neroshop_database_src ${NEROSHOP_CORE_SRC_DIR}/database/sqlite.cpp)
+set(neroshop_database_src 
+    ${NEROSHOP_CORE_SRC_DIR}/database/database.cpp 
+    ${NEROSHOP_CORE_SRC_DIR}/database/sqlite.cpp
+)
 
 set(neroshop_network_src 
     ${NEROSHOP_CORE_SRC_DIR}/network/i2p.cpp 
@@ -23,35 +27,45 @@ set(neroshop_price_src
     ${NEROSHOP_CORE_SRC_DIR}/price/cointelegraph.cpp 
     ${NEROSHOP_CORE_SRC_DIR}/price/cryptorank.cpp 
     ${NEROSHOP_CORE_SRC_DIR}/price/cryptowatch.cpp 
+    ${NEROSHOP_CORE_SRC_DIR}/price/currency_converter.cpp     
     ${NEROSHOP_CORE_SRC_DIR}/price/fawazahmed0.cpp 
     ${NEROSHOP_CORE_SRC_DIR}/price/kraken.cpp
 )
 
 set(neroshop_protocol_src 
+    ${NEROSHOP_CORE_SRC_DIR}/protocol/messages/msgpack.cpp
+    ${NEROSHOP_CORE_SRC_DIR}/protocol/p2p/kademlia.cpp 
+    ${NEROSHOP_CORE_SRC_DIR}/protocol/p2p/mapper.cpp     
+    ${NEROSHOP_CORE_SRC_DIR}/protocol/p2p/node.cpp 
+    ${NEROSHOP_CORE_SRC_DIR}/protocol/p2p/routing_table.cpp 
+    ${NEROSHOP_CORE_SRC_DIR}/protocol/p2p/serializer.cpp 
     ${NEROSHOP_CORE_SRC_DIR}/protocol/rpc/json_rpc.cpp 
+    ${NEROSHOP_CORE_SRC_DIR}/protocol/transport/client.cpp 
+    ${NEROSHOP_CORE_SRC_DIR}/protocol/transport/ip_address.cpp 
+    ${NEROSHOP_CORE_SRC_DIR}/protocol/transport/server.cpp 
+    ${NEROSHOP_CORE_SRC_DIR}/protocol/transport/zmq_client.cpp 
+    ${NEROSHOP_CORE_SRC_DIR}/protocol/transport/zmq_server.cpp 
 )
 
-set(neroshop_util_src 
-    ${NEROSHOP_CORE_SRC_DIR}/util/downloader.cpp 
-    ${NEROSHOP_CORE_SRC_DIR}/util/extractor.cpp
-    ${NEROSHOP_CORE_SRC_DIR}/util/regex.cpp 
-    ${NEROSHOP_CORE_SRC_DIR}/util/updater.cpp
+set(neroshop_tools_src 
+    ${NEROSHOP_CORE_SRC_DIR}/tools/base64.cpp 
+    ${NEROSHOP_CORE_SRC_DIR}/tools/downloader.cpp 
+    ${NEROSHOP_CORE_SRC_DIR}/tools/extractor.cpp 
+    ${NEROSHOP_CORE_SRC_DIR}/tools/logger.cpp 
+    ${NEROSHOP_CORE_SRC_DIR}/tools/process.cpp     
+    ${NEROSHOP_CORE_SRC_DIR}/tools/regex.cpp 
+    ${NEROSHOP_CORE_SRC_DIR}/tools/script.cpp 
+    ${NEROSHOP_CORE_SRC_DIR}/tools/timestamp.cpp 
+    ${NEROSHOP_CORE_SRC_DIR}/tools/updater.cpp
 )
 
 set(neroshop_core_src 
-    ${NEROSHOP_CORE_SRC_DIR}/buyer.cpp 
     ${NEROSHOP_CORE_SRC_DIR}/cart.cpp 
-    ${NEROSHOP_CORE_SRC_DIR}/catalog.cpp 
-    ${NEROSHOP_CORE_SRC_DIR}/client.cpp 
-    ${NEROSHOP_CORE_SRC_DIR}/config.cpp 
-    ${NEROSHOP_CORE_SRC_DIR}/currency_converter.cpp 
-    ${NEROSHOP_CORE_SRC_DIR}/database.cpp 
-    ${NEROSHOP_CORE_SRC_DIR}/item.cpp 
+    ${NEROSHOP_CORE_SRC_DIR}/listing.cpp 
     ${NEROSHOP_CORE_SRC_DIR}/order.cpp 
-    ${NEROSHOP_CORE_SRC_DIR}/process.cpp 
-    ${NEROSHOP_CORE_SRC_DIR}/script.cpp 
+    ${NEROSHOP_CORE_SRC_DIR}/product.cpp 
     ${NEROSHOP_CORE_SRC_DIR}/seller.cpp 
-    ${NEROSHOP_CORE_SRC_DIR}/server.cpp 
+    ${NEROSHOP_CORE_SRC_DIR}/settings.cpp  # TODO: move to tools or not?
     ${NEROSHOP_CORE_SRC_DIR}/user.cpp 
     ${NEROSHOP_CORE_SRC_DIR}/wallet.cpp 
     ${neroshop_crypto_src} 
@@ -59,8 +73,8 @@ set(neroshop_core_src
     ${neroshop_network_src}
     ${neroshop_price_src}
     ${neroshop_protocol_src}
-    ${neroshop_util_src}
-    #[[${neroshop__src}]]
+    ${neroshop_tools_src}
+    #[[${neroshop_wallet_src}]]
 )
 set(neroshop_srcs ${neroshop_core_src})
 #set(neroshop_headers ) # not needed
