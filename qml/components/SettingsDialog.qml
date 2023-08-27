@@ -26,6 +26,7 @@ Popup {
     property alias language: languageBox
     property alias hideHomepageButton: hideHomepageButtonSwitch.checked
     property alias hidePriceDisplay: priceDisplaySwitch.checked
+    property alias hideWalletSyncBarOnFull: walletSyncBarSwitch.checked
     // Wallet settings
     property alias balanceDisplay: balanceDisplayBox.currentIndex//property alias balanceDisplay: balanceDisplayBox.currentText
     property alias balanceAmountPrecision: balancePrecisionBox.currentText
@@ -75,6 +76,7 @@ Popup {
             language: languageBox.currentText,//currentIndex,
             hide_homepage_button: hideHomepageButtonSwitch.checked,
             hide_price_display: priceDisplaySwitch.checked,
+            hide_wallet_sync_bar: walletSyncBarSwitch.checked,
             /*window_width: Script.getJsonRootObject()["window_width"],
             window_height: Script.getJsonRootObject()["window_height"],
             window_mode: Script.getJsonRootObject()["window_mode"],*/
@@ -457,6 +459,7 @@ Popup {
                             onToggled: settingsDialog.save()
                         }
                     }
+                    // hide price display
                     Item {
                         Layout.fillWidth: true
                         Layout.preferredHeight: childrenRect.height
@@ -471,6 +474,26 @@ Popup {
                             anchors.right: parent.right; anchors.rightMargin: 5
                             //width: settingsStack.comboBoxWidth
                             checked: Script.getJsonRootObject()["hide_price_display"]//false
+                            radius: 13
+                            backgroundCheckedColor: "#605185"
+                            onToggled: settingsDialog.save()
+                        }
+                    }
+                    // hide wallet sync bar(s)
+                    Item {
+                        Layout.fillWidth: true
+                        Layout.preferredHeight: childrenRect.height
+                        Text {
+                            anchors.verticalCenter: walletSyncBarSwitch.verticalCenter
+                            text: qsTr("Hide wallet sync bar on full:")
+                            color: NeroshopComponents.Style.darkTheme ? "#ffffff" : "#000000"
+                        }
+                        
+                        NeroshopComponents.Switch {
+                            id: walletSyncBarSwitch
+                            anchors.right: parent.right; anchors.rightMargin: 5
+                            //width: settingsStack.comboBoxWidth
+                            checked: Script.getJsonRootObject()["hide_wallet_sync_bar"]//false
                             radius: 13
                             backgroundCheckedColor: "#605185"
                             onToggled: settingsDialog.save()
@@ -648,7 +671,7 @@ Popup {
                             id: requirePasswordOnWithdrawalSwitch
                             anchors.right: parent.right; anchors.rightMargin: 5
                             //width: settingsStack.comboBoxWidth
-                            checked: Script.getJsonRootObject()["monero"]["wallet"]["require_password_on_withdrawal"]//true
+                            checked: true // can NEVER be modified!!
                             radius: 13
                             backgroundCheckedColor: "#605185"
                             onToggled: settingsDialog.save()

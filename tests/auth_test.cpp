@@ -40,7 +40,7 @@ static void register_user() {
     wallet->create_random(wallet_pwd, wallet_confirm_pwd, NEROSHOP_DEFAULT_WALLET_PATH + "/" + wallet_name);
     // Provide user with their mnemonic
     std::cout << "Store these words safely. These 25 words are the key to your account. If you lose them, your account goes bye-bye:\n\033[1;36m";
-    std::cout << wallet->get_mnemonic() << "\033[0m" << std::endl;
+    std::cout << wallet->get_seed() << "\033[0m" << std::endl;
     // And their secret view and spend key pairs too ...
     std::cout << "Secret view key: " << wallet->get_monero_wallet()->get_private_view_key() << std::endl;
     std::cout << "Secret spend key: " << wallet->get_monero_wallet()->get_private_spend_key() << std::endl;
@@ -102,11 +102,11 @@ static bool auth_with_seed() {
     //----------------------------
     Wallet * wallet = new Wallet();
     // Initialize monero wallet with existing wallet mnemonic
-    std::string wallet_mnemonic;// = "hefty value later extra artistic firm radar yodel talent future fungal nutshell because sanity awesome nail unjustly rage unafraid cedar delayed thumbs comb custom sanity";
+    std::string wallet_seed;// = "hefty value later extra artistic firm radar yodel talent future fungal nutshell because sanity awesome nail unjustly rage unafraid cedar delayed thumbs comb custom sanity";
     std::cout << "Please enter your wallet mnemonic:\n";
-    std::getline(std::cin, wallet_mnemonic);
+    std::getline(std::cin, wallet_seed);
     // todo: allow user to specify a custom location for the wallet keyfile or use a default location
-    wallet->restore_from_mnemonic(wallet_mnemonic);
+    wallet->restore_from_seed(wallet_seed);
     // Get the hash of the primary address
     std::string primary_address = wallet->get_monero_wallet()->get_primary_address();
     std::string user_auth_key = neroshop_crypto::sha256(primary_address); // temp

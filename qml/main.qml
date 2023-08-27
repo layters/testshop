@@ -297,6 +297,10 @@ ApplicationWindow {
                         repeat: true // If repeat is true the timer is triggered repeatedly at the specified interval
                         onTriggered: {
                             moneroDaemonSyncBar.value = Wallet.getSyncPercentage()
+                            
+                            if(settingsDialog.hideWalletSyncBarOnFull && (moneroDaemonSyncBar.value >= 1.0)) {
+                                moneroDaemonSyncBar.parent.visible = false
+                            }
                         }
                     }                    
                 

@@ -797,8 +797,7 @@ Popup {
                                 // List product
                                 let listing_key = User.listProduct(
                                     productNameField.text, 
-                                    productDescriptionEdit.text, 
-                                    productWeightField.text, 
+                                    productDescriptionEdit.text,
                                     attributes, 
                                     productCodeField.text,
                                     Backend.getCategoryIdByName(productCategoryBox.currentText),

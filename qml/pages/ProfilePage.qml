@@ -109,7 +109,23 @@ Page {
                     width: rateDialogContent.width - spacing
                     Button {
                         Layout.fillWidth: true
+                        implicitHeight: 40
                         text: "Cancel"
+                        background: Rectangle {
+                            color: "#f5c5c5"
+                            radius: 18
+                        }
+                        contentItem: Text {
+                            text: parent.text
+                            color: "#000000"
+                            horizontalAlignment: Text.AlignHCenter
+                            verticalAlignment: Text.AlignVCenter
+                        }
+                        MouseArea {
+                            anchors.fill: parent
+                            onPressed: mouse.accepted = false
+                            cursorShape: Qt.PointingHandCursor
+                        }
                         onClicked: {
                             rateDialog.reject()
                         }
@@ -117,7 +133,23 @@ Page {
                 
                     Button {
                         Layout.fillWidth: true
+                        implicitHeight: 40
                         text: "Rate"
+                        background: Rectangle {
+                            color: "#e0e0c0"//"#e0e0e0"
+                            radius: 18
+                        }
+                        contentItem: Text {
+                            text: parent.text
+                            color: "#000000"
+                            horizontalAlignment: Text.AlignHCenter
+                            verticalAlignment: Text.AlignVCenter
+                        }
+                        MouseArea {
+                            anchors.fill: parent
+                            onPressed: mouse.accepted = false
+                            cursorShape: Qt.PointingHandCursor
+                        }
                         onClicked: {
                             rateDialog.accept()
                         }
@@ -169,6 +201,11 @@ Page {
                                 color: parent.checked ? "red" : "#808080"
                                 radius: 5
                             }
+                            MouseArea {
+                                anchors.fill: parent
+                                onPressed: mouse.accepted = false
+                                cursorShape: Qt.PointingHandCursor
+                            }
                         }
                         Button {
                             width: (commentTextArea.width / 2) - parent.spacing
@@ -186,6 +223,11 @@ Page {
                             background: Rectangle {
                                 color: parent.checked ? "green" : "#808080"
                                 radius: 5
+                            }
+                            MouseArea {
+                                anchors.fill: parent
+                                onPressed: mouse.accepted = false
+                                cursorShape: Qt.PointingHandCursor
                             }
                         }
                     }
@@ -298,7 +340,23 @@ Page {
                     width: messageDialogContent.width - spacing
                     Button {
                         Layout.fillWidth: true
+                        implicitHeight: 40
                         text: "Cancel"
+                        background: Rectangle {
+                            color: "#f5c5c5"
+                            radius: 18
+                        }
+                        contentItem: Text {
+                            text: parent.text
+                            color: "#000000"
+                            horizontalAlignment: Text.AlignHCenter
+                            verticalAlignment: Text.AlignVCenter
+                        }
+                        MouseArea {
+                            anchors.fill: parent
+                            onPressed: mouse.accepted = false
+                            cursorShape: Qt.PointingHandCursor
+                        }
                         onClicked: {
                             messageDialog.reject()
                         }
@@ -306,7 +364,23 @@ Page {
                 
                     Button {
                         Layout.fillWidth: true
+                        implicitHeight: 40
                         text: "Send"
+                        background: Rectangle {
+                            color: "#e0c0e0"//"#e0e0e0"
+                            radius: 18
+                        }
+                        contentItem: Text {
+                            text: parent.text
+                            color: "#000000"
+                            horizontalAlignment: Text.AlignHCenter
+                            verticalAlignment: Text.AlignVCenter
+                        }
+                        MouseArea {
+                            anchors.fill: parent
+                            onPressed: mouse.accepted = false
+                            cursorShape: Qt.PointingHandCursor
+                        }
                         onClicked: {
                             messageDialog.accept()
                         }

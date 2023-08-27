@@ -44,7 +44,6 @@ neroshop::Seller::~Seller() {
 std::string neroshop::Seller::list_item(
     const std::string& name,
     const std::string& description,
-    double weight,
     const std::vector<Attribute>& attributes,
     const std::string& product_code,
     int category_id,
