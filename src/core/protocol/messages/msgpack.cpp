@@ -83,8 +83,8 @@ std::vector<uint8_t> neroshop::msgpack::process(const std::vector<uint8_t>& requ
         }
     }
     //-----------------------------------------------------
-    if(method == "get_peers") {
-        std::cout << "message type is a get_peers\n"; // 
+    if(method == "get_providers") {
+        std::cout << "message type is a get_providers\n"; // 
         assert(request_object["args"].is_object());
         auto params_object = request_object["args"];
         assert(params_object["info_hash"].is_string()); // info hash
@@ -93,7 +93,7 @@ std::vector<uint8_t> neroshop::msgpack::process(const std::vector<uint8_t>& requ
         response_object["version"] = std::string(NEROSHOP_DHT_VERSION);
         response_object["response"]["id"] = node.get_id();
         // Check if the queried node has peers for the requested infohash
-        std::vector<Peer> peers = node.get_peers(info_hash);
+        std::vector<Peer> peers = node.get_providers(info_hash);
         if(peers.empty()) {
             // If the queried node has no peers for the requested infohash,
             // return the K closest nodes in the routing table to the requested infohash
@@ -125,40 +125,6 @@ std::vector<uint8_t> neroshop::msgpack::process(const std::vector<uint8_t>& requ
         auto secret = generate_secret(16);
         std::string token = generate_token(node.get_id(), info_hash, secret); // The reason for concatenating the node ID and info hash is to ensure that the generated token is unique and specific to the peer making the request. This helps prevent replay attacks, where an attacker intercepts and reuses a token generated for another peer.
         response_object["response"]["token"] = token;
-    }
-    //-----------------------------------------------------
-    if(method == "announce_peer") {
-        std::cout << "message type is a announce_peer\n";
-        assert(request_object["args"].is_object());
-        auto params_object = request_object["args"];
-        assert(params_object["info_hash"].is_string()); // info hash
-        std::string info_hash = params_object["info_hash"];
-        assert(params_object["token"].is_string());
-        std::string token = params_object["token"];
-        assert(params_object["port"].is_number_integer());
-        int port = params_object["port"];
-        
-        // Verify the token
-        std::string secret = generate_secret(16);
-        std::string expected_token = generate_token(node.get_id(), info_hash, secret);
-        if (token != expected_token) {
-            // Invalid token, return error response
-            code = static_cast<int>(KadResultCode::InvalidToken);
-            response_object["error"]["code"] = code;
-            response_object["error"]["message"] = "Invalid token";
-            response_object["tid"] = tid;
-            response = nlohmann::json::to_msgpack(response_object);
-            return response;
-        }
-
-        // Add the peer to the info_hash_peers unordered_map
-        node.add_peer(info_hash, {/*ip_address*/"", port});
-        
-        // Return success response
-        response_object["version"] = std::string(NEROSHOP_DHT_VERSION);
-        response_object["response"]["id"] = node.get_id();
-        response_object["response"]["code"] = code;
-        response_object["response"]["message"] = "Peer announced"; // not needed
     }
     //-----------------------------------------------------
     if(method == "get") {

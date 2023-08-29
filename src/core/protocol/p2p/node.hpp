@@ -29,7 +29,7 @@ private:
     std::string id;
     std::string version;
     std::unordered_map<std::string, std::string> data; // internal hash table that stores key-value pairs 
-    std::unordered_map<std::string, std::vector<Peer>> info_hash_peers; // maps an info_hash to a vector of Peers
+    std::unordered_map<std::string, std::vector<Peer>> providers; // maps a data's hash (key) to a vector of Peers who have the data
     ////std::unique_ptr<Server> server;// a node acts as a server so it should have a server object
     int sockfd;
     struct sockaddr_in sockin; // IPV4
@@ -69,16 +69,13 @@ public:
     //---------------------------------------------------
     bool send_ping(const std::string& address, int port);
     std::vector<Node*> send_find_node(const std::string& target_id, const std::string& address, uint16_t port);
-    void send_get_peers(const std::string& info_hash);
-    void send_announce_peer(const std::string& info_hash, int port, const std::string& token);
-    void send_add_peer(const std::string& info_hash, const Peer& peer);
     int send_put(const std::string& key, const std::string& value);
     int send_store(const std::string& key, const std::string& value);
     std::string send_get(const std::string& key);
     std::string send_find_value(const std::string& key);
     void send_remove(const std::string& key);
     void send_map(const std::string& address, int port); // Distributes indexing data to a single node
-    // announce_peer, get_peers are specific to Bittorent and are not used in standard Kademlia
+    void send_get_providers(const std::string& data_hash);
     //---------------------------------------------------
     ////std::vector<Node*> lookup(const std::string& key); // In Kademlia, the primary purpose of the lookup function is to find the nodes responsible for storing a particular key in the DHT, rather than retrieving the actual value of the key. The lookup function helps in locating the nodes that are likely to have the key or be able to provide information about it.
     //---------------------------------------------------
@@ -94,6 +91,7 @@ public:
     void rebuild_routing_table(); // Re-builds routing table from data stored on disk
     //---------------------------------------------------
     void on_ping(const std::vector<uint8_t>& buffer, const struct sockaddr_in& client_addr);
+    void on_map(const std::vector<uint8_t>& buffer, const struct sockaddr_in& client_addr);
     ////void on_dead_node(const std::vector<std::string>& node_ids);
     ////bool on_keyword_blocked(const std::string& keyword);
     ////bool on_node_blacklisted(const std::string& address);
@@ -102,18 +100,16 @@ public:
     // DHT Query Types
     bool ping(const std::string& address, int port); // A simple query to check if a node is online and responsive.
     std::vector<Node*> find_node(const std::string& target_id, int count) const;// override; // A query to find the contact information for a specific node in the DHT. // Finds the node closest to the target_id
-    std::vector<Peer> get_peers(const std::string& info_hash) const; // A query to get a list of peers for a specific torrent or infohash.
-    void announce_peer(const std::string& info_hash, int port, const std::string& token); // A query to announce that a peer has joined a specific torrent or infohash.
-    void add_peer(const std::string& info_hash, const Peer& peer);
-    void remove_peer(const std::string& info_hash);
     int put(const std::string& key, const std::string& value); // A query to store a value in the DHT.    // Stores the key-value pair in the DHT
     int store(const std::string& key, const std::string& value);
     std::string get(const std::string& key) const; // A query to get a specific value stored in the DHT.         // Retrieves the value associated with the key from the DHT
     std::string find_value(const std::string& key) const;
     int remove(const std::string& key); // Remove a key-value pair from the DHT
-    //---------------------------------------------------
-    // DHT-based indexing (Inverted indexing)
     void map(const std::string& key, const std::string& value); // Maps search terms to keys
+    void add_provider(const std::string& data_hash, const Peer& peer);
+    void remove_providers(const std::string& data_hash);
+    void remove_provider(const std::string& data_hash, const std::string& address, int port);
+    std::vector<Peer> get_providers(const std::string& data_hash) const; // A query to get a list of peers for a specific torrent or infohash.
     //---------------------------------------------------
     std::string get_id() const; // get ID of this node
     std::string get_ip_address() const;

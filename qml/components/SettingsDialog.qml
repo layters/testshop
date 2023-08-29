@@ -76,7 +76,7 @@ Popup {
             language: languageBox.currentText,//currentIndex,
             hide_homepage_button: hideHomepageButtonSwitch.checked,
             hide_price_display: priceDisplaySwitch.checked,
-            hide_wallet_sync_bar: walletSyncBarSwitch.checked,
+            hide_wallet_sync_bar_on_full: walletSyncBarSwitch.checked,
             /*window_width: Script.getJsonRootObject()["window_width"],
             window_height: Script.getJsonRootObject()["window_height"],
             window_mode: Script.getJsonRootObject()["window_mode"],*/
@@ -105,7 +105,7 @@ Popup {
                     balance_amount_precision: Number(balancePrecisionBox.currentText),
                     show_currency_sign: showCurrencySignSwitch.checked,
                     block_explorer: blockExplorerBox.currentText,//currentIndex,
-                    require_password_on_withdrawal: requirePasswordOnWithdrawalSwitch.checked,
+                    ////require_password_on_withdrawal: requirePasswordOnWithdrawalSwitch.checked,
                 },
             },
             // proxy / privacy
@@ -493,7 +493,7 @@ Popup {
                             id: walletSyncBarSwitch
                             anchors.right: parent.right; anchors.rightMargin: 5
                             //width: settingsStack.comboBoxWidth
-                            checked: Script.getJsonRootObject()["hide_wallet_sync_bar"]//false
+                            checked: Script.getJsonRootObject()["hide_wallet_sync_bar_on_full"]//false
                             radius: 13
                             backgroundCheckedColor: "#605185"
                             onToggled: settingsDialog.save()

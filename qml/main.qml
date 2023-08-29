@@ -300,6 +300,8 @@ ApplicationWindow {
                             
                             if(settingsDialog.hideWalletSyncBarOnFull && (moneroDaemonSyncBar.value >= 1.0)) {
                                 moneroDaemonSyncBar.parent.visible = false
+                            } else {
+                                moneroDaemonSyncBar.parent.visible = true
                             }
                         }
                     }                    
