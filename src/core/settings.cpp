@@ -180,7 +180,7 @@ bool neroshop::create_json() {
         root_obj.insert(QString("language"), QJsonValue("English"));
         root_obj.insert(QString("hide_homepage_button"), QJsonValue(false));
         root_obj.insert(QString("hide_price_display"), QJsonValue(false));
-        root_obj.insert(QString("hide_wallet_sync_bar"), QJsonValue(false));
+        root_obj.insert(QString("hide_wallet_sync_bar_on_full"), QJsonValue(false));
         root_obj.insert(QString("wallet_directory"), QJsonValue(""));
         /*root_obj.insert(QString("window_width"), QJsonValue(1280));
         root_obj.insert(QString("window_height"), QJsonValue(900));//720));
@@ -192,7 +192,7 @@ bool neroshop::create_json() {
         wallet_obj.insert(QString("balance_amount_precision"), QJsonValue(12));
         wallet_obj.insert(QString("show_currency_sign"), QJsonValue(false));
         wallet_obj.insert(QString("block_explorer"), QJsonValue("xmrchain.net"));
-        wallet_obj.insert(QString("require_password_on_withdrawal"), QJsonValue(true));
+        ////wallet_obj.insert(QString("require_password_on_withdrawal"), QJsonValue(true));
         monero_obj.insert(QString("wallet"), QJsonValue(wallet_obj));
         QJsonObject catalog_obj;
         catalog_obj.insert(QString("price_display"), QJsonValue("All prices"));
@@ -252,7 +252,7 @@ bool neroshop::create_json() {
         settings_json["language"] = "English";
         settings_json["hide_homepage_button"] = false;
         settings_json["hide_price_display"] = false;
-        settings_json["hide_wallet_sync_bar"] = false;
+        settings_json["hide_wallet_sync_bar_on_full"] = false;
         settings_json["wallet_directory"] = ""; // leave blank to use default
         /*settings_json["window_width"] = 1280;
         settings_json["window_height"] = 900;//720;
@@ -262,7 +262,7 @@ bool neroshop::create_json() {
         settings_json["monero"]["wallet"]["balance_amount_precision"] = 12;
         settings_json["monero"]["wallet"]["show_currency_sign"] = false;
         settings_json["monero"]["wallet"]["block_explorer"] = "xmrchain.net";
-        settings_json["monero"]["wallet"]["require_password_on_withdrawal"] = true;
+        ////settings_json["monero"]["wallet"]["require_password_on_withdrawal"] = true;
         settings_json["catalog"]["price_display"] = "All prices";
         settings_json["catalog"]["hide_product_details"] = false;
         settings_json["catalog"]["catalog_view"] = "Grid view";

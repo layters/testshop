@@ -164,7 +164,7 @@ neroshop::Node::Node(Node&& other) noexcept
     : id(std::move(other.id)),
       version(std::move(other.version)),
       data(std::move(other.data)),
-      info_hash_peers(std::move(other.info_hash_peers)),
+      providers(std::move(other.providers)),
       //server(std::move(other.server)),
       sockfd(other.sockfd),
       sockin(std::move(other.sockin)),
@@ -258,54 +258,6 @@ std::vector<neroshop::Node*> neroshop::Node::find_node(const std::string& target
     // Get the nodes from the routing table that are closest to the target node
     std::vector<Node*> closest_nodes = routing_table->find_closest_nodes(target_id, count);
     return closest_nodes;
-}
-
-std::vector<neroshop::Peer> neroshop::Node::get_peers(const std::string& info_hash) const {
-    std::vector<Peer> peers = {};
-
-    // Check if info_hash is in info_hash_peers
-    auto info_hash_it = info_hash_peers.find(info_hash);
-    if (info_hash_it != info_hash_peers.end()) {
-        // If info_hash is in info_hash_peers, get the vector of peers
-        peers = info_hash_it->second;
-    } else {
-        std::vector<Node*> nodes = find_node(info_hash, NEROSHOP_DHT_MAX_CLOSEST_NODES);
-        for (Node* node : nodes) {
-            // Access the info_hash_peers map for each node and concatenate the vectors of peers
-            auto node_it = node->info_hash_peers.find(info_hash);
-            if (node_it != node->info_hash_peers.end()) {
-                const std::vector<Peer>& node_peers = node_it->second;
-                peers.insert(peers.end(), node_peers.begin(), node_peers.end());
-            }
-        }
-    }
-    
-    return peers;
-}
-
-void neroshop::Node::announce_peer(const std::string& info_hash, int port, const std::string& token/*, bool implied_port*/) {
-
-}
-
-void neroshop::Node::add_peer(const std::string& info_hash, const Peer& peer) {
-    // Check if the info_hash is already in the info_hash_peers map
-    auto it = info_hash_peers.find(info_hash);
-    if (it != info_hash_peers.end()) {
-        // If the info_hash is already in the map, add the peer to the vector of peers
-        it->second.push_back(peer);
-    } else {
-        // If the info_hash is not in the map, create a new vector of peers and add the peer
-        info_hash_peers.emplace(info_hash, std::vector<Peer>{peer});
-    }
-}
-
-void neroshop::Node::remove_peer(const std::string& info_hash) {
-    // Find the info_hash entry in the info_hash_peers map
-    auto it = info_hash_peers.find(info_hash);
-    if (it != info_hash_peers.end()) {
-        // If the info_hash exists, remove the entry from the map
-        info_hash_peers.erase(it);
-    }
 }
 
 int neroshop::Node::put(const std::string& key, const std::string& value) {
@@ -417,6 +369,72 @@ int neroshop::Node::set(const std::string& key, const std::string& value) {
     
     data[key] = value;
     return has_key(key); // boolean
+}
+
+void neroshop::Node::add_provider(const std::string& data_hash, const Peer& peer) {
+    // Check if the data_hash is already in the providers map
+    auto it = providers.find(data_hash);
+    if (it != providers.end()) {
+        // If the data_hash is already in the map, check for duplicates
+        for (const auto& existing_peer : it->second) {
+            if (existing_peer.address == peer.address && existing_peer.port == peer.port) {
+                // Peer with the same address and port already exists, so don't add it again
+                std::cout << "Provider (\033[36m" << peer.address + ":" + std::to_string(peer.port) << "\033[0m) for hash (" << data_hash << ") already exists" << std::endl;
+                return;
+            }
+        }
+        // If the data_hash is already in the map, add the peer to the vector of peers
+        it->second.push_back(peer);
+        std::cout << "Provider (\033[36m" << peer.address + ":" + std::to_string(peer.port) << "\033[0m) for hash (" << data_hash << ") has been added" << std::endl;
+    } else {
+        // If the data_hash is not in the map, create a new vector of peers and add the peer
+        providers.emplace(data_hash, std::vector<Peer>{peer});
+        std::cout << "Provider (\033[36m" << peer.address + ":" + std::to_string(peer.port) << "\033[0m) for hash (" << data_hash << ") has been added (0)" << std::endl;
+    }
+}
+
+void neroshop::Node::remove_providers(const std::string& data_hash) {
+    // Find the data_hash entry in the providers map
+    auto it = providers.find(data_hash);
+    if (it != providers.end()) {
+        // If the data_hash exists, remove the entry from the map
+        providers.erase(it);
+    }
+}
+
+void neroshop::Node::remove_provider(const std::string& data_hash, const std::string& address, int port) {
+    // Find the data_hash entry in the providers map
+    auto it = providers.find(data_hash);
+    if (it != providers.end()) {
+        // Iterate through the vector of providers for the data_hash
+        auto& peers = it->second;
+        for (auto peer_it = peers.begin(); peer_it != peers.end(); ) {
+            if (peer_it->address == address && peer_it->port == port) {
+                // If the address and port match, remove the provider from the vector
+                peer_it = peers.erase(peer_it);
+            } else {
+                ++peer_it;
+            }
+        }
+
+        // If the vector becomes empty after removing the provider, remove the entry from the map
+        if (peers.empty()) {
+            providers.erase(it);
+        }
+    }
+}
+
+std::vector<neroshop::Peer> neroshop::Node::get_providers(const std::string& data_hash) const {
+    std::vector<Peer> peers = {};
+
+    // Check if data_hash is in providers
+    auto data_hash_it = providers.find(data_hash);
+    if (data_hash_it != providers.end()) {
+        // If data_hash is in providers, get the vector of peers
+        peers = data_hash_it->second;
+    }
+    
+    return peers;
 }
 
 //-------------------------------------------------------------------------------------
@@ -566,7 +584,10 @@ bool neroshop::Node::send_ping(const std::string& address, int port) {
     query_object["tid"] = transaction_id;
     query_object["query"] = "ping";
     query_object["args"]["id"] = this->id;
-    query_object["args"]["ephemeral_port"] = get_port(); // for testing on local network. This cannot be removed since the two primary sockets used in the protocol have different ports with the "ephemeral_port" being the actual port
+    int my_port = get_port();
+    if(my_port != NEROSHOP_P2P_DEFAULT_PORT) {
+        query_object["args"]["port"] = my_port; // for testing on local network. This cannot be removed since the two primary sockets used in the protocol have different ports with the "port" being the actual port
+    }
     query_object["version"] = std::string(NEROSHOP_DHT_VERSION);
     
     auto ping_message = nlohmann::json::to_msgpack(query_object);
@@ -639,22 +660,22 @@ std::vector<neroshop::Node*> neroshop::Node::send_find_node(const std::string& t
     return nodes;
 }
 
-void neroshop::Node::send_get_peers(const std::string& info_hash) {
+void neroshop::Node::send_get_providers(const std::string& data_hash) {
 
     std::string transaction_id = msgpack::generate_transaction_id();
     
     /*bencode_dict query;
     query["t"] = transaction_id;
     query["y"] = "q";
-    query["q"] = "get_peers";
+    query["q"] = "get_providers";
     
-    std::string get_peers_message = bencode::encode(query);*/
+    std::string get_providers_message = bencode::encode(query);*/
     //-----------------------------------------------------
     nlohmann::json query_object;
     query_object["tid"] = transaction_id;
-    query_object["query"] = "get_peers";
+    query_object["query"] = "get_providers";
     query_object["args"]["id"] = this->id;
-    query_object["args"]["info_hash"] = info_hash;
+    query_object["args"]["data_hash"] = data_hash;
     query_object["version"] = std::string(NEROSHOP_DHT_VERSION);
     //-----------------------------------------------
     // socket sendto and recvfrom here
@@ -665,43 +686,6 @@ void neroshop::Node::send_get_peers(const std::string& info_hash) {
     //-----------------------------------------------
     // get result of put request
     // ...    
-}
-
-void neroshop::Node::send_announce_peer(const std::string& info_hash, int port, const std::string& token) {
-    // announce_peer is called by a client to announce that it is downloading a file with a specific infohash and is now a potential peer for that file. This is typically called when a client starts downloading a file or completes downloading a file and wants to start seeding it.
-    // When a client calls announce_peer, it sends an announce_peer query to the DHT network, which contains the client's node ID, the infohash of the file, and the client's IP address and port number. If the query is successful, the DHT network will store the client's IP address and port number in the list of peers for the specified infohash.
-    // Other clients who are also downloading or seeding the same file can then query the DHT network for a list of peers for that infohash. The DHT network will respond with a list of IP addresses and port numbers of all the peers who have announced themselves for that infohash. The requesting client can then use this list to connect to other peers and start downloading or uploading data.
-    std::string transaction_id = msgpack::generate_transaction_id();
-    
-    /*bencode_dict query;
-    query["t"] = transaction_id;
-    query["y"] = "q";
-    query["q"] = "announce_peer";
-    
-    std::string announce_peer_message = bencode::encode(query);*/
-    //---------------------------------------------------------
-    nlohmann::json query_object;
-    query_object["tid"] = transaction_id;
-    query_object["query"] = "announce_peer";
-    query_object["args"]["id"] = this->id;
-    query_object["args"]["info_hash"] = info_hash;
-    query_object["args"]["port"] = port; // the port of the peer that is announcing itself
-    query_object["args"]["token"] = token;
-    query_object["args"]["implied_port"] = (port != 0);//implied_port; // optional // set to 1 if the port number is included in the peer list, and 0 otherwise. // refers to the port of the peer that is announcing itself, not the port of the node that receives the announcement // the value of implied_port should be set based on whether the port number is included in the peer list or not, and it should not be set to this->port.
-    query_object["version"] = std::string(NEROSHOP_DHT_VERSION);
-    //-----------------------------------------------    
-    // send the query to the nodes in the routing table
-    //auto receive_buffer = send_query(address, port, _message);  
-    //-----------------------------------------------    
-    // process the response
-    // ...
-    //-----------------------------------------------
-    // get result of put request
-    // ...        
-}
-
-void neroshop::Node::send_add_peer(const std::string& info_hash, const Peer& peer) {
-
 }
 
 int neroshop::Node::send_put(const std::string& key, const std::string& value) {
@@ -914,6 +898,7 @@ void neroshop::Node::send_map(const std::string& address, int port) {
     nlohmann::json query_object;
     query_object["query"] = "map";
     query_object["args"]["id"] = this->id;
+    query_object["args"]["port"] = get_port(); // the port of the peer that is announcing itself (map will also be used to "announce" the peer or provider)
     query_object["version"] = std::string(NEROSHOP_DHT_VERSION);
     
     bool map_sent = false;
@@ -1117,7 +1102,8 @@ void neroshop::Node::on_ping(const std::vector<uint8_t>& buffer, const struct so
         if (message.contains("query") && message["query"] == "ping") {
             std::string sender_id = message["args"]["id"].get<std::string>();
             std::string sender_ip = inet_ntoa(client_addr.sin_addr);
-            uint16_t sender_port = (message["args"].contains("ephemeral_port")) ? (uint16_t)message["args"]["ephemeral_port"] : ntohs(client_addr.sin_port);//NEROSHOP_P2P_DEFAULT_PORT;
+            uint16_t sender_port = (message["args"].contains("port")) ? (uint16_t)message["args"]["port"] : NEROSHOP_P2P_DEFAULT_PORT;
+            
             bool node_exists = routing_table->has_node((sender_ip == "127.0.0.1") ? this->public_ip_address : sender_ip, sender_port);
             if (!node_exists) {
                 auto node_that_pinged = std::make_unique<Node>((sender_ip == "127.0.0.1") ? this->public_ip_address : sender_ip, sender_port, false);
@@ -1129,6 +1115,22 @@ void neroshop::Node::on_ping(const std::vector<uint8_t>& buffer, const struct so
                     send_map((sender_ip == this->public_ip_address) ? "127.0.0.1" : sender_ip, sender_port);
                 }
             }
+        }
+    }
+}
+
+//-----------------------------------------------------------------------------
+
+void neroshop::Node::on_map(const std::vector<uint8_t>& buffer, const struct sockaddr_in& client_addr) {
+    if (buffer.size() > 0) {
+        nlohmann::json message = nlohmann::json::from_msgpack(buffer);
+        if (message.contains("query") && message["query"] == "map") {
+            std::string sender_id = message["args"]["id"].get<std::string>();
+            std::string sender_ip = inet_ntoa(client_addr.sin_addr);
+            uint16_t sender_port = (message["args"].contains("port")) ? (uint16_t)message["args"]["port"] : NEROSHOP_P2P_DEFAULT_PORT;
+            std::string data_hash = message["args"]["key"].get<std::string>();
+            
+            add_provider(data_hash, { (sender_ip == "127.0.0.1") ? this->public_ip_address : sender_ip, sender_port });
         }
     }
 }
@@ -1220,6 +1222,9 @@ void neroshop::Node::run() {
         
             // Add the node that pinged this node to the routing table
             on_ping(buffer, client_addr);
+            
+            // Add provider
+            on_map(buffer, client_addr);
         };
         
         // Create a detached thread to handle the request
@@ -1293,6 +1298,9 @@ void neroshop::Node::run_optimized() {
                 
                     // Add the node that pinged this node to the routing table
                     on_ping(buffer, client_addr);
+                    
+                    // Add provider
+                    on_map(buffer, client_addr);
                 };
                 
                 // Create a detached thread to handle the request

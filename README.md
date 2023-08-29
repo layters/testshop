@@ -57,14 +57,15 @@ https://user-images.githubusercontent.com/58671384/219222567-f170f728-be31-43d5-
 
 
 ## Feature Status
-- [x] Distributed P2P network (urgently seeking assistance with I2P integration/NAT traversal!!!)
+- [ ] Distributed P2P network (urgently seeking assistance with I2P integration/NAT traversal!!!)
 - [ ] Buy and sell products and services with Monero
 - [x] No KYC
 - [x] No censorship (censorship-resistant)
 - [ ] No listing fees, sales tax, or any other fees (except for miner transaction fees and shipping costs)
-    - there will be 0.5% fee for using one of the three payment options, specifically the 2-of-3 escrow system.
+    - there will be 0.5% fee for using one of the three payment options (specifically the 2-of-3 escrow system).
+    This is to incentivize arbitrators (who are chosen from sellers with the highest reputation) for disputing 2/3 escrow transactions.
 - [x] Pseudonymous identities 
-    - sellers and buyers are identified by their unique ids and/or optional display names
+    - sellers and buyers are identified by their unique id (monero primary address) and optional display name
 - [x] End-to-end encrypted messaging system for communications between sellers and buyers
     - generated RSA-4096 private keys will be used to decrypt messages.
 - [ ] Subaddress generator for direct payments without an escrow 
