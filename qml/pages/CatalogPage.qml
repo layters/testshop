@@ -80,10 +80,11 @@ Page {
                 id: sortByBox
                 anchors.right: parent.right
                 anchors.verticalCenter: viewToggle.verticalCenter
-                width: 300
+                width: 250
                 model: ["None", "Latest", "Oldest", "Alphabetical order", "Price - Lowest", "Price - Highest"]
                 Component.onCompleted: currentIndex = find("None")
                 displayText: "Sort: " + currentText
+                indicatorDoNotPassBorder: true
                 onActivated: {
                     if(currentIndex == find("None")) {
                         catalogPage.model = Backend.getListings(Enum.Sorting.SortNone, settingsDialog.hideIllegalProducts)

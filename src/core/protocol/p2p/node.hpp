@@ -75,7 +75,7 @@ public:
     std::string send_find_value(const std::string& key);
     void send_remove(const std::string& key);
     void send_map(const std::string& address, int port); // Distributes indexing data to a single node
-    void send_get_providers(const std::string& data_hash);
+    std::vector<Peer> send_get_providers(const std::string& data_hash);
     //---------------------------------------------------
     ////std::vector<Node*> lookup(const std::string& key); // In Kademlia, the primary purpose of the lookup function is to find the nodes responsible for storing a particular key in the DHT, rather than retrieving the actual value of the key. The lookup function helps in locating the nodes that are likely to have the key or be able to provide information about it.
     //---------------------------------------------------
