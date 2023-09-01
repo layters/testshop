@@ -20,6 +20,7 @@
 #include <cassert>
 #include <thread>
 #include <unordered_set>
+#include <set>
 
 namespace neroshop_crypto = neroshop::crypto;
 namespace neroshop_timestamp = neroshop::timestamp;
@@ -660,34 +661,6 @@ std::vector<neroshop::Node*> neroshop::Node::send_find_node(const std::string& t
     return nodes;
 }
 
-void neroshop::Node::send_get_providers(const std::string& data_hash) {
-
-    std::string transaction_id = msgpack::generate_transaction_id();
-    
-    /*bencode_dict query;
-    query["t"] = transaction_id;
-    query["y"] = "q";
-    query["q"] = "get_providers";
-    
-    std::string get_providers_message = bencode::encode(query);*/
-    //-----------------------------------------------------
-    nlohmann::json query_object;
-    query_object["tid"] = transaction_id;
-    query_object["query"] = "get_providers";
-    query_object["args"]["id"] = this->id;
-    query_object["args"]["data_hash"] = data_hash;
-    query_object["version"] = std::string(NEROSHOP_DHT_VERSION);
-    //-----------------------------------------------
-    // socket sendto and recvfrom here
-    //auto receive_buffer = send_query(address, port, _message);
-    //-----------------------------------------------
-    // process the response here
-    // ...    
-    //-----------------------------------------------
-    // get result of put request
-    // ...    
-}
-
 int neroshop::Node::send_put(const std::string& key, const std::string& value) {
     
     nlohmann::json query_object;
@@ -722,6 +695,7 @@ int neroshop::Node::send_put(const std::string& key, const std::string& value) {
         nlohmann::json put_response_message;
         try {
             put_response_message = nlohmann::json::from_msgpack(receive_buffer);
+            add_provider(key, { node->get_ip_address(), node_port });
         } catch (const std::exception& e) {
             std::cerr << "Node \033[91m" << node_ip << ":" << node_port << "\033[0m did not respond" << std::endl;
             node->check_counter += 1;
@@ -777,6 +751,7 @@ int neroshop::Node::send_put(const std::string& key, const std::string& value) {
                 nlohmann::json put_response_message;
                 try {
                     put_response_message = nlohmann::json::from_msgpack(receive_buffer);
+                    add_provider(key, { replacement_node->get_ip_address(), node_port });
                 } catch (const std::exception& e) {
                     std::cerr << "Node \033[91m" << node_ip << ":" << node_port << "\033[0m did not respond" << std::endl;
                     replacement_node->check_counter += 1;
@@ -927,6 +902,62 @@ void neroshop::Node::send_map(const std::string& address, int port) {
     if(map_sent && !data.empty()) std::cout << "\033[93mIndexing data distributed to " << address << ":" << port << "\033[0m\n";
 }
 
+std::vector<neroshop::Peer> neroshop::Node::send_get_providers(const std::string& data_hash) {
+    std::vector<neroshop::Peer> peers = {};
+    std::set<std::pair<std::string, uint16_t>> unique_peers; // Set to store unique IP-port pairs
+    //-----------------------------------------------
+    nlohmann::json query_object;
+    query_object["query"] = "get_providers";
+    query_object["args"]["id"] = this->id;
+    query_object["args"]["data_hash"] = data_hash;
+    query_object["version"] = std::string(NEROSHOP_DHT_VERSION);
+    //-----------------------------------------------
+    for (auto& bucket : routing_table->buckets) {
+        for (auto& node : bucket.second) {
+            if (node.get() == nullptr) continue;
+            if (node->get_status() != NodeStatus::Active) continue;
+            // Construct message with a unique tid
+            std::string transaction_id = msgpack::generate_transaction_id();
+            query_object["tid"] = transaction_id;
+            auto get_providers_query = nlohmann::json::to_msgpack(query_object);
+            // Send get_providers query message to each node
+            std::string node_ip = (node->get_ip_address() == this->public_ip_address) ? "127.0.0.1" : node->get_ip_address();
+            int node_port = node->get_port();
+            std::cout << "Sending get_providers request to \033[36m" << node_ip << ":" << node_port << "\033[0m\n";
+            auto receive_buffer = send_query(node_ip, node_port, get_providers_query);
+            // Process the response here
+            nlohmann::json get_providers_response;
+            try {
+                get_providers_response = nlohmann::json::from_msgpack(receive_buffer);
+            } catch (const std::exception& e) {
+                std::cerr << "Node \033[91m" << node_ip << ":" << node_port << "\033[0m did not respond" << std::endl;
+                node->check_counter += 1;
+                continue; // Continue with the next node if this one fails
+            }
+            // Show response and handle the retrieved value
+            std::cout << ((get_providers_response.contains("error")) ? ("\033[91m") : ("\033[32m")) << get_providers_response.dump() << "\033[0m\n";
+            if(get_providers_response.contains("error")) {
+                continue; // Skip if error
+            }
+            if (get_providers_response.contains("response") && get_providers_response["response"].contains("peers")) {
+                for (auto& node_json : get_providers_response["response"]["peers"]) {
+                    if (node_json.contains("ip_address") && node_json.contains("port")) {
+                        std::string ip_address = node_json["ip_address"];
+                        uint16_t port = node_json["port"];
+                        // Check if the IP-port pair is already added
+                        if (unique_peers.insert({ip_address, port}).second) {
+                            Peer provider = Peer{ip_address, port};
+                            peers.push_back(provider);
+                        }
+                    }
+                }
+            }
+        }
+    }    
+    //-----------------------------------------------
+    return peers;
+}
+
 //-----------------------------------------------------------------------------
 
 void neroshop::Node::republish() {
@@ -968,6 +999,7 @@ bool neroshop::Node::validate(const std::string& key, const std::string& value) 
             std::cerr << "Data has expired (exp date: " << expiration_date << " UTC)\n";
             // Notify the other nodes that this data has expired (so that once they receive a put with the expired data, it will be removed from their local hash table as soon as it goes through the validate function)
             ////send_put(key, value); // this should propagate the expiration information to other nodes in the DHT until the expired data is removed once and for all. Hmmm this could cause an endless loop ...
+            // This won't work unless all data contain a mandatory expiration date set on creation. A consensus mechanism may be necessary
             // Remove the data from hash table if it was previously stored
             if(has_key(key)) {
                 if(remove(key) == true) {

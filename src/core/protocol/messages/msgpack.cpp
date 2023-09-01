@@ -87,17 +87,17 @@ std::vector<uint8_t> neroshop::msgpack::process(const std::vector<uint8_t>& requ
         std::cout << "message type is a get_providers\n"; // 
         assert(request_object["args"].is_object());
         auto params_object = request_object["args"];
-        assert(params_object["info_hash"].is_string()); // info hash
-        std::string info_hash = params_object["info_hash"];
+        assert(params_object["data_hash"].is_string()); // info hash
+        std::string data_hash = params_object["data_hash"];
         
         response_object["version"] = std::string(NEROSHOP_DHT_VERSION);
         response_object["response"]["id"] = node.get_id();
         // Check if the queried node has peers for the requested infohash
-        std::vector<Peer> peers = node.get_providers(info_hash);
+        std::vector<Peer> peers = node.get_providers(data_hash);
         if(peers.empty()) {
             // If the queried node has no peers for the requested infohash,
             // return the K closest nodes in the routing table to the requested infohash
-            std::vector<Node*> closest_nodes = node.find_node(info_hash, NEROSHOP_DHT_MAX_CLOSEST_NODES);
+            std::vector<Node*> closest_nodes = node.find_node(data_hash, NEROSHOP_DHT_MAX_CLOSEST_NODES);
             std::vector<nlohmann::json> nodes_array;
             for (const auto& n : closest_nodes) {
                 nlohmann::json node_object = {
@@ -119,11 +119,11 @@ std::vector<uint8_t> neroshop::msgpack::process(const std::vector<uint8_t>& requ
                 peers_array.push_back(peer_object);
                 //std::cout << "Peer IP address: " << p.address << ", Peer port: " << p.port << std::endl;
             }
-            response_object["response"]["values"] = peers_array; // If the queried node has peers for the infohash, they are returned in a key "values" as a list of strings. Each string containing "compact" format peer information for a single peer
+            response_object["response"]["peers"] = peers_array; // If the queried node has peers for the infohash, they are returned in a key "values" as a list of strings. Each string containing "compact" format peer information for a single peer
         }
         // Generate and include a token value in the response
         auto secret = generate_secret(16);
-        std::string token = generate_token(node.get_id(), info_hash, secret); // The reason for concatenating the node ID and info hash is to ensure that the generated token is unique and specific to the peer making the request. This helps prevent replay attacks, where an attacker intercepts and reuses a token generated for another peer.
+        std::string token = generate_token(node.get_id(), data_hash, secret); // The reason for concatenating the node ID and info hash is to ensure that the generated token is unique and specific to the peer making the request. This helps prevent replay attacks, where an attacker intercepts and reuses a token generated for another peer.
         response_object["response"]["token"] = token;
     }
     //-----------------------------------------------------
@@ -328,7 +328,7 @@ std::string neroshop::msgpack::generate_secret(int length) {
 
 //-----------------------------------------------------------------------------
 
-std::string neroshop::msgpack::generate_token(const std::string& node_id, const std::string& info_hash, const std::string& secret) {
+std::string neroshop::msgpack::generate_token(const std::string& node_id, const std::string& data_hash, const std::string& secret) {
     std::string token;
     uint8_t token_data[EVP_MAX_MD_SIZE];
     unsigned int token_length = 0;
@@ -338,7 +338,7 @@ std::string neroshop::msgpack::generate_token(const std::string& node_id, const 
 
     EVP_DigestInit_ex(md_ctx, md, nullptr);
     EVP_DigestUpdate(md_ctx, node_id.data(), node_id.size());
-    EVP_DigestUpdate(md_ctx, info_hash.data(), info_hash.size());
+    EVP_DigestUpdate(md_ctx, data_hash.data(), data_hash.size());
     EVP_DigestUpdate(md_ctx, secret.data(), secret.size());
     EVP_DigestFinal_ex(md_ctx, token_data, &token_length);
 
