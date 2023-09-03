@@ -32,6 +32,7 @@ Page {
         width: parent.width; height: parent.height//2000//anchors.fill: parent
         anchors.top: tabBar.bottom
         anchors.left: parent.left; anchors.right: parent.right // margins can now be applied horizontally
+        anchors.bottom: parent.bottom
         anchors.margins: 20
         currentIndex: tabBar.currentIndex
             
@@ -233,7 +234,7 @@ Page {
                 id: inventoryTabScrollable
                 anchors.fill: parent
                 contentWidth: width
-                contentHeight: inventoryTab.childrenRect.height * 3//+ tabBar.buttonHeight + 20//parent.height
+                contentHeight: 180 + (50 + inventoryTable.list.height)// * 3//+ tabBar.buttonHeight + 20//parent.height
                 ScrollBar.vertical.policy: ScrollBar.AsNeeded
                 clip: true
                 

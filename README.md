@@ -85,25 +85,25 @@ https://user-images.githubusercontent.com/58671384/219222567-f170f728-be31-43d5-
 ## Building neroshop
 
 ### Dependencies
-:heavy_check_mark: = Currently in use; :o: = Optional; :x: = Not currently in use or deprecated; :grey_question: = Not yet in use, but up for consideration; :white_square_button: = Exclusive to CLI
+:heavy_check_mark: = Currently in use; :o: = Optional; :x: = Not currently in use or deprecated; :grey_question: = Not yet in use, but up for consideration; :white_square_button: = Exclusive to CLI; :package: = Bundled
 
-|      Library                                                       | Minimum Ver.       |         Purpose                                                        | Status                                   |
-|--------------------------------------------------------------------|--------------------|------------------------------------------------------------------------|------------------------------------------|
-| [monero-cpp](https://github.com/monero-ecosystem/monero-cpp)       | latest             | monero wallet and payment system                                       | :heavy_check_mark:                       |
-| [sqlite3](https://sqlite.org/)                                     | 3.38.0             | database management                                                    | :heavy_check_mark:                       |
-| [QR Code generator](https://github.com/nayuki/QR-Code-generator)   | ?                  | qr code generation                                                     | :heavy_check_mark:                       |
-| [json](https://github.com/nlohmann/json/)                          | ?                  | json parsing and msgpack                                               | :heavy_check_mark:                       |
-| [curl](https://github.com/curl/curl)                               | ?                  | currency conversion                                                    | :heavy_check_mark: :white_square_button: |
-| [openssl](https://github.com/openssl/openssl)                      | 1.1.1              | for curl, sha256 sum and message encryption                            | :heavy_check_mark:                       |
-| [Qt](https://www.qt.io/)                                           | 5.12.8             | graphical user interface                                               | :heavy_check_mark:                       |
-| [raft](https://github.com/willemt/raft)                            | ?                  | consensus mechanism                                                    | :grey_question:                          |
-| [stduuid](https://github.com/mariusbancila/stduuid)                | ?                  | unique id generation                                                   | :heavy_check_mark: :white_square_button: |
-| [linenoise](https://github.com/antirez/linenoise)                  | ?                  | command line interface                                                 | :heavy_check_mark: :white_square_button: |
-| [lua](https://www.lua.org/)                                        | 5.1.5              | configuration script                                                   | :heavy_check_mark:                       |
-| [cxxopts](https://github.com/jarro2783/cxxopts)                    | ?                  | command line option parser                                             | :heavy_check_mark:                       |
-| [libzmq](https://github.com/zeromq/libzmq)                         | ?                  | networking                                                             | :grey_question:                          |
-| [libi2pd](https://github.com/PurpleI2P/i2pd)                       | latest             | network proxy                                                          | :grey_question:                          |
-| [libjuice](https://github.com/paullouisageneau/libjuice)           | ?                  | NAT traversal (clearnet)                                               | :grey_question:                          |
+|      Library                                                       | Minimum Ver.       |         Purpose                                                        | Status                                             |
+|--------------------------------------------------------------------|--------------------|------------------------------------------------------------------------|----------------------------------------------------|
+| [monero-cpp](https://github.com/monero-ecosystem/monero-cpp)       | latest             | monero wallet and payment system                                       | :heavy_check_mark: :package:                       |
+| [sqlite3](https://sqlite.org/)                                     | 3.38.0             | database management                                                    | :heavy_check_mark: :package:                       |
+| [QR Code generator](https://github.com/nayuki/QR-Code-generator)   | ?                  | qr code generation                                                     | :heavy_check_mark: :package:                       |
+| [json](https://github.com/nlohmann/json/)                          | ?                  | json parsing and msgpack                                               | :heavy_check_mark: :package:                       |
+| [curl](https://github.com/curl/curl)                               | ?                  | currency conversion                                                    | :heavy_check_mark: :white_square_button:           |
+| [openssl](https://github.com/openssl/openssl)                      | 1.1.1              | for curl, sha256 sum and message encryption                            | :heavy_check_mark:                                 |
+| [Qt](https://www.qt.io/)                                           | 5.12.8             | graphical user interface                                               | :heavy_check_mark:                                 |
+| [raft](https://github.com/willemt/raft)                            | ?                  | consensus mechanism                                                    | :grey_question: :package:                          |
+| [stduuid](https://github.com/mariusbancila/stduuid)                | ?                  | unique id generation                                                   | :heavy_check_mark: :white_square_button: :package: |
+| [linenoise](https://github.com/antirez/linenoise)                  | ?                  | command line interface                                                 | :heavy_check_mark: :white_square_button: :package: |
+| [lua](https://www.lua.org/)                                        | 5.1.5              | configuration script                                                   | :heavy_check_mark: :package:                       |
+| [cxxopts](https://github.com/jarro2783/cxxopts)                    | ?                  | command line option parser                                             | :heavy_check_mark: :package:                       |
+| [libzmq](https://github.com/zeromq/libzmq)                         | ?                  | networking                                                             | :grey_question:                                    |
+| [libi2pd](https://github.com/PurpleI2P/i2pd)                       | latest             | network proxy                                                          | :grey_question: :package:                          |
+| [libjuice](https://github.com/paullouisageneau/libjuice)           | ?                  | NAT traversal (clearnet)                                               | :grey_question: :package:                          |
 
 ### Compiling neroshop from source
 **0. Install prerequisites**
