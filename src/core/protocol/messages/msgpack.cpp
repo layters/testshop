@@ -305,7 +305,10 @@ std::vector<uint8_t> neroshop::msgpack::process(const std::vector<uint8_t>& requ
                    
         // Store the key-value pair in your own node as well
         node.store(key, value);
-        // Mapping data already exists in database so no need to call node.map()
+        
+        // Map keys to search terms for efficient search operations
+        node.map(key, value);
+        
         // Return success response
         response_object["version"] = std::string(NEROSHOP_DHT_VERSION);
         response_object["response"]["id"] = node.get_id();
