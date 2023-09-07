@@ -537,6 +537,26 @@ QVariantList neroshop::UserController::getMessages() const {
         }
     }
     
+    std::sort(messages_array.begin(), messages_array.end(), [](const QVariant& a, const QVariant& b) {
+        QVariantMap mapA = a.toMap();
+        QVariantMap mapB = b.toMap();
+        QString timestampA = mapA.value("timestamp").toString();
+        QString timestampB = mapB.value("timestamp").toString();
+        
+        // Convert 'Z' to UTC+0 offset
+        if (timestampA.endsWith("Z")) {
+            timestampA.replace(timestampA.length() - 1, 1, "+00:00");
+        }
+        if (timestampB.endsWith("Z")) {
+            timestampB.replace(timestampB.length() - 1, 1, "+00:00");
+        }
+                
+        QDateTime dateTimeA = QDateTime::fromString(timestampA, Qt::ISODateWithMs);
+        QDateTime dateTimeB = QDateTime::fromString(timestampB, Qt::ISODateWithMs);
+        
+        return dateTimeA > dateTimeB;
+    });
+    
     sqlite3_finalize(stmt);
     
     return messages_array;

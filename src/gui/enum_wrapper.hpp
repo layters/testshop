@@ -50,6 +50,26 @@ public:
         UserIsNullPointer,
     };
     Q_ENUM(LoginError)
+    
+    enum class RegistrationError {
+        Ok = 0,
+        
+        Password_NoUpperCaseLetter,
+        Password_NoLowerCaseLetter,
+        Password_NoDigit,
+        Password_NoSpecialCharacter,
+        Password_LengthTooShort, // or WrongLength
+    
+        Username_LengthTooShort, // MinimumLengthReached
+        Username_LengthTooLong, // MaximumLengthReached
+        Username_NoSpacesAllowed,
+        Username_NoSymbolsAllowedWithExceptions,
+        Username_MustBeginWithLetter,
+        Username_MustEndWithAlphaNumericCharacter,
+        Username_TakenOrUnavailable,
+        Username_ReservedForInternalUse,
+    };
+    Q_ENUM(RegistrationError)
 
     enum class Sorting {
         // Listing sorting
@@ -82,5 +102,6 @@ public:
 Q_DECLARE_METATYPE(neroshop::EnumWrapper::WalletError)
 Q_DECLARE_METATYPE(neroshop::EnumWrapper::CartError)
 Q_DECLARE_METATYPE(neroshop::EnumWrapper::LoginError)
+Q_DECLARE_METATYPE(neroshop::EnumWrapper::RegistrationError)
 Q_DECLARE_METATYPE(neroshop::EnumWrapper::Sorting)
 #endif

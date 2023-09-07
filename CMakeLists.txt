@@ -414,7 +414,6 @@ set(neroshop_database_src
 
 set(neroshop_network_src 
     ${NEROSHOP_CORE_SRC_DIR}/network/i2p.cpp 
-    ${NEROSHOP_CORE_SRC_DIR}/network/tor.cpp
 )
 
 set(neroshop_price_src 
@@ -458,6 +457,7 @@ set(neroshop_tools_src
 
 set(neroshop_core_src 
     ${NEROSHOP_CORE_SRC_DIR}/cart.cpp 
+    ${NEROSHOP_CORE_SRC_DIR}/escrow.cpp 
     ${NEROSHOP_CORE_SRC_DIR}/listing.cpp 
     ${NEROSHOP_CORE_SRC_DIR}/order.cpp 
     ${NEROSHOP_CORE_SRC_DIR}/product.cpp 

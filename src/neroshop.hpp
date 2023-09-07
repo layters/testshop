@@ -10,6 +10,7 @@
 #include "core/cart.hpp"
 #include "core/category.hpp"
 #include "core/enums.hpp"
+#include "core/escrow.hpp"
 #include "core/listing.hpp"
 #include "core/order.hpp"
 #include "core/product.hpp"
@@ -28,7 +29,6 @@
 #include "core/database/sqlite.hpp"
 // network
 #include "core/network/i2p.hpp"
-#include "core/network/tor.hpp"
 // price
 #include "core/price/currency_converter.hpp"
 // protocol

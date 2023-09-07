@@ -85,7 +85,9 @@ https://user-images.githubusercontent.com/58671384/219222567-f170f728-be31-43d5-
 ## Building neroshop
 
 ### Dependencies
-:heavy_check_mark: = Currently in use; :o: = Optional; :x: = Not currently in use or deprecated; :grey_question: = Not yet in use, but up for consideration; :white_square_button: = Exclusive to CLI; :package: = Bundled
+:heavy_check_mark: = Currently in use; :o: = Optional; :x: = Marked for deprecation or removed; :grey_question: = Not in use, but may be considered 
+
+:white_square_button: = Exclusive to CLI; :package: = Bundled
 
 |      Library                                                       | Minimum Ver.       |         Purpose                                                        | Status                                             |
 |--------------------------------------------------------------------|--------------------|------------------------------------------------------------------------|----------------------------------------------------|

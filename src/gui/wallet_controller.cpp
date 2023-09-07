@@ -1,7 +1,5 @@
 #include "wallet_controller.hpp"
 
-#include "../core/enums.hpp"
-
 neroshop::WalletController::WalletController(QObject *parent) : QObject(parent)
 {
     _wallet = std::make_unique<neroshop::Wallet>();
