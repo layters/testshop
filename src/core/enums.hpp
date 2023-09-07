@@ -48,27 +48,5 @@ enum class PriceSource {
     Kraken,
 };
 
-// username and password verification
-enum class PasswordResult {
-    Password_Ok = 0,
-    Password_NoUpperCaseLetter,
-    Password_NoLowerCaseLetter,
-    Password_NoDigit,
-    Password_NoSpecialCharacter,
-    Password_LengthTooShort, // or WrongLength
-};
-
-enum class UsernameResult {
-    Username_Ok = 0,
-    Username_LengthTooShort, // MinimumLengthReached
-    Username_LengthTooLong, // MaximumLengthReached
-    Username_NoSpacesAllowed,
-    Username_NoSymbolsAllowedWithExceptions,
-    Username_MustBeginWithLetter,
-    Username_MustEndWithAlphaNumericCharacter,
-    Username_TakenOrUnavailable,
-    Username_ReservedForInternalUse,    
-};
-
 } // namespace neroshop
 #endif

@@ -229,14 +229,14 @@ void neroshop::Node::join() {
         }
         
         // Then add nodes to the routing table
-        for (auto node : nodes) {
+        for (auto& node : nodes) {
             // Ping the received nodes first
             std::string node_ip = (node->get_ip_address() == this->public_ip_address) ? "127.0.0.1" : node->get_ip_address();
             if(!ping(node_ip, node->get_port())) {
                 continue; // Skip the node and continue with the next iteration
             }
             // Process the response and update the routing table if necessary
-            routing_table->add_node(std::unique_ptr<neroshop::Node>(node));
+            routing_table->add_node(std::move(node));
         }
     }
     
@@ -386,11 +386,11 @@ void neroshop::Node::add_provider(const std::string& data_hash, const Peer& peer
         }
         // If the data_hash is already in the map, add the peer to the vector of peers
         it->second.push_back(peer);
-        std::cout << "Provider (\033[36m" << peer.address + ":" + std::to_string(peer.port) << "\033[0m) for hash (" << data_hash << ") has been added" << std::endl;
+        //std::cout << "Provider (\033[36m" << peer.address + ":" + std::to_string(peer.port) << "\033[0m) for hash (" << data_hash << ") has been added" << std::endl;
     } else {
         // If the data_hash is not in the map, create a new vector of peers and add the peer
         providers.emplace(data_hash, std::vector<Peer>{peer});
-        std::cout << "Provider (\033[36m" << peer.address + ":" + std::to_string(peer.port) << "\033[0m) for hash (" << data_hash << ") has been added (0)" << std::endl;
+        //std::cout << "Provider (\033[36m" << peer.address + ":" + std::to_string(peer.port) << "\033[0m) for hash (" << data_hash << ") has been added (0)" << std::endl;
     }
 }
 
@@ -621,7 +621,7 @@ bool neroshop::Node::send_ping(const std::string& address, int port) {
     return true;
 }
 
-std::vector<neroshop::Node*> neroshop::Node::send_find_node(const std::string& target_id, const std::string& address, uint16_t port) {
+std::vector<std::unique_ptr<neroshop::Node>> neroshop::Node::send_find_node(const std::string& target_id, const std::string& address, uint16_t port) {
     std::string transaction_id = msgpack::generate_transaction_id();
 
     nlohmann::json query_object;
@@ -645,15 +645,15 @@ std::vector<neroshop::Node*> neroshop::Node::send_find_node(const std::string& t
     }
     std::cout << "\033[32m" << nodes_message.dump() << "\033[0m\n";
     // Create node vector and store nodes from the message inside the vector
-    std::vector<Node*> nodes;
+    std::vector<std::unique_ptr<Node>> nodes;
     if (nodes_message.contains("response") && nodes_message["response"].contains("nodes")) {
         for (auto& node_json : nodes_message["response"]["nodes"]) {
             if (node_json.contains("ip_address") && node_json.contains("port")) {
                 std::string ip_address = node_json["ip_address"];
                 uint16_t port = node_json["port"];
-                Node* node = new Node(ip_address, port, false);
+                auto node = std::make_unique<Node>(ip_address, port, false);
                 if (node->id != this->id && !routing_table->has_node(node->id)) { // add node to vector only if it's not the current node
-                    nodes.push_back(node);
+                    nodes.push_back(std::move(node));
                 }
             }
         }
@@ -793,6 +793,8 @@ std::string neroshop::Node::send_get(const std::string& key) {
     //-----------------------------------------------
     // Send get message to the closest nodes
     for(auto const& node : closest_nodes) {
+        if (node->get_status() != NodeStatus::Active) { continue; } // ignore inactive nodes
+        
         std::string transaction_id = msgpack::generate_transaction_id();
         query_object["tid"] = transaction_id; // tid should be unique for each get message
         std::vector<uint8_t> get_message = nlohmann::json::to_msgpack(query_object);

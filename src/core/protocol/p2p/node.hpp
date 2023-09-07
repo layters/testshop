@@ -68,7 +68,7 @@ public:
     std::vector<uint8_t> send_query(const std::string& address, uint16_t port, const std::vector<uint8_t>& message, int recv_timeout = 5);
     //---------------------------------------------------
     bool send_ping(const std::string& address, int port);
-    std::vector<Node*> send_find_node(const std::string& target_id, const std::string& address, uint16_t port);
+    std::vector<std::unique_ptr<Node>> send_find_node(const std::string& target_id, const std::string& address, uint16_t port);
     int send_put(const std::string& key, const std::string& value);
     int send_store(const std::string& key, const std::string& value);
     std::string send_get(const std::string& key);
