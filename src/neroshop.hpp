@@ -11,6 +11,7 @@
 #include "core/category.hpp"
 #include "core/enums.hpp"
 #include "core/escrow.hpp"
+#include "core/image.hpp"
 #include "core/listing.hpp"
 #include "core/order.hpp"
 #include "core/product.hpp"
