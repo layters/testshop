@@ -89,7 +89,18 @@ Item {
             interactive: false // Set to true for scrollbar to work with mouse wheel (but then it flicks x.x)
             ScrollBar.vertical: ScrollBar { }
             property real delegateHeight: 32
-            model: searchBar.model//.slice(0, suggestionsPopup.maxSuggestions) // Limit to the first 10 items
+            model: {
+                let uniqueProductNames = [];
+
+                for (let i = 0; i < searchBar.model.length; i++) {
+                    let item = searchBar.model[i];
+                    if (uniqueProductNames.indexOf(item.product_name) === -1) {
+                        uniqueProductNames.push(item.product_name);
+                    }
+                }
+
+                return uniqueProductNames;
+            }//.slice(0, suggestionsPopup.maxSuggestions) // Limit to the first 10 items
             delegate: Rectangle {
                 width: suggestionsList.width
                 height: suggestionsList.delegateHeight
@@ -97,7 +108,7 @@ Item {
                 property bool hovered: false
                 
                 Text {
-                    text: modelData.product_name
+                    text: modelData
                     anchors.fill: parent
                     verticalAlignment: Text.AlignVCenter
                     horizontalAlignment: Text.AlignHCenter
@@ -115,7 +126,7 @@ Item {
                         hovered = false
                     }
                     onClicked: {
-                        searchField.text = modelData.product_name
+                        searchField.text = modelData
                         searchButton.activate() // This does not work either :( ////suggestionsPopup.close() // Does not work :( => "ReferenceError: suggestionsPopup is not defined"
                     }
                 }

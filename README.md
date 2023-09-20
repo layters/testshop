@@ -85,9 +85,9 @@ https://user-images.githubusercontent.com/58671384/219222567-f170f728-be31-43d5-
 ## Building neroshop
 
 ### Dependencies
-:heavy_check_mark: = Currently in use; :o: = Optional; :x: = Marked for deprecation or removed; :grey_question: = Not in use, but may be considered 
+:heavy_check_mark: = Currently in use | :o: = Optional | :x: = Marked for deprecation or removed | :grey_question: = Not in use, but may be considered 
 
-:white_square_button: = Exclusive to CLI; :package: = Bundled
+:white_square_button: = For CLI only | :package: = Bundled
 
 |      Library                                                       | Minimum Ver.       |         Purpose                                                        | Status                                             |
 |--------------------------------------------------------------------|--------------------|------------------------------------------------------------------------|----------------------------------------------------|
@@ -292,7 +292,7 @@ amount     sender     timestamp
 u/EchoingCat — for the revision of the official neroshop logo
 woodser — for his guidance and for his work on the monero-cpp library which has made the development of this app possible
 yuriio147 — for his work on various QML components, the currency converter, wallet address qr provider, fixing a major bug in the RSA encryption code, the RSA signing and verifying functions, and for teaching me some Qt/QML techniques
-lza_menace — for his help on creating the new monero.fail JSON API endpoint
+lza_menace — for creating the new monero.fail JSON API endpoint
 everyone in our matrix room — for sharing many great ideas that have been useful to the project
 ```
 

@@ -793,7 +793,7 @@ std::string neroshop::Node::send_get(const std::string& key) {
     //-----------------------------------------------
     // Send get message to the closest nodes
     for(auto const& node : closest_nodes) {
-        if (node->get_status() != NodeStatus::Active) { continue; } // ignore inactive nodes
+        if (node->get_status() != NodeStatus::Active) { continue; } // ignore idle nodes
         
         std::string transaction_id = msgpack::generate_transaction_id();
         query_object["tid"] = transaction_id; // tid should be unique for each get message
@@ -994,6 +994,7 @@ bool neroshop::Node::validate(const std::string& key, const std::string& value) 
     }
     
     // Check whether data is expired so we don't store it
+    db::Sqlite3 * database = neroshop::get_database();
     if(json.contains("expiration_date")) {
         assert(json["expiration_date"].is_string());
         std::string expiration_date = json["expiration_date"].get<std::string>();
@@ -1005,6 +1006,7 @@ bool neroshop::Node::validate(const std::string& key, const std::string& value) 
             // Remove the data from hash table if it was previously stored
             if(has_key(key)) {
                 if(remove(key) == true) {
+                    int error = database->execute_params("DELETE FROM mappings WHERE key = ?1", { key });
                     std::cout << "Expired data with key (" << key << ") has been removed from hash table\n";
                 }
             }
