@@ -43,6 +43,8 @@
 #define NEROSHOP_DHT_REPUBLISH_INTERVAL      1 // Number of hours between each periodic refresh/republishing
 #define NEROSHOP_DHT_MAX_SEARCHES            3
 
+#define NEROSHOP_MAX_SEARCH_RESULTS          1000
+
 #define NEROSHOP_PUBLIC_KEY_FILENAME              "<user_id>.pub"
 #define NEROSHOP_PRIVATE_KEY_FILENAME             "<user_id>.key"
 #define NEROSHOP_OPENSSL_PUBLIC_KEY_FILENAME      "<user_id>.pem"

@@ -50,6 +50,7 @@ ApplicationWindow {
             anchors.leftMargin: 20
             onClicked: { 
                 navBar.uncheckAllButtons()
+                searchBar.children[0].text = ""
                 pageStack.pushPage("qrc:/qml/pages/HomePage.qml", StackView.Immediate)//pageStack.push(Qt.createComponent("qrc:/qml/pages/HomePage.qml"))//pageLoader.source = "qrc:/qml/pages/HomePage.qml" 
                 console.log("Number of items in StackView: " + pageStack.depth)
             }

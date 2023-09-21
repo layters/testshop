@@ -170,7 +170,7 @@ Page {
                         spacing: 5
                         Repeater {
                             id: itemsRepeater
-                            model: Backend.getListingsByMostRecentLimit(6, settingsDialog.hideIllegalProducts)
+                            model: Backend.getListingsByMostRecent(6, settingsDialog.hideIllegalProducts)
                             delegate: Rectangle {
                                 implicitWidth: 200
                                 implicitHeight: implicitWidth

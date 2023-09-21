@@ -9,7 +9,7 @@ import "." as NeroshopComponents
 Item {
     id: searchBar
     width: childrenRect.width; height: childrenRect.height
-    property var model: Backend.getListingsBySearchTerm(searchField.text, 1000, settingsDialog.hideIllegalProducts)
+    property var model: Backend.getListingsBySearchTerm(searchField.text, settingsDialog.hideIllegalProducts)
     TextField {
         id: searchField
         color: (NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000"// textColor
@@ -94,8 +94,9 @@ Item {
 
                 for (let i = 0; i < searchBar.model.length; i++) {
                     let item = searchBar.model[i];
-                    if (uniqueProductNames.indexOf(item.product_name) === -1) {
-                        uniqueProductNames.push(item.product_name);
+                    let lowercaseName = item.product_name.toLowerCase(); // Convert to lowercase
+                    if (uniqueProductNames.indexOf(lowercaseName) === -1) {
+                        uniqueProductNames.push(lowercaseName);
                     }
                 }
 
