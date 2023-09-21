@@ -59,8 +59,10 @@ public:
     
     Q_INVOKABLE QVariantList getListings(int sorting = 0, bool hide_illicit_items = true); // Products listed by sellers
     Q_INVOKABLE QVariantList getListingsByCategory(int category_id, bool hide_illicit_items = true);
-    Q_INVOKABLE QVariantList getListingsByMostRecentLimit(int limit, bool hide_illicit_items = true);
-    Q_INVOKABLE QVariantList getListingsBySearchTerm(const QString& search_term, int count = 1000, bool hide_illicit_items = true); // count is the maximum number of search results (total). The search results (per page) can be between 10-100 or 50-100
+    Q_INVOKABLE QVariantList getListingsByMostRecent(int limit, bool hide_illicit_items = true);
+    Q_INVOKABLE QVariantList getListingsBySearchTerm(const QString& search_term, bool hide_illicit_items = true); // count is the maximum number of search results (total). The search results (per page) can be between 10-100 or 50-100
+
+    Q_INVOKABLE QVariantList sortBy(const QVariantList& catalog, int sorting = 0);
 
     Q_INVOKABLE bool saveAvatarImage(const QString& fileName, const QString& userAccountKey);
         

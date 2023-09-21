@@ -32,18 +32,23 @@ RowLayout {
             console.log("Selected", button.text, "button")
             button.checked = true
             if(button.text == walletButton.text) {
+                searchBar.children[0].text = ""
                 pageStack.pushPage("qrc:/qml/pages/subpages/WalletPage.qml", StackView.Immediate)//_stackview.currentIndex = 0
             }
             if(button.text == shopButton.text) {
+                searchBar.children[0].text = ""
                 pageStack.pushPage("qrc:/qml/pages/subpages/DashboardPage.qml", StackView.Immediate)
             }
             if(button.text == messagesButton.text) {
+                searchBar.children[0].text = ""
                 pageStack.pushPage("qrc:/qml/pages/subpages/MessagesPage.qml", StackView.Immediate)
             }
             if(button.text == ordersButton.text) {
+                searchBar.children[0].text = ""
                 pageStack.pushPage("qrc:/qml/pages/subpages/OrdersPage.qml", StackView.Immediate)
             }
             if(button.text == accountButton.text) {
+                searchBar.children[0].text = ""
                 pageStack.pushPage("qrc:/qml/pages/subpages/AccountPage.qml", StackView.Immediate)
             }                                                        
         }
@@ -266,6 +271,7 @@ RowLayout {
         
         onClicked: {
             navBar.uncheckAllButtons();
+            searchBar.children[0].text = ""
             pageStack.pushPage("qrc:/qml/pages/CartPage.qml", StackView.Immediate)
         }
                 

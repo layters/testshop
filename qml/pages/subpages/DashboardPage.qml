@@ -410,7 +410,7 @@ Page {
                         x: mainWindow.x + (mainWindow.width - this.width) / 2
                         y: mainWindow.y + (mainWindow.height - this.height) / 2
                         title: qsTr("Remove product")
-                        text: qsTr("Are you sure you want to permanently remove the selected product(s)?")
+                        text: qsTr("Are you sure you want to permanently remove the selected item(s)?")
                         buttonModel: ["No", "Yes"]
                         buttonRow.state: "centered"; buttonRow.width: 300 // buttons should fill the row width
                         Component.onCompleted: {

@@ -87,28 +87,28 @@ Page {
                 indicatorDoNotPassBorder: true
                 onActivated: {
                     if(currentIndex == find("None")) {
-                        catalogPage.model = Backend.getListings(Enum.Sorting.SortNone, settingsDialog.hideIllegalProducts)
+                        catalogPage.model = Backend.sortBy(catalogPage.model, Enum.Sorting.SortByOldest)//Enum.Sorting.SortNone)
                         settingsDialog.lastUsedListingSorting = Enum.Sorting.SortNone
                     }
                     if(currentIndex == find("Oldest")) {
-                        catalogPage.model = Backend.getListings(Enum.Sorting.SortByOldest, settingsDialog.hideIllegalProducts)
+                        catalogPage.model = Backend.sortBy(catalogPage.model, Enum.Sorting.SortByOldest)
                         settingsDialog.lastUsedListingSorting = Enum.Sorting.SortByOldest
                     }
                     if(currentIndex == find("Latest")) {
                         console.log("Showing most recent items")
-                        catalogPage.model = Backend.getListings(Enum.Sorting.SortByMostRecent, settingsDialog.hideIllegalProducts)
+                        catalogPage.model = Backend.sortBy(catalogPage.model, Enum.Sorting.SortByMostRecent)
                         settingsDialog.lastUsedListingSorting = Enum.Sorting.SortByMostRecent
                     }
                     if(currentIndex == find("Alphabetical order")) {
-                        catalogPage.model = Backend.getListings(Enum.Sorting.SortByAlphabeticalOrder, settingsDialog.hideIllegalProducts)
+                        catalogPage.model = Backend.sortBy(catalogPage.model, Enum.Sorting.SortByAlphabeticalOrder)
                         settingsDialog.lastUsedListingSorting = Enum.Sorting.SortByAlphabeticalOrder
                     }
                     if(currentIndex == find("Price - Lowest")) {
-                        catalogPage.model = Backend.getListings(Enum.Sorting.SortByPriceLowest, settingsDialog.hideIllegalProducts)
+                        catalogPage.model = Backend.sortBy(catalogPage.model, Enum.Sorting.SortByPriceLowest)
                         settingsDialog.lastUsedListingSorting = Enum.Sorting.SortByPriceLowest
                     }
                     if(currentIndex == find("Price - Highest")) {
-                        catalogPage.model = Backend.getListings(Enum.Sorting.SortByPriceHighest, settingsDialog.hideIllegalProducts)
+                        catalogPage.model = Backend.sortBy(catalogPage.model, Enum.Sorting.SortByPriceHighest)
                         settingsDialog.lastUsedListingSorting = Enum.Sorting.SortByPriceHighest
                     }
                     /*if(currentIndex == find("")) {
