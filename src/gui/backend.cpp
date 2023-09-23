@@ -943,7 +943,7 @@ QVariantList neroshop::Backend::getInventory(const QString& user_id, bool hide_i
                 inventory_object.insert("date", QString::fromStdString(value_obj["date"].get<std::string>()));
                 assert(value_obj["product"].is_object());
                 const auto& product_obj = value_obj["product"];
-                inventory_object.insert("product_uuid", QString::fromStdString(product_obj["id"].get<std::string>()));
+                ////inventory_object.insert("product_uuid", QString::fromStdString(product_obj["id"].get<std::string>()));
                 inventory_object.insert("product_name", QString::fromStdString(product_obj["name"].get<std::string>()));
                 inventory_object.insert("product_description", QString::fromStdString(product_obj["description"].get<std::string>()));
                 // product category and subcategories
@@ -1073,7 +1073,7 @@ QVariantList neroshop::Backend::getListingsBySearchTerm(const QString& searchTer
                 listing.insert("date", QString::fromStdString(value_obj["date"].get<std::string>()));
                 assert(value_obj["product"].is_object());
                 const auto& product_obj = value_obj["product"];
-                listing.insert("product_uuid", QString::fromStdString(product_obj["id"].get<std::string>()));
+                ////listing.insert("product_uuid", QString::fromStdString(product_obj["id"].get<std::string>()));
                 listing.insert("product_name", QString::fromStdString(product_obj["name"].get<std::string>()));
                 listing.insert("product_description", QString::fromStdString(product_obj["description"].get<std::string>()));
                 // product category and subcategories
@@ -1187,7 +1187,7 @@ QVariantList neroshop::Backend::getListings(int sorting, bool hide_illicit_items
                 listing.insert("date", QString::fromStdString(value_obj["date"].get<std::string>()));
                 assert(value_obj["product"].is_object());
                 const auto& product_obj = value_obj["product"];
-                listing.insert("product_uuid", QString::fromStdString(product_obj["id"].get<std::string>()));
+                ////listing.insert("product_uuid", QString::fromStdString(product_obj["id"].get<std::string>()));
                 listing.insert("product_name", QString::fromStdString(product_obj["name"].get<std::string>()));
                 listing.insert("product_description", QString::fromStdString(product_obj["description"].get<std::string>()));
                 // product category and subcategories
@@ -1413,7 +1413,7 @@ QVariantList neroshop::Backend::getListingsByCategory(int category_id, bool hide
                 listing.insert("date", QString::fromStdString(value_obj["date"].get<std::string>()));
                 assert(value_obj["product"].is_object());
                 const auto& product_obj = value_obj["product"];
-                listing.insert("product_uuid", QString::fromStdString(product_obj["id"].get<std::string>()));
+                ////listing.insert("product_uuid", QString::fromStdString(product_obj["id"].get<std::string>()));
                 listing.insert("product_name", QString::fromStdString(product_obj["name"].get<std::string>()));
                 listing.insert("product_description", QString::fromStdString(product_obj["description"].get<std::string>()));
                 // product category and subcategories

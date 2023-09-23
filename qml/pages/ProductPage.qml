@@ -202,8 +202,8 @@ Page {
                     Row { 
                         id: starsRow
                         //spacing: 5
-                        property real avg_stars: Backend.getProductAverageStars(productPage.model.product_uuid)
-                        property int star_ratings_count: Backend.getProductStarCount(productPage.model.product_uuid)
+                        property real avg_stars: Backend.getProductAverageStars(productPage.model.listing_uuid)
+                        property int star_ratings_count: Backend.getProductStarCount(productPage.model.listing_uuid)
                         //Component.onCompleted: console.log("avg stars", starsRow.avg_stars)
                         Repeater {
                             model: 5

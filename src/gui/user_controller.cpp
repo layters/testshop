@@ -337,7 +337,7 @@ QVariantList neroshop::UserController::getInventory(int sorting) const {
                 inventory_object.insert("date", QString::fromStdString(value_obj["date"].get<std::string>()));
                 assert(value_obj["product"].is_object());
                 const auto& product_obj = value_obj["product"];
-                inventory_object.insert("product_uuid", QString::fromStdString(product_obj["id"].get<std::string>()));
+                ////inventory_object.insert("product_uuid", QString::fromStdString(product_obj["id"].get<std::string>()));
                 inventory_object.insert("product_name", QString::fromStdString(product_obj["name"].get<std::string>()));
                 inventory_object.insert("product_description", QString::fromStdString(product_obj["description"].get<std::string>()));
                 // product category and subcategories
