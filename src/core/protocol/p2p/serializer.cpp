@@ -60,7 +60,7 @@ std::pair<std::string, std::string/*std::vector<uint8_t>*/> neroshop::Serializer
         assert(listing.get_product() != nullptr);
         const Product& product = *listing.get_product();
         nlohmann::json product_obj = {};
-        product_obj["id"] = product.get_id();
+        ////product_obj["id"] = product.get_id(); // use listing_id instead
         product_obj["name"] = product.get_name();
         product_obj["description"] = product.get_description();
         for (const auto& attr : product.get_attributes()) {
@@ -275,7 +275,7 @@ std::shared_ptr<neroshop::Object> neroshop::Serializer::deserialize(const std::p
         assert(value["product"].is_object());
         const auto& product_value = value["product"];
         Product product; // initialize the Product object
-        product.set_id(product_value["id"].get<std::string>());
+        product.set_id(/*product_*/value["id"].get<std::string>()); // use listing_id instead
         product.set_name(product_value["name"].get<std::string>());
         product.set_description(product_value["description"].get<std::string>());
         if(product_value.contains("attributes")) assert(product_value["attributes"].is_array());
