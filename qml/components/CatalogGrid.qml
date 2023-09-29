@@ -268,27 +268,51 @@ GridView {
                 } 
             }
             // TODO: Ratings stars and ratings count
-            Row { 
-                id: starsRow
+            Rectangle {
+                id: starsRect
+                color: "transparent"
+                //border.color: "blue" // <- for debug
                 Layout.alignment: (!settingsDialog.gridDetailsAlignCenter) ? 0 : Qt.AlignHCenter
-                //spacing: 5
+                Layout.preferredWidth: childrenRect.width
+                Layout.preferredHeight: childrenRect.height
+                property bool hovered: false
                 property var product_ratings_model: Backend.getProductRatings(modelData.listing_uuid)
-                property real avg_stars: Backend.getProductAverageStars(starsRow.product_ratings_model)
-                property int star_ratings_count: Backend.getProductStarCount(starsRow.product_ratings_model)
-                //Component.onCompleted: console.log("avg stars", starsRow.avg_stars)
-                Repeater {
-                    model: 5
-                    delegate: Text {
-                        text: (starsRow.star_ratings_count <= 0) ? qsTr(FontAwesome.star) : ((starsRow.avg_stars > index && starsRow.avg_stars < (index + 1)) ? qsTr(FontAwesome.starHalfStroke) : qsTr(FontAwesome.star)) // not sure?
-                        color: ((index + 1) > Math.ceil(starsRow.avg_stars) || (starsRow.star_ratings_count <= 0)) ? "#777" : "#ffb344" // good!
-                        font.bold: true
-                        font.family: FontAwesome.fontFamily                            
-                    }       
+                property real avg_stars: Backend.getProductAverageStars(starsRect.product_ratings_model)
+                property int star_ratings_count: Backend.getProductStarCount(starsRect.product_ratings_model)
+                Row { 
+                    id: starsRow
+                    //spacing: 5
+                    Repeater {
+                        model: 5
+                        delegate: Text {
+                            text: (starsRect.star_ratings_count <= 0) ? qsTr(FontAwesome.star) : ((starsRect.avg_stars > index && starsRect.avg_stars < (index + 1)) ? qsTr(FontAwesome.starHalfStroke) : qsTr(FontAwesome.star)) // not sure?
+                            color: ((index + 1) > Math.ceil(starsRect.avg_stars) || (starsRect.star_ratings_count <= 0)) ? "#777" : "#ffb344" // good!
+                            font.bold: true
+                            font.family: FontAwesome.fontFamily
+                        }       
+                    }
+                    Text {
+                        visible: !settingsDialog.hideProductDetails
+                        anchors.verticalCenter: parent.children[0].verticalCenter
+                        text: qsTr(" %1").arg((starsRect.star_ratings_count <= 0) ? "" : starsRect.star_ratings_count)
+                        color: "#4169e1"//(NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000"
+                        font.pointSize: 10
+                    }
                 }
-                Text {
-                    visible: !settingsDialog.hideProductDetails
-                    text: qsTr(" %1"/* ratings"*/).arg((starsRow.star_ratings_count <= 0) ? "" : "(" + starsRow.star_ratings_count + ")")
-                    color: (NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000"
+                NeroshopComponents.Hint {
+                    x: starsMouseArea.mouseX; y: starsRect.height + 10//x: starsRect.width + 10; y: (starsRect.height - height) / 2
+                    visible: parent.hovered
+                    height: contentHeight + 30; width: contentWidth + 30
+                    text: (!settingsDialog.hideProductDetails || (starsRect.star_ratings_count <= 0)) ? qsTr("%1 out of 5 stars").arg(starsRect.avg_stars) : qsTr("%1 out of 5 stars\n%2 total ratings").arg(starsRect.avg_stars).arg(starsRect.star_ratings_count)
+                    pointer.visible: false
+                    timeout: 5000
+                }
+                MouseArea { 
+                    id: starsMouseArea
+                    anchors.fill: parent
+                    hoverEnabled: true
+                    onEntered: parent.hovered = true
+                    onExited: parent.hovered = false
                 }
             }
         } // ColumnLayout

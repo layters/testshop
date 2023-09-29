@@ -389,7 +389,7 @@ Page {
                         id: showOutOfStockProductsBox
                         Layout.preferredWidth: 20; Layout.preferredHeight: 20//anchors.verticalCenter: parent.verticalCenter
                         shapeType: NeroshopComponents.CheckBox.ShapeType.Block
-                        text: qsTr("Show out of stock products")
+                        text: qsTr("Show out of stock items")
                         textColor: (NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000"
                         color: "transparent"
                         checked: true

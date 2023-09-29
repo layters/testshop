@@ -44,7 +44,7 @@ static nlohmann::json get_listing_object(const std::string& listing_key) {
     // Parse the response
     nlohmann::json json = nlohmann::json::parse(response);
     if(json.contains("error")) {
-        std::cout << "get_available_stock: listing key is lost or missing from DHT\n";
+        std::cout << "get_listing_object: listing key is lost or missing from DHT\n";
         int rescode = database->execute_params("DELETE FROM mappings WHERE key = ?1", { listing_key });
         if(rescode != SQLITE_OK) neroshop::print("sqlite error: DELETE failed", 1);
         return nlohmann::json(); // Key is lost or missing from DHT

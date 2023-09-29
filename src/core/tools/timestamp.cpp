@@ -3,6 +3,53 @@
 #include <chrono>
 #include <iomanip>
 #include <sstream>
+#include <boost/date_time.hpp> // only 'cause monero uses boost
+
+std::string neroshop::timestamp::get_utc_timestamp_after_duration(int duration, const std::string& time_unit) {
+    // Get the current UTC time
+    boost::posix_time::ptime now = boost::posix_time::second_clock::universal_time();
+
+    // Define the time units and their respective durations
+    std::unordered_map<std::string, boost::posix_time::time_duration> time_units = {
+        {"seconds", boost::posix_time::seconds(duration)},
+        {"minutes", boost::posix_time::minutes(duration)},
+        {"hours", boost::posix_time::hours(duration)},
+        {"days", boost::posix_time::hours(duration * 24)},
+        {"months", boost::posix_time::not_a_date_time},  // Placeholder for months
+        {"years", boost::posix_time::not_a_date_time}    // Placeholder for years
+    };
+
+    if (time_units.find(time_unit) == time_units.end()) {
+        throw std::invalid_argument("Invalid time unit.");
+    }
+
+    if (time_unit == "months" || time_unit == "years") {
+        // Extract the date and time components
+        boost::gregorian::date now_date = now.date();
+        boost::posix_time::time_duration now_time = now.time_of_day();
+
+        if (time_unit == "months") {
+            // Calculate the target time using Boost Date Time's months_duration
+            boost::gregorian::date later_date = now_date + boost::gregorian::months(duration);
+            boost::posix_time::ptime later(later_date, now_time);
+            return boost::posix_time::to_iso_extended_string(later) + "Z";
+        } else if (time_unit == "years") {
+            // Calculate the target time using Boost Date Time's years_duration
+            boost::gregorian::date later_date = now_date + boost::gregorian::years(duration);
+            boost::posix_time::ptime later(later_date, now_time);
+            return boost::posix_time::to_iso_extended_string(later) + "Z";
+        }
+    }
+
+    // Calculate the target time using the specified duration
+    boost::posix_time::ptime later = now + time_units[time_unit];
+
+    // Format the time
+    std::ostringstream oss;
+    oss << boost::posix_time::to_iso_extended_string(later) << "Z";
+
+    return oss.str();
+}
 
 std::string neroshop::timestamp::get_current_utc_timestamp() {
     auto now = std::chrono::system_clock::now();

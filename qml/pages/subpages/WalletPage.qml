@@ -353,6 +353,9 @@ Page {
                                 return;
                             }
                             Wallet.transfer(addressField.text, amountField.text)
+                            // TODO: clear address and amount field if transfer was successful
+                            /*addressField.text = ""
+                            amountField.text = ""*/
                             onCloseCallback()
                             close()
                         }
