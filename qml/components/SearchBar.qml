@@ -111,6 +111,8 @@ Item {
                 Text {
                     text: modelData
                     anchors.fill: parent
+                    wrapMode: Text.WordWrap
+                    elide: Text.ElideRight
                     verticalAlignment: Text.AlignVCenter
                     horizontalAlignment: Text.AlignHCenter
                     color: "#ffffff"

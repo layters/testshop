@@ -77,9 +77,9 @@ https://user-images.githubusercontent.com/58671384/219222567-f170f728-be31-43d5-
 - [ ] Native I2P support 
     - i2pd will be built-in (statically linked)
 - [x] Seller reputation system
-- [x] Product rating system
+- [x] Product rating system (GUI Integration Pending)
 - [x] Wishlists
-- [x] Built-in SQLite-powered search engine that can find any products or sellers
+- [x] Built-in SQLite-powered search engine that can find any listing or seller
 - [ ] Full-featured and user-friendly GUI application (WIP)
 
 ## Building neroshop
@@ -256,17 +256,6 @@ WW2pQTQWHpyJf2CHrCmZG7Tn3zBnYRZTH8g4U3pSZf5s6xsTXrZc9odDWmrWzjRc9MMQWrKXxjHsRdzH
 
 [**OpenAlias**](https://openalias.org/):
 `donate.neroshop.org` or `donate@neroshop.org`
-
-Donations Log:
-```
-amount     sender     timestamp
---------------------------------
-0.12 xmr   anonymous  2022-10-25
-0.50 xmr   anonymous  2022-11-15
-0.02 xmr   anonymous  2022-11-22
-0.003 xmr  anonymous  2023-01-03
-1.00 xmr   anonymous  2023-07-23
-```
 
 
 ## Resources

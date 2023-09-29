@@ -61,14 +61,14 @@ std::string neroshop::Seller::list_item(
     // Transition from Sqlite to DHT:
     Client * client = Client::get_main_client();
     // Create product object
-    const std::string product_id = neroshop::uuid::generate();
+    const std::string listing_id = neroshop::uuid::generate();//std::cout << "listing id: " << listing_id << "\n";
+    const std::string product_id = listing_id;
     Product product {
         product_id, name, description, attributes, 
         product_code, static_cast<unsigned int>(category_id), subcategory_ids, tags,
         images
     };
     // Create listing object
-    const std::string listing_id = neroshop::uuid::generate();//std::cout << "listing id: " << listing_id << "\n";
     const std::string seller_id = get_id();//std::cout << "seller_id: " << seller_id << "\n";
 
     auto now = std::chrono::system_clock::now();

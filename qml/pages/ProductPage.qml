@@ -411,9 +411,9 @@ Page {
                                     cursorShape: Qt.PointingHandCursor
                                 }
                             }                            
-                            // Message seller button
+                            // Rate product button
                             Button {
-                                id: chatSellerButton
+                                id: rateProductButton
                                 anchors.horizontalCenter: parent.horizontalCenter//Layout.alignment: Qt.AlignHCenter
                                 width: 500; height: 50//Layout.preferredWidth: 500; Layout.preferredHeight: 50
                                 hoverEnabled: true
@@ -422,8 +422,8 @@ Page {
                                 property string lightColor: "#6c60b9"
                                 property string darkColor: "#483d8b"
                                 background: Rectangle {
-                                    color: parent.hovered ? (parent.down ? chatSellerButton.darkColor : chatSellerButton.lightColor) : chatSellerButton.color
-                                    border.color: chatSellerButton.darkColor
+                                    color: parent.hovered ? (parent.down ? rateProductButton.darkColor : rateProductButton.lightColor) : rateProductButton.color
+                                    border.color: rateProductButton.darkColor
                                     border.width: 2
                                     radius: 3
                                 }

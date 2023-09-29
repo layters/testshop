@@ -486,6 +486,7 @@ void neroshop::User::send_message(const std::string& recipient_id, const std::st
     data["recipient_id"] = recipient_id;
     data["timestamp"] = neroshop::timestamp::get_current_utc_timestamp();
     data["metadata"] = "message";
+    data["expiration_date"] = neroshop::timestamp::get_utc_timestamp_after_duration(2, "years");
     
     std::string value = data.dump();
     std::string key = neroshop::crypto::sha3_256(value);//std::cout << "key: " << key << "\nvalue: " << value << "\n";

@@ -693,6 +693,7 @@ Page {
                                     }
                                     
                                     NeroshopComponents.Hint {
+                                        y: parent.height + 3
                                         visible: parent.hovered
                                         height: contentHeight + 20; width: contentWidth + 20
                                         text: qsTr("Reputation")
