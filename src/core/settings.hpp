@@ -3,8 +3,6 @@
 #ifndef SETTINGS_HPP_NEROSHOP
 #define SETTINGS_HPP_NEROSHOP
 
-#include "../neroshop_config.hpp"
-
 #include "tools/script.hpp" // lua_State
 
 #define LUA_TAG "\033[1;34m[lua]:\033[0m "

@@ -1,6 +1,8 @@
 #include "user.hpp"
 
+#include "../neroshop_config.hpp"
 #include "cart.hpp"
+#include "settings.hpp"
 #include "database/database.hpp"
 #include "tools/logger.hpp"
 
@@ -12,8 +14,10 @@
 #include "crypto/sha3.hpp"
 #include "tools/base64.hpp"
 #include "tools/timestamp.hpp"
+#include "tools/string.hpp"
 
 #include <fstream>
+#include <regex>
 
 ////////////////////
 neroshop::User::User() : id(""), logged(false), account_type(UserAccountType::Guest), cart(nullptr), order_list({}), favorites({}) {
@@ -486,7 +490,30 @@ void neroshop::User::send_message(const std::string& recipient_id, const std::st
     data["recipient_id"] = recipient_id;
     data["timestamp"] = neroshop::timestamp::get_current_utc_timestamp();
     data["metadata"] = "message";
-    data["expiration_date"] = neroshop::timestamp::get_utc_timestamp_after_duration(2, "years");
+    nlohmann::json settings_json = nlohmann::json::parse(neroshop::load_json(), nullptr, false);
+    if(settings_json.is_discarded()) {
+        data["expiration_date"] = neroshop::timestamp::get_utc_timestamp_after_duration(1, "year"); // default: 1 year
+    } else {
+        nlohmann::json message_expiration = settings_json["data_expiration"]["message"].get<std::string>();
+        std::string expires_in = message_expiration.dump();
+        if(neroshop::string::contains(expires_in, "Never")) return;
+        std::regex pattern("(\\d+) (\\w+)"); // Regular expression to match number followed by text
+        std::smatch match;
+        if (std::regex_search(expires_in, match, pattern)) {
+            std::string number_str = match[1].str(); // Extract the matched number
+            int number = std::stoi(number_str); // Convert the matched number to an integer
+
+            std::string time_unit = match[2].str(); // Extract the matched text
+            if (!time_unit.empty() && time_unit.back() == 's' && time_unit.size() > 1) {// Check if the string ends with 's' and has more than one character
+                time_unit.pop_back(); // Remove the last character ('s')
+            }
+            #ifdef NEROSHOP_DEBUG0
+            std::cout << "Extracted number: " << number << std::endl;
+            std::cout << "Extracted text: " << time_unit << std::endl;
+            #endif
+            data["expiration_date"] = neroshop::timestamp::get_utc_timestamp_after_duration(number, time_unit);
+        }
+    }
     
     std::string value = data.dump();
     std::string key = neroshop::crypto::sha3_256(value);//std::cout << "key: " << key << "\nvalue: " << value << "\n";

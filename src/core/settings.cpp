@@ -1,5 +1,6 @@
 #include "settings.hpp"
 
+#include "../neroshop_config.hpp"
 #include "tools/logger.hpp"
 #include "tools/tools.hpp"
 
@@ -212,8 +213,17 @@ bool neroshop::create_json() {
         daemon_obj.insert(QString("last_selected_node"), QJsonValue(""));
         monero_obj.insert(QString("daemon"), QJsonValue(daemon_obj));
         root_obj.insert(QString("monero"), QJsonValue(monero_obj));
+        QJsonObject data_expiration_obj;
+        ////data_expiration_obj.insert(QString("user"), QJsonValue("Never"));
+        data_expiration_obj.insert(QString("listing"), QJsonValue("Never"));
+        data_expiration_obj.insert(QString("product_rating"), QJsonValue("Never"));
+        data_expiration_obj.insert(QString("seller_rating"), QJsonValue("Never"));
+        data_expiration_obj.insert(QString("order"), QJsonValue("2 years"));
+        data_expiration_obj.insert(QString("message"), QJsonValue("30 days"));
+        root_obj.insert(QString("data_expiration"), QJsonValue(data_expiration_obj));
         //QJsonObject _obj;
         //_obj.insert(QString(""), QJsonValue());
+        //root_obj.insert(QString(""), QJsonValue(_obj));
         // Convert to JSON string
         QJsonDocument json_doc(root_obj);
         QString settings_json = json_doc.toJson();
@@ -276,6 +286,12 @@ bool neroshop::create_json() {
         settings_json["monero"]["daemon"]["node_type"] = 0;
         settings_json["monero"]["daemon"]["executable"] = "";
         settings_json["monero"]["daemon"]["last_selected_node"] = "";
+        ////settings_json["data_expiration"]["user"] = "Never"; // permanent
+        settings_json["data_expiration"]["listing"] = "Never"; // can be modified
+        settings_json["data_expiration"]["product_rating"] = "Never";
+        settings_json["data_expiration"]["seller_rating"] = "Never";
+        settings_json["data_expiration"]["order"] = "2 years"; // until order is completed or fails
+        settings_json["data_expiration"]["message"] = "30 days"; // can be modified
         //settings_json[""][""] = ;
         // Write to file then close it
         settings_file << settings_json.dump(4);

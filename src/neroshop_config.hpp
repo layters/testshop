@@ -58,7 +58,7 @@
 #define NEROSHOP_RSA_DEFAULT_BITS NEROSHOP_RSA_DEFAULT_BIT_LENGTH
 
 #define NEROSHOP_APPLICATION_NAME       "neroshop"
-#define NEROSHOP_DAEMON_CONFIG_FILENAME "daemon.conf" // This is actually a lua file
+#define NEROSHOP_DAEMON_CONFIG_FILENAME "daemon.ini"
 #define NEROSHOP_DATABASE_FILENAME      "data.sqlite3"
 #define NEROSHOP_SETTINGS_FILENAME      "settings.json"
 #define NEROSHOP_NODES_FILENAME         "nodes.lua"

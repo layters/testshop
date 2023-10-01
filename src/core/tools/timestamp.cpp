@@ -11,29 +11,29 @@ std::string neroshop::timestamp::get_utc_timestamp_after_duration(int duration, 
 
     // Define the time units and their respective durations
     std::unordered_map<std::string, boost::posix_time::time_duration> time_units = {
-        {"seconds", boost::posix_time::seconds(duration)},
-        {"minutes", boost::posix_time::minutes(duration)},
-        {"hours", boost::posix_time::hours(duration)},
-        {"days", boost::posix_time::hours(duration * 24)},
-        {"months", boost::posix_time::not_a_date_time},  // Placeholder for months
-        {"years", boost::posix_time::not_a_date_time}    // Placeholder for years
+        {"second", boost::posix_time::seconds(duration)},
+        {"minute", boost::posix_time::minutes(duration)},
+        {"hour", boost::posix_time::hours(duration)},
+        {"day", boost::posix_time::hours(duration * 24)},
+        {"month", boost::posix_time::not_a_date_time},  // Placeholder for months
+        {"year", boost::posix_time::not_a_date_time}    // Placeholder for years
     };
 
     if (time_units.find(time_unit) == time_units.end()) {
         throw std::invalid_argument("Invalid time unit.");
     }
 
-    if (time_unit == "months" || time_unit == "years") {
+    if (time_unit == "month" || time_unit == "year") {
         // Extract the date and time components
         boost::gregorian::date now_date = now.date();
         boost::posix_time::time_duration now_time = now.time_of_day();
 
-        if (time_unit == "months") {
+        if (time_unit == "month") {
             // Calculate the target time using Boost Date Time's months_duration
             boost::gregorian::date later_date = now_date + boost::gregorian::months(duration);
             boost::posix_time::ptime later(later_date, now_time);
             return boost::posix_time::to_iso_extended_string(later) + "Z";
-        } else if (time_unit == "years") {
+        } else if (time_unit == "year") {
             // Calculate the target time using Boost Date Time's years_duration
             boost::gregorian::date later_date = now_date + boost::gregorian::years(duration);
             boost::posix_time::ptime later(later_date, now_time);
