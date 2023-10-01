@@ -492,7 +492,7 @@ void neroshop::User::send_message(const std::string& recipient_id, const std::st
     data["metadata"] = "message";
     nlohmann::json settings_json = nlohmann::json::parse(neroshop::load_json(), nullptr, false);
     if(settings_json.is_discarded()) {
-        data["expiration_date"] = neroshop::timestamp::get_utc_timestamp_after_duration(1, "year"); // default: 1 year
+        data["expiration_date"] = neroshop::timestamp::get_utc_timestamp_after_duration(30, "day"); // default: 30 days
     } else {
         nlohmann::json message_expiration = settings_json["data_expiration"]["message"].get<std::string>();
         std::string expires_in = message_expiration.dump();
