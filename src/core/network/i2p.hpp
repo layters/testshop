@@ -1,4 +1,7 @@
 #pragma once
 
-#include <api.h> // libi2pd
-#include <SAM.h> // libi2pd_client
+// libi2pd
+#include <api.h>
+// libi2pd_client
+//#include <SAM.h>
+//#include <UDPTunnel.h>

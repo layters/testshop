@@ -109,6 +109,15 @@ Popup {
                 },
             },
             // proxy / privacy
+            // dht / privacy
+            data_expiration: {
+                ////user: userExpBox.currentText,
+                listing: listingExpBox.currentText,
+                product_rating: productRatingExpBox.currentText,
+                seller_rating: sellerRatingExpBox.currentText,
+                order: orderExpBox.currentText,
+                message: messageExpBox.currentText,
+            },
             // paths
             wallet_directory: (Script.getJsonRootObject()["wallet_directory"].length > 0) ? Script.getJsonRootObject()["wallet_directory"] : neroshopDefaultWalletDirPath,
         };
@@ -249,7 +258,36 @@ Popup {
                     onPressed: mouse.accepted = false
                     cursorShape: !parent.checked ? Qt.PointingHandCursor : Qt.ArrowCursor
                 }
-            }            
+            }   
+            
+            TabButton { 
+                text: qsTr("Privacy")
+                width: implicitWidth + 20
+                onClicked: {
+                    settingsStack.currentIndex = 2
+                    resetScrollBar()
+                }
+                display: AbstractButton.TextOnly
+                checkable: true
+                checked: (settingsStack.currentIndex == 2)
+                background: Rectangle {
+                    color: (parent.checked) ? settingsBar.buttonOnColor : settingsBar.buttonOffColor
+                    radius: settingsBar.buttonRadius
+                }
+                contentItem: Text {
+                    text: parent.text
+                    color: (parent.checked) ? "#ffffff" : ((NeroshopComponents.Style.darkTheme) ? "#e0e0e0" : "#353637")
+                    horizontalAlignment: Text.AlignHCenter
+                    verticalAlignment: Text.AlignVCenter                    
+                    font.bold: true
+                    //font.family: FontAwesome.fontFamily
+                }
+                MouseArea {
+                    anchors.fill: parent
+                    onPressed: mouse.accepted = false
+                    cursorShape: !parent.checked ? Qt.PointingHandCursor : Qt.ArrowCursor
+                }
+            }                     
         }
         /*Rectangle {
             id : decorator
@@ -1375,6 +1413,170 @@ Item {
                 } // Item 1
                 } // StackLayout (node)             
             } // moneroSettings
+            
+            // Privacy settings
+            ColumnLayout {
+                id: privacySettings
+                Layout.preferredWidth: parent.width
+                spacing: 30
+                
+                GroupBox {
+                    title: qsTr("Data expiration")
+                    //Layout.row: 3
+                    Layout.alignment: Qt.AlignHCenter
+                    Layout.preferredWidth: settingsStack.contentBoxWidth
+                    background: Rectangle {
+                        y: parent.topPadding - parent.bottomPadding
+                        width: parent.width
+                        height: parent.height - parent.topPadding + parent.bottomPadding
+                        color: settingsStack.contentBoxColor
+                        border.color: settingsStack.contentBoxBorderColor
+                        radius: 2
+                    }
+                    
+                    label: Label {
+                        x: parent.leftPadding
+                        width: parent.availableWidth
+                        text: parent.title
+                        color: parent.background.border.color//"#030380"
+                        elide: Text.ElideRight
+                    }
+                    // Privacy settings content
+                    ColumnLayout {
+                        id: dataExpSetColumn
+                        width: parent.width; height: childrenRect.height
+                        // User account data expiration
+                        Item {
+                            Layout.fillWidth: true
+                            Layout.preferredHeight: childrenRect.height                        
+                            Text {
+                                anchors.verticalCenter: userExpBox.verticalCenter
+                                text: qsTr("User account data:")
+                                color: NeroshopComponents.Style.darkTheme ? "#ffffff" : "#000000"
+                            }
+
+                            NeroshopComponents.ComboBox {
+                                id: userExpBox
+                                anchors.right: parent.right//; anchors.rightMargin: 0
+                                width: settingsStack.comboBoxWidth; indicatorWidth: settingsStack.comboBoxButtonWidth
+                                model: ["Never"]
+                                currentIndex: 0
+                                onCurrentTextChanged: settingsDialog.save()
+                                color: "#f2f2f2"
+                                indicatorDoNotPassBorder: settingsStack.comboBoxNestedButton
+                                enabled: false
+                            }
+                        }
+                        // Listing expiration
+                        Item {
+                            Layout.fillWidth: true
+                            Layout.preferredHeight: childrenRect.height                        
+                            Text {
+                                anchors.verticalCenter: listingExpBox.verticalCenter
+                                text: qsTr("Listings:")
+                                color: NeroshopComponents.Style.darkTheme ? "#ffffff" : "#000000"
+                            }
+
+                            NeroshopComponents.ComboBox {
+                                id: listingExpBox
+                                anchors.right: parent.right
+                                width: settingsStack.comboBoxWidth; indicatorWidth: settingsStack.comboBoxButtonWidth
+                                model: ["Never", "30 days", "3 months", "6 months", 
+                                    "1 year", "2 years", "3 years", "4 years", "5 years"]
+                                currentIndex: model.indexOf(Script.getJsonRootObject()["data_expiration"]["listing"])
+                                onCurrentTextChanged: settingsDialog.save()
+                                color: "#f2f2f2"
+                                indicatorDoNotPassBorder: settingsStack.comboBoxNestedButton
+                            }
+                        }
+                        // Product rating expiration
+                        Item {
+                            Layout.fillWidth: true
+                            Layout.preferredHeight: childrenRect.height                        
+                            Text {
+                                anchors.verticalCenter: productRatingExpBox.verticalCenter
+                                text: qsTr("Product ratings:")
+                                color: NeroshopComponents.Style.darkTheme ? "#ffffff" : "#000000"
+                            }
+
+                            NeroshopComponents.ComboBox {
+                                id: productRatingExpBox
+                                anchors.right: parent.right
+                                width: settingsStack.comboBoxWidth; indicatorWidth: settingsStack.comboBoxButtonWidth
+                                model: ["Never", "2 years", "3 years", "4 years", "5 years"]
+                                currentIndex: model.indexOf(Script.getJsonRootObject()["data_expiration"]["product_rating"])
+                                onCurrentTextChanged: settingsDialog.save()
+                                color: "#f2f2f2"
+                                indicatorDoNotPassBorder: settingsStack.comboBoxNestedButton
+                            }
+                        }
+                        // Seller rating expiration
+                        Item {
+                            Layout.fillWidth: true
+                            Layout.preferredHeight: childrenRect.height                        
+                            Text {
+                                anchors.verticalCenter: sellerRatingExpBox.verticalCenter
+                                text: qsTr("Seller ratings:")
+                                color: NeroshopComponents.Style.darkTheme ? "#ffffff" : "#000000"
+                            }
+
+                            NeroshopComponents.ComboBox {
+                                id: sellerRatingExpBox
+                                anchors.right: parent.right
+                                width: settingsStack.comboBoxWidth; indicatorWidth: settingsStack.comboBoxButtonWidth
+                                model: productRatingExpBox.model
+                                currentIndex: model.indexOf(Script.getJsonRootObject()["data_expiration"]["seller_rating"])
+                                onCurrentTextChanged: settingsDialog.save()
+                                color: "#f2f2f2"
+                                indicatorDoNotPassBorder: settingsStack.comboBoxNestedButton
+                            }
+                        }
+                        // Order history expiration
+                        Item {
+                            Layout.fillWidth: true
+                            Layout.preferredHeight: childrenRect.height                        
+                            Text {
+                                anchors.verticalCenter: orderExpBox.verticalCenter
+                                text: qsTr("Orders:")
+                                color: NeroshopComponents.Style.darkTheme ? "#ffffff" : "#000000"
+                            }
+
+                            NeroshopComponents.ComboBox {
+                                id: orderExpBox
+                                anchors.right: parent.right
+                                width: settingsStack.comboBoxWidth; indicatorWidth: settingsStack.comboBoxButtonWidth
+                                model: ["2 years", "3 years", "4 years", "5 years"]
+                                    //"Until Transaction Completion", "Until Dispute Resolution"]
+                                currentIndex: model.indexOf(Script.getJsonRootObject()["data_expiration"]["order"])
+                                onCurrentTextChanged: settingsDialog.save()
+                                color: "#f2f2f2"
+                                indicatorDoNotPassBorder: settingsStack.comboBoxNestedButton
+                            }
+                        }
+                        // Message expiration
+                        Item {
+                            Layout.fillWidth: true
+                            Layout.preferredHeight: childrenRect.height                        
+                            Text {
+                                anchors.verticalCenter: messageExpBox.verticalCenter
+                                text: qsTr("Messages:")
+                                color: NeroshopComponents.Style.darkTheme ? "#ffffff" : "#000000"
+                            }
+
+                            NeroshopComponents.ComboBox {
+                                id: messageExpBox
+                                anchors.right: parent.right
+                                width: settingsStack.comboBoxWidth; indicatorWidth: settingsStack.comboBoxButtonWidth
+                                model: ["30 days", "3 months", "6 months", "1 year"]
+                                currentIndex: model.indexOf(Script.getJsonRootObject()["data_expiration"]["message"])
+                                onCurrentTextChanged: settingsDialog.save()
+                                color: "#f2f2f2"
+                                indicatorDoNotPassBorder: settingsStack.comboBoxNestedButton
+                            }
+                        }
+                    }
+                }
+            }    
         } // StackLayout (settings)
     } // ScrollView 
 }

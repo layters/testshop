@@ -6,6 +6,7 @@
 #include "../../tools/timestamp.hpp"
 //#include "../../tools/base64.hpp"
 #include "../../wallet.hpp"
+#include "../../settings.hpp"
 
 #include <nlohmann/json.hpp>
 
