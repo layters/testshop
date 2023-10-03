@@ -13,6 +13,7 @@
 #include "category.hpp"
 #include "tools/base64.hpp"
 #include "crypto/rsa.hpp"
+#include "tools/timestamp.hpp"
 
 #include <cmath> // floor
 #include <random>
@@ -71,11 +72,7 @@ std::string neroshop::Seller::list_item(
     // Create listing object
     const std::string seller_id = get_id();//std::cout << "seller_id: " << seller_id << "\n";
 
-    auto now = std::chrono::system_clock::now();
-    auto in_time_t = std::chrono::system_clock::to_time_t(now); // current time
-    std::stringstream date;
-    date << std::put_time(std::gmtime(&in_time_t), "%Y-%m-%dT%H:%M:%SZ");
-    std::string utc_time = date.str();//std::cout << "utc time: " << utc_time << "\n";
+    std::string created_at = neroshop::timestamp::get_current_utc_timestamp();//std::cout << "utc time: " << utc_time << "\n";
     
     std::string signature = wallet->sign_message(listing_id, monero_message_signature_type::SIGN_WITH_SPEND_KEY);//std::cout << "signature: " << signature << "\n\n";
     
@@ -87,7 +84,7 @@ std::string neroshop::Seller::list_item(
     
     Listing listing { listing_id, product, seller_id,
         quantity, price, currency,
-        condition, location, date.str(), signature
+        condition, location, created_at, signature
     };//listing.print_listing();
     
     auto data = Serializer::serialize(listing);
@@ -144,12 +141,7 @@ void neroshop::Seller::delist_item(const std::string& listing_key) {
         // Might be a good idea to set the stock quantity to zero beforehand or nah?
         ////value_obj["quantity"] = 0;
         // Finally, set the expiration date
-        auto now = std::chrono::system_clock::now();
-        auto in_time_t = std::chrono::system_clock::to_time_t(now); // current time
-        std::stringstream datetime;
-        datetime << std::put_time(std::gmtime(&in_time_t), "%Y-%m-%dT%H:%M:%SZ");
-        std::string utc_time = datetime.str();
-        value_obj["expiration_date"] = utc_time;//value_obj["valid_until"] = utc_time;
+        value_obj["expiration_date"] = neroshop::timestamp::get_current_utc_timestamp();//value_obj["valid_until"] = neroshop::timestamp::get_current_utc_timestamp();
         // Send set request containing the updated value with the same key as before
         std::string modified_value = value_obj.dump();
         std::string response;
@@ -358,12 +350,7 @@ void neroshop::Seller::set_stock_quantity(const std::string& listing_key, int qu
         // Finally, modify the quantity
         value_obj["quantity"] = quantity;
         // Add a last_modified or last_updated field so nodes can compare dates and choose the most recent listing
-        auto now = std::chrono::system_clock::now();
-        auto in_time_t = std::chrono::system_clock::to_time_t(now); // current time
-        std::stringstream datetime;
-        datetime << std::put_time(std::gmtime(&in_time_t), "%Y-%m-%dT%H:%M:%SZ");
-        std::string utc_time = datetime.str();
-        value_obj["last_updated"] = utc_time;
+        value_obj["last_updated"] = neroshop::timestamp::get_current_utc_timestamp();
         // Send set request containing the updated value with the same key as before
         std::string modified_value = value_obj.dump();
         std::string response;

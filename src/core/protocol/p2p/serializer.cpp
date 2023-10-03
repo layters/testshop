@@ -8,6 +8,8 @@
 #include "../../wallet.hpp"
 #include "../../settings.hpp"
 
+#include <regex>
+
 #include <nlohmann/json.hpp>
 
 /** Thoughts and ideas: I think cart and wishlist data should be stored locally in the database file:
@@ -193,6 +195,24 @@ std::pair<std::string, std::string/*std::vector<uint8_t>*/> neroshop::Serializer
             json_object["items"].push_back(order_item_obj); // order_items // TODO: encrypt order items
         }
         json_object["metadata"] = "order";
+        nlohmann::json settings_json = nlohmann::json::parse(neroshop::load_json(), nullptr, false);
+        if(settings_json.is_discarded()) {
+            json_object["expiration_date"] = neroshop::timestamp::get_utc_timestamp_after_duration(2, "year"); // default: 2 years
+        } else {
+            nlohmann::json order_expiration = settings_json["data_expiration"]["order"].get<std::string>();
+            std::string expires_in = order_expiration.dump();
+            std::regex pattern("(\\d+) (\\w+)"); // Regular expression to match number followed by text
+            std::smatch match;
+            if (std::regex_search(expires_in, match, pattern)) {
+                std::string number_str = match[1].str();
+                int number = std::stoi(number_str);
+                std::string time_unit = match[2].str();
+                if (!time_unit.empty() && time_unit.back() == 's' && time_unit.size() > 1) {
+                    time_unit.pop_back(); // Remove the last character ('s')
+                }
+                json_object["expiration_date"] = neroshop::timestamp::get_utc_timestamp_after_duration(number, time_unit);
+            }
+        }
     }
     
     if(std::holds_alternative<ProductRating>(obj)) {
