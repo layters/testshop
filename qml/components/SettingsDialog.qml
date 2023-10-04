@@ -1451,7 +1451,7 @@ Item {
                             Layout.preferredHeight: childrenRect.height                        
                             Text {
                                 anchors.verticalCenter: userExpBox.verticalCenter
-                                text: qsTr("User account data:")
+                                text: qsTr("User accounts:")
                                 color: NeroshopComponents.Style.darkTheme ? "#ffffff" : "#000000"
                             }
 
@@ -1464,7 +1464,6 @@ Item {
                                 onCurrentTextChanged: settingsDialog.save()
                                 color: "#f2f2f2"
                                 indicatorDoNotPassBorder: settingsStack.comboBoxNestedButton
-                                enabled: false
                             }
                         }
                         // Listing expiration
@@ -1524,7 +1523,7 @@ Item {
                                 id: sellerRatingExpBox
                                 anchors.right: parent.right
                                 width: settingsStack.comboBoxWidth; indicatorWidth: settingsStack.comboBoxButtonWidth
-                                model: productRatingExpBox.model
+                                model: productRatingExpBox.model//["Never"]
                                 currentIndex: model.indexOf(Script.getJsonRootObject()["data_expiration"]["seller_rating"])
                                 onCurrentTextChanged: settingsDialog.save()
                                 color: "#f2f2f2"
