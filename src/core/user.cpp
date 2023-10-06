@@ -490,12 +490,11 @@ void neroshop::User::send_message(const std::string& recipient_id, const std::st
     data["recipient_id"] = recipient_id;
     data["timestamp"] = neroshop::timestamp::get_current_utc_timestamp();
     data["metadata"] = "message";
-    nlohmann::json settings_json = nlohmann::json::parse(neroshop::load_json(), nullptr, false);
-    if(settings_json.is_discarded()) {
+    nlohmann::json settings = nlohmann::json::parse(neroshop::load_json(), nullptr, false);
+    if(settings.is_discarded()) {
         data["expiration_date"] = neroshop::timestamp::get_utc_timestamp_after_duration(30, "day"); // default: 30 days
     } else {
-        nlohmann::json message_expiration = settings_json["data_expiration"]["message"].get<std::string>();
-        std::string expires_in = message_expiration.dump();
+        std::string expires_in = settings["data_expiration"]["message"].get<std::string>();
         if(neroshop::string::contains(expires_in, "Never")) return;
         std::regex pattern("(\\d+) (\\w+)"); // Regular expression to match number followed by text
         std::smatch match;

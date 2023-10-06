@@ -118,6 +118,19 @@ void neroshop::Mapper::add(const std::string& key, const std::string& value) {
             std::string order_id = json["id"].get<std::string>();
             order_ids[order_id].push_back(key);
         }
+        /*// Map seller_ids to orders
+        if(json.contains("items") && json["items"].is_array()) {
+            const auto& order_items = json["items"];
+            
+            for (const auto& item : order_items) {
+                assert(item.is_object());
+                if (item.contains("seller_id") && item["seller_id"].is_string()) {
+                    std::string seller_id = item["seller_id"].get<std::string>();
+                    order_recipients[seller_id].push_back(key);
+                    std::cout << "seller_id (" << seller_id << ") has been mapped to order key (" << key << ")\n";
+                }
+            }
+        }*/
     }    
     //-----------------------------------------------
     if(metadata == "product_rating") {

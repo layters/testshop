@@ -195,11 +195,11 @@ std::pair<std::string, std::string/*std::vector<uint8_t>*/> neroshop::Serializer
             json_object["items"].push_back(order_item_obj); // order_items // TODO: encrypt order items
         }
         json_object["metadata"] = "order";
-        nlohmann::json settings_json = nlohmann::json::parse(neroshop::load_json(), nullptr, false);
-        if(settings_json.is_discarded()) {
+        nlohmann::json settings = nlohmann::json::parse(neroshop::load_json(), nullptr, false);
+        if(settings.is_discarded()) {
             json_object["expiration_date"] = neroshop::timestamp::get_utc_timestamp_after_duration(2, "year"); // default: 2 years
         } else {
-            std::string expires_in = settings_json["data_expiration"]["order"].get<std::string>();
+            std::string expires_in = settings["data_expiration"]["order"].get<std::string>();
             std::regex pattern("(\\d+) (\\w+)"); // Regular expression to match number followed by text
             std::smatch match;
             if (std::regex_search(expires_in, match, pattern)) {

@@ -16,6 +16,7 @@ Page {
         color: "transparent"
     }
     property var model: null
+    property var starModel: null
     function openSellerPage() {
         pageStack.pushPageWithProperties("qrc:/qml/pages/ProfilePage.qml", {"productModel": productPage.model})
     }
@@ -202,8 +203,8 @@ Page {
                     Row { 
                         id: starsRow
                         //spacing: 5
-                        property real avg_stars: Backend.getProductAverageStars(productPage.model.listing_uuid)
-                        property int star_ratings_count: Backend.getProductStarCount(productPage.model.listing_uuid)
+                        property real avg_stars: Backend.getProductAverageStars(productPage.starModel)
+                        property int star_ratings_count: Backend.getProductStarCount(productPage.starModel)
                         //Component.onCompleted: console.log("avg stars", starsRow.avg_stars)
                         Repeater {
                             model: 5
@@ -421,6 +422,7 @@ Page {
                                 property string color: "#53469f"
                                 property string lightColor: "#6c60b9"
                                 property string darkColor: "#483d8b"
+                                enabled: false
                                 background: Rectangle {
                                     color: parent.hovered ? (parent.down ? rateProductButton.darkColor : rateProductButton.lightColor) : rateProductButton.color
                                     border.color: rateProductButton.darkColor
