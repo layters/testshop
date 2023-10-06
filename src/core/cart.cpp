@@ -195,7 +195,7 @@ neroshop::CartError neroshop::Cart::add(const std::string& user_id, const std::s
     database->execute_params("INSERT INTO cart_item (cart_id, listing_key, quantity, seller_id) "
                              "VALUES ($1, $2, $3, $4)", 
     { cart_id, listing_key, std::to_string(quantity), seller_id });
-    contents.emplace_back(listing_key, quantity, ""); // Save in memory as well
+    contents.emplace_back(listing_key, quantity, seller_id); // Save in memory as well
     neroshop::print(item_name + " (" + std::to_string(quantity) + ") added to cart", 3);
     print_cart();
     return CartError::Ok;

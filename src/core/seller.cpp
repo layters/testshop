@@ -72,7 +72,7 @@ std::string neroshop::Seller::list_item(
     // Create listing object
     const std::string seller_id = get_id();//std::cout << "seller_id: " << seller_id << "\n";
 
-    std::string created_at = neroshop::timestamp::get_current_utc_timestamp();//std::cout << "utc time: " << utc_time << "\n";
+    std::string created_at = neroshop::timestamp::get_current_utc_timestamp();//std::cout << "created_at: " << created_at << "\n";
     
     std::string signature = wallet->sign_message(listing_id, monero_message_signature_type::SIGN_WITH_SPEND_KEY);//std::cout << "signature: " << signature << "\n\n";
     

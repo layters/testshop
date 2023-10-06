@@ -75,6 +75,7 @@ public:
 	friend class Seller;
 	friend class Order;
 	friend class Serializer;
+	friend class Backend;
 private:
     std::string id;
     std::string owner_id;

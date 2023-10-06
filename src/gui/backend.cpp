@@ -1774,6 +1774,8 @@ QVariantList neroshop::Backend::registerUser(WalletController* wallet_controller
     QString cart_uuid = QUuid::createUuid().toString();
     cart_uuid = cart_uuid.remove("{").remove("}"); // remove brackets
     database->execute_params("INSERT INTO cart (uuid, user_id) VALUES ($1, $2)", { cart_uuid.toStdString(), user_controller->_user->get_id() });
+    // Set cart id
+    user_controller->_user->get_cart()->set_id(cart_uuid.toStdString());
     //---------------------------------------------
     emit user_controller->userChanged();
     emit user_controller->userLogged();

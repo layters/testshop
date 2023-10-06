@@ -9,5 +9,11 @@ Page {
 	background: Rectangle {
         color: "transparent"
     }
+    Button {
+        text: "checkout"
+        width: parent.width
+        height: 100
+        onClicked: pageStack.pushPage("qrc:/qml/pages/OrderCheckoutPage.qml", StackView.Immediate)
+    }
 }
 
