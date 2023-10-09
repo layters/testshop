@@ -3,6 +3,8 @@ import QtQuick.Controls 2.12
 import QtQuick.Layouts 1.12
 import Qt.labs.platform 1.1 // FileDialog
 
+import FontAwesome 1.0
+
 import "." as NeroshopComponents
 
 Popup {
@@ -22,14 +24,69 @@ Popup {
     background: Rectangle {
         radius: 8
         color: (NeroshopComponents.Style.darkTheme) ? (NeroshopComponents.Style.themeName == "PurpleDust" ? "#0e0e11" : "#101010") : "#f0f0f0"
+    
+        // header
+        Rectangle {
+           id: titleBar
+           color: "#202020"
+           height: 40
+           width: parent.width
+           anchors.left: parent.left
+           anchors.right: parent.right
+           radius: 6
+
+           // Rounded top corners
+           Rectangle {
+               anchors.left: parent.left
+               anchors.right: parent.right
+               anchors.bottom: parent.bottom
+               height: parent.height / 2
+               color: parent.color
+           }
+    
+           Label {
+               text: "Add item"
+               color: "#ffffff"
+               font.bold: true
+               anchors.horizontalCenter: parent.horizontalCenter
+               anchors.verticalCenter: parent.verticalCenter
+           }
+    
+           Button {
+               id: closeButton
+               width: 25
+               height: this.width
+    
+               anchors.verticalCenter: titleBar.verticalCenter
+               anchors.right: titleBar.right
+               anchors.rightMargin: 10
+               text: qsTr(FontAwesome.xmark)
+               contentItem: Text {  
+                   text: closeButton.text
+                   color: "#ffffff"
+                   font.bold: true
+                   font.family: FontAwesome.fontFamily
+                   horizontalAlignment: Text.AlignHCenter
+                   verticalAlignment: Text.AlignVCenter
+               }
+               background: Rectangle {
+                   color: "#ff4d4d"
+                   radius: 100
+               }
+               onClicked: {
+                   productDialog.close()
+                   mainScrollView.ScrollBar.vertical.position = 0.0 // reset scrollbar
+               }
+           }
+       }
     }
     
     contentItem: ScrollView {
         id: mainScrollView
         anchors.fill: parent
-        anchors.topMargin: 20; anchors.bottomMargin: anchors.topMargin////anchors.margins: 20
+        anchors.topMargin: titleBar.height + 20; anchors.bottomMargin: 20//anchors.topMargin////anchors.margins: 20
         clip: true
-        ScrollBar.vertical.policy: ScrollBar.AsNeeded
+        ScrollBar.vertical.policy: ScrollBar.AlwaysOn//AsNeeded
         ColumnLayout {
             width: productDialog.availableWidth; height: productDialog.availableHeight
             spacing: 30
@@ -41,7 +98,7 @@ Popup {
                 Column {
                     spacing: productDialog.titleSpacing
                     Text {
-                        text: "Product name"
+                        text: "Name / Title"
                         color: productDialog.palette.text
                         font.bold: true
                     }
@@ -124,11 +181,34 @@ Popup {
                         
                 Column {
                     spacing: productDialog.titleSpacing
-                    Text {
-                        text: "Quantity"
-                        color: productDialog.palette.text
-                        font.bold: true
-                        //visible: false
+                    Row {
+                        spacing: 10
+                        Text {
+                            text: qsTr("Quantity")
+                            color: productDialog.palette.text
+                            font.bold: true
+                        }
+                        Text {
+                            text: qsTr(FontAwesome.circleInfo)
+                            color: productDialog.optTextColor
+                            font.bold: true
+                            //font.pointSize: 
+                            anchors.verticalCenter: parent.children[0].verticalCenter
+                            property bool hovered: false
+                            NeroshopComponents.Hint {
+                                x: parent.width + 10; y: ((parent.height - height) / 2) - 3
+                                visible: parent.hovered
+                                height: contentHeight + 20; width: contentWidth + 20
+                                text: qsTr("The total number of items in stock")
+                                pointer.visible: false;// delay: 0
+                            }
+                            MouseArea { 
+                                anchors.fill: parent
+                                hoverEnabled: true
+                                onEntered: parent.hovered = true
+                                onExited: parent.hovered = false
+                            }
+                        }
                     }
                             
                     TextField {
@@ -250,298 +330,298 @@ Popup {
                         }
                     }
                             
-                            Row {
-                                spacing: 5
-                                TextField {
-                                    id: productCodeField
-                                    width: 500 - parent.children[1].width - parent.spacing; height: 50
-                                    placeholderText: qsTr("Enter product code")
-                                    color: productDialog.inputTextColor
-                                    selectByMouse: true
-                                    background: Rectangle { 
-                                        color: "transparent"
-                                        border.color: productDialog.inputBorderColor
-                                        border.width: parent.activeFocus ? 2 : 1
-                                        radius: productDialog.inputRadius
-                                    }                            
-                                }
-                                NeroshopComponents.ComboBox {
-                                    id: productCodeType
-                                    height: parent.children[0].height//Layout.preferredWidth: 100; Layout.preferredHeight: parent.children[0].height
-                                    model: ["EAN", "ISBN", "JAN", "SKU", "UPC"] // default is UPC (each code will be validated before product is listed)
-                                    Component.onCompleted: currentIndex = find("UPC")
-                                    radius: productDialog.inputRadius
-                                    color: productDialog.inputBaseColor
-                                    textColor: productDialog.inputTextColor
-                                }
-                            }
+                    Row {
+                        spacing: 5
+                        TextField {
+                            id: productCodeField
+                            width: 500 - parent.children[1].width - parent.spacing; height: 50
+                            placeholderText: qsTr("Enter product code")
+                            color: productDialog.inputTextColor
+                            selectByMouse: true
+                            background: Rectangle { 
+                                color: "transparent"
+                                border.color: productDialog.inputBorderColor
+                                border.width: parent.activeFocus ? 2 : 1
+                                radius: productDialog.inputRadius
+                            }                            
                         }
+                        NeroshopComponents.ComboBox {
+                            id: productCodeType
+                            height: parent.children[0].height//Layout.preferredWidth: 100; Layout.preferredHeight: parent.children[0].height
+                            model: ["EAN", "ISBN", "JAN", "SKU", "UPC"] // default is UPC (each code will be validated before product is listed)
+                            Component.onCompleted: currentIndex = find("UPC")
+                            radius: productDialog.inputRadius
+                            color: productDialog.inputBaseColor
+                            textColor: productDialog.inputTextColor
+                        }
+                    }
+                }
             }
-                    // Product categories
-                    Item {
-                        //Layout.row: 
-                        Layout.alignment: Qt.AlignHCenter
-                        Layout.preferredWidth: childrenRect.width
-                        Layout.preferredHeight: childrenRect.height
-                        function getCategoryStringList() {
-                            let categoryStringList = []
-                            let categories = Backend.getCategoryList(true)
-                            for(let i = 0; i < categories.length; i++) {
-                                categoryStringList[i] = categories[i].name//console.log(parent.parent.parent.categoryStringList[i])//console.log(categories[i].name)
-                            }       
-                            return categoryStringList;
-                        }
+            // Product categories
+            Item {
+                //Layout.row: 
+                Layout.alignment: Qt.AlignHCenter
+                Layout.preferredWidth: childrenRect.width
+                Layout.preferredHeight: childrenRect.height
+                function getCategoryStringList() {
+                    let categoryStringList = []
+                    let categories = Backend.getCategoryList(true)
+                    for(let i = 0; i < categories.length; i++) {
+                        categoryStringList[i] = categories[i].name//console.log(parent.parent.parent.categoryStringList[i])//console.log(categories[i].name)
+                    }       
+                    return categoryStringList;
+                }
                         
-                        Column {
-                            spacing: productDialog.titleSpacing
-                            Text {
-                                text: "Category"
-                                color: productDialog.palette.text
-                                font.bold: true
-                            }
+                Column {
+                    spacing: productDialog.titleSpacing
+                    Text {
+                        text: "Category"
+                        color: productDialog.palette.text
+                        font.bold: true
+                    }
                             
-                            Row {
-                                spacing: 5
-                                NeroshopComponents.ComboBox {
-                                    id: productCategoryBox
-                                    width: addSubCategoryButton.visible ? (500 - addSubCategoryButton.width - parent.spacing) : 500; height: 50
-                                    model: parent.parent.parent.getCategoryStringList()
-                                    Component.onCompleted: {
-                                        currentIndex = find("Miscellaneous")
-                                    }
-                                    function reset() {
-                                        let subcategories = Backend.getSubCategoryList(Backend.getCategoryIdByName(productCategoryBox.currentText), true)
-                                        addSubCategoryButton.visible = (subcategories.length > 0)
-                                        subCategoryRepeater.model = 0 // reset
-                                    }
-                                    onActivated: {
-                                        productCategoryBox.reset()
-                                    }
-                                    radius: productDialog.inputRadius
-                                    color: productDialog.inputBaseColor
-                                    textColor: productDialog.inputTextColor
-                                }
-                                Button {
-                                    id: addSubCategoryButton
-                                    width: 50; height: 50
-                                    text: qsTr("+")
-                                    visible: Backend.hasSubCategory(Backend.getCategoryIdByName(productCategoryBox.currentText))
-                                    background: Rectangle {
-                                        color: parent.hovered ? "#698b22" : "#506a1a"//"#605185"
-                                        radius: productDialog.inputRadius
-                                    }
-                                    contentItem: Text {
-                                        text: parent.text
-                                        color: "#ffffff"
-                                        verticalAlignment: Text.AlignVCenter
-                                        horizontalAlignment: Text.AlignHCenter
-                                    }
-                                    onClicked: {
-                                        let subcategories = Backend.getSubCategoryList(Backend.getCategoryIdByName(productCategoryBox.currentText), true)
-                                        let max_subcategories = Math.min(2, subcategories.length)
-                                        if(subCategoryRepeater.count == max_subcategories) {
-                                            console.log("Cannot add no more than " + max_subcategories + " subcategories")
-                                            return
-                                        }
-                                        subCategoryRepeater.model = subCategoryRepeater.model + 1
-                                    }
-                                }
+                    Row {
+                        spacing: 5
+                        NeroshopComponents.ComboBox {
+                            id: productCategoryBox
+                            width: addSubCategoryButton.visible ? (500 - addSubCategoryButton.width - parent.spacing) : 500; height: 50
+                            model: parent.parent.parent.getCategoryStringList()
+                            Component.onCompleted: {
+                                currentIndex = find("Miscellaneous")
                             }
-                        }
-                    }                    
-                    // Subcategories (will be determined based on selected categories)
-                    Item {
-                        id: subCategoryItem
-                        Layout.alignment: Qt.AlignHCenter
-                        Layout.preferredWidth: childrenRect.width
-                        Layout.preferredHeight: childrenRect.height
-                        visible: (subCategoryRepeater.count > 0)//Backend.hasSubCategory(Backend.getCategoryIdByName(productCategoryBox.currentText))
-                        
-                        function getSubCategoryStringList() {
-                            let subCategoryStringList = []
-                            let subcategories = Backend.getSubCategoryList(Backend.getCategoryIdByName(productCategoryBox.currentText), true)
-                            for(let i = 0; i < subcategories.length; i++) {
-                                subCategoryStringList[i] = subcategories[i].name//console.log(parent.parent.parent.categoryStringList[i])//console.log(categories[i].name)
-                            }       
-                            return subCategoryStringList;
-                        }
-                        
-                        Column {
-                            spacing: productDialog.titleSpacing
-                            Text {
-                                text: "Subcategory"
-                                color: productDialog.palette.text
-                                font.bold: true
+                            function reset() {
+                                let subcategories = Backend.getSubCategoryList(Backend.getCategoryIdByName(productCategoryBox.currentText), true)
+                                addSubCategoryButton.visible = (subcategories.length > 0)
+                                subCategoryRepeater.model = 0 // reset
                             }
-                            
-                            Repeater {
-                                id: subCategoryRepeater
-                                model: 0
-                                delegate: Row {
-                                    spacing: 5
-                                    NeroshopComponents.ComboBox {
-                                        id: productSubCategoryBox
-                                        width: removeSubCategoryButton.visible ? (500 - removeSubCategoryButton.width - parent.spacing) : 500; height: 50
-                                        model: parent.parent.parent.getSubCategoryStringList()
-                                        currentIndex: 0
-                                        radius: productDialog.inputRadius
-                                        color: productDialog.inputBaseColor
-                                        textColor: productDialog.inputTextColor
-                                    }
-                                    Button {
-                                        id: removeSubCategoryButton
-                                        width: 50; height: 50
-                                        text: qsTr("x")
-                                        background: Rectangle {
-                                            color: parent.hovered ? "#b22222" : "#921c1c"
-                                            radius: productDialog.inputRadius
-                                        }
-                                        contentItem: Text {
-                                            text: parent.text
-                                            color: "#ffffff"
-                                            verticalAlignment: Text.AlignVCenter
-                                            horizontalAlignment: Text.AlignHCenter
-                                        }
-                                        onClicked: {
-                                            subCategoryRepeater.model = subCategoryRepeater.model - 1
-                                        }
-                                    }
-                                } // Row
+                            onActivated: {
+                                productCategoryBox.reset()
+                            }
+                            radius: productDialog.inputRadius
+                            color: productDialog.inputBaseColor
+                            textColor: productDialog.inputTextColor
+                        }
+                        Button {
+                            id: addSubCategoryButton
+                            width: 50; height: 50
+                            text: qsTr("+")
+                            visible: Backend.hasSubCategory(Backend.getCategoryIdByName(productCategoryBox.currentText))
+                            background: Rectangle {
+                                color: parent.hovered ? "#698b22" : "#506a1a"//"#605185"
+                                radius: productDialog.inputRadius
+                            }
+                            contentItem: Text {
+                                text: parent.text
+                                color: "#ffffff"
+                                verticalAlignment: Text.AlignVCenter
+                                horizontalAlignment: Text.AlignHCenter
+                            }
+                            onClicked: {
+                                let subcategories = Backend.getSubCategoryList(Backend.getCategoryIdByName(productCategoryBox.currentText), true)
+                                let max_subcategories = Math.min(2, subcategories.length)
+                                if(subCategoryRepeater.count == max_subcategories) {
+                                    console.log("Cannot add no more than " + max_subcategories + " subcategories")
+                                    return
+                                }
+                                subCategoryRepeater.model = subCategoryRepeater.model + 1
                             }
                         }
                     }
-                    // Weight
-                    Item {
-                        //Layout.row: 
-                        Layout.alignment: Qt.AlignHCenter
-                        Layout.preferredWidth: childrenRect.width
-                        Layout.preferredHeight: childrenRect.height
+                }
+            }                    
+            // Subcategories (will be determined based on selected categories)
+            Item {
+                id: subCategoryItem
+                Layout.alignment: Qt.AlignHCenter
+                Layout.preferredWidth: childrenRect.width
+                Layout.preferredHeight: childrenRect.height
+                visible: (subCategoryRepeater.count > 0)//Backend.hasSubCategory(Backend.getCategoryIdByName(productCategoryBox.currentText))
                         
-                        Column {
-                            spacing: productDialog.titleSpacing
-                            Row {
-                                spacing: 10
-                                Text {
-                                    text: "Weight"
-                                    color: productDialog.palette.text
-                                    font.bold: true
-                                }
-                                Text {
-                                    text: "(OPTIONAL)"
-                                    color: productDialog.optTextColor
-                                    font.bold: true
-                                    font.pointSize: 8
-                                    anchors.verticalCenter: parent.children[0].verticalCenter
-                                }                            
-                            }
+                function getSubCategoryStringList() {
+                    let subCategoryStringList = []
+                    let subcategories = Backend.getSubCategoryList(Backend.getCategoryIdByName(productCategoryBox.currentText), true)
+                    for(let i = 0; i < subcategories.length; i++) {
+                        subCategoryStringList[i] = subcategories[i].name//console.log(parent.parent.parent.categoryStringList[i])//console.log(categories[i].name)
+                    }       
+                    return subCategoryStringList;
+                }
+                        
+                Column {
+                    spacing: productDialog.titleSpacing
+                    Text {
+                        text: "Subcategory"
+                        color: productDialog.palette.text
+                        font.bold: true
+                    }
                             
-                            Row {
-                                spacing: 5
-                                TextField {
-                                    id: productWeightField
-                                    width: 500 - parent.children[1].width - parent.spacing; height: 50
-                                    placeholderText: qsTr("Enter weight")
-                                    color: productDialog.inputTextColor
-                                    selectByMouse: true
-                                    validator: RegExpValidator{ regExp: new RegExp("^-?[0-9]+(\\.[0-9]{1," + 8 + "})?$") }
-                                    background: Rectangle { 
-                                        color: "transparent"
-                                        border.color: productDialog.inputBorderColor
-                                        border.width: parent.activeFocus ? 2 : 1
-                                        radius: productDialog.inputRadius
-                                    }
-                                }
-                                NeroshopComponents.ComboBox {
-                                    id: weightMeasurementUnit
-                                    height: parent.children[0].height
-                                    model: ["kg", "lb"] // default is kg (every unit of measurement will be converted to kg)
-                                    Component.onCompleted: currentIndex = find("kg")
-                                    radius: productDialog.inputRadius
-                                    color: productDialog.inputBaseColor
-                                    textColor: productDialog.inputTextColor
-                                }
-                            }
-                        }
-                    }                    
-                    // Size
-                    /*Item {
-                        //Layout.row: 
-                        Layout.alignment: Qt.AlignHCenter
-                        Layout.preferredWidth: childrenRect.width
-                        Layout.preferredHeight: childrenRect.height
-                        
-                        Column {
-                            spacing: productDialog.titleSpacing
-                            Row {
-                                spacing: 10
-                                Text {
-                                    text: "Size"
-                                    color: productDialog.palette.text
-                                    font.bold: true
-                                }
-                                Text {
-                                    text: "(OPTIONAL)"
-                                    color: productDialog.optTextColor
-                                    font.bold: true
-                                    font.pointSize: 8
-                                    anchors.verticalCenter: parent.children[0].verticalCenter
-                                }
-                            }
-                         
-                            Row {
-                                spacing: 5
-                                TextField {
-                                    id: productSizeField
-                                    width: 500; height: 50
-                                    placeholderText: qsTr("Enter size")
-                                    color: productDialog.inputTextColor
-                                    selectByMouse: true
-                                    background: Rectangle { 
-                                        color: "transparent"
-                                        border.color: productDialog.inputBorderColor
-                                        border.width: parent.activeFocus ? 2 : 1
-                                        radius: productDialog.inputRadius
-                                    }                            
-                                }
-                            //ComboBox
-                            }
-                        }
-                    }*/                    
-                    // Variations/Attributes (i.e. Color, Size, Type, Model, etc. options to choose from - optional)
-                    // Product location (ship to and ship from)
-                    Item {
-                        Layout.alignment: Qt.AlignHCenter
-                        Layout.preferredWidth: childrenRect.width
-                        Layout.preferredHeight: childrenRect.height
-                        property var countriesModel: ["Afghanistan", "Albania", "Algeria", "Andorra", "Angola", "Antigua & Deps", "Argentina", "Armenia", "Australia", "Austria", "Azerbaijan", "Bahamas", "Bahrain", "Bangladesh", "Barbados", "Belarus", "Belgium", "Belize", "Benin", "Bermuda", "Bhutan", "Bolivia", "Bosnia Herzegovina", "Botswana", "Brazil", "Brunei", "Bulgaria", "Burkina", "Burundi", "Cambodia", "Cameroon", "Canada", "Cape Verde", "Central African Rep", "Chad", "Chile", "China", "Colombia", "Comoros", "Congo", "Congo (Democratic Rep)", "Costa Rica", "Croatia", "Cuba", "Cyprus", "Czech Republic", "Denmark", "Djibouti", "Dominica", "Dominican Republic", "East Timor", "Ecuador", "Egypt", "El Salvador", "Equatorial Guinea", "Eritrea", "Estonia", "Eswatini", "Ethiopia", "Fiji", "Finland", "France", "Gabon", "Gambia", "Georgia", "Germany", "Ghana", "Greece", "Grenada", "Guatemala", "Guinea", "Guinea-Bissau", "Guyana", "Haiti", "Honduras", "Hungary", "Iceland", "India", "Indonesia", "Iran", "Iraq", "Ireland (Republic)", "Israel", "Italy", "Ivory Coast", "Jamaica", "Japan", "Jordan", "Kazakhstan", "Kenya", "Kiribati", "Korea North", "Korea South", "Kosovo", "Kuwait", "Kyrgyzstan", "Laos", "Latvia", "Lebanon", "Lesotho", "Liberia", "Libya", "Liechtenstein", "Lithuania", "Luxembourg", "Macedonia", "Madagascar", "Malawi", "Malaysia", "Maldives", "Mali", "Malta", "Marshall Islands", "Mauritania", "Mauritius", "Mexico", "Micronesia", "Moldova", "Monaco", "Mongolia", "Montenegro", "Morocco", "Mozambique", "Myanmar", "Namibia", "Nauru", "Nepal", "Netherlands", "New Zealand", "Nicaragua", "Niger", "Nigeria", "Norway", "Oman", "Pakistan", "Palau", "Palestine", "Panama", "Papua New Guinea", "Paraguay", "Peru", "Philippines", "Poland", "Portugal", "Qatar", "Romania", "Russian Federation", "Rwanda", "St Kitts & Nevis", "St Lucia", "Saint Vincent & the Grenadines", "Samoa", "San Marino", "Sao Tome & Principe", "Saudi Arabia", "Senegal", "Serbia", "Seychelles", "Sierra Leone", "Singapore", "Slovakia", "Slovenia", "Solomon Islands", "Somalia", "South Africa", "South Sudan", "Spain", "Sri Lanka", "Sudan", "Suriname", "Sweden", "Switzerland", "Syria", "Taiwan", "Tajikistan", "Tanzania", "Thailand", "Togo", "Tonga", "Trinidad & Tobago", "Tunisia", "Turkey", "Turkmenistan", "Tuvalu", "Uganda", "Ukraine", "United Arab Emirates", "United Kingdom", "United States", "Unspecified", "Uruguay", "Uzbekistan", "Vanuatu", "Vatican City", "Venezuela", "Vietnam", "Yemen", "Zambia", "Zimbabwe", "Worldwide",]
-                        
-                        Column {
-                            spacing: productDialog.titleSpacing
-                            Text {
-                                text: "Location"
-                                color: productDialog.palette.text
-                                font.bold: true
-                            }
-                            
+                    Repeater {
+                        id: subCategoryRepeater
+                        model: 0
+                        delegate: Row {
+                            spacing: 5
                             NeroshopComponents.ComboBox {
-                                id: productLocationBox
-                                width: 500; height: 50
-                                model: parent.parent.countriesModel
-                                Component.onCompleted: {
-                                    contentItem.selectByMouse = true
-                                    currentIndex = find("Unspecified")//find("Worldwide")
-                                }
-                                editable: true
-                                onAccepted: {
-                                    if(find(editText) === -1)
-                                        model.append({text: editText})
-                                }
+                                id: productSubCategoryBox
+                                width: removeSubCategoryButton.visible ? (500 - removeSubCategoryButton.width - parent.spacing) : 500; height: 50
+                                model: parent.parent.parent.getSubCategoryStringList()
+                                currentIndex: 0
                                 radius: productDialog.inputRadius
                                 color: productDialog.inputBaseColor
                                 textColor: productDialog.inputTextColor
                             }
+                            Button {
+                                id: removeSubCategoryButton
+                                width: 50; height: 50
+                                text: qsTr("x")
+                                    background: Rectangle {
+                                    color: parent.hovered ? "#b22222" : "#921c1c"
+                                    radius: productDialog.inputRadius
+                                }
+                                contentItem: Text {
+                                    text: parent.text
+                                    color: "#ffffff"
+                                    verticalAlignment: Text.AlignVCenter
+                                    horizontalAlignment: Text.AlignHCenter
+                                }
+                                onClicked: {
+                                    subCategoryRepeater.model = subCategoryRepeater.model - 1
+                                }
+                            }
+                        } // Row
+                    }
+                }
+            }
+            // Weight
+            Item {
+                //Layout.row: 
+                Layout.alignment: Qt.AlignHCenter
+                Layout.preferredWidth: childrenRect.width
+                Layout.preferredHeight: childrenRect.height
+                        
+                Column {
+                    spacing: productDialog.titleSpacing
+                    Row {
+                        spacing: 10
+                        Text {
+                            text: "Weight"
+                            color: productDialog.palette.text
+                            font.bold: true
                         }
-                    }                    
+                        Text {
+                            text: "(OPTIONAL)"
+                            color: productDialog.optTextColor
+                            font.bold: true
+                            font.pointSize: 8
+                            anchors.verticalCenter: parent.children[0].verticalCenter
+                        }                            
+                    }
+                            
+                    Row {
+                        spacing: 5
+                        TextField {
+                            id: productWeightField
+                            width: 500 - parent.children[1].width - parent.spacing; height: 50
+                            placeholderText: qsTr("Enter weight")
+                            color: productDialog.inputTextColor
+                            selectByMouse: true
+                            validator: RegExpValidator{ regExp: new RegExp("^-?[0-9]+(\\.[0-9]{1," + 8 + "})?$") }
+                            background: Rectangle { 
+                                color: "transparent"
+                                border.color: productDialog.inputBorderColor
+                                border.width: parent.activeFocus ? 2 : 1
+                                radius: productDialog.inputRadius
+                            }
+                        }
+                        NeroshopComponents.ComboBox {
+                            id: weightMeasurementUnit
+                            height: parent.children[0].height
+                            model: ["kg", "lb"] // default is kg (every unit of measurement will be converted to kg)
+                            Component.onCompleted: currentIndex = find("kg")
+                            radius: productDialog.inputRadius
+                            color: productDialog.inputBaseColor
+                            textColor: productDialog.inputTextColor
+                        }
+                    }
+                }
+            }                    
+            // Size
+            /*Item {
+                  //Layout.row: 
+                  Layout.alignment: Qt.AlignHCenter
+                  Layout.preferredWidth: childrenRect.width
+                  Layout.preferredHeight: childrenRect.height
+                        
+                  Column {
+                      spacing: productDialog.titleSpacing
+                      Row {
+                          spacing: 10
+                          Text {
+                              text: "Size"
+                              color: productDialog.palette.text
+                              font.bold: true
+                          }
+                          Text {
+                              text: "(OPTIONAL)"
+                              color: productDialog.optTextColor
+                              font.bold: true
+                              font.pointSize: 8
+                              anchors.verticalCenter: parent.children[0].verticalCenter
+                          }
+                      }
+                         
+                      Row {
+                          spacing: 5
+                          TextField {
+                              id: productSizeField
+                              width: 500; height: 50
+                              placeholderText: qsTr("Enter size")
+                              color: productDialog.inputTextColor
+                              selectByMouse: true
+                              background: Rectangle { 
+                                  color: "transparent"
+                                  border.color: productDialog.inputBorderColor
+                                  border.width: parent.activeFocus ? 2 : 1
+                                  radius: productDialog.inputRadius
+                              }                            
+                          }
+                          //ComboBox
+                     }
+                 }
+             }*/                    
+            // Variations/Attributes (i.e. Color, Size, Type, Model, etc. options to choose from - optional)
+            // Product location (ship to and ship from)
+            Item {
+                Layout.alignment: Qt.AlignHCenter
+                Layout.preferredWidth: childrenRect.width
+                Layout.preferredHeight: childrenRect.height
+                property var countriesModel: ["Afghanistan", "Albania", "Algeria", "Andorra", "Angola", "Antigua & Deps", "Argentina", "Armenia", "Australia", "Austria", "Azerbaijan", "Bahamas", "Bahrain", "Bangladesh", "Barbados", "Belarus", "Belgium", "Belize", "Benin", "Bermuda", "Bhutan", "Bolivia", "Bosnia Herzegovina", "Botswana", "Brazil", "Brunei", "Bulgaria", "Burkina", "Burundi", "Cambodia", "Cameroon", "Canada", "Cape Verde", "Central African Rep", "Chad", "Chile", "China", "Colombia", "Comoros", "Congo", "Congo (Democratic Rep)", "Costa Rica", "Croatia", "Cuba", "Cyprus", "Czech Republic", "Denmark", "Djibouti", "Dominica", "Dominican Republic", "East Timor", "Ecuador", "Egypt", "El Salvador", "Equatorial Guinea", "Eritrea", "Estonia", "Eswatini", "Ethiopia", "Fiji", "Finland", "France", "Gabon", "Gambia", "Georgia", "Germany", "Ghana", "Greece", "Grenada", "Guatemala", "Guinea", "Guinea-Bissau", "Guyana", "Haiti", "Honduras", "Hungary", "Iceland", "India", "Indonesia", "Iran", "Iraq", "Ireland (Republic)", "Israel", "Italy", "Ivory Coast", "Jamaica", "Japan", "Jordan", "Kazakhstan", "Kenya", "Kiribati", "Korea North", "Korea South", "Kosovo", "Kuwait", "Kyrgyzstan", "Laos", "Latvia", "Lebanon", "Lesotho", "Liberia", "Libya", "Liechtenstein", "Lithuania", "Luxembourg", "Macedonia", "Madagascar", "Malawi", "Malaysia", "Maldives", "Mali", "Malta", "Marshall Islands", "Mauritania", "Mauritius", "Mexico", "Micronesia", "Moldova", "Monaco", "Mongolia", "Montenegro", "Morocco", "Mozambique", "Myanmar", "Namibia", "Nauru", "Nepal", "Netherlands", "New Zealand", "Nicaragua", "Niger", "Nigeria", "Norway", "Oman", "Pakistan", "Palau", "Palestine", "Panama", "Papua New Guinea", "Paraguay", "Peru", "Philippines", "Poland", "Portugal", "Qatar", "Romania", "Russian Federation", "Rwanda", "St Kitts & Nevis", "St Lucia", "Saint Vincent & the Grenadines", "Samoa", "San Marino", "Sao Tome & Principe", "Saudi Arabia", "Senegal", "Serbia", "Seychelles", "Sierra Leone", "Singapore", "Slovakia", "Slovenia", "Solomon Islands", "Somalia", "South Africa", "South Sudan", "Spain", "Sri Lanka", "Sudan", "Suriname", "Sweden", "Switzerland", "Syria", "Taiwan", "Tajikistan", "Tanzania", "Thailand", "Togo", "Tonga", "Trinidad & Tobago", "Tunisia", "Turkey", "Turkmenistan", "Tuvalu", "Uganda", "Ukraine", "United Arab Emirates", "United Kingdom", "United States", "Unspecified", "Uruguay", "Uzbekistan", "Vanuatu", "Vatican City", "Venezuela", "Vietnam", "Yemen", "Zambia", "Zimbabwe", "Worldwide",]
+                        
+                Column {
+                    spacing: productDialog.titleSpacing
+                    Text {
+                        text: "Location"
+                        color: productDialog.palette.text
+                        font.bold: true
+                    }
+                            
+                    NeroshopComponents.ComboBox {
+                        id: productLocationBox
+                        width: 500; height: 50
+                        model: parent.parent.countriesModel
+                        Component.onCompleted: {
+                            contentItem.selectByMouse = true
+                            currentIndex = find("Unspecified")//find("Worldwide")
+                        }
+                        editable: true
+                        onAccepted: {
+                            if(find(editText) === -1)
+                                model.append({text: editText})
+                        }
+                        radius: productDialog.inputRadius
+                        color: productDialog.inputBaseColor
+                        textColor: productDialog.inputTextColor
+                    }
+                }
+            }                    
                     //Product description and bullet points
                     Item {
                         //Layout.row: 
@@ -625,7 +705,7 @@ Popup {
                                 contentWidth: (210 * productImageRepeater.count) + (5 * (productImageRepeater.count - 1))//<- 5 is the Flow.spacing//; contentHeight: 210//<- contentHeight is not needed unless a newline is supported
                                 clip: true
                                 ScrollBar.horizontal: ScrollBar {
-                                    policy: ScrollBar.AsNeeded
+                                    policy: ScrollBar.AlwaysOn//AsNeeded
                                 }
                                 Flow {
                                     width: parent.contentWidth; height: parent.height//anchors.fill: parent// Note: Flow width must be large enough to fit all items horizontally so that there won't be a need to move an item to a newline
@@ -660,6 +740,44 @@ Popup {
                                                         if(this.status == Image.Loading) console.log("Loading image " + source + " (" + (progress * 100) + "%)")
                                                         if(this.status == Image.Error) console.log("An error occurred while loading the image")
                                                         //if(this.status == Image.Null) console.log("No image has been set" + parent.parent.index)
+                                                    }
+                                                }
+                                                // Position the close button
+                                                Button {
+                                                    id: removeImageButton
+                                                    anchors.right: parent.right
+                                                    anchors.top: parent.top
+                                                    anchors.margins: 8
+                         
+                                                    width: 20; height: 20//32
+                                                    text: qsTr(FontAwesome.xmark)
+                                                    hoverEnabled: true
+                                                    visible: (parent.children[0].status === Image.Ready)
+                            
+                                                    contentItem: Text {
+                                                        horizontalAlignment: Text.AlignHCenter
+                                                        verticalAlignment: Text.AlignVCenter
+                                                        text: removeImageButton.text
+                                                        color: removeImageButton.hovered ? "#ffffff" : "#000000"
+                                                        font.bold: true
+                                                        font.family: FontAwesome.fontFamily
+                                                    }
+                        
+                                                    background: Rectangle {
+                                                        width: parent.width
+                                                        height: parent.height
+                                                        radius: 5//50
+                                                        color: removeImageButton.hovered ? "firebrick" : "transparent"
+                                                        opacity: 0.7
+                                                    }
+                         
+                                                     onClicked: {
+                                                         parent.children[0].source = ""
+                                                     }
+                                                     MouseArea {
+                                                        anchors.fill: parent
+                                                        onPressed: mouse.accepted = false
+                                                        cursorShape: Qt.PointingHandCursor
                                                     }
                                                 }
                                             }
@@ -735,7 +853,7 @@ Popup {
                             id: listProductButton
                             width: 333.333333333; height: contentItem.contentHeight + 30
                             hoverEnabled: true
-                            text: qsTr("Add")
+                            text: qsTr("Submit")
                             background: Rectangle {
                                 color: parent.hovered ? "#698b22" : "#506a1a"
                                 radius: productDialog.inputRadius
@@ -749,6 +867,12 @@ Popup {
                             onClicked: {
                                 // Check input fields to see if entered info is valid
                                 // ...
+                                //---------------------------------------
+                                if(productNameField.text.length < 3) {
+                                    messageBox.text = qsTr("Product name is too short")
+                                    messageBox.open()
+                                    return; // exit function
+                                }
                                 //---------------------------------------
                                 let subcategory_ids = []//let subcategories = []
                                 for (let i = 0; i < subCategoryRepeater.count; i++) {
@@ -767,7 +891,12 @@ Popup {
                                 let attributes = [];
                                 let attribute_object = {};
                                 if(productWeightField.text.length > 0 && Number(productWeightField.text) > 0.00) {
-                                    attribute_object.weight = productWeightField.text
+                                    if(weightMeasurementUnit.currentText !== "kg") {
+                                        console.log("weight is in " + weightMeasurementUnit.currentText + ". Converting to kg ...")
+                                        attribute_object.weight = Backend.weightToKg(Number(productWeightField.text), weightMeasurementUnit.currentText)
+                                    } else {
+                                        attribute_object.weight = Number(productWeightField.text)
+                                    }
                                 }
                                 // Add attribute obj to list as long as its filled with properties
                                 if (Object.keys(attribute_object).length > 0) {
@@ -799,7 +928,7 @@ Popup {
                                     productNameField.text, 
                                     productDescriptionEdit.text,
                                     attributes, 
-                                    productCodeField.text,
+                                    productCodeType.currentText.toLowerCase() + ":" + productCodeField.text,
                                     Backend.getCategoryIdByName(productCategoryBox.currentText),
                                     (subCategoryRepeater.count > 0) ? subcategory_ids : [], // subcategoryIds
                                     productTagsField.tags(),

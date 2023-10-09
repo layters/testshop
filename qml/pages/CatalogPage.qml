@@ -75,47 +75,91 @@ Page {
             }    
             //GroupBox {
             //        title: qsTr("Sort")
-            // SortComboBox
-            NeroshopComponents.ComboBox {
-                id: sortByBox
+            Row {
                 anchors.right: parent.right
                 anchors.verticalCenter: viewToggle.verticalCenter
-                width: 250
-                model: ["None", "Latest", "Oldest", "Alphabetical order", "Price - Lowest", "Price - Highest"]
-                Component.onCompleted: currentIndex = find("None")
-                displayText: "Sort: " + currentText
-                indicatorDoNotPassBorder: true
-                onActivated: {
-                    if(currentIndex == find("None")) {
-                        catalogPage.model = Backend.sortBy(catalogPage.model, Enum.Sorting.SortByOldest)//Enum.Sorting.SortNone)
-                        settingsDialog.lastUsedListingSorting = Enum.Sorting.SortNone
+                spacing: 3
+                // Filter button
+                Button {
+                    id: filterButton
+                    text: qsTr("Filter")
+                    //anchors.verticalCenter: parent.verticalCenter
+                    //height: sortBox.height
+                    checkable: true
+                    checked: filterPopUp.visible
+                    display: AbstractButton.IconOnly
+                    icon.source: "qrc:/assets/images/filter.png"
+                    icon.color: !this.checked ? "#605185" : "#ffffff"
+                    background: Rectangle {
+                        radius: 3
+                        color: parent.checked ? "#605185" : "#e0e0e0"
                     }
-                    if(currentIndex == find("Oldest")) {
-                        catalogPage.model = Backend.sortBy(catalogPage.model, Enum.Sorting.SortByOldest)
-                        settingsDialog.lastUsedListingSorting = Enum.Sorting.SortByOldest
+                    onClicked: {
+                        filterPopUp.visible = true
                     }
-                    if(currentIndex == find("Latest")) {
-                        console.log("Showing most recent items")
-                        catalogPage.model = Backend.sortBy(catalogPage.model, Enum.Sorting.SortByMostRecent)
-                        settingsDialog.lastUsedListingSorting = Enum.Sorting.SortByMostRecent
+                
+                    Popup {
+                        id: filterPopUp
+                        visible: false
+                        x: (parent.width - width) / 2
+                        y: parent.height + 1
+                        width: 200
+                        height: 300//implicitHeight: contentItem.implicitHeight
+                        
+                        background: Rectangle {
+                            radius: 5
+                            color: "#e0e0e0"
+                        }
+                        
+                        contentItem: /*NeroshopComponents.FilterBox {*/Item {
+                           Text {
+                               text: qsTr("Coming soon!")
+                               anchors.centerIn: parent
+                           }
+                        }
                     }
-                    if(currentIndex == find("Alphabetical order")) {
-                        catalogPage.model = Backend.sortBy(catalogPage.model, Enum.Sorting.SortByAlphabeticalOrder)
-                        settingsDialog.lastUsedListingSorting = Enum.Sorting.SortByAlphabeticalOrder
-                    }
-                    if(currentIndex == find("Price - Lowest")) {
-                        catalogPage.model = Backend.sortBy(catalogPage.model, Enum.Sorting.SortByPriceLowest)
-                        settingsDialog.lastUsedListingSorting = Enum.Sorting.SortByPriceLowest
-                    }
-                    if(currentIndex == find("Price - Highest")) {
-                        catalogPage.model = Backend.sortBy(catalogPage.model, Enum.Sorting.SortByPriceHighest)
-                        settingsDialog.lastUsedListingSorting = Enum.Sorting.SortByPriceHighest
-                    }
-                    /*if(currentIndex == find("")) {
-                        catalogPage.model = Backend.
-                    }*/
                 }
-            }
+                // SortComboBox
+                NeroshopComponents.ComboBox {
+                    id: sortBox
+                    //anchors.verticalCenter: parent.verticalCenter
+                    width: 250; height: viewToggle.height
+                    model: ["None", "Latest", "Oldest", "Alphabetical order", "Price - Lowest", "Price - Highest"]
+                    Component.onCompleted: currentIndex = find("None")
+                    displayText: "Sort: " + currentText
+                    indicatorDoNotPassBorder: true
+                    onActivated: {
+                        if(currentIndex == find("None")) {
+                            catalogPage.model = Backend.sortBy(catalogPage.model, Enum.Sorting.SortByOldest)//Enum.Sorting.SortNone)
+                            settingsDialog.lastUsedListingSorting = Enum.Sorting.SortNone
+                        }
+                        if(currentIndex == find("Oldest")) {
+                            catalogPage.model = Backend.sortBy(catalogPage.model, Enum.Sorting.SortByOldest)
+                            settingsDialog.lastUsedListingSorting = Enum.Sorting.SortByOldest
+                        }
+                        if(currentIndex == find("Latest")) {
+                            console.log("Showing most recent items")
+                            catalogPage.model = Backend.sortBy(catalogPage.model, Enum.Sorting.SortByMostRecent)
+                            settingsDialog.lastUsedListingSorting = Enum.Sorting.SortByMostRecent
+                        }
+                        if(currentIndex == find("Alphabetical order")) {
+                            catalogPage.model = Backend.sortBy(catalogPage.model, Enum.Sorting.SortByAlphabeticalOrder)
+                            settingsDialog.lastUsedListingSorting = Enum.Sorting.SortByAlphabeticalOrder
+                        }
+                        if(currentIndex == find("Price - Lowest")) {
+                            catalogPage.model = Backend.sortBy(catalogPage.model, Enum.Sorting.SortByPriceLowest)
+                            settingsDialog.lastUsedListingSorting = Enum.Sorting.SortByPriceLowest
+                        }
+                        if(currentIndex == find("Price - Highest")) {
+                            catalogPage.model = Backend.sortBy(catalogPage.model, Enum.Sorting.SortByPriceHighest)
+                            settingsDialog.lastUsedListingSorting = Enum.Sorting.SortByPriceHighest
+                        }
+                        /*if(currentIndex == find("")) {
+                            catalogPage.model = Backend.
+                        }*/
+                    }
+                }
+            } // Row
         } // Rectangle            
         StackLayout {
             id: catalogStack
