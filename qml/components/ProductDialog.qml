@@ -199,7 +199,7 @@ Popup {
                                 x: parent.width + 10; y: ((parent.height - height) / 2) - 3
                                 visible: parent.hovered
                                 height: contentHeight + 20; width: contentWidth + 20
-                                text: qsTr("The total number of items in stock")
+                                text: qsTr("Total number of items in stock")
                                 pointer.visible: false;// delay: 0
                             }
                             MouseArea { 
@@ -597,10 +597,33 @@ Popup {
                         
                 Column {
                     spacing: productDialog.titleSpacing
-                    Text {
-                        text: "Location"
-                        color: productDialog.palette.text
-                        font.bold: true
+                    Row {
+                        spacing: 10
+                        Text {
+                            text: "Location"
+                            color: productDialog.palette.text
+                            font.bold: true
+                        }
+                        Text {
+                            text: qsTr(FontAwesome.circleInfo)
+                            color: productDialog.optTextColor
+                            font.bold: true
+                            anchors.verticalCenter: parent.children[0].verticalCenter
+                            property bool hovered: false
+                            NeroshopComponents.Hint {
+                                x: parent.width + 10; y: ((parent.height - height) / 2) - 3
+                                visible: parent.hovered
+                                height: contentHeight + 20; width: contentWidth + 20
+                                text: qsTr("Ships from")
+                                pointer.visible: false;
+                            }
+                            MouseArea { 
+                                anchors.fill: parent
+                                hoverEnabled: true
+                                onEntered: parent.hovered = true
+                                onExited: parent.hovered = false
+                            }
+                        }
                     }
                             
                     NeroshopComponents.ComboBox {
@@ -928,7 +951,7 @@ Popup {
                                     productNameField.text, 
                                     productDescriptionEdit.text,
                                     attributes, 
-                                    productCodeType.currentText.toLowerCase() + ":" + productCodeField.text,
+                                    (productCodeField.text.length > 0) ? productCodeType.currentText.toLowerCase() + ":" + productCodeField.text : productCodeField.text,
                                     Backend.getCategoryIdByName(productCategoryBox.currentText),
                                     (subCategoryRepeater.count > 0) ? subcategory_ids : [], // subcategoryIds
                                     productTagsField.tags(),
