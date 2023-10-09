@@ -86,6 +86,15 @@ QImage neroshop::Backend::base64ToImage(const QString& base64Data) {
 }
 //----------------------------------------------------------------
 //----------------------------------------------------------------
+double neroshop::Backend::weightToKg(double amount, const QString& unit_name) const {
+    return neroshop::Converter::to_kg(amount, unit_name.toStdString());
+}
+
+double neroshop::Backend::lgToKg(double amount) const {
+    return neroshop::Converter::lb_to_kg(amount);
+}
+//----------------------------------------------------------------
+//----------------------------------------------------------------
 QStringList neroshop::Backend::getCurrencyList() const
 {
     QStringList currency_list;

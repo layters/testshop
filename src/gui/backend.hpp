@@ -28,6 +28,9 @@ public:
     
     QString imageToBase64(const QImage& image); // un-tested
     QImage base64ToImage(const QString& base64Data); // un-tested
+    
+    Q_INVOKABLE double weightToKg(double amount, const QString& unit_name) const;
+    Q_INVOKABLE double lgToKg(double amount) const;
 
     Q_INVOKABLE QStringList getCurrencyList() const;
     Q_INVOKABLE int getCurrencyDecimals(const QString& currency) const;

@@ -257,7 +257,7 @@ Page {
                             Button {
                                 id: addProductButton
                                 ////anchors.right: parent.right // <- uncomment if not enclosed in row
-                                text: qsTr("+ Add Product")
+                                text: qsTr("+ Add Item")
                                 width: 304/*inventoryManager.width*/; height: 100//width: 200; height: 100//width: 100; height: width
                                 hoverEnabled: true
                                 background: Rectangle {
@@ -409,7 +409,7 @@ Page {
                         id: removeProductsMessageBox
                         x: mainWindow.x + (mainWindow.width - this.width) / 2
                         y: mainWindow.y + (mainWindow.height - this.height) / 2
-                        title: qsTr("Remove product")
+                        title: qsTr("Remove items")
                         text: qsTr("Are you sure you want to permanently remove the selected item(s)?")
                         buttonModel: ["No", "Yes"]
                         buttonRow.state: "centered"; buttonRow.width: 300 // buttons should fill the row width

@@ -17,7 +17,7 @@
 std::string neroshop::Converter::json_string ("");
 //-------------------------------------------------------
 //-------------------------------------------------------
-double neroshop::Converter::to_kg(double amount, const std::string& unit_name) const {
+double neroshop::Converter::to_kg(double amount, const std::string& unit_name) {
     if(neroshop::string::lower(unit_name) == "lb" || neroshop::string::lower(unit_name) == "lbs" || neroshop::string::lower(unit_name) == "pound") {return lb_to_kg(amount);}
     return 0.0;
 }

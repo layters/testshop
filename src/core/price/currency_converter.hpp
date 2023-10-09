@@ -24,7 +24,7 @@ namespace neroshop {
 class Converter {
 public:
     // weight (mass)
-    double to_kg(double amount, const std::string& unit_name) const;
+    static double to_kg(double amount, const std::string& unit_name);
     static double lb_to_kg(double lb); //static double pound_to_kilogram(double pound); // The correct way of abbreviation in expressing singular or plural pounds is “lb.” though “lbs.”, which stands for libra, is the common abbreviation used in expressing pounds
     
     static std::unique_ptr<PriceApi> make_price_source(PriceSource source);
