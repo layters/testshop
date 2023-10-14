@@ -281,12 +281,12 @@ RowLayout {
             cursorShape: Qt.PointingHandCursor
         }
            
-        NeroshopComponents.Hint {
+        /*NeroshopComponents.Hint {
             visible: parent.hovered
             text: "Cart"
             pointer.visible: false
             delay: 0
             //textObject.font.bold: true
-        }        
+        }*/        
     }
 }

@@ -188,6 +188,7 @@ GridView {
                 id: productNameText
                 Layout.alignment: (!settingsDialog.gridDetailsAlignCenter) ? 0 : Qt.AlignHCenter
                 width: parent.width
+                property int maximumHeight: 100
                 text: qsTr(modelData.product_name)//qsTr("Product name")
                 color: (NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000"
                 visible: !settingsDialog.hideProductDetails
@@ -198,6 +199,13 @@ GridView {
                 font.pointSize: 13
                 background: Rectangle { color: "transparent" }
                 padding: 0; leftPadding: 0
+                Component.onCompleted: {
+                    if (contentHeight > productNameText.maximumHeight) {
+                        console.log("contentHeight has exceeded maximumHeight", contentHeight)
+                        font.pointSize = Qt.application.font.pointSize
+                    }
+                    //console.log("productNameText.height",productNameText.height)
+                }
                 //onClicked://onFocusChanged: {
                     //if(activeFocus) pageLoader.setSource("qrc:/qml/pages/ProductPage.qml")
                 //}

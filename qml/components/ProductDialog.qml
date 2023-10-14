@@ -109,7 +109,7 @@ Popup {
                         placeholderText: qsTr("Enter name")
                         color: productDialog.inputTextColor
                         selectByMouse: true
-                        maximumLength: 120
+                        maximumLength: 200
                         background: Rectangle { 
                             color: "transparent"
                             border.color: productDialog.inputBorderColor
@@ -926,6 +926,13 @@ Popup {
                                     attributes.push(attribute_object)
                                 }
                                 //---------------------------------------
+                                // Ship from location must be valid
+                                if(productLocationBox.model.indexOf(productLocationBox.contentItem.text) === -1) {
+                                    messageBox.text = "Invalid location entered"
+                                    messageBox.open()
+                                    return; // exit function
+                                }
+                                //---------------------------------------
                                 // Product must have a minimum of 1 image
                                 let productThumbnail = productImageRepeater.itemAt(0).children[0].children[0]
                                 if(productThumbnail.status == Image.Null) {
@@ -951,7 +958,7 @@ Popup {
                                     productNameField.text, 
                                     productDescriptionEdit.text,
                                     attributes, 
-                                    (productCodeField.text.length > 0) ? productCodeType.currentText.toLowerCase() + ":" + productCodeField.text : productCodeField.text,
+                                    (productCodeField.text.length >= 6) ? productCodeType.currentText.toLowerCase() + ":" + productCodeField.text : "",
                                     Backend.getCategoryIdByName(productCategoryBox.currentText),
                                     (subCategoryRepeater.count > 0) ? subcategory_ids : [], // subcategoryIds
                                     productTagsField.tags(),
