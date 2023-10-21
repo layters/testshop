@@ -591,6 +591,15 @@ QVariantList neroshop::UserController::getMessages(const QString& sender_id, con
     return filteredMessages;
 }
 //----------------------------------------------------------------
+int neroshop::UserController::getMessagesCount() const {
+    neroshop::db::Sqlite3 * database = neroshop::get_database();
+    if(!database) throw std::runtime_error("database is NULL");
+    std::string command = "SELECT COUNT(DISTINCT key) FROM mappings WHERE search_term = ?1 AND content = 'message'";
+    int messages_count = database->get_integer_params(command, { _user->get_id() });
+    //emit messagesCountChanged();
+    return messages_count;
+}
+//----------------------------------------------------------------
 //----------------------------------------------------------------
 bool neroshop::UserController::isUserLogged() const {
     return (_user.get() != nullptr);

@@ -58,6 +58,7 @@ Object {
     property string ellipsis: "\uf141"
     property string cartShopping: "\uf07a"
     property string shop: "\uf54f"
+    property string sort: "\uf0dc"
     property string store: "\uf54e"
     property string tag: "\uf02b"
     property string tags: "\uf02c"

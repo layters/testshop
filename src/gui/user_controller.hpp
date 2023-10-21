@@ -26,6 +26,7 @@ public:
     Q_PROPERTY(bool logged READ isUserLogged NOTIFY userLogged);
     Q_PROPERTY(int productsCount READ getProductsCount NOTIFY productsCountChanged);
     Q_PROPERTY(int cartQuantity READ getCartQuantity NOTIFY cartQuantityChanged);
+    Q_PROPERTY(int messagesCount READ getMessagesCount NOTIFY messagesCountChanged);
 
     Q_PROPERTY(QVariantList inventory READ getInventory NOTIFY inventoryChanged);
     //Q_PROPERTY(QVariantList cart READ getCart NOTIFY cartQuantityChanged);
@@ -81,6 +82,7 @@ public:
     Q_INVOKABLE QVariantList getMessages() const;
     Q_INVOKABLE QVariantList getMessages(const QString& sender_id) const;
     Q_INVOKABLE QVariantList getMessages(const QString& sender_id, const QVariantList& messages) const;
+    Q_INVOKABLE int getMessagesCount() const;
 
     Q_INVOKABLE neroshop::User * getUser() const;
     neroshop::Seller * getSeller() const;    
@@ -94,6 +96,7 @@ signals:
     void inventoryChanged(); // for inventory sorting
     void productsCountChanged();
     void cartQuantityChanged();
+    void messagesCountChanged();
 private:
     std::unique_ptr<neroshop::User> _user;
     //std::unique_ptr<neroshop::WalletController> wallet_controller;
