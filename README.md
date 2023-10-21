@@ -78,7 +78,7 @@ https://user-images.githubusercontent.com/58671384/219222567-f170f728-be31-43d5-
     - i2pd will be built-in (statically linked)
 - [x] Seller reputation system
 - [x] Product rating system (GUI Integration Pending)
-- [x] Wishlists
+- [x] Wishlists (GUI Integration Pending)
 - [x] Built-in SQLite-powered search engine that can find any listing or seller
 - [ ] Full-featured and user-friendly GUI application (WIP)
 

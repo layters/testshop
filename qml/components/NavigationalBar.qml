@@ -9,6 +9,7 @@ RowLayout {
     id: navBar
     readonly property string defaultButtonColor: "#6b5b95"
     property bool useDefaultButtonColor: false
+    property alias messageCounterText: messagesButton.count//messageCounter.text
     
     function getCheckedButton() {
         return navBarButtonGroup.checkedButton;
@@ -124,11 +125,11 @@ RowLayout {
     
     Button {
         id: messagesButton
-        text: (messagesButton.dummy_count > 0) ? qsTr("Messages : %1").arg(dummy_count.toString()) : qsTr("Messages")
+        text: (messagesButton.count > 0) ? qsTr("Messages (%1)").arg(messagesButton.count.toString()) : qsTr("Messages")
         ButtonGroup.group: navBarButtonGroup
         display: AbstractButton.IconOnly//AbstractButton.TextBesideIcon
         hoverEnabled: true
-        property int dummy_count: 0
+        property int count: 0
         
         icon.source: "qrc:/assets/images/mailbox.png"
         icon.color: (!checked && this.hovered) ? reservedColor : "#ffffff"
@@ -154,6 +155,25 @@ RowLayout {
             delay: 0
             //textObject.font.bold: true
         }
+        
+        /*Rectangle {
+            visible: (Number(messageCounter.text) > 0) && !messagesButton.checked
+            anchors.top: parent.top
+            anchors.topMargin: -5
+            anchors.right: parent.right
+            anchors.rightMargin: -5
+            z: 1
+            width: children[0].contentWidth + 10; height: 20
+            radius: 5
+            color: "firebrick"
+            Text {
+                id: messageCounter
+                text: "0"
+                anchors.centerIn: parent
+                color: "#ffffff"
+                font.pointSize: 8
+            }
+        }*/
     }
     
     Button {

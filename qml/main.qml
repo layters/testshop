@@ -20,8 +20,8 @@ ApplicationWindow {
     visible: true
     //visibility: (Script.getJsonRootObject()["window_mode"] == 1) ? "FullScreen" : "Windowed"
     title: qsTr("neroshop" + " v" + neroshopVersion)
-    width: 1280//Script.getJsonRootObject()["window_width"]
-    height: 900//Script.getJsonRootObject()["window_height"]
+    width: 1024//Script.getJsonRootObject()["window_width"]
+    height: 768//Script.getJsonRootObject()["window_height"]
     minimumWidth: 1024
     minimumHeight: 768
     color: NeroshopComponents.Style.getColorsFromTheme()[0]

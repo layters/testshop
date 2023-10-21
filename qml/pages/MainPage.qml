@@ -91,8 +91,14 @@ Page {
             walletMessageArea.messageCode = 1
             return; // exit function and do not proceed any further
         }        
+        // In case password does not fit the regex requirements
+        if(!walletPasswordField.acceptableInput) {
+            walletMessageArea.text = "Wallet password is too short (minimum length: 8)"
+            walletMessageArea.messageCode = 1
+            return;
+        }
         // In case wallet passwords do not match, display error message
-        if(walletPasswordConfirmField.text != walletPasswordField.text || !walletPasswordField.acceptableInput) {
+        if(walletPasswordConfirmField.text != walletPasswordField.text) {
             walletMessageArea.text = (walletPasswordConfirmField.length > 0) ? qsTr("Wallet passwords do not match") : qsTr("Wallet password must be confirmed")
             walletMessageArea.messageCode = 1
             return;
@@ -588,6 +594,7 @@ Page {
                             // Switch to HomePage
                             pageStack.pushPage("qrc:/qml/pages/HomePage.qml", StackView.Immediate)
                             //console.log("Seed:", Wallet.getSeed())
+                            navBar.messageCounterText = User.messagesCount
                 	    }
                 	    // restore from seed
                 	    if(walletRestoreStack.currentIndex == 1) {
@@ -716,364 +723,454 @@ Page {
                 }
             }            
 
-            GridLayout {
-                anchors.horizontalCenter: parent.horizontalCenter//(walletSeedRepeater.model) ? this.horizontalCenter : parent.horizontalCenter
+            ColumnLayout {
+                anchors.fill: parent
+                anchors.margins: 20
+                /*anchors.horizontalCenter: parent.horizontalCenter//(walletSeedRepeater.model) ? this.horizontalCenter : parent.horizontalCenter
                 anchors.verticalCenter: parent.verticalCenter
                 anchors.top: parent.top
-                anchors.topMargin: 20
+                anchors.topMargin: 20*/
                 //anchors.left: parent.left
                 //anchors.leftMargin: walletPageNextButton.width + 20
                 //width: 800
                 ////anchors.rightMargin: walletPageNextButton.width + 20//anchors.margins: 50
-                columns: 2 // Set column limit to 2
-                columnSpacing: 100 // The default value is 5. Same with rowSpacing
+                /*columns: 2 // Set column limit to 2
+                columnSpacing: 100*/ // The default value is 5. Same with rowSpacing
                 ////rows: 10
                 ////rowSpacing: 15
-                // Reminder: Layout. functions work for items inside Layouts but not for the Layout itself!
-                Text {
-                    id: walletGenPageTitle
-                    Layout.row: 0
-                    Layout.column: 0
-                    text: qsTr("Create Wallet")
-                    color: (NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000"
-                    font.bold: true                    
-                    font.pointSize: 14
-                }                
-                // wallet name creation text
-                Text {
-                    id: walletNameText
-                    Layout.row: 1
-                    Layout.column: 0               
-                    text: qsTr("Wallet name")
-                    //visible: !walletSeedRepeater.model
-                    color: (NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000"
-                    font.bold: true
-                }                
-                // wallet name creation field
-                TextField {
-                    id: walletNameField
-                    Layout.preferredWidth: 500
-                    Layout.preferredHeight: 50//width: 500; height: 50
-                    Layout.row: 2
-                    Layout.column: 0
-                    Layout.topMargin: (walletNameText.visible) ? 5 : 0
-                    //visible: !walletSeedRepeater.model
-                    placeholderText: qsTr("wallet"); placeholderTextColor: (NeroshopComponents.Style.darkTheme) ? "#a9a9a9" : "#696969"
-                    color: (NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000" // textColor
-                    selectByMouse: true
-                    // todo: validator regex for preventing special characters like: * . " / \ [ ] : ; | , from being added to the wallet name
-                
-                    background: Rectangle { 
-                        color: (NeroshopComponents.Style.darkTheme) ? "#101010" : "#ffffff"
-                        border.color: (NeroshopComponents.Style.darkTheme) ? "#a9a9a9" : "#696969"
-                        radius: 3
-                    }                     
-                }
-                // wallet password creation field
-                TextField {
-                    id: walletPasswordField
-                    Layout.preferredWidth: 500
-                    Layout.preferredHeight: 50//width: 500; height: 50
-                    Layout.row: 3
-                    Layout.column: 0                
-                    //visible: !walletSeedRepeater.model
-                    placeholderText: qsTr("Wallet Password")
-                    placeholderTextColor: (NeroshopComponents.Style.darkTheme) ? "#a9a9a9" : "#696969"
-                    color: NeroshopComponents.Style.moneroOrangeColor // textColor
-                    echoMode: (!walletPasswordVisibilityToggle.checked) ? TextInput.Normal : TextInput.Password//TextInput.PasswordEchoOnEdit
-                    inputMethodHints: Qt.ImhSensitiveData
-                    selectByMouse: true
-                    //validator: RegularExpressionValidator { regularExpression: "^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])(?=.*?[#?!@$%^&*-]).{8,}$" }
-                    background: Rectangle { 
-                        color: walletNameField.background.color
-                        border.color: (!parent.acceptableInput) ? walletPasswordStatusMark.invalidColor : parent.placeholderTextColor//walletPasswordConfirmField.background.border.color////((parent.length > 0 && walletPasswordConfirmField.length == 0) ? ((walletPasswordConfirmField.text != walletPasswordField.text || !walletPasswordField.acceptableInput) ? walletPasswordStatusMark.invalidColor : walletPasswordStatusMark.validColor) : walletPasswordConfirmField.background.border.color)
-                        border.width: (!parent.acceptableInput) ? 2 : 1//walletPasswordConfirmField.background.border.width////(parent.length > 0 && walletPasswordConfirmField.length == 0) ? 2 : walletPasswordConfirmField.background.border.width
-                        radius: 3
-                    }         
-                    // todo: maybe add a regex validator
-                    rightPadding: 15 + walletPasswordVisibilityToggle.width
-                    // wallet password visibility toggle
-                    Button {
-                        id: walletPasswordVisibilityToggle
-                        text: (checked) ? FontAwesome.eye : FontAwesome.eyeSlash//icon.source:
-                        anchors.right: parent.right
-                        anchors.rightMargin: 15
-                        anchors.verticalCenter: parent.verticalCenter
-                        implicitWidth: 24; implicitHeight: 24
-                        checkable: true
-                        checked: true//false
-                        hoverEnabled: true
-                        // checked = show, unchecked = hide. Passwords are hidden by default
-                        background: Rectangle {
-                            color: "transparent"
-                        }
-                        contentItem: Text {
-                            text: parent.text
-                            color: (parent.checked) ? "#a9a9a9" : "#696969"
-                            verticalAlignment: Text.AlignVCenter
-                            font.bold: true
-                        }
-                    }
-                }                
-                // wallet password confirmation field
-                TextField {
-                    id: walletPasswordConfirmField
-                    Layout.preferredWidth: 500
-                    Layout.preferredHeight: 50//width: 500; height: 50
-                    Layout.row: 4
-                    Layout.column: 0
-                    //Layout.topMargin: 5
-                    //rightPadding
-                    //visible: !walletSeedRepeater.model
-                    placeholderText: qsTr("Confirm Wallet Password")
-                    placeholderTextColor: (NeroshopComponents.Style.darkTheme) ? "#a9a9a9" : "#696969"
-                    color: walletPasswordField.color//NeroshopComponents.Style.moneroOrangeColor // textColor
-                    echoMode: (!walletPasswordVisibilityToggle.checked) ? TextInput.Normal : TextInput.Password
-                    inputMethodHints: Qt.ImhSensitiveData
-                    selectByMouse: true
-                    background: Rectangle { 
-                        color: walletPasswordField.background.color//NeroshopComponents.Style.moneroGrayColor
-                        border.color: (parent.length > 0) ? walletPasswordStatusMark.color : parent.placeholderTextColor
-                        border.width: (parent.length > 0) ? 2 : 1
-                        radius: 3
-                    }
-                    rightPadding: 30 + walletPasswordStatusMark.contentWidth//double rightmargin size
-                    // wallet password validation status mark
-                    Text {
-                        id: walletPasswordStatusMark
-                        property string validColor: "#50b954"
-                        property string invalidColor: "#f17982"
-                        anchors.right: parent.right
-                        anchors.rightMargin: 15
-                        anchors.verticalCenter: parent.verticalCenter                        
-                        text: (walletPasswordConfirmField.text != walletPasswordField.text || !walletPasswordField.acceptableInput) ? qsTr(FontAwesome.xmark) : qsTr(FontAwesome.check)
-                        visible: (walletPasswordConfirmField.length > 0)
-                        font.bold: true
-                        font.family: FontAwesome.fontFamily
-                        color: (walletPasswordConfirmField.text != walletPasswordField.text || !walletPasswordField.acceptableInput) ? invalidColor : validColor
-                    }                              
-                }
-                // wallet path text
-                Text {
-                    id: walletPathText
-                    Layout.row: 5
-                    Layout.column: 0               
-                    Layout.topMargin: 10
-                    text: qsTr("Wallet path")
-                    //visible: !walletSeedRepeater.model
-                    color: (NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000"
-                    font.bold: true                
-                }                
-                // wallet path field
-                TextField {
-                    id: walletPathField
-                    Layout.row: 6
-                    Layout.column: 0
-                    Layout.preferredWidth: 500; Layout.preferredHeight: 50
-                    Layout.topMargin: (walletPathText.visible) ? 5 : 0
-                    //visible: !walletSeedRepeater.model
-                    text: walletFolderDialog.folder////(walletNameField.text) ? qsTr(walletFolderDialog.folder + "/%1.keys").arg(walletNameField.text) : qsTr(walletFolderDialog.folder + "/%1.keys").arg(walletNameField.placeholderText)
-                    color: "#000000"//(NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000" // textColor                
-                    selectByMouse: true
-                    readOnly: true
-                
-                    background: Rectangle { 
-                        color: "#708090"//(NeroshopComponents.Style.darkTheme) ? "#101010" : "#ffffff"
-                        border.color: (NeroshopComponents.Style.darkTheme) ? "#a9a9a9" : "#696969"
-                        radius: 3
-                    }                     
-                }
                 RowLayout {
-                    Layout.row: 7
-                    Layout.column: 0
-                    //visible: !walletSeedRepeater.model
-                // wallet path change or upload button
-                Button {
-                    id: walletPathChangeButton
-                Layout.topMargin: 10
-                Layout.preferredWidth: walletPathField.width / 4//walletPathChangeButtonText.contentWidth + 20  
-                Layout.preferredHeight: 50//walletPathField.Layout.preferredHeight
-                text: qsTr("Change")
-                //display: AbstractButton.IconOnly//AbstractButton.TextBesideIcon//AbstractButton.TextOnly
-                //icon.source: "qrc:/assets/images/change.png"
-                //icon.color: "#ffffff"
-                hoverEnabled: true                
-                onClicked: walletFolderDialog.open()
-                
-                background: Rectangle {
-                    color: NeroshopComponents.Style.moneroGrayColor
-                    radius: 5
-                    border.color: walletPathChangeButton.hovered ? "#ffffff" : this.color//"#ffffff"//control.down ? "#17a81a" : "#21be2b"
-                }            
-                
-                contentItem: Text {
-                    id: walletPathChangeButtonText
-                    text: parent.text
-                    color: "#ffffff"
-                    horizontalAlignment: Text.AlignHCenter
-                    verticalAlignment: Text.AlignVCenter
-                    font.bold: true                              
-                }
-            
-                    ToolTip.delay: 1000
-                    ToolTip.visible: hovered
-                    ToolTip.text: qsTr("Change wallet path")
-                }                  
-                // generate key button
-                Button {
-                    id: generateKeysButton      
-                Layout.topMargin: 10//20      
-                Layout.preferredWidth: (walletPathChangeButton.width * 3) - parent.spacing//150
-                Layout.preferredHeight: 50          
-                text: qsTr("Generate")//("Generate Keys")
-                hoverEnabled: true
-                onClicked: generateWalletKeys()
-                
-                contentItem: Text {  
-                    //id: generateKeysButtonText
-                    font.bold: true
-                    text: generateKeysButton.text
-                    color: "#ffffff" // white
-                    horizontalAlignment: Text.AlignHCenter
-                    verticalAlignment: Text.AlignVCenter                    
-                }
-                
-                    background: Rectangle {
-                        color: NeroshopComponents.Style.moneroOrangeColor
-                        radius: 5
-                    }
-                }
-                } // RowLayout containing both walletPathChangeButton and generateKeys button
-                // important wallet message box
-                TextArea {
-                    id: walletMessageArea
-                    visible: true////false
-                    Layout.row: 8
-                    Layout.column: 0
-                    Layout.fillWidth: true // extends the TextArea's width to the width of the Layout
-                    Layout.maximumWidth: walletPathField.width // keeps textarea from going past grid bounds when text is added
-                    Layout.preferredHeight: contentHeight + 20
-                    Layout.topMargin: 20//15
-                    selectByMouse: true
-                    readOnly: true
-                    verticalAlignment: TextEdit.AlignVCenter // align the text within the center of TextArea item's height
-                    wrapMode: TextEdit.Wrap // move text to newline if it reaches the width of the TextArea
-                    text: qsTr("Please generate your wallet keys before registering your wallet.")
-                    color: (messageCode == 1) ? "#b22222" : ((NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#404040")// text color
-                    property int messageCode: 0 //0 = info; 1 = warning or error
-                    background: Rectangle { 
+                // Reminder: Layout. functions work for items inside Layouts but not for the Layout itself!
+                    // Row Rect 1
+                    Item {//Rectangle {
+                        Layout.alignment: Qt.AlignTop | Qt.AlignLeft
+                        Layout.fillWidth: true
+                        Layout.fillHeight: true
+                        /*radius: 3
                         color: "transparent"
-                        border.color: (parent.messageCode == 1) ? "#b22222" : "#2196f3"////parent.color//(NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#404040"
-                        radius: 3
-                    }            
-                    leftPadding: 30 + circleInfo.contentWidth
-                    Text {
-                        id: circleInfo
-                        anchors.left: parent.left
-                        anchors.leftMargin: 15
-                        anchors.verticalCenter: parent.verticalCenter                         
-                        text: (parent.messageCode == 1) ? qsTr(FontAwesome.triangleExclamation) : qsTr(FontAwesome.circleInfo)
-                        color: (parent.messageCode == 1) ? "#b22222" : "#2196f3"
-                        font.bold: true
-                        font.family: FontAwesome.fontFamily
-                    }
-                }
-                // wallet seed message box
-                TextArea {
-                    id: seedMessageArea
-                    visible: (walletSeedRepeater.model != null)
-                    Layout.row: 0
-                    Layout.column: 1
-                    Layout.fillWidth: true // extends the TextArea's width to the width of the Layout
-                    Layout.maximumWidth: 550////walletPathField.width // keeps textarea from going past grid bounds when text is added
-                    ////implicitHeight: contentHeight + 20////Layout.preferredHeight: contentHeight + 20  // cause of QML TextArea: Binding loop detected for property "implicitWidth" error
-                    ////Layout.topMargin: 20//15
-                    selectByMouse: true
-                    readOnly: true
-                    verticalAlignment: TextEdit.AlignVCenter // align the text within the center of TextArea item's height
-                    wrapMode: TextEdit.Wrap // move text to newline if it reaches the width of the TextArea
-                    text: qsTr("")
-                    //font.bold: true
-                    color: (messageCode == 1) ? "#b22222" : ((NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#404040")// text color
-                    property int messageCode: 0 //0 = info; 1 = warning or error
-                    background: Rectangle { 
-                        color: "transparent"
-                        border.color: (parent.messageCode == 1) ? "#b22222" : ((NeroshopComponents.Style.darkTheme) ? "#a9a9a9" : parent.color)////parent.color
-                        radius: 3
-                    }            
-                    leftPadding: 25 + circleInfo.contentWidth
-                    Text {
-                        ////id: circleInfo
-                        anchors.left: parent.left
-                        anchors.leftMargin: 15
-                        anchors.verticalCenter: parent.verticalCenter                         
-                        text: (parent.messageCode == 1) ? qsTr(FontAwesome.triangleExclamation) : qsTr(FontAwesome.circleInfo)//(parent.messageCode == 2) ? qsTr(FontAwesome.seedling) : ((parent.messageCode == 1) ? qsTr(FontAwesome.triangleExclamation) : qsTr(FontAwesome.circleInfo))
-                        color: (parent.messageCode == 1) ? "#b22222" : "#2196f3"//(parent.messageCode == 2) ? "#228b22" : ((parent.messageCode == 1) ? "#b22222" : "#2196f3")
-                        font.bold: true
-                        font.family: FontAwesome.fontFamily
-                    }
-                }              
-                // testing listview for walletseed display   
-                Flow {////RowLayout {
-                    id: walletSeedDisplay
-                    //Layout.preferredHeight: 200
-                    Layout.rowSpan: 7////8 // fill the row 8 times?
-                    Layout.row: 1
-                    Layout.column: 1
-                    ////Layout.fillWidth: true // no reason to fill width since we set the maximum width
-                    //Layout.preferredHeight: 40 * Layout.rowSpan // remove
-                    Layout.maximumWidth: 550//walletMessageArea.width
-                    Layout.topMargin: 20//15
-                    /****orientation: ListView.Horizontal****/
-                    spacing: 5
-
-                    Repeater {
-                        id: walletSeedRepeater
-                        ////model: null
-                        delegate: Rectangle {
-                            width: 130; height: 40
-                            Text { 
-                                text: (index + 1) + ".   " + modelData
+                        border.color: "#ffffff"*/
+                        
+                        ColumnLayout {
+                            id: rectColumn1
+                            anchors.centerIn: parent // Never use "anchors.fill: parent" for this so we have full control over the spacing and margins!//"anchors.margins: 20" - makes no sense if centered in parent
+                            
+                            states: [
+                                State {
+                                    name: "expand"
+                                    PropertyChanges {
+                                        target: rectColumn1
+                                        width: 600 // 600 or 540 instead of 500, to leave room for the margins without reducing children size
+                                    }
+                                },
+                                State {
+                                    name: "shrink"
+                                    PropertyChanges {
+                                        target: rectColumn1
+                                        width: parent.width
+                                    }          
+                                }
+                            ]
+                            state: (walletSeedRepeater.model == null) ? "expand" : "shrink"
+                        
+                            /*Text {
+                                id: walletGenPageTitle
+                                text: qsTr("Create Wallet")
                                 color: (NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000"
-                                anchors.verticalCenter: parent.verticalCenter//verticalAlignment: Text.AlignVCenter
-                                anchors.left: parent.left
-                                anchors.leftMargin: 15
+                                font.bold: true                    
+                                font.pointSize: 14
+                            }*/                
+                            
+                            Item {
+                                Layout.alignment: Qt.AlignHCenter | Qt.AlignTop // remove this if want to fill width
+                                Layout.maximumWidth: 500 // remove this too if want to fill width
+                                Layout.fillWidth: true
+                                Layout.preferredHeight: childrenRect.height
+                                Layout.leftMargin: 20; Layout.rightMargin: 20
+                               
+                                // wallet name creation text
+                                Column {
+                                    spacing: 10
+                                    Text {
+                                        id: walletNameText
+                                        text: qsTr("Wallet name")
+                                        color: (NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000"
+                                        font.bold: true
+                                    }                
+                                    // wallet name creation field
+                                    TextField {
+                                        id: walletNameField
+                                        width: parent.parent.width//500
+                                        height: 50
+                                        placeholderText: qsTr("wallet"); placeholderTextColor: (NeroshopComponents.Style.darkTheme) ? "#a9a9a9" : "#696969"
+                                        color: (NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000" // textColor
+                                        selectByMouse: true
+                                        maximumLength: 255
+                                        // validator regex for preventing special characters like: * . " \ / [ ] : ; < > ^ | , ? from being added to the wallet name
+                                        validator: RegExpValidator {
+                                            regExp: /^(?![. ])(?!.*[. ]$)[^*/"\\[\]:;<>\^|,?]*$/
+                                        }
+    
+                                        background: Rectangle { 
+                                            color: (NeroshopComponents.Style.darkTheme) ? "#101010" : "#ffffff"
+                                            border.color: (NeroshopComponents.Style.darkTheme) ? "#a9a9a9" : "#696969"
+                                            radius: 3
+                                        }                     
+                                    }
+                                }
                             }
-                            color: "transparent"
-                            border.color: (NeroshopComponents.Style.darkTheme) ? "#a9a9a9" : "#696969"
-                            radius: 3
-                            //MouseArea {
-                            //    anchors.fill: parent
-                            //    onClicked: {}
-                            //}
-                        }
-                    }
-                } // Flow?
-                // wallet seed copy button  
-                Button {
-                    id: seedCopyButton
-                    Layout.row: 9
-                    Layout.column: 1
-                    Layout.fillWidth: true////width: contentWidth + 20; height: 40
-                    visible: (walletSeedRepeater.model != null)
-                    text: qsTr("Copy")
-                    icon.source: "qrc:/assets/images/copy.png"
-                    icon.color: "#ffffff"
-                    display: AbstractButton.IconOnly//AbstractButton.TextBesideIcon//AbstractButton.TextOnly//AbstractButton.TextUnderIcon
-                    hoverEnabled: true
-                    onClicked: Backend.copyTextToClipboard(Wallet.getSeed())
+                            
+                            Item {
+                                Layout.alignment: Qt.AlignHCenter | Qt.AlignTop
+                                Layout.maximumWidth: 500
+                                Layout.fillWidth: true
+                                Layout.preferredHeight: childrenRect.height
+                                Layout.leftMargin: 20; Layout.rightMargin: 20
+                                // wallet password creation field
+                                Column {
+                                    spacing: 10
+                                    TextField {
+                                        id: walletPasswordField
+                                        width: parent.parent.width; height: 50
+                                        //visible: !walletSeedRepeater.model
+                                        placeholderText: qsTr("Wallet Password")
+                                        placeholderTextColor: (NeroshopComponents.Style.darkTheme) ? "#a9a9a9" : "#696969"
+                                        color: NeroshopComponents.Style.moneroOrangeColor // textColor
+                                        echoMode: (!walletPasswordVisibilityToggle.checked) ? TextInput.Normal : TextInput.Password//TextInput.PasswordEchoOnEdit
+                                        inputMethodHints: Qt.ImhSensitiveData
+                                        selectByMouse: true
+                                        validator: RegExpValidator { 
+                                            regExp: /^.{8,}$/
+                                            // Explanation of the regex:
+                                            // .{8,} - Minimum 8 characters
+                                        }
+                                        background: Rectangle { 
+                                            color: walletNameField.background.color
+                                            border.color: (!parent.acceptableInput && parent.text.length > 0) ? walletPasswordStatusMark.invalidColor : parent.placeholderTextColor//walletPasswordConfirmField.background.border.color////((parent.length > 0 && walletPasswordConfirmField.length == 0) ? ((walletPasswordConfirmField.text != walletPasswordField.text || !walletPasswordField.acceptableInput) ? walletPasswordStatusMark.invalidColor : walletPasswordStatusMark.validColor) : walletPasswordConfirmField.background.border.color)
+                                            border.width: (!parent.acceptableInput && parent.text.length > 0) ? 2 : 1//walletPasswordConfirmField.background.border.width////(parent.length > 0 && walletPasswordConfirmField.length == 0) ? 2 : walletPasswordConfirmField.background.border.width
+                                            radius: 3
+                                        }         
+                                        // todo: maybe add a regex validator
+                                        rightPadding: 15 + walletPasswordVisibilityToggle.width
+                                        // wallet password visibility toggle
+                                        Button {
+                                            id: walletPasswordVisibilityToggle
+                                            text: (checked) ? FontAwesome.eye : FontAwesome.eyeSlash//icon.source:
+                                            anchors.right: parent.right
+                                            anchors.rightMargin: 15
+                                            anchors.verticalCenter: parent.verticalCenter
+                                            implicitWidth: 24; implicitHeight: 24
+                                            checkable: true
+                                            checked: true//false
+                                            hoverEnabled: true
+                                            // checked = show, unchecked = hide. Passwords are hidden by default
+                                            background: Rectangle {
+                                                color: "transparent"
+                                            }
+                                            contentItem: Text {
+                                                text: parent.text
+                                                color: (parent.checked) ? "#a9a9a9" : "#696969"
+                                                verticalAlignment: Text.AlignVCenter
+                                                font.bold: true
+                                            }
+                                        }
+                                    }
+                                                
+                                    // wallet password confirmation field
+                                    TextField {
+                                        id: walletPasswordConfirmField
+                                        width: parent.parent.width; height: 50
+                                        //Layout.topMargin: 5
+                                        //rightPadding
+                                        //visible: !walletSeedRepeater.model
+                                        placeholderText: qsTr("Confirm Wallet Password")
+                                        placeholderTextColor: (NeroshopComponents.Style.darkTheme) ? "#a9a9a9" : "#696969"
+                                        color: walletPasswordField.color//NeroshopComponents.Style.moneroOrangeColor // textColor
+                                        echoMode: (!walletPasswordVisibilityToggle.checked) ? TextInput.Normal : TextInput.Password
+                                        inputMethodHints: Qt.ImhSensitiveData
+                                        selectByMouse: true
+                                        background: Rectangle { 
+                                            color: walletPasswordField.background.color//NeroshopComponents.Style.moneroGrayColor
+                                            border.color: (parent.length > 0) ? walletPasswordStatusMark.color : parent.placeholderTextColor
+                                            border.width: (parent.length > 0) ? 2 : 1
+                                            radius: 3
+                                        }
+                                        rightPadding: 30 + walletPasswordStatusMark.contentWidth//double rightmargin size
+                                        // wallet password validation status mark
+                                        Text {
+                                            id: walletPasswordStatusMark
+                                            property string validColor: "#50b954"
+                                            property string invalidColor: "#f17982"
+                                            anchors.right: parent.right
+                                            anchors.rightMargin: 15
+                                            anchors.verticalCenter: parent.verticalCenter                        
+                                            text: (walletPasswordConfirmField.text != walletPasswordField.text) ? qsTr(FontAwesome.xmark) : qsTr(FontAwesome.check)
+                                            visible: (walletPasswordConfirmField.length > 0)
+                                            font.bold: true
+                                            font.family: FontAwesome.fontFamily
+                                            color: (walletPasswordConfirmField.text != walletPasswordField.text) ? invalidColor : validColor
+                                        }                              
+                                    }
+                                } // column
+                            } // wallet password item
+                            
+                            Item {
+                                Layout.alignment: Qt.AlignHCenter | Qt.AlignTop
+                                Layout.maximumWidth: 500
+                                Layout.fillWidth: true
+                                Layout.preferredHeight: childrenRect.height
+                                Layout.leftMargin: 20; Layout.rightMargin: 20
+                                Column {
+                                    spacing: 10
+                                    // wallet path text
+                                    Text {
+                                        id: walletPathText
+                                        text: qsTr("Wallet path")
+                                        color: (NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000"
+                                        font.bold: true                
+                                    }                
+                                    // wallet path field
+                                    TextField {
+                                        id: walletPathField
+                                        width: parent.parent.width; height: 50
+                                        text: walletFolderDialog.folder////(walletNameField.text) ? qsTr(walletFolderDialog.folder + "/%1.keys").arg(walletNameField.text) : qsTr(walletFolderDialog.folder + "/%1.keys").arg(walletNameField.placeholderText)
+                                        color: "#000000"//(NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000" // textColor                
+                                        selectByMouse: true
+                                        readOnly: true
                 
-                    background: Rectangle {
-                        color: "#404040"
-                        radius: 5
-                        border.color: parent.hovered ? "#ffffff" : this.color//"#ffffff"//control.down ? "#17a81a" : "#21be2b"
-                    }
+                                        background: Rectangle { 
+                                            color: "#708090"//(NeroshopComponents.Style.darkTheme) ? "#101010" : "#ffffff"
+                                            border.color: (NeroshopComponents.Style.darkTheme) ? "#a9a9a9" : "#696969"
+                                            radius: 3
+                                        }                     
+                                    }
+                                }
+                            }
+                            
+                            Row {
+                                Layout.alignment: Qt.AlignHCenter | Qt.AlignTop
+                                Layout.maximumWidth: 500
+                                Layout.fillWidth: true
+                                Layout.leftMargin: 20; Layout.rightMargin: 20
+                                spacing: 5
+                                // wallet path change or upload button
+                                Button {
+                                    id: walletPathChangeButton
+                                    //Layout.topMargin: 10
+                                    width: parent.width / 4//walletPathChangeButtonText.contentWidth + 20  
+                                    height: 50//walletPathField.Layout.preferredHeight
+                                    text: qsTr("Change")
+                                    //display: AbstractButton.IconOnly//AbstractButton.TextBesideIcon//AbstractButton.TextOnly
+                                    //icon.source: "qrc:/assets/images/change.png"
+                                    //icon.color: "#ffffff"
+                                    hoverEnabled: true                
+                                    onClicked: walletFolderDialog.open()
+                
+                                    background: Rectangle {
+                                        color: NeroshopComponents.Style.moneroGrayColor
+                                        radius: 5
+                                        border.color: walletPathChangeButton.hovered ? "#ffffff" : this.color//"#ffffff"//control.down ? "#17a81a" : "#21be2b"
+                                    }            
+                
+                                    contentItem: Text {
+                                        id: walletPathChangeButtonText
+                                        text: parent.text
+                                        color: "#ffffff"
+                                        horizontalAlignment: Text.AlignHCenter
+                                        verticalAlignment: Text.AlignVCenter
+                                        font.bold: true                              
+                                    }
+                                    
+                                    MouseArea {
+                                        anchors.fill: parent
+                                        onPressed: mouse.accepted = false
+                                        cursorShape: Qt.PointingHandCursor
+                                    }
+            
+                                    ToolTip.delay: 1000
+                                    ToolTip.visible: hovered
+                                    ToolTip.text: qsTr("Change wallet path")
+                                }                  
+                                // generate key button
+                                Button {
+                                    id: generateKeysButton      
+                                    //Layout.topMargin: 10//20      
+                                    width: (walletPathChangeButton.width * 3) - parent.spacing//150
+                                    height: 50          
+                                    text: qsTr("Generate")//("Generate Keys")
+                                    hoverEnabled: true
+                                    onClicked: generateWalletKeys()
+                
+                                    contentItem: Text {  
+                                        //id: generateKeysButtonText
+                                        font.bold: true
+                                        text: generateKeysButton.text
+                                        color: "#ffffff" // white
+                                        horizontalAlignment: Text.AlignHCenter
+                                        verticalAlignment: Text.AlignVCenter                    
+                                    }
+                
+                                    background: Rectangle {
+                                        color: NeroshopComponents.Style.moneroOrangeColor
+                                        radius: 5
+                                    }
+                                    
+                                    MouseArea {
+                                        anchors.fill: parent
+                                        onPressed: mouse.accepted = false
+                                        cursorShape: Qt.PointingHandCursor
+                                    }
+                                }
+                            } // Row containing both walletPathChangeButton and generateKeys button
+                            // important wallet message box
+                            TextArea {
+                                id: walletMessageArea
+                                visible: true////false
+                                Layout.alignment: Qt.AlignHCenter | Qt.AlignTop
+                                Layout.fillWidth: true // extends the TextArea's width to the width of the Layout
+                                Layout.maximumWidth: walletPathField.width // keeps textarea from going past grid bounds when text is added
+                                Layout.preferredHeight: contentHeight + 20
+                                Layout.topMargin: 20//15
+                                Layout.leftMargin: 20; Layout.rightMargin: 20
+                                selectByMouse: true
+                                readOnly: true
+                                verticalAlignment: TextEdit.AlignVCenter // align the text within the center of TextArea item's height
+                                wrapMode: TextEdit.Wrap // move text to newline if it reaches the width of the TextArea
+                                text: qsTr("Please generate your wallet keys before registering your wallet address.")
+                                color: (messageCode == 1) ? "#b22222" : ((NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#404040")// text color
+                                property int messageCode: 0 //0 = info; 1 = warning or error
+                                background: Rectangle { 
+                                    color: "transparent"
+                                    border.color: (parent.messageCode == 1) ? "#b22222" : "#2196f3"////parent.color//(NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#404040"
+                                    radius: 3
+                                }            
+                                leftPadding: 30 + circleInfo.contentWidth
+                                Text {
+                                    id: circleInfo
+                                    anchors.left: parent.left
+                                    anchors.leftMargin: 15
+                                    anchors.verticalCenter: parent.verticalCenter                         
+                                    text: (parent.messageCode == 1) ? qsTr(FontAwesome.triangleExclamation) : qsTr(FontAwesome.circleInfo)
+                                    color: (parent.messageCode == 1) ? "#b22222" : "#2196f3"
+                                    font.bold: true
+                                    font.family: FontAwesome.fontFamily
+                                }
+                            }
+                        } // ColumnLayout for Rect
+                    } // Row Rect 1
+                    
+                    // Row Rect 2
+                    Item {//Rectangle {
+                        Layout.fillWidth: true
+                        Layout.fillHeight: true
+                        visible: (walletSeedRepeater.model != null)
+                        /*radius: 3
+                        color: "transparent"
+                        border.color: "#ffffff"*/
+                        
+                        ColumnLayout {
+                            anchors.centerIn: parent
+                            width: parent.width
+                        
+                            // wallet seed message box
+                            TextArea {
+                                id: seedMessageArea
+                                visible: (walletSeedRepeater.model != null)
+                                Layout.alignment: Qt.AlignHCenter | Qt.AlignTop
+                                Layout.fillWidth: true // extends the TextArea's width to the width of the Layout
+                                Layout.maximumWidth: walletSeedDisplay.width////parent.width
+                                Layout.leftMargin: 20; Layout.rightMargin: 20
+                                ////implicitHeight: contentHeight + 20////Layout.preferredHeight: contentHeight + 20  // cause of QML TextArea: Binding loop detected for property "implicitWidth" error
+                                ////Layout.topMargin: 20//15
+                                selectByMouse: true
+                                readOnly: true
+                                verticalAlignment: TextEdit.AlignVCenter // align the text within the center of TextArea item's height
+                                wrapMode: TextEdit.Wrap // move text to newline if it reaches the width of the TextArea
+                                text: qsTr("")
+                                //font.bold: true
+                                color: (messageCode == 1) ? "#b22222" : ((NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#404040")// text color
+                                property int messageCode: 0 //0 = info; 1 = warning or error
+                                background: Rectangle { 
+                                    color: "transparent"
+                                    border.color: (parent.messageCode == 1) ? "#b22222" : ((NeroshopComponents.Style.darkTheme) ? "#a9a9a9" : parent.color)////parent.color
+                                    radius: 3
+                                }            
+                                leftPadding: 25 + circleInfo.contentWidth
+                                Text {
+                                    ////id: circleInfo
+                                    anchors.left: parent.left
+                                    anchors.leftMargin: 15
+                                    anchors.verticalCenter: parent.verticalCenter                         
+                                    text: (parent.messageCode == 1) ? qsTr(FontAwesome.triangleExclamation) : qsTr(FontAwesome.circleInfo)//(parent.messageCode == 2) ? qsTr(FontAwesome.seedling) : ((parent.messageCode == 1) ? qsTr(FontAwesome.triangleExclamation) : qsTr(FontAwesome.circleInfo))
+                                    color: (parent.messageCode == 1) ? "#b22222" : "#2196f3"//(parent.messageCode == 2) ? "#228b22" : ((parent.messageCode == 1) ? "#b22222" : "#2196f3")
+                                    font.bold: true
+                                    font.family: FontAwesome.fontFamily
+                                }
+                            }              
+                        
+                            // testing listview for walletseed display   
+                            Flow {////RowLayout {
+                                id: walletSeedDisplay
+                                //Layout.preferredHeight: 200
+                                Layout.alignment: Qt.AlignHCenter | Qt.AlignTop
+                                Layout.fillWidth: true // no reason to fill width since we set the maximum width
+                                //Layout.preferredHeight: 40 * Layout.rowSpan // remove
+                                Layout.maximumWidth: 670////parent.width
+                                Layout.topMargin: 20//15
+                                Layout.leftMargin: 20; Layout.rightMargin: 20
+                                //orientation: ListView.Horizontal
+                                spacing: 5
 
-                    ToolTip.delay: 1000
-                    ToolTip.visible: hovered
-                    ToolTip.text: qsTr("Copy seed phrase")////qsTr("Copy to clipboard")                    
-                } // copyButton                                                                    
-            } // GridLayout for walletGenerationPage                    
+                                Repeater {
+                                    id: walletSeedRepeater
+                                    ////model: null
+                                    delegate: Rectangle {
+                                        width: 130; height: 40
+                                        Text { 
+                                            text: (index + 1) + ".   " + modelData
+                                            color: (NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000"
+                                            anchors.verticalCenter: parent.verticalCenter//verticalAlignment: Text.AlignVCenter
+                                            anchors.left: parent.left
+                                            anchors.leftMargin: 15
+                                        }
+                                        color: "transparent"
+                                        border.color: (NeroshopComponents.Style.darkTheme) ? "#a9a9a9" : "#696969"
+                                        radius: 3
+                                        //MouseArea {
+                                        //    anchors.fill: parent
+                                        //    onClicked: {}
+                                        //}
+                                    }
+                                }
+                            } // Flow?
+                        
+                            // wallet seed copy button  
+                            Button {
+                                id: seedCopyButton
+                                Layout.alignment: Qt.AlignHCenter | Qt.AlignTop
+                                Layout.fillWidth: true////width: contentWidth + 20; height: 40
+                                Layout.maximumWidth: walletSeedDisplay.width////parent.width
+                                Layout.leftMargin: 20; Layout.rightMargin: 20
+                                visible: (walletSeedRepeater.model != null)
+                                text: qsTr("Copy")
+                                icon.source: "qrc:/assets/images/copy.png"
+                                icon.color: "#ffffff"
+                                display: AbstractButton.IconOnly//AbstractButton.TextBesideIcon//AbstractButton.TextOnly//AbstractButton.TextUnderIcon
+                                hoverEnabled: true
+                                onClicked: Backend.copyTextToClipboard(Wallet.getSeed())
+                
+                                background: Rectangle {
+                                    color: "#404040"
+                                    radius: 5
+                                    border.color: parent.hovered ? "#ffffff" : this.color//"#ffffff"//control.down ? "#17a81a" : "#21be2b"
+                                }
+
+                                ToolTip.delay: 1000
+                                ToolTip.visible: hovered
+                                ToolTip.text: qsTr("Copy seed phrase")////qsTr("Copy to clipboard")                    
+                            } // copyButton  
+                        } // ColumnLayout for Rect
+                    } // Row Rectangle 2
+                } // ROWLAYOUT                                                                 
+            } // ColumnLayout for walletGenerationPage
         } // eof walletGenerationPage
         Rectangle {
             id: registrationPage

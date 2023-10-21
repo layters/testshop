@@ -5,6 +5,8 @@ import QtQuick.Layouts 1.12 // GridLayout
 import QtQuick.Shapes 1.3 // (since Qt 5.10) // Shape
 import QtGraphicalEffects 1.12//Qt5Compat.GraphicalEffects 1.15//= Qt6// ColorOverlay
 
+import FontAwesome 1.0
+
 import neroshop.Enums 1.0
 
 import "../components" as NeroshopComponents
@@ -123,40 +125,36 @@ Page {
                 NeroshopComponents.ComboBox {
                     id: sortBox
                     //anchors.verticalCenter: parent.verticalCenter
-                    width: 250; height: viewToggle.height
-                    model: ["None", "Latest", "Oldest", "Alphabetical order", "Price - Lowest", "Price - Highest"]
-                    Component.onCompleted: currentIndex = find("None")
-                    displayText: "Sort: " + currentText
+                    width: 200; height: viewToggle.height
+                    model: ["Default", "Most Recent", "Name - A to Z", "Price - Low to High", "Price - High to Low"]//, "Average Ratings"]
+                    Component.onCompleted: {
+                        currentIndex = find("Default")
+                        font.pointSize = 10
+                        indicator.children[2].text = qsTr(FontAwesome.sort)
+                    }
+                    displayText: currentText
                     indicatorDoNotPassBorder: true
                     onActivated: {
-                        if(currentIndex == find("None")) {
+                        if(currentIndex == find("Default")) {
                             catalogPage.model = Backend.sortBy(catalogPage.model, Enum.Sorting.SortByOldest)//Enum.Sorting.SortNone)
-                            settingsDialog.lastUsedListingSorting = Enum.Sorting.SortNone
+                            settingsDialog.lastUsedListingSorting = Enum.Sorting.SortByOldest//Enum.Sorting.SortNone
                         }
-                        if(currentIndex == find("Oldest")) {
-                            catalogPage.model = Backend.sortBy(catalogPage.model, Enum.Sorting.SortByOldest)
-                            settingsDialog.lastUsedListingSorting = Enum.Sorting.SortByOldest
-                        }
-                        if(currentIndex == find("Latest")) {
-                            console.log("Showing most recent items")
+                        if(currentIndex == find("Most Recent")) {
                             catalogPage.model = Backend.sortBy(catalogPage.model, Enum.Sorting.SortByMostRecent)
                             settingsDialog.lastUsedListingSorting = Enum.Sorting.SortByMostRecent
                         }
-                        if(currentIndex == find("Alphabetical order")) {
+                        if(currentIndex == find("Name - A to Z")) {
                             catalogPage.model = Backend.sortBy(catalogPage.model, Enum.Sorting.SortByAlphabeticalOrder)
                             settingsDialog.lastUsedListingSorting = Enum.Sorting.SortByAlphabeticalOrder
                         }
-                        if(currentIndex == find("Price - Lowest")) {
+                        if(currentIndex == find("Price - Low to High")) {
                             catalogPage.model = Backend.sortBy(catalogPage.model, Enum.Sorting.SortByPriceLowest)
                             settingsDialog.lastUsedListingSorting = Enum.Sorting.SortByPriceLowest
                         }
-                        if(currentIndex == find("Price - Highest")) {
+                        if(currentIndex == find("Price - High to Low")) {
                             catalogPage.model = Backend.sortBy(catalogPage.model, Enum.Sorting.SortByPriceHighest)
                             settingsDialog.lastUsedListingSorting = Enum.Sorting.SortByPriceHighest
                         }
-                        /*if(currentIndex == find("")) {
-                            catalogPage.model = Backend.
-                        }*/
                     }
                 }
             } // Row
