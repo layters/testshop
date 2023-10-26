@@ -221,16 +221,11 @@ Page {
                 }
             }            
                 
-            GridLayout {
-                anchors.horizontalCenter: parent.horizontalCenter
-                anchors.top: parent.top
-                anchors.topMargin: 20                
-                //rowSpacing: 5
+            ColumnLayout {
+                anchors.centerIn: parent//anchors.fill: parent;anchors.margins: 20
             
                 Text {
                     id: loginPageTitle
-                    Layout.row: 0
-                    Layout.column: 0
                     text: qsTr("Restore Wallet (Login)")
                     color: (NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000"
                     font.bold: true                    
@@ -259,9 +254,7 @@ Page {
                 RowLayout {
                     id: walletRestoreButtonsRow
                     //Layout.preferredWidth: 
-                    //Layout.preferredHeight: 
-                    Layout.row: 1
-                    Layout.column: 0    
+                    //Layout.preferredHeight:
                     Layout.fillWidth: true                
                     Layout.topMargin: 15
                     property real buttonWidth: (500 / 4)
@@ -378,8 +371,6 @@ Page {
             // walletRestoreStack
             StackLayout {
                 id: walletRestoreStack
-                    Layout.row: 2
-                    Layout.column: 0           
                     Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
                     currentIndex: 0
                 // WalletFileStackContent    
@@ -397,8 +388,6 @@ Page {
                 // wallet file text
                 Text {
                     id: walletFileText
-                    Layout.row: 0
-                    Layout.column: 0               
                     Layout.topMargin: 15
                     text: qsTr("Wallet file")
                     //visible: false
@@ -408,8 +397,6 @@ Page {
             // wallet file field
             TextField {
                 id: walletFileField
-                Layout.row: 1
-                Layout.column: 0
                 Layout.fillWidth: true//Layout.alignment: Qt.AlignHCenter
                 Layout.preferredWidth: 500
                 Layout.preferredHeight: 50
@@ -428,8 +415,6 @@ Page {
             // wallet file upload or browse button
             Button {
                 id: walletFileBrowseButton
-                Layout.row: 2//1
-                Layout.column: 0//1
                 Layout.alignment: Qt.AlignHCenter
                 ////Layout.fillWidth: true
                 Layout.preferredWidth: 125////walletFileBrowseButtonText.contentWidth + 20  
@@ -467,8 +452,6 @@ Page {
                     Layout.fillWidth: true
                     Layout.preferredWidth: 500
                     Layout.preferredHeight: 50
-                    Layout.row: 3
-                    Layout.column: 0
                     Layout.topMargin: 15
                     placeholderText: qsTr("Wallet Password"); placeholderTextColor: (NeroshopComponents.Style.darkTheme) ? "#a9a9a9" : "#696969"
                     color: (NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000" // textColor
@@ -522,8 +505,6 @@ Page {
                 // confirm button
                 Button {
                     id: loginButton
-                    Layout.row: 3
-                    Layout.column: 0
                     Layout.fillWidth: true
                     Layout.preferredWidth: 500
                     Layout.preferredHeight: 50
@@ -619,8 +600,6 @@ Page {
                 
                 Button {
                     id: newUserButton
-                    Layout.row: 4
-                    Layout.column: 0
                     Layout.fillWidth: true
                     Layout.preferredWidth: 500
                     Layout.preferredHeight: 50
@@ -651,7 +630,7 @@ Page {
                         newUserButton.activate()
                 	}
                 }            
-            } // GridLayout
+            } // ColumnLayout
         } // eof wallet_file_authentication_page
                 
         // generate auth keys page
@@ -1161,6 +1140,12 @@ Page {
                                     color: "#404040"
                                     radius: 5
                                     border.color: parent.hovered ? "#ffffff" : this.color//"#ffffff"//control.down ? "#17a81a" : "#21be2b"
+                                }
+                                
+                                MouseArea {
+                                    anchors.fill: parent
+                                    onPressed: mouse.accepted = false
+                                    cursorShape: Qt.PointingHandCursor
                                 }
 
                                 ToolTip.delay: 1000
