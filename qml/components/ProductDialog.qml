@@ -11,8 +11,9 @@ Popup {
     id: productDialog
     implicitWidth: 800////parent.width
     implicitHeight: 500//mainWindow.height - (mainWindow.header.height + mainWindow.footer.height)////500    
-    visible: false////modal: true // <- uncomment for dimming effect
-    closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutside
+    visible: false
+    modal: true
+    closePolicy: Popup.CloseOnEscape
     palette.text: (NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000"
     property string inputTextColor: palette.text
     property real titleSpacing: 10 // space between title and input fields/controls
@@ -28,7 +29,7 @@ Popup {
         // header
         Rectangle {
            id: titleBar
-           color: "#202020"
+           color: "transparent"
            height: 40
            width: parent.width
            anchors.left: parent.left
@@ -42,14 +43,6 @@ Popup {
                anchors.bottom: parent.bottom
                height: parent.height / 2
                color: parent.color
-           }
-    
-           Label {
-               text: "Add item"
-               color: "#ffffff"
-               font.bold: true
-               anchors.horizontalCenter: parent.horizontalCenter
-               anchors.verticalCenter: parent.verticalCenter
            }
     
            Button {
@@ -98,7 +91,7 @@ Popup {
                 Column {
                     spacing: productDialog.titleSpacing
                     Text {
-                        text: "Name / Title"
+                        text: "Name or title"
                         color: productDialog.palette.text
                         font.bold: true
                     }
@@ -189,7 +182,7 @@ Popup {
                             font.bold: true
                         }
                         Text {
-                            text: qsTr(FontAwesome.circleInfo)
+                            text: qsTr(FontAwesome.questionCircle)
                             color: productDialog.optTextColor
                             font.bold: true
                             //font.pointSize: 
@@ -605,7 +598,7 @@ Popup {
                             font.bold: true
                         }
                         Text {
-                            text: qsTr(FontAwesome.circleInfo)
+                            text: qsTr(FontAwesome.questionCircle)
                             color: productDialog.optTextColor
                             font.bold: true
                             anchors.verticalCenter: parent.children[0].verticalCenter
@@ -644,7 +637,8 @@ Popup {
                         textColor: productDialog.inputTextColor
                     }
                 }
-            }                    
+            } 
+            // todo: Shipping details                   
                     //Product description and bullet points
                     Item {
                         //Layout.row: 
@@ -736,6 +730,7 @@ Popup {
                                     Repeater {
                                         id: productImageRepeater
                                         model: 6
+                                        property int lastImageIndex: -1
                                         delegate: Rectangle {//Item { 
                                             width: 210; height: 210
                                             color: "transparent"
@@ -759,6 +754,7 @@ Popup {
                                                         if(this.status == Image.Ready) {
                                                             console.log(source + ' has been loaded')
                                                             // TODO: Upload image to the database
+                                                            productImageRepeater.lastImageIndex = index // Update the lastImageIndex
                                                         }
                                                         if(this.status == Image.Loading) console.log("Loading image " + source + " (" + (progress * 100) + "%)")
                                                         if(this.status == Image.Error) console.log("An error occurred while loading the image")
@@ -775,7 +771,7 @@ Popup {
                                                     width: 20; height: 20//32
                                                     text: qsTr(FontAwesome.xmark)
                                                     hoverEnabled: true
-                                                    visible: (parent.children[0].status === Image.Ready)
+                                                    visible: (parent.children[0].status === Image.Ready) && (index === productImageRepeater.lastImageIndex)
                             
                                                     contentItem: Text {
                                                         horizontalAlignment: Text.AlignHCenter
@@ -796,6 +792,7 @@ Popup {
                          
                                                      onClicked: {
                                                          parent.children[0].source = ""
+                                                         productImageRepeater.lastImageIndex = productImageRepeater.lastImageIndex - 1
                                                      }
                                                      MouseArea {
                                                         anchors.fill: parent
@@ -892,7 +889,7 @@ Popup {
                                 // ...
                                 //---------------------------------------
                                 if(productNameField.text.length < 3) {
-                                    messageBox.text = qsTr("Product name is too short")
+                                    messageBox.text = qsTr("Item name is too short")
                                     messageBox.open()
                                     return; // exit function
                                 }
@@ -904,7 +901,7 @@ Popup {
                                 // Product subcategories cannot be duplicated
                                 if(subCategoryRepeater.count >= 2) {    
                                     if((new Set(subcategory_ids)).size !== subcategory_ids.length) {
-                                        messageBox.text = "Product cannot have duplicate subcategories"
+                                        messageBox.text = "Item cannot have duplicate subcategories"
                                         messageBox.open()
                                         return; // exit function
                                     }
@@ -936,7 +933,7 @@ Popup {
                                 // Product must have a minimum of 1 image
                                 let productThumbnail = productImageRepeater.itemAt(0).children[0].children[0]
                                 if(productThumbnail.status == Image.Null) {
-                                    messageBox.text = "Product must have at least 1 image"
+                                    messageBox.text = "Item must have at least 1 image"
                                     messageBox.open()
                                     return; // exit function
                                 }

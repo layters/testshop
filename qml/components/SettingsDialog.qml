@@ -1523,7 +1523,7 @@ Item {
                                 id: sellerRatingExpBox
                                 anchors.right: parent.right
                                 width: settingsStack.comboBoxWidth; indicatorWidth: settingsStack.comboBoxButtonWidth
-                                model: productRatingExpBox.model//["Never"]
+                                model: ["Never"]
                                 currentIndex: model.indexOf(Script.getJsonRootObject()["data_expiration"]["seller_rating"])
                                 onCurrentTextChanged: settingsDialog.save()
                                 color: "#f2f2f2"
