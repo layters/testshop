@@ -56,7 +56,7 @@ Item {
                 border.color: table.columnBorderColor
                 radius: table.titleBoxRadius
                 Label {
-                    text: qsTr("Product")
+                    text: qsTr("Item")
                     color: (NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000"
                     anchors.horizontalCenter: parent.horizontalCenter
                     anchors.verticalCenter: parent.verticalCenter
