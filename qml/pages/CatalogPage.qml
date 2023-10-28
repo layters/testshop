@@ -84,6 +84,7 @@ Page {
                 // Filter button
                 Button {
                     id: filterButton
+                    visible: false // <- hide for now
                     text: qsTr("Filter")
                     //anchors.verticalCenter: parent.verticalCenter
                     //height: sortBox.height
@@ -125,7 +126,7 @@ Page {
                 NeroshopComponents.ComboBox {
                     id: sortBox
                     //anchors.verticalCenter: parent.verticalCenter
-                    width: 200; height: viewToggle.height
+                    width: 200; height: 30//viewToggle.height
                     model: ["Default", "Most Recent", "Name - A to Z", "Price - Low to High", "Price - High to Low"]//, "Average Ratings"]
                     Component.onCompleted: {
                         currentIndex = find("Default")
@@ -177,6 +178,15 @@ Page {
 
             NeroshopComponents.CatalogGrid {
                 model: (catalogPage.model != null) ? catalogPage.model : this.model
+                footer: Item {
+                    width: parent.width
+                    height: pagination.height
+
+                    NeroshopComponents.PaginationBar {
+                        id: pagination
+                        anchors.horizontalCenter: parent.horizontalCenter
+                    }
+                }
             }    
             
             NeroshopComponents.CatalogList {

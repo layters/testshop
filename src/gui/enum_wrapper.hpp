@@ -84,6 +84,7 @@ public:
         SortByName = SortByAlphabeticalOrder,
         SortByPriceLowest,
         SortByPriceHighest,
+        SortByAverageRating,
         SortByMostFavorited,
         SortByMostSales,
         // Inventory sorting

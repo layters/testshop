@@ -264,15 +264,8 @@ int neroshop::Backend::getSubCategoryIdByName(const QString& subcategory_name) c
 int neroshop::Backend::getCategoryProductCount(int category_id) const {
     db::Sqlite3 * database = neroshop::get_database();
 
-    std::string query = "SELECT COUNT(*) FROM (SELECT DISTINCT search_term, key FROM mappings WHERE search_term MATCH ?";//"SELECT COUNT(*) FROM (SELECT DISTINCT search_term, key FROM mappings WHERE search_term MATCH ?);";
+    std::string query = "SELECT COUNT(*) FROM (SELECT DISTINCT search_term, key FROM mappings WHERE search_term = ?)";
     std::string category = get_category_name_by_id(category_id);
-    
-    // Replace ampersands with wildcard (*)
-    std::replace(category.begin(), category.end(), '&', '*');
-    // Add double quotes around the category for phrase matching
-    category = "\"" + category + "\"";
-
-    query += ")";
 
     int category_product_count = database->get_integer_params(query, { category });
     return category_product_count;
@@ -1137,7 +1130,7 @@ QVariantList neroshop::Backend::getListings(int sorting, bool hide_illicit_items
     db::Sqlite3 * database = neroshop::get_database();
     if(!database) throw std::runtime_error("database is NULL");
     
-    std::string command = "SELECT DISTINCT key FROM mappings WHERE content MATCH 'listing';";
+    std::string command = "SELECT DISTINCT key FROM mappings WHERE content = 'listing';";
     sqlite3_stmt * stmt = nullptr;
     // Prepare (compile) statement
     if(sqlite3_prepare_v2(database->get_handle(), command.c_str(), -1, &stmt, nullptr) != SQLITE_OK) {
@@ -1348,7 +1341,7 @@ QVariantList neroshop::Backend::getListingsByCategory(int category_id, bool hide
     db::Sqlite3 * database = neroshop::get_database();
     if(!database) throw std::runtime_error("database is NULL");
     
-    std::string command = "SELECT DISTINCT key FROM mappings WHERE search_term MATCH ? AND content MATCH 'listing';";
+    std::string command = "SELECT DISTINCT key FROM mappings WHERE search_term = ? AND content = 'listing';";
     sqlite3_stmt * stmt = nullptr;
     // Prepare (compile) statement
     if(sqlite3_prepare_v2(database->get_handle(), command.c_str(), -1, &stmt, nullptr) != SQLITE_OK) {
@@ -1357,12 +1350,6 @@ QVariantList neroshop::Backend::getListingsByCategory(int category_id, bool hide
     }
     //-------------------------------------------------------
     std::string category = get_category_name_by_id(category_id);
-    
-    // Replace ampersands with wildcard (*)
-    std::replace(category.begin(), category.end(), '&', '*');
-    // Add double quotes around the category for phrase matching
-    category = "\"" + category + "\"";
-    //-------------------------------------------------------
     // Bind value to parameter arguments
     if(sqlite3_bind_text(stmt, 1, category.c_str(), category.length(), SQLITE_STATIC) != SQLITE_OK) {
         neroshop::print("sqlite3_bind_text: " + std::string(sqlite3_errmsg(database->get_handle())), 1);
@@ -1558,6 +1545,9 @@ QVariantList neroshop::Backend::sortBy(const QVariantList& catalog, int sorting)
                 return listingA["price"].toDouble() > listingB["price"].toDouble();
             });
             break;
+        case static_cast<int>(EnumWrapper::Sorting::SortByAverageRating):
+            // Code for sorting by average rating
+            break;    
         case static_cast<int>(EnumWrapper::Sorting::SortByMostFavorited):
             // Code for sorting by most favorited
             break;

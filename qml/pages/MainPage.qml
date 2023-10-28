@@ -596,6 +596,12 @@ Page {
                 	onClicked: {
                         loginButton.activate()
                 	}     
+                	
+                	MouseArea {
+                        anchors.fill: parent
+                        onPressed: mouse.accepted = false
+                        cursorShape: Qt.PointingHandCursor
+                    }
                 }
                 
                 Button {
@@ -629,6 +635,12 @@ Page {
                 	onClicked: {
                         newUserButton.activate()
                 	}
+                	
+                	MouseArea {
+                        anchors.fill: parent
+                        onPressed: mouse.accepted = false
+                        cursorShape: Qt.PointingHandCursor
+                    }
                 }            
             } // ColumnLayout
         } // eof wallet_file_authentication_page
@@ -1317,7 +1329,13 @@ Page {
                     	color: "#ffffff" // white
                     	horizontalAlignment: Text.AlignHCenter
                     	verticalAlignment: Text.AlignVCenter                    
-                	}                
+                	}
+                	
+                	MouseArea {
+                        anchors.fill: parent
+                        onPressed: mouse.accepted = false
+                        cursorShape: Qt.PointingHandCursor
+                    }                
             	}
             } // GridLayout for registrationPage
         } // eof registrationPage  
