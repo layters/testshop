@@ -27,7 +27,7 @@ Page {
         contentWidth: width; contentHeight: productPageLayout.childrenRect.height
         clip: true
         ScrollBar.vertical: ScrollBar {
-            policy: ScrollBar.AsNeeded
+            policy: ScrollBar.AlwaysOn
         }
         
         RowLayout {
