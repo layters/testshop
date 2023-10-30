@@ -1088,8 +1088,8 @@ QVariantList neroshop::Backend::getListingsBySearchTerm(const QString& searchTer
                             product_categories.append(QString::fromStdString(subcategory.get<std::string>()));
                         }
                     }
-                    listing.insert("product_categories", product_categories);
                 }
+                listing.insert("product_categories", product_categories);
                 //listing.insert("", QString::fromStdString(product_obj[""].get<std::string>()));
                 //listing.insert("", QString::fromStdString(product_obj[""].get<std::string>()));
                 if (product_obj.contains("images") && product_obj["images"].is_array()) {
@@ -1202,8 +1202,8 @@ QVariantList neroshop::Backend::getListings(int sorting, bool hide_illicit_items
                             product_categories.append(QString::fromStdString(subcategory.get<std::string>()));
                         }
                     }
-                    listing.insert("product_categories", product_categories);
                 }
+                listing.insert("product_categories", product_categories);
                 //listing.insert("", QString::fromStdString(product_obj[""].get<std::string>()));
                 // product attributes
                 if (product_obj.contains("attributes") && product_obj["attributes"].is_array()) {
@@ -1422,8 +1422,8 @@ QVariantList neroshop::Backend::getListingsByCategory(int category_id, bool hide
                             product_categories.append(QString::fromStdString(subcategory.get<std::string>()));
                         }
                     }
-                    listing.insert("product_categories", product_categories);
                 }
+                listing.insert("product_categories", product_categories);
                 //listing.insert("weight", QString::fromStdString(product_obj[""].get<std::string>()));
                 //listing.insert("other_attr", QString::fromStdString(product_obj[""].get<std::string>()));
                 //listing.insert("code", QString::fromStdString(product_obj[""].get<std::string>()));
@@ -1564,7 +1564,7 @@ QVariantList neroshop::Backend::sortBy(const QVariantList& catalog, int sorting)
 //----------------------------------------------------------------
 //----------------------------------------------------------------
 bool neroshop::Backend::isIllicitItem(const QVariantMap& listing_obj) {
-    std::string illegal_category_name = "Illicit Goods & Services";
+    std::string illegal_category_name = predefined_categories[25].name;//"Illicit Goods & Services";
     
     if (!listing_obj.contains("product_categories")) {
         std::cerr << "No product categories found\n";

@@ -31,7 +31,7 @@ QtObject {
             if(themeName.match("PurpleDust")) {
                 primaryColor = "#141419"
                 secondaryColor = "#292933"
-                tertiaryColor = "#393947"//"#4f4f63"//<= tint
+                tertiaryColor = "#515162"//"#4f4f63"
             }
             else { //"DefaultDark"
                 primaryColor = "#131415"//"#1a1a1a"//"#202020"////"#141414"

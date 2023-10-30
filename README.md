@@ -2,12 +2,12 @@
 [![banner](assets/images/appicons/LogoLight250x250.png)](https://github.com/larteyoh/testshop "neroshop logo")
 
 
-A decentralized P2P (peer-to-peer) marketplace for [**Monero**](https://getmonero.org/) users (PoC)
+NeroShop is a decentralized peer-to-peer marketplace for trading goods and services with [**Monero**](https://getmonero.org/)
 
 
 __Disclaimer: The neroshop team is comprised of a single developer that operates independently and is not affiliated, associated, authorized, endorsed by, or in any way officially connected with the Monero project, Monero team or any other organization.__
 
-__Also, this is an experimental / hobbyist project that is still in its early stages of development so use at your own risk.__
+__Also, this is an experimental / hobbyist project that is still in its early stages of development so use it at your own risk. The future of this project remains uncertain due to my upcoming relocation to a less economically developed region. I am proud of the work that has been accomplished thus far and am hopeful that the project's mission can continue. If you are interested in taking over this project and moving it forward in its development, please feel free to reach out to me. I would be happy to provide you with any insights or guidance you may need. Your passion and dedication can help ensure that the project's goals are realized, even in my absence.__
 
 
 ## Table of contents
@@ -236,7 +236,7 @@ This project is licensed under the [GNU General Public License v3.0 (GPLv3)](LIC
 
 
 ## Donations
-Donate if you like, to any of the addresses below. Received payments will be used to reward developers for completing bounties and will also be used to keep the `neroshop.org` domain up and running.
+~~Donate if you like, to any of the addresses below. Received payments will be used to reward developers for completing bounties and will also be used to keep the `neroshop.org` domain up and running.~~
 
 **Monero (XMR):**
 ```
