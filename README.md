@@ -7,7 +7,7 @@ NeroShop is a decentralized peer-to-peer marketplace for trading goods and servi
 
 __Disclaimer: The neroshop team is comprised of a single developer that operates independently and is not affiliated, associated, authorized, endorsed by, or in any way officially connected with the Monero project, Monero team or any other organization.__
 
-__Also, this is an experimental / hobbyist project that is still in its early stages of development so use it at your own risk. The future of this project remains uncertain due to my upcoming relocation to a less economically developed region. I am proud of the work that has been accomplished thus far and am hopeful that the project's mission can continue. If you are interested in taking over this project and moving it forward in its development, please feel free to reach out to me. I would be happy to provide you with any insights or guidance you may need. Your passion and dedication can help ensure that the project's goals are realized, even in my absence.__
+__Also, this is an experimental / hobbyist project that is still in its early stages of development so use it at your own risk.__
 
 
 ## Table of contents
