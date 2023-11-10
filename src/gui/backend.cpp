@@ -1564,7 +1564,7 @@ QVariantList neroshop::Backend::sortBy(const QVariantList& catalog, int sorting)
 //----------------------------------------------------------------
 //----------------------------------------------------------------
 bool neroshop::Backend::isIllicitItem(const QVariantMap& listing_obj) {
-    std::string illegal_category_name = predefined_categories[25].name;//"Illicit Goods & Services";
+    std::string illegal_category_name = predefined_categories[25].name;
     
     if (!listing_obj.contains("product_categories")) {
         std::cerr << "No product categories found\n";

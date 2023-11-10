@@ -240,11 +240,16 @@ This project is licensed under the [GNU General Public License v3.0 (GPLv3)](LIC
 
 **Monero (XMR):**
 ```
-83QbQvnnyo7515rEnW8XwF1hbP5qMab6sHXFzP6pg3EKGscgXCbVjbt1FX5SF7AV9p4Ur1tiommuQSzrQQRHkZicVYu6j8Y
+45q7enruS4A87ajduA8z5wc3xfPkUwoXCeFT37f496sMBnq3f3H5sL2YccNf8iCvfoJHwbPszTo5WQPvQ4hBqqNg4cXYSHw
 ```
 <p align="center">
     <a href="monero:83QbQvnnyo7515rEnW8XwF1hbP5qMab6sHXFzP6pg3EKGscgXCbVjbt1FX5SF7AV9p4Ur1tiommuQSzrQQRHkZicVYu6j8Y" target="_blank"><img src="assets/images/donate_xmr.png" width="128" height="128"></img></a>
 </p>
+
+Secret view key (Monero)
+```
+6c3ecfd52a5f34111732d19e893e8e2ba2631c4b6fe1aea7d107373c7bdf8402
+```
 
 **Wownero (WOW):**
 ```
