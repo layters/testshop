@@ -179,6 +179,7 @@ Page {
             NeroshopComponents.CatalogGrid {
                 model: (catalogPage.model != null) ? catalogPage.model : this.model
                 footer: Item {
+                    visible: false // <- hide this for now
                     width: parent.width
                     height: pagination.height
 

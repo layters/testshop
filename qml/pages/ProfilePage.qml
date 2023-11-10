@@ -41,11 +41,13 @@ Page {
                 if(commentTextArea.text.length > 0 && rateButtonGroup.checkedButton != null) {
                     User.rateSeller(userModel.monero_address, rateButtonGroup.checkedButton.buttonValue, commentTextArea.text)
                     commentTextArea.text = "" // clear message after sending it
+                    rateButtonGroup.checkedButton = null
                 }
             }
             onRejected: {
                 console.log("Cancel clicked")
                 commentTextArea.text = ""
+                rateButtonGroup.checkedButton = null
             }
             // header
             header: Rectangle {
