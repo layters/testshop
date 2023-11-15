@@ -2,13 +2,13 @@
 [![banner](assets/images/appicons/LogoLight250x250.png)](https://github.com/larteyoh/testshop "neroshop logo")
 
 
-> NeroShop is a decentralized peer-to-peer marketplace
-> for trading goods and services with [**Monero**](https://getmonero.org/)
+NeroShop is a decentralized peer-to-peer marketplace for trading goods and services with [**Monero**](https://getmonero.org/)
 
 
-__Disclaimer: The neroshop team is comprised of a single developer that operates independently and is not affiliated, associated, authorized, endorsed by, or in any way officially connected with the Monero project, Monero team or any other organization.__
-
-__Also, this is an experimental / hobbyist project that is still in its early stages of development so use it at your own risk.__
+> __Disclaimer: The neroshop team is comprised of a single developer that operates independently
+> and is not affiliated, associated, authorized, endorsed by, or in any way officially connected
+> with the Monero project, Monero team or any other organization.__
+> __Also, this is an experimental / hobbyist project that is still in its early stages of development so use it at your own risk.__
 
 
 ## Table of contents
