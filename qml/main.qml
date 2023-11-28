@@ -23,7 +23,7 @@ ApplicationWindow {
     width: 1024//Script.getJsonRootObject()["window_width"]
     height: 768//Script.getJsonRootObject()["window_height"]
     minimumWidth: 1024
-    minimumHeight: 768
+    minimumHeight: 700//768
     color: NeroshopComponents.Style.getColorsFromTheme()[0]
 
     header: Rectangle {
