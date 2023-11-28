@@ -13,6 +13,7 @@
 #include <QJsonObject>
 #include <QJsonParseError>
 #include <QString>
+#include <QTextStream>
 #else
 #include <nlohmann/json.hpp>
 #endif
