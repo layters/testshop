@@ -1,6 +1,8 @@
 import QtQuick 2.12
 import QtQuick.Controls 2.12
 
+import FontAwesome 1.0
+
 import "." as NeroshopComponents // Triangle (in Triangle.qml)
 
 ComboBox {
@@ -70,6 +72,7 @@ ComboBox {
             text: qsTr("\uf078")
             color: control.pressed ? "#d3d3d3" : "#ffffff"
             font.bold: true
+            font.family: FontAwesome.fontFamily
         }
     }
 

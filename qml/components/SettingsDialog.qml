@@ -1122,6 +1122,7 @@ Item {
                             verticalAlignment: Text.AlignVCenter
                             horizontalAlignment: Text.AlignHCenter
                             font.bold: true
+                            font.family: FontAwesome.fontFamily
                         }
                     }                                 
                 }
@@ -1163,6 +1164,7 @@ Item {
                             verticalAlignment: Text.AlignVCenter
                             horizontalAlignment: Text.AlignHCenter
                             font.bold: true
+                            font.family: FontAwesome.fontFamily
                         }
                     }                                  
                 }
