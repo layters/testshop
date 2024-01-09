@@ -169,7 +169,7 @@ Page {
                                     anchors.centerIn: parent
                                     text: modelData.is_incoming ? "\uf063" : "\uf062"
                                     color: (!Wallet.opened) ? "#ffffff" : (modelData.is_incoming ? "#2cba78" : "#c32235")
-                                    font.bold: true//; font.family: FontAwesome.fontFamily
+                                    font.bold: true; font.family: FontAwesome.fontFamily
                                     font.pixelSize: 32
                                 }
                             }

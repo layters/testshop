@@ -19,7 +19,7 @@ neroshop::Order::Order() : status(OrderStatus::New), subtotal(0.00), discount(0.
 neroshop::Order::Order(const std::string& id, const std::string& date, OrderStatus status, const std::string& customer_id,
 	    double subtotal, double discount, double shipping_cost, double total, PaymentOption payment_option,
 	    PaymentCoin payment_coin, DeliveryOption delivery_option, const std::string& notes,
-	    const std::vector<std::tuple<std::string, int, std::string>>& items)
+	    const std::vector<OrderItem>& items)
 	: id(id), date(date), status(status), customer_id(customer_id), subtotal(subtotal), discount(discount),
 	  shipping_cost(shipping_cost), total(total), payment_option(payment_option), payment_coin(payment_coin),
 	  delivery_option(delivery_option), notes(notes), items(items)
@@ -70,7 +70,7 @@ void neroshop::Order::create_order(const neroshop::Cart& cart, const std::string
         return;
     }
     //----------------------------------------------------------------------------
-    std::vector<std::tuple<std::string, int, std::string>> order_items;
+    std::vector<OrderItem> order_items;
     double subtotal = 0.00, discount = 0.00, shipping_cost = 0.00, total = 0.00;
     std::string currency = "USD"; // default
     std::unordered_map<std::string, nlohmann::json> listing_cache;
@@ -133,7 +133,7 @@ void neroshop::Order::create_order(const neroshop::Cart& cart, const std::string
             }
             
             // Add each product to order_item of the same order_id
-            order_items.emplace_back(listing_key, listing_qty, seller_id);
+            order_items.emplace_back(OrderItem{listing_key, static_cast<unsigned int>(listing_qty), seller_id});
             // Only the seller can reduce stock quantity of each purchased item
         }
     }
@@ -242,7 +242,7 @@ void neroshop::Order::create_order_batch(const neroshop::Cart& cart, const std::
         ////std::cout << "Seller ID: " << seller_id << std::endl;
         // Create a separate order for each seller
         // Process each item in the seller's order_items vector
-        std::vector<std::tuple<std::string, int, std::string>> order_items;
+        std::vector<OrderItem> order_items;
         double subtotal = 0.00, discount = 0.00, shipping_cost = 0.00, total = 0.00;
         std::string currency = "USD"; // default
 
@@ -279,7 +279,7 @@ void neroshop::Order::create_order_batch(const neroshop::Cart& cart, const std::
             }
             
             // Add each product to order_item of the same order_id
-            order_items.emplace_back(listing_key, listing_qty, seller_id);
+            order_items.emplace_back(OrderItem{listing_key, static_cast<unsigned int>(listing_qty), seller_id});
             // Only the seller can reduce stock quantity of each purchased item
         }
         //----------------------------------------------------------------------------
@@ -455,7 +455,7 @@ void neroshop::Order::set_notes(const std::string& notes) {
     this->notes = notes;
 }
 
-void neroshop::Order::set_items(const std::vector<std::tuple<std::string, int, std::string>>& items) {
+void neroshop::Order::set_items(const std::vector<OrderItem>& items) {
     this->items = items;
 }
 ////////////////////
@@ -552,7 +552,7 @@ std::string neroshop::Order::get_notes() const {
     return notes;
 }
 
-std::vector<std::tuple<std::string, int, std::string>> neroshop::Order::get_items() const {
+std::vector<neroshop::OrderItem> neroshop::Order::get_items() const {
     return items;
 }
 ////////////////////

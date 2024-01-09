@@ -189,9 +189,9 @@ std::pair<std::string, std::string/*std::vector<uint8_t>*/> neroshop::Serializer
         json_object["notes"] = order.get_notes(); // TODO: encrypt notes
         for(const auto& item : order.get_items()) {
             nlohmann::json order_item_obj = {};
-            order_item_obj["listing_key"] = std::get<0>(item);
-            order_item_obj["quantity"] = std::get<1>(item);
-            order_item_obj["seller_id"] = std::get<2>(item);
+            order_item_obj["listing_key"] = item.key;
+            order_item_obj["quantity"] = item.quantity;
+            order_item_obj["seller_id"] = item.seller_id;
             json_object["items"].push_back(order_item_obj); // order_items // TODO: encrypt order items
         }
         json_object["metadata"] = "order";
@@ -391,12 +391,12 @@ std::shared_ptr<neroshop::Object> neroshop::Serializer::deserialize(const std::p
         order.set_delivery_option_by_string(value["delivery_option"].get<std::string>());
         order.set_notes(value["notes"].get<std::string>());
         assert(value["items"].is_array()); // items should be an array of objects
-        std::vector<std::tuple<std::string, int, std::string>> order_items;
+        std::vector<OrderItem> order_items;
         for (const auto& item : value["items"]) {
             std::string listing_id = item["listing_key"].get<std::string>();
             int quantity = item["quantity"].get<int>();
             std::string seller_id = item["seller_id"].get<std::string>();
-            order_items.emplace_back(listing_id, quantity, seller_id);
+            order_items.emplace_back(OrderItem{listing_id, static_cast<unsigned int>(quantity), seller_id});
         }
         order.set_items(order_items);
         variant_object = std::make_shared<Object>(order);

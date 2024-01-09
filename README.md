@@ -244,7 +244,7 @@ This project is licensed under the [GNU General Public License v3.0 (GPLv3)](LIC
 45q7enruS4A87ajduA8z5wc3xfPkUwoXCeFT37f496sMBnq3f3H5sL2YccNf8iCvfoJHwbPszTo5WQPvQ4hBqqNg4cXYSHw
 ```
 <p align="center">
-    <a href="monero:83QbQvnnyo7515rEnW8XwF1hbP5qMab6sHXFzP6pg3EKGscgXCbVjbt1FX5SF7AV9p4Ur1tiommuQSzrQQRHkZicVYu6j8Y" target="_blank"><img src="assets/images/donate_xmr.png" width="128" height="128"></img></a>
+    <a href="monero:45q7enruS4A87ajduA8z5wc3xfPkUwoXCeFT37f496sMBnq3f3H5sL2YccNf8iCvfoJHwbPszTo5WQPvQ4hBqqNg4cXYSHw" target="_blank"><img src="assets/images/donate_xmr.png" width="128" height="128"></img></a>
 </p>
 
 Secret view key (Monero)
