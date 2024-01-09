@@ -165,9 +165,9 @@ std::pair<std::string, std::string/*std::vector<uint8_t>*/> neroshop::Serializer
         json_object["owner_id"] = cart.get_owner_id();
         for (const auto& item : cart.contents) {
             nlohmann::json cart_item_obj = {};
-            cart_item_obj["product_id"] = std::get<0>(item);
-            cart_item_obj["quantity"] = std::get<1>(item);
-            cart_item_obj["seller_id"] = std::get<2>(item);
+            cart_item_obj["product_id"] = item.key;
+            cart_item_obj["quantity"] = item.quantity;
+            cart_item_obj["seller_id"] = item.seller_id;
             json_object["contents"].push_back(cart_item_obj); // cart_items // TODO: encrypt cart contents
         }
         json_object["metadata"] = "cart";
@@ -365,12 +365,12 @@ std::shared_ptr<neroshop::Object> neroshop::Serializer::deserialize(const std::p
         cart.set_id(value["id"].get<std::string>());
         cart.set_owner_id(value["owner_id"].get<std::string>());
         assert(value["contents"].is_array());
-        std::vector<std::tuple<std::string, int, std::string>> cart_items;
+        std::vector<CartItem> cart_items;
         for (const auto& item : value["contents"]) {
             std::string product_id = item["product_id"].get<std::string>();
             int quantity = item["quantity"].get<int>();
             std::string seller_id = item["seller_id"].get<std::string>();
-            cart_items.emplace_back(product_id, quantity, seller_id);
+            cart_items.emplace_back(CartItem{product_id, static_cast<unsigned int>(quantity), seller_id});
         }
         cart.set_contents(cart_items);
         variant_object = std::make_shared<Object>(cart);

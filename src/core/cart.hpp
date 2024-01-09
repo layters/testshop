@@ -22,6 +22,12 @@ enum class CartError {
     SellerAddOwnItem,
 };
 
+struct CartItem {
+    std::string key;
+    unsigned int quantity = 0;
+    std::string seller_id;
+};
+
 class Cart {
 public:
     Cart();
@@ -79,13 +85,13 @@ public:
 private:
     std::string id;
     std::string owner_id;
-    std::vector<std::tuple<std::string, int, std::string>> contents;
+    std::vector<CartItem> contents;
     static unsigned int max_items; // cart can only hold up to 10 unique items
     static unsigned int max_quantity; // the max quantity each item can add up to is 100, so 10 items can each have a quantity of 10, making the total number of items 100
     void load(const std::string& user_id); // loads cart data in-memory (called on user login)
     void set_id(const std::string& id);
     void set_owner_id(const std::string& owner_id);
-    void set_contents(const std::vector<std::tuple<std::string, int, std::string>>& contents);
+    void set_contents(const std::vector<CartItem>& contents);
 };
 }
 #endif
