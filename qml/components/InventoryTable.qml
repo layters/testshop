@@ -149,7 +149,7 @@ Item {
             function getSelectedItems() {
                 let selectedItems = []
                 for(let i = 0; i < listView.count; i++) {
-                    let listItem = listView.itemAtIndex(i)
+                    let listItem = listView.itemAtIndex(i) // itemAtIndex is only available in Qt 5.13+ :(
                     let isItemChecked = (listItem == null) ? false : listItem.children[1].children[0].checked
                     if(isItemChecked) {
                         selectedItems[i] = listView.itemAtIndex(i)

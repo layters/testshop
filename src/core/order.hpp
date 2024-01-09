@@ -74,13 +74,19 @@ enum class DeliveryMethod {
     Digitally,
 };
 
+struct OrderItem {
+    std::string key;
+    unsigned int quantity = 0;
+    std::string seller_id;
+};
+
 class Order { 
 public:
     Order();
 	Order(const std::string& id, const std::string& date, OrderStatus status, const std::string& customer_id,
 	    double subtotal, double discount, double shipping_cost, double total, PaymentOption payment_option,
 	    PaymentCoin payment_coin, DeliveryOption delivery_option, const std::string& notes,
-	    const std::vector<std::tuple<std::string, int, std::string>>& items);
+	    const std::vector<OrderItem>& items);
 	~Order();
 	void create_order(const neroshop::Cart& cart, const std::string& shipping_address);
 	void cancel_order(); // revoke the order
@@ -107,7 +113,7 @@ public:
 	DeliveryOption get_delivery_option() const;
 	std::string get_delivery_option_as_string() const;
 	std::string get_notes() const;
-	std::vector<std::tuple<std::string, int, std::string>> get_items() const;
+	std::vector<OrderItem> get_items() const;
 	// boolean
 	bool is_cancelled() const;
 	// friend
@@ -126,7 +132,7 @@ private:
 	PaymentCoin payment_coin; // "Monero"
 	DeliveryOption delivery_option; // "Delivery", "Pickup"
 	std::string notes; // encrypted note containing sensative information
-	std::vector<std::tuple<std::string, int, std::string>> items; // <product_id>,<quantity>,<seller_id>
+	std::vector<OrderItem> items; // <product_id>,<quantity>,<seller_id>
 	// TODO: make cart contents a vector instead of a map so cart items can be in correct order
 	void set_id(const std::string& id);
 	void set_date(const std::string& date);
@@ -144,7 +150,7 @@ private:
 	void set_delivery_option(DeliveryOption delivery_option);
 	void set_delivery_option_by_string(const std::string& delivery_option);
 	void set_notes(const std::string& notes);		
-	void set_items(const std::vector<std::tuple<std::string, int, std::string>>& items); // TODO: use struct for OrderItem maybe?
+	void set_items(const std::vector<OrderItem>& items);
 	void create_order_batch(const neroshop::Cart& cart, const std::string& shipping_address);
 };
 
