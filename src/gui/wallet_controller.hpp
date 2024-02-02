@@ -25,15 +25,7 @@ class WalletController : public QObject, public monero_wallet_listener
     Q_PROPERTY(double balanceUnlocked READ getBalanceUnlocked NOTIFY balanceChanged);
     Q_PROPERTY(QVariantList transfers READ getTransfers NOTIFY transfersChanged);
     //Q_PROPERTY(<type> <variable_name> READ <get_function_name> NOTIFY)
-public:    
-    // I don't know how to use or compare enums in QML. It never works, but oh well :|
-    enum KeyfileStatus {
-        KeyfileStatus_Ok = 0,
-        KeyfileStatus_Wrong_Password,
-        KeyfileStatus_No_Matching_Passwords,
-        KeyfileStatus_Exists,
-    };
-    Q_ENUM(KeyfileStatus)
+public:
     // functions (for use in QML)
     Q_INVOKABLE int createRandomWallet(const QString& password, const QString& confirm_pwd, const QString& path);
     Q_INVOKABLE int restoreFromSeed(const QString& seed);

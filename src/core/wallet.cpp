@@ -271,12 +271,58 @@ void neroshop::Wallet::transfer(const std::string& address, double amount) {
     //uint64_t deducted_amount = (monero_to_piconero + fee);
     std::string tx_hash = monero_wallet_obj->relay_tx(*sent_tx); // recipient receives notification within 5 seconds    
     std::cout << "Tx hash: " << tx_hash << "\n";
+    monero_utils::free(sent_tx);
     });
     
     std::future<void> future_result = transfer_task.get_future();
     // move the task (function) to a separate thread to prevent blocking of the main thread
     std::thread worker(std::move(transfer_task));
     worker.detach(); // join may block but detach won't//void transfer_result = future_result.get();
+}
+//-------------------------------------------------------
+void neroshop::Wallet::transfer(const std::vector<std::pair<std::string, double>>& payment_addresses) { // untested
+    if(!monero_wallet_obj.get()) throw std::runtime_error("monero_wallet_full is not opened");
+    if(!monero_wallet_obj.get()->is_synced()) throw std::runtime_error("wallet is not synced with a daemon");
+    
+    monero_tx_config tx_config = monero_tx_config();
+    tx_config.m_account_index = 0; // withdraw funds from this account
+    tx_config.m_relay = false; // create transaction and relay to the network if true
+    
+    double piconero = 0.000000000001;
+    // Calculate the total amount owed
+    double total_amount = 0.000000000000;
+    for (const auto& address : payment_addresses) {
+        total_amount += address.second;
+    }
+    std::cout << "Total amount to pay: " << total_amount << " (xmr)\n";
+    // Check if balance is sufficient
+    uint64_t total_to_piconero = total_amount / piconero;
+    std::cout << "Wallet balance (spendable): " << monero_wallet_obj->get_unlocked_balance() << " (picos)\n";
+    std::cout << "Amount to send: " << total_to_piconero << " (picos)\n";
+    if(monero_wallet_obj->get_unlocked_balance() < total_to_piconero) {
+        neroshop::print("Wallet balance is insufficient", 1); return;
+    }
+    // Add each destination
+    std::vector<std::shared_ptr<monero_destination>> destinations; // specify the recipients and their amounts
+    for(const auto& address : payment_addresses) {
+        // Check if address is valid
+        if(!monero_utils::is_valid_address(address.first, monero_wallet_obj->get_network_type())) {
+            neroshop::print(address.first + " is not a valid Monero address", 1);
+            continue; // skip to the next address
+        }
+        // Convert monero to piconero
+        uint64_t monero_to_piconero = address.second / piconero; //std::cout << neroshop::string::precision(address.second, 12) << " xmr to piconero: " << monero_to_piconero << "\n";
+        destinations.push_back(std::make_shared<monero_destination>(address.first, monero_to_piconero));
+        // Print address and amount
+        std::cout << "Address: " << address.first << ", Amount: " << address.second << std::endl;
+    }
+    tx_config.m_destinations = destinations;
+    
+    // Create the transaction, confirm with the user, and relay to the network
+    std::shared_ptr<monero_tx_wallet> created_tx = monero_wallet_obj->create_tx(tx_config);
+    uint64_t fee = created_tx->m_fee.get(); // "Are you sure you want to send ...?"
+    monero_wallet_obj->relay_tx(*created_tx); // recipient receives notification within 5 seconds
+    monero_utils::free(created_tx);
 }
 //-------------------------------------------------------
 std::string neroshop::Wallet::sign_message(const std::string& message, monero_message_signature_type signature_type) const {
@@ -299,12 +345,6 @@ monero::monero_subaddress neroshop::Wallet::create_subaddress(unsigned int accou
     }    
     return subaddress;
 }
-//-------------------------------------------------------
-//-------------------------------------------------------
-void neroshop::Wallet::sweep_all(const std::string& address) {
-    if(!monero_wallet_obj.get()) throw std::runtime_error("monero_wallet_full is not opened");
-    //std::vector< std::shared_ptr< monero_tx_wallet > > monero::monero_wallet_full::sweep_dust 	( 	bool  	relay = false	) 	
-} // sends entire balance, including dust to an address // "sweep_all <address>"
 //-------------------------------------------------------
 //-------------------------------------------------------
 // NOTE: It is IMPOSSIBLE to change the network type of a pre-existing monero wallet, but it can be set before its creation

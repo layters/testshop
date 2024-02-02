@@ -94,7 +94,7 @@ Page {
                     TextField {
                         id: balanceLockedText
                         visible: (settingsDialog.balanceDisplay == 2) ? false : true
-                        property double balance: !Wallet.opened ? 0.000000000000 : Wallet.balanceLocked
+                        property double balance: !Wallet.opened || (Wallet.balanceLocked == Wallet.balanceUnlocked) ? 0.000000000000 : Wallet.balanceLocked - Wallet.balanceUnlocked
                         text: balance.toFixed(settingsDialog.balanceAmountPrecision)
                         font.bold: !balanceUnlockedText.visible ? true : false
                         font.pointSize: !balanceUnlockedText.visible ? 48 : 24

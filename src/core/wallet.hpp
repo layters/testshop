@@ -56,7 +56,8 @@ public:
     monero::monero_subaddress create_subaddress(unsigned int account_idx, const std::string & label = "") const; // generates a new subaddress from main account // monero addresses start with 4 or 8
     
     void transfer(const std::string& address, double amount); // "transfer" will be used for sending refunds
-    void sweep_all(const std::string& address); // sends entire balance, including dust to an address // "sweep_all <address>"
+    void transfer(const std::vector<std::pair<std::string, double>>& payment_addresses);
+    
     std::string address_new() const; // this function has been replaced by create_subaddress() and is deprecated. Will be removed soon
     unsigned int address_book_add(const std::string& address, std::string description = ""); // "address_book add <address> <description>"
     void address_book_delete(unsigned int index); // "address_book delete 0"  
