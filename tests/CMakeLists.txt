@@ -17,7 +17,7 @@ set(neroshop_database_src
 
 set(neroshop_network_src 
     ${NEROSHOP_CORE_SRC_DIR}/network/i2p.cpp 
-    ${NEROSHOP_CORE_SRC_DIR}/network/tor.cpp
+    #[[${NEROSHOP_CORE_SRC_DIR}/network/tor.cpp]]
 )
 
 set(neroshop_price_src 
@@ -429,7 +429,7 @@ set(lua_src liblua.a)
 # network_test
 set(test_network "network_test")
 add_executable(${test_network} network_test.cpp ${neroshop_srcs})
-target_link_libraries(${test_network} ${monero_cpp_src} ${sqlite_src} ${qr_code_generator_src} ${raft_src} ${libuv_src} ${curl_src} ${monero_src} ${lua_src})
+target_link_libraries(${test_network} ${monero_cpp_src} ${sqlite_src} ${qr_code_generator_src} ${raft_src} ${curl_src} ${monero_src} ${lua_src})
 # network_uv test
 #[[set(test_network_uv "network_uv_test")
 add_executable(${test_network_uv} network_test_uv.cpp ${neroshop_srcs})
@@ -437,30 +437,30 @@ target_link_libraries(${test_network_uv} ${monero_cpp_src} ${sqlite_src} ${qr_co
 # utility test
 set(test_utility "utility_test")
 add_executable(${test_utility} utility_test.cpp ${neroshop_srcs})
-target_link_libraries(${test_utility} ${monero_cpp_src} ${sqlite_src} ${qr_code_generator_src} ${raft_src} ${libuv_src} ${curl_src} ${monero_src} ${lua_src})
+target_link_libraries(${test_utility} ${monero_cpp_src} ${sqlite_src} ${qr_code_generator_src} ${raft_src} ${curl_src} ${monero_src} ${lua_src})
 # auth_test
 set(test_auth "auth_test")
 add_executable(${test_auth} auth_test.cpp ${neroshop_srcs})
-target_link_libraries(${test_auth} ${monero_cpp_src} ${sqlite_src} ${qr_code_generator_src} ${raft_src} ${libuv_src} ${curl_src} ${monero_src} ${lua_src})
+target_link_libraries(${test_auth} ${monero_cpp_src} ${sqlite_src} ${qr_code_generator_src} ${raft_src} ${curl_src} ${monero_src} ${lua_src})
 # uuid_test
 set(test_uuid "uuid_test")
 add_executable(${test_uuid} uuid_test.cpp)
 # qr_code_test
 set(test_qr_code "qr_test")
 add_executable(${test_qr_code} qr_test.cpp ${neroshop_srcs})
-target_link_libraries(${test_qr_code} ${monero_cpp_src} ${sqlite_src} ${qr_code_generator_src} ${raft_src} ${libuv_src} ${curl_src} ${monero_src} ${lua_src})
+target_link_libraries(${test_qr_code} ${monero_cpp_src} ${sqlite_src} ${qr_code_generator_src} ${raft_src} ${curl_src} ${monero_src} ${lua_src})
 # encryption_test
 set(test_crypt "encryption_test")
 add_executable(${test_crypt} encryption_test.cpp ${neroshop_srcs})
-target_link_libraries(${test_crypt} ${monero_cpp_src} ${sqlite_src} ${qr_code_generator_src} ${raft_src} ${libuv_src} ${curl_src} ${monero_src} ${lua_src})
+target_link_libraries(${test_crypt} ${monero_cpp_src} ${sqlite_src} ${qr_code_generator_src} ${raft_src} ${curl_src} ${monero_src} ${lua_src})
 # signing_test
 set(test_sign "signing_test")
 add_executable(${test_sign} signing_test.cpp ${neroshop_srcs})
-target_link_libraries(${test_sign} ${monero_cpp_src} ${sqlite_src} ${qr_code_generator_src} ${raft_src} ${libuv_src} ${curl_src} ${monero_src} ${lua_src})
+target_link_libraries(${test_sign} ${monero_cpp_src} ${sqlite_src} ${qr_code_generator_src} ${raft_src} ${curl_src} ${monero_src} ${lua_src})
 # sign_verify_test
 set(test_sign_verify "sign_verify_test")
 add_executable(${test_sign_verify} sign_verify_test.cpp ${neroshop_srcs})
-target_link_libraries(${test_sign_verify} ${monero_cpp_src} ${sqlite_src} ${qr_code_generator_src} ${raft_src} ${libuv_src} ${curl_src} ${monero_src} ${lua_src})
+target_link_libraries(${test_sign_verify} ${monero_cpp_src} ${sqlite_src} ${qr_code_generator_src} ${raft_src} ${curl_src} ${monero_src} ${lua_src})
 # Qt gui_test
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
@@ -471,17 +471,21 @@ add_executable(${test_gui_qt} main_window.ui main_window.cpp gui_qt_test.cpp ${n
 #[[target_]] 
 include_directories(#[[${test_gui_qt} ]] /usr/include/x86_64-linux-gnu/qt5/ /usr/include/x86_64-linux-gnu/qt5/QtWidgets/)
 #target_compile_definitions(${test_gui_qt} PRIVATE )
-target_link_libraries(${test_gui_qt} ${monero_cpp_src} ${sqlite_src} ${qr_code_generator_src} ${raft_src} ${libuv_src} ${curl_src} ${monero_src} ${lua_src})
+target_link_libraries(${test_gui_qt} ${monero_cpp_src} ${sqlite_src} ${qr_code_generator_src} ${raft_src} ${curl_src} ${monero_src} ${lua_src})
 
 # escrow_test
 set(test_escrow "escrow_test")
 add_executable(${test_escrow} escrow.cpp ${neroshop_srcs})
-target_link_libraries(${test_escrow} ${monero_cpp_src} ${sqlite_src} ${qr_code_generator_src} ${raft_src} ${libuv_src} ${curl_src} ${monero_src} ${lua_src})
+target_link_libraries(${test_escrow} ${monero_cpp_src} ${sqlite_src} ${qr_code_generator_src} ${raft_src} ${curl_src} ${monero_src} ${lua_src})
+
+set(test_wallet "wallet_test")
+add_executable(${test_wallet} wallet_test.cpp ${neroshop_srcs})
+target_link_libraries(${test_wallet} ${monero_cpp_src} ${sqlite_src} ${qr_code_generator_src} ${raft_src} ${curl_src} ${monero_src} ${lua_src})
 
 #[[
 set(test_ "")
 add_executable(${test_} .cpp ${neroshop_srcs})
-target_link_libraries(${test_} ${monero_cpp_src} ${sqlite_src} ${qr_code_generator_src} ${raft_src} ${libuv_src} ${curl_src} ${monero_src} ${lua_src})
+target_link_libraries(${test_} ${monero_cpp_src} ${sqlite_src} ${qr_code_generator_src} ${raft_src} ${curl_src} ${monero_src} ${lua_src})
 ]]
 
 ######################################
@@ -501,8 +505,11 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
     target_link_libraries(${test_auth} ${posix_src})
     target_link_libraries(${test_qr_code} ${posix_src})
     target_link_libraries(${test_crypt} ${posix_src})
+    target_link_libraries(${test_sign} ${posix_src})
     target_link_libraries(${test_sign_verify} ${posix_src})
     target_link_libraries(${test_gui_qt} ${posix_src})
+    target_link_libraries(${test_escrow} ${posix_src})
+    target_link_libraries(${test_wallet} ${posix_src})
     #target_link_libraries(${test_} ${posix_src})
     find_package(X11 REQUIRED)
     if(X11_FOUND)
