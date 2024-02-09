@@ -19,6 +19,6 @@
 [submodule "external/i2pd"]
 	path = external/i2pd
 	url = https://github.com/PurpleI2P/i2pd.git
-[submodule "external/libjuice"]
-    path = external/libjuice
-    url = https://github.com/paullouisageneau/libjuice.git
+[submodule "external/i2psam"]
+	path = external/i2psam
+	url = https://github.com/i2p/i2psam.git

@@ -8,7 +8,6 @@ NeroShop is a decentralized peer-to-peer marketplace for trading goods and servi
 > __Disclaimer: The neroshop team is comprised of a single developer that operates independently
 > and is not affiliated, associated, authorized, endorsed by, or in any way officially connected
 > with the Monero project, Monero team or any other organization.__
-> __Also, this is an experimental / hobbyist project that is still in its early stages of development so use it at your own risk.__
 
 
 ## Table of contents
@@ -106,7 +105,7 @@ https://user-images.githubusercontent.com/58671384/219222567-f170f728-be31-43d5-
 | [cxxopts](https://github.com/jarro2783/cxxopts)                    | ?                  | command line option parser                                             | :heavy_check_mark: :package:                       |
 | [libzmq](https://github.com/zeromq/libzmq)                         | ?                  | networking                                                             | :grey_question:                                    |
 | [libi2pd](https://github.com/PurpleI2P/i2pd)                       | latest             | network proxy                                                          | :grey_question: :package:                          |
-| [libjuice](https://github.com/paullouisageneau/libjuice)           | ?                  | NAT traversal (clearnet)                                               | :grey_question: :package:                          |
+| [i2psam](https://github.com/i2p/i2psam)                            | ?                  | network proxy                                                          | :grey_question: :package:                          |
 
 ### Compiling neroshop from source
 **0. Install prerequisites**
@@ -210,7 +209,7 @@ To build with [**CMake**](https://cmake.org/):
 ```bash
 # Build external libraries
 cd external/
-cmake . && cmake --build . --target juice-static
+cmake .
 make -j$(nproc)
 cd ..
 ```
