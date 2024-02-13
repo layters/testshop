@@ -22,7 +22,7 @@ neroshop::UserController::~UserController() {
 QString neroshop::UserController::listProduct(const QString& name, const QString& description,
         const QList<QVariantMap>& attributes, 
         const QString& product_code, int category_id, const QList<int>& subcategory_ids, const QStringList& tags, const QList<QVariantMap>& images,
-int quantity, double price, const QString& currency, const QString& condition, const QString& location) {
+int quantity, double price, const QString& currency, const QString& condition, const QString& location, int quantity_per_order) {
     if (!_user)
         throw std::runtime_error("neroshop::User is not initialized");
     auto seller = dynamic_cast<neroshop::Seller *>(_user.get());
@@ -110,7 +110,8 @@ int quantity, double price, const QString& currency, const QString& condition, c
         price, 
         currency.toStdString(), 
         condition.toStdString(), 
-        location.toStdString()
+        location.toStdString(), 
+        quantity_per_order
     );
     emit productsCountChanged();
     emit inventoryChanged();

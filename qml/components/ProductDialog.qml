@@ -271,6 +271,41 @@ Popup {
                             }
                         }
                     }
+                    
+                    Item {
+                        width: 500; height: childrenRect.height
+                        Text {
+                            anchors.left: parent.left
+                            anchors.verticalCenter: quantityPerOrderField.verticalCenter
+                            text: qsTr("Limit quantity per order")
+                            color: productDialog.palette.text
+                            font.pointSize: 10
+                        }
+                        TextField {
+                            id: quantityPerOrderField
+                            anchors.right: parent.right
+                            width: 50; height: 25
+                            placeholderText: qsTr("#")
+                            font.pixelSize: 12
+                            color: productDialog.inputTextColor
+                            selectByMouse: true
+                            inputMethodHints: Qt.ImhDigitsOnly
+                            validator: RegExpValidator{ regExp: /[0-9]*/ }
+                            onTextChanged: {
+                                if (text.length > 2) text = text.substring(0, 2);
+                            }
+                            onEditingFinished: {
+                                if (text === "00") text = "";
+                                if (text.startsWith("0")) text = text.substring(1);
+                            }
+                            background: Rectangle { 
+                                color: "transparent"
+                                border.color: productDialog.inputBorderColor
+                                border.width: parent.activeFocus ? 2 : 1
+                                radius: productDialog.inputRadius
+                            }
+                        }
+                    }
                 }
             }                                
             // Product condition
@@ -965,7 +1000,8 @@ Popup {
                                     productPriceField.text, 
                                     selectedCurrencyText.text, 
                                     productConditionBox.currentText, 
-                                    productLocationBox.currentText
+                                    productLocationBox.currentText,
+                                    (quantityPerOrderField.text.length > 0) ? Number(quantityPerOrderField.text) : 0
                                 )                       
                                 // Save product thumbnail
                                 Backend.saveProductThumbnail(productImages[0].source, listing_key)
@@ -985,6 +1021,7 @@ Popup {
                                 productLocationBox.currentIndex = productLocationBox.find("Unspecified")//find("Worldwide")
                                 productDescriptionEdit.text = ""
                                 productTagsField.clearTags()
+                                quantityPerOrderField.text = ""
                                 // Clear upload images as well
                                 for(let i = 0; i < productImageRepeater.count; i++) {
                                     let productImage = productImageRepeater.itemAt(i).children[0].children[0]

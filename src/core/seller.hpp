@@ -37,7 +37,8 @@ public:
 	    const std::string& currency, 
 	    /*double discount = 0.00, unsigned int discounted_items = 1, unsigned int discount_times = 1, std::string discount_expiry = "0000-00-00 00:00:00", */
 	    const std::string& condition, 
-	    const std::string& location
+	    const std::string& location,
+	    unsigned int quantity_per_order
 	) const; // adds an item to the inventory
 	////void list_item(const neroshop::Product& item, unsigned int stock_qty, double sales_price = 0.00, std::string currency = "usd", double discount = 0.00, unsigned int discounted_items = 1, unsigned int discount_times = 1, std::string discount_expiry = ""/*"0000-00-00 00:00:00"*/, std::string condition = "new");
 	void delist_item(const std::string& listing_key); // deletes an item from the inventory

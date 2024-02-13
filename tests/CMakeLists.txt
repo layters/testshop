@@ -423,7 +423,14 @@ include_directories(${neroshop_root}/external/lua/src) # v5.4.4
 set(lua_src liblua.a)
 
 ######################################
-# 
+# libi2pd (and i2pd_client)
+include_directories(${neroshop_root}/external/i2pd/libi2pd ${neroshop_root}/external/i2pd/libi2pd_client)
+set(i2pd_src libi2pd.a libi2pd_client.a)
+
+######################################
+# i2psam
+#[[include_directories(${neroshop_root}/external/i2psam/)
+set(i2psam_src libi2psam.a)]]
 
 ######################################
 # network_test
@@ -482,6 +489,10 @@ set(test_wallet "wallet_test")
 add_executable(${test_wallet} wallet_test.cpp ${neroshop_srcs})
 target_link_libraries(${test_wallet} ${monero_cpp_src} ${sqlite_src} ${qr_code_generator_src} ${raft_src} ${curl_src} ${monero_src} ${lua_src})
 
+#[[set(test_i2pd "i2pd_test")
+add_executable(${test_i2pd} i2pd_test.cpp ${neroshop_srcs})
+target_link_libraries(${test_i2pd} ${monero_cpp_src} ${sqlite_src} ${qr_code_generator_src} ${raft_src} ${monero_src} ${lua_src} ${i2pd_src})]]
+
 #[[
 set(test_ "")
 add_executable(${test_} .cpp ${neroshop_srcs})
@@ -510,6 +521,7 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
     target_link_libraries(${test_gui_qt} ${posix_src})
     target_link_libraries(${test_escrow} ${posix_src})
     target_link_libraries(${test_wallet} ${posix_src})
+    #target_link_libraries(${test_i2pd} ${posix_src})
     #target_link_libraries(${test_} ${posix_src})
     find_package(X11 REQUIRED)
     if(X11_FOUND)
