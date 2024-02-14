@@ -1073,6 +1073,9 @@ QVariantList neroshop::Backend::getListingsBySearchTerm(const QString& searchTer
                     listing.insert("location", QString::fromStdString(value_obj["location"].get<std::string>()));
                 }
                 listing.insert("date", QString::fromStdString(value_obj["date"].get<std::string>()));
+                if(value_obj.contains("quantity_per_order") && value_obj["quantity_per_order"].is_number_integer()) {
+                    listing.insert("quantity_per_order", value_obj["quantity_per_order"].get<int>());
+                }
                 assert(value_obj["product"].is_object());
                 const auto& product_obj = value_obj["product"];
                 ////listing.insert("product_uuid", QString::fromStdString(product_obj["id"].get<std::string>()));
@@ -1187,6 +1190,9 @@ QVariantList neroshop::Backend::getListings(int sorting, bool hide_illicit_items
                     listing.insert("location", QString::fromStdString(value_obj["location"].get<std::string>()));
                 }
                 listing.insert("date", QString::fromStdString(value_obj["date"].get<std::string>()));
+                if(value_obj.contains("quantity_per_order") && value_obj["quantity_per_order"].is_number_integer()) {
+                    listing.insert("quantity_per_order", value_obj["quantity_per_order"].get<int>());
+                }
                 assert(value_obj["product"].is_object());
                 const auto& product_obj = value_obj["product"];
                 ////listing.insert("product_uuid", QString::fromStdString(product_obj["id"].get<std::string>()));
@@ -1407,6 +1413,9 @@ QVariantList neroshop::Backend::getListingsByCategory(int category_id, bool hide
                     listing.insert("location", QString::fromStdString(value_obj["location"].get<std::string>()));
                 }
                 listing.insert("date", QString::fromStdString(value_obj["date"].get<std::string>()));
+                if(value_obj.contains("quantity_per_order") && value_obj["quantity_per_order"].is_number_integer()) {
+                    listing.insert("quantity_per_order", value_obj["quantity_per_order"].get<int>());
+                }
                 assert(value_obj["product"].is_object());
                 const auto& product_obj = value_obj["product"];
                 ////listing.insert("product_uuid", QString::fromStdString(product_obj["id"].get<std::string>()));

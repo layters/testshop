@@ -58,6 +58,10 @@ std::pair<std::string, std::string/*std::vector<uint8_t>*/> neroshop::Serializer
         }
         json_object["date"] = listing.get_date();
         json_object["signature"] = listing.get_signature();// listings can be updated by the user that can verify the signature
+        int quantity_per_order = listing.get_quantity_per_order();
+        if(quantity_per_order > 0) {
+            json_object["quantity_per_order"] = quantity_per_order;
+        }
         json_object["metadata"] = "listing";
         // Include the product serialization within the listing serialization
         assert(listing.get_product() != nullptr);

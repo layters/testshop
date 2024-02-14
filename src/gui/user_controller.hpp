@@ -45,7 +45,8 @@ public:
         double price, 
         const QString& currency, 
         const QString& condition, 
-        const QString& location
+        const QString& location, 
+        int quantity_per_order
     );
     Q_INVOKABLE void delistProduct(const QString& listing_key);
     Q_INVOKABLE void delistProducts(const QStringList& listing_keys);

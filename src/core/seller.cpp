@@ -56,7 +56,8 @@ std::string neroshop::Seller::list_item(
     double price, 
     const std::string& currency, 
     const std::string& condition, 
-    const std::string& location
+    const std::string& location,
+    unsigned int quantity_per_order
 ) const
 {
     // Transition from Sqlite to DHT:
@@ -84,7 +85,7 @@ std::string neroshop::Seller::list_item(
     
     Listing listing { listing_id, product, seller_id,
         quantity, price, currency,
-        condition, location, created_at, signature
+        condition, location, created_at, signature, quantity_per_order
     };//listing.print_listing();
     
     auto data = Serializer::serialize(listing);

@@ -4,25 +4,29 @@
 
 #include "product.hpp"
 
-neroshop::Listing::Listing() : quantity(0), price(0.00) {}
+neroshop::Listing::Listing() : quantity(0), price(0.00), quantity_per_order(0) {}
 
 neroshop::Listing::Listing(const std::string& id, const Product& product, const std::string& seller_id, unsigned int quantity,
-        double price, const std::string& currency, const std::string& condition, const std::string& location, const std::string& date, const std::string& signature)
+        double price, const std::string& currency, const std::string& condition, const std::string& location, const std::string& date, const std::string& signature,
+        unsigned int quantity_per_order)
     : id(id), product(std::make_unique<Product>(product)), seller_id(seller_id), quantity(quantity),
-      price(price), currency(currency), condition(condition), location(location), date(date), signature(signature)
+      price(price), currency(currency), condition(condition), location(location), date(date), signature(signature),
+      quantity_per_order(quantity_per_order)
 {}
 
 neroshop::Listing::Listing(const Listing& other)
     : id(other.id), product(std::make_unique<Product>(*other.product)), seller_id(other.seller_id), quantity(other.quantity),
       price(other.price), currency(other.currency), condition(other.condition), location(other.location),
-      date(other.date), signature(other.signature)
+      date(other.date), signature(other.signature),
+      quantity_per_order(other.quantity_per_order)
 {}
 
 neroshop::Listing::Listing(Listing&& other) noexcept
     : id(std::move(other.id)), product(std::move(other.product)), seller_id(std::move(other.seller_id)),
       quantity(std::exchange(other.quantity, 0)), price(std::exchange(other.price, 0.0)),
       currency(std::move(other.currency)), condition(std::move(other.condition)), location(std::move(other.location)),
-      date(std::move(other.date)), signature(std::move(other.signature))
+      date(std::move(other.date)), signature(std::move(other.signature)),
+      quantity_per_order(std::exchange(other.quantity_per_order, 0))
 {}
 
 //-----------------------------------------------------------------------------
@@ -40,6 +44,7 @@ neroshop::Listing& neroshop::Listing::operator=(const neroshop::Listing& other)
         location = other.location;
         date = other.date;
         signature = other.signature;
+        quantity_per_order = other.quantity_per_order;
     }
     return *this;
 }
@@ -57,6 +62,7 @@ neroshop::Listing& neroshop::Listing::operator=(neroshop::Listing&& other) noexc
         location = std::move(other.location);
         date = std::move(other.date);
         signature = std::move(other.signature);
+        quantity_per_order = std::exchange(other.quantity_per_order, 0);
     }
     return *this;
 }
@@ -133,6 +139,10 @@ void neroshop::Listing::set_signature(const std::string& signature) {
     this->signature = signature;
 }
 
+void neroshop::Listing::set_quantity_per_order(unsigned int quantity_per_order) {
+    this->quantity_per_order = quantity_per_order;
+}
+
 //-----------------------------------------------------------------------------
 
 std::string neroshop::Listing::get_id() const {
@@ -180,4 +190,8 @@ neroshop::Product * neroshop::Listing::get_product() const {
 
 std::string neroshop::Listing::get_signature() const {
     return signature;
+}
+
+int neroshop::Listing::get_quantity_per_order() const {
+    return quantity_per_order;
 }
