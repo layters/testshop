@@ -8,7 +8,7 @@
 #include "../../neroshop_config.hpp"
 
 void neroshop::logger(log_priority priority, const std::string& message) {
-    std::string config_path = NEROSHOP_DATA_DIRECTORY_PATH;
+    std::string config_path = NEROSHOP_DEFAULT_CONFIGURATION_PATH;
     std::string log_path = config_path + "/" + NEROSHOP_LOG_FILENAME;
     std::ofstream file(std::string(log_path).c_str(), std::ios_base::app);
 	    

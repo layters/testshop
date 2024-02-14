@@ -277,7 +277,7 @@ Popup {
                         Text {
                             anchors.left: parent.left
                             anchors.verticalCenter: quantityPerOrderField.verticalCenter
-                            text: qsTr("Limit quantity per order")
+                            text: qsTr("Quantity per order")
                             color: productDialog.palette.text
                             font.pointSize: 10
                         }
@@ -285,7 +285,7 @@ Popup {
                             id: quantityPerOrderField
                             anchors.right: parent.right
                             width: 50; height: 25
-                            placeholderText: qsTr("#")
+                            placeholderText: qsTr("max")
                             font.pixelSize: 12
                             color: productDialog.inputTextColor
                             selectByMouse: true
