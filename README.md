@@ -263,9 +263,6 @@ WW2pQTQWHpyJf2CHrCmZG7Tn3zBnYRZTH8g4U3pSZf5s6xsTXrZc9odDWmrWzjRc9MMQWrKXxjHsRdzH
 `donate.neroshop.org` or `donate@neroshop.org`
 
 
-[**Kuno**](): https://kuno.anne.media/fundraiser/lxeq/
-
-
 ## Resources
 * Website: [neroshop.org](https://neroshop.org/)
 
