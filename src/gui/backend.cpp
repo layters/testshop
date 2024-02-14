@@ -279,8 +279,8 @@ bool neroshop::Backend::hasSubCategory(int category_id) const {
 //----------------------------------------------------------------
 bool neroshop::Backend::saveAvatarImage(const QString& fileName, const QString& userAccountKey) {
     std::string config_path = NEROSHOP_DEFAULT_CONFIGURATION_PATH;
-    std::string cache_folder = config_path + "/" + NEROSHOP_CACHE_FOLDER_NAME;
-    std::string avatars_folder = cache_folder + "/" + NEROSHOP_AVATAR_FOLDER_NAME;
+    std::string data_folder = config_path + "/" + NEROSHOP_DATA_FOLDER_NAME;
+    std::string avatars_folder = data_folder + "/" + NEROSHOP_AVATAR_FOLDER_NAME;
     //----------------------------------------
     std::string image_file = fileName.toStdString(); // Full path with file name
     std::string image_name = image_file.substr(image_file.find_last_of("\\/") + 1);// get filename from path (complete base name)
@@ -335,8 +335,8 @@ bool neroshop::Backend::saveAvatarImage(const QString& fileName, const QString& 
 //----------------------------------------------------------------
 bool neroshop::Backend::saveProductThumbnail(const QString& fileName, const QString& listingKey) {
     std::string config_path = NEROSHOP_DEFAULT_CONFIGURATION_PATH;
-    std::string cache_folder = config_path + "/" + NEROSHOP_CACHE_FOLDER_NAME;
-    std::string listings_folder = cache_folder + "/" + NEROSHOP_CATALOG_FOLDER_NAME;
+    std::string data_folder = config_path + "/" + NEROSHOP_DATA_FOLDER_NAME;
+    std::string listings_folder = data_folder + "/" + NEROSHOP_CATALOG_FOLDER_NAME;
     //----------------------------------------
     // datastore/listings/<listing_key>
     std::string key_folder = listings_folder + "/" + listingKey.toStdString();
@@ -396,8 +396,8 @@ bool neroshop::Backend::saveProductThumbnail(const QString& fileName, const QStr
 //----------------------------------------------------------------
 bool neroshop::Backend::saveProductImage(const QString& fileName, const QString& listingKey) {
     std::string config_path = NEROSHOP_DEFAULT_CONFIGURATION_PATH;
-    std::string cache_folder = config_path + "/" + NEROSHOP_CACHE_FOLDER_NAME;
-    std::string listings_folder = cache_folder + "/" + NEROSHOP_CATALOG_FOLDER_NAME;
+    std::string data_folder = config_path + "/" + NEROSHOP_DATA_FOLDER_NAME;
+    std::string listings_folder = data_folder + "/" + NEROSHOP_CATALOG_FOLDER_NAME;
     //----------------------------------------
     std::string image_file = fileName.toStdString(); // Full path with file name
     std::string image_name = image_file.substr(image_file.find_last_of("\\/") + 1);// get filename from path (complete base name)
@@ -1735,7 +1735,7 @@ QVariantList neroshop::Backend::registerUser(WalletController* wallet_controller
     }
     //---------------------------------------------
     // Generate RSA key pair (this is for sending/receiving encrypted messages)
-    std::string config_path = NEROSHOP_DEFAULT_CONFIGURATION_PATH;
+    std::string config_path = NEROSHOP_DEFAULT_KEYS_PATH;
     std::string public_key_filename = config_path + "/" + primary_address + ".pub";
     std::string private_key_filename = config_path + "/" + primary_address + ".key";
     EVP_PKEY * pkey = neroshop::crypto::rsa_generate_keys_get();
@@ -1850,7 +1850,7 @@ int neroshop::Backend::loginWithWalletFile(WalletController* wallet_controller, 
     }
     //----------------------------------------
     // Load RSA keys from file
-    std::string config_path = NEROSHOP_DEFAULT_CONFIGURATION_PATH;
+    std::string config_path = NEROSHOP_DEFAULT_KEYS_PATH;
     std::string public_key_path = config_path + "/" + primary_address + ".pub";
     std::string private_key_path = config_path + "/" + primary_address + ".key";
     //----------------------------------------

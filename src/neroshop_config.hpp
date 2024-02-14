@@ -64,14 +64,15 @@
 #define NEROSHOP_NODES_FILENAME         "nodes.lua"
 #define NEROSHOP_LOG_FILENAME           "neroshop.log"
 
-#define NEROSHOP_CACHE_FOLDER_NAME   "datastore"
+#define NEROSHOP_KEYS_FOLDER_NAME    "keys"
+#define NEROSHOP_DATA_FOLDER_NAME    "datastore"
 #define NEROSHOP_CATALOG_FOLDER_NAME "listings"
 #define NEROSHOP_AVATAR_FOLDER_NAME  "avatars"
 
 #if defined(NEROSHOP_USE_QT)
-#define NEROSHOP_DATA_DIRECTORY_PATH           QStandardPaths::writableLocation(QStandardPaths::AppConfigLocation).toStdString()//(QStandardPaths::AppLocalDataLocation).toStdString()
-#define NEROSHOP_DEFAULT_CONFIGURATION_PATH    NEROSHOP_DATA_DIRECTORY_PATH
-#define NEROSHOP_DEFAULT_DATABASE_PATH         NEROSHOP_DATA_DIRECTORY_PATH
+#define NEROSHOP_DEFAULT_CONFIGURATION_PATH    QStandardPaths::writableLocation(QStandardPaths::AppConfigLocation).toStdString()//(QStandardPaths::AppLocalDataLocation).toStdString()
+#define NEROSHOP_DEFAULT_DATABASE_PATH         NEROSHOP_DEFAULT_CONFIGURATION_PATH + "/" + NEROSHOP_DATA_FOLDER_NAME
+#define NEROSHOP_DEFAULT_KEYS_PATH             NEROSHOP_DEFAULT_CONFIGURATION_PATH + "/" + NEROSHOP_KEYS_FOLDER_NAME
 #if defined(_WIN32)
 #define NEROSHOP_DEFAULT_WALLET_DIRECTORY_PATH (QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation) + "/neroshop").toStdString()
 #else
@@ -81,32 +82,32 @@
 
 #if !defined(NEROSHOP_USE_QT)
 #if defined(_WIN32)
-#define NEROSHOP_DATA_DIRECTORY_PATH "C:/Users/" + neroshop::device::get_user() + "/AppData/Local/neroshop"//"C:/ProgramData/neroshop"
+#define NEROSHOP_DEFAULT_CONFIGURATION_PATH "C:/Users/" + neroshop::device::get_user() + "/AppData/Local/neroshop"//"C:/ProgramData/neroshop"
 #define NEROSHOP_DEFAULT_WALLET_DIRECTORY_PATH "C:/Users/" + neroshop::device::get_user() + "/Documents" + "/neroshop"
 #endif
 
 #if defined(__linux__) && !defined(__ANDROID__)
-#define NEROSHOP_DATA_DIRECTORY_PATH "/home/" + neroshop::device::get_user() + "/.config/neroshop"//"/etc/xdg/neroshop"//"/home/" + neroshop::device::get_user() + "/.local/share/neroshop"
+#define NEROSHOP_DEFAULT_CONFIGURATION_PATH "/home/" + neroshop::device::get_user() + "/.config/neroshop"//"/etc/xdg/neroshop"//"/home/" + neroshop::device::get_user() + "/.local/share/neroshop"
 #define NEROSHOP_DEFAULT_WALLET_DIRECTORY_PATH "/home/" + neroshop::device::get_user() + "/neroshop"
 #endif
 
 #if defined(__APPLE__) && defined(__MACH__)
-#define NEROSHOP_DATA_DIRECTORY_PATH "~/Library/Preferences/neroshop"
+#define NEROSHOP_DEFAULT_CONFIGURATION_PATH "~/Library/Preferences/neroshop"
 #endif
 
 #if defined(__ANDROID__)
-#define NEROSHOP_DATA_DIRECTORY_PATH "<APPROOT>/files/settings"
+#define NEROSHOP_DEFAULT_CONFIGURATION_PATH "<APPROOT>/files/settings"
 #endif
 
 #if defined(__APPLE__)
 #include <TargetConditionals.h>
 #if TARGET_OS_IPHONE
-#define NEROSHOP_DATA_DIRECTORY_PATH "<APPROOT>/Library/Preferences/neroshop"
+#define NEROSHOP_DEFAULT_CONFIGURATION_PATH "<APPROOT>/Library/Preferences/neroshop"
 #endif
 #endif
 
-#define NEROSHOP_DEFAULT_CONFIGURATION_PATH            NEROSHOP_DATA_DIRECTORY_PATH
-#define NEROSHOP_DEFAULT_DATABASE_PATH                 NEROSHOP_DATA_DIRECTORY_PATH
+#define NEROSHOP_DEFAULT_DATABASE_PATH                 NEROSHOP_DEFAULT_CONFIGURATION_PATH + "/" + NEROSHOP_DATA_FOLDER_NAME
+#define NEROSHOP_DEFAULT_KEYS_PATH                     NEROSHOP_DEFAULT_CONFIGURATION_PATH + "/" + NEROSHOP_KEYS_FOLDER_NAME
 #endif // endif NOT NEROSHOP_USE_QT
 
 namespace neroshop {

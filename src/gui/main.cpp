@@ -79,12 +79,21 @@ int main(int argc, char *argv[])
         neroshop::print("\033[1;91mnetwork_type \"" + network_type + "\" is not valid");
         return 1;
     }
-    // create neroshop config directory
-    std::string data_dir = NEROSHOP_DATA_DIRECTORY_PATH;
+    // create "datastore" folder within "~/.config/neroshop/" path
+    std::string data_dir = NEROSHOP_DEFAULT_DATABASE_PATH;
     if(!neroshop::filesystem::is_directory(data_dir)) {
         neroshop::print(std::string("Creating directory \"") + data_dir + "\"", 3);
         if(!neroshop::filesystem::make_directory(data_dir)) {
             throw std::runtime_error("Failed to create neroshop data dir");
+            return 1;
+        }
+    }
+    // create "keys" folder within "~/.config/neroshop/" path
+    std::string keys_dir = NEROSHOP_DEFAULT_KEYS_PATH;
+    if(!neroshop::filesystem::is_directory(keys_dir)) {
+        neroshop::print(std::string("Creating directory \"") + keys_dir + "\"", 3);
+        if(!neroshop::filesystem::make_directory(keys_dir)) {
+            throw std::runtime_error("Failed to create neroshop keys dir");
             return 1;
         }
     }
