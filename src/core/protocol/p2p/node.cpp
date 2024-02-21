@@ -13,6 +13,7 @@
 #include "../../database/database.hpp"
 
 #include <nlohmann/json.hpp>
+#include <wallet/monero_wallet_full.h>
 
 #include <cstring> // memset
 #include <future>
@@ -262,10 +263,6 @@ std::vector<neroshop::Node*> neroshop::Node::find_node(const std::string& target
 }
 
 int neroshop::Node::put(const std::string& key, const std::string& value) {
-    if(!validate(key, value)) {
-        return false;
-    }
-    
     // If data is a duplicate, skip it and return success (true)
     if (has_key(key) && get(key) == value) {
         std::cout << "Data already exists. Skipping ...\n";
@@ -278,6 +275,10 @@ int neroshop::Node::put(const std::string& key, const std::string& value) {
         return set(key, value);
     }
 
+    if(!validate(key, value)) {
+        return false;
+    }
+    
     data[key] = value;
     return has_key(key); // boolean
 }
@@ -327,20 +328,30 @@ int neroshop::Node::set(const std::string& key, const std::string& value) {
                 assert(json["signature"].is_string());
                 std::string signature = json["signature"].get<std::string>();//neroshop::base64_decode(json["signature"].get<std::string>());
                 
-                // READ THIS!!
-                // Unfortunately data verification can only be done on the client side since the wallet is used for verification and it only exists on the client side
-                // The only way to verify from the daemon backend would be to use the RSA keys instead of Monero keys for signing/verifying
-                
-                // Get the public key and other account data from the user
-                /////std::string public_key = json["public_key"].get<std::string>();//user.get_public_key(); // Get the public key from the user object
-                ////std::string user_id = json["monero_address"].get<std::string>();//user.get_id(); // Get the user ID from the user object
-        
-                ////std::cout << "Verifying existing key's signature ...\n";
-                /*bool verified = neroshop_crypto::rsa_public_verify(public_key, user_id, signature);
-                if(!verified) {
-                    std::cerr << "Verification failed." << std::endl;
-                    return false; // Verification failed, return false
-                }*/
+                assert(json["metadata"].is_string());
+                std::string metadata = json["metadata"].get<std::string>();
+
+                std::cout << "Verifying existing key's signature ...\n";
+                // For metadata="listing"
+                if(metadata == "listing") {
+                    std::string message = json["id"].get<std::string>(); // the listing's "id" (or "uuid") is the signed message
+                    std::string address = json["seller_id"].get<std::string>(); // the "seller_id" is the signing address
+                    // Create a temporary monero_wallet_full object to verify signature
+                    monero::monero_wallet_config wallet_config_obj;
+                    wallet_config_obj.m_path = "";
+                    wallet_config_obj.m_password = "";
+                    wallet_config_obj.m_network_type = monero_network_type::STAGENET;
+                    std::unique_ptr<monero::monero_wallet_full> monero_wallet_obj = std::unique_ptr<monero_wallet_full>(monero_wallet_full::create_wallet (wallet_config_obj, nullptr));
+                    // Verify the data's signature
+                    bool verified = monero_wallet_obj->verify_message(message, address, signature).m_is_good;
+                    if(!verified) {
+                        std::cerr << "Verification failed." << std::endl;
+                        return false; // Verification failed, return false
+                    }
+                    // Destroy the wallet
+                    monero_wallet_obj->close(false);
+                    monero_wallet_obj.reset();
+                }
             }
             
             // Compare dates of new data and old (pre-existing) data - untested
