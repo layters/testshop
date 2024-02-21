@@ -199,12 +199,13 @@ Page {
                                 width: contentItem.contentWidth + 20; height: contentItem.contentHeight + 20
                                 text: qsTr("View")
                                 background: Rectangle {
-                                    color: "dimgray"
+                                    color: "transparent"
+                                    border.color: balanceTxColumn.borderColor
                                     radius: 3
                                 }
                                 contentItem: Text {
                                     text: parent.text
-                                    color: "#ffffff"
+                                    color: balanceTxColumn.textColor
                                     horizontalAlignment: Text.AlignHCenter
                                     verticalAlignment: Text.AlignVCenter
                                 }
