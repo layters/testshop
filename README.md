@@ -103,7 +103,6 @@ https://user-images.githubusercontent.com/58671384/219222567-f170f728-be31-43d5-
 | [linenoise](https://github.com/antirez/linenoise)                  | ?                  | command line interface                                                 | :heavy_check_mark: :white_square_button: :package: |
 | [lua](https://www.lua.org/)                                        | 5.1.5              | configuration script                                                   | :heavy_check_mark: :package:                       |
 | [cxxopts](https://github.com/jarro2783/cxxopts)                    | ?                  | command line option parser                                             | :heavy_check_mark: :package:                       |
-| [libzmq](https://github.com/zeromq/libzmq)                         | ?                  | networking                                                             | :grey_question:                                    |
 | [libi2pd](https://github.com/PurpleI2P/i2pd)                       | latest             | network proxy                                                          | :grey_question: :package:                          |
 | [i2psam](https://github.com/i2p/i2psam)                            | ?                  | network proxy                                                          | :grey_question: :package:                          |
 
@@ -170,7 +169,7 @@ cd external/monero-project
 ```bash
 wget https://github.com/libexpat/libexpat/releases/download/R_2_4_8/expat-2.4.8.tar.bz2
 tar -xf expat-2.4.8.tar.bz2
-rm expat-2.4.8.tar.bz2
+sudo rm expat-2.4.8.tar.bz2
 cd expat-2.4.8
 ./configure --enable-static --disable-shared
 make
@@ -179,12 +178,18 @@ cd ../
 ```
 
 ```bash
-wget https://www.nlnetlabs.nl/downloads/unbound/unbound-1.16.1.tar.gz
-tar -xzf unbound-1.16.1.tar.gz
-rm unbound-1.16.1.tar.gz
-cd unbound-1.16.1
-./configure --disable-shared --enable-static --without-pyunbound --with-libevent=no --without-pythonmodule --disable-flto --with-pthreads --with-libunbound-only --with-pic
+wget https://www.nlnetlabs.nl/downloads/unbound/unbound-1.17.0.tar.gz
+tar xzf unbound-1.17.0.tar.gz
+sudo apt update
+sudo apt install -y build-essential
+sudo apt install -y libssl-dev
+sudo apt install -y libexpat1-dev
+sudo apt-get install -y bison
+sudo apt-get install -y flex
+cd unbound-1.17.0
+./configure --with-libexpat=/usr --with-ssl=/usr
 make
+sudo make install
 cd ../
 ```
 
