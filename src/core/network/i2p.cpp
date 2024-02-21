@@ -1,6 +1,6 @@
 #include "i2p.hpp"
 
-int i2pd_sam_test() {
+/*int i2pd_sam_test() {
     // Address and ports for SAM bridge
     std::string address = "127.0.0.1";
     int portTCP = 7656;
@@ -12,7 +12,7 @@ int i2pd_sam_test() {
     // Start the SAM bridge
     samBridge.Start();
 
-/*    // Create a SAM session
+    // Create a SAM session
     std::string sessionID = "mysession";
     i2p::client::SAMSessionType sessionType = i2p::client::eSAMSessionTypeStream;
     std::string destination = ""; // empty string means transient
@@ -24,13 +24,13 @@ int i2pd_sam_test() {
     samBridge.AddSession(session);
 
     // Perform SAM-related operations
-    // ...*/
+    // ...
 
     // Stop the SAM bridge
     samBridge.Stop();
     
     return 0;
-}
+}*/
 /*int main(int argc, char* argv[]) {
     // Initialize i2pd router
     i2p::api::InitI2P(argc, argv, "MyI2PApp");
