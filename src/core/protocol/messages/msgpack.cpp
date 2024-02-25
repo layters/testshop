@@ -284,17 +284,6 @@ std::vector<uint8_t> neroshop::msgpack::process(const std::vector<uint8_t>& requ
         std::string key = params_object["key"];
         assert(params_object["value"].is_string());
         std::string value = params_object["value"];
-        assert(params_object["verified"].is_boolean());
-        bool verified = params_object["verified"].get<bool>();
-        
-        if(verified == false) {
-            code = static_cast<int>(KadResultCode::DataVerificationFailed);
-            response_object["error"]["code"] = code;
-            response_object["error"]["message"] = "Data verification failed";
-            response_object["tid"] = tid;
-            response = nlohmann::json::to_msgpack(response_object);
-            return response;
-        }
         
         // Send put messages to the closest nodes in your routing table (IPC mode)
         int put_messages_sent = node.send_put(key, value);

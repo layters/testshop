@@ -269,14 +269,14 @@ int neroshop::Node::put(const std::string& key, const std::string& value) {
         return true;
     }
     
-    // If node has the key but the value has been altered, verify data integrity and ownership then update the data
-    if (has_key(key) && get(key) != value) {
-        std::cout << "Updating value for key (" << key << ")\n";
-        return set(key, value);
-    }
-
     if(!validate(key, value)) {
         return false;
+    }
+    
+    // If node has the key but the value has been altered, verify data integrity and ownership then update the data
+    if (has_key(key) && get(key) != value) {
+        std::cout << "Updating value for key (" << key << ") ...\n";
+        return set(key, value);
     }
     
     data[key] = value;
@@ -313,39 +313,37 @@ void neroshop::Node::map(const std::string& key, const std::string& value) {
 }
 
 int neroshop::Node::set(const std::string& key, const std::string& value) {
-    nlohmann::json json = nlohmann::json::parse(value); // Already validated so we just need to parse it without checking for errors
-    // Detect when key is the same but the value has changed
+    nlohmann::json json = nlohmann::json::parse(value); // Already validated in put() so we just need to parse it without checking for errors
+    // Same key but both current and new values do not match
     if(has_key(key)) {
-        std::string current_value = find_value(key);//std::cout << "preexisting_value: " << preexisting_value << std::endl;
-            
-        // Compare the preexisting value with the new value
+        std::string current_value = find_value(key);
         if (current_value != value) {
-            ////std::cout << "Value modification detected. Performing signature verification ...\n";//std::cout << "Value mismatch. Skipping ...\n";//return false;}
             nlohmann::json current_json = nlohmann::json::parse(current_value);
-            
-            // Verify signature using user's public key (required for account data and listing data)
+            // If a signature field is found in the value, we can verify the data by using the signed message, signing monero address, and the signature itself
             if (json.contains("signature")) {
                 assert(json["signature"].is_string());
-                std::string signature = json["signature"].get<std::string>();//neroshop::base64_decode(json["signature"].get<std::string>());
+                std::string signature = json["signature"].get<std::string>(); // the signature may have been updated
                 
                 assert(json["metadata"].is_string());
                 std::string metadata = json["metadata"].get<std::string>();
+                if(metadata != current_json["metadata"].get<std::string>()) { std::cerr << "Metadata mismatch\n"; return false; } // metadata is immutable
 
-                std::cout << "Verifying existing key's signature ...\n";
-                // For metadata="listing"
+                // For listings
                 if(metadata == "listing") {
-                    std::string message = json["id"].get<std::string>(); // the listing's "id" (or "uuid") is the signed message
-                    std::string address = json["seller_id"].get<std::string>(); // the "seller_id" is the signing address
-                    // Create a temporary monero_wallet_full object to verify signature
+                    std::string message = json["id"].get<std::string>(); // the id (uuid) is the signed message
+                    std::string address = json["seller_id"].get<std::string>(); // the seller_id (monero primary address) is the signing address
+                    if(message != current_json["id"].get<std::string>()) { std::cerr << "Listing UUID mismatch\n"; return false; } // id is immutable
+                    if(address != current_json["seller_id"].get<std::string>()) { std::cerr << "Seller ID mismatch\n"; return false; } // seller_id is immutable
+                    // Create a temporary monero wallet
                     monero::monero_wallet_config wallet_config_obj;
                     wallet_config_obj.m_path = "";
                     wallet_config_obj.m_password = "";
                     wallet_config_obj.m_network_type = monero_network_type::STAGENET;
                     std::unique_ptr<monero::monero_wallet_full> monero_wallet_obj = std::unique_ptr<monero_wallet_full>(monero_wallet_full::create_wallet (wallet_config_obj, nullptr));
-                    // Verify the data's signature
+                    // Verify the message
                     bool verified = monero_wallet_obj->verify_message(message, address, signature).m_is_good;
                     if(!verified) {
-                        std::cerr << "Verification failed." << std::endl;
+                        std::cerr << "\033[91mData verification failed.\033[0m" << std::endl;
                         return false; // Verification failed, return false
                     }
                     // Destroy the wallet
@@ -998,9 +996,16 @@ bool neroshop::Node::validate(const std::string& key, const std::string& value) 
         return false; // Invalid value, return false
     }
     
-    // Make sure value contains a metadata field
+    // Make sure value contains a valid metadata field
     if(!json.contains("metadata")) {
         std::cerr << "No metadata found\n";
+        return false;
+    }
+    assert(json["metadata"].is_string());
+    std::string metadata = json["metadata"].get<std::string>();
+    std::vector<std::string> valid_metadatas = { "user","listing","product_rating","seller_rating","order","message", };
+    if (std::find(valid_metadatas.begin(), valid_metadatas.end(), metadata) == valid_metadatas.end()) {
+        std::cerr << metadata << " is not a VALID metadata\n";
         return false;
     }
     
@@ -1010,15 +1015,14 @@ bool neroshop::Node::validate(const std::string& key, const std::string& value) 
         assert(json["expiration_date"].is_string());
         std::string expiration_date = json["expiration_date"].get<std::string>();
         if(neroshop_timestamp::is_expired(expiration_date)) {
-            std::cerr << "Data has expired (exp date: " << expiration_date << ")\n";
             // Notify the other nodes that this data has expired (so that once they receive a put with the expired data, it will be removed from their local hash table as soon as it goes through the validate function)
             ////send_put(key, value); // this should propagate the expiration information to other nodes in the DHT until the expired data is removed once and for all. Hmmm this could cause an endless loop ...
             // This won't work unless all data contain a mandatory expiration date set on creation. A consensus mechanism may be necessary
             // Remove the data from hash table if it was previously stored
             if(has_key(key)) {
+                std::cout << "Data has expired. Removing data (key: " << key << ", exp:" << expiration_date << ") from hash table ...\n";
                 if(remove(key) == true) {
                     int error = database->execute_params("DELETE FROM mappings WHERE key = ?1", { key });
-                    std::cout << "Expired data with key (" << key << ") has been removed from hash table\n";
                 }
             }
             return false;
