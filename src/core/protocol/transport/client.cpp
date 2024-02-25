@@ -239,9 +239,9 @@ void neroshop::Client::get(const std::string& key, std::string& reply) {
     }    
 }
 
-void neroshop::Client::set(const std::string& key, const std::string& value, bool verified, std::string& reply) {
+void neroshop::Client::set(const std::string& key, const std::string& value, std::string& reply) {
     // Send set - no id or tid required for IPC client requests. The DHT server will deal with that
-    nlohmann::json args_obj = { {"key", key}, {"value", value}, {"verified", verified} };
+    nlohmann::json args_obj = { {"key", key}, {"value", value} };
     nlohmann::json query_object = { {"version", std::string(NEROSHOP_DHT_VERSION)}, {"query", "set"}, {"args", args_obj}, {"tid", nullptr} };
     std::vector<uint8_t> packed_data = nlohmann::json::to_msgpack(query_object);
     send(packed_data);

@@ -56,7 +56,7 @@ public:
 	// Interactions with the DHT node, which only exists on the client side via IPC server
 	void put(const std::string& key, const std::string& value, std::string& response);
 	void get(const std::string& key, std::string& response);
-	void set(const std::string& key, const std::string& value, bool verified, std::string& response);
+	void set(const std::string& key, const std::string& value, std::string& response);
 	void close(); // kills socket
 	void shutdown(); // shuts down connection (disconnects from server)
     void disconnect(); // breaks connection to server then closes the client socket // combination of shutdown() and close()
