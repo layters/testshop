@@ -138,13 +138,13 @@ void neroshop::Seller::delist_item(const std::string& listing_key) {
         // Verify the signature
         std::string listing_id = value_obj["id"].get<std::string>();
         std::string signature = value_obj["signature"].get<std::string>();
-        bool verified = wallet->verify_message(listing_id, signature);
-        if(!verified) { neroshop::print("Data verification failed."); return; }
+        bool self_verified = wallet->verify_message(listing_id, signature);
+        if(!self_verified) { neroshop::print("Data verification failed."); return; }
         // Might be a good idea to set the stock quantity to zero beforehand or nah?
         ////value_obj["quantity"] = 0;
         // Finally, set the expiration date
         value_obj["expiration_date"] = neroshop::timestamp::get_current_utc_timestamp();//value_obj["valid_until"] = neroshop::timestamp::get_current_utc_timestamp();
-        // Re-sign the listing to reflect the modification
+        // Re-sign to reflect the modification
         std::string new_signature = wallet->sign_message(listing_id, monero_message_signature_type::SIGN_WITH_SPEND_KEY);
         value_obj["signature"] = new_signature;
         // Send set request containing the updated value with the same key as before
@@ -351,13 +351,13 @@ void neroshop::Seller::set_stock_quantity(const std::string& listing_key, int qu
         // Verify the signature
         std::string listing_id = value_obj["id"].get<std::string>();
         std::string signature = value_obj["signature"].get<std::string>();
-        bool verified = wallet->verify_message(listing_id, signature);
-        if(!verified) { neroshop::print("Data verification failed."); return; }
+        bool self_verified = wallet->verify_message(listing_id, signature);
+        if(!self_verified) { neroshop::print("Data verification failed."); return; }
         // Finally, modify the quantity
         value_obj["quantity"] = quantity;
         // Add a last_modified or last_updated field so nodes can compare dates and choose the most recent listing
         value_obj["last_updated"] = neroshop::timestamp::get_current_utc_timestamp();
-        // Re-sign the listing to reflect the modification
+        // Re-sign to reflect the modification
         std::string new_signature = wallet->sign_message(listing_id, monero_message_signature_type::SIGN_WITH_SPEND_KEY);
         value_obj["signature"] = new_signature;
         // Send set request containing the updated value with the same key as before

@@ -9,10 +9,13 @@
 #include "../../version.hpp"
 #include "../../tools/base64.hpp"
 #include "mapper.hpp"
+#include "../../tools/string.hpp"
 #include "../../tools/timestamp.hpp"
 #include "../../database/database.hpp"
 
 #include <nlohmann/json.hpp>
+
+#include <utils/monero_utils.h>
 #include <wallet/monero_wallet_full.h>
 
 #include <cstring> // memset
@@ -25,6 +28,7 @@
 
 namespace neroshop_crypto = neroshop::crypto;
 namespace neroshop_timestamp = neroshop::timestamp;
+namespace neroshop_string = neroshop::string;
 
 neroshop::Node::Node(const std::string& address, int port, bool local) : sockfd(-1), bootstrap(false), check_counter(0) { 
     // Convert URL to IP (in case it happens to be a url)
@@ -157,8 +161,8 @@ neroshop::Node::Node(const std::string& address, int port, bool local) : sockfd(
     } 
        
     // Initialize key mapper
-    if(!mapper.get()) {
-        mapper = std::make_unique<Mapper>();
+    if(!key_mapper.get()) {
+        key_mapper = std::make_unique<Mapper>();
     }
 }
 
@@ -305,11 +309,7 @@ int neroshop::Node::remove(const std::string& key) {
 }
 
 void neroshop::Node::map(const std::string& key, const std::string& value) {
-    if(!validate(key, value)) {
-        return;
-    }
-    
-    mapper->add(key, value); // Temporarily stores the mapping in C++ for serialization before permanently adding it to the database
+    key_mapper->add(key, value);
 }
 
 int neroshop::Node::set(const std::string& key, const std::string& value) {
@@ -319,37 +319,23 @@ int neroshop::Node::set(const std::string& key, const std::string& value) {
         std::string current_value = find_value(key);
         if (current_value != value) {
             nlohmann::json current_json = nlohmann::json::parse(current_value);
-            // If a signature field is found in the value, we can verify the data by using the signed message, signing monero address, and the signature itself
-            if (json.contains("signature")) {
-                assert(json["signature"].is_string());
-                std::string signature = json["signature"].get<std::string>(); // the signature may have been updated
-                
-                assert(json["metadata"].is_string());
-                std::string metadata = json["metadata"].get<std::string>();
-                if(metadata != current_json["metadata"].get<std::string>()) { std::cerr << "Metadata mismatch\n"; return false; } // metadata is immutable
-
-                // For listings
-                if(metadata == "listing") {
-                    std::string message = json["id"].get<std::string>(); // the id (uuid) is the signed message
-                    std::string address = json["seller_id"].get<std::string>(); // the seller_id (monero primary address) is the signing address
-                    if(message != current_json["id"].get<std::string>()) { std::cerr << "Listing UUID mismatch\n"; return false; } // id is immutable
-                    if(address != current_json["seller_id"].get<std::string>()) { std::cerr << "Seller ID mismatch\n"; return false; } // seller_id is immutable
-                    // Create a temporary monero wallet
-                    monero::monero_wallet_config wallet_config_obj;
-                    wallet_config_obj.m_path = "";
-                    wallet_config_obj.m_password = "";
-                    wallet_config_obj.m_network_type = monero_network_type::STAGENET;
-                    std::unique_ptr<monero::monero_wallet_full> monero_wallet_obj = std::unique_ptr<monero_wallet_full>(monero_wallet_full::create_wallet (wallet_config_obj, nullptr));
-                    // Verify the message
-                    bool verified = monero_wallet_obj->verify_message(message, address, signature).m_is_good;
-                    if(!verified) {
-                        std::cerr << "\033[91mData verification failed.\033[0m" << std::endl;
-                        return false; // Verification failed, return false
-                    }
-                    // Destroy the wallet
-                    monero_wallet_obj->close(false);
-                    monero_wallet_obj.reset();
-                }
+            // Verify that no immutable fields have been altered
+            assert(json["metadata"].is_string());
+            std::string metadata = json["metadata"].get<std::string>();
+            if(metadata != current_json["metadata"].get<std::string>()) { std::cerr << "Metadata mismatch\n"; return false; } // metadata is immutable
+            if(metadata == "user") {
+                std::string user_id = json["monero_address"].get<std::string>();
+                if(user_id != current_json["monero_address"].get<std::string>()) { std::cerr << "User ID (Monero Primary Address) mismatch\n"; return false; } // monero_address is immutable
+            }
+            if(metadata == "listing") {
+                std::string listing_uuid = json["id"].get<std::string>();
+                std::string seller_id = json["seller_id"].get<std::string>(); // seller_id (monero primary address)
+                if(listing_uuid != current_json["id"].get<std::string>()) { std::cerr << "Listing UUID mismatch\n"; return false; } // id is immutable
+                if(seller_id != current_json["seller_id"].get<std::string>()) { std::cerr << "Seller ID mismatch\n"; return false; } // seller_id is immutable
+            }
+            if(metadata == "product_rating" || metadata == "seller_rating") {
+                std::string rater_id = json["rater_id"].get<std::string>(); // rater_id (monero primary address)
+                if(rater_id != current_json["rater_id"].get<std::string>()) { std::cerr << "Rater ID mismatch\n"; return false; } // rater_id is immutable
             }
             
             // Compare dates of new data and old (pre-existing) data - untested
@@ -1009,6 +995,12 @@ bool neroshop::Node::validate(const std::string& key, const std::string& value) 
         return false;
     }
     
+    // Verify the value using the signature field
+    if(!verify(value)) {
+        std::cerr << "Verification failed\n";
+        return false;
+    }
+    
     // Check whether data is expired so we don't store it
     db::Sqlite3 * database = neroshop::get_database();
     if(json.contains("expiration_date")) {
@@ -1020,7 +1012,7 @@ bool neroshop::Node::validate(const std::string& key, const std::string& value) 
             // This won't work unless all data contain a mandatory expiration date set on creation. A consensus mechanism may be necessary
             // Remove the data from hash table if it was previously stored
             if(has_key(key)) {
-                std::cout << "Data has expired. Removing data (key: " << key << ", exp:" << expiration_date << ") from hash table ...\n";
+                std::cout << "Data with key (" << key << ") has expired. Removing from hash table ...\n";
                 if(remove(key) == true) {
                     int error = database->execute_params("DELETE FROM mappings WHERE key = ?1", { key });
                 }
@@ -1028,6 +1020,63 @@ bool neroshop::Node::validate(const std::string& key, const std::string& value) 
             return false;
         }
     }
+    
+    return true;
+}
+
+//-----------------------------------------------------------------------------
+
+bool neroshop::Node::verify(const std::string& value) const {
+    nlohmann::json json = nlohmann::json::parse(value);
+
+    // Get required fields from the value
+    std::string metadata = json["metadata"].get<std::string>();
+    std::string signed_message, signing_address;
+    if(metadata == "user") {
+        signed_message = json["monero_address"].get<std::string>(); // user_id
+        signing_address = signed_message; // the monero_address (monero primary address) is both the signed message and the signing address
+    }
+    if(metadata == "listing") {
+        signed_message = json["id"].get<std::string>(); // the id (uuid) is the signed message
+        signing_address = json["seller_id"].get<std::string>(); // the seller_id (monero primary address) is the signing address      
+    }
+    if(metadata == "product_rating" || metadata == "seller_rating") {
+        signed_message = json["comments"].get<std::string>(); // the comments is the signed message
+        signing_address = json["rater_id"].get<std::string>(); // the rater_id (monero primary address) is the signing address
+    }
+    // Messages and orders don't need to be signed since they will be encrypted??
+    if(metadata == "order") { return true; }
+    if(metadata == "message") { return true; }
+    std::string signature;
+    if (json.contains("signature")) {
+        assert(json["signature"].is_string());
+        signature = json["signature"].get<std::string>(); // the signature may have been updated
+    }
+    
+    // Validate signing address and signature
+    auto network_type = monero_network_type::STAGENET;
+    if(!monero_utils::is_valid_address(signing_address, network_type)) {
+        std::cerr << "Invalid address\n"; 
+        return false;
+    }
+    if(signature.empty() || signature.length() != 93 || !neroshop_string::contains_first_of(signature, "Sig")) { 
+        std::cerr << "Invalid signature\n"; 
+        return false;
+    }
+    
+    // Verify the signed message
+    monero::monero_wallet_config wallet_config_obj;
+    wallet_config_obj.m_path = "";
+    wallet_config_obj.m_password = "";
+    wallet_config_obj.m_network_type = network_type;
+    std::unique_ptr<monero::monero_wallet_full> monero_wallet_obj = std::unique_ptr<monero_wallet_full>(monero_wallet_full::create_wallet (wallet_config_obj, nullptr));
+    bool verified = monero_wallet_obj->verify_message(signed_message, signing_address, signature).m_is_good;
+    if(!verified) {
+        std::cerr << "\033[91mMessage verification failed.\033[0m" << std::endl;
+        return false;
+    }
+    monero_wallet_obj->close(false);
+    monero_wallet_obj.reset();
     
     return true;
 }

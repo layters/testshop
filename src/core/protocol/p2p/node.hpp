@@ -44,13 +44,14 @@ private:
     // Declare a mutex to protect access to the routing table
     std::shared_mutex node_read_mutex; // Shared mutex for routing table access
     std::shared_mutex node_write_mutex; // Shared mutex for routing table access
-    std::unique_ptr<Mapper> mapper;
+    std::unique_ptr<Mapper> key_mapper;
     // Generates a node id from address and port combination
     std::string generate_node_id(const std::string& address, int port);
     // Determines if node1 is closer to the target_id than node2
     bool is_closer(const std::string& target_id, const std::string& node1_id, const std::string& node2_id);
     //---------------------------------------------------
     int set(const std::string& key, const std::string& value); // Updates the value without changing the key. set cannot be accessed directly but only through put
+    bool verify(const std::string& value) const;
 public:
     Node(const std::string& address, int port, bool local); // Binds a socket to a port and initializes the DHT
     //Node(const Node& other); // Copy constructor
