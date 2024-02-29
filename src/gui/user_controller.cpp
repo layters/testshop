@@ -161,9 +161,7 @@ void neroshop::UserController::rateItem(const QString& product_id, int stars, co
     auto seller = dynamic_cast<neroshop::Seller *>(_user.get());
 
     std::string signature = seller->get_wallet()->sign_message(comments.toStdString(), monero_message_signature_type::SIGN_WITH_SPEND_KEY);
-    std::cout << "Signature: \033[33m" << signature << "\033[0m" << std::endl;
-    std::string verified = (seller->get_wallet()->verify_message(comments.toStdString(), signature)) ? "true" : "false";
-    std::cout << "Is verified: " << ((verified == "true") ? "\033[32m" : "\033[31m") << verified << "\033[0m" << std::endl;
+    std::cout << "Signed: \033[33m" << signature << "\033[0m" << std::endl;
     
     _user->rate_item(product_id.toStdString(), stars, comments.toStdString(), signature);//signature.toStdString());
 }
@@ -174,9 +172,7 @@ void neroshop::UserController::rateSeller(const QString& seller_id, int score, c
     auto seller = dynamic_cast<neroshop::Seller *>(_user.get());
 
     std::string signature = seller->get_wallet()->sign_message(comments.toStdString(), monero_message_signature_type::SIGN_WITH_SPEND_KEY);
-    std::cout << "Signature: \033[33m" << signature << "\033[0m" << std::endl;
-    std::string verified = (seller->get_wallet()->verify_message(comments.toStdString(), signature)) ? "true" : "false";
-    std::cout << "Is verified: " << ((verified == "true") ? "\033[32m" : "\033[31m") << verified << "\033[0m" << std::endl;
+    std::cout << "Signed: \033[33m" << signature << "\033[0m" << std::endl;
     
     _user->rate_seller(seller_id.toStdString(), score, comments.toStdString(), signature);//signature.toStdString());
 }

@@ -223,8 +223,10 @@ std::vector<uint8_t> neroshop::msgpack::process(const std::vector<uint8_t>& requ
                    ? static_cast<int>(KadResultCode::StoreFailed) 
                    : static_cast<int>(KadResultCode::Success);
             
-            // Map keys to search terms for efficient search operations
-            node.map(key, value);
+            if(code == 0) {
+                // Map keys to search terms for efficient search operations
+                node.map(key, value);
+            }
         
             // Return success response // TODO: error reply
             response_object["version"] = std::string(NEROSHOP_DHT_VERSION);
@@ -248,10 +250,11 @@ std::vector<uint8_t> neroshop::msgpack::process(const std::vector<uint8_t>& requ
             std::cout << "Number of nodes you've sent a put message to: " << put_messages_sent << "\n";
                    
             // Store the key-value pair in your own node as well
-            node.store(key, value);
+            if(node.store(key, value)) {
             
-            // Map keys to search terms for efficient search operations
-            node.map(key, value);
+                // Map keys to search terms for efficient search operations
+                node.map(key, value);
+            }
         
             // Return success response
             response_object["version"] = std::string(NEROSHOP_DHT_VERSION);
@@ -269,8 +272,12 @@ std::vector<uint8_t> neroshop::msgpack::process(const std::vector<uint8_t>& requ
         assert(params_object["value"].is_string());
         std::string value = params_object["value"];
         
-        // Store indexing data in database on receiving a "map" request
-        node.map(key, value);
+        // Since we are not storing in hash table, we must validate the data before mapping it
+        if(node.validate(key, value)) {
+        
+            // Store indexing data in database on receiving a "map" request
+            node.map(key, value);
+        }
     
         // Return success response
         response_object["version"] = std::string(NEROSHOP_DHT_VERSION);
@@ -293,10 +300,11 @@ std::vector<uint8_t> neroshop::msgpack::process(const std::vector<uint8_t>& requ
         std::cout << "Number of nodes you've sent a put message to: " << put_messages_sent << "\n";
                    
         // Store the key-value pair in your own node as well
-        node.store(key, value);
+        if(node.store(key, value)) {
         
-        // Map keys to search terms for efficient search operations
-        node.map(key, value);
+            // Map keys to search terms for efficient search operations
+            node.map(key, value);
+        }
         
         // Return success response
         response_object["version"] = std::string(NEROSHOP_DHT_VERSION);
