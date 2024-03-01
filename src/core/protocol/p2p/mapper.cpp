@@ -170,7 +170,7 @@ void neroshop::Mapper::sync() {
     for (const auto& entry : user_ids) {
         const std::string& search_term = entry.first;
         const std::vector<std::string>& keys = entry.second;
-        const std::string content = "account";
+        const std::string content = "user";
 
         for (const std::string& key : keys) {
             // Ignore any empty keys
@@ -190,7 +190,7 @@ void neroshop::Mapper::sync() {
     for (const auto& entry : display_names) {
         const std::string& search_term = entry.first;
         const std::vector<std::string>& keys = entry.second;
-        const std::string content = "account";
+        const std::string content = "user";
 
         for (const std::string& key : keys) {
             // Ignore any empty keys
