@@ -759,10 +759,10 @@ QVariantList neroshop::Backend::getSellerRatings(const QString& user_id) {
 QString neroshop::Backend::getDisplayNameByUserId(const QString& user_id) {
     db::Sqlite3 * database = neroshop::get_database();
     if(!database) throw std::runtime_error("database is NULL");
-    std::string key = database->get_text_params("SELECT key FROM mappings WHERE search_term = ?1 AND content = 'account' LIMIT 1;", { user_id.toStdString() });
+    std::string key = database->get_text_params("SELECT key FROM mappings WHERE search_term = ?1 AND content = 'user' LIMIT 1;", { user_id.toStdString() });
     if(key.empty()) return user_id; // Key will never be empty as long as it exists in DHT + database
 
-    std::string display_name = database->get_text_params("SELECT search_term FROM mappings WHERE key = ?1 AND LENGTH(search_term) <= 30 AND content = 'account'", { key });
+    std::string display_name = database->get_text_params("SELECT search_term FROM mappings WHERE key = ?1 AND LENGTH(search_term) <= 30 AND content = 'user'", { key });
     if(!display_name.empty()) {
         return QString::fromStdString(display_name);
     }
@@ -778,7 +778,7 @@ QString neroshop::Backend::getDisplayNameByUserId(const QString& user_id) {
 QString neroshop::Backend::getKeyByUserId(const QString& user_id) { // not currently in use
     db::Sqlite3 * database = neroshop::get_database();
     if(!database) throw std::runtime_error("database is NULL");
-    std::string key = database->get_text_params("SELECT key FROM mappings WHERE search_term = $1 AND content = 'account' LIMIT 1;", { user_id.toStdString() });
+    std::string key = database->get_text_params("SELECT key FROM mappings WHERE search_term = $1 AND content = 'user' LIMIT 1;", { user_id.toStdString() });
     return QString::fromStdString(key);
 }
 //----------------------------------------------------------------
@@ -787,7 +787,7 @@ QVariantMap neroshop::Backend::getUser(const QString& user_id) {
     
     db::Sqlite3 * database = neroshop::get_database();
     if(!database) throw std::runtime_error("database is NULL");
-    std::string key = database->get_text_params("SELECT key FROM mappings WHERE search_term = $1 AND content = 'account' LIMIT 1;", { user_id.toStdString() });
+    std::string key = database->get_text_params("SELECT key FROM mappings WHERE search_term = $1 AND content = 'user' LIMIT 1;", { user_id.toStdString() });
     if(key.empty()) return {};
     // Get the value of the corresponding key from the DHT
     std::string response;
@@ -1831,7 +1831,7 @@ int neroshop::Backend::loginWithWalletFile(WalletController* wallet_controller, 
     std::string primary_address = wallet_controller->getPrimaryAddress().toStdString();
     //----------------------------------------
     // Check database to see if user key (hash of primary address) exists
-    bool user_found = database->get_integer_params("SELECT EXISTS(SELECT * FROM mappings WHERE search_term = ?1 AND content = 'account')", { primary_address });
+    bool user_found = database->get_integer_params("SELECT EXISTS(SELECT * FROM mappings WHERE search_term = ?1 AND content = 'user')", { primary_address });
     // If user key is not found in the database, then create one. This is like registering for an account
     if(!user_found) {
         // In reality, this function will return false if user key is not registered in the database
@@ -1840,9 +1840,9 @@ int neroshop::Backend::loginWithWalletFile(WalletController* wallet_controller, 
         return static_cast<int>(EnumWrapper::LoginError::UserNotFound);
     }
     // Get the account DHT key
-    std::string account_key = database->get_text_params("SELECT key FROM mappings WHERE search_term = ?1 AND content = 'account'", { primary_address });
+    std::string account_key = database->get_text_params("SELECT key FROM mappings WHERE search_term = ?1 AND content = 'user'", { primary_address });
     // Save user information in memory
-    std::string display_name = database->get_text_params("SELECT search_term FROM mappings WHERE key = ?1 AND LENGTH(search_term) <= 30 AND content = 'account'", { account_key });
+    std::string display_name = database->get_text_params("SELECT search_term FROM mappings WHERE key = ?1 AND LENGTH(search_term) <= 30 AND content = 'user'", { account_key });
     std::unique_ptr<neroshop::User> seller(neroshop::Seller::on_login(*wallet_controller->getWallet()));
     user_controller->_user = std::move(seller);
     if(user_controller->getUser() == nullptr) {

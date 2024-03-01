@@ -383,7 +383,7 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR}/external/cxxopts/include/)
 
 ######################################
 # libi2pd (and i2pd_client)
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/external/i2pd/daemon ${CMAKE_CURRENT_SOURCE_DIR}/external/i2pd/i18n ${CMAKE_CURRENT_SOURCE_DIR}/external/i2pd/libi2pd ${CMAKE_CURRENT_SOURCE_DIR}/external/i2pd/libi2pd_client)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/external/i2pd/daemon ${CMAKE_CURRENT_SOURCE_DIR}/external/i2pd/i18n ${CMAKE_CURRENT_SOURCE_DIR}/external/i2pd/libi2pd ${CMAKE_CURRENT_SOURCE_DIR}/external/i2pd/libi2pd_client) # v2.50.2
 set(i2pd_src ${CMAKE_CURRENT_SOURCE_DIR}/build/libi2pd.a ${CMAKE_CURRENT_SOURCE_DIR}/build/libi2pdclient.a ${CMAKE_CURRENT_SOURCE_DIR}/build/libi2pdlang.a)
 
 ######################################
