@@ -46,7 +46,7 @@ void neroshop::Mapper::add(const std::string& key, const std::string& value) {
     std::string metadata = json["metadata"].get<std::string>();
 
     //-----------------------------------------------
-    // Note: As long as we have the user id, we can find the seller_ratings
+    // Note: As long as we have the user id, we can find the user
     if(metadata == "user") {
         // Store user-related data in the user_ids and display_names unordered maps
         if (json.contains("monero_address") && json["monero_address"].is_string()) {
@@ -142,7 +142,7 @@ void neroshop::Mapper::add(const std::string& key, const std::string& value) {
     }
     //-----------------------------------------------
     if(metadata == "seller_rating") {
-        // Map a seller_rating's key to user_id
+        // Map a seller_rating's key to seller_id
         if (json.contains("seller_id") && json["seller_id"].is_string()) {
             std::string seller_id = json["seller_id"].get<std::string>();
             seller_ratings[seller_id].push_back(key);

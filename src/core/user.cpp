@@ -54,7 +54,7 @@ void neroshop::User::rate_seller(const std::string& seller_id, int score, const 
     ////if(account_type_id != 2) {neroshop::print("This user (id: " + seller_id + ") is not a seller, so they cannot be rated", 2); return;}//if(String::lower(account_type) != "seller") {neroshop::print("You cannot rate a non-seller");return;}
     // Prevent seller from rating him/herself
     if(seller_id == this->id) {
-        neroshop::print("You cannot rate yourself", 2);
+        neroshop::print("You cannot rate yourself", 1);
         return; // exit function
     }
     /*// To prevent duplicating seller_id that is has already been rated by this user_id (a user cannot rate the same seller twice, except update his or her score rating for a specific seller_id
@@ -90,7 +90,61 @@ void neroshop::User::rate_seller(const std::string& seller_id, int score, const 
     //----------------------------------------------------------------------------------------------------------
     // Transition from Sqlite to DHT:
     Client * client = Client::get_main_client();
+    //----------------------------------
+    std::string command = "SELECT DISTINCT key FROM mappings WHERE search_term = $1 AND content = 'seller_rating'";
+    db::Sqlite3 * database = neroshop::get_database();
+    sqlite3_stmt * stmt = nullptr;
+
+    if(sqlite3_prepare_v2(database->get_handle(), command.c_str(), -1, &stmt, nullptr) != SQLITE_OK) {
+        neroshop::print("sqlite3_prepare_v2: " + std::string(sqlite3_errmsg(database->get_handle())), 1);
+        return;
+    }
     
+    if(sqlite3_bind_text(stmt, 1, seller_id.c_str(), seller_id.length(), SQLITE_STATIC) != SQLITE_OK) {
+        neroshop::print("sqlite3_bind_text: " + std::string(sqlite3_errmsg(database->get_handle())), 1);
+        sqlite3_finalize(stmt);
+        return;
+    }
+    
+    while(sqlite3_step(stmt) == SQLITE_ROW) {
+        for(int i = 0; i < sqlite3_column_count(stmt); i++) { 
+            const char* column_text = reinterpret_cast<const char *>(sqlite3_column_text(stmt, i));//std::cout << column_text  << " (" << i << ")" << std::endl;
+            std::string key = (column_text != nullptr) ? column_text : "";
+            if(key.empty()) { continue; } // Skip invalid columns//std::cout << key << "\n";
+            
+            // Get the value of the corresponding key from the DHT
+            std::string response;
+            client->get(key, response); // TODO: error handling
+            std::cout << "Received response (get): " << response << "\n";
+            // Parse the response
+            nlohmann::json json = nlohmann::json::parse(response);
+            if(json.contains("error")) {
+                int rescode = database->execute_params("DELETE FROM mappings WHERE key = ?1", { key });
+                if(rescode != SQLITE_OK) neroshop::print("sqlite error: DELETE failed", 1);
+                continue; // Key is lost or missing from DHT, skip to next iteration
+            }
+            
+            const auto& response_obj = json["response"];
+            assert(response_obj.is_object());
+            if (response_obj.contains("value") && response_obj["value"].is_string()) {
+                const auto& value = response_obj["value"].get<std::string>();
+                nlohmann::json value_obj = nlohmann::json::parse(value);
+                assert(value_obj.is_object());//std::cout << value_obj.dump(4) << "\n";
+                std::string metadata = value_obj["metadata"].get<std::string>();
+                if (metadata != "seller_rating") { std::cerr << "Invalid metadata. \"seller_rating\" expected, got \"" << metadata << "\" instead\n"; continue; }
+                // Check if the rater (you) has not already rated this seller
+                std::string rater_id = value_obj["rater_id"].get<std::string>();
+                if(rater_id == this->id) {
+                    neroshop::print("You have already rated this seller", 1);
+                    // TODO: Update seller rating then re-sign it (key will remain the same)
+                    return;
+                }
+            }
+        }
+    }
+
+    sqlite3_finalize(stmt);
+    //----------------------------------
     SellerRating seller_rating = { this->id, comments, signature, seller_id, static_cast<unsigned int>(score) };
     
     auto data = Serializer::serialize(seller_rating);
@@ -105,8 +159,6 @@ void neroshop::User::rate_seller(const std::string& seller_id, int score, const 
 ////////////////////
 ////////////////////
 void neroshop::User::rate_item(const std::string& product_id, int stars, const std::string& comments, const std::string& signature) { // perfected 99%!!!
-    neroshop::db::Sqlite3 * database = neroshop::get_database();
-    if(!database) throw std::runtime_error("database is NULL");
     // If item is not registered
     if(product_id.empty()) return; // exit function
     // star ratings must be between 1 and 5
@@ -170,7 +222,63 @@ void neroshop::User::rate_item(const std::string& product_id, int stars, const s
     //----------------------------------------------------------------------------------------------------------
     // Transition from Sqlite to DHT:
     Client * client = Client::get_main_client();
+    //----------------------------------
+    // TODO: Check if the rater (you) has previously purchased this product to be able to rate it
+    //----------------------------------
+    std::string command = "SELECT DISTINCT key FROM mappings WHERE search_term = $1 AND content = 'product_rating'";
+    db::Sqlite3 * database = neroshop::get_database(); 
+    sqlite3_stmt * stmt = nullptr;
+
+    if(sqlite3_prepare_v2(database->get_handle(), command.c_str(), -1, &stmt, nullptr) != SQLITE_OK) {
+        neroshop::print("sqlite3_prepare_v2: " + std::string(sqlite3_errmsg(database->get_handle())), 1);
+        return;
+    }
     
+    if(sqlite3_bind_text(stmt, 1, product_id.c_str(), product_id.length(), SQLITE_STATIC) != SQLITE_OK) {
+        neroshop::print("sqlite3_bind_text: " + std::string(sqlite3_errmsg(database->get_handle())), 1);
+        sqlite3_finalize(stmt);
+        return;
+    }
+    
+    while(sqlite3_step(stmt) == SQLITE_ROW) {
+        for(int i = 0; i < sqlite3_column_count(stmt); i++) { 
+            const char* column_text = reinterpret_cast<const char *>(sqlite3_column_text(stmt, i));//std::cout << column_text  << " (" << i << ")" << std::endl;
+            std::string key = (column_text != nullptr) ? column_text : "";
+            if(key.empty()) { continue; } // Skip invalid columns//std::cout << key << "\n";
+            
+            // Get the value of the corresponding key from the DHT
+            std::string response;
+            client->get(key, response); // TODO: error handling
+            std::cout << "Received response (get): " << response << "\n";
+            // Parse the response
+            nlohmann::json json = nlohmann::json::parse(response);
+            if(json.contains("error")) {
+                int rescode = database->execute_params("DELETE FROM mappings WHERE key = ?1", { key });
+                if(rescode != SQLITE_OK) neroshop::print("sqlite error: DELETE failed", 1);
+                continue; // Key is lost or missing from DHT, skip to next iteration
+            }
+            
+            const auto& response_obj = json["response"];
+            assert(response_obj.is_object());
+            if (response_obj.contains("value") && response_obj["value"].is_string()) {
+                const auto& value = response_obj["value"].get<std::string>();
+                nlohmann::json value_obj = nlohmann::json::parse(value);
+                assert(value_obj.is_object());//std::cout << value_obj.dump(4) << "\n";
+                std::string metadata = value_obj["metadata"].get<std::string>();
+                if (metadata != "product_rating") { std::cerr << "Invalid metadata. \"product_rating\" expected, got \"" << metadata << "\" instead\n"; continue; }
+                // Check if the rater (you) has not already rated this product
+                std::string rater_id = value_obj["rater_id"].get<std::string>();
+                if(rater_id == this->id) {
+                    neroshop::print("You have already rated this product or service", 1);
+                    // TODO: Update product rating then re-sign it (key will remain the same)
+                    return;
+                }
+            }
+        }
+    }
+
+    sqlite3_finalize(stmt);
+    //----------------------------------
     ProductRating product_rating = { this->id, comments, signature, product_id, static_cast<unsigned int>(stars) };
     
     auto data = Serializer::serialize(product_rating);
