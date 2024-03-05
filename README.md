@@ -193,9 +193,6 @@ sudo make install
 cd ../
 ```
 
-If you happen to run into an `undefined reference to icu_*` error, you may need to add this line under the `find_package(Boost ...` in "external/monero-cpp/external/monero-project/CMakeLists.txt":
-`set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -licuio -licui18n -licuuc -licudata")`
-
 <!-- git submodule update --init --force --> <!-- <= call this before building monero -->
 
 **5. Build monero-project to create .a libraries**
@@ -226,6 +223,8 @@ cmake .. #-DNEROSHOP_BUILD_CLI=1 #-DNEROSHOP_BUILD_TESTS=1
 make -j$(nproc)
 ```
 
+
+**7. Run neroshop**
 ```bash
 # Run neroshop
 ./neroshop
@@ -269,29 +268,33 @@ WW2pQTQWHpyJf2CHrCmZG7Tn3zBnYRZTH8g4U3pSZf5s6xsTXrZc9odDWmrWzjRc9MMQWrKXxjHsRdzH
 
 
 ## Resources
-* Website: [neroshop.org](https://neroshop.org/)
+- Website: [neroshop.org](https://neroshop.org/)
 
-* Neroshop DHT Specification: [specs](https://github.com/larteyoh/specs)
+- Neroshop DHT Specification: [specs](https://github.com/larteyoh/specs)
 
-* Wiki: [Wikipage](https://github.com/larteyoh/testshop/wiki)
+- Wiki: [Wikipage](https://github.com/larteyoh/testshop/wiki)
 
-* Git (Unofficial): [github.com/larteyoh/testshop](https://github.com/larteyoh/testshop)
+- Git Mirrors: 
+    - [Codeberg](https://codeberg.org/layter/neroshop)
+    - [Gitea](https://git.wownero.com/layter/neroshop) (requires an account to view)
 
-* Git (Official): [github.com/larteyoh/neroshop](https://github.com/larteyoh/neroshop)
+- Mail: larteyoh@pm.me
 
-* Mail: larteyoh@protonmail.com or neroshop@protonmail.com
+- Matrix: [#neroshop:matrix.org](https://matrix.to/#/#neroshop:matrix.org)
 
-* Matrix: [#neroshop:matrix.org](https://matrix.to/#/#neroshop:matrix.org)
-
-* Matrix 2: [#neroshop-dev:matrix.org](https://matrix.to/#/#neroshop-dev:matrix.org)
+- Matrix 2: [#neroshop-dev:matrix.org](https://matrix.to/#/#neroshop-dev:matrix.org)
 
 
 ## Thanks
 ```
 u/EchoingCat — for the revision of the official neroshop logo
+
 woodser — for his guidance and for his work on the monero-cpp library which has made the development of this app possible
+
 yuriio147 — for his work on various QML components, the currency converter, wallet address qr provider, fixing a major bug in the RSA encryption code, the RSA signing and verifying functions, and for teaching me some Qt/QML techniques
+
 lza_menace — for creating the new monero.fail JSON API endpoint
+
 everyone in our matrix room — for sharing many great ideas that have been useful to the project
 ```
 
