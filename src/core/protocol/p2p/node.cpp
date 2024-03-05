@@ -1073,6 +1073,8 @@ bool neroshop::Node::verify(const std::string& value) const {
     bool verified = monero_wallet_obj->verify_message(signed_message, signing_address, signature).m_is_good;
     if(!verified) {
         std::cerr << "\033[91mMessage verification failed.\033[0m" << std::endl;
+        monero_wallet_obj->close(false);
+        monero_wallet_obj.reset();
         return false;
     }
     monero_wallet_obj->close(false);

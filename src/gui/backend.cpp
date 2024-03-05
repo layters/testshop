@@ -619,6 +619,8 @@ QVariantList neroshop::Backend::getProductRatings(const QString& product_id) {
         }
     }
     //----------------------------------
+    sqlite3_finalize(stmt);
+    
     return product_ratings;
 }
 //----------------------------------------------------------------
@@ -752,6 +754,8 @@ QVariantList neroshop::Backend::getSellerRatings(const QString& user_id) {
         }
     }
     //----------------------------------
+    sqlite3_finalize(stmt);
+    
     return seller_ratings;
 }
 //----------------------------------------------------------------
@@ -1787,9 +1791,6 @@ QVariantList neroshop::Backend::registerUser(WalletController* wallet_controller
     //---------------------------------------------
     emit user_controller->userChanged();
     emit user_controller->userLogged();
-    // temp - remove soon
-    //user_controller->rateItem("8e12c9e7-7017-4bd0-95fe-9abbcd82c1ff", 3, "This product is aiight");
-    //user_controller->rateSeller("5AQFFwoqqBWMYCh6b2V6RyEKZS5ozqfCP1uLnf5FTHiqjk9qyDGoj62Vva2jz71nFGPsDgXAfv2q4GGaWyV2EQ2xTfgFPCw", 1, "This seller rocks");
     // Display registration message
     neroshop::print(((!display_name.isEmpty()) ? "Welcome to neroshop, " : "Welcome to neroshop") + display_name.toStdString(), 4);
     return { true, QString::fromStdString(key) };
@@ -1882,19 +1883,6 @@ int neroshop::Backend::loginWithWalletFile(WalletController* wallet_controller, 
     //----------------------------------------
     emit user_controller->userChanged();
     emit user_controller->userLogged();
-    // temp - remove soon
-    //getSellerRatings(wallet_controller->getPrimaryAddress());
-    //getSellerRatingsCount("5AncSFWauoN8bfA68uYpWJRM8fFxEqztuhXSGkeQn5Xd9yU6XqJPW7cZmtYETUAjTK1fCfYQX1CP3Dnmy5a8eUSM5n3C6aL");
-    //getSellerReputation("5AncSFWauoN8bfA68uYpWJRM8fFxEqztuhXSGkeQn5Xd9yU6XqJPW7cZmtYETUAjTK1fCfYQX1CP3Dnmy5a8eUSM5n3C6aL");
-    //getProductRatings("2b715653-da61-4ea0-8b5a-ad2754d78ba1");
-    /*getProductStarCount("2b715653-da61-4ea0-8b5a-ad2754d78ba1");
-    getProductStarCount("2b715653-da61-4ea0-8b5a-ad2754d78ba1", 5);
-    getProductStarCount("2b715653-da61-4ea0-8b5a-ad2754d78ba1", 4);
-    getProductStarCount("2b715653-da61-4ea0-8b5a-ad2754d78ba1", 3);
-    getProductStarCount("2b715653-da61-4ea0-8b5a-ad2754d78ba1", 2);
-    getProductStarCount("2b715653-da61-4ea0-8b5a-ad2754d78ba1", 1);
-    getProductAverageStars("2b715653-da61-4ea0-8b5a-ad2754d78ba1");*/
-    //user_controller->createOrder("12 Robot Dr. Boston MA 02115");
     // Display message
     neroshop::print("Welcome back, user " + ((!display_name.empty()) ? (display_name + " (id: " + primary_address + ")") : primary_address), 4);
     return static_cast<int>(EnumWrapper::LoginError::Ok);
