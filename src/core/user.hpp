@@ -14,6 +14,7 @@ enum class UserAccountType : unsigned int { Guest, Buyer, Seller };
 
 namespace neroshop {
 
+class Wallet;
 class Cart; // forward declaration
 
 class User { // base class of seller and buyer // sellers can buy and sell while buyers (including guests) can only buy but cannot sell
@@ -45,8 +46,12 @@ public:
     // setters
     void set_public_key(const std::string& public_key);
     void set_private_key(const std::string& private_key);
+	// setters - wallet-related stuff
+	void set_wallet(const neroshop::Wallet& wallet);
     // getters
     std::string get_public_key() const;
+	// getters - wallet-related stuff
+	neroshop::Wallet * get_wallet() const;
     // account-related stuff - getters
     std::string get_id() const;//unsigned int get_id() const;
     std::string get_name() const;
@@ -74,6 +79,8 @@ public:
     // item-related stuff - boolean
     bool has_purchased(const std::string& listing_key); // checks if an item was previously purchased or not
     bool has_favorited(const std::string& listing_key); // checks if an item is in a user's favorites or wishlist
+	bool has_wallet() const; // returns true if seller's wallet is opened
+	bool has_wallet_synced() const; // returns true if seller's wallet is synced to a node
     // callbacks
     void on_registration(const std::string& name); // on registering an account
     //virtual User * on_login(const std::string& username);// = 0; // load all data: orders, reputation/ratings, settings // for all users
@@ -94,6 +101,7 @@ protected: // can only be accessed by classes that inherit from class User (even
     void load_cart();
     void load_orders(); // on login, load all orders this user has made so far (this function is called only once per login)
     void load_favorites(); // on login, load favorites (this function is called only once per login)
+	std::unique_ptr<neroshop::Wallet> wallet;
 private:
     std::string id;
     std::string name;
