@@ -18,7 +18,7 @@
 #include <cmath> // floor
 #include <random>
 
-neroshop::Seller::Seller() : wallet(nullptr)
+neroshop::Seller::Seller()
 {}
 ////////////////////
 ////////////////////
@@ -30,8 +30,6 @@ neroshop::Seller::Seller(const std::string& name) : Seller() {
 neroshop::Seller::~Seller() {
     // clear customer orders
     customer_order_list.clear(); // will reset (delete) all customer orders
-    // destroy wallet
-    if(wallet.get()) wallet.reset();
 #ifdef NEROSHOP_DEBUG    
     std::cout << "seller deleted\n";
 #endif    
@@ -137,16 +135,16 @@ void neroshop::Seller::delist_item(const std::string& listing_key) {
         }
         // Verify the signature
         std::string listing_id = value_obj["id"].get<std::string>();
-        std::string signature = value_obj["signature"].get<std::string>();
-        bool self_verified = wallet->verify_message(listing_id, signature);
+        std::string old_signature = value_obj["signature"].get<std::string>();
+        bool self_verified = wallet->verify_message(listing_id, old_signature);
         if(!self_verified) { neroshop::print("Data verification failed."); return; }
         // Might be a good idea to set the stock quantity to zero beforehand or nah?
         ////value_obj["quantity"] = 0;
         // Finally, set the expiration date
         value_obj["expiration_date"] = neroshop::timestamp::get_current_utc_timestamp();//value_obj["valid_until"] = neroshop::timestamp::get_current_utc_timestamp();
         // Re-sign to reflect the modification
-        std::string new_signature = wallet->sign_message(listing_id, monero_message_signature_type::SIGN_WITH_SPEND_KEY);
-        value_obj["signature"] = new_signature;
+        std::string signature = wallet->sign_message(listing_id, monero_message_signature_type::SIGN_WITH_SPEND_KEY);
+        value_obj["signature"] = signature;
         // Send set request containing the updated value with the same key as before
         std::string modified_value = value_obj.dump();
         std::string response;
@@ -350,16 +348,16 @@ void neroshop::Seller::set_stock_quantity(const std::string& listing_key, int qu
         }
         // Verify the signature
         std::string listing_id = value_obj["id"].get<std::string>();
-        std::string signature = value_obj["signature"].get<std::string>();
-        bool self_verified = wallet->verify_message(listing_id, signature);
+        std::string old_signature = value_obj["signature"].get<std::string>();
+        bool self_verified = wallet->verify_message(listing_id, old_signature);
         if(!self_verified) { neroshop::print("Data verification failed."); return; }
         // Finally, modify the quantity
         value_obj["quantity"] = quantity;
         // Add a last_modified or last_updated field so nodes can compare dates and choose the most recent listing
         value_obj["last_updated"] = neroshop::timestamp::get_current_utc_timestamp();
         // Re-sign to reflect the modification
-        std::string new_signature = wallet->sign_message(listing_id, monero_message_signature_type::SIGN_WITH_SPEND_KEY);
-        value_obj["signature"] = new_signature;
+        std::string signature = wallet->sign_message(listing_id, monero_message_signature_type::SIGN_WITH_SPEND_KEY);
+        value_obj["signature"] = signature;
         // Send set request containing the updated value with the same key as before
         std::string modified_value = value_obj.dump();
         std::string response;
@@ -372,12 +370,6 @@ void neroshop::Seller::set_stock_quantity(const std::string& listing_key, int qu
 ////////////////////
 ////////////////////
 ////////////////////
-// setters - wallet-related stuff
-////////////////////
-void neroshop::Seller::set_wallet(const neroshop::Wallet& wallet) {
-    std::unique_ptr<neroshop::Wallet> seller_wallet(&const_cast<neroshop::Wallet&>(wallet));
-    this->wallet = std::move(seller_wallet); // unique pointers cannot be copied, but can only be moved // "std::unique_ptr::release()" is a similar function but "std::move()" is better of the two
-}
 ////////////////////
 ////////////////////
 ////////////////////
@@ -509,11 +501,6 @@ std::vector<unsigned int> neroshop::Seller::get_top_rated_sellers(unsigned int l
 ////////////////////
 ////////////////////
 ////////////////////
-// getters - wallet-related stuff
-////////////////////
-neroshop::Wallet * neroshop::Seller::get_wallet() const {
-    return wallet.get();
-}
 ////////////////////
 ////////////////////
 ////////////////////
@@ -685,19 +672,6 @@ bool neroshop::Seller::has_stock(const std::string& product_id) const {
 ////////////////////
 bool neroshop::Seller::has_stock(const neroshop::Product& item) const {
     return has_stock(item.get_id());
-}
-////////////////////
-bool neroshop::Seller::has_wallet() const {
-    if(!wallet.get()) return false; // wallet is nullptr
-    if(!wallet->get_monero_wallet()) return false; // wallet not opened
-    return true;
-}
-////////////////////
-bool neroshop::Seller::has_wallet_synced() const {
-    if(!wallet.get()) return false; // wallet is nullptr
-    if(!wallet->get_monero_wallet()) return false; // wallet not opened
-    if(!wallet->get_monero_wallet()->is_synced()) return false; // wallet not synced to daemon
-    return true;
 }
 ////////////////////
 ////////////////////

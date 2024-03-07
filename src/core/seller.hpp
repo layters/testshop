@@ -13,7 +13,6 @@
 namespace neroshop {
 
 // forward declarations
-class Wallet;
 class Product;
 class Image;
 
@@ -44,8 +43,6 @@ public:
 	void delist_item(const std::string& listing_key); // deletes an item from the inventory
 	// setters - item and inventory-related stuff
 	void set_stock_quantity(const std::string& listing_key, int quantity);
-	// setters - wallet-related stuff
-	void set_wallet(const neroshop::Wallet& wallet);// temporary - delete ASAP
 	// getters - seller rating system
 	unsigned int get_good_ratings() const; // returns the total number of good ratings given to this seller by their customers
 	unsigned int get_bad_ratings() const; // returns the total number of bad ratings given to this seller by their customers
@@ -53,8 +50,6 @@ public:
 	unsigned int get_total_ratings() const; // same as get_ratings_count
 	unsigned int get_reputation() const; // returns a percentage of good ratings
 	static std::vector<unsigned int> get_top_rated_sellers(unsigned int limit = 50); // returns a container of n seller_ids with the most positive (good) ratings // the default value of n is 50
-	// getters - wallet-related stuff
-	neroshop::Wallet * get_wallet() const;
 	// getters - order-related stuff
     unsigned int get_customer_order(unsigned int index) const;
     unsigned int get_customer_order_count() const;
@@ -77,8 +72,6 @@ public:
 	bool has_listed(const neroshop::Product& item) const; // returns true if this seller has listed an item
 	bool has_stock(const std::string& product_id) const; // returns true if this seller has an item in stock
 	bool has_stock(const neroshop::Product& item) const;
-	bool has_wallet() const; // returns true if seller's wallet is opened
-	bool has_wallet_synced() const; // returns true if seller's wallet is synced to a node
 	// callbacks
 	static neroshop::User * on_login(const neroshop::Wallet& wallet);
 	void on_order_received(std::string& subaddress);
@@ -87,7 +80,6 @@ public:
 protected:
     void load_customer_orders(); // called one-time when seller logs in
 private:
-	std::unique_ptr<neroshop::Wallet> wallet;
 	std::vector<int> customer_order_list;
 	friend class Serializer;
 };

@@ -338,6 +338,13 @@ int neroshop::Node::set(const std::string& key, const std::string& value) {
                 if(rater_id != current_json["rater_id"].get<std::string>()) { std::cerr << "Rater ID mismatch\n"; return false; } // rater_id is immutable
             }
             
+            // Make sure the signature has been updated
+            if (json.contains("signature")) {
+                assert(json["signature"].is_string());
+                std::string signature = json["signature"].get<std::string>();
+                if(signature == current_json["signature"].get<std::string>()) { std::cerr << "Signature is outdated\n"; return false; }
+            }
+            
             // Compare dates of new data and old (pre-existing) data - untested
             if(json.contains("last_updated")) {
                 assert(json["last_updated"].is_string());

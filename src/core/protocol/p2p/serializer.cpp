@@ -461,7 +461,7 @@ std::pair<std::string, std::string> neroshop::Serializer::serialize(const User& 
     std::string key = neroshop_crypto::sha3_256(value);
     
     // Data verification tests
-    #ifdef NEROSHOP_DEBUG
+    #ifdef NEROSHOP_DEBUG0
     auto result = seller->get_wallet()->verify_message(user_id, signature);
     std::cout << "\033[1mverified: " << (result == 1 ? "\033[32mpass" : "\033[91mfail") << "\033[0m\n";
     assert(result == true);

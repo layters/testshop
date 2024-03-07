@@ -15,12 +15,13 @@
 #include "tools/base64.hpp"
 #include "tools/timestamp.hpp"
 #include "tools/string.hpp"
+#include "wallet.hpp"
 
 #include <fstream>
 #include <regex>
 
 ////////////////////
-neroshop::User::User() : id(""), logged(false), account_type(UserAccountType::Guest), cart(nullptr), order_list({}), favorites({}) {
+neroshop::User::User() : wallet(nullptr), id(""), logged(false), account_type(UserAccountType::Guest), cart(nullptr), order_list({}), favorites({}) {
     cart = std::unique_ptr<Cart>(new Cart());
 }
 ////////////////////
@@ -30,6 +31,8 @@ neroshop::User::~User()
     private_key.clear();
     // destroy cart
     if(cart.get()) cart.reset();
+    // destroy wallet
+    if(wallet.get()) wallet.reset();
     // clear orders
     order_list.clear(); // this should reset (delete) all orders
     // clear favorites
@@ -54,7 +57,7 @@ void neroshop::User::rate_seller(const std::string& seller_id, int score, const 
     ////if(account_type_id != 2) {neroshop::print("This user (id: " + seller_id + ") is not a seller, so they cannot be rated", 2); return;}//if(String::lower(account_type) != "seller") {neroshop::print("You cannot rate a non-seller");return;}
     // Prevent seller from rating him/herself
     if(seller_id == this->id) {
-        neroshop::print("You cannot rate yourself", 1);
+        std::cerr << "\033[91mYou cannot rate yourself\033[0m\n";
         return; // exit function
     }
     /*// To prevent duplicating seller_id that is has already been rated by this user_id (a user cannot rate the same seller twice, except update his or her score rating for a specific seller_id
@@ -135,8 +138,24 @@ void neroshop::User::rate_seller(const std::string& seller_id, int score, const 
                 // Check if the rater (you) has not already rated this seller
                 std::string rater_id = value_obj["rater_id"].get<std::string>();
                 if(rater_id == this->id) {
-                    neroshop::print("You have already rated this seller", 1);
-                    // TODO: Update seller rating then re-sign it (key will remain the same)
+                    std::cerr << "\033[91mYou have already rated this seller\033[0m\n";
+                    // Self-verify the signature
+                    std::string old_comments = value_obj["comments"].get<std::string>();
+                    std::string old_signature = value_obj["signature"].get<std::string>();
+                    bool self_verified = wallet->verify_message(old_comments, old_signature);
+                    if(!self_verified) { neroshop::print("Data verification failed."); return; }
+                    // Modify/Update the seller rating and re-signed to reflect the modification
+                    value_obj["comments"] = comments;
+                    value_obj["score"] = score;
+                    assert(old_signature != signature && "Signature is outdated");
+                    value_obj["signature"] = signature;
+                    value_obj["last_updated"] = neroshop::timestamp::get_current_utc_timestamp(); // Should I update the timestamp or just add a last_updated field?
+                    // Send set request containing the updated value with the same key as before
+                    std::string modified_value = value_obj.dump();
+                    std::string response;
+                    client->set(key, modified_value, response); // key MUST remain unchanged!!
+                    std::cout << "Received response (set): " << response << "\n";
+                    std::cout << "\033[1;37;49mYour rating for seller (" + seller_id + ") has been updated (score: " << ((score != 0) ? "\033[1;32m" : "\033[1;91m") + std::to_string(score) << "\033[1;37;49m)\033[0m\n";
                     return;
                 }
             }
@@ -269,7 +288,7 @@ void neroshop::User::rate_item(const std::string& product_id, int stars, const s
                 // Check if the rater (you) has not already rated this product
                 std::string rater_id = value_obj["rater_id"].get<std::string>();
                 if(rater_id == this->id) {
-                    neroshop::print("You have already rated this product or service", 1);
+                    std::cerr << "\033[91mYou have already rated this product or service\033[0m\n";
                     // TODO: Update product rating then re-sign it (key will remain the same)
                     return;
                 }
@@ -670,6 +689,10 @@ void neroshop::User::set_private_key(const std::string& private_key) {
     this->private_key = private_key;
 }
 ////////////////////
+void neroshop::User::set_wallet(const neroshop::Wallet& wallet) {
+    std::unique_ptr<neroshop::Wallet> user_wallet(&const_cast<neroshop::Wallet&>(wallet));
+    this->wallet = std::move(user_wallet);
+}
 ////////////////////
 ////////////////////
 ////////////////////
@@ -734,6 +757,10 @@ std::string neroshop::User::get_public_key() const {
 
 std::string neroshop::User::get_private_key() const {
     return private_key;
+}
+////////////////////
+neroshop::Wallet * neroshop::User::get_wallet() const {
+    return wallet.get();
 }
 ////////////////////
 ////////////////////
@@ -979,6 +1006,18 @@ bool neroshop::User::has_favorited(const std::string& listing_key_or_id) {
         if(favorite == listing_key_or_id) return true;
     }
     return false;////return (std::find(favorites.begin(), favorites.end(), product_id) != favorites.end()); // this is good for when storing favorites as integers (product_ids)
+}
+////////////////////
+bool neroshop::User::has_wallet() const {
+    if(!wallet.get()) return false; // wallet is nullptr
+    if(!wallet->get_monero_wallet()) return false; // wallet not opened
+    return true;
+}
+////////////////////
+bool neroshop::User::has_wallet_synced() const {
+    if(!has_wallet()) return false; // wallet is either nullptr or not opened
+    if(!wallet->get_monero_wallet()->is_synced()) return false; // wallet not synced to daemon
+    return true;
 }
 ////////////////////
 ////////////////////
