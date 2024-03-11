@@ -1,6 +1,6 @@
 #include "i2p.hpp"
 
-/*int i2pd_sam_test() {
+int i2pd_sam_test() {
     // Address and ports for SAM bridge
     std::string address = "127.0.0.1";
     int portTCP = 7656;
@@ -30,7 +30,7 @@
     samBridge.Stop();
     
     return 0;
-}*/
+}
 /*int main(int argc, char* argv[]) {
     // Initialize i2pd router
     i2p::api::InitI2P(argc, argv, "MyI2PApp");

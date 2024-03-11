@@ -7,7 +7,7 @@
 
 #include "../../neroshop_config.hpp"
 
-void neroshop::logger(log_priority priority, const std::string& message) {
+void neroshop::log(log_priority priority, const std::string& message) {
     std::string config_path = NEROSHOP_DEFAULT_CONFIGURATION_PATH;
     std::string log_path = config_path + "/" + NEROSHOP_LOG_FILENAME;
     std::ofstream file(std::string(log_path).c_str(), std::ios_base::app);
@@ -36,7 +36,7 @@ void neroshop::print(const std::string& text, int code, bool log_msg) { // 0=nor
     if(code == 2) { std::cout << "\033[1;35;49m" << "[neroshop]: " << "\033[1;33;49m" << text << "\033[0m\n"; verbosity = log_priority::warn; }
     if(code == 3) { std::cout << "\033[1;35;49m" << "[neroshop]: " << "\033[1;32;49m" << text << "\033[0m\n"; verbosity = log_priority::info; }
     if(code == 4) { std::cout << "\033[1;35;49m" << "[neroshop]: " << "\033[1;34;49m" << text << "\033[0m\n"; verbosity = log_priority::info; }
-    if(log_msg) logger(verbosity, text);
+    if(log_msg) log(verbosity, text);
 }    
 
 void neroshop::io_write(const std::string& text) { 

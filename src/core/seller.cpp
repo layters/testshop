@@ -137,14 +137,16 @@ void neroshop::Seller::delist_item(const std::string& listing_key) {
         std::string listing_id = value_obj["id"].get<std::string>();
         std::string old_signature = value_obj["signature"].get<std::string>();
         bool self_verified = wallet->verify_message(listing_id, old_signature);
-        if(!self_verified) { neroshop::print("Data verification failed."); return; }
-        // Might be a good idea to set the stock quantity to zero beforehand or nah?
-        ////value_obj["quantity"] = 0;
+        if(!self_verified) { neroshop::print("Data verification failed.", 1); return; }
+        // Might be a good idea to set the stock quantity to zero beforehand
+        value_obj["quantity"] = 0;
         // Finally, set the expiration date
-        value_obj["expiration_date"] = neroshop::timestamp::get_current_utc_timestamp();//value_obj["valid_until"] = neroshop::timestamp::get_current_utc_timestamp();
+        // But extend the expiration date to give enough time for all nodes in the network to update the listing in their hash tables
+        value_obj["expiration_date"] = neroshop::timestamp::get_utc_timestamp_after_duration(24, "hour");
         // Re-sign to reflect the modification
         std::string signature = wallet->sign_message(listing_id, monero_message_signature_type::SIGN_WITH_SPEND_KEY);
         value_obj["signature"] = signature;
+        value_obj["last_updated"] = neroshop::timestamp::get_current_utc_timestamp();
         // Send set request containing the updated value with the same key as before
         std::string modified_value = value_obj.dump();
         std::string response;
@@ -350,14 +352,14 @@ void neroshop::Seller::set_stock_quantity(const std::string& listing_key, int qu
         std::string listing_id = value_obj["id"].get<std::string>();
         std::string old_signature = value_obj["signature"].get<std::string>();
         bool self_verified = wallet->verify_message(listing_id, old_signature);
-        if(!self_verified) { neroshop::print("Data verification failed."); return; }
+        if(!self_verified) { neroshop::print("Data verification failed.", 1); return; }
         // Finally, modify the quantity
         value_obj["quantity"] = quantity;
-        // Add a last_modified or last_updated field so nodes can compare dates and choose the most recent listing
-        value_obj["last_updated"] = neroshop::timestamp::get_current_utc_timestamp();
         // Re-sign to reflect the modification
         std::string signature = wallet->sign_message(listing_id, monero_message_signature_type::SIGN_WITH_SPEND_KEY);
         value_obj["signature"] = signature;
+        // Add a last_modified or last_updated field so nodes can compare dates and choose the most recent listing
+        value_obj["last_updated"] = neroshop::timestamp::get_current_utc_timestamp();
         // Send set request containing the updated value with the same key as before
         std::string modified_value = value_obj.dump();
         std::string response;
