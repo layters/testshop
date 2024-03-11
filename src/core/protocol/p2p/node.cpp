@@ -314,60 +314,63 @@ void neroshop::Node::map(const std::string& key, const std::string& value) {
 
 int neroshop::Node::set(const std::string& key, const std::string& value) {
     nlohmann::json json = nlohmann::json::parse(value); // Already validated in put() so we just need to parse it without checking for errors
-    // Same key but both current and new values do not match
-    if(has_key(key)) {
-        std::string current_value = find_value(key);
-        if (current_value != value) {
-            nlohmann::json current_json = nlohmann::json::parse(current_value);
-            // Verify that no immutable fields have been altered
-            assert(json["metadata"].is_string());
-            std::string metadata = json["metadata"].get<std::string>();
-            if(metadata != current_json["metadata"].get<std::string>()) { std::cerr << "Metadata mismatch\n"; return false; } // metadata is immutable
-            if(metadata == "user") {
-                std::string user_id = json["monero_address"].get<std::string>();
-                if(user_id != current_json["monero_address"].get<std::string>()) { std::cerr << "User ID (Monero Primary Address) mismatch\n"; return false; } // monero_address is immutable
-            }
-            if(metadata == "listing") {
-                std::string listing_uuid = json["id"].get<std::string>();
-                std::string seller_id = json["seller_id"].get<std::string>(); // seller_id (monero primary address)
-                if(listing_uuid != current_json["id"].get<std::string>()) { std::cerr << "Listing UUID mismatch\n"; return false; } // id is immutable
-                if(seller_id != current_json["seller_id"].get<std::string>()) { std::cerr << "Seller ID mismatch\n"; return false; } // seller_id is immutable
-            }
-            if(metadata == "product_rating" || metadata == "seller_rating") {
-                std::string rater_id = json["rater_id"].get<std::string>(); // rater_id (monero primary address)
-                if(rater_id != current_json["rater_id"].get<std::string>()) { std::cerr << "Rater ID mismatch\n"; return false; } // rater_id is immutable
-            }
-            
-            // Make sure the signature has been updated
-            if (json.contains("signature")) {
-                assert(json["signature"].is_string());
-                std::string signature = json["signature"].get<std::string>();
-                if(signature == current_json["signature"].get<std::string>()) { std::cerr << "Signature is outdated\n"; return false; }
-            }
-            
-            // Compare dates of new data and old (pre-existing) data - untested
-            if(json.contains("last_updated")) {
-                assert(json["last_updated"].is_string());
-                std::string last_updated = json["last_updated"].get<std::string>();
+    
+    std::string current_value = get(key);
+    nlohmann::json current_json = nlohmann::json::parse(current_value);
+    
+    // Verify that no immutable fields have been altered
+    std::string metadata = json["metadata"].get<std::string>();
+    if(metadata != current_json["metadata"].get<std::string>()) { std::cerr << "\033[91mMetadata mismatch\033[0m\n"; return false; } // metadata is immutable
+    if(metadata == "user") {
+        std::string user_id = json["monero_address"].get<std::string>();
+        if(user_id != current_json["monero_address"].get<std::string>()) { std::cerr << "\033[91mUser ID (Monero Primary Address) mismatch\033[0m\n"; return false; } // monero_address is immutable
+    }
+    if(metadata == "listing") {
+        std::string listing_uuid = json["id"].get<std::string>();
+        std::string seller_id = json["seller_id"].get<std::string>(); // seller_id (monero primary address)
+        if(listing_uuid != current_json["id"].get<std::string>()) { std::cerr << "\033[91mListing UUID mismatch\033[0m\n"; return false; } // id is immutable
+        if(seller_id != current_json["seller_id"].get<std::string>()) { std::cerr << "\033[91mSeller ID mismatch\033[0m\n"; return false; } // seller_id is immutable
+    }
+    if(metadata == "product_rating" || metadata == "seller_rating") {
+        std::string rater_id = json["rater_id"].get<std::string>(); // rater_id (monero primary address)
+        if(rater_id != current_json["rater_id"].get<std::string>()) { std::cerr << "\033[91mRater ID mismatch\033[0m\n"; return false; } // rater_id is immutable
+    }
+    
+    // Make sure the signature has been updated (re-signed)
+    if (json.contains("signature")) {
+        assert(json["signature"].is_string());
+        std::string signature = json["signature"].get<std::string>();
+        if(signature == current_json["signature"].get<std::string>()) { std::cerr << "\033[91mSignature is outdated\033[0m\n"; return false; }
+    }
+    
+    // No "last_updated" field found in the modified value, only the current value, discard the new value (its likely outdated) - untested
+    if(metadata != "message") { // messages cannot be updated
+        if(!json.contains("last_updated") && current_json.contains("last_updated")) {
+            std::cout << "Value for key (" << key << ") is already up to date" << std::endl;
+            return true;
+        }
+    }
+    // Compare "last_updated" field of modified value and current value - untested
+    if(json.contains("last_updated")) {
+        assert(json["last_updated"].is_string());
+        std::string last_updated = json["last_updated"].get<std::string>();
                 
-                // Check if current value has a last_updated field too
-                if(current_json.contains("last_updated")) {
-                    assert(current_json["last_updated"].is_string());
-                    std::string current_last_updated = current_json["last_updated"].get<std::string>();
-                    // Compare the new json's last_updated timestamp with the current json's own
-                    // And choose whichever has the most recent timestamp then exit the function
-                    std::string most_recent_timestamp = neroshop_timestamp::get_most_recent_timestamp(last_updated, current_last_updated);
-                    // If this node has the up-to-date value, return true as there is no need to update
-                    if(most_recent_timestamp == current_last_updated) {
-                        std::cout << "Value for key (" << key << ") is already up-to-date" << std::endl;
-                        return true;
-                    }
-                }
-                // If current value does not have a last_updated field 
-                // then it means it's probably outdated, so do nothing.
-                // It will be replaced with the new value at the end of the scope
+        // Check if current value has a last_updated field too
+        if(current_json.contains("last_updated")) {
+            assert(current_json["last_updated"].is_string());
+            std::string current_last_updated = current_json["last_updated"].get<std::string>();
+            // Compare the new json's last_updated timestamp with the current json's own
+            // And choose whichever has the most recent timestamp then exit the function
+            std::string most_recent_timestamp = neroshop_timestamp::get_most_recent_timestamp(last_updated, current_last_updated);
+            // If this node has the up-to-date value, return true as there is no need to update
+            if(most_recent_timestamp == current_last_updated) {
+                std::cout << "Value for key (" << key << ") is already up to date" << std::endl;
+                return true;
             }
         }
+        // If current value does not have a last_updated field 
+        // then it means it's probably outdated, so do nothing.
+        // It will be replaced with the new value at the end of the scope
     }
     
     data[key] = value;
@@ -1014,9 +1017,6 @@ bool neroshop::Node::validate(const std::string& key, const std::string& value) 
         assert(json["expiration_date"].is_string());
         std::string expiration_date = json["expiration_date"].get<std::string>();
         if(neroshop_timestamp::is_expired(expiration_date)) {
-            // Notify the other nodes that this data has expired (so that once they receive a put with the expired data, it will be removed from their local hash table as soon as it goes through the validate function)
-            ////send_put(key, value); // this should propagate the expiration information to other nodes in the DHT until the expired data is removed once and for all. Hmmm this could cause an endless loop ...
-            // This won't work unless all data contain a mandatory expiration date set on creation. A consensus mechanism may be necessary
             // Remove the data from hash table if it was previously stored
             if(has_key(key)) {
                 std::cout << "Data with key (" << key << ") has expired. Removing from hash table ...\n";
@@ -1063,7 +1063,7 @@ bool neroshop::Node::verify(const std::string& value) const {
     // Validate signing address and signature
     auto network_type = monero_network_type::STAGENET;
     if(!monero_utils::is_valid_address(signing_address, network_type)) {
-        std::cerr << "Invalid address\n"; 
+        std::cerr << "Invalid signing address\n"; 
         return false;
     }
     if(signature.empty() || signature.length() != 93 || !neroshop_string::contains_first_of(signature, "Sig")) { 

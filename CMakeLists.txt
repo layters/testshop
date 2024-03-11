@@ -382,9 +382,18 @@ set(lua_src ${CMAKE_CURRENT_SOURCE_DIR}/build/liblua.a)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/external/cxxopts/include/)
 
 ######################################
+# zlib
+find_package(ZLIB)
+if(ZLIB_FOUND)
+    message(STATUS "Using ZLIB: ${ZLIB_LIBRARIES}")
+    include_directories(${ZLIB_INCLUDE_DIRS})
+    set(zlib_src ${ZLIB_LIBRARIES})
+endif()
+
+######################################
 # libi2pd (and i2pd_client)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/external/i2pd/daemon ${CMAKE_CURRENT_SOURCE_DIR}/external/i2pd/i18n ${CMAKE_CURRENT_SOURCE_DIR}/external/i2pd/libi2pd ${CMAKE_CURRENT_SOURCE_DIR}/external/i2pd/libi2pd_client) # v2.50.2
-set(i2pd_src ${CMAKE_CURRENT_SOURCE_DIR}/build/libi2pd.a ${CMAKE_CURRENT_SOURCE_DIR}/build/libi2pdclient.a ${CMAKE_CURRENT_SOURCE_DIR}/build/libi2pdlang.a)
+set(i2pd_src ${CMAKE_CURRENT_SOURCE_DIR}/build/libi2pdclient.a ${CMAKE_CURRENT_SOURCE_DIR}/build/libi2pd.a ${CMAKE_CURRENT_SOURCE_DIR}/build/libi2pdlang.a)
 
 ######################################
 # i2psam
@@ -485,7 +494,7 @@ add_executable(${daemon_executable} src/daemon/main.cpp ${daemon_src})#target_li
 install(TARGETS ${daemon_executable} DESTINATION bin)
 target_compile_definitions(${daemon_executable} PRIVATE NEROSHOP_DEBUG)
 target_include_directories(${daemon_executable} PRIVATE #[[${CMAKE_CURRENT_SOURCE_DIR}/src/]])
-target_link_libraries(${daemon_executable} ${i2pd_src} ${monero_cpp_src} ${sqlite_src} ${raft_src} ${monero_src})#set(CMAKE_CXX_LINK_EXECUTABLE "${CMAKE_CXX_LINK_EXECUTABLE} -ldl") # fixes undefined reference to symbol 'dlsym@@GLIBC_2.2.5' error
+target_link_libraries(${daemon_executable} ${i2pd_src} ${monero_cpp_src} ${sqlite_src} ${raft_src} ${monero_src} ${zlib_src})#set(CMAKE_CXX_LINK_EXECUTABLE "${CMAKE_CXX_LINK_EXECUTABLE} -ldl") # fixes undefined reference to symbol 'dlsym@@GLIBC_2.2.5' error
 
 ######################################
 # neroshop-console
@@ -495,7 +504,7 @@ if(NEROSHOP_BUILD_CLI)
     install(TARGETS ${neroshop_console} DESTINATION bin)
     target_compile_definitions(${neroshop_console} PRIVATE NEROSHOP_DEBUG)
     target_include_directories(${neroshop_console} PRIVATE #[[${CMAKE_CURRENT_SOURCE_DIR}/src/]])
-    target_link_libraries(${neroshop_console} ${i2pd_src} ${monero_cpp_src} ${sqlite_src} #[[${qr_code_generator_src}]] ${raft_src} ${curl_src} ${monero_src} ${lua_src} ${linenoise_src})
+    target_link_libraries(${neroshop_console} ${i2pd_src} ${monero_cpp_src} ${sqlite_src} #[[${qr_code_generator_src}]] ${raft_src} ${curl_src} ${monero_src} ${zlib_src} ${lua_src} ${linenoise_src})
     message(STATUS "${BoldMagenta}NEROSHOP_BUILD_CLI option set to ON${ColourReset}")
 endif()
 
@@ -508,7 +517,7 @@ if(NEROSHOP_BUILD_GUI)
     target_sources(${neroshop_executable} PRIVATE ${neroshop_res} src/gui/main.cpp src/gui/script_controller.cpp src/gui/wallet_controller.cpp src/gui/user_controller.cpp src/gui/image_loader.cpp src/gui/image_provider.cpp src/gui/wallet_qr_provider.cpp src/gui/currency_rate_provider.cpp #[[src/gui/table_model.cpp]] src/gui/daemon_manager.cpp src/gui/enum_wrapper.cpp src/gui/backend.cpp ${neroshop_core_src})
     target_compile_definitions(${neroshop_executable} PRIVATE NEROSHOP_DEBUG)#set_target_properties(${neroshop_executable} PROPERTIES COMPILE_DEFINITIONS "NEROSHOP_DEBUG")
     target_include_directories(${neroshop_executable} PRIVATE #[[${CMAKE_CURRENT_SOURCE_DIR}/src/]])
-    target_link_libraries(${neroshop_executable} ${i2pd_src} ${monero_cpp_src} ${sqlite_src} ${qr_code_generator_src} ${raft_src} ${monero_src} ${lua_src})
+    target_link_libraries(${neroshop_executable} ${i2pd_src} ${monero_cpp_src} ${sqlite_src} ${qr_code_generator_src} ${raft_src} ${monero_src} ${zlib_src} ${lua_src})
     message(STATUS "${BoldMagenta}NEROSHOP_BUILD_GUI option set to ON${ColourReset}")
     target_compile_definitions(${neroshop_executable} PRIVATE NEROSHOP_BUILD_GUI)
 endif()

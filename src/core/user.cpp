@@ -138,24 +138,23 @@ void neroshop::User::rate_seller(const std::string& seller_id, int score, const 
                 // Check if the rater (you) has not already rated this seller
                 std::string rater_id = value_obj["rater_id"].get<std::string>();
                 if(rater_id == this->id) {
-                    std::cerr << "\033[91mYou have already rated this seller\033[0m\n";
+                    std::cerr << "\033[1;33mYou have previously rated this seller\033[0m\n";
                     // Self-verify the signature
                     std::string old_comments = value_obj["comments"].get<std::string>();
                     std::string old_signature = value_obj["signature"].get<std::string>();
                     bool self_verified = wallet->verify_message(old_comments, old_signature);
-                    if(!self_verified) { neroshop::print("Data verification failed."); return; }
+                    if(!self_verified) { neroshop::print("Data verification failed.", 1); return; }
                     // Modify/Update the seller rating and re-signed to reflect the modification
                     value_obj["comments"] = comments;
                     value_obj["score"] = score;
                     assert(old_signature != signature && "Signature is outdated");
                     value_obj["signature"] = signature;
-                    value_obj["last_updated"] = neroshop::timestamp::get_current_utc_timestamp(); // Should I update the timestamp or just add a last_updated field?
+                    value_obj["last_updated"] = neroshop::timestamp::get_current_utc_timestamp();
                     // Send set request containing the updated value with the same key as before
                     std::string modified_value = value_obj.dump();
                     std::string response;
                     client->set(key, modified_value, response); // key MUST remain unchanged!!
                     std::cout << "Received response (set): " << response << "\n";
-                    std::cout << "\033[1;37;49mYour rating for seller (" + seller_id + ") has been updated (score: " << ((score != 0) ? "\033[1;32m" : "\033[1;91m") + std::to_string(score) << "\033[1;37;49m)\033[0m\n";
                     return;
                 }
             }
