@@ -359,11 +359,6 @@ if(NOT CURL_FOUND)
 endif()
 
 ######################################
-# willemt/raft
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/external/raft/include)
-set(raft_src ${CMAKE_CURRENT_SOURCE_DIR}/build/libraft.a)
-
-######################################
 # stduuid
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/external/stduuid ${CMAKE_CURRENT_SOURCE_DIR}/external/stduuid/catch ${CMAKE_CURRENT_SOURCE_DIR}/external/stduuid/include)
 
@@ -388,6 +383,10 @@ if(ZLIB_FOUND)
     message(STATUS "Using ZLIB: ${ZLIB_LIBRARIES}")
     include_directories(${ZLIB_INCLUDE_DIRS})
     set(zlib_src ${ZLIB_LIBRARIES})
+endif()
+if(NOT ZLIB_FOUND)
+    include_directories(${CMAKE_CURRENT_SOURCE_DIR}/external/zlib/)
+    set(zlib_src ${CMAKE_CURRENT_SOURCE_DIR}/build/libz.a)
 endif()
 
 ######################################
