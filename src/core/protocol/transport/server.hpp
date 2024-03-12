@@ -27,11 +27,6 @@
 #include <uv.h>
 #endif
 
-#include <cstdlib>
-extern "C" {
-#include <raft.h>
-}
-
 #include <unordered_map> // std::unordered_map
 #include <functional> // std::function
 #include <any> // std::any (C++17)

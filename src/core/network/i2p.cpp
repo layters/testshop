@@ -7,27 +7,27 @@ int i2pd_sam_test() {
     int portUDP = 7655;
 
     // Create SAM bridge
-    i2p::client::SAMBridge samBridge(address, portTCP, portUDP, false); // Set the last parameter to true for single-threaded operation
+    i2p::client::SAMBridge sam_bridge(address, 0/*portTCP*/, portUDP, false); // Set the last parameter to true for single-threaded operation
 
     // Start the SAM bridge
-    samBridge.Start();
+    sam_bridge.Start();
 
     // Create a SAM session
-    std::string sessionID = "mysession";
-    i2p::client::SAMSessionType sessionType = i2p::client::eSAMSessionTypeStream;
+    std::string session_id = "mysession";
+    i2p::client::SAMSessionType session_type = i2p::client::eSAMSessionTypeDatagram;//i2p::client::eSAMSessionTypeStream;
     std::string destination = ""; // empty string means transient
     std::map<std::string, std::string> params; // additional parameters if needed
 
-    std::shared_ptr<i2p::client::SAMSession> session = samBridge.CreateSession(sessionID, sessionType, destination, &params);
+    std::shared_ptr<i2p::client::SAMSession> session = sam_bridge.CreateSession(session_id, session_type, destination, &params);
 
     // Add the session to the bridge
-    samBridge.AddSession(session);
+    sam_bridge.AddSession(session);
 
     // Perform SAM-related operations
     // ...
 
     // Stop the SAM bridge
-    samBridge.Stop();
+    sam_bridge.Stop();
     
     return 0;
 }
@@ -128,6 +128,6 @@ int i2pd_sam_test() {
     return error;
 }*/
 
-// g++ i2p.cpp -o i2p -I../../../external/i2pd/daemon -I../../../external/i2pd/i18n -I../../../external/i2pd/libi2pd -I../../../external/i2pd/libi2pd_client -L../../../build -li2pd -li2pd_client -lboost_program_options -lboost_filesystem -lboost_system -lboost_date_time -lcrypto -lssl -lz -lpthread 
+// g++ i2p.cpp -o i2p -I../../../external/i2pd/daemon -I../../../external/i2pd/i18n -I../../../external/i2pd/libi2pd -I../../../external/i2pd/libi2pd_client -L../../../build -li2pdclient -li2pd -li2pdlang -lboost_program_options -lboost_filesystem -lboost_system -lboost_date_time -lcrypto -lssl -lz -lpthread 
 
 // g++ i2p.cpp -o i2p -I../../../external/i2psam -L../../../build -li2psam
