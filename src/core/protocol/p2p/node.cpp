@@ -1066,7 +1066,7 @@ bool neroshop::Node::verify(const std::string& value) const {
         std::cerr << "Invalid signing address\n"; 
         return false;
     }
-    if(signature.empty() || signature.length() != 93 || !neroshop_string::contains_first_of(signature, "Sig")) { 
+    if(signature.length() != 93 || !neroshop_string::contains_first_of(signature, "Sig")) { 
         std::cerr << "Invalid signature\n"; 
         return false;
     }
@@ -1079,7 +1079,7 @@ bool neroshop::Node::verify(const std::string& value) const {
     std::unique_ptr<monero::monero_wallet_full> monero_wallet_obj = std::unique_ptr<monero_wallet_full>(monero_wallet_full::create_wallet (wallet_config_obj, nullptr));
     bool verified = monero_wallet_obj->verify_message(signed_message, signing_address, signature).m_is_good;
     if(!verified) {
-        std::cerr << "\033[91mMessage verification failed.\033[0m" << std::endl;
+        std::cerr << "\033[91mMessage verification failed\033[0m" << std::endl;
         monero_wallet_obj->close(false);
         monero_wallet_obj.reset();
         return false;
@@ -1220,6 +1220,7 @@ void neroshop::Node::on_ping(const std::vector<uint8_t>& buffer, const struct so
                     routing_table->add_node(std::move(node_that_pinged)); // Already has internal write_lock
                     persist_routing_table((sender_ip == "127.0.0.1") ? this->public_ip_address : sender_ip, sender_port);
                     routing_table->print_table();
+                    
                     // Redistribute your indexing data to the new node that recently joined the network to make product/service listings more easily discoverable by the new node
                     send_map((sender_ip == this->public_ip_address) ? "127.0.0.1" : sender_ip, sender_port);
                 }
@@ -1239,7 +1240,8 @@ void neroshop::Node::on_map(const std::vector<uint8_t>& buffer, const struct soc
             uint16_t sender_port = (message["args"].contains("port")) ? (uint16_t)message["args"]["port"] : NEROSHOP_P2P_DEFAULT_PORT;
             std::string data_hash = message["args"]["key"].get<std::string>();
             
-            add_provider(data_hash, { (sender_ip == "127.0.0.1") ? this->public_ip_address : sender_ip, sender_port });
+            // Save this peer as the provider of this data hash
+            add_provider(data_hash, Peer{ (sender_ip == "127.0.0.1") ? this->public_ip_address : sender_ip, sender_port });
         }
     }
 }

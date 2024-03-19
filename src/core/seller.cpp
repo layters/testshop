@@ -75,7 +75,7 @@ std::string neroshop::Seller::list_item(
     
     std::string signature = wallet->sign_message(listing_id, monero_message_signature_type::SIGN_WITH_SPEND_KEY);//std::cout << "signature: " << signature << "\n\n";
     
-    #ifdef NEROSHOP_DEBUG
+    #ifdef NEROSHOP_DEBUG0
     auto result = wallet->verify_message(listing_id, signature);
     std::cout << "\033[1mverified: " << (result == 1 ? "\033[32mpass" : "\033[91mfail") << "\033[0m\n";
     assert(result == true);

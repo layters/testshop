@@ -203,7 +203,7 @@ endif()
 ######################################
 # Monero
 set(MONERO_PROJECT_BUILD "${MONERO_PROJECT}/build/release" CACHE STRING "Monero project build directory")
-message(STATUS "Using monero-project build" : ${MONERO_PROJECT_BUILD})
+message(STATUS "Using monero-project build: " ${MONERO_PROJECT_BUILD})
 
 #list(APPEND CMAKE_MODULE_PATH "${MONERO_PROJECT}/cmake")
     
@@ -322,7 +322,7 @@ set_target_properties(randomx PROPERTIES IMPORTED_LOCATION
     ${MONERO_PROJECT_BUILD}/external/randomx/librandomx.a)   
     
 ######################################
-set(monero_src wallet rpc_base net lmdb unbound easylogging cryptonote_core cryptonote_protocol cryptonote_basic cryptonote_format_utils_basic mnemonics ringct ringct_basic common cncrypto blockchain_db blocks checkpoints device device_trezor multisig version randomx epee hardforks cncrypto ${wallet_crypto} 
+set(monero_src wallet rpc_base net lmdb unbound easylogging cryptonote_core cryptonote_protocol cryptonote_basic cryptonote_format_utils_basic mnemonics ringct ringct_basic common blockchain_db blocks checkpoints device device_trezor cncrypto multisig version randomx epee hardforks ${wallet_crypto} 
 ${UNBOUND_LIBRARIES} ${Boost_LIBRARIES} ${Protobuf_LIBRARY} ${LibUSB_LIBRARIES} ${OPENSSL_LIBRARIES} ${SODIUM_LIBRARY} ${HIDAPI_LIBRARY} ${EXTRA_LIBRARIES})
 ######################################
 # monero-cpp (wrapper)
