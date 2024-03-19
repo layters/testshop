@@ -16,7 +16,7 @@ set(monero_cpp "monero-cpp")
 set(monero_cpp_srcs monero-cpp/src/utils/gen_utils.cpp monero-cpp/src/utils/monero_utils.cpp monero-cpp/src/daemon/monero_daemon_model.cpp monero-cpp/src/daemon/monero_daemon.cpp monero-cpp/src/wallet/monero_wallet_model.cpp monero-cpp/src/wallet/monero_wallet_keys.cpp monero-cpp/src/wallet/monero_wallet_full.cpp)
 add_library(${monero_cpp} STATIC ${monero_cpp_srcs})
 target_include_directories(${monero_cpp} PUBLIC monero-cpp/src/ ${monero_include_dirs})
-target_compile_definitions(${monero_cpp} PUBLIC -DBOOST_DISABLE_PRAGMA_MESSAGE)
+target_compile_definitions(${monero_cpp} PUBLIC BOOST_DISABLE_PRAGMA_MESSAGE)
 
 set(qrcodegen "qrcodegen")
 set(QR_Code_generator_srcs QR-Code-generator/cpp/qrcodegen.cpp) # or QR-Code-generator/c/qrcodegen.c
@@ -44,6 +44,7 @@ set(zlib_srcs zlib/adler32.c zlib/compress.c zlib/crc32.c zlib/deflate.c zlib/gz
 add_library(${zlib_target} STATIC ${zlib_srcs})
 target_include_directories(${zlib_target} PUBLIC zlib/)
 set_target_properties(${zlib_target} PROPERTIES OUTPUT_NAME "z")
+target_compile_options(${zlib_target} PUBLIC -Wno-implicit-function-declaration)
 
 set(i2pd_target "i2pd")
 set(i2pd_srcs )
