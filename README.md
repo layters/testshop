@@ -1,5 +1,5 @@
 # neroshop - WORK IN PROGRESS (ON HOLD)
-[![banner](assets/images/appicons/LogoLight250x250.png)](https://github.com/larteyoh/testshop "neroshop logo")
+[![banner](assets/images/appicons/LogoLight250x250.png)](https://github.com/layters/testshop "neroshop logo")
 
 
 NeroShop is a decentralized peer-to-peer marketplace for trading goods and services with [**Monero**](https://getmonero.org/)
@@ -30,28 +30,28 @@ https://user-images.githubusercontent.com/58671384/219222567-f170f728-be31-43d5-
 <details>
 <summary>Click to load images</summary>
     
-![Wallet_Keys_Generation](https://github.com/larteyoh/testshop/blob/main/assets/images/screenshots/Wallet_Keys_Generation.png)
-![Registration](https://github.com/larteyoh/testshop/blob/main/assets/images/screenshots/Registration.png)
-![Login](https://github.com/larteyoh/testshop/blob/main/assets/images/screenshots/Login.png)
-![CatalogGrid](https://github.com/larteyoh/testshop/blob/main/assets/images/screenshots/CatalogGrid.png)
-![CatalogList](https://github.com/larteyoh/testshop/blob/main/assets/images/screenshots/CatalogList.png)
-![ProductPage](https://github.com/larteyoh/testshop/blob/main/assets/images/screenshots/ProductPage.png)
-![SettingsDialog_Network](https://github.com/larteyoh/testshop/blob/main/assets/images/screenshots/SettingsDialog_Monero.png)
-![SettingsDialog_General](https://github.com/larteyoh/testshop/blob/main/assets/images/screenshots/SettingsDialog_General.png)
-![HomePage](https://github.com/larteyoh/testshop/blob/main/assets/images/screenshots/HomePage.png)
-![HomePage_Recent_Listings](https://github.com/larteyoh/testshop/blob/main/assets/images/screenshots/HomePage_Recent_Listings.png)
-![Dashboard](https://github.com/larteyoh/testshop/blob/main/assets/images/screenshots/Dashboard_Overview.png)
-![Store_Inventory](https://github.com/larteyoh/testshop/blob/main/assets/images/screenshots/Store_InventoryTab.png)
-![Store_Inventory_ProductDialog_Top](https://github.com/larteyoh/testshop/blob/main/assets/images/screenshots/Store_InventoryTab_ProductDialog_Top.png)
-![Store_Inventory_ProductDialog_Mid](https://github.com/larteyoh/testshop/blob/main/assets/images/screenshots/Store_InventoryTab_ProductDialog_Mid.png)
-![Store_Inventory_ProductDialog_Bottom](https://github.com/larteyoh/testshop/blob/main/assets/images/screenshots/Store_InventoryTab_ProductDialog_Bottom.png)
-![WalletPage_Send](https://github.com/larteyoh/testshop/blob/main/assets/images/screenshots/WalletPage_BalanceSend.png)
-![WalletPage_Receive](https://github.com/larteyoh/testshop/blob/main/assets/images/screenshots/WalletPage_BalanceReceive.png)
-![WalletPage_Transactions](https://github.com/larteyoh/testshop/blob/main/assets/images/screenshots/WalletPage_BalanceTxs.png)
-![ProfilePage_ListingsTab](https://github.com/larteyoh/testshop/blob/main/assets/images/screenshots/ProfilePage_ListingsTab.png)
-![ProfilePage_RatingsTab](https://github.com/larteyoh/testshop/blob/main/assets/images/screenshots/ProfilePage_RatingsTab.png)
-![ProfilePage_With_Custom_Avatar](https://github.com/larteyoh/testshop/blob/main/assets/images/screenshots/ProfilePage_With_Custom_Avatar.png)
-![MessagesPage](https://github.com/larteyoh/testshop/blob/main/assets/images/screenshots/Messages_Page.png)
+![Wallet_Keys_Generation](https://github.com/layters/testshop/blob/main/assets/images/screenshots/Wallet_Keys_Generation.png)
+![Registration](https://github.com/layters/testshop/blob/main/assets/images/screenshots/Registration.png)
+![Login](https://github.com/layters/testshop/blob/main/assets/images/screenshots/Login.png)
+![CatalogGrid](https://github.com/layters/testshop/blob/main/assets/images/screenshots/CatalogGrid.png)
+![CatalogList](https://github.com/layters/testshop/blob/main/assets/images/screenshots/CatalogList.png)
+![ProductPage](https://github.com/layters/testshop/blob/main/assets/images/screenshots/ProductPage.png)
+![SettingsDialog_Network](https://github.com/layters/testshop/blob/main/assets/images/screenshots/SettingsDialog_Monero.png)
+![SettingsDialog_General](https://github.com/layters/testshop/blob/main/assets/images/screenshots/SettingsDialog_General.png)
+![HomePage](https://github.com/layters/testshop/blob/main/assets/images/screenshots/HomePage.png)
+![HomePage_Recent_Listings](https://github.com/layters/testshop/blob/main/assets/images/screenshots/HomePage_Recent_Listings.png)
+![Dashboard](https://github.com/layters/testshop/blob/main/assets/images/screenshots/Dashboard_Overview.png)
+![Store_Inventory](https://github.com/layters/testshop/blob/main/assets/images/screenshots/Store_InventoryTab.png)
+![Store_Inventory_ProductDialog_Top](https://github.com/layters/testshop/blob/main/assets/images/screenshots/Store_InventoryTab_ProductDialog_Top.png)
+![Store_Inventory_ProductDialog_Mid](https://github.com/layters/testshop/blob/main/assets/images/screenshots/Store_InventoryTab_ProductDialog_Mid.png)
+![Store_Inventory_ProductDialog_Bottom](https://github.com/layters/testshop/blob/main/assets/images/screenshots/Store_InventoryTab_ProductDialog_Bottom.png)
+![WalletPage_Send](https://github.com/layters/testshop/blob/main/assets/images/screenshots/WalletPage_BalanceSend.png)
+![WalletPage_Receive](https://github.com/layters/testshop/blob/main/assets/images/screenshots/WalletPage_BalanceReceive.png)
+![WalletPage_Transactions](https://github.com/layters/testshop/blob/main/assets/images/screenshots/WalletPage_BalanceTxs.png)
+![ProfilePage_ListingsTab](https://github.com/layters/testshop/blob/main/assets/images/screenshots/ProfilePage_ListingsTab.png)
+![ProfilePage_RatingsTab](https://github.com/layters/testshop/blob/main/assets/images/screenshots/ProfilePage_RatingsTab.png)
+![ProfilePage_With_Custom_Avatar](https://github.com/layters/testshop/blob/main/assets/images/screenshots/ProfilePage_With_Custom_Avatar.png)
+![MessagesPage](https://github.com/layters/testshop/blob/main/assets/images/screenshots/Messages_Page.png)
 
 </details>
 
@@ -124,7 +124,7 @@ sudo dnf install gcc gcc-c++ make cmake git
 
 **1. Clone neroshop (and its submodules)**
 ```bash
-git clone --recurse-submodules https://github.com/larteyoh/testshop.git
+git clone --recurse-submodules https://github.com/layters/testshop.git
 ```
 ```bash
 cd testshop
@@ -192,7 +192,7 @@ sudo make install
 cd ../
 ```
 
-<!-- git submodule update --init --force --> <!-- <= call this before building monero -->
+<!-- git submodule update --init --force --recursive --> <!-- <= call this before building monero -->
 
 **5. Build monero-project to create .a libraries**
 ```bash
@@ -231,7 +231,7 @@ make -j$(nproc)
 
 
 ## Contributing
-See [Wiki](https://github.com/larteyoh/testshop/wiki/Contributing)
+See [Wiki](https://github.com/layters/testshop/wiki/Contributing)
 
 
 ## License
@@ -264,9 +264,9 @@ WW2pQTQWHpyJf2CHrCmZG7Tn3zBnYRZTH8g4U3pSZf5s6xsTXrZc9odDWmrWzjRc9MMQWrKXxjHsRdzH
 ## Resources
 - Website: [neroshop.org](https://neroshop.org/)
 
-- Neroshop DHT Specification: [specs](https://github.com/larteyoh/specs)
+- Neroshop DHT Specification: [specs](https://github.com/layters/specs)
 
-- Wiki: [Wikipage](https://github.com/larteyoh/testshop/wiki)
+- Wiki: [Wikipage](https://github.com/layters/testshop/wiki)
 
 - Git Mirrors: 
     - [Codeberg](https://codeberg.org/layter/neroshop)
@@ -297,5 +297,5 @@ everyone in our matrix room — for sharing many great ideas that have been usef
 [//]: # (git add .gitignore .gitmodules assets/ cmake/ CMakeLists.txt external/ LICENSE qml/ qml.qrc README.md src/ tests/)
 [//]: # (git commit -m"..."    or    git commit -a --allow-empty-message -m "")
 [//]: # (git push -u origin backup --force)
-[//]: # (https://git.slipfox.xyz/larteyoh/testshop/settings => Mirror Settings => Synchronize Now)
+[//]: # (https://git.wownero.com/layter/neroshop/settings => Mirror Settings => Synchronize Now)
 [//]: # (removing an external lib from submodules index: git rm --cached path/to/submodule)

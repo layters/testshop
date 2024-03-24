@@ -1048,6 +1048,9 @@ Item {
                             let remote_node_port = remote_node.split(":")[1]
                             console.log("connecting to remote node:", (remote_node_ip + ":" + remote_node_port))
                             Wallet.nodeConnect(remote_node_ip, remote_node_port)
+                            if(Wallet.isConnectedToDaemon()) {
+                                moneroDaemonSyncBar.title = settingsDialog.moneroNodeAddress
+                            }
                         }
                     }
                 }                

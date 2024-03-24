@@ -99,11 +99,6 @@ std::string neroshop::Seller::list_item(
     return key;
 }
 ////////////////////
-/*void neroshop::Seller::list_item(const neroshop::Product& item, unsigned int stock_qty, double sales_price, std::string currency, double discount, unsigned int discounted_items, unsigned int discount_times, std::string discount_expiry, std::string condition) { // ex. 5% off 10 balls
-    list_item(item.get_id(), stock_qty, sales_price, currency, discount, discounted_items, discount_times, discount_expiry, condition);
-}*/
-// static_cast<Seller *>(user)->list_item(ball, 50, 8.50, "usd", 0.00, 0, 0, "", "new"); // $0.50 cents off every 2 balls
-////////////////////
 void neroshop::Seller::delist_item(const std::string& listing_key) {
     // Transition from Sqlite to DHT:
     Client * client = Client::get_main_client();
@@ -450,7 +445,7 @@ unsigned int neroshop::Seller::get_total_ratings() const {
 }
 ////////////////////
 unsigned int neroshop::Seller::get_reputation() const {
-    neroshop::db::Sqlite3 * database = neroshop::get_database();
+    /*neroshop::db::Sqlite3 * database = neroshop::get_database();
     if(!database) throw std::runtime_error("database is NULL");
     // Get seller reputation as percentage
     unsigned int ratings_count = database->get_integer_params("SELECT COUNT(*) FROM seller_ratings WHERE seller_id = $1", { get_id() });
@@ -459,7 +454,8 @@ unsigned int neroshop::Seller::get_reputation() const {
     unsigned int good_ratings = database->get_integer_params("SELECT COUNT(score) FROM seller_ratings WHERE seller_id = $1 AND score = $2", { get_id(), std::to_string(1) });
     // Calculate seller reputation
     double reputation = (good_ratings / static_cast<double>(ratings_count)) * 100;
-    return static_cast<int>(reputation); // convert reputation to an integer (for easier readability)
+    return static_cast<int>(reputation); // convert reputation to an integer (for easier readability)*/
+    return 0;
 }
 ////////////////////
 std::vector<unsigned int> neroshop::Seller::get_top_rated_sellers(unsigned int limit) {
@@ -681,11 +677,8 @@ bool neroshop::Seller::has_stock(const neroshop::Product& item) const {
 // callbacks
 ////////////////////
 neroshop::User * neroshop::Seller::on_login(const neroshop::Wallet& wallet) { // assumes user data already exists in database
-    /*neroshop::db::Sqlite3 * database = neroshop::get_database();
-    if(!database) throw std::runtime_error("database is NULL");*/
-    //std::string user_id = database->get_text_params("SELECT monero_address FROM users WHERE name = $1", { username });
-    std::string monero_address = wallet.get_monero_wallet()->get_primary_address();
-    if(!monero_utils::is_valid_address(monero_address, wallet.get_network_type())) {
+    std::string monero_primary_address = wallet.get_primary_address();
+    if(!wallet.is_valid_address(monero_primary_address)) {
         neroshop::print("Invalid monero address");
         return nullptr;
     }
@@ -693,7 +686,7 @@ neroshop::User * neroshop::Seller::on_login(const neroshop::Wallet& wallet) { //
     neroshop::User * user = new Seller();
     // set user properties retrieved from database
     dynamic_cast<Seller *>(user)->set_logged(true); // protected, so can only be accessed by child class obj    
-    dynamic_cast<Seller *>(user)->set_id(monero_address);
+    dynamic_cast<Seller *>(user)->set_id(monero_primary_address);
     dynamic_cast<Seller *>(user)->set_wallet(wallet);
     dynamic_cast<Seller *>(user)->set_account_type(UserAccountType::Seller);
     //-------------------------------

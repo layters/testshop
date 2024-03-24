@@ -56,7 +56,7 @@ void neroshop::Escrow::test_create_multisig_wallet(int M, int N) {
     // wallets are now multisig
     for(auto wallet : wallets) {
         std::string primary_address = wallet->get_monero_wallet()->get_address(0, 0);  
-        if(!monero_utils::is_valid_address(primary_address, wallet->get_network_type())) {
+        if(!monero_utils::is_valid_address(primary_address, wallet->get_monero_wallet()->get_network_type())) {
             throw std::runtime_error("wallet address is not valid!");
         }
         std::cout << "multisig address: " << primary_address << std::endl;

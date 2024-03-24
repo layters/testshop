@@ -57,8 +57,8 @@ enum class PaymentMethod {
 enum class PaymentCoin { 
     None = -1, // intended for cash and card payments
     Monero,
-    //Wownero, // coming soon!
-    //Bitcoin, // coming soon or not :S
+    Wownero,
+    //Bitcoin,
 };
 
 // delivery options

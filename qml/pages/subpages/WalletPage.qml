@@ -173,11 +173,20 @@ Page {
                                     font.pixelSize: 32
                                 }
                             }
-                            Text {
+                            Column {
                                 anchors.left: parent.children[0].right; anchors.leftMargin: 20
                                 anchors.verticalCenter: parent.verticalCenter
-                                text: modelData.is_incoming ? qsTr("Received") : qsTr("Sent")
-                                color: balanceTxColumn.textColor
+                                spacing: 1
+                                Text {
+                                    text: modelData.is_incoming ? qsTr("Received") : qsTr("Sent")
+                                    color: balanceTxColumn.textColor
+                                }
+                                Text {
+                                    text: "2024-01-01 00:00" // TODO: get actual tx date and time
+                                    color: "#777"
+                                    font.pointSize: 10
+                                    visible: false // <- hide this for now
+                                }
                             }
                             Column {
                                 anchors.horizontalCenter: parent.horizontalCenter
@@ -190,7 +199,7 @@ Page {
                                 Text {
                                     text: (!Wallet.opened) ? "" : qsTr("%1 %2%3 %4").arg(modelData.is_incoming ? "+" : "-").arg(Backend.getCurrencySign(priceDisplayText.currency)).arg(CurrencyExchangeRates.getXmrPrice(priceDisplayText.currency) * modelData.amount.toFixed(12)).arg(priceDisplayText.currency.toUpperCase())
                                     color: "#777"
-                                    //font.bold: true
+                                    font.pointSize: 10
                                 }
                             }
                             Button {

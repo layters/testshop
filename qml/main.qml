@@ -312,7 +312,7 @@ ApplicationWindow {
                         x: parent.x + (parent.width - this.width) / 2
                         height: contentHeight + 20; width: (contentWidth > parent.width) ? 300 : parent.width
                         bottomMargin : footer.height + 5
-                        text: qsTr("%1\n%2 %3%4").arg(moneroDaemonSyncBar.title).arg((!Wallet.opened || parent.value <= 0.0) ? ((moneroDaemonSyncBar.title != "monerod") ? "Waiting" : "Disconnected") : ((parent.value > 0.0 && parent.value < 1.0) ? Wallet.getSyncMessage() : "Connected")).arg((parent.value > 0.0 && parent.value != 1.0) ? ("(" + (parent.value * 100).toFixed(2) + "%)") : "").arg((!Wallet.opened || parent.value <= 0.0) ? "" : ((parent.value > 0.0 && parent.value != 1.0) ? ("\nBlocks remaining: " + Wallet.getSyncHeight() + " / " + Wallet.getSyncEndHeight()) : ""))
+                        text: qsTr("%1\n%2 %3%4").arg(moneroDaemonSyncBar.title).arg((!Wallet.opened || parent.value <= 0.0) ? ((moneroDaemonSyncBar.title != "monerod") ? "Waiting" : "Disconnected") : ((parent.value > 0.0 && parent.value < 1.0) ? Wallet.getSyncMessage() : "Synchronized")).arg((parent.value > 0.0 && parent.value != 1.0) ? ("(" + (parent.value * 100).toFixed(2) + "%)") : "").arg((!Wallet.opened || parent.value <= 0.0) ? "" : ((parent.value > 0.0 && parent.value != 1.0) ? ("\nBlocks remaining: " + Wallet.getSyncHeight() + " / " + Wallet.getSyncEndHeight()) : ""))
                         pointer.visible: false
                     }                
                 }
