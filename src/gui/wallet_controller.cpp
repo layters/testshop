@@ -257,6 +257,7 @@ QVariantList neroshop::WalletController::getTransfers() const {
 
 
 void neroshop::WalletController::nodeConnect(const QString& ip, const QString& port, const QString& username, const QString& password) {
+    if (!_wallet) throw std::runtime_error("neroshop::Wallet is not initialized");
     _wallet->daemon_connect_remote(ip.toStdString(),
                                    port.toStdString(),
                                    username.toStdString(),
@@ -265,10 +266,12 @@ void neroshop::WalletController::nodeConnect(const QString& ip, const QString& p
 }
 
 void neroshop::WalletController::daemonConnect(const QString& username, const QString& password) {
+    if (!_wallet) throw std::runtime_error("neroshop::Wallet is not initialized");
     _wallet->daemon_connect_local(username.toStdString(), password.toStdString());
 }
 
 void neroshop::WalletController::daemonExecute(const QString& daemon_dir, bool confirm_external_bind, bool restricted_rpc, QString data_dir, unsigned int restore_height) {//const {
+    if (!_wallet) throw std::runtime_error("neroshop::Wallet is not initialized");
     _wallet->daemon_open(daemon_dir.toStdString(),
                          confirm_external_bind,
                          restricted_rpc,
@@ -341,6 +344,8 @@ bool neroshop::WalletController::isOpened() const {
 }
 
 bool neroshop::WalletController::fileExists(const QString& filename) const {
+    if (!_wallet)
+        throw std::runtime_error("neroshop::Wallet is not initialized");
     return _wallet->file_exists(filename.toStdString());
 }
 
