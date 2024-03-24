@@ -38,6 +38,7 @@ enum class WalletError {
     DoesNotExist,
     BadNetworkType,
     IsNotOpened, // monero_wallet_obj is nullptr
+    BadWalletType,
 };
 
 class Wallet : public monero_wallet_listener {

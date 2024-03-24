@@ -558,6 +558,9 @@ Page {
                 	            } else if(loginError == Enum.LoginError.WalletIsOpenedByAnotherProgram) {
                 	                messageBox.text = qsTr("Wallet is opened by another program")
                 	                messageBox.open()
+                	            } else if(loginError == Enum.LoginError.WalletBadWalletType) {
+                	                messageBox.text = qsTr("Bad wallet type")
+                	                messageBox.open()
                 	            } else if(loginError == Enum.LoginError.DaemonIsNotConnected) {
                 	                messageBox.text = qsTr("Daemon (neromon) is not connected")
                 	                messageBox.open()

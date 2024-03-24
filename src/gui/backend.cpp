@@ -1819,6 +1819,8 @@ int neroshop::Backend::loginWithWalletFile(WalletController* wallet_controller, 
                 return static_cast<int>(EnumWrapper::LoginError::WalletBadNetworkType);
             if(wallet_error == static_cast<int>(WalletError::IsNotOpened))
                 return static_cast<int>(EnumWrapper::LoginError::WalletIsNotOpened);
+            if(wallet_error == static_cast<int>(WalletError::BadWalletType))
+                return static_cast<int>(EnumWrapper::LoginError::WalletBadWalletType);    
         }
         return static_cast<int>(EnumWrapper::LoginError::Ok);
     });

@@ -169,10 +169,12 @@ int neroshop::Wallet::open(const std::string& path, const std::string& password)
     } catch (const std::exception& e) {
         std::string error_msg = e.what();
         neroshop::print(error_msg, 1);//tools::error::invalid_password
-        if(neroshop::string::contains(error_msg, "wallet cannot be opened")) {
+        if(neroshop::string::contains(error_msg, "wallet cannot be opened as")) {
             return static_cast<int>(WalletError::BadNetworkType);
         } else if(neroshop::string::contains(error_msg, "invalid password")) {
             return static_cast<int>(WalletError::WrongPassword);
+        } else if(neroshop::string::contains(error_msg, "Invalid decimal point specification")) {
+            return static_cast<int>(WalletError::BadWalletType);
         } else {
             return static_cast<int>(WalletError::IsOpenedByAnotherProgram);
         }
