@@ -3,14 +3,10 @@
 #ifndef WALLET_HPP_NEROSHOP
 #define WALLET_HPP_NEROSHOP
 
-#include <daemon/monero_daemon.h>
-#include <daemon/monero_daemon_model.h>
-#include <utils/gen_utils.h>
-#include <utils/monero_utils.h>
-#include <wallet/monero_wallet.h>
-#include <wallet/monero_wallet_full.h>
-#include <wallet/monero_wallet_keys.h>
-#include <wallet/monero_wallet_model.h>
+#define PICONERO 0.000000000001  // the smallest unit of a monero (monero has 12 decimal places) // https://web.getmonero.org/resources/moneropedia/denominations.html
+
+#include "wallets/monero.hpp"
+//#include "wallets/wownero.hpp"
 
 #include <iostream>
 #include <string>
@@ -21,6 +17,17 @@
 namespace neroshop {
 
 class Process; // forward declaration
+
+enum class WalletType {
+    Monero = 0,
+    Wownero
+};
+
+enum class WalletNetworkType : uint8_t { // refer to daemon/monero_daemon_model.h
+    Mainnet = 0,
+    Testnet,
+    Stagenet
+};
 
 enum class WalletError {
     Ok = 0, 
@@ -84,27 +91,42 @@ public:
     //void explore_tx(const std::string& tx_hash);
     void wallet_info();
     
-    std::string sign_message(const std::string& message, monero_message_signature_type signature_type) const;//, unsigned int account_idx = 0, unsigned int subaddress_idx = 0) const;
+    std::string sign_message(const std::string& message, monero_message_signature_type signature_type) const;
     bool verify_message(const std::string& message, const std::string& signature) const;
     // setters
-    void set_network_type(monero::monero_network_type network_type);
+    void set_wallet_type(WalletType wallet_type);
+    
+    void set_network_type(WalletNetworkType network_type);
     void set_network_type_by_string(const std::string& network_type);
     
     void set_tx_note(const std::string& txid, const std::string& tx_note); // "set_tx_note <txid> [free note text here]" - useful for filling address information
     // getters
+    WalletType get_wallet_type() const;
+    
     double get_sync_percentage() const;
     unsigned long long get_sync_height() const;
     unsigned long long get_sync_start_height() const;
     unsigned long long get_sync_end_height() const;
     std::string get_sync_message() const;
     
-    std::string get_primary_address() const; // returns primary address string // "address"
+    std::string get_primary_address() const;
     std::string get_address(unsigned int index) const; // returns address at "index"'s string (primary address is index 0) // "address all"
-    unsigned int get_address_count() const; // address_list.size();
-    double get_balance_raw(unsigned int account_index = 0, unsigned int subaddress_index = 0) const; // "balance"
-    double get_unlocked_balance_raw(unsigned int account_index = 0, unsigned int subaddress_index = 0) const; // "balance"
-    double get_balance(unsigned int account_index = 0, unsigned int subaddress_index = 0) const;
-    double get_unlocked_balance(unsigned int account_index = 0, unsigned int subaddress_index = 0) const;
+    unsigned int get_address_count() const;
+    
+    uint64_t get_balance_raw() const;
+    uint64_t get_balance_raw(unsigned int account_index) const;
+    uint64_t get_balance_raw(unsigned int account_index, unsigned int subaddress_index) const;
+    uint64_t get_unlocked_balance_raw() const;
+    uint64_t get_unlocked_balance_raw(unsigned int account_index) const;
+    uint64_t get_unlocked_balance_raw(unsigned int account_index, unsigned int subaddress_index) const;
+    
+    double get_balance() const;
+    double get_balance(unsigned int account_index) const;
+    double get_balance(unsigned int account_index, unsigned int subaddress_index) const;
+    double get_unlocked_balance() const;
+    double get_unlocked_balance(unsigned int account_index) const;
+    double get_unlocked_balance(unsigned int account_index, unsigned int subaddress_index) const;
+    
     std::vector<std::string> get_transactions() const; // "show_transfers"
     unsigned int get_transactions_count() const;
     // subaddress
@@ -117,24 +139,29 @@ public:
     std::string get_public_spend_key() const;
     std::pair<std::string, std::string> get_spend_keys() const; // secret, public // "spendkey"
     std::string get_seed() const; // "seed"
-    //-Image * get_qr_code() const; // returns address qrcode // "show_qr_code"
-    //-Image * get_qr_code(unsigned int address_index) const; // returns the qrcode of the address at "index"
-    std::string get_path() const; // "wallet_info"
-    std::string get_description() const; // "wallet_info"    
+    std::string get_path() const;
+    //std::string get_description() const;
     std::string get_type() const; // "wallet_info": Normal, HW
     unsigned int get_daemon_height() const;
     unsigned int get_height() const;
     unsigned int get_height_by_date(int year, int month, int day) const;
-    monero::monero_network_type get_network_type() const; // "wallet_info":  Mainnet, Testnet, Stagenet
-    std::string get_network_type_string() const; // "wallet_info":  Mainnet, Testnet, Stagenet
+    WalletNetworkType get_network_type() const; // "wallet_info":  Mainnet, Testnet, Stagenet
+    std::string get_network_type_as_string() const; // "wallet_info":  Mainnet, Testnet, Stagenet
     std::string get_status() const; // "status" - Check current status of wallet.
     std::string get_version() const; // "version" - Check software version.
     // get wallet handles (monero, wownero, etc.)
     monero_wallet_full * get_monero_wallet() const;
+    //wownero_wallet_full * get_wownero_wallet() const;
     std::vector<std::string> recent_address_list; // recently used addresses
     // boolean functions
+    bool is_opened() const;
+    bool is_connected_to_daemon() const;
+    bool is_synced() const;
+    bool is_daemon_synced() const;
+    
     bool file_exists(const std::string& filename) const;
     bool is_valid_address(const std::string& address) const;
+    bool is_cryptonote_based() const;
     // friends
     friend class Seller; // seller can access wallet private members
     friend class WalletController;
@@ -145,8 +172,10 @@ private:
     // callbacks
     void load_from_config(std::string/*const std::string&*/ password = "supersecretpassword123");
 private:
+    WalletType wallet_type; // can switch between different wallets
+    static WalletNetworkType network_type;
     std::unique_ptr<monero::monero_wallet_full> monero_wallet_obj; // monero wallet
-    static monero::monero_network_type network_type; // default will be mainnet when this application is released
+    //std::unique_ptr<wownero::wownero_wallet_full> wownero_wallet_obj;
     std::unique_ptr<Process> process; // monerod process // every wallet will have its own process
     volatile double percentage; // sync progress
     mutable std::mutex wallet_data_mutex;

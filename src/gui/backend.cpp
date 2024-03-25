@@ -1852,34 +1852,27 @@ int neroshop::Backend::loginWithWalletFile(WalletController* wallet_controller, 
     //----------------------------------------
     // Load RSA keys from file
     std::string config_path = NEROSHOP_DEFAULT_KEYS_PATH;
-    std::string public_key_path = config_path + "/" + primary_address + ".pub";
-    std::string private_key_path = config_path + "/" + primary_address + ".key";
+    std::string public_key_path = config_path + "/" + (primary_address + ".pub");
+    std::string private_key_path = config_path + "/" + (primary_address + ".key");
     //----------------------------------------
-    // Load public_key
+    // Load public_key (optional)
     std::ifstream public_key_file(public_key_path);
-    if (!public_key_file) {
-        // Handle file open error
-        throw std::runtime_error("Failed to open public key file: " + public_key_path);
+    if (public_key_file) {
+        std::ostringstream buffer;
+        buffer << public_key_file.rdbuf();
+        std::string public_key = buffer.str();
+        user_controller->_user->set_public_key(public_key);
     }
-
-    std::ostringstream buffer0;
-    buffer0 << public_key_file.rdbuf();
-    std::string public_key = buffer0.str();
     //----------------------------------------
-    // Load private_key
+    // Load private_key (mandatory)
     std::ifstream private_key_file(private_key_path);
     if (!private_key_file) {
-        // Handle file open error
         throw std::runtime_error("Failed to open private key file: " + private_key_path);
     }
-
     std::ostringstream buffer;
     buffer << private_key_file.rdbuf();
     std::string private_key = buffer.str();    
-    //----------------------------------------
-    // Set RSA private key
-    user_controller->_user->set_public_key(public_key);
-    user_controller->_user->set_private_key(private_key);
+    user_controller->_user->set_private_key(private_key); // Set RSA private key
     //----------------------------------------
     emit user_controller->userChanged();
     emit user_controller->userLogged();

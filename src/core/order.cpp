@@ -439,6 +439,7 @@ void neroshop::Order::set_payment_coin(PaymentCoin payment_coin) {
 void neroshop::Order::set_payment_coin_by_string(const std::string& payment_coin) {
     if(payment_coin == "None") set_payment_coin(PaymentCoin::None);
     if(payment_coin == "Monero") set_payment_coin(PaymentCoin::Monero);
+    if(payment_coin == "Wownero") set_payment_coin(PaymentCoin::Wownero);
     //if(payment_coin == "") set_payment_coin(PaymentCoin::);
 }
 
@@ -470,18 +471,18 @@ neroshop::OrderStatus neroshop::Order::get_status() const {
 
 std::string neroshop::Order::get_status_as_string() const {
     switch(status) {
-        case OrderStatus::New: return "New"; break;
-        case OrderStatus::Pending: return "Pending"; break;
-        case OrderStatus::Processing: return "Processing"; break;
-        case OrderStatus::Shipped: return "Shipped"; break;
-        case OrderStatus::ReadyForPickup: return "Ready For Pickup"; break; //case OrderStatus::Ready: return "Ready For Pickup"; break;
-        case OrderStatus::Delivered: return "Delivered"; break; //case OrderStatus::Done: return "Delivered"; break;
-        case OrderStatus::Cancelled: return "Cancelled"; break;
-        case OrderStatus::Failed: return "Failed"; break;
-        case OrderStatus::Returned: return "Returned"; break;
-        case OrderStatus::Disputed: return "Disputed"; break;
-        case OrderStatus::Declined: return "Declined"; break;
-        //case OrderStatus::: return ""; break;
+        case OrderStatus::New: return "New";
+        case OrderStatus::Pending: return "Pending";
+        case OrderStatus::Processing: return "Processing";
+        case OrderStatus::Shipped: return "Shipped";
+        case OrderStatus::ReadyForPickup: return "Ready For Pickup"; //case OrderStatus::Ready: return "Ready For Pickup";
+        case OrderStatus::Delivered: return "Delivered"; //case OrderStatus::Done: return "Delivered";
+        case OrderStatus::Cancelled: return "Cancelled";
+        case OrderStatus::Failed: return "Failed";
+        case OrderStatus::Returned: return "Returned";
+        case OrderStatus::Disputed: return "Disputed";
+        case OrderStatus::Declined: return "Declined";
+        //case OrderStatus::: return "";
         default: return "New";
     }
 }
@@ -516,9 +517,9 @@ neroshop::PaymentOption neroshop::Order::get_payment_option() const {
 
 std::string neroshop::Order::get_payment_option_as_string() const {
     switch(payment_option) {
-        case PaymentOption::Escrow: return "Escrow"; break;
-        case PaymentOption::Multisig: return "Multisig"; break;
-        case PaymentOption::Finalize: return "Finalize"; break;
+        case PaymentOption::Escrow: return "Escrow";
+        case PaymentOption::Multisig: return "Multisig";
+        case PaymentOption::Finalize: return "Finalize";
         default: return "Escrow";
     }
 }
@@ -529,9 +530,10 @@ neroshop::PaymentCoin neroshop::Order::get_payment_coin() const {
 
 std::string neroshop::Order::get_payment_coin_as_string() const {
     switch(payment_coin) {
-        case PaymentCoin::None: return "None"; break;
-        case PaymentCoin::Monero: return "Monero"; break;
-        //case PaymentCoin::: return ""; break;
+        case PaymentCoin::None: return "None";
+        case PaymentCoin::Monero: return "Monero";
+        case PaymentCoin::Wownero: return "Wownero";
+        //case PaymentCoin::: return "";
         default: return "Monero";
     }
 }
@@ -542,8 +544,8 @@ neroshop::DeliveryOption neroshop::Order::get_delivery_option() const {
 
 std::string neroshop::Order::get_delivery_option_as_string() const {
     switch(delivery_option) {
-        case DeliveryOption::Delivery: return "Delivery"; break;
-        case DeliveryOption::Pickup: return "Pickup"; break;
+        case DeliveryOption::Delivery: return "Delivery";
+        case DeliveryOption::Pickup: return "Pickup";
         default: return "Delivery";
     }
 }

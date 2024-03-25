@@ -43,6 +43,7 @@ public:
     Q_INVOKABLE unsigned int getSyncStartHeight() const;
     Q_INVOKABLE unsigned int getSyncEndHeight() const;
     Q_INVOKABLE QString getSyncMessage() const;
+    Q_INVOKABLE int getWalletType() const;
     Q_INVOKABLE int getNetworkType() const;
     Q_INVOKABLE QString getNetworkTypeString() const;
     Q_INVOKABLE QString getSeed() const;
@@ -61,6 +62,7 @@ public:
     Q_INVOKABLE QVariantList getTransfers() const;
     Q_INVOKABLE neroshop::Wallet * getWallet() const;
     
+    Q_INVOKABLE void setWalletType(unsigned int wallet_type);
     Q_INVOKABLE void setNetworkTypeByString(const QString& network_type);
     //Q_INVOKABLE <type> <function_name>() const {}
     

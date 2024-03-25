@@ -59,7 +59,7 @@ int neroshop::WalletController::open(const QString& path, const QString& passwor
 void neroshop::WalletController::close(bool save) {
     if (!_wallet)
         throw std::runtime_error("neroshop::Wallet is not initialized");
-    _wallet->get_monero_wallet()->close(save);
+    _wallet->close(save);
     // set monero_wallet to nullptr so that we know it has been deleted
     _wallet->monero_wallet_obj.reset();
     emit walletChanged();
@@ -78,13 +78,12 @@ QVariantMap neroshop::WalletController::createUniqueSubaddressObject(unsigned in
     QVariantMap subaddress_object;
     monero::monero_subaddress subaddress = _wallet->create_subaddress(account_idx,
                                                                       label.toStdString());
-    double piconero = 0.000000000001;
     subaddress_object.insert("account_index", subaddress.m_account_index.get());
     subaddress_object.insert("index", subaddress.m_index.get());
     subaddress_object.insert("address", QString::fromStdString(subaddress.m_address.get()));
     subaddress_object.insert("label", QString::fromStdString(subaddress.m_label.get()));
-    subaddress_object.insert("balance", (qulonglong(subaddress.m_balance.get()) * piconero));
-    subaddress_object.insert("unlocked_balance", (qulonglong(subaddress.m_unlocked_balance.get()) * piconero));
+    subaddress_object.insert("balance", (qulonglong(subaddress.m_balance.get()) * PICONERO));
+    subaddress_object.insert("unlocked_balance", (qulonglong(subaddress.m_unlocked_balance.get()) * PICONERO));
     subaddress_object.insert("num_unspent_outputs", qulonglong(subaddress.m_num_unspent_outputs.get()));
     subaddress_object.insert("is_used", subaddress.m_is_used.get());
     subaddress_object.insert("num_blocks_to_unlock", qulonglong(subaddress.m_num_blocks_to_unlock.get())); // uint64_t is an unsigned long long so we have to convert it into a qulonglong
@@ -113,6 +112,11 @@ bool neroshop::WalletController::verifyMessage(const QString& message, const QSt
     return _wallet->verify_message(message.toStdString(), signature.toStdString());
 }
 
+int neroshop::WalletController::getWalletType() const {
+    if (!_wallet)
+        throw std::runtime_error("neroshop::Wallet is not initialized");
+    return static_cast<int>(_wallet->get_wallet_type());
+}
 
 int neroshop::WalletController::getNetworkType() const {
     if (!_wallet)
@@ -123,21 +127,21 @@ int neroshop::WalletController::getNetworkType() const {
 QString neroshop::WalletController::getNetworkTypeString() const {
     if (!_wallet)
         throw std::runtime_error("neroshop::Wallet is not initialized");
-    return QString::fromStdString(_wallet->get_network_type_string());
+    return QString::fromStdString(_wallet->get_network_type_as_string());
 }
 
 QString neroshop::WalletController::getSeed() const {
     if (!_wallet)
         throw std::runtime_error("neroshop::Wallet is not initialized");
-    if (!_wallet->get_monero_wallet())
-        return "";
-    return QString::fromStdString(_wallet->get_monero_wallet()->get_seed());
+    /*if (!_wallet->get_monero_wallet())
+        return "";*/
+    return QString::fromStdString(_wallet->get_seed());
 }
 
 QStringList neroshop::WalletController::getSeedList() const {
     if (!_wallet)
         throw std::runtime_error("neroshop::Wallet is not initialized");
-    QStringList seed_phrase = QString::fromStdString(_wallet->get_monero_wallet()->get_seed())
+    QStringList seed_phrase = QString::fromStdString(_wallet->get_seed())
                                   .split(' ');
     return seed_phrase;
 }
@@ -145,9 +149,7 @@ QStringList neroshop::WalletController::getSeedList() const {
 QString neroshop::WalletController::getPrimaryAddress() const {
     if (!_wallet)
         throw std::runtime_error("neroshop::Wallet is not initialized");
-    if (!_wallet->get_monero_wallet())
-        throw std::runtime_error("monero_wallet_full is not opened");
-    return QString::fromStdString(_wallet->get_monero_wallet()->get_primary_address());
+    return QString::fromStdString(_wallet->get_primary_address());
 }
 
 QStringList neroshop::WalletController::getAddressesAll() const {
@@ -183,60 +185,37 @@ QStringList neroshop::WalletController::getAddressesUnused() const {
 double neroshop::WalletController::getBalanceLocked() const {
     if (!_wallet)
         throw std::runtime_error("neroshop::Wallet is not initialized");
-    if (!_wallet->get_monero_wallet())
-        throw std::runtime_error("monero_wallet_full is not opened");
-    double piconero = 0.000000000001;
-    return _wallet->get_monero_wallet()->get_balance() * piconero;
+    return _wallet->get_balance();
 }
 
 double neroshop::WalletController::getBalanceLocked(unsigned int account_index) const {
     if (!_wallet)
         throw std::runtime_error("neroshop::Wallet is not initialized");
-    if (!_wallet->get_monero_wallet())
-        throw std::runtime_error("monero_wallet_full is not opened");
-    double piconero = 0.000000000001;
-    // primary address balance
-    return _wallet->get_monero_wallet()->get_balance(account_index) * piconero;
+    return _wallet->get_balance(account_index);
 }
 
 double neroshop::WalletController::getBalanceLocked(unsigned int account_index, unsigned int subaddress_index) const {
     if (!_wallet)
         throw std::runtime_error("neroshop::Wallet is not initialized");
-    if (!_wallet->get_monero_wallet())
-        throw std::runtime_error("monero_wallet_full is not opened");
-    double piconero = 0.000000000001;
-    // subaddress balance
-    return _wallet->get_monero_wallet()->get_balance(account_index, subaddress_index) * piconero;
+    return _wallet->get_balance(account_index, subaddress_index);
 }
 
 double neroshop::WalletController::getBalanceUnlocked() const {
     if (!_wallet)
         throw std::runtime_error("neroshop::Wallet is not initialized");
-    if (!_wallet->get_monero_wallet())
-        throw std::runtime_error("monero_wallet_full is not opened");
-    double piconero = 0.000000000001;
-    return _wallet->get_monero_wallet()->get_unlocked_balance() * piconero;
+    return _wallet->get_unlocked_balance();
 }
 
 double neroshop::WalletController::getBalanceUnlocked(unsigned int account_index) const {
     if (!_wallet)
         throw std::runtime_error("neroshop::Wallet is not initialized");
-    if (!_wallet->get_monero_wallet())
-        throw std::runtime_error("monero_wallet_full is not opened");
-    double piconero = 0.000000000001;
-    // primary address balance unlocked
-    return _wallet->get_monero_wallet()->get_unlocked_balance(account_index) * piconero;
+    return _wallet->get_unlocked_balance(account_index);
 }
 
 double neroshop::WalletController::getBalanceUnlocked(unsigned int account_index, unsigned int subaddress_index) const {
     if (!_wallet)
         throw std::runtime_error("neroshop::Wallet is not initialized");
-    if (!_wallet->get_monero_wallet())
-        throw std::runtime_error("monero_wallet_full is not opened");
-    double piconero = 0.000000000001;
-    // subaddress balance unlocked
-    return _wallet->get_monero_wallet()->get_unlocked_balance(account_index, subaddress_index)
-           * piconero;
+    return _wallet->get_unlocked_balance(account_index, subaddress_index);
 }
 
 
@@ -245,7 +224,6 @@ QVariantList neroshop::WalletController::getTransfers() const {
     if (!_wallet->get_monero_wallet()) throw std::runtime_error("monero_wallet_full is not opened");
     // TODO: make this function async or put in a separate thread
     std::packaged_task<QVariantList(void)> get_transfers_task([this]() -> QVariantList {
-        double piconero = 0.000000000001;
         monero_transfer_query transfer_query; // optional
         auto transfers = _wallet->get_monero_wallet()->get_transfers(transfer_query);
 
@@ -255,11 +233,11 @@ QVariantList neroshop::WalletController::getTransfers() const {
             monero_transfer * transfer = transfers[i].get();*/
 
             QVariantMap transfer_object;
-            transfer_object.insert("amount", (transfer->m_amount.get() * piconero));
+            transfer_object.insert("amount", (transfer->m_amount.get() * PICONERO));
             transfer_object.insert("account_index", transfer->m_account_index.get()); // obviously account index 0
             transfer_object.insert("is_incoming", transfer->is_incoming().get());
             transfer_object.insert("is_outgoing", transfer->is_outgoing().get());
-            monero_tx_wallet * tx_wallet = transfer->m_tx.get();
+            monero_tx_wallet * tx_wallet = transfer->m_tx.get(); // refer to: https://woodser.github.io/monero-cpp/doxygen/structmonero_1_1monero__tx__wallet.html
             ////transfer_object.insert("", tx_wallet->);
             //std::cout << ": " << tx_wallet-> << "\n";
         
@@ -279,6 +257,7 @@ QVariantList neroshop::WalletController::getTransfers() const {
 
 
 void neroshop::WalletController::nodeConnect(const QString& ip, const QString& port, const QString& username, const QString& password) {
+    if (!_wallet) throw std::runtime_error("neroshop::Wallet is not initialized");
     _wallet->daemon_connect_remote(ip.toStdString(),
                                    port.toStdString(),
                                    username.toStdString(),
@@ -287,10 +266,12 @@ void neroshop::WalletController::nodeConnect(const QString& ip, const QString& p
 }
 
 void neroshop::WalletController::daemonConnect(const QString& username, const QString& password) {
+    if (!_wallet) throw std::runtime_error("neroshop::Wallet is not initialized");
     _wallet->daemon_connect_local(username.toStdString(), password.toStdString());
 }
 
 void neroshop::WalletController::daemonExecute(const QString& daemon_dir, bool confirm_external_bind, bool restricted_rpc, QString data_dir, unsigned int restore_height) {//const {
+    if (!_wallet) throw std::runtime_error("neroshop::Wallet is not initialized");
     _wallet->daemon_open(daemon_dir.toStdString(),
                          confirm_external_bind,
                          restricted_rpc,
@@ -325,6 +306,11 @@ QString neroshop::WalletController::getSyncMessage() const {
         _wallet->message); //QString::fromStdString(wallet->get_sync_message());
 }
 
+void neroshop::WalletController::setWalletType(unsigned int wallet_type) {
+    if (!_wallet)
+        throw std::runtime_error("neroshop::Wallet is not initialized");
+    _wallet->set_wallet_type(static_cast<WalletType>(wallet_type));
+}
 
 void neroshop::WalletController::setNetworkTypeByString(const QString& network_type) {
     if (!_wallet)
@@ -336,36 +322,30 @@ void neroshop::WalletController::setNetworkTypeByString(const QString& network_t
 bool neroshop::WalletController::isConnectedToDaemon() const {
     if (!_wallet)
         throw std::runtime_error("neroshop::Wallet is not initialized");
-    if (!_wallet->get_monero_wallet())
-        throw std::runtime_error("monero_wallet_full is not opened");
-    return _wallet->get_monero_wallet()->is_connected_to_daemon();
+    return _wallet->is_connected_to_daemon();
 }
 
 bool neroshop::WalletController::isSynced() const {
     if (!_wallet)
         throw std::runtime_error("neroshop::Wallet is not initialized");
-    if (!_wallet->get_monero_wallet())
-        throw std::runtime_error("monero_wallet_full is not opened");
-    return _wallet->get_monero_wallet()->is_synced();
+    return _wallet->is_synced();
 }
 
 bool neroshop::WalletController::isDaemonSynced() const {
     if (!_wallet)
         throw std::runtime_error("neroshop::Wallet is not initialized");
-    if (!_wallet->get_monero_wallet())
-        throw std::runtime_error("monero_wallet_full is not opened");
-    if (!_wallet->get_monero_wallet()->is_connected_to_daemon()) {
-        return false;
-    }
-    return _wallet->get_monero_wallet()
-        ->is_daemon_synced(); // will cause crash if wallet is not connected to daemon
+    return _wallet->is_daemon_synced();
 }
 
 bool neroshop::WalletController::isOpened() const {
-    return (_wallet->get_monero_wallet() != nullptr);
+    if (!_wallet)
+        throw std::runtime_error("neroshop::Wallet is not initialized");
+    return _wallet->is_opened();
 }
 
 bool neroshop::WalletController::fileExists(const QString& filename) const {
+    if (!_wallet)
+        throw std::runtime_error("neroshop::Wallet is not initialized");
     return _wallet->file_exists(filename.toStdString());
 }
 
