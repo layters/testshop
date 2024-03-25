@@ -365,11 +365,11 @@ void neroshop::Wallet::set_wallet_type(WalletType wallet_type) {
 //-------------------------------------------------------
 // NOTE: It is IMPOSSIBLE to change the network type of a pre-existing monero wallet, but it can be set before its creation
 void neroshop::Wallet::set_network_type(WalletNetworkType network_type) {
-    auto current_network_type = get_network_type();
+    auto current_network_type = get_wallet_network_type();
     if(current_network_type == network_type) {
         return;
     }
-    auto network_type_str = get_network_type_as_string();
+    auto network_type_str = get_wallet_network_type_as_string();
     switch(wallet_type) {
         case WalletType::Monero:
             if(monero_wallet_obj.get()) throw std::runtime_error("cannot change " + network_type_str + " wallet network type");
@@ -600,7 +600,7 @@ void neroshop::Wallet::daemon_open(const std::string& daemon_dir, bool confirm_e
     std::string args = (" --data-dir=" + data_dir) + (" --rpc-bind-ip=" + ip) + (" --rpc-bind-port=38081");
     if(confirm_external_bind == true) { args = args + " --confirm-external-bind"; }
     if(confirm_external_bind == true && restricted_rpc == true) { args = args + " --restricted-rpc"; }
-    auto network_type_str = get_network_type_as_string();
+    auto network_type_str = get_wallet_network_type_as_string();
     if(neroshop::string::lower(network_type_str) != "mainnet") args = args + (" --" + neroshop::string::lower(network_type_str));
     args = args + (" --detach"); // https://monero.stackexchange.com/questions/12005/what-is-the-difference-between-monerod-detach-and-monerod-non-interactive
     std::cout << "\033[1;95;49m" << "$ " << daemon_dir + args << "\033[0m" << std::endl;
@@ -728,20 +728,33 @@ neroshop::WalletType neroshop::Wallet::get_wallet_type() const {
     return wallet_type;
 }
 //-------------------------------------------------------
-neroshop::WalletNetworkType neroshop::Wallet::get_network_type() const {
+neroshop::WalletNetworkType neroshop::Wallet::get_wallet_network_type() const {
     switch(wallet_type) {
         case WalletType::Monero:
-            if(!monero_wallet_obj.get()) return this->network_type;
+            if(!monero_wallet_obj.get()) return network_type;
             return static_cast<WalletNetworkType>(monero_wallet_obj->get_network_type());
         case WalletType::Wownero:
-            return this->network_type;
+            return network_type;
         default:
-            return this->network_type;
+            return network_type;
     }
 }
 //-------------------------------------------------------
-std::string neroshop::Wallet::get_network_type_as_string() const {
-    auto network_type = get_network_type();
+neroshop::WalletNetworkType neroshop::Wallet::get_network_type() {
+    return network_type;
+}
+//-------------------------------------------------------
+std::string neroshop::Wallet::get_wallet_network_type_as_string() const {
+    auto wallet_network_type = get_wallet_network_type();
+    switch(wallet_network_type) {
+        case WalletNetworkType::Mainnet: return "mainnet"; // 0
+        case WalletNetworkType::Testnet: return "testnet"; // 1
+        case WalletNetworkType::Stagenet: return "stagenet"; // 2
+        default: return "mainnet";
+    }
+}
+//-------------------------------------------------------
+std::string neroshop::Wallet::get_network_type_as_string() {
     switch(network_type) {
         case WalletNetworkType::Mainnet: return "mainnet"; // 0
         case WalletNetworkType::Testnet: return "testnet"; // 1
@@ -1193,7 +1206,7 @@ bool neroshop::Wallet::file_exists(const std::string& filename) const {
 }
 //-------------------------------------------------------
 bool neroshop::Wallet::is_valid_address(const std::string& address) const {
-    auto network_type = get_network_type();
+    auto network_type = get_wallet_network_type();
     switch(wallet_type) {
         case WalletType::Monero:
             return monero_utils::is_valid_address(address, static_cast<monero::monero_network_type>(network_type));

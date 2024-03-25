@@ -71,14 +71,7 @@ int main(int argc, char *argv[])
     // Configuration file must be loaded right after Qt Application object has been created so that we can get the correct config location
     // open configuration script
     neroshop::load_nodes_from_memory();
-    // Set monero network type
-    std::vector<std::string> networks = { "mainnet", "testnet", "stagenet" };
     
-    std::string network_type = Script::get_string(neroshop::lua_state, "monero.network_type");
-    if (std::find(networks.begin(), networks.end(), network_type) == networks.end()) {
-        neroshop::print("\033[1;91mnetwork_type \"" + network_type + "\" is not valid");
-        return 1;
-    }
     // create "datastore" folder within "~/.config/neroshop/" path
     std::string data_dir = NEROSHOP_DEFAULT_DATABASE_PATH;
     if(!neroshop::filesystem::is_directory(data_dir)) {
@@ -131,7 +124,6 @@ int main(int argc, char *argv[])
     engine.rootContext()->setContextProperty("DaemonManager", &daemonManager);
     // we can also register an instance of a class instead of the class itself
     WalletController *wallet = new WalletController(&engine);
-    wallet->setNetworkTypeByString(QString::fromStdString(network_type));
     engine.rootContext()->setContextProperty("Wallet", wallet);//new WalletController());//qmlRegisterUncreatableType<WalletProxy>("neroshop.Wallet", 1, 0, "Wallet", "Wallet cannot be instantiated directly.");//qmlRegisterType<WalletProxy>("neroshop.Wallet", 1, 0, "Wallet"); // Usage: import neroshop.Wallet  ...  Wallet { id: wallet }
     qRegisterMetaType<WalletController*>(); // Wallet can now be used as an argument in function parameters
     // register script

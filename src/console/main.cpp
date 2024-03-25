@@ -48,7 +48,7 @@ int main(int argc, char** argv) {
 
     std::vector<std::string> networks = {"mainnet", "stagenet", "testnet"};
 
-    std::string network_type = Script::get_string(lua_state, "monero.network_type");
+    std::string network_type = Wallet::get_network_type_as_string();
     if (std::find(networks.begin(), networks.end(), network_type) == networks.end()) {
         neroshop::print("\033[1;91mnetwork_type \"" + network_type + "\" is not valid");
         return 1;

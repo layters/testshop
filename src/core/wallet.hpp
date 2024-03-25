@@ -4,6 +4,7 @@
 #define WALLET_HPP_NEROSHOP
 
 #define PICONERO 0.000000000001  // the smallest unit of a monero (monero has 12 decimal places) // https://web.getmonero.org/resources/moneropedia/denominations.html
+#define WOWOSHI  0.00000000001   // https://git.wownero.com/wownero/wownero/src/branch/master/src/cryptonote_config.h#L68
 
 #include "wallets/monero.hpp"
 //#include "wallets/wownero.hpp"
@@ -27,6 +28,12 @@ enum class WalletNetworkType : uint8_t { // refer to daemon/monero_daemon_model.
     Mainnet = 0,
     Testnet,
     Stagenet
+};
+
+static std::map<WalletNetworkType, std::vector<std::string>> WalletNetworkPortMap {
+    { WalletNetworkType::Mainnet, { "18081", "18089" } },
+    { WalletNetworkType::Testnet, { "28081", "28089" } },
+    { WalletNetworkType::Stagenet, { "38081", "38089" } },
 };
 
 enum class WalletError {
@@ -103,6 +110,10 @@ public:
     void set_tx_note(const std::string& txid, const std::string& tx_note); // "set_tx_note <txid> [free note text here]" - useful for filling address information
     // getters
     WalletType get_wallet_type() const;
+    WalletNetworkType get_wallet_network_type() const;
+    static WalletNetworkType get_network_type();
+    std::string get_wallet_network_type_as_string() const;
+    static std::string get_network_type_as_string();
     
     double get_sync_percentage() const;
     unsigned long long get_sync_height() const;
@@ -146,8 +157,6 @@ public:
     unsigned int get_daemon_height() const;
     unsigned int get_height() const;
     unsigned int get_height_by_date(int year, int month, int day) const;
-    WalletNetworkType get_network_type() const; // "wallet_info":  Mainnet, Testnet, Stagenet
-    std::string get_network_type_as_string() const; // "wallet_info":  Mainnet, Testnet, Stagenet
     std::string get_status() const; // "status" - Check current status of wallet.
     std::string get_version() const; // "version" - Check software version.
     // get wallet handles (monero, wownero, etc.)
