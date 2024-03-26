@@ -21,6 +21,7 @@ public:
         DoesNotExist,
         BadNetworkType,
         IsNotOpened, // monero_wallet_obj is nullptr
+        BadWalletType,
     };    
     Q_ENUM(WalletError)
 
@@ -43,6 +44,7 @@ public:
         WalletDoesNotExist = static_cast<int>(WalletError::DoesNotExist),
         WalletBadNetworkType = static_cast<int>(WalletError::BadNetworkType),
         WalletIsNotOpened = static_cast<int>(WalletError::IsNotOpened),
+        WalletBadWalletType = static_cast<int>(WalletError::BadWalletType),
         
         DaemonIsNotConnected = 10,
         

@@ -121,13 +121,13 @@ int neroshop::WalletController::getWalletType() const {
 int neroshop::WalletController::getNetworkType() const {
     if (!_wallet)
         throw std::runtime_error("neroshop::Wallet is not initialized");
-    return static_cast<int>(_wallet->get_network_type());
+    return static_cast<int>(_wallet->get_wallet_network_type());
 }
 
 QString neroshop::WalletController::getNetworkTypeString() const {
     if (!_wallet)
         throw std::runtime_error("neroshop::Wallet is not initialized");
-    return QString::fromStdString(_wallet->get_network_type_as_string());
+    return QString::fromStdString(_wallet->get_wallet_network_type_as_string());
 }
 
 QString neroshop::WalletController::getSeed() const {

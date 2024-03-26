@@ -21,7 +21,6 @@
 #include <filesystem>
 
 const static std::string lua_string = R"(monero = {
-    network_type = "stagenet", -- TODO: remove this on mainnet release
     nodes = {
         mainnet = {
             "node.community.rino.io:18081",

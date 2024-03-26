@@ -1600,7 +1600,7 @@ void neroshop::Backend::createOrder(UserController * user_controller, const QStr
 //----------------------------------------------------------------
 QVariantList neroshop::Backend::getNodeListDefault(const QString& coin) const {
     QVariantList node_list;
-    std::string network_type = neroshop::Script::get_string(neroshop::lua_state, "monero.network_type");
+    std::string network_type = Wallet::get_network_type_as_string();
     std::vector<std::string> node_table = neroshop::Script::get_table_string(neroshop::lua_state, coin.toStdString() + ".nodes." + network_type); // Get monero nodes from settings.lua////std::cout << "lua_query: " << coin.toStdString() + ".nodes." + network_type << std::endl;
     for(auto strings : node_table) {
         node_list << QString::fromStdString(strings);
@@ -1608,10 +1608,24 @@ QVariantList neroshop::Backend::getNodeListDefault(const QString& coin) const {
     return node_list;
 }
 //----------------------------------------------------------------
+bool containsSubstring(const std::string& str, const std::vector<std::string>& substrings) {
+    // Iterate over the substrings vector
+    for (const auto& substring : substrings) {
+        // Check if the string contains the current substring
+        if (str.find(substring) != std::string::npos) {
+            return true; // Substring found in the string
+        }
+    }
+    return false; // Substring not found in the string
+}
+//----------------------------------------------------------------
 QVariantList neroshop::Backend::getNodeList(const QString& coin) const {
     const QUrl url(QStringLiteral("https://monero.fail/health.json"));
     QVariantList node_list;
     QString coin_lower = coin.toLower(); // make coin name lowercase
+    
+    WalletNetworkType network_type = Wallet::get_network_type();
+    auto network_ports = WalletNetworkPortMap[network_type];//std::cout << "ports: " << std::get<0>(network_ports) << ", " << std::get<1>(network_ports) << "\n";
     
     QNetworkAccessManager manager;
     QEventLoop loop;
@@ -1623,7 +1637,7 @@ QVariantList neroshop::Backend::getNodeList(const QString& coin) const {
     const auto json_doc = QJsonDocument::fromJson(reply->readAll(), &error);
     // Use fallback monero node list if we fail to get the nodes from the url
     if (error.error != QJsonParseError::NoError) {
-        neroshop::print("Error reading json from " + url.toString().toStdString() + "\nUsing default nodes as fallback", 2);
+        neroshop::print("Error reading json from " + url.toString().toStdString() + "\nUsing default nodes as fallback", 1);
         return getNodeListDefault(coin_lower);
     }
     // Get monero nodes from the JSON
@@ -1634,15 +1648,15 @@ QVariantList neroshop::Backend::getNodeList(const QString& coin) const {
     foreach(const QString& key, clearnet_obj.keys()) {//for (const auto monero_nodes : clearnet_obj) {
         QJsonObject monero_node_obj = clearnet_obj.value(key).toObject();//QJsonObject monero_node_obj = monero_nodes.toObject();
         QVariantMap node_object; // Create an object for each row
-        if(key.contains("38081") || key.contains("38089")) { // Temporarily fetch only stagenet nodes (TODO: change to mainnet port upon release)
-        node_object.insert("address", key);
-        node_object.insert("available", monero_node_obj.value("available").toBool());//std::cout << "available: " << monero_node_obj.value("available").toBool() << "\n";
-        ////node_object.insert("", );//////std::cout << ": " << monero_node_obj.value("checks").toArray() << "\n";
-        node_object.insert("datetime_checked", monero_node_obj.value("datetime_checked").toString());//std::cout << "datetime_checked: " << monero_node_obj.value("datetime_checked").toString().toStdString() << "\n";
-        node_object.insert("datetime_entered", monero_node_obj.value("datetime_entered").toString());//std::cout << "datetime_entered: " << monero_node_obj.value("datetime_entered").toString().toStdString() << "\n";
-        node_object.insert("datetime_failed", monero_node_obj.value("datetime_failed").toString());//std::cout << "datetime_failed: " << monero_node_obj.value("datetime_failed").toString().toStdString() << "\n";
-        node_object.insert("last_height", monero_node_obj.value("last_height").toInt());//std::cout << "last_height: " << monero_node_obj.value("last_height").toInt() << "\n";
-        node_list.append(node_object); // Add node object to the node list
+        if(containsSubstring(key.toStdString(), network_ports)) {
+            node_object.insert("address", key);
+            node_object.insert("available", monero_node_obj.value("available").toBool());//std::cout << "available: " << monero_node_obj.value("available").toBool() << "\n";
+            ////node_object.insert("", );//////std::cout << ": " << monero_node_obj.value("checks").toArray() << "\n";
+            node_object.insert("datetime_checked", monero_node_obj.value("datetime_checked").toString());//std::cout << "datetime_checked: " << monero_node_obj.value("datetime_checked").toString().toStdString() << "\n";
+            node_object.insert("datetime_entered", monero_node_obj.value("datetime_entered").toString());//std::cout << "datetime_entered: " << monero_node_obj.value("datetime_entered").toString().toStdString() << "\n";
+            node_object.insert("datetime_failed", monero_node_obj.value("datetime_failed").toString());//std::cout << "datetime_failed: " << monero_node_obj.value("datetime_failed").toString().toStdString() << "\n";
+            node_object.insert("last_height", monero_node_obj.value("last_height").toInt());//std::cout << "last_height: " << monero_node_obj.value("last_height").toInt() << "\n";
+            node_list.append(node_object); // Add node object to the node list
         }
     }
     return node_list;
@@ -1819,6 +1833,8 @@ int neroshop::Backend::loginWithWalletFile(WalletController* wallet_controller, 
                 return static_cast<int>(EnumWrapper::LoginError::WalletBadNetworkType);
             if(wallet_error == static_cast<int>(WalletError::IsNotOpened))
                 return static_cast<int>(EnumWrapper::LoginError::WalletIsNotOpened);
+            if(wallet_error == static_cast<int>(WalletError::BadWalletType))
+                return static_cast<int>(EnumWrapper::LoginError::WalletBadWalletType);    
         }
         return static_cast<int>(EnumWrapper::LoginError::Ok);
     });

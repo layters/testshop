@@ -177,7 +177,7 @@ static std::map<std::string, std::tuple<neroshop::Currency, std::string, int, st
     { "BTC", { neroshop::Currency::BTC, "Bitcoin", 8, "₿" } },
     { "ETH", { neroshop::Currency::ETH, "Ether", 18, "" } },    
     { "LTC", { neroshop::Currency::LTC, "Litecoin", 8, "" } },
-    { "WOW", { neroshop::Currency::WOW, "Wownero", 12, "" } },
+    { "WOW", { neroshop::Currency::WOW, "Wownero", 11, "" } },
 };
 
 }
