@@ -51,7 +51,7 @@ enum class WalletError {
 class Wallet : public monero_wallet_listener {
 public:
     Wallet();
-    ~Wallet();
+    virtual ~Wallet();
 
     int create_random(const std::string& password, const std::string& confirm_pwd, const std::string& path);
     int create_from_seed(const std::string& seed, const std::string& password, const std::string& confirm_pwd, const std::string& path);
