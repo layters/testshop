@@ -76,7 +76,7 @@ int main(int argc, char** argv) {
             }        
         }            
         else if(command == "version") {
-            std::cout << "\033[0;93m" << "neroshop v" << NEROSHOP_VERSION << "\033[0m" << std::endl;
+            std::cout << "\033[0;93m" << NEROSHOP_VERSION_FULL << "\033[0m" << std::endl;
         }         
         else if(neroshop::string::starts_with(command, "query")) {
             auto arg_count = neroshop::string::split(command, " ").size();
@@ -88,7 +88,7 @@ int main(int argc, char** argv) {
                  std::string json = neroshop::rpc::json::translate(sql);
                  // No need to call RPC server to access RPC functions when it can be done directly.
                  std::cout << neroshop::rpc::json::process(json) << "\n";
-                 // Usage: query SELECT * FROM users;
+                 // Usage: query SELECT * FROM mappings;
             }
         }
         else if(command == "curl_version") {

@@ -270,7 +270,7 @@ WW2pQTQWHpyJf2CHrCmZG7Tn3zBnYRZTH8g4U3pSZf5s6xsTXrZc9odDWmrWzjRc9MMQWrKXxjHsRdzH
 
 - Git Mirrors: 
     - [Codeberg](https://codeberg.org/layter/neroshop)
-    - [Gitea](https://git.wownero.com/layter/neroshop) (requires an account to view)
+    - [Gitea](https://git.wownero.com/layter/neroshop)
 
 - Mail: larteyoh@pm.me
 

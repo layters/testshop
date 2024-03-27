@@ -1625,7 +1625,7 @@ QVariantList neroshop::Backend::getNodeList(const QString& coin) const {
     QString coin_lower = coin.toLower(); // make coin name lowercase
     
     WalletNetworkType network_type = Wallet::get_network_type();
-    auto network_ports = WalletNetworkPortMap[network_type];//std::cout << "ports: " << std::get<0>(network_ports) << ", " << std::get<1>(network_ports) << "\n";
+    auto network_ports = WalletNetworkPortMap[network_type];
     
     QNetworkAccessManager manager;
     QEventLoop loop;

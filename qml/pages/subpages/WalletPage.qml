@@ -200,6 +200,7 @@ Page {
                                     text: (!Wallet.opened) ? "" : qsTr("%1 %2%3 %4").arg(modelData.is_incoming ? "+" : "-").arg(Backend.getCurrencySign(priceDisplayText.currency)).arg(CurrencyExchangeRates.getXmrPrice(priceDisplayText.currency) * modelData.amount.toFixed(12)).arg(priceDisplayText.currency.toUpperCase())
                                     color: "#777"
                                     font.pointSize: 10
+                                    visible: (Wallet.getWalletType() == 0 && priceDisplayText.currency != "XMR")
                                 }
                             }
                             Button {

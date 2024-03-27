@@ -901,27 +901,69 @@ uint64_t neroshop::Wallet::get_unlocked_balance_raw(unsigned int account_index, 
 //-------------------------------------------------------
 //-------------------------------------------------------
 double neroshop::Wallet::get_balance() const {
-    return get_balance_raw() * PICONERO;
+    switch(wallet_type) {
+        case WalletType::Monero:
+            return get_balance_raw() * PICONERO;
+        case WalletType::Wownero:
+            return get_balance_raw() * WOWOSHI;
+        default:
+            return 0;
+    }
 }
 //-------------------------------------------------------
 double neroshop::Wallet::get_balance(unsigned int account_index) const {
-    return get_balance_raw(account_index) * PICONERO;
+    switch(wallet_type) {
+        case WalletType::Monero:
+            return get_balance_raw(account_index) * PICONERO;
+        case WalletType::Wownero:
+            return get_balance_raw(account_index) * WOWOSHI;
+        default:
+            return 0;
+    }
 }
 //-------------------------------------------------------
 double neroshop::Wallet::get_balance(unsigned int account_index, unsigned int subaddress_index) const {
-    return get_balance_raw(account_index, subaddress_index) * PICONERO;
+    switch(wallet_type) {
+        case WalletType::Monero:
+            return get_balance_raw(account_index, subaddress_index) * PICONERO;
+        case WalletType::Wownero:
+            return get_balance_raw(account_index, subaddress_index) * WOWOSHI;
+        default:
+            return 0;
+    }
 }
 //-------------------------------------------------------
 double neroshop::Wallet::get_unlocked_balance() const {
-    return get_unlocked_balance_raw() * PICONERO;
+    switch(wallet_type) {
+        case WalletType::Monero:
+            return get_unlocked_balance_raw() * PICONERO;
+        case WalletType::Wownero:
+            return get_unlocked_balance_raw() * WOWOSHI;
+        default:
+            return 0;
+    }
 }
 //-------------------------------------------------------
 double neroshop::Wallet::get_unlocked_balance(unsigned int account_index) const {
-    return get_unlocked_balance_raw(account_index) * PICONERO;
+    switch(wallet_type) {
+        case WalletType::Monero:
+            return get_unlocked_balance_raw(account_index) * PICONERO;
+        case WalletType::Wownero:
+            return get_unlocked_balance_raw(account_index) * WOWOSHI;
+        default:
+            return 0;
+    }
 }
 //-------------------------------------------------------
 double neroshop::Wallet::get_unlocked_balance(unsigned int account_index, unsigned int subaddress_index) const {
-    return get_unlocked_balance_raw(account_index, subaddress_index) * PICONERO;
+    switch(wallet_type) {
+        case WalletType::Monero:
+            return get_unlocked_balance_raw(account_index, subaddress_index) * PICONERO;
+        case WalletType::Wownero:
+            return get_unlocked_balance_raw(account_index, subaddress_index) * WOWOSHI;
+        default:
+            return 0;
+    }
 }
 //-------------------------------------------------------
 std::vector<std::string> neroshop::Wallet::get_transactions() const {
