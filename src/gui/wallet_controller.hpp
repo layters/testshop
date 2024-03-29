@@ -11,7 +11,7 @@
 #endif
 #include <memory> // std::unique_ptr
 
-#include "../core/wallet.hpp"
+#include "../core/wallet/wallet.hpp"
 
 namespace neroshop {
 
