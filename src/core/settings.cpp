@@ -42,10 +42,10 @@ const static std::string lua_string = R"(monero = {
         stagenet = {
             "http://node.monerodevs.org:38089",
             "http://node2.monerodevs.org:38089",
+            "http://node3.monerodevs.org:38089",
+            "http://singapore.node.xmr.pm:38081",
             "http://stagenet.community.rino.io:38081",
             "http://stagenet.xmr-tw.org:38081",
-            "http://xmr-lux.boldsuck.org:38081",
-            "https://xmr-lux.boldsuck.org:38081",
         },
         testnet = {
             "http://node.monerodevs.org:28089",

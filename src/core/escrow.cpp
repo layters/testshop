@@ -11,7 +11,7 @@ void neroshop::Escrow::test_create_multisig_wallet(int M, int N) {
     // create participating wallets
     std::vector<neroshop::Wallet *> wallets = {};
     for(int i = 0; i < N; i++) {
-        neroshop::Wallet *wallet = new neroshop::Wallet();
+        neroshop::Wallet *wallet = new neroshop::Wallet(WalletType::Monero); // TODO: replace with: std::make_unique<neroshop::MoneroWallet>();
         wallet->create_random("", "", std::string("multisig_wallet_" + std::to_string(i)));
         wallets.push_back(wallet);
     }

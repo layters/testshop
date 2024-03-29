@@ -1,13 +1,13 @@
 #include "wallet.hpp"
 
-#include "tools/logger.hpp"
-#include "tools/tools.hpp"
-#include "tools/process.hpp" // for monerod daemon process
+#include "../tools/logger.hpp"
+#include "../tools/tools.hpp"
+#include "../tools/process.hpp" // for monerod daemon process
 
 #include <cmath>
 #include <filesystem>
 
-neroshop::Wallet::Wallet() : wallet_type(WalletType::Monero), monero_wallet_obj(nullptr),
+neroshop::Wallet::Wallet(WalletType wallet_type) : wallet_type(wallet_type), monero_wallet_obj(nullptr),
     process(nullptr), percentage(0.0)
 {}
 //-------------------------------------------------------
@@ -1258,6 +1258,16 @@ bool neroshop::Wallet::is_valid_address(const std::string& address) const {
             return false;
     }
 }
+//-------------------------------------------------------
+bool neroshop::Wallet::is_valid_monero_address(const std::string& address) {
+    auto network_type = get_network_type();
+    return monero_utils::is_valid_address(address, static_cast<monero::monero_network_type>(network_type));
+}
+//-------------------------------------------------------
+/*bool neroshop::Wallet::is_valid_wownero_address(const std::string& address) {
+    auto network_type = get_network_type();
+    return ;
+}*/
 //-------------------------------------------------------
 bool neroshop::Wallet::is_cryptonote_based() const {
     return (wallet_type == WalletType::Monero || wallet_type == WalletType::Wownero);

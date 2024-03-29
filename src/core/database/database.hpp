@@ -2,7 +2,7 @@
 #ifndef DATABASE_HPP_NEROSHOP
 #define DATABASE_HPP_NEROSHOP
 
-#include "sqlite.hpp"
+#include "sqlite3/sqlite3.hpp"
 
 namespace neroshop {
 
