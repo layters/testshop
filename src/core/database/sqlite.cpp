@@ -1,6 +1,6 @@
-#include "sqlite3.hpp"
+#include "sqlite.hpp"
 
-#include "../../tools/logger.hpp"
+#include "../tools/logger.hpp"
 
 #include <cstdarg>
 #include <fstream>

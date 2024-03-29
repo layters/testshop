@@ -5,7 +5,7 @@
 #include "tools/tools.hpp" // uuid
 #include "database/database.hpp"
 #include "product.hpp"
-#include "wallet/wallet.hpp"
+#include "wallet.hpp"
 #include "listing.hpp"
 #include "product.hpp"
 #include "protocol/transport/client.hpp"

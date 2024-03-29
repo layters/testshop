@@ -2,7 +2,7 @@
 
 neroshop::WalletController::WalletController(QObject *parent) : QObject(parent)
 {
-    _wallet = std::make_unique<neroshop::Wallet>(WalletType::Monero); // TODO: replace with: std::make_unique<neroshop::MoneroWallet>();
+    _wallet = std::make_unique<neroshop::Wallet>();
 }
 
 neroshop::WalletController::~WalletController() {

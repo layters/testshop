@@ -2,7 +2,7 @@
 #ifndef CURRENCY_MAP_HPP_NEROSHOP
 #define CURRENCY_MAP_HPP_NEROSHOP
 
-#include "currency_enum.hpp" // neroshop::Currency::
+#include "../enums.hpp" // neroshop::Currency::
 
 namespace neroshop {
 

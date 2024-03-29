@@ -15,7 +15,7 @@
 #include "tools/base64.hpp"
 #include "tools/timestamp.hpp"
 #include "tools/string.hpp"
-#include "wallet/wallet.hpp"
+#include "wallet.hpp"
 
 #include <fstream>
 #include <regex>

@@ -8,7 +8,7 @@
 // #define NDEBUG
 #include <cassert>
 
-#include "wallet/wallet.hpp"
+#include "wallet.hpp"
 
 namespace neroshop {
 

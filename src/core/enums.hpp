@@ -35,5 +35,18 @@ enum class Currency {
     WOW,
 };
 
+enum class PriceSource {
+    // Crypto Price Aggregators
+    CoinMarketCap = 0,
+    CoinGecko,
+    CryptoWatch,
+    CoinTelegraph,
+    CryptoRank,
+    CoinCodex,
+    Fawazahmed0,
+    // Exchanges
+    Kraken,
+};
+
 } // namespace neroshop
 #endif

@@ -9,6 +9,7 @@
 // neroshop (core)
 #include "core/cart.hpp"
 #include "core/category.hpp"
+#include "core/enums.hpp"
 #include "core/escrow.hpp"
 #include "core/image.hpp"
 #include "core/listing.hpp"
@@ -19,13 +20,14 @@
 #include "core/settings.hpp"
 #include "core/user.hpp"
 #include "core/version.hpp"
+#include "core/wallet.hpp"
 // crypto
 #include "core/crypto/rsa.hpp"
 #include "core/crypto/sha3.hpp"
 #include "core/crypto/sha256.hpp"
 // database
 #include "core/database/database.hpp"
-#include "core/database/sqlite3/sqlite3.hpp"
+#include "core/database/sqlite.hpp"
 // network
 #include "core/network/i2p.hpp"
 // price
@@ -56,9 +58,6 @@
 #include "core/tools/tools.hpp"
 #include "core/tools/updater.hpp"
 #include "core/tools/uuid.hpp"
-// wallet
-#include "core/wallet/wallet.hpp"
-//#include "core/wallet/monero/monero.hpp"
 // neroshop-daemon
 // ...
 // neroshop (gui)

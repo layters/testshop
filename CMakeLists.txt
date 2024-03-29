@@ -413,7 +413,7 @@ set(neroshop_crypto_src
 
 set(neroshop_database_src 
     ${NEROSHOP_CORE_SRC_DIR}/database/database.cpp 
-    ${NEROSHOP_CORE_SRC_DIR}/database/sqlite3/sqlite3.cpp
+    ${NEROSHOP_CORE_SRC_DIR}/database/sqlite.cpp
 )
 
 set(neroshop_network_src 
@@ -458,11 +458,6 @@ set(neroshop_tools_src
     ${NEROSHOP_CORE_SRC_DIR}/tools/updater.cpp
 )
 
-set(neroshop_wallet_src 
-    ${NEROSHOP_CORE_SRC_DIR}/wallet/wallet.cpp 
-    #[[${NEROSHOP_CORE_SRC_DIR}/wallet/monero/monero.cpp]]
-)
-
 set(neroshop_core_src 
     ${NEROSHOP_CORE_SRC_DIR}/cart.cpp 
     ${NEROSHOP_CORE_SRC_DIR}/escrow.cpp 
@@ -472,13 +467,14 @@ set(neroshop_core_src
     ${NEROSHOP_CORE_SRC_DIR}/seller.cpp 
     ${NEROSHOP_CORE_SRC_DIR}/settings.cpp  # TODO: move to tools or not?
     ${NEROSHOP_CORE_SRC_DIR}/user.cpp 
+    ${NEROSHOP_CORE_SRC_DIR}/wallet.cpp 
     ${neroshop_crypto_src} 
     ${neroshop_database_src} 
     ${neroshop_network_src}
     ${neroshop_price_src}
     ${neroshop_protocol_src}
     ${neroshop_tools_src}
-    ${neroshop_wallet_src}
+    #[[${neroshop_wallet_src}]]
 )
 
 ######################################

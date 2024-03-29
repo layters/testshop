@@ -5,7 +5,7 @@
 #include "../../tools/string.hpp"
 #include "../../tools/timestamp.hpp"
 //#include "../../tools/base64.hpp"
-#include "../../wallet/wallet.hpp"
+#include "../../wallet.hpp"
 #include "../../settings.hpp"
 
 #include <regex>
