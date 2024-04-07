@@ -258,6 +258,7 @@ Page {
                                 onClicked: productPage.openSellerPage()
                                 onEntered: parent.color = "blue"
                                 onExited: parent.color = "#4169e1"
+                                cursorShape: Qt.PointingHandCursor
                             }
                         }
                     }

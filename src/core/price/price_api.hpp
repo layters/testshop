@@ -22,8 +22,6 @@ enum class PriceSource {
     Kraken,
 };
 
-}
-
 class PriceApi
 {
 public:
@@ -33,4 +31,5 @@ public:
     virtual std::optional<double> price(neroshop::Currency from, neroshop::Currency to) const = 0;
 };
 
-#endif // PRICESOURCE_H
+}
+#endif // PRICE_API_HPP_NEROSHOP

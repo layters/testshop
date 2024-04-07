@@ -119,16 +119,16 @@ int main(int argc, char *argv[])
         }
     }    
     // Create an instance of DaemonManager and expose it to QML
-    DaemonManager daemonManager;
-    daemonManager.startDaemonProcessDetached();
-    engine.rootContext()->setContextProperty("DaemonManager", &daemonManager);
+    DaemonManager * daemonManager = new DaemonManager(&engine);
+    daemonManager->startDaemonProcessDetached();
+    engine.rootContext()->setContextProperty("DaemonManager", daemonManager);
     // we can also register an instance of a class instead of the class itself
     WalletController *wallet = new WalletController(&engine);
     engine.rootContext()->setContextProperty("Wallet", wallet);//new WalletController());//qmlRegisterUncreatableType<WalletProxy>("neroshop.Wallet", 1, 0, "Wallet", "Wallet cannot be instantiated directly.");//qmlRegisterType<WalletProxy>("neroshop.Wallet", 1, 0, "Wallet"); // Usage: import neroshop.Wallet  ...  Wallet { id: wallet }
     qRegisterMetaType<WalletController*>(); // Wallet can now be used as an argument in function parameters
     // register script
-    ScriptController * script_controller = new ScriptController(&engine);
-    engine.rootContext()->setContextProperty("Script", script_controller);
+    ScriptManager * script_manager = new ScriptManager(&engine);
+    engine.rootContext()->setContextProperty("Script", script_manager);
     // register backend
     engine.rootContext()->setContextProperty("Backend", new Backend(&engine));
     // Register user

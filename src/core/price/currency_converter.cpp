@@ -1,13 +1,13 @@
 #include "currency_converter.hpp"
 // copied from price_api_factory.cpp
-#include "coincodex.hpp"
-#include "coingecko.hpp"
-#include "coinmarketcap.hpp"
-#include "cointelegraph.hpp"
-#include "cryptorank.hpp"
-#include "cryptowatch.hpp"
-#include "fawazahmed0.hpp"
-#include "kraken.hpp"
+#include "coincodex/coincodex.hpp"
+#include "coingecko/coingecko.hpp"
+#include "coinmarketcap/coinmarketcap.hpp"
+#include "cointelegraph/cointelegraph.hpp"
+#include "cryptorank/cryptorank.hpp"
+#include "cryptowatch/cryptowatch.hpp"
+#include "fawazahmed0/fawazahmed0.hpp"
+#include "kraken/kraken.hpp"
 
 #include "../tools/logger.hpp"
 #include "../tools/tools.hpp"
@@ -28,7 +28,7 @@ double neroshop::Converter::lb_to_kg(double lb) {
 }
 //-------------------------------------------------------
 //-------------------------------------------------------
-std::unique_ptr<PriceApi> neroshop::Converter::make_price_source(PriceSource source)
+std::unique_ptr<neroshop::PriceApi> neroshop::Converter::make_price_source(PriceSource source)
 {
     switch (source) {
         // Crypto Data Aggregators

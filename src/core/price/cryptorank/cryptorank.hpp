@@ -1,9 +1,9 @@
 #ifndef CRYPTORANK_API_HPP_NEROSHOP
 #define CRYPTORANK_API_HPP_NEROSHOP
 
-#include "price_api.hpp"
+#include "../price_api.hpp"
 
-class CryptoRankApi : public PriceApi
+class CryptoRankApi : public neroshop::PriceApi
 {
 public:
     std::optional<double> price(neroshop::Currency from, neroshop::Currency to) const override;

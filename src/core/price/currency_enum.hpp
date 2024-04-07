@@ -1,11 +1,10 @@
 #pragma once
 
-#ifndef ENUMS_HPP_NEROSHOP
-#define ENUMS_HPP_NEROSHOP
+#ifndef CURRENCY_ENUM_HPP_NEROSHOP
+#define CURRENCY_ENUM_HPP_NEROSHOP
 
 namespace neroshop {
 
-// currency and price
 enum class Currency {
     // Fiat
     USD = 0,

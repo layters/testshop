@@ -37,7 +37,7 @@ enum class WalletNetworkType : uint8_t { // refer to daemon/monero_daemon_model.
 };
 
 static std::map<WalletNetworkType, std::vector<std::string>> WalletNetworkPortMap {
-    { WalletNetworkType::Mainnet, { "18081", "18089" } },
+    { WalletNetworkType::Mainnet, { "18081", "18089", "34568" } },
     { WalletNetworkType::Testnet, { "28081", "28089" } },
     { WalletNetworkType::Stagenet, { "38081", "38089" } },
 };
@@ -121,6 +121,8 @@ public:
     std::string get_wallet_network_type_as_string() const;
     static std::string get_network_type_as_string();
     
+    std::string get_network_port() const;
+    
     double get_sync_percentage() const;
     unsigned long long get_sync_height() const;
     unsigned long long get_sync_start_height() const;
@@ -169,6 +171,7 @@ public:
     std::string get_status() const; // "status" - Check current status of wallet.
     std::string get_version() const; // "version" - Check software version.
     // get wallet handles (monero, wownero, etc.)
+    void * get_handle() const;
     monero_wallet_full * get_monero_wallet() const;
     //wownero_wallet_full * get_wownero_wallet() const;
     std::vector<std::string> recent_address_list; // recently used addresses

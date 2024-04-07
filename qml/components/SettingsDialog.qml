@@ -59,14 +59,6 @@ Popup {
         scrollView.ScrollBar.vertical.position = 0.0
     }
     
-    function getPortByNetworkType() {
-        let network_type = Wallet.getNetworkTypeString()
-        if(network_type == "mainnet") return "18081";
-        if(network_type == "testnet") return "28081";
-        if(network_type == "stagenet") return "38081";
-        return "18081"
-    }
-    
     function save() { 
         const settings_obj = {
             // general
@@ -1007,7 +999,7 @@ Item {
                         id: moneroNodePortField
                         Layout.preferredWidth: (500 / 4)
                         Layout.preferredHeight: 50
-                        placeholderText: getPortByNetworkType()
+                        placeholderText: Wallet.getNetworkPort()
                         placeholderTextColor: (NeroshopComponents.Style.darkTheme) ? "#a9a9a9" : "#696969"
                         color: (NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000"
                         selectByMouse: true
@@ -1195,7 +1187,7 @@ Item {
                         id: moneroDaemonPortField
                         Layout.preferredWidth: (500 / 4)
                         Layout.preferredHeight: 50
-                        placeholderText: getPortByNetworkType()
+                        placeholderText: Wallet.getNetworkPort()
                         placeholderTextColor: (NeroshopComponents.Style.darkTheme) ? "#a9a9a9" : "#696969"
                         color: (NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000"
                         selectByMouse: true
