@@ -46,13 +46,31 @@ const static std::string lua_string = R"(monero = {
             "http://singapore.node.xmr.pm:38081",
             "http://stagenet.community.rino.io:38081",
             "http://stagenet.xmr-tw.org:38081",
+            "http://xmr-lux.boldsuck.org:38081",
         },
         testnet = {
             "http://node.monerodevs.org:28089",
             "http://node2.monerodevs.org:28089",
+            "http://node3.monerodevs.org:28089",
             "http://testnet.community.rino.io:28081",
             "http://testnet.xmr-tw.org:28081",
         }
+    }
+}
+wownero = {
+    nodes = {
+        mainnet = {
+            "http://88.198.199.23:34568",
+            "http://amsterdam.muchwow.lol:34568",
+            "http://eu-west-2.wow.xmr.pm:34568",
+            "http://idontwanttogototoronto.wow.fail:34568",
+            "http://node.monerodevs.org:34568",
+            "http://node2.monerodevs.org:34568",
+            "http://node.suchwow.xyz:34568",
+            "http://nyc.muchwow.lol:34568",
+            "http://singapore.muchwow.lol:34568",
+            "https://muchwow.lol:34568",
+        },
     }
 })";
 //----------------------------------------------------------------
@@ -186,15 +204,7 @@ bool neroshop::create_json() {
         /*root_obj.insert(QString("window_width"), QJsonValue(1280));
         root_obj.insert(QString("window_height"), QJsonValue(900));//720));
         root_obj.insert(QString("window_mode"), QJsonValue(0));*/
-        QJsonObject monero_obj;
-        //monero_obj.insert(QString("restore_height"), QJsonValue());
-        QJsonObject wallet_obj;
-        wallet_obj.insert(QString("balance_display"), QJsonValue("All balances"));
-        wallet_obj.insert(QString("balance_amount_precision"), QJsonValue(12));
-        wallet_obj.insert(QString("show_currency_sign"), QJsonValue(false));
-        wallet_obj.insert(QString("block_explorer"), QJsonValue("xmrchain.net"));
-        ////wallet_obj.insert(QString("require_password_on_withdrawal"), QJsonValue(true));
-        monero_obj.insert(QString("wallet"), QJsonValue(wallet_obj));
+        
         QJsonObject catalog_obj;
         catalog_obj.insert(QString("price_display"), QJsonValue("All prices"));
         catalog_obj.insert(QString("hide_product_details"), QJsonValue(false));
@@ -202,6 +212,9 @@ bool neroshop::create_json() {
         catalog_obj.insert(QString("grid_details_align_center"), QJsonValue(false));
         catalog_obj.insert(QString("hide_illegal_products"), QJsonValue(true));
         root_obj.insert(QString("catalog"), QJsonValue(catalog_obj));
+        
+        QJsonObject monero_obj;
+        //monero_obj.insert(QString("restore_height"), QJsonValue());
         QJsonObject daemon_obj;
         //daemon_obj.insert(QString("network_type"), QJsonValue("stagenet")); // has no effect when changed manually
         daemon_obj.insert(QString("confirm_external_bind"), QJsonValue(false));
@@ -212,7 +225,35 @@ bool neroshop::create_json() {
         daemon_obj.insert(QString("executable"), QJsonValue(""));
         daemon_obj.insert(QString("last_selected_node"), QJsonValue(""));
         monero_obj.insert(QString("daemon"), QJsonValue(daemon_obj));
+        QJsonObject wallet_obj;
+        wallet_obj.insert(QString("balance_display"), QJsonValue("All balances"));
+        wallet_obj.insert(QString("balance_amount_precision"), QJsonValue(12));
+        wallet_obj.insert(QString("show_currency_sign"), QJsonValue(false));
+        wallet_obj.insert(QString("block_explorer"), QJsonValue("xmrchain.net"));
+        ////wallet_obj.insert(QString("require_password_on_withdrawal"), QJsonValue(true));
+        monero_obj.insert(QString("wallet"), QJsonValue(wallet_obj));
         root_obj.insert(QString("monero"), QJsonValue(monero_obj));
+        
+        QJsonObject wownero_obj;
+        //wownero_obj.insert(QString("restore_height"), QJsonValue());
+        QJsonObject daemon2_obj;
+        daemon2_obj.insert(QString("confirm_external_bind"), QJsonValue(false));
+        daemon2_obj.insert(QString("restricted_rpc"), QJsonValue(true));
+        daemon2_obj.insert(QString("data_dir"), QJsonValue(""));
+        daemon2_obj.insert(QString("auto_sync"), QJsonValue(true));
+        daemon2_obj.insert(QString("node_type"), QJsonValue(0));
+        daemon2_obj.insert(QString("executable"), QJsonValue(""));
+        daemon2_obj.insert(QString("last_selected_node"), QJsonValue(""));
+        wownero_obj.insert(QString("daemon"), QJsonValue(daemon2_obj));
+        QJsonObject wallet2_obj;
+        wallet2_obj.insert(QString("balance_display"), QJsonValue("All balances"));
+        wallet2_obj.insert(QString("balance_amount_precision"), QJsonValue(11));
+        wallet2_obj.insert(QString("show_currency_sign"), QJsonValue(false));
+        wallet2_obj.insert(QString("block_explorer"), QJsonValue("explore.wownero.com"));
+        ////wallet2_obj.insert(QString("require_password_on_withdrawal"), QJsonValue(true));
+        wownero_obj.insert(QString("wallet"), QJsonValue(wallet2_obj));
+        root_obj.insert(QString("wownero"), QJsonValue(wownero_obj));
+        
         QJsonObject data_expiration_obj;
         ////data_expiration_obj.insert(QString("user"), QJsonValue("Never"));
         data_expiration_obj.insert(QString("listing"), QJsonValue("Never"));
@@ -268,16 +309,12 @@ bool neroshop::create_json() {
         settings_json["window_height"] = 900;//720;
         settings_json["window_mode"] = 0;*/
         //settings_json[""] = ;
-        settings_json["monero"]["wallet"]["balance_display"] = "All balances";
-        settings_json["monero"]["wallet"]["balance_amount_precision"] = 12;
-        settings_json["monero"]["wallet"]["show_currency_sign"] = false;
-        settings_json["monero"]["wallet"]["block_explorer"] = "xmrchain.net";
-        ////settings_json["monero"]["wallet"]["require_password_on_withdrawal"] = true;
         settings_json["catalog"]["price_display"] = "All prices";
         settings_json["catalog"]["hide_product_details"] = false;
         settings_json["catalog"]["catalog_view"] = "Grid view";
         settings_json["catalog"]["grid_details_align_center"] = false;
         settings_json["catalog"]["hide_illegal_products"] = true;
+        
         //settings_json["monero"]["daemon"]["network_type"] = "stagenet";
         settings_json["monero"]["daemon"]["confirm_external_bind"] = false;
         settings_json["monero"]["daemon"]["restricted_rpc"] = true;
@@ -286,6 +323,25 @@ bool neroshop::create_json() {
         settings_json["monero"]["daemon"]["node_type"] = 0;
         settings_json["monero"]["daemon"]["executable"] = "";
         settings_json["monero"]["daemon"]["last_selected_node"] = "";
+        settings_json["monero"]["wallet"]["balance_display"] = "All balances";
+        settings_json["monero"]["wallet"]["balance_amount_precision"] = 12;
+        settings_json["monero"]["wallet"]["show_currency_sign"] = false;
+        settings_json["monero"]["wallet"]["block_explorer"] = "xmrchain.net";
+        ////settings_json["monero"]["wallet"]["require_password_on_withdrawal"] = true;
+        
+        settings_json["wownero"]["daemon"]["confirm_external_bind"] = false;
+        settings_json["wownero"]["daemon"]["restricted_rpc"] = true;
+        settings_json["wownero"]["daemon"]["data_dir"] = ""; // leave blank to use default
+        settings_json["wownero"]["daemon"]["auto_sync"] = true;
+        settings_json["wownero"]["daemon"]["node_type"] = 0;
+        settings_json["wownero"]["daemon"]["executable"] = "";
+        settings_json["wownero"]["daemon"]["last_selected_node"] = "";
+        settings_json["wownero"]["wallet"]["balance_display"] = "All balances";
+        settings_json["wownero"]["wallet"]["balance_amount_precision"] = 11;
+        settings_json["wownero"]["wallet"]["show_currency_sign"] = false;
+        settings_json["wownero"]["wallet"]["block_explorer"] = "explore.wownero.com";
+        ////settings_json["wownero"]["wallet"]["require_password_on_withdrawal"] = true;
+        
         ////settings_json["data_expiration"]["user"] = "Never"; // permanent
         settings_json["data_expiration"]["listing"] = "Never"; // can be modified
         settings_json["data_expiration"]["product_rating"] = "Never";

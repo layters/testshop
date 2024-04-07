@@ -96,8 +96,6 @@ include_directories("${MONERO_PROJECT_SRC}/wallet/api")
 include_directories("${MONERO_PROJECT_SRC}/hardforks")
 include_directories("${MONERO_PROJECT_SRC}/crypto/crypto_ops_builder/include/")
 
-set(EXTERNAL_LIBS_DIR ${CMAKE_SOURCE_DIR}/monero-cpp/external-libs)
-message(STATUS EXTERNAL_LIBS_DIR : ${EXTERNAL_LIBS_DIR})
 ####################
 # Extra libraries
 if (APPLE)
@@ -200,13 +198,23 @@ if(NOT HIDAPI_FOUND)
         set(HIDAPI_LIBRARY ${UDEV_LIBRARY} libhidapi-libusb.so) # or libhidapi-hidraw.so # has to be dynamically linked or you'll get "undefined reference to `libusb_get_device_address'" error
     endif()
 endif()
+
+######################################
+# Unbound
+find_package(Unbound)
+include_directories(${UNBOUND_INCLUDE_DIR})
+if ("${UNBOUND_LIBRARIES}" MATCHES "libunbound")
+  message(STATUS "Using libunbound: ${UNBOUND_LIBRARIES}")
+  add_library(unbound SHARED IMPORTED)
+  set_target_properties(unbound PROPERTIES IMPORTED_LOCATION
+      ${UNBOUND_LIBRARIES})
+endif()
+
 ######################################
 # Monero
 set(MONERO_PROJECT_BUILD "${MONERO_PROJECT}/build/release" CACHE STRING "Monero project build directory")
 message(STATUS "Using monero-project build: " ${MONERO_PROJECT_BUILD})
 
-#list(APPEND CMAKE_MODULE_PATH "${MONERO_PROJECT}/cmake")
-    
 add_library(wallet STATIC IMPORTED)
 set_target_properties(wallet PROPERTIES IMPORTED_LOCATION
     ${MONERO_PROJECT_BUILD}/lib/libwallet.a)
@@ -227,16 +235,6 @@ add_library(epee STATIC IMPORTED)
 set_target_properties(epee PROPERTIES IMPORTED_LOCATION
     ${MONERO_PROJECT_BUILD}/contrib/epee/src/libepee.a)
     
-# Unbound
-find_package(Unbound)
-include_directories(${UNBOUND_INCLUDE_DIR})
-if ("${UNBOUND_LIBRARIES}" MATCHES "libunbound")
-  message(STATUS "Using libunbound: ${UNBOUND_LIBRARIES}")
-  add_library(unbound SHARED IMPORTED)
-  set_target_properties(unbound PROPERTIES IMPORTED_LOCATION
-      ${UNBOUND_LIBRARIES})
-endif()
-
 add_library(rpc_base STATIC IMPORTED)
 set_target_properties(rpc_base PROPERTIES IMPORTED_LOCATION
     ${MONERO_PROJECT_BUILD}/src/rpc/librpc_base.a)
@@ -421,15 +419,15 @@ set(neroshop_network_src
 )
 
 set(neroshop_price_src 
-    ${NEROSHOP_CORE_SRC_DIR}/price/coincodex.cpp 
-    ${NEROSHOP_CORE_SRC_DIR}/price/coingecko.cpp 
-    ${NEROSHOP_CORE_SRC_DIR}/price/coinmarketcap.cpp 
-    ${NEROSHOP_CORE_SRC_DIR}/price/cointelegraph.cpp 
-    ${NEROSHOP_CORE_SRC_DIR}/price/cryptorank.cpp 
-    ${NEROSHOP_CORE_SRC_DIR}/price/cryptowatch.cpp 
-    ${NEROSHOP_CORE_SRC_DIR}/price/currency_converter.cpp     
-    ${NEROSHOP_CORE_SRC_DIR}/price/fawazahmed0.cpp 
-    ${NEROSHOP_CORE_SRC_DIR}/price/kraken.cpp
+    ${NEROSHOP_CORE_SRC_DIR}/price/coincodex/coincodex.cpp 
+    ${NEROSHOP_CORE_SRC_DIR}/price/coingecko/coingecko.cpp 
+    ${NEROSHOP_CORE_SRC_DIR}/price/coinmarketcap/coinmarketcap.cpp 
+    ${NEROSHOP_CORE_SRC_DIR}/price/cointelegraph/cointelegraph.cpp 
+    ${NEROSHOP_CORE_SRC_DIR}/price/cryptorank/cryptorank.cpp 
+    ${NEROSHOP_CORE_SRC_DIR}/price/cryptowatch/cryptowatch.cpp 
+    ${NEROSHOP_CORE_SRC_DIR}/price/fawazahmed0/fawazahmed0.cpp 
+    ${NEROSHOP_CORE_SRC_DIR}/price/kraken/kraken.cpp 
+    ${NEROSHOP_CORE_SRC_DIR}/price/currency_converter.cpp
 )
 
 set(neroshop_protocol_src 
@@ -470,7 +468,7 @@ set(neroshop_core_src
     ${NEROSHOP_CORE_SRC_DIR}/order.cpp 
     ${NEROSHOP_CORE_SRC_DIR}/product.cpp 
     ${NEROSHOP_CORE_SRC_DIR}/seller.cpp 
-    ${NEROSHOP_CORE_SRC_DIR}/settings.cpp  # TODO: move to tools or not?
+    ${NEROSHOP_CORE_SRC_DIR}/settings.cpp 
     ${NEROSHOP_CORE_SRC_DIR}/user.cpp 
     ${neroshop_crypto_src} 
     ${neroshop_database_src} 
@@ -517,7 +515,7 @@ if(NEROSHOP_BUILD_GUI)
     set(neroshop_executable "neroshop")
     add_executable(${neroshop_executable})
     install(TARGETS ${neroshop_executable} DESTINATION bin)
-    target_sources(${neroshop_executable} PRIVATE ${neroshop_res} src/gui/main.cpp src/gui/script_controller.cpp src/gui/wallet_controller.cpp src/gui/user_controller.cpp src/gui/image_loader.cpp src/gui/image_provider.cpp src/gui/wallet_qr_provider.cpp src/gui/currency_rate_provider.cpp #[[src/gui/table_model.cpp]] src/gui/daemon_manager.cpp src/gui/enum_wrapper.cpp src/gui/backend.cpp ${neroshop_core_src})
+    target_sources(${neroshop_executable} PRIVATE ${neroshop_res} src/gui/main.cpp src/gui/script_manager.cpp src/gui/wallet_controller.cpp src/gui/user_controller.cpp src/gui/image_loader.cpp src/gui/image_provider.cpp src/gui/wallet_qr_provider.cpp src/gui/currency_rate_provider.cpp #[[src/gui/table_model.cpp]] src/gui/daemon_manager.cpp src/gui/enum_wrapper.cpp src/gui/backend.cpp ${neroshop_core_src})
     target_compile_definitions(${neroshop_executable} PRIVATE NEROSHOP_DEBUG)#set_target_properties(${neroshop_executable} PROPERTIES COMPILE_DEFINITIONS "NEROSHOP_DEBUG")
     target_include_directories(${neroshop_executable} PRIVATE #[[${CMAKE_CURRENT_SOURCE_DIR}/src/]])
     target_link_libraries(${neroshop_executable} ${i2pd_src} ${monero_cpp_src} ${sqlite_src} ${qr_code_generator_src} ${raft_src} ${monero_src} ${zlib_src} ${lua_src})

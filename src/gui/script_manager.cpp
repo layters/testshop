@@ -1,4 +1,4 @@
-#include "script_controller.hpp"
+#include "script_manager.hpp"
 
 #include "../core/tools/script.hpp"
 #include "../core/settings.hpp" // neroshop::lua_state
@@ -7,7 +7,7 @@
 #include <QJsonDocument>
 #include <QJsonParseError>
 
-neroshop::ScriptController::ScriptController(QObject *parent) : QObject(parent) {
+neroshop::ScriptManager::ScriptManager(QObject *parent) : QObject(parent) {
     neroshop::create_json(); // Create settings.json if does not yet exist
     QString json = QString::fromStdString(neroshop::load_json());
     QJsonParseError json_error;
@@ -19,21 +19,21 @@ neroshop::ScriptController::ScriptController(QObject *parent) : QObject(parent) 
     json_object = json_doc.object();
 }
 
-//neroshop::ScriptController::~Script() {}
+//neroshop::ScriptManager::~Script() {}
 
-QString neroshop::ScriptController::getString(const QString& key) const {
+QString neroshop::ScriptManager::getString(const QString& key) const {
     return QString::fromStdString(neroshop::Script::get_string(neroshop::lua_state, key.toStdString()));
 }
 
-double neroshop::ScriptController::getNumber(const QString& key) const {
+double neroshop::ScriptManager::getNumber(const QString& key) const {
     return neroshop::Script::get_number(neroshop::lua_state, key.toStdString());
 }    
 
-bool neroshop::ScriptController::getBoolean(const QString& key) const {
+bool neroshop::ScriptManager::getBoolean(const QString& key) const {
     return neroshop::Script::get_boolean(neroshop::lua_state, key.toStdString());
 }
 
-QVariantList neroshop::ScriptController::getTableStrings(const QString& key) const {
+QVariantList neroshop::ScriptManager::getTableStrings(const QString& key) const {
     std::vector<std::string> table_strings = neroshop::Script::get_table_string(neroshop::lua_state, key.toStdString());
     QVariantList result;
     for(auto strings : table_strings) {
@@ -42,61 +42,61 @@ QVariantList neroshop::ScriptController::getTableStrings(const QString& key) con
     return result;
 }
 
-// neroshop::ScriptController::get_(const QString& key) const {
+// neroshop::ScriptManager::get_(const QString& key) const {
     //neroshop::Script::get_(neroshop::lua_state, key.toStdString());
 //}
 
-QString neroshop::ScriptController::getJsonString(const QString& key) {
+QString neroshop::ScriptManager::getJsonString(const QString& key) {
     QJsonValue json_value = json_object.value(key);
     assert(json_value.isString());
     return json_value.toString();
 }
 
-int neroshop::ScriptController::getJsonInt(const QString& key) {
+int neroshop::ScriptManager::getJsonInt(const QString& key) {
     QJsonValue json_value = json_object.value(key);
     //assert(json_value.is?());
     return json_value.toInt();
 }
 
-bool neroshop::ScriptController::getJsonBool(const QString& key) {
+bool neroshop::ScriptManager::getJsonBool(const QString& key) {
     QJsonValue json_value = json_object.value(key);
     assert(json_value.isBool());
     return json_value.toBool();
 }
 
-double neroshop::ScriptController::getJsonDouble(const QString& key) {
+double neroshop::ScriptManager::getJsonDouble(const QString& key) {
     QJsonValue json_value = json_object.value(key);
     assert(json_value.isDouble());
     return json_value.toDouble();
 }
 
-QVariantList neroshop::ScriptController::getJsonArray(const QString& key) {
+QVariantList neroshop::ScriptManager::getJsonArray(const QString& key) {
     QJsonValue json_value = json_object.value(key);
     assert(json_value.isArray());
     QJsonArray json_array = json_value.toArray();
     return json_array.toVariantList();
 }
 
-QVariantMap neroshop::ScriptController::getJsonObject(const QString& key) {
+QVariantMap neroshop::ScriptManager::getJsonObject(const QString& key) {
     QJsonValue json_value = json_object.value(key);
     assert(json_value.isObject());
     QJsonObject json_obj = json_value.toObject();
     return json_obj.toVariantMap();
 }
 
-QVariantMap neroshop::ScriptController::getJsonRootObject() const {
+QVariantMap neroshop::ScriptManager::getJsonRootObject() const {
     return json_object.toVariantMap();
 }
 
-QString neroshop::ScriptController::getJsonLiteral() {
+QString neroshop::ScriptManager::getJsonLiteral() {
     QJsonDocument json_doc(json_object);
     return QString(json_doc.toJson(QJsonDocument::Compact));
 }
 
-void neroshop::ScriptController::saveJson(const QString& settings) {
+void neroshop::ScriptManager::saveJson(const QString& settings) {
     neroshop::modify_json(settings.toStdString());
 }
 
-QJsonObject neroshop::ScriptController::getJsonRootObjectCpp() const {
+QJsonObject neroshop::ScriptManager::getJsonRootObjectCpp() const {
     return json_object;
 }

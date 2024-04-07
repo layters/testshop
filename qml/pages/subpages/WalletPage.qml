@@ -220,7 +220,12 @@ Page {
                                     verticalAlignment: Text.AlignVCenter
                                 }
                                 onClicked: {
-                                    Qt.openUrlExternally("https://" + "stagenet." + settingsDialog.blockExplorer)
+                                    let network_type = Wallet.getNetworkTypeString()
+                                    if(network_type != "mainnet") {
+                                        Qt.openUrlExternally("https://" + network_type + "." + settingsDialog.blockExplorer)
+                                        return
+                                    }
+                                    Qt.openUrlExternally("https://" + settingsDialog.blockExplorer)
                                 }
                             }
                         }

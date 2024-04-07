@@ -46,6 +46,7 @@ public:
     Q_INVOKABLE int getWalletType() const;
     Q_INVOKABLE int getNetworkType() const;
     Q_INVOKABLE QString getNetworkTypeString() const;
+    Q_INVOKABLE QString getNetworkPort() const;
     Q_INVOKABLE QString getSeed() const;
     Q_INVOKABLE QStringList getSeedList() const;
     Q_INVOKABLE QString getPrimaryAddress() const;

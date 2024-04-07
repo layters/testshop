@@ -1,9 +1,9 @@
 #ifndef COINGECKO_API_HPP_NEROSHOP
 #define COINGECKO_API_HPP_NEROSHOP
 
-#include "price_api.hpp"
+#include "../price_api.hpp"
 
-class CoinGeckoApi : public PriceApi
+class CoinGeckoApi : public neroshop::PriceApi
 {
 public:
     std::optional<double> price(neroshop::Currency from, neroshop::Currency to) const override;

@@ -1,4 +1,4 @@
-// Copyright (c) 2021-2023 the neroshop core team
+// Copyright (c) 2021-2024 the neroshop core team
 // Distributed under the GPLv3 software license, see the accompanying
 // file LICENSE or https://opensource.org/license/gpl-3-0/.
 

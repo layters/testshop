@@ -17,8 +17,8 @@
 
 #include <map>
 
-#include "currency_map.hpp"
-#include "../../core/tools/tools.hpp" // neroshop::string::upper
+#include "../currency_map.hpp"
+#include "../../../core/tools/tools.hpp" // neroshop::string::upper
 
 std::optional<double> CryptoRankApi::price(neroshop::Currency from, neroshop::Currency to) const
 {

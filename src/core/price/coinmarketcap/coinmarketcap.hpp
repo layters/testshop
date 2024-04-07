@@ -1,9 +1,9 @@
 #ifndef COINMARKETCAP_API_HPP_NEROSHOP
 #define COINMARKETCAP_API_HPP_NEROSHOP
 
-#include "price_api.hpp"
+#include "../price_api.hpp"
 
-class CoinMarketCapApi : public PriceApi
+class CoinMarketCapApi : public neroshop::PriceApi
 {
 public:
     std::optional<double> price(neroshop::Currency from, neroshop::Currency to) const override;

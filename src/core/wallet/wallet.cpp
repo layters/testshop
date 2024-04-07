@@ -764,6 +764,19 @@ std::string neroshop::Wallet::get_network_type_as_string() {
 }
 //-------------------------------------------------------
 //-------------------------------------------------------
+std::string neroshop::Wallet::get_network_port() const {
+    auto wallet_network_type = get_wallet_network_type();
+    switch(wallet_type) {
+        case WalletType::Monero:
+            return WalletNetworkPortMap[wallet_network_type][0];
+        case WalletType::Wownero:
+            return WalletNetworkPortMap[wallet_network_type][2];
+        default:
+            return "";
+    }
+}
+//-------------------------------------------------------
+//-------------------------------------------------------
 double neroshop::Wallet::get_sync_percentage() const {
     std::lock_guard<std::mutex> lock(wallet_data_mutex);
     return percentage;
@@ -1185,6 +1198,18 @@ std::string neroshop::Wallet::get_version() const {
     }
 }
 //-------------------------------------------------------
+//-------------------------------------------------------
+void * neroshop::Wallet::get_handle() const {
+    switch(wallet_type) {
+        case WalletType::Monero:
+            return monero_wallet_obj.get();
+        case WalletType::Wownero:
+            return nullptr;//wownero_wallet_obj.get();
+        default:
+            return nullptr;
+    }
+}
+//-------------------------------------------------------
 monero_wallet_full * neroshop::Wallet::get_monero_wallet() const
 {
     return monero_wallet_obj.get();
@@ -1248,10 +1273,10 @@ bool neroshop::Wallet::file_exists(const std::string& filename) const {
 }
 //-------------------------------------------------------
 bool neroshop::Wallet::is_valid_address(const std::string& address) const {
-    auto network_type = get_wallet_network_type();
+    auto wallet_network_type = get_wallet_network_type();
     switch(wallet_type) {
         case WalletType::Monero:
-            return monero_utils::is_valid_address(address, static_cast<monero::monero_network_type>(network_type));
+            return monero_utils::is_valid_address(address, static_cast<monero::monero_network_type>(wallet_network_type));
         case WalletType::Wownero:
             return false;
         default:

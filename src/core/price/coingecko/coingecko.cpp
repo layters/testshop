@@ -17,8 +17,8 @@
 
 #include <map>
 
-#include "currency_map.hpp"
-#include "../../core/tools/tools.hpp" // neroshop::string::lower
+#include "../currency_map.hpp"
+#include "../../../core/tools/tools.hpp" // neroshop::string::lower
 
 std::optional<double> CoinGeckoApi::price(neroshop::Currency from, neroshop::Currency to) const
 {

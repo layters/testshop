@@ -64,7 +64,7 @@ Item {
             ScrollBar.vertical: ScrollBar { }
             model: {
                 // Get all monero nodes from https://monero.fail/health.json
-                const monero_node_list = Backend.getNodeList("monero")
+                const monero_node_list = (Wallet.getWalletType() == 1) ? Backend.getNodeList("wownero") : Backend.getNodeList("monero")
                 return monero_node_list
             }
             delegate: Item {

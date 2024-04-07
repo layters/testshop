@@ -1,9 +1,9 @@
 #ifndef CRYPTOWATCH_API_HPP_NEROSHOP
 #define CRYPTOWATCH_API_HPP_NEROSHOP
 
-#include "price_api.hpp"
+#include "../price_api.hpp"
 
-class CryptoWatchApi : public PriceApi
+class CryptoWatchApi : public neroshop::PriceApi
 {
 public:
     std::optional<double> price(neroshop::Currency from, neroshop::Currency to) const override;
