@@ -131,6 +131,7 @@ public:
     void set_bootstrap(bool bootstrap);
     
     bool is_bootstrap_node() const;
+    bool is_hardcoded() const;
     static bool is_hardcoded(const std::string& address, uint16_t port);
     bool has_key(const std::string& key) const;
     bool has_value(const std::string& value) const;
