@@ -14,6 +14,7 @@
 #include "../core/tools/logger.hpp"
 #include "../core/version.hpp"
 #include "../core/tools/timer.hpp"
+#include "../core/tools/filesystem.hpp"
 
 #include <cxxopts.hpp>
 
@@ -210,6 +211,14 @@ int main(int argc, char** argv)
     std::string ip_address = NEROSHOP_LOOPBACK_ADDRESS;
     if(result.count("public")) {
         ip_address = NEROSHOP_ANY_ADDRESS;
+    }
+    //-------------------------------------------------------
+    // create "datastore" folder within "~/.config/neroshop/" path (to prevent sqlite3_open: out of memory error)
+    std::string data_dir = NEROSHOP_DEFAULT_DATABASE_PATH;
+    if(!neroshop::filesystem::is_directory(data_dir)) {
+        if(!neroshop::filesystem::make_directory(data_dir)) {
+            throw std::runtime_error("Failed to create neroshop data dir");
+        }
     }
     //-------------------------------------------------------
     neroshop::Node node("0.0.0.0"/*ip_address*/, NEROSHOP_P2P_DEFAULT_PORT, true);

@@ -207,6 +207,7 @@ std::string neroshop::Node::generate_node_id(const std::string& address, int por
 // Define the list of bootstrap nodes
 std::vector<neroshop::Peer> bootstrap_nodes = {
     {"node.neroshop.org", NEROSHOP_P2P_DEFAULT_PORT},
+    ////{"127.0.0.1", NEROSHOP_P2P_DEFAULT_PORT}, // Uncomment to test on local network (you are allowed to create multiple separate daemon instances too)
 };
 
 void neroshop::Node::join() {
@@ -446,7 +447,7 @@ std::vector<neroshop::Peer> neroshop::Node::get_providers(const std::string& dat
 //-------------------------------------------------------------------------------------
 
 void neroshop::Node::persist_routing_table(const std::string& address, int port) {
-    if(!is_bootstrap_node()) return; // Regular nodes cannot run this function
+    if(!is_hardcoded()) return; // Regular nodes cannot run this function
     
     db::Sqlite3 * database = neroshop::get_database();
     if(!database) throw std::runtime_error("database is NULL");
@@ -463,7 +464,7 @@ void neroshop::Node::persist_routing_table(const std::string& address, int port)
 }
 
 void neroshop::Node::rebuild_routing_table() {
-    if(!is_bootstrap_node()) return; // Regular nodes cannot run this function
+    if(!is_hardcoded()) return; // Regular nodes cannot run this function
     
     db::Sqlite3 * database = neroshop::get_database();
     if(!database) throw std::runtime_error("database is NULL");
@@ -499,7 +500,7 @@ void neroshop::Node::rebuild_routing_table() {
             }
             
             auto node = std::make_unique<Node>(ip_address, port, false);
-            if(!node->is_bootstrap_node()) {
+            if(!node->is_hardcoded()) {
                 routing_table->add_node(std::move(node));
             }
         }
@@ -1131,7 +1132,7 @@ void neroshop::Node::periodic_check() {
                 uint16_t node_port = node->get_port();
                 
                 // Skip the bootstrap nodes from the periodic checks
-                if (node->is_bootstrap_node()) continue;
+                if (node->is_hardcoded()) continue;
                 
                 std::cout << "Performing periodic check on \033[34m" << node_ip << ":" << node_port << "\033[0m\n";
                 
@@ -1216,7 +1217,7 @@ void neroshop::Node::on_ping(const std::vector<uint8_t>& buffer, const struct so
             bool node_exists = routing_table->has_node((sender_ip == "127.0.0.1") ? this->public_ip_address : sender_ip, sender_port);
             if (!node_exists) {
                 auto node_that_pinged = std::make_unique<Node>((sender_ip == "127.0.0.1") ? this->public_ip_address : sender_ip, sender_port, false);
-                if(!node_that_pinged->is_bootstrap_node()) { // To prevent the bootstrap node from being stored in the routing table
+                if(!node_that_pinged->is_hardcoded()) { // To prevent the bootstrap node from being stored in the routing table
                     routing_table->add_node(std::move(node_that_pinged)); // Already has internal write_lock
                     persist_routing_table((sender_ip == "127.0.0.1") ? this->public_ip_address : sender_ip, sender_port);
                     routing_table->print_table();
@@ -1260,7 +1261,7 @@ void neroshop::Node::on_map(const std::vector<uint8_t>& buffer, const struct soc
             uint16_t routing_table_node_port = routing_table_node->get_port();
             
             // Skip the bootstrap nodes (as they are not involved in the replacement of dead nodes)
-            if (routing_table_node->is_bootstrap_node()) continue;
+            if (routing_table_node->is_hardcoded()) continue;
                 
             // Send find_node to make up for dead nodes
             auto nodes = send_find_node(dead_node_id, routing_table_node_ip, routing_table_node_port);
@@ -1578,8 +1579,25 @@ bool neroshop::Node::is_hardcoded(const std::string& address, uint16_t port) {
     return false;
 }
 
+bool neroshop::Node::is_hardcoded() const {
+    for (const auto& bootstrap_node : bootstrap_nodes) {
+        auto bootstrap_node_ip = neroshop::ip::resolve(bootstrap_node.address);
+        if (bootstrap_node_ip == this->public_ip_address
+        && bootstrap_node.port == this->get_port()) {
+            return true;
+        }
+        
+        if((bootstrap_node_ip == "127.0.0.1" || bootstrap_node_ip == "0.0.0.0")
+        && bootstrap_node.port == NEROSHOP_P2P_DEFAULT_PORT
+        && bootstrap_node.port == this->get_port()) { // For testing on localhost. Remove this soon!!
+            return true;
+        }
+    }
+    return false;
+}
+
 bool neroshop::Node::is_bootstrap_node() const {
-    return (bootstrap == true) || is_hardcoded(this->public_ip_address, this->get_port());
+    return (bootstrap == true) || is_hardcoded();
 }
 
 bool neroshop::Node::is_dead() const {
