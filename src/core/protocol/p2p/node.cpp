@@ -451,7 +451,6 @@ void neroshop::Node::persist_routing_table(const std::string& address, int port)
     
     db::Sqlite3 * database = neroshop::get_database();
     if(!database) throw std::runtime_error("database is NULL");
-    database->execute("BEGIN;");
     
     if(!database->table_exists("routing_table")) { // or simply "nodes"
         database->execute("CREATE TABLE routing_table("
@@ -459,8 +458,6 @@ void neroshop::Node::persist_routing_table(const std::string& address, int port)
     }
     
     database->execute_params("INSERT INTO routing_table (ip_address, port) VALUES (?1, ?2);", { address, std::to_string(port) });
-    
-    database->execute("COMMIT;");
 }
 
 void neroshop::Node::rebuild_routing_table() {

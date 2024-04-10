@@ -131,9 +131,18 @@ int neroshop::Wallet::restore_from_seed(const std::string& seed)
     wallet_config_obj.m_seed = seed;
     wallet_config_obj.m_restore_height = 0;
     
-    monero_wallet_obj = std::unique_ptr<monero_wallet_full>(monero_wallet_full::create_wallet (wallet_config_obj, nullptr));
+    try {
+        monero_wallet_obj = std::unique_ptr<monero_wallet_full>(monero_wallet_full::create_wallet (wallet_config_obj, nullptr));
+    } catch (const std::exception& e) {
+        std::string error_msg = e.what();
+        std::cerr << "\033[1;91m" << error_msg << "\033[0m\n";
+        if(neroshop::string::contains(error_msg, "Invalid mnemonic")) {
+            return static_cast<int>(WalletError::InvalidMnemonic);
+        }
+    }
     if(!monero_wallet_obj.get()) return static_cast<int>(WalletError::IsNotOpened);
     std::cout << "\033[1;35;49m" << "restored in-memory wallet (from seed)" << "\033[0m" << std::endl;    
+    
     return static_cast<int>(WalletError::Ok);
 }
 //-------------------------------------------------------
@@ -168,7 +177,7 @@ int neroshop::Wallet::open(const std::string& path, const std::string& password)
         monero_wallet_obj = std::unique_ptr<monero_wallet_full>(monero::monero_wallet_full::open_wallet(path, password, static_cast<monero::monero_network_type>(this->network_type)));
     } catch (const std::exception& e) {
         std::string error_msg = e.what();
-        neroshop::print(error_msg, 1);//tools::error::invalid_password
+        std::cerr << "\033[1;91m" << error_msg << "\033[0m\n";//tools::error::invalid_password
         if(neroshop::string::contains(error_msg, "wallet cannot be opened as")) {
             return static_cast<int>(WalletError::BadNetworkType);
         } else if(neroshop::string::contains(error_msg, "invalid password")) {
