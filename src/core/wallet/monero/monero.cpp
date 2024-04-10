@@ -96,7 +96,15 @@ int neroshop::MoneroWallet::restore_from_seed(const std::string& seed)
     wallet_config_obj.m_seed = seed;
     wallet_config_obj.m_restore_height = 0;
     
-    monero_wallet_obj = std::unique_ptr<monero_wallet_full>(monero_wallet_full::create_wallet (wallet_config_obj, nullptr));
+    try {
+        monero_wallet_obj = std::unique_ptr<monero_wallet_full>(monero_wallet_full::create_wallet (wallet_config_obj, nullptr));
+    } catch (const std::exception& e) {
+        std::string error_msg = e.what();
+        std::cerr << "\033[1;91m" << error_msg << "\033[0m\n";
+        if(neroshop::string::contains(error_msg, "Invalid mnemonic")) {
+            return static_cast<int>(WalletError::InvalidMnemonic);
+        }
+    }
     if(!monero_wallet_obj.get()) return static_cast<int>(WalletError::IsNotOpened);
     std::cout << "\033[1;35m" << "restored in-memory wallet (from seed)" << "\033[0m" << std::endl;    
     

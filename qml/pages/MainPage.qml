@@ -242,6 +242,7 @@ Page {
                         }
                         if(button.text == restoreFromSeedButton.text) {
                             walletRestoreStack.currentIndex = 1
+                            seedInput.forceActiveFocus()
                         }
                         if(button.text == restoreFromKeysButton.text) {
                             walletRestoreStack.currentIndex = 2
@@ -587,12 +588,34 @@ Page {
                 	            messageBox.open()
                 	            return;                	        
                 	        }
-                	        Wallet.restoreFromSeed(seedInput.text, User)
-                	        // Process login credentials
-                	        // ...
+                	        
+                	        let loginError = Backend.loginWithMnemonic(Wallet, seedInput.text, User)
+                	        if(loginError != Enum.LoginError.Ok) {
+                	            console.log("loginError", loginError)
+                	            if(loginError == Enum.LoginError.WalletBadNetworkType) {
+                	                messageBox.text = qsTr("Bad network type")
+                	                messageBox.open()
+                	            } else if(loginError == Enum.LoginError.WalletInvalidMnemonic) {
+                	                messageBox.text = qsTr("Invalid mnemonic")
+                	                messageBox.open()
+                	            } else if(loginError == Enum.LoginError.WalletBadWalletType) {
+                	                messageBox.text = qsTr("Bad wallet type")
+                	                messageBox.open()
+                	            } else if(loginError == Enum.LoginError.DaemonIsNotConnected) {
+                	                messageBox.text = qsTr("Daemon (neromon) is not connected")
+                	                messageBox.open()
+                	            } else if(loginError == Enum.LoginError.UserNotFound) {
+                	                messageBox.text = qsTr("User not found. Please try again or register")
+                	                messageBox.open()
+                	            } else {
+                	                messageBox.text = qsTr("Login error")
+                	                messageBox.open()
+                	            }
+                	            return;
+                	        }
                 	        onAutoSync();
                             // Switch to HomePage
-                            ////pageStack.pushPage("qrc:/qml/pages/HomePage.qml", StackView.Immediate)//stack.push(home_page)                	        
+                            pageStack.pushPage("qrc:/qml/pages/HomePage.qml", StackView.Immediate)//stack.push(home_page)                	        
                 	    }                	
                 	}
                 	

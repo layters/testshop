@@ -22,6 +22,7 @@ public:
         BadNetworkType,
         IsNotOpened, // monero_wallet_obj is nullptr
         BadWalletType,
+        InvalidMnemonic,
     };    
     Q_ENUM(WalletError)
 
@@ -45,10 +46,11 @@ public:
         WalletBadNetworkType = static_cast<int>(WalletError::BadNetworkType),
         WalletIsNotOpened = static_cast<int>(WalletError::IsNotOpened),
         WalletBadWalletType = static_cast<int>(WalletError::BadWalletType),
+        WalletInvalidMnemonic = static_cast<int>(WalletError::InvalidMnemonic),
         
-        DaemonIsNotConnected = 10,
+        DaemonIsNotConnected = 100,
         
-        UserNotFound = 20,
+        UserNotFound = 200,
         UserIsNullPointer,
     };
     Q_ENUM(LoginError)
