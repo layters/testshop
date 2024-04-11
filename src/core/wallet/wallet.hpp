@@ -53,6 +53,9 @@ enum class WalletError {
     IsNotOpened, // monero_wallet_obj is nullptr
     BadWalletType,
     InvalidMnemonic,
+    InvalidAddress,
+    InvalidViewKey,
+    InvalidSpendKey,
 };
 
 class Wallet : public monero_wallet_listener {

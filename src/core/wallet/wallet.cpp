@@ -152,8 +152,8 @@ int neroshop::Wallet::restore_from_keys(const std::string& primary_address, cons
 {
     // Check validity of primary address
     if(!monero_utils::is_valid_address(primary_address, static_cast<monero::monero_network_type>(this->network_type))) {
-        neroshop::print("Invalid Monero address", 1);
-        return static_cast<int>(WalletError::IsNotOpened);
+        std::cerr << "\033[1;91mInvalid Monero address\033[0m\n";
+        return static_cast<int>(WalletError::InvalidAddress);
     }
     
     monero::monero_wallet_config wallet_config_obj;
