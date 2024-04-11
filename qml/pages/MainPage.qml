@@ -239,6 +239,9 @@ Page {
                         button.checked = true
                         if(button.text == restoreFromFileButton.text) {
                             walletRestoreStack.currentIndex = 0
+                            if(walletFileField.text.length > 0) {
+                                walletPasswordRestoreField.forceActiveFocus()
+                            }
                         }
                         if(button.text == restoreFromSeedButton.text) {
                             walletRestoreStack.currentIndex = 1
@@ -287,6 +290,11 @@ Page {
                              font.bold: true
                              //font.family: FontAwesome.fontFamilySolid
                          }*/
+                         MouseArea {
+                             anchors.fill: parent
+                             onPressed: mouse.accepted = false
+                             cursorShape: !parent.checked ? Qt.PointingHandCursor : Qt.ArrowCursor
+                         }
                          NeroshopComponents.Hint {
                              id: restoreFileHint
                              visible: parent.hovered; delay: 0
@@ -312,6 +320,11 @@ Page {
                          //border.width: 1
                          radius: 3
                      }
+                         MouseArea {
+                             anchors.fill: parent
+                             onPressed: mouse.accepted = false
+                             cursorShape: !parent.checked ? Qt.PointingHandCursor : Qt.ArrowCursor
+                         }
                          NeroshopComponents.Hint {
                              visible: parent.hovered; delay: 0
                              text: parent.text
@@ -336,6 +349,11 @@ Page {
                         //border.width: 1
                         radius: 3
                     }
+                         MouseArea {
+                             anchors.fill: parent
+                             onPressed: mouse.accepted = false
+                             cursorShape: !parent.checked ? Qt.PointingHandCursor : Qt.ArrowCursor
+                         }
                          NeroshopComponents.Hint {
                              visible: parent.hovered; delay: 0
                              text: parent.text
@@ -361,6 +379,11 @@ Page {
                         //border.width: 1
                         radius: 3
                     }
+                         MouseArea {
+                             anchors.fill: parent
+                             onPressed: mouse.accepted = false
+                             cursorShape: !parent.checked ? Qt.PointingHandCursor : Qt.ArrowCursor
+                         }
                          NeroshopComponents.Hint {
                              visible: parent.hovered; delay: 0
                              text: parent.text
@@ -485,8 +508,8 @@ Page {
                             color: (NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000"                  
                             background: Rectangle {
                                 color: (NeroshopComponents.Style.darkTheme) ? "#101010" : "#f0f0f0"
-                                //border.color: (NeroshopComponents.Style.darkTheme) ? "#404040" : "#4d4d4d"
-                                border.width: parent.activeFocus ? 2 : 1
+                                border.color: (NeroshopComponents.Style.darkTheme) ? "#404040" : "#4d4d4d"
+                                border.width: seedInput.activeFocus ? 2 : 1
                                 //radius: 
                             }
                         }

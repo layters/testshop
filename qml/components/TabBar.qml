@@ -17,51 +17,50 @@ Item {
     property var buttonAt: tabButtonRepeater.itemAt
     width: row.childrenRect.width; height: row.childrenRect.height
 
-ButtonGroup {
-    id: tabButtonGroup
-    buttons: row.children
-    exclusive: true // only one button in the group can be checked at any given time
-    onClicked: {
-        console.log("Switched to", button.text + " (index: " + button.buttonIndex + ")")
-        button.checked = true
+    ButtonGroup {
+        id: tabButtonGroup
+        buttons: row.children
+        exclusive: true // only one button in the group can be checked at any given time
+        onClicked: {
+            console.log("Switched to", button.text + " (index: " + button.buttonIndex + ")")
+            button.checked = true
+        }
     }
-}
 
-Row {//TODO: try using a Column too
-    id: row
-    spacing: 2
-    anchors.centerIn: parent
+    Row {//TODO: try using a Column too
+        id: row
+        spacing: 2
+        anchors.centerIn: parent
 
-    Repeater {
-        id: tabButtonRepeater
-        model: null
-        delegate: Button {
-            checked: true
-            text: modelData
-            ButtonGroup.group: tabButtonGroup // attaches a button to a button group
-            property int buttonIndex: index
-            //display: AbstractButton.IconOnly
-            //icon.source: "qrc:/images/grid.png"
-            //icon.color: !this.checked ? "#39304f" : "#ffffff"// icon color is set automatically unless we set it ourselves, which we do here
-            width: tabBar.buttonWidth; height: tabBar.buttonHeight
-            background: Rectangle {
-                radius: tabBar.radius
-                color: parent.checked ? color0 : color1
-            }
-            contentItem: Text {
-                text: parent.text
-                font.bold: parent.checked ? true : false
-                color: parent.checked ? "#ffffff" : "#000000"
-                horizontalAlignment: Text.AlignHCenter
-                verticalAlignment: Text.AlignVCenter
-            }
-            MouseArea {
-                anchors.fill: parent
-                onPressed: mouse.accepted = false
-                cursorShape: Qt.PointingHandCursor//!parent.checked ? Qt.PointingHandCursor : Qt.ArrowCursor
+        Repeater {
+            id: tabButtonRepeater
+            model: null
+            delegate: Button {
+                checked: true
+                text: modelData
+                ButtonGroup.group: tabButtonGroup // attaches a button to a button group
+                property int buttonIndex: index
+                //display: AbstractButton.IconOnly
+                //icon.source: "qrc:/images/grid.png"
+                //icon.color: !this.checked ? "#39304f" : "#ffffff"// icon color is set automatically unless we set it ourselves, which we do here
+                width: tabBar.buttonWidth; height: tabBar.buttonHeight
+                background: Rectangle {
+                    radius: tabBar.radius
+                    color: parent.checked ? color0 : color1
+                }
+                contentItem: Text {
+                    text: parent.text
+                    font.bold: parent.checked ? true : false
+                    color: parent.checked ? "#ffffff" : "#000000"
+                    horizontalAlignment: Text.AlignHCenter
+                    verticalAlignment: Text.AlignVCenter
+                }
+                MouseArea {
+                    anchors.fill: parent
+                    onPressed: mouse.accepted = false
+                    cursorShape: Qt.PointingHandCursor//!parent.checked ? Qt.PointingHandCursor : Qt.ArrowCursor
+                }
             }
         }
     }
-}
-
 }

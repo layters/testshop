@@ -85,17 +85,6 @@ endif()
 set(MONERO_PROJECT "${CMAKE_SOURCE_DIR}/external/monero-cpp/external/monero-project")
 set(MONERO_PROJECT_SRC "${MONERO_PROJECT}/src")
 
-# header includes
-include_directories("${MONERO_PROJECT}/contrib/epee/include")
-include_directories("${MONERO_PROJECT}/external/")
-include_directories("${MONERO_PROJECT}/external/easylogging++")
-include_directories("${MONERO_PROJECT}/external/rapidjson/include")
-include_directories("${MONERO_PROJECT_SRC}/")
-include_directories("${MONERO_PROJECT_SRC}/wallet")
-include_directories("${MONERO_PROJECT_SRC}/wallet/api")
-include_directories("${MONERO_PROJECT_SRC}/hardforks")
-include_directories("${MONERO_PROJECT_SRC}/crypto/crypto_ops_builder/include/")
-
 ####################
 # Extra libraries
 if (APPLE)
@@ -121,7 +110,6 @@ message(STATUS EXTRA_LIBRARIES: ${EXTRA_LIBRARIES})
 include(FindProtobuf)
 find_package(Protobuf)
 message(STATUS "Protobuf lib: ${Protobuf_LIBRARY}, inc: ${Protobuf_INCLUDE_DIR}, protoc: ${Protobuf_PROTOC_EXECUTABLE}")
-include_directories(${Protobuf_INCLUDE_DIR})
 
 ######################################
 # LibUSB
@@ -134,7 +122,6 @@ set(Boost_NO_BOOST_CMAKE 1)
 set(Boost_USE_MULTITHREADED ON)
 find_package(Boost 1.58 QUIET REQUIRED COMPONENTS chrono date_time filesystem program_options regex serialization wserialization system thread)
 message(STATUS "Using Boost include dir at ${Boost_INCLUDE_DIR}")
-include_directories(${Boost_INCLUDE_DIR})
 
 ######################################
 # OpenSSL
@@ -150,7 +137,6 @@ endif()
 
 find_package(OpenSSL REQUIRED)
 message(STATUS "Using OpenSSL include dir at ${OPENSSL_INCLUDE_DIR}")
-include_directories(${OPENSSL_INCLUDE_DIR})
 
 if(STATIC AND NOT IOS)
   if(UNIX)
@@ -160,8 +146,6 @@ endif()
 
 ######################################
 # libsodium
-include_directories(external/monero-cpp/external/libsodium/include)
-include_directories(external/monero-cpp/external/libsodium/include/sodium) # "export.h"
 find_library(SODIUM_LIBRARY sodium REQUIRED)
 message(STATUS "Using libsodium: ${SODIUM_LIBRARY}")
 
@@ -188,7 +172,6 @@ find_package(HIDAPI)
 if(HIDAPI_FOUND)
     message(STATUS "Using HIDAPI include dir at ${HIDAPI_INCLUDE_DIR}")
     add_definitions(-DHAVE_HIDAPI)
-    include_directories(${HIDAPI_INCLUDE_DIR})
     link_directories(${LIBHIDAPI_LIBRARY_DIRS})
 endif()
 if(NOT HIDAPI_FOUND)
@@ -202,7 +185,6 @@ endif()
 ######################################
 # Unbound
 find_package(Unbound)
-include_directories(${UNBOUND_INCLUDE_DIR})
 if ("${UNBOUND_LIBRARIES}" MATCHES "libunbound")
   message(STATUS "Using libunbound: ${UNBOUND_LIBRARIES}")
   add_library(unbound SHARED IMPORTED)
@@ -320,37 +302,56 @@ set_target_properties(randomx PROPERTIES IMPORTED_LOCATION
     ${MONERO_PROJECT_BUILD}/external/randomx/librandomx.a)   
     
 ######################################
+set(monero_include_dirs ${MONERO_PROJECT}/contrib/epee/include
+    ${MONERO_PROJECT}/external/
+    ${MONERO_PROJECT}/external/easylogging++
+    ${MONERO_PROJECT}/external/rapidjson/include
+    ${MONERO_PROJECT_SRC}/
+    ${MONERO_PROJECT_SRC}/wallet
+    ${MONERO_PROJECT_SRC}/wallet/api
+    ${MONERO_PROJECT_SRC}/hardforks
+    ${MONERO_PROJECT_SRC}/crypto
+    ${MONERO_PROJECT_SRC}/crypto/crypto_ops_builder/include/
+    ${Protobuf_INCLUDE_DIR}
+    ${Boost_INCLUDE_DIR}
+    ${OPENSSL_INCLUDE_DIR}
+    ${CMAKE_CURRENT_SOURCE_DIR}/external/monero-cpp/external/libsodium/include/sodium
+    #[[${CMAKE_CURRENT_SOURCE_DIR}/external/monero-cpp/external/openssl-sdk/include]]
+    ${HIDAPI_INCLUDE_DIR}
+    ${UNBOUND_INCLUDE_DIR}
+)
 set(monero_src wallet rpc_base net lmdb unbound easylogging cryptonote_core cryptonote_protocol cryptonote_basic cryptonote_format_utils_basic mnemonics ringct ringct_basic common blockchain_db blocks checkpoints device device_trezor cncrypto multisig version randomx epee hardforks ${wallet_crypto} 
 ${UNBOUND_LIBRARIES} ${Boost_LIBRARIES} ${Protobuf_LIBRARY} ${LibUSB_LIBRARIES} ${OPENSSL_LIBRARIES} ${SODIUM_LIBRARY} ${HIDAPI_LIBRARY} ${EXTRA_LIBRARIES})
+
 ######################################
 # monero-cpp (wrapper)
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/external/monero-cpp/src/)
+set(monero_cpp_include_dir ${CMAKE_CURRENT_SOURCE_DIR}/external/monero-cpp/src/)
 set(monero_cpp_src ${CMAKE_CURRENT_SOURCE_DIR}/build/libmonero-cpp.a)
 
 ######################################
 # sqlite3
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/external/sqlite) # v3.39.1 (amalgamation - said to run a bit faster)
+set(sqlite_include_dir ${CMAKE_CURRENT_SOURCE_DIR}/external/sqlite) # v3.39.1 (amalgamation - said to run a bit faster)
 set(sqlite_src ${CMAKE_CURRENT_SOURCE_DIR}/build/libsqlite3.a)
 
 ######################################
 # QR-Code-generator
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/external/QR-Code-generator/cpp) # v1.8.0
-set(qr_code_generator_src ${CMAKE_CURRENT_SOURCE_DIR}/build/libqrcodegen.a)
+set(qrcodegen_include_dir ${CMAKE_CURRENT_SOURCE_DIR}/external/QR-Code-generator/cpp) # v1.8.0
+set(qrcodegen_src ${CMAKE_CURRENT_SOURCE_DIR}/build/libqrcodegen.a)
 
 ######################################
 # json
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/external/json/single_include)
+set(json_include_dir ${CMAKE_CURRENT_SOURCE_DIR}/external/json/single_include)
 
 ######################################
 # curl
 find_package(CURL)
 if(CURL_FOUND) 
     message(STATUS "Using CURL: ${CURL_LIBRARIES} (v${CURL_VERSION_STRING})")
-    include_directories(${CURL_INCLUDE_DIRS})
+    set(curl_include_dirs ${CURL_INCLUDE_DIRS})
     set(curl_src ${CURL_LIBRARIES})
 endif()
 if(NOT CURL_FOUND)
-    include_directories(${CMAKE_CURRENT_SOURCE_DIR}/external/curl/include ${CMAKE_CURRENT_SOURCE_DIR}/external/curl/lib)
+    set(curl_include_dirs ${CMAKE_CURRENT_SOURCE_DIR}/external/curl/include ${CMAKE_CURRENT_SOURCE_DIR}/external/curl/lib)
     set(curl_src ${CMAKE_CURRENT_SOURCE_DIR}/external/curl/lib/.libs/libcurl.a) # In case user chooses to build libcurl themselves instead of installing it on the system
     add_definitions(-DCURL_STATICLIB)
     set(CMAKE_CXX_LINK_EXECUTABLE "${CMAKE_CXX_LINK_EXECUTABLE} -lldap -llber -lnghttp2 -lpsl -lidn2 -lbrotlidec -lzstd -lrtmp") # for Arch (Manjaro)
@@ -358,43 +359,43 @@ endif()
 
 ######################################
 # stduuid
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/external/stduuid ${CMAKE_CURRENT_SOURCE_DIR}/external/stduuid/catch ${CMAKE_CURRENT_SOURCE_DIR}/external/stduuid/include)
+set(stduuid_include_dirs ${CMAKE_CURRENT_SOURCE_DIR}/external/stduuid ${CMAKE_CURRENT_SOURCE_DIR}/external/stduuid/catch ${CMAKE_CURRENT_SOURCE_DIR}/external/stduuid/include)
 
 ######################################
 # linenoise
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/external/linenoise/)
+set(linenoise_include_dir ${CMAKE_CURRENT_SOURCE_DIR}/external/linenoise/)
 set(linenoise_src ${CMAKE_CURRENT_SOURCE_DIR}/build/liblinenoise.a)
 
 ######################################
 # lua
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/external/lua/src/) # v5.4.4
+set(lua_include_dir ${CMAKE_CURRENT_SOURCE_DIR}/external/lua/src/) # v5.4.4
 set(lua_src ${CMAKE_CURRENT_SOURCE_DIR}/build/liblua.a)
 
 ######################################
 # cxxopts
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/external/cxxopts/include/)
+set(cxxopts_include_dir ${CMAKE_CURRENT_SOURCE_DIR}/external/cxxopts/include/)
 
 ######################################
 # zlib
 find_package(ZLIB)
 if(ZLIB_FOUND)
     message(STATUS "Using ZLIB: ${ZLIB_LIBRARIES}")
-    include_directories(${ZLIB_INCLUDE_DIRS})
+    set(zlib_include_dir ${ZLIB_INCLUDE_DIRS})
     set(zlib_src ${ZLIB_LIBRARIES})
 endif()
 if(NOT ZLIB_FOUND)
-    include_directories(${CMAKE_CURRENT_SOURCE_DIR}/external/zlib/)
+    set(zlib_include_dir ${CMAKE_CURRENT_SOURCE_DIR}/external/zlib/)
     set(zlib_src ${CMAKE_CURRENT_SOURCE_DIR}/build/libz.a)
 endif()
 
 ######################################
 # libi2pd (and i2pd_client)
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/external/i2pd/daemon ${CMAKE_CURRENT_SOURCE_DIR}/external/i2pd/i18n ${CMAKE_CURRENT_SOURCE_DIR}/external/i2pd/libi2pd ${CMAKE_CURRENT_SOURCE_DIR}/external/i2pd/libi2pd_client) # v2.50.2
+set(i2pd_include_dirs ${CMAKE_CURRENT_SOURCE_DIR}/external/i2pd/daemon ${CMAKE_CURRENT_SOURCE_DIR}/external/i2pd/i18n ${CMAKE_CURRENT_SOURCE_DIR}/external/i2pd/libi2pd ${CMAKE_CURRENT_SOURCE_DIR}/external/i2pd/libi2pd_client) # v2.50.2
 set(i2pd_src ${CMAKE_CURRENT_SOURCE_DIR}/build/libi2pdclient.a ${CMAKE_CURRENT_SOURCE_DIR}/build/libi2pd.a ${CMAKE_CURRENT_SOURCE_DIR}/build/libi2pdlang.a)
 
 ######################################
 # i2psam
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/external/i2psam/)
+set(i2psam_include_dir ${CMAKE_CURRENT_SOURCE_DIR}/external/i2psam/)
 set(i2psam_src ${CMAKE_CURRENT_SOURCE_DIR}/build/libi2psam.a)
 
 ######################################
@@ -494,7 +495,7 @@ set(daemon_src ${neroshop_crypto_src} ${neroshop_database_src} ${neroshop_networ
 add_executable(${daemon_executable} src/daemon/main.cpp ${daemon_src})#target_link_libraries(daemon ${curl_src} ${OPENSSL_LIBRARIES}) # curl requires both openssl(used in monero) and zlib(used in dokun-ui)
 install(TARGETS ${daemon_executable} DESTINATION bin)
 target_compile_definitions(${daemon_executable} PRIVATE NEROSHOP_DEBUG)
-target_include_directories(${daemon_executable} PRIVATE #[[${CMAKE_CURRENT_SOURCE_DIR}/src/]])
+target_include_directories(${daemon_executable} PRIVATE #[[${CMAKE_CURRENT_SOURCE_DIR}/src/]] ${monero_include_dirs} ${monero_cpp_include_dir} ${sqlite_include_dir} ${json_include_dir} ${zlib_include_dir} ${i2pd_include_dirs} ${cxxopts_include_dir})
 target_link_libraries(${daemon_executable} ${i2pd_src} ${monero_cpp_src} ${sqlite_src} ${raft_src} ${monero_src} ${zlib_src})#set(CMAKE_CXX_LINK_EXECUTABLE "${CMAKE_CXX_LINK_EXECUTABLE} -ldl") # fixes undefined reference to symbol 'dlsym@@GLIBC_2.2.5' error
 
 ######################################
@@ -504,8 +505,8 @@ if(NEROSHOP_BUILD_CLI)
     add_executable(${neroshop_console} src/console/main.cpp ${neroshop_core_src})
     install(TARGETS ${neroshop_console} DESTINATION bin)
     target_compile_definitions(${neroshop_console} PRIVATE NEROSHOP_DEBUG)
-    target_include_directories(${neroshop_console} PRIVATE #[[${CMAKE_CURRENT_SOURCE_DIR}/src/]])
-    target_link_libraries(${neroshop_console} ${i2pd_src} ${monero_cpp_src} ${sqlite_src} #[[${qr_code_generator_src}]] ${raft_src} ${curl_src} ${monero_src} ${zlib_src} ${lua_src} ${linenoise_src})
+    target_include_directories(${neroshop_console} PRIVATE #[[${CMAKE_CURRENT_SOURCE_DIR}/src/]] ${monero_include_dirs} ${monero_cpp_include_dir} ${sqlite_include_dir} ${json_include_dir} ${zlib_include_dir} ${i2pd_include_dirs} ${lua_include_dir} ${curl_include_dirs} ${stduuid_include_dirs} ${linenoise_include_dir})
+    target_link_libraries(${neroshop_console} ${i2pd_src} ${monero_cpp_src} ${sqlite_src} #[[${qrcodegen_src}]] ${raft_src} ${curl_src} ${monero_src} ${zlib_src} ${lua_src} ${linenoise_src})
     message(STATUS "${BoldMagenta}NEROSHOP_BUILD_CLI option set to ON${ColourReset}")
 endif()
 
@@ -517,8 +518,8 @@ if(NEROSHOP_BUILD_GUI)
     install(TARGETS ${neroshop_executable} DESTINATION bin)
     target_sources(${neroshop_executable} PRIVATE ${neroshop_res} src/gui/main.cpp src/gui/script_manager.cpp src/gui/wallet_controller.cpp src/gui/user_controller.cpp src/gui/image_loader.cpp src/gui/image_provider.cpp src/gui/wallet_qr_provider.cpp src/gui/currency_rate_provider.cpp #[[src/gui/table_model.cpp]] src/gui/daemon_manager.cpp src/gui/enum_wrapper.cpp src/gui/backend.cpp ${neroshop_core_src})
     target_compile_definitions(${neroshop_executable} PRIVATE NEROSHOP_DEBUG)#set_target_properties(${neroshop_executable} PROPERTIES COMPILE_DEFINITIONS "NEROSHOP_DEBUG")
-    target_include_directories(${neroshop_executable} PRIVATE #[[${CMAKE_CURRENT_SOURCE_DIR}/src/]])
-    target_link_libraries(${neroshop_executable} ${i2pd_src} ${monero_cpp_src} ${sqlite_src} ${qr_code_generator_src} ${raft_src} ${monero_src} ${zlib_src} ${lua_src})
+    target_include_directories(${neroshop_executable} PRIVATE #[[${CMAKE_CURRENT_SOURCE_DIR}/src/]] ${monero_include_dirs} ${monero_cpp_include_dir} ${sqlite_include_dir} ${json_include_dir} ${zlib_include_dir} ${i2pd_include_dirs} ${lua_include_dir} ${qrcodegen_include_dir})
+    target_link_libraries(${neroshop_executable} ${i2pd_src} ${monero_cpp_src} ${sqlite_src} ${qrcodegen_src} ${raft_src} ${monero_src} ${zlib_src} ${lua_src})
     message(STATUS "${BoldMagenta}NEROSHOP_BUILD_GUI option set to ON${ColourReset}")
     target_compile_definitions(${neroshop_executable} PRIVATE NEROSHOP_BUILD_GUI)
 endif()
