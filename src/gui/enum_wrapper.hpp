@@ -23,6 +23,9 @@ public:
         IsNotOpened, // monero_wallet_obj is nullptr
         BadWalletType,
         InvalidMnemonic,
+        InvalidAddress,
+        InvalidViewKey,
+        InvalidSpendKey,
     };    
     Q_ENUM(WalletError)
 
@@ -47,6 +50,9 @@ public:
         WalletIsNotOpened = static_cast<int>(WalletError::IsNotOpened),
         WalletBadWalletType = static_cast<int>(WalletError::BadWalletType),
         WalletInvalidMnemonic = static_cast<int>(WalletError::InvalidMnemonic),
+        WalletInvalidAddress = static_cast<int>(WalletError::InvalidAddress),
+        WalletInvalidViewKey = static_cast<int>(WalletError::InvalidViewKey),
+        WalletInvalidSpendKey = static_cast<int>(WalletError::InvalidSpendKey),
         
         DaemonIsNotConnected = 100,
         

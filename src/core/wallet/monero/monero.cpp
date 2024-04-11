@@ -106,7 +106,9 @@ int neroshop::MoneroWallet::restore_from_seed(const std::string& seed)
         }
     }
     if(!monero_wallet_obj.get()) return static_cast<int>(WalletError::IsNotOpened);
-    std::cout << "\033[1;35m" << "restored in-memory wallet (from seed)" << "\033[0m" << std::endl;    
+    std::cout << "\033[1;35m" << "restored in-memory wallet (from seed)" << "\033[0m" << std::endl;
+    
+    password_hash = sign_message(wallet_config_obj.m_password.get(), monero_message_signature_type::SIGN_WITH_SPEND_KEY);
     
     return static_cast<int>(WalletError::Ok);
 }
@@ -116,7 +118,7 @@ int neroshop::MoneroWallet::restore_from_keys(const std::string& primary_address
     // Check validity of primary address
     if(!monero_utils::is_valid_address(primary_address, static_cast<monero::monero_network_type>(this->network_type))) {
         std::cerr << "\033[1;91mInvalid Monero address\033[0m\n";
-        return static_cast<int>(WalletError::IsNotOpened);
+        return static_cast<int>(WalletError::InvalidAddress);
     }
     
     monero::monero_wallet_config wallet_config_obj;
@@ -130,6 +132,8 @@ int neroshop::MoneroWallet::restore_from_keys(const std::string& primary_address
     monero_wallet_obj = std::unique_ptr<monero_wallet_full>(monero_wallet_full::create_wallet (wallet_config_obj, nullptr));    
     if(!monero_wallet_obj.get()) return static_cast<int>(WalletError::IsNotOpened);
     std::cout << "\033[1;35m" << "restored in-memory wallet (from keys)" << "\033[0m" << std::endl;
+    
+    password_hash = sign_message(wallet_config_obj.m_password.get(), monero_message_signature_type::SIGN_WITH_SPEND_KEY);
     
     return static_cast<int>(WalletError::Ok);
 }

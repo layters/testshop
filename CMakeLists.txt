@@ -83,7 +83,7 @@ endif()
 
 ######################################
 set(MONERO_PROJECT "${CMAKE_SOURCE_DIR}/external/monero-cpp/external/monero-project")
-set(MONERO_PROJECT_SRC "${MONERO_PROJECT}/src")
+set(MONERO_PROJECT_SRC_DIR "${MONERO_PROJECT}/src")
 
 ####################
 # Extra libraries
@@ -306,12 +306,12 @@ set(monero_include_dirs ${MONERO_PROJECT}/contrib/epee/include
     ${MONERO_PROJECT}/external/
     ${MONERO_PROJECT}/external/easylogging++
     ${MONERO_PROJECT}/external/rapidjson/include
-    ${MONERO_PROJECT_SRC}/
-    ${MONERO_PROJECT_SRC}/wallet
-    ${MONERO_PROJECT_SRC}/wallet/api
-    ${MONERO_PROJECT_SRC}/hardforks
-    ${MONERO_PROJECT_SRC}/crypto
-    ${MONERO_PROJECT_SRC}/crypto/crypto_ops_builder/include/
+    ${MONERO_PROJECT_SRC_DIR}/
+    ${MONERO_PROJECT_SRC_DIR}/wallet
+    ${MONERO_PROJECT_SRC_DIR}/wallet/api
+    ${MONERO_PROJECT_SRC_DIR}/hardforks
+    ${MONERO_PROJECT_SRC_DIR}/crypto
+    ${MONERO_PROJECT_SRC_DIR}/crypto/crypto_ops_builder/include/
     ${Protobuf_INCLUDE_DIR}
     ${Boost_INCLUDE_DIR}
     ${OPENSSL_INCLUDE_DIR}
