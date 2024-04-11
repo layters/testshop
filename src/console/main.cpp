@@ -46,7 +46,7 @@ int main(int argc, char** argv) {
     //-------------------------------------------------------
     neroshop::load_nodes_from_memory();
 
-    std::vector<std::string> networks = {"mainnet", "stagenet", "testnet"};
+    std::vector<std::string> networks = {"mainnet", "testnet", "stagenet"};
 
     std::string network_type = Wallet::get_network_type_as_string();
     if (std::find(networks.begin(), networks.end(), network_type) == networks.end()) {
