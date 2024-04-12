@@ -1897,7 +1897,7 @@ int neroshop::Backend::loginWithWalletFile(WalletController* wallet_controller, 
     return static_cast<int>(EnumWrapper::LoginError::Ok);
 }
 //----------------------------------------------------------------
-int neroshop::Backend::loginWithMnemonic(WalletController* wallet_controller, const QString& mnemonic, UserController * user_controller) {
+int neroshop::Backend::loginWithMnemonic(WalletController* wallet_controller, const QString& mnemonic, unsigned int restore_height, UserController * user_controller) {
     db::Sqlite3 * database = neroshop::get_database();
     if(!database) throw std::runtime_error("database is NULL");
     
@@ -1907,8 +1907,8 @@ int neroshop::Backend::loginWithMnemonic(WalletController* wallet_controller, co
         return static_cast<int>(EnumWrapper::LoginError::DaemonIsNotConnected);
     }
     // Initialize monero wallet with existing wallet mnemonic
-    std::packaged_task<int(void)> restore_wallet_task([wallet_controller, mnemonic]() -> int {
-        int wallet_error = wallet_controller->restoreFromSeed(mnemonic);
+    std::packaged_task<int(void)> restore_wallet_task([wallet_controller, mnemonic, restore_height]() -> int {
+        int wallet_error = wallet_controller->restoreFromSeed(mnemonic, restore_height);
         if(wallet_error != 0) {
             if(wallet_error == static_cast<int>(WalletError::IsOpenedByAnotherProgram))
                 return static_cast<int>(EnumWrapper::LoginError::WalletIsOpenedByAnotherProgram);

@@ -82,8 +82,8 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 endif()
 
 ######################################
-set(MONERO_PROJECT "${CMAKE_SOURCE_DIR}/external/monero-cpp/external/monero-project")
-set(MONERO_PROJECT_SRC_DIR "${MONERO_PROJECT}/src")
+set(MONERO_PROJECT_ROOT_DIR "${CMAKE_SOURCE_DIR}/external/monero-cpp/external/monero-project")
+set(MONERO_PROJECT_SRC_DIR "${MONERO_PROJECT_ROOT_DIR}/src")
 
 ####################
 # Extra libraries
@@ -194,7 +194,7 @@ endif()
 
 ######################################
 # Monero
-set(MONERO_PROJECT_BUILD "${MONERO_PROJECT}/build/release" CACHE STRING "Monero project build directory")
+set(MONERO_PROJECT_BUILD "${MONERO_PROJECT_ROOT_DIR}/build/release" CACHE STRING "Monero project build directory")
 message(STATUS "Using monero-project build: " ${MONERO_PROJECT_BUILD})
 
 add_library(wallet STATIC IMPORTED)
@@ -302,10 +302,10 @@ set_target_properties(randomx PROPERTIES IMPORTED_LOCATION
     ${MONERO_PROJECT_BUILD}/external/randomx/librandomx.a)   
     
 ######################################
-set(monero_include_dirs ${MONERO_PROJECT}/contrib/epee/include
-    ${MONERO_PROJECT}/external/
-    ${MONERO_PROJECT}/external/easylogging++
-    ${MONERO_PROJECT}/external/rapidjson/include
+set(monero_include_dirs ${MONERO_PROJECT_ROOT_DIR}/contrib/epee/include
+    ${MONERO_PROJECT_ROOT_DIR}/external/
+    ${MONERO_PROJECT_ROOT_DIR}/external/easylogging++
+    ${MONERO_PROJECT_ROOT_DIR}/external/rapidjson/include
     ${MONERO_PROJECT_SRC_DIR}/
     ${MONERO_PROJECT_SRC_DIR}/wallet
     ${MONERO_PROJECT_SRC_DIR}/wallet/api

@@ -122,14 +122,14 @@ int neroshop::Wallet::create_from_keys(const std::string& primary_address, const
     return static_cast<int>(WalletError::Ok);
 }
 //-------------------------------------------------------
-int neroshop::Wallet::restore_from_seed(const std::string& seed) 
+int neroshop::Wallet::restore_from_seed(const std::string& seed, uint64_t restore_height) 
 {
     monero::monero_wallet_config wallet_config_obj;
     wallet_config_obj.m_path = ""; // set path to "" for an in-memory wallet
     wallet_config_obj.m_password = "";
     wallet_config_obj.m_network_type = static_cast<monero::monero_network_type>(this->network_type);
     wallet_config_obj.m_seed = seed;
-    wallet_config_obj.m_restore_height = 1570000;//3120000 (mainnet)
+    wallet_config_obj.m_restore_height = (restore_height == 0) ? 1570000 : restore_height;//1570000 (stagenet);3120000 (mainnet)
     
     try {
         monero_wallet_obj = std::unique_ptr<monero_wallet_full>(monero_wallet_full::create_wallet (wallet_config_obj, nullptr));

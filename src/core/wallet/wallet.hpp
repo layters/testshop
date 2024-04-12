@@ -67,13 +67,13 @@ public:
     virtual int create_from_seed(const std::string& seed, const std::string& password, const std::string& confirm_pwd, const std::string& path);
     virtual int create_from_keys(const std::string& address, const std::string& view_key, const std::string& spend_key, const std::string& password, const std::string &confirm_pwd, const std::string& path);
     
-    virtual int restore_from_seed(const std::string& seed); // In-memory wallet
+    virtual int restore_from_seed(const std::string& seed, uint64_t restore_height = 0); // In-memory wallet
     virtual int restore_from_keys(const std::string& primary_address, const std::string& view_key, const std::string& spend_key); // In-memory wallet
     virtual int open(const std::string& path, const std::string& password); // Password-protected wallet file
     
     virtual void close(bool save = false);
     
-    std::string upload(bool open = true, std::string password = ""); // change to mainnet later    
+    std::string upload(bool open = true, std::string password = "");
     
     bool verify_password(const std::string& password);
     
@@ -105,8 +105,7 @@ public:
     bool daemon_connect_local(const std::string& username = "", const std::string& password = "");
     void daemon_connect_remote(const std::string& ip, const std::string& port, const std::string& username = "", const std::string& password = "", const monero_wallet_listener* listener = nullptr);
     void daemon_close();
-    //void explore_address(const std::string& address); //{Browser::open(this->addr_url + address);}// will detect address before opening explorer
-    //void explore_tx(const std::string& tx_hash);
+    
     void wallet_info();
     
     virtual std::string sign_message(const std::string& message, monero_message_signature_type signature_type) const;

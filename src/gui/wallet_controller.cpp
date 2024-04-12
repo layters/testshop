@@ -27,10 +27,10 @@ int neroshop::WalletController::createRandomWallet(const QString& password, cons
     return static_cast<int>(error);
 }
 
-int neroshop::WalletController::restoreFromSeed(const QString& seed) {
+int neroshop::WalletController::restoreFromSeed(const QString& seed, unsigned int restore_height) {
     if (!_wallet)
         throw std::runtime_error("neroshop::Wallet is not initialized");
-    auto error = _wallet->restore_from_seed(seed.toStdString());
+    auto error = _wallet->restore_from_seed(seed.toStdString(), restore_height);
     emit walletChanged();
     if(error == static_cast<int>(WalletError::Ok)) emit isOpenedChanged();
     return static_cast<int>(error);

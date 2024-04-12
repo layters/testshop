@@ -16,7 +16,7 @@ public:
     int create_from_seed(const std::string& seed, const std::string& password, const std::string& confirm_pwd, const std::string& path) override;
     int create_from_keys(const std::string& address, const std::string& view_key, const std::string& spend_key, const std::string& password, const std::string &confirm_pwd, const std::string& path) override;
     
-    int restore_from_seed(const std::string& seed) override;
+    int restore_from_seed(const std::string& seed, uint64_t restore_height = 0) override;
     int restore_from_keys(const std::string& primary_address, const std::string& view_key, const std::string& spend_key) override;
     
     int open(const std::string& path, const std::string& password) override;

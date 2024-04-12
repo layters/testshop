@@ -245,7 +245,11 @@ Page {
                         }
                         if(button.text == restoreFromSeedButton.text) {
                             walletRestoreStack.currentIndex = 1
-                            seedInput.forceActiveFocus()
+                            if(seedInput.text.length > 0) {
+                                walletRestoreHeightField.forceActiveFocus()
+                            } else {
+                                seedInput.forceActiveFocus()
+                            }
                         }
                         if(button.text == restoreFromKeysButton.text) {
                             walletRestoreStack.currentIndex = 2
@@ -486,34 +490,55 @@ Page {
                     background: Rectangle { 
                         color: (NeroshopComponents.Style.darkTheme) ? "#101010" : "#ffffff"
                         border.color: (NeroshopComponents.Style.darkTheme) ? "#a9a9a9" : "#696969"
+                        border.width: walletPasswordRestoreField.activeFocus ? 2 : 1
                         radius: 3
                     }
                     Keys.onEnterPressed: loginButton.activate()
                     Keys.onReturnPressed: loginButton.activate()
                 }                    
                 }
-               Rectangle {//ColumnLayout {
+               Rectangle {
                     id: restoreFromSeed
                     Layout.fillWidth: true
                     Layout.fillHeight: true
-                    border.color: "blue"
-                    
-                    ScrollView {
-                        //Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
-                        anchors.fill: parent//width: 500; height: 500
-                        TextArea {
-                            id: seedInput
-                            wrapMode: TextEdit.Wrap
-                            selectByMouse: true      
-                            color: (NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000"                  
-                            background: Rectangle {
-                                color: (NeroshopComponents.Style.darkTheme) ? "#101010" : "#f0f0f0"
-                                border.color: (NeroshopComponents.Style.darkTheme) ? "#404040" : "#4d4d4d"
-                                border.width: seedInput.activeFocus ? 2 : 1
-                                //radius: 
+                    color: "transparent"//; border.color: "blue"
+                    ColumnLayout {
+                        anchors.fill: parent
+                        ScrollView {
+                            Layout.fillWidth: true
+                            Layout.fillHeight: true//width: 500; height: 500
+                            TextArea {
+                                id: seedInput
+                                wrapMode: TextEdit.Wrap
+                                selectByMouse: true      
+                                color: (NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000"                  
+                                background: Rectangle {
+                                    color: (NeroshopComponents.Style.darkTheme) ? "#101010" : "#f0f0f0"
+                                    border.color: (NeroshopComponents.Style.darkTheme) ? "#404040" : "#4d4d4d"
+                                    border.width: seedInput.activeFocus ? 2 : 1
+                                    radius: 3
+                                }
                             }
                         }
-                    }
+                    
+                        TextField {
+                            id: walletRestoreHeightField
+                            Layout.fillWidth: true
+                            Layout.preferredHeight: 50
+                            placeholderText: qsTr("Restore Height (default: 1570000)"); placeholderTextColor: (NeroshopComponents.Style.darkTheme) ? "#a9a9a9" : "#696969"
+                            color: (NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000" // textColor
+                            selectByMouse: true
+                            validator: RegExpValidator{ regExp: /[0-9]*/ }
+                            background: Rectangle { 
+                                color: (NeroshopComponents.Style.darkTheme) ? "#101010" : "#ffffff"
+                                border.color: (NeroshopComponents.Style.darkTheme) ? "#a9a9a9" : "#696969"
+                                border.width: walletRestoreHeightField.activeFocus ? 2 : 1
+                                radius: 3
+                            }
+                            Keys.onEnterPressed: loginButton.activate()
+                            Keys.onReturnPressed: loginButton.activate()
+                        }
+                    } // ColumnLayout
                 }
                 Rectangle {
                     id: restoreFromKeys
@@ -612,7 +637,7 @@ Page {
                 	            return;                	        
                 	        }
                 	        
-                	        let loginError = Backend.loginWithMnemonic(Wallet, seedInput.text, User)
+                	        let loginError = Backend.loginWithMnemonic(Wallet, seedInput.text, Number(walletRestoreHeightField.text), User)
                 	        if(loginError != Enum.LoginError.Ok) {
                 	            console.log("loginError", loginError)
                 	            if(loginError == Enum.LoginError.WalletBadNetworkType) {

@@ -31,24 +31,34 @@ RowLayout {
         //checkState: conditionParentBox.checkState
         onClicked: {
             console.log("Selected", button.text, "button")
-            button.checked = true
             if(button.text == walletButton.text) {
+                if(!Wallet.isConnectedToDaemon()) {
+                    button.checked = false
+                    messageBox.text = qsTr("wallet must be connected to a daemon")
+                    messageBox.open()
+                    return
+                }
+                button.checked = true
                 searchBar.children[0].text = ""
                 pageStack.pushPage("qrc:/qml/pages/subpages/WalletPage.qml", StackView.Immediate)//_stackview.currentIndex = 0
             }
             if(button.text == shopButton.text) {
+                button.checked = true
                 searchBar.children[0].text = ""
                 pageStack.pushPage("qrc:/qml/pages/subpages/DashboardPage.qml", StackView.Immediate)
             }
             if(button.text == messagesButton.text) {
+                button.checked = true
                 searchBar.children[0].text = ""
                 pageStack.pushPage("qrc:/qml/pages/subpages/MessagesPage.qml", StackView.Immediate)
             }
             if(button.text == ordersButton.text) {
+                button.checked = true
                 searchBar.children[0].text = ""
                 pageStack.pushPage("qrc:/qml/pages/subpages/OrdersPage.qml", StackView.Immediate)
             }
             if(button.text == accountButton.text) {
+                button.checked = true
                 searchBar.children[0].text = ""
                 pageStack.pushPage("qrc:/qml/pages/subpages/AccountPage.qml", StackView.Immediate)
             }                                                        
