@@ -74,7 +74,7 @@ if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
     message(STATUS "Building with clang")
 else()
     message(STATUS "Building with gcc/g++")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC -no-pie")# -w")# -fsanitize=address") # -no-pie=can run outside terminal
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC -no-pie -Wno-deprecated-declarations")# -w")# -fsanitize=address") # -no-pie=can run outside terminal
 endif()
 endif()
 
