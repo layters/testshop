@@ -28,7 +28,7 @@ class WalletController : public QObject, public monero_wallet_listener
 public:
     // functions (for use in QML)
     Q_INVOKABLE int createRandomWallet(const QString& password, const QString& confirm_pwd, const QString& path);
-    Q_INVOKABLE int restoreFromSeed(const QString& seed);
+    Q_INVOKABLE int restoreFromSeed(const QString& seed, unsigned int restore_height);
     Q_INVOKABLE int restoreFromKeys(const QString& primary_address, const QString& private_view_key, const QString& private_spend_key);
     Q_INVOKABLE int open(const QString& path, const QString& password);
     Q_INVOKABLE void close(bool save = false);
