@@ -402,33 +402,22 @@ Page {
                     Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
                     currentIndex: 0
                 // WalletFileStackContent    
-                ColumnLayout {
+                ColumnLayout { // Replace with Rectangle
                     id: restoreFromWalletFile
-                    Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter// | Qt.AlignTop; Layout.topMargin: 20               
-                    //Layout.minimumHeight: 
                     Layout.preferredWidth: 500
                     Layout.maximumWidth: 600
                     //Layout.preferredHeight: 380
-                    /*color: "transparent"
-                    border.color: (NeroshopComponents.Style.darkTheme) ? "#a9a9a9" : "#696969"
-                    //radius: 3*/
-
-                // wallet file text
-                Text {
-                    id: walletFileText
-                    Layout.topMargin: 15
-                    text: qsTr("Wallet file")
-                    //visible: false
-                    color: (NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000"
-                    font.bold: true
-                }
-            // wallet file field
-            TextField {
-                id: walletFileField
+                    Layout.topMargin: 5//0
+            //ColumnLayout here
+            Column {
                 Layout.fillWidth: true//Layout.alignment: Qt.AlignHCenter
                 Layout.preferredWidth: 500
-                Layout.preferredHeight: 50
-                Layout.topMargin: (walletFileText.visible) ? 5 : 0
+                spacing: 10 // looks more like 5 than 10, but that's fine
+           // wallet file field
+            TextField {
+                id: walletFileField
+                width: parent.width
+                height: 50
                 text: walletFileDialog.file
                 color: "#000000"////(NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000" // textColor                
                 selectByMouse: true
@@ -443,11 +432,10 @@ Page {
             // wallet file upload or browse button
             Button {
                 id: walletFileBrowseButton
-                Layout.alignment: Qt.AlignHCenter
+                anchors.horizontalCenter: parent.horizontalCenter
                 ////Layout.fillWidth: true
-                Layout.preferredWidth: 125////walletFileBrowseButtonText.contentWidth + 20  
-                Layout.preferredHeight: walletFileField.height
-                Layout.topMargin: 20
+                width: 125////walletFileBrowseButtonText.contentWidth + 20  
+                height: walletFileField.height
                 text: qsTr("Browse")
                 //display: AbstractButton.IconOnly//AbstractButton.TextBesideIcon//AbstractButton.TextOnly//AbstractButton.TextUnderIcon
                 //icon.source: "qrc:/assets/images/ellipsis.png"//"/upload.png"
@@ -473,14 +461,14 @@ Page {
                 ToolTip.visible: hovered
                 ToolTip.text: qsTr("Browse wallet file")
             }                    
-                    
+            } // Column
                 TextField {
                     id: walletPasswordRestoreField
                     //Layout.alignment: Qt.AlignHCenter//Layout.fillWidth: true
                     Layout.fillWidth: true
                     Layout.preferredWidth: 500
                     Layout.preferredHeight: 50
-                    Layout.topMargin: 15
+                    Layout.topMargin: 10
                     placeholderText: qsTr("Wallet Password"); placeholderTextColor: (NeroshopComponents.Style.darkTheme) ? "#a9a9a9" : "#696969"
                     color: (NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000" // textColor
                     echoMode: TextInput.Password
@@ -501,9 +489,11 @@ Page {
                     id: restoreFromSeed
                     Layout.fillWidth: true
                     Layout.fillHeight: true
+                    Layout.topMargin: 5
                     color: "transparent"//; border.color: "blue"
                     ColumnLayout {
                         anchors.fill: parent
+                        spacing: 10
                         ScrollView {
                             Layout.fillWidth: true
                             Layout.fillHeight: true//width: 500; height: 500
