@@ -163,7 +163,10 @@ Page {
         folder: (isWindows) ? StandardPaths.writableLocation(StandardPaths.DocumentsLocation) + "/neroshop" : StandardPaths.writableLocation(StandardPaths.HomeLocation) + "/neroshop"//StandardPaths.writableLocation(StandardPaths.AppDataLocation) // refer to https://doc.qt.io/qt-5/qstandardpaths.html#StandardLocation-enum
         nameFilters: ["Wallet files (*.keys)"]
         ////options: FileDialog.ReadOnly // will not allow you to create folders while file dialog is opened
-        onAccepted: walletPasswordRestoreField.forceActiveFocus()
+        onAccepted: {
+            walletFileField.text = Backend.urlToLocalFile(walletFileDialog.file)
+            walletPasswordRestoreField.forceActiveFocus()
+        }
     }
     ///////////////////////////
     // for registration page
@@ -418,7 +421,7 @@ Page {
                 id: walletFileField
                 width: parent.width
                 height: 50
-                text: walletFileDialog.file
+                text: (settingsDialog.rememberWallet && settingsDialog.lastOpenedWallet.length > 0) ? settingsDialog.lastOpenedWallet : ""//walletFileDialog.file
                 color: "#000000"////(NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000" // textColor                
                 selectByMouse: true
                 readOnly: true
@@ -427,7 +430,7 @@ Page {
                     color: "#708090"////(NeroshopComponents.Style.darkTheme) ? "#101010" : "#ffffff"
                     border.color: (NeroshopComponents.Style.darkTheme) ? "#a9a9a9" : "#696969"
                     radius: 3
-                }                     
+                }
             }
             // wallet file upload or browse button
             Button {
@@ -483,7 +486,19 @@ Page {
                     }
                     Keys.onEnterPressed: loginButton.activate()
                     Keys.onReturnPressed: loginButton.activate()
-                }                    
+                }
+                Item {       
+                    Layout.fillWidth: true
+                    Layout.preferredHeight: childrenRect.height
+                    Layout.topMargin: 10
+                    NeroshopComponents.CheckBox {
+                        id: rememberWalletCheckBox
+                        text: qsTr("Remember wallet")
+                        textColor: (NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000"
+                        color: "transparent"
+                        checked: settingsDialog.rememberWallet
+                    }
+                }
                 }
                Rectangle {
                     id: restoreFromSeed
@@ -585,7 +600,7 @@ Page {
                 	        }
                 	        // Process login credentials
                 	        //if(!Wallet.isOpened()) {
-                	        let loginError = Backend.loginWithWalletFile(Wallet, Backend.urlToLocalFile(walletFileField.text), walletPasswordRestoreField.text, User)
+                	        let loginError = Backend.loginWithWalletFile(Wallet, walletFileField.text, walletPasswordRestoreField.text, User)
                 	        if(loginError != Enum.LoginError.Ok) {
                 	            console.log("loginError", loginError)
                 	            if(loginError == Enum.LoginError.WalletBadNetworkType) {
@@ -612,6 +627,11 @@ Page {
                 	            }         
                 	            return;	        
                 	        }
+                	        settingsDialog.rememberWallet = rememberWalletCheckBox.checked
+                	        if(rememberWalletCheckBox.checked) {
+                	            settingsDialog.lastOpenedWallet = walletFileField.text
+                	        }
+                	        settingsDialog.save()
                             // Start synching the monero node as soon we hit the login button only sync automatically if auto-sync option is turned on (will be turned on by default)
                             onAutoSync();
                             // Switch to HomePage

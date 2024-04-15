@@ -52,6 +52,8 @@ Popup {
     property bool moneroDaemonAutoSync: (nodeTypeStackLayout.currentIndex == remoteNodeButton.stackLayoutIndex) ? autoNodeSyncSwitch.checked : autoDaemonSyncSwitch.checked
     property Button moneroDaemonConnectButton: (nodeTypeStackLayout.currentIndex == remoteNodeButton.stackLayoutIndex) ? remoteNodeConnectButton : localNodeConnectButton
     property string lastSelectedNode: Script.getJsonRootObject()["monero"]["daemon"]["last_selected_node"]
+    property bool rememberWallet: Script.getJsonRootObject()["remember_wallet"]
+    property string lastOpenedWallet: Script.getJsonRootObject()["last_opened_wallet"]
     // Listing properties
     property int lastUsedListingSorting: 0
     
@@ -69,6 +71,8 @@ Popup {
             hide_homepage_button: hideHomepageButtonSwitch.checked,
             hide_price_display: priceDisplaySwitch.checked,
             hide_wallet_sync_bar_on_full: walletSyncBarSwitch.checked,
+            remember_wallet: rememberWallet,
+            last_opened_wallet: lastOpenedWallet,
             /*window_width: Script.getJsonRootObject()["window_width"],
             window_height: Script.getJsonRootObject()["window_height"],
             window_mode: Script.getJsonRootObject()["window_mode"],*/
