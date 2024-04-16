@@ -54,7 +54,7 @@ int neroshop::Wallet::create_random(const std::string& password, const std::stri
     monero::monero_wallet_config wallet_config_obj;
     wallet_config_obj.m_path = path;
     wallet_config_obj.m_password = password;
-    wallet_config_obj.m_network_type = static_cast<monero::monero_network_type>(this->network_type);
+    wallet_config_obj.m_network_type = static_cast<monero::monero_network_type>(Wallet::network_type);
     
     monero_wallet_obj = std::unique_ptr<monero_wallet_full>(monero_wallet_full::create_wallet (wallet_config_obj, nullptr));
     if(monero_wallet_obj.get()) std::cout << "\033[1;35;49m" << "created wallet \"" << path << ".keys\"" << "\033[0m" << std::endl;
@@ -79,7 +79,7 @@ int neroshop::Wallet::create_from_seed(const std::string& seed, const std::strin
     monero::monero_wallet_config wallet_config_obj;
     wallet_config_obj.m_path = path;
     wallet_config_obj.m_password = password;
-    wallet_config_obj.m_network_type = static_cast<monero::monero_network_type>(this->network_type);
+    wallet_config_obj.m_network_type = static_cast<monero::monero_network_type>(Wallet::network_type);
     wallet_config_obj.m_seed = seed;
     
     monero_wallet_obj = std::unique_ptr<monero_wallet_full>(monero_wallet_full::create_wallet (wallet_config_obj, nullptr));
@@ -107,7 +107,7 @@ int neroshop::Wallet::create_from_keys(const std::string& primary_address, const
     monero::monero_wallet_config wallet_config_obj;
     wallet_config_obj.m_path = path;
     wallet_config_obj.m_password = password;
-    wallet_config_obj.m_network_type = static_cast<monero::monero_network_type>(this->network_type);
+    wallet_config_obj.m_network_type = static_cast<monero::monero_network_type>(Wallet::network_type);
     wallet_config_obj.m_primary_address = primary_address;
     wallet_config_obj.m_private_view_key = view_key;
     wallet_config_obj.m_private_spend_key = spend_key;
@@ -127,7 +127,7 @@ int neroshop::Wallet::restore_from_seed(const std::string& seed, uint64_t restor
     monero::monero_wallet_config wallet_config_obj;
     wallet_config_obj.m_path = ""; // set path to "" for an in-memory wallet
     wallet_config_obj.m_password = "";
-    wallet_config_obj.m_network_type = static_cast<monero::monero_network_type>(this->network_type);
+    wallet_config_obj.m_network_type = static_cast<monero::monero_network_type>(Wallet::network_type);
     wallet_config_obj.m_seed = seed;
     wallet_config_obj.m_restore_height = (restore_height == 0) ? 1570000 : restore_height;//1570000 (stagenet);3120000 (mainnet)
     
@@ -151,7 +151,7 @@ int neroshop::Wallet::restore_from_seed(const std::string& seed, uint64_t restor
 int neroshop::Wallet::restore_from_keys(const std::string& primary_address, const std::string& view_key, const std::string& spend_key)
 {
     // Check validity of primary address
-    if(!monero_utils::is_valid_address(primary_address, static_cast<monero::monero_network_type>(this->network_type))) {
+    if(!monero_utils::is_valid_address(primary_address, static_cast<monero::monero_network_type>(Wallet::network_type))) {
         std::cerr << "\033[1;91mInvalid Monero address\033[0m\n";
         return static_cast<int>(WalletError::InvalidAddress);
     }
@@ -159,7 +159,7 @@ int neroshop::Wallet::restore_from_keys(const std::string& primary_address, cons
     monero::monero_wallet_config wallet_config_obj;
     wallet_config_obj.m_path = ""; // set path to "" for an in-memory wallet
     wallet_config_obj.m_password = "";
-    wallet_config_obj.m_network_type = static_cast<monero::monero_network_type>(this->network_type);
+    wallet_config_obj.m_network_type = static_cast<monero::monero_network_type>(Wallet::network_type);
     wallet_config_obj.m_primary_address = primary_address;
     wallet_config_obj.m_private_view_key = view_key;
     wallet_config_obj.m_private_spend_key = spend_key;
@@ -179,7 +179,7 @@ int neroshop::Wallet::open(const std::string& path, const std::string& password)
     }
 
     try {
-        monero_wallet_obj = std::unique_ptr<monero_wallet_full>(monero::monero_wallet_full::open_wallet(path, password, static_cast<monero::monero_network_type>(this->network_type)));
+        monero_wallet_obj = std::unique_ptr<monero_wallet_full>(monero::monero_wallet_full::open_wallet(path, password, static_cast<monero::monero_network_type>(Wallet::network_type)));
     } catch (const std::exception& e) {
         std::string error_msg = e.what();
         std::cerr << "\033[1;91m" << error_msg << "\033[0m\n";//tools::error::invalid_password
@@ -393,7 +393,7 @@ void neroshop::Wallet::set_network_type(WalletNetworkType network_type) {
         default:
             break;
     }
-    this->network_type = network_type;
+    Wallet::network_type = network_type;
 }
 //-------------------------------------------------------
 void neroshop::Wallet::set_network_type_by_string(const std::string& network_type) {

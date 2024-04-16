@@ -113,18 +113,18 @@ public:
     // setters
     void set_wallet_type(WalletType wallet_type);
     
-    void set_network_type(WalletNetworkType network_type);
+    virtual void set_network_type(WalletNetworkType network_type);
     void set_network_type_by_string(const std::string& network_type);
     
     void set_tx_note(const std::string& txid, const std::string& tx_note); // "set_tx_note <txid> [free note text here]" - useful for filling address information
     // getters
     WalletType get_wallet_type() const;
-    WalletNetworkType get_wallet_network_type() const;
+    virtual WalletNetworkType get_wallet_network_type() const;
     static WalletNetworkType get_network_type();
     std::string get_wallet_network_type_as_string() const;
     static std::string get_network_type_as_string();
     
-    std::string get_network_port() const;
+    virtual std::string get_network_port() const;
     
     double get_sync_percentage() const;
     unsigned long long get_sync_height() const;
@@ -174,7 +174,7 @@ public:
     std::string get_status() const; // "status" - Check current status of wallet.
     std::string get_version() const; // "version" - Check software version.
     // get wallet handles (monero, wownero, etc.)
-    void * get_handle() const;
+    virtual void * get_handle() const;
     monero_wallet_full * get_monero_wallet() const;
     //wownero_wallet_full * get_wownero_wallet() const;
     std::vector<std::string> recent_address_list; // recently used addresses
