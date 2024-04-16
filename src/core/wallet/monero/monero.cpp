@@ -292,7 +292,7 @@ void neroshop::MoneroWallet::set_network_type(WalletNetworkType network_type) {
 //-------------------------------------------------------
 //-------------------------------------------------------
 //-------------------------------------------------------
-WalletNetworkType neroshop::MoneroWallet::get_wallet_network_type() const {
+neroshop::WalletNetworkType neroshop::MoneroWallet::get_wallet_network_type() const {
     if(!monero_wallet_obj.get()) return Wallet::network_type;
     return static_cast<WalletNetworkType>(monero_wallet_obj->get_network_type());
 }
