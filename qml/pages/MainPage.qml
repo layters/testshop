@@ -421,7 +421,7 @@ Page {
                 id: walletFileField
                 width: parent.width
                 height: 50
-                text: (settingsDialog.rememberWallet && settingsDialog.lastOpenedWallet.length > 0) ? settingsDialog.lastOpenedWallet : ""//walletFileDialog.file
+                text: (settingsDialog.rememberWallet) ? settingsDialog.lastOpenedWallet : ""//walletFileDialog.file
                 color: "#000000"////(NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000" // textColor                
                 selectByMouse: true
                 readOnly: true
@@ -628,9 +628,7 @@ Page {
                 	            return;	        
                 	        }
                 	        settingsDialog.rememberWallet = rememberWalletCheckBox.checked
-                	        if(rememberWalletCheckBox.checked) {
-                	            settingsDialog.lastOpenedWallet = walletFileField.text
-                	        }
+                	        settingsDialog.lastOpenedWallet = walletFileField.text
                 	        settingsDialog.save()
                             // Start synching the monero node as soon we hit the login button only sync automatically if auto-sync option is turned on (will be turned on by default)
                             onAutoSync();
