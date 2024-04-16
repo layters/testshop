@@ -201,6 +201,8 @@ bool neroshop::create_json() {
         root_obj.insert(QString("hide_price_display"), QJsonValue(false));
         root_obj.insert(QString("hide_wallet_sync_bar_on_full"), QJsonValue(true));
         root_obj.insert(QString("wallet_directory"), QJsonValue(""));
+        root_obj.insert(QString("last_opened_wallet"), QJsonValue(""));
+        root_obj.insert(QString("remember_wallet"), QJsonValue(false));
         /*root_obj.insert(QString("window_width"), QJsonValue(1280));
         root_obj.insert(QString("window_height"), QJsonValue(900));//720));
         root_obj.insert(QString("window_mode"), QJsonValue(0));*/
@@ -305,6 +307,8 @@ bool neroshop::create_json() {
         settings_json["hide_price_display"] = false;
         settings_json["hide_wallet_sync_bar_on_full"] = true;
         settings_json["wallet_directory"] = ""; // leave blank to use default
+        settings_json["last_opened_wallet"] = "";
+        settings_json["remember_wallet"] = false;
         /*settings_json["window_width"] = 1280;
         settings_json["window_height"] = 900;//720;
         settings_json["window_mode"] = 0;*/

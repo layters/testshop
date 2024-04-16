@@ -28,6 +28,11 @@ public:
     void transfer(const std::string& address, double amount) override;
     void transfer(const std::vector<std::pair<std::string, double>>& payment_addresses) override;
     
+    void set_network_type(WalletNetworkType network_type) override;
+    
+    WalletNetworkType get_wallet_network_type() const override;
+    std::string get_network_port() const override;
+    
     std::string get_primary_address() const override;
     std::string get_address(unsigned int index) const override;
     
@@ -60,6 +65,8 @@ public:
     unsigned int get_daemon_height() const override;
     unsigned int get_height() const override;
     unsigned int get_height_by_date(int year, int month, int day) const override;
+    
+    void * get_handle() const override;
     
     bool is_opened() const override;
     bool is_connected_to_daemon() const override;
