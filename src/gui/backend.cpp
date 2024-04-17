@@ -39,7 +39,7 @@
 #include "../core/tools/logger.hpp"
 #include "../core/tools/process.hpp"
 #include "../core/category.hpp"
-#include "../core/tools/regex.hpp"
+#include "../core/tools/string.hpp"
 #include "../core/crypto/rsa.hpp"
 #include "enum_wrapper.hpp"
 

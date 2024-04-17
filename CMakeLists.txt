@@ -439,7 +439,6 @@ set(neroshop_tools_src
     ${NEROSHOP_CORE_SRC_DIR}/tools/base64.cpp 
     ${NEROSHOP_CORE_SRC_DIR}/tools/logger.cpp 
     ${NEROSHOP_CORE_SRC_DIR}/tools/process.cpp 
-    ${NEROSHOP_CORE_SRC_DIR}/tools/regex.cpp 
     ${NEROSHOP_CORE_SRC_DIR}/tools/script.cpp 
     ${NEROSHOP_CORE_SRC_DIR}/tools/timestamp.cpp 
     ${NEROSHOP_CORE_SRC_DIR}/tools/updater.cpp

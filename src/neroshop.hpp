@@ -47,7 +47,6 @@
 #include "core/tools/filesystem.hpp"
 #include "core/tools/logger.hpp"
 #include "core/tools/process.hpp"
-#include "core/tools/regex.hpp"
 #include "core/tools/script.hpp"
 #include "core/tools/string.hpp"
 #include "core/tools/timestamp.hpp"
