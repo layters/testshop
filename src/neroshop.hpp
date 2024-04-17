@@ -44,8 +44,6 @@
 // tools (utilities)
 #include "core/tools/base64.hpp"
 #include "core/tools/device.hpp"
-#include "core/tools/downloader.hpp"
-#include "core/tools/extractor.hpp"
 #include "core/tools/filesystem.hpp"
 #include "core/tools/logger.hpp"
 #include "core/tools/process.hpp"
