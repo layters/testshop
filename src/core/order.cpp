@@ -5,7 +5,8 @@
 #include "settings.hpp" // neroshop::lua_state
 #include "database/database.hpp"
 #include "tools/logger.hpp"
-#include "tools/tools.hpp" // neroshop::uuid::generate()
+#include "tools/string.hpp"
+#include "tools/uuid.hpp" // neroshop::uuid::generate()
 #include "protocol/p2p/serializer.hpp"
 #include "protocol/transport/client.hpp"
 #include "tools/timestamp.hpp"

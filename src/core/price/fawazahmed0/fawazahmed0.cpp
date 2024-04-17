@@ -18,7 +18,7 @@
 #include <map>
 
 #include "../currency_map.hpp"
-#include "../../../core/tools/tools.hpp" // neroshop::string::lower
+#include "../../../core/tools/string.hpp" // neroshop::string::lower
 
 std::optional<double> Fawazahmed0CurrencyApi::price(neroshop::Currency from, neroshop::Currency to) const
 {

@@ -2,7 +2,6 @@
 
 #include "../neroshop_config.hpp"
 #include "tools/logger.hpp"
-#include "tools/tools.hpp"
 
 #if defined(NEROSHOP_USE_QT)
 #include <QDir>

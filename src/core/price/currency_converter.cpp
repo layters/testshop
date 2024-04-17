@@ -10,7 +10,7 @@
 #include "kraken/kraken.hpp"
 
 #include "../tools/logger.hpp"
-#include "../tools/tools.hpp"
+#include "../tools/string.hpp"
 #include "currency_map.hpp" // neroshop::CurrencyMap
 //-------------------------------------------------------
 //-------------------------------------------------------

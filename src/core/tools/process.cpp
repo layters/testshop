@@ -14,7 +14,8 @@
 #include <fstream>
 
 #include "logger.hpp"
-#include "tools.hpp" // neroshop::filesystem
+#include "filesystem.hpp" // neroshop::filesystem
+#include "string.hpp"
 
 neroshop::Process::Process()
 {

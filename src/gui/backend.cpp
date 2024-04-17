@@ -35,7 +35,7 @@
 #include "../core/tools/script.hpp"
 #include "../core/settings.hpp"
 #include "script_manager.hpp" // neroshop::Script::get_table_string
-#include "../core/tools/tools.hpp"
+#include "../core/tools/filesystem.hpp"
 #include "../core/tools/logger.hpp"
 #include "../core/tools/process.hpp"
 #include "../core/category.hpp"
