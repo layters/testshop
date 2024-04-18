@@ -145,6 +145,10 @@ Page {
         if(avatarImage.status === Image.Ready) {
             Backend.saveAvatarImage(Backend.urlToLocalFile(avatarImage.source), account_key)
         }
+        /*// Save lastOpenedWallet
+        let folder = Backend.urlToLocalFile(walletFolderDialog.folder);
+        settingsDialog.lastOpenedWallet = (walletNameField.text) ? qsTr(folder + "/%1.keys").arg(walletNameField.text) : qsTr(folder + "/%1.keys").arg(walletNameField.placeholderText)
+        settingsDialog.save()*/
         // Switch to HomePage
         pageStack.pushPage("qrc:/qml/pages/HomePage.qml", StackView.Immediate)//stack.push(home_page)
         //console.log("Primary address: ", Wallet.getPrimaryAddress())
