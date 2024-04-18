@@ -17,7 +17,6 @@ static void print_commands() {
         {"monero_nodes", "Display a list of monero nodes"}, 
         {"query       ", "Execute an SQLite query"}, 
         {"curl_version", "Show libcurl version"}, 
-        {"download_tor", "Download Tor"}, 
         {"send        ", "Send a test message to the local daemon IPC server"}
         /*, 
         {"", ""}*/
@@ -97,12 +96,6 @@ int main(int argc, char** argv) {
                 "." + std::to_string((curl_version->version_num >> 8) & 0xff) + 
                 "." + std::to_string(curl_version->version_num & 0xff);
             std::cout << "libcurl version " << curl_version_str << std::endl;
-        }
-        else if(command == "download_tor") {
-            std::packaged_task<void(void)> download_task([&]() -> void {
-                neroshop_tools::downloader::download_tor();
-            });
-            std::thread { std::move(download_task) }.detach();
         }
         else if(command == "send") { // This is only a test command
             #if !defined(NEROSHOP_USE_LIBZMQ)

@@ -1,7 +1,7 @@
 #include "wallet.hpp"
 
 #include "../tools/logger.hpp"
-#include "../tools/tools.hpp"
+#include "../tools/string.hpp"
 #include "../tools/process.hpp" // for monerod daemon process
 
 #include <cmath>

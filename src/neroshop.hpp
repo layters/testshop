@@ -44,16 +44,12 @@
 // tools (utilities)
 #include "core/tools/base64.hpp"
 #include "core/tools/device.hpp"
-#include "core/tools/downloader.hpp"
-#include "core/tools/extractor.hpp"
 #include "core/tools/filesystem.hpp"
 #include "core/tools/logger.hpp"
 #include "core/tools/process.hpp"
-#include "core/tools/regex.hpp"
 #include "core/tools/script.hpp"
 #include "core/tools/string.hpp"
 #include "core/tools/timestamp.hpp"
-#include "core/tools/tools.hpp"
 #include "core/tools/updater.hpp"
 #include "core/tools/uuid.hpp"
 // wallet

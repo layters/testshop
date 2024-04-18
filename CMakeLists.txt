@@ -437,11 +437,8 @@ set(neroshop_protocol_src
 
 set(neroshop_tools_src 
     ${NEROSHOP_CORE_SRC_DIR}/tools/base64.cpp 
-    ${NEROSHOP_CORE_SRC_DIR}/tools/downloader.cpp 
-    ${NEROSHOP_CORE_SRC_DIR}/tools/extractor.cpp 
     ${NEROSHOP_CORE_SRC_DIR}/tools/logger.cpp 
-    ${NEROSHOP_CORE_SRC_DIR}/tools/process.cpp     
-    ${NEROSHOP_CORE_SRC_DIR}/tools/regex.cpp 
+    ${NEROSHOP_CORE_SRC_DIR}/tools/process.cpp 
     ${NEROSHOP_CORE_SRC_DIR}/tools/script.cpp 
     ${NEROSHOP_CORE_SRC_DIR}/tools/timestamp.cpp 
     ${NEROSHOP_CORE_SRC_DIR}/tools/updater.cpp
@@ -482,7 +479,7 @@ endif()
 # neroshop-daemon
 set(daemon_executable "neromon")
 set(daemon_src ${neroshop_crypto_src} ${neroshop_database_src} ${neroshop_network_src} ${NEROSHOP_CORE_SRC_DIR}/protocol/messages/msgpack.cpp ${NEROSHOP_CORE_SRC_DIR}/protocol/p2p/mapper.cpp ${NEROSHOP_CORE_SRC_DIR}/protocol/p2p/node.cpp ${NEROSHOP_CORE_SRC_DIR}/protocol/p2p/routing_table.cpp ${NEROSHOP_CORE_SRC_DIR}/protocol/rpc/json_rpc.cpp ${NEROSHOP_CORE_SRC_DIR}/protocol/transport/client.cpp ${NEROSHOP_CORE_SRC_DIR}/protocol/transport/ip_address.cpp ${NEROSHOP_CORE_SRC_DIR}/protocol/transport/server.cpp ${NEROSHOP_CORE_SRC_DIR}/protocol/transport/zmq_client.cpp ${NEROSHOP_CORE_SRC_DIR}/protocol/transport/zmq_server.cpp ${NEROSHOP_CORE_SRC_DIR}/tools/base64.cpp ${NEROSHOP_CORE_SRC_DIR}/tools/logger.cpp ${NEROSHOP_CORE_SRC_DIR}/tools/timestamp.cpp)
-add_executable(${daemon_executable} src/daemon/main.cpp ${daemon_src})#target_link_libraries(daemon ${curl_src} ${OPENSSL_LIBRARIES}) # curl requires both openssl(used in monero) and zlib(used in dokun-ui)
+add_executable(${daemon_executable} src/daemon/main.cpp ${daemon_src})#target_link_libraries(daemon ${curl_src} ${OPENSSL_LIBRARIES}) # curl requires both openssl(used in monero) and zlib(used in libi2pd)
 install(TARGETS ${daemon_executable} DESTINATION bin)
 target_compile_definitions(${daemon_executable} PRIVATE NEROSHOP_DEBUG)
 target_include_directories(${daemon_executable} PRIVATE #[[${CMAKE_CURRENT_SOURCE_DIR}/src/]] ${monero_include_dirs} ${monero_cpp_include_dir} ${sqlite_include_dir} ${json_include_dir} ${zlib_include_dir} ${i2pd_include_dirs} ${cxxopts_include_dir})
