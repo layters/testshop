@@ -367,15 +367,17 @@ set(cxxopts_include_dir ${CMAKE_CURRENT_SOURCE_DIR}/external/cxxopts/include/)
 
 ######################################
 # zlib
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/build/libz.a")
+    set(zlib_include_dir ${CMAKE_CURRENT_SOURCE_DIR}/external/zlib/)
+    set(zlib_src ${CMAKE_CURRENT_SOURCE_DIR}/build/libz.a)
+    message(STATUS "Using ZLIB: ${zlib_src}")
+else()
 find_package(ZLIB)
 if(ZLIB_FOUND)
     message(STATUS "Using ZLIB: ${ZLIB_LIBRARIES}")
     set(zlib_include_dir ${ZLIB_INCLUDE_DIRS})
     set(zlib_src ${ZLIB_LIBRARIES})
 endif()
-if(NOT ZLIB_FOUND)
-    set(zlib_include_dir ${CMAKE_CURRENT_SOURCE_DIR}/external/zlib/)
-    set(zlib_src ${CMAKE_CURRENT_SOURCE_DIR}/build/libz.a)
 endif()
 
 ######################################
