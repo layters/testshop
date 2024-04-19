@@ -3,7 +3,7 @@
 #ifndef WALLET_HPP_NEROSHOP
 #define WALLET_HPP_NEROSHOP
 
-#define PICONERO 0.000000000001  // the smallest unit of a monero (monero has 12 decimal places) // https://web.getmonero.org/resources/moneropedia/denominations.html
+#define PICONERO 0.000000000001  // https://github.com/monero-project/monero/blob/master/src/cryptonote_config.h#L65 // https://web.getmonero.org/resources/moneropedia/denominations.html
 #define WOWOSHI  0.00000000001   // https://git.wownero.com/wownero/wownero/src/branch/master/src/cryptonote_config.h#L68
 
 #include <daemon/monero_daemon.h>
@@ -78,14 +78,14 @@ public:
     bool verify_password(const std::string& password);
     
     // todo: create a function that connects a hardware wallet
-    monero::monero_subaddress create_subaddress(unsigned int account_idx, const std::string & label = "") const; // generates a new subaddress from main account // monero addresses start with 4 or 8
+    monero::monero_subaddress create_subaddress(unsigned int account_idx, const std::string & label = "") const; // generates a new subaddress from main account
     
-    virtual void transfer(const std::string& address, double amount); // "transfer" will be used for sending refunds
+    virtual void transfer(const std::string& address, double amount);
     virtual void transfer(const std::vector<std::pair<std::string, double>>& payment_addresses);
     
     std::string address_new() const; // this function has been replaced by create_subaddress() and is deprecated. Will be removed soon
-    unsigned int address_book_add(const std::string& address, std::string description = ""); // "address_book add <address> <description>"
-    void address_book_delete(unsigned int index); // "address_book delete 0"  
+    unsigned int address_book_add(const std::string& address, std::string description = "");
+    void address_book_delete(unsigned int index);
     
     static std::string generate_uri(const std::string& payment_address, double amount = 0.000000000000, const std::string& description = "", const std::string& recipient = ""); // Generates a monero uri for qr code with the amount embedded into it
     
@@ -116,7 +116,7 @@ public:
     virtual void set_network_type(WalletNetworkType network_type);
     void set_network_type_by_string(const std::string& network_type);
     
-    void set_tx_note(const std::string& txid, const std::string& tx_note); // "set_tx_note <txid> [free note text here]" - useful for filling address information
+    void set_tx_note(const std::string& txid, const std::string& tx_note);
     // getters
     WalletType get_wallet_type() const;
     virtual WalletNetworkType get_wallet_network_type() const;
@@ -133,7 +133,7 @@ public:
     std::string get_sync_message() const;
     
     virtual std::string get_primary_address() const;
-    virtual std::string get_address(unsigned int index) const; // returns address at "index"'s string (primary address is index 0) // "address all"
+    virtual std::string get_address(unsigned int index) const; // returns address at index (primary address is index 0)
     unsigned int get_address_count() const;
     
     virtual uint64_t get_balance_raw() const;
@@ -154,25 +154,22 @@ public:
     unsigned int get_transactions_count() const;
     // subaddress
     std::string get_last_subaddress() const; // returns the last subaddress to be created
-    // NOTE: use address_new to automatically generate a unique subaddress for each customer to make it easier to track who and where the payments are coming from 
     virtual std::string get_private_view_key() const; // secret view key
     virtual std::string get_public_view_key() const;
-    virtual std::pair<std::string, std::string> get_view_keys() const; // secret, public // "viewkey"
+    virtual std::pair<std::string, std::string> get_view_keys() const; // secret, public
     
     virtual std::string get_private_spend_key() const; // secret spend key
     virtual std::string get_public_spend_key() const;
-    virtual std::pair<std::string, std::string> get_spend_keys() const; // secret, public // "spendkey"
+    virtual std::pair<std::string, std::string> get_spend_keys() const; // secret, public
     
-    virtual std::string get_seed() const; // "seed"
+    virtual std::string get_seed() const;
     
     virtual std::string get_path() const;
-    //std::string get_description() const;
     std::string get_type() const; // "wallet_info": Normal, HW
     virtual unsigned int get_daemon_height() const;
     virtual unsigned int get_height() const;
     virtual unsigned int get_height_by_date(int year, int month, int day) const;
-    std::string get_status() const; // "status" - Check current status of wallet.
-    std::string get_version() const; // "version" - Check software version.
+    std::string get_version() const;
     // get wallet handles (monero, wownero, etc.)
     virtual void * get_handle() const;
     monero_wallet_full * get_monero_wallet() const;
@@ -192,24 +189,18 @@ public:
     // friends
     friend class Seller; // seller can access wallet private members
     friend class WalletController;
-private:
-    void set_daemon(); // "set_daemon <host>[:<port>] [trusted|untrusted|this-is-probably-a-spy-node]" - connects to a daemon
-    void refresh(); // "refresh" - Synchronize wallet with the Monero network.
-    void config(); // loads a config file (wallet_config.txt) with wallet settings
-    // callbacks
-    void load_from_config(std::string/*const std::string&*/ password = "supersecretpassword123");
 protected:
     WalletType wallet_type; // can switch between different wallets
     static WalletNetworkType network_type;
-    std::unique_ptr<monero::monero_wallet_full> monero_wallet_obj; // monero wallet
+    std::unique_ptr<monero::monero_wallet_full> monero_wallet_obj;
     //std::unique_ptr<wownero::wownero_wallet_full> wownero_wallet_obj;
-    std::unique_ptr<Process> process; // monerod process // every wallet will have its own process
+    std::unique_ptr<Process> process; // monerod process - every wallet will have its own process
     volatile double percentage; // sync progress
     mutable std::mutex wallet_data_mutex;
     volatile unsigned int height, start_height, end_height;
     /*volatile */std::string message;
     uint64_t/*unsigned long long*/ restore_height;
-    std::string password_hash; // pw hash that is only stored in memory
+    std::string password_hash;
 };
 
 }
