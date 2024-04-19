@@ -406,28 +406,26 @@ void neroshop::Wallet::set_network_type_by_string(const std::string& network_typ
 //-------------------------------------------------------
 std::string neroshop::Wallet::address_new() const {
     if(!monero_wallet_obj.get()) throw std::runtime_error("monero_wallet_full is not opened");
-    // Create a subaddress within an account (account_0 to be specific).
-    monero_subaddress subaddress = monero_wallet_obj->create_subaddress(0);//monero_subaddress monero::monero_wallet_full::create_subaddress	(	uint32_t 	account_idx,const std::string & 	label = "" )
+    // Create a subaddress within an account (account 0 to be specific).
+    monero_subaddress subaddress = monero_wallet_obj->create_subaddress(0);
 #ifdef NEROSHOP_DEBUG
     std::cout << "address_new: " << subaddress.m_address.get() << " (account_idx: " << subaddress.m_account_index.get() << ", subaddress_idx: " << subaddress.m_index.get() << ")" << std::endl;
 #endif
     //if subaddress has already been used
     if(subaddress.m_is_used.get()) { std::cout << "subaddress " << subaddress.m_address.get() << " already in use!" << std::endl; return ""; }
     return subaddress.m_address.get();// return the newly created subaddress
-    // store new subaddress//subaddress_list.push_back(subaddress.m_address.get());
-} // generates a new subaddress from main account // "address new"
+    //subaddress_list.push_back(subaddress.m_address.get());
+}
 //-------------------------------------------------------
 unsigned int neroshop::Wallet::address_book_add(const std::string& address, std::string description) {
     if(!monero_wallet_obj.get()) throw std::runtime_error("monero_wallet_full is not opened");
-    return monero_wallet_obj->add_address_book_entry(address, description);//unsigned int index = monero::monero_wallet_full::add_address_book_entry	(	address, const std::string & 	description ); // adds an address book entry and returns the index of the added entry
+    return monero_wallet_obj->add_address_book_entry(address, description);
 }
 //-------------------------------------------------------
 void neroshop::Wallet::address_book_delete(unsigned int index) {
     if(!monero_wallet_obj.get()) throw std::runtime_error("monero_wallet_full is not opened");
-    monero_wallet_obj->delete_address_book_entry(index);//void monero::monero_wallet_full::delete_address_book_entry	(	uint64_t 	index	);
+    monero_wallet_obj->delete_address_book_entry(index);
 }
-//-------------------------------------------------------
-//void  neroshop::Wallet::explore(const std::string& address) {} // will detect address before opening explorer
 //-------------------------------------------------------
 std::vector<monero::monero_subaddress> neroshop::Wallet::get_addresses_all(unsigned int account_idx) {
     if(!monero_wallet_obj.get()) throw std::runtime_error("monero_wallet_full is not opened");
@@ -435,7 +433,7 @@ std::vector<monero::monero_subaddress> neroshop::Wallet::get_addresses_all(unsig
     std::vector<monero::monero_subaddress> addresses = {};
     std::vector<unsigned int> subaddress_indices = {};
     for(int i = 0; i < monero_wallet_obj->get_account(account_idx, true).m_subaddresses.size(); i++) {
-        addresses = monero_wallet_obj->get_subaddresses(account_idx, subaddress_indices); // retrieve subaddress from account at 'account_idx'
+        addresses = monero_wallet_obj->get_subaddresses(account_idx, subaddress_indices);
         std::cout << addresses[i].m_index.get() << " " << addresses[i].m_address.get() << (addresses[i].m_is_used.get() ? " (used)" : "") << std::endl;
     }
     return addresses;
@@ -447,7 +445,7 @@ std::vector<monero::monero_subaddress> neroshop::Wallet::get_addresses_used(unsi
     std::vector<monero::monero_subaddress> addresses = {};
     std::vector<unsigned int> subaddress_indices = {};
     for(int i = 0; i < monero_wallet_obj->get_account(account_idx, true).m_subaddresses.size(); i++) {
-        addresses = monero_wallet_obj->get_subaddresses(account_idx, subaddress_indices); // retrieve subaddress from account at 'account_idx'
+        addresses = monero_wallet_obj->get_subaddresses(account_idx, subaddress_indices);
         if(addresses[i].m_is_used.get()) {
             std::cout << addresses[i].m_index.get() << " " << addresses[i].m_address.get() << std::endl;
         }
@@ -461,7 +459,7 @@ std::vector<monero::monero_subaddress> neroshop::Wallet::get_addresses_unused(un
     std::vector<monero::monero_subaddress> addresses = {};
     std::vector<unsigned int> subaddress_indices = {};
     for(int i = 0; i < monero_wallet_obj->get_account(account_idx, true).m_subaddresses.size(); i++) {
-        std::vector<monero::monero_subaddress> unused_addresses = monero_wallet_obj->get_subaddresses(account_idx, subaddress_indices); // retrieve subaddress from account at 'account_idx'
+        std::vector<monero::monero_subaddress> unused_addresses = monero_wallet_obj->get_subaddresses(account_idx, subaddress_indices);
         if(!unused_addresses[i].m_is_used.get()) {
             std::cout << ((std::find(recent_address_list.begin(), recent_address_list.end(), unused_addresses[i].m_address.get()) != recent_address_list.end()) ? "\033[91m" : "\033[0m") << unused_addresses[i].m_index.get() << " " << unused_addresses[i].m_address.get() << "\033[0m" << std::endl;// if subaddress is found in recent_address_list, mark it red
             // skip any recently used subaddress (to ensure the uniqueness of a subaddress)
@@ -733,7 +731,7 @@ void neroshop::Wallet::wallet_info() {
 //-------------------------------------------------------
 // setters
 //-------------------------------------------------------
-void neroshop::Wallet::set_tx_note(const std::string& txid, const std::string& tx_note) {} // "set_tx_note <txid> [free note text here]" - useful for filling address information
+void neroshop::Wallet::set_tx_note(const std::string& txid, const std::string& tx_note) {}
 //-------------------------------------------------------
 //-------------------------------------------------------
 // getters
@@ -1018,7 +1016,7 @@ std::vector<std::string> neroshop::Wallet::get_transactions() const {
     }
     */
     return txs_list;
-} // "show_transfers"
+}
 //-------------------------------------------------------
 unsigned int neroshop::Wallet::get_transactions_count() const {return 0;}
 //-------------------------------------------------------
@@ -1036,14 +1034,6 @@ std::string neroshop::Wallet::get_last_subaddress() const
     return monero_wallet_obj->get_account(0, true).m_subaddresses[last].m_address.get();
 }
 //-------------------------------------------------------
-//-------------------------------------------------------
-//-------------------------------------------------------
-//-------------------------------------------------------
-//-------------------------------------------------------
-//-------------------------------------------------------
-//-------------------------------------------------------
-// proof (proving the transaction was submitted) - https://web.getmonero.org/resources/user-guides/prove-payment.html
-//std::string neroshop::Wallet::get_tx_note(const std::string& txid) const {return "";} // "get_tx_note <txid>" - useful for retrieving address information
 //-------------------------------------------------------
 std::string neroshop::Wallet::get_private_view_key() const {
     switch(wallet_type) {
@@ -1141,15 +1131,10 @@ std::string neroshop::Wallet::get_path() const {
     }
 }
 //-------------------------------------------------------
-/*std::string neroshop::Wallet::get_description() const {
-    if(!monero_wallet_obj.get()) throw std::runtime_error("monero_wallet_full is not opened");
-    return "";
-}*/
-//-------------------------------------------------------
 std::string neroshop::Wallet::get_type() const {
     if(!monero_wallet_obj.get()) throw std::runtime_error("monero_wallet_full is not opened");
     return "";
-} // "wallet_info": Normal, HW
+}
 //-------------------------------------------------------
 unsigned int neroshop::Wallet::get_daemon_height() const {
     switch(wallet_type) {
@@ -1184,18 +1169,6 @@ unsigned int neroshop::Wallet::get_height_by_date(int year, int month, int day) 
             return 0;
         default:
             return 0;
-    }
-}
-//-------------------------------------------------------
-std::string neroshop::Wallet::get_status() const {
-    switch(wallet_type) {
-        case WalletType::Monero:
-            if(!monero_wallet_obj.get()) throw std::runtime_error("monero_wallet_full is not opened");
-            return "";
-        case WalletType::Wownero:
-            return "";
-        default:
-            return "";
     }
 }
 //-------------------------------------------------------
@@ -1299,12 +1272,10 @@ bool neroshop::Wallet::is_valid_address(const std::string& address) const {
 }
 //-------------------------------------------------------
 bool neroshop::Wallet::is_valid_monero_address(const std::string& address) {
-    auto network_type = get_network_type();
-    return monero_utils::is_valid_address(address, static_cast<monero::monero_network_type>(network_type));
+    return monero_utils::is_valid_address(address, static_cast<monero::monero_network_type>(Wallet::network_type));
 }
 //-------------------------------------------------------
 /*bool neroshop::Wallet::is_valid_wownero_address(const std::string& address) {
-    auto network_type = get_network_type();
     return ;
 }*/
 //-------------------------------------------------------
