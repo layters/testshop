@@ -163,6 +163,8 @@ public:
     virtual std::pair<std::string, std::string> get_spend_keys() const; // secret, public
     
     virtual std::string get_seed() const;
+    virtual std::string get_seed_language() const;
+    static std::vector<std::string> get_seed_languages();
     
     virtual std::string get_path() const;
     std::string get_type() const; // "wallet_info": Normal, HW

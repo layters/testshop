@@ -3,6 +3,9 @@
 #include "../tools/logger.hpp"
 #include "../tools/string.hpp"
 #include "../tools/process.hpp" // for monerod daemon process
+#include "../settings.hpp" // language
+
+#include <nlohmann/json.hpp>
 
 #include <cmath>
 #include <filesystem>
@@ -55,6 +58,12 @@ int neroshop::Wallet::create_random(const std::string& password, const std::stri
     wallet_config_obj.m_path = path;
     wallet_config_obj.m_password = password;
     wallet_config_obj.m_network_type = static_cast<monero::monero_network_type>(Wallet::network_type);
+    nlohmann::json settings = nlohmann::json::parse(neroshop::load_json(), nullptr, false);
+    if(settings.is_discarded()) {
+        wallet_config_obj.m_language = "English";
+    } else {
+        wallet_config_obj.m_language = settings["language"];
+    }
     
     monero_wallet_obj = std::unique_ptr<monero_wallet_full>(monero_wallet_full::create_wallet (wallet_config_obj, nullptr));
     if(monero_wallet_obj.get()) std::cout << "\033[1;35;49m" << "created wallet \"" << path << ".keys\"" << "\033[0m" << std::endl;
@@ -1118,6 +1127,23 @@ std::string neroshop::Wallet::get_seed() const {
             return "";
     }
 }
+//-------------------------------------------------------
+std::string neroshop::Wallet::get_seed_language() const {
+    switch(wallet_type) {
+        case WalletType::Monero:
+            if(!monero_wallet_obj.get()) throw std::runtime_error("monero_wallet_full is not opened");
+            return monero_wallet_obj->get_seed_language();
+        case WalletType::Wownero:
+            return "";
+        default:
+            return "";
+    }
+}
+//-------------------------------------------------------
+std::vector<std::string> neroshop::Wallet::get_seed_languages() {
+    return monero::monero_wallet_full::get_seed_languages();
+}
+//-------------------------------------------------------
 //-------------------------------------------------------
 std::string neroshop::Wallet::get_path() const {
     switch(wallet_type) {

@@ -151,6 +151,20 @@ QStringList neroshop::WalletController::getSeedList() const {
     return seed_phrase;
 }
 
+QString neroshop::WalletController::getSeedLanguage() const {
+    if (!_wallet) throw std::runtime_error("neroshop::Wallet is not initialized");
+    return QString::fromStdString(_wallet->get_seed_language());
+}
+
+QStringList neroshop::WalletController::getSeedLanguages() const {
+    if (!_wallet) throw std::runtime_error("neroshop::Wallet is not initialized");
+    QStringList seed_languages;
+    for(const auto& lang : _wallet->get_seed_languages()) {
+        seed_languages.append(QString::fromStdString(lang));
+    }
+    return seed_languages;
+}
+
 QString neroshop::WalletController::getPrimaryAddress() const {
     if (!_wallet)
         throw std::runtime_error("neroshop::Wallet is not initialized");

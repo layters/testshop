@@ -574,7 +574,7 @@ Popup {
                     anchors.right: parent.right//Layout.alignment: Qt.AlignRight; Layout.rightMargin: 0
                     width: settingsStack.comboBoxWidth
                     currentIndex: model.indexOf(Script.getJsonRootObject()["language"])
-                    model: ["English"] // TODO logic from controller
+                    model: Wallet.getSeedLanguages()
                     onCurrentTextChanged: settingsDialog.save()
                     indicatorWidth: settingsStack.comboBoxButtonWidth
                     indicatorDoNotPassBorder: settingsStack.comboBoxNestedButton
