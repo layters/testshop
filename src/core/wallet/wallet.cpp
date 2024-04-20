@@ -1140,8 +1140,15 @@ std::string neroshop::Wallet::get_seed_language() const {
     }
 }
 //-------------------------------------------------------
-std::vector<std::string> neroshop::Wallet::get_seed_languages() {
-    return monero::monero_wallet_full::get_seed_languages();
+std::vector<std::string> neroshop::Wallet::get_seed_languages() const {
+    switch(wallet_type) {
+        case WalletType::Monero:
+            return monero::monero_wallet_full::get_seed_languages();
+        case WalletType::Wownero:
+            return {};
+        default:
+            return {};
+    }
 }
 //-------------------------------------------------------
 //-------------------------------------------------------
