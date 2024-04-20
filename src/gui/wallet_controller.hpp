@@ -49,6 +49,8 @@ public:
     Q_INVOKABLE QString getNetworkPort() const;
     Q_INVOKABLE QString getSeed() const;
     Q_INVOKABLE QStringList getSeedList() const;
+    Q_INVOKABLE QString getSeedLanguage() const;
+    Q_INVOKABLE QStringList getSeedLanguages() const;
     Q_INVOKABLE QString getPrimaryAddress() const;
     // todo: change getAddresses* functions to return a QVariantList (array) containing QVariantMaps (objects) that represent a monero subaddress
     Q_INVOKABLE QStringList getAddressesAll() const;

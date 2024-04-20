@@ -59,6 +59,7 @@ public:
     std::pair<std::string, std::string> get_spend_keys() const override;
     
     std::string get_seed() const override;
+    std::string get_seed_language() const override;
     
     std::string get_path() const override;
     
