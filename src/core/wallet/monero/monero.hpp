@@ -60,6 +60,7 @@ public:
     
     std::string get_seed() const override;
     std::string get_seed_language() const override;
+    std::vector<std::string> get_seed_languages() const override;
     
     std::string get_path() const override;
     

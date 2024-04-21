@@ -427,6 +427,10 @@ std::string neroshop::MoneroWallet::get_seed_language() const {
     return monero_wallet_obj->get_seed_language();
 }
 //-------------------------------------------------------
+std::vector<std::string> neroshop::MoneroWallet::get_seed_languages() const {
+    return monero::monero_wallet_full::get_seed_languages();
+}
+//-------------------------------------------------------
 //-------------------------------------------------------
 std::string neroshop::MoneroWallet::get_path() const {
     if(!monero_wallet_obj.get()) throw std::runtime_error("monero_wallet_full is not opened");

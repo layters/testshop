@@ -534,7 +534,7 @@ Page {
                             id: walletRestoreHeightField
                             Layout.fillWidth: true
                             Layout.preferredHeight: 50
-                            placeholderText: qsTr("Restore Height (default: 1570000)"); placeholderTextColor: (NeroshopComponents.Style.darkTheme) ? "#a9a9a9" : "#696969"
+                            placeholderText: qsTr("Restore Height (default: 1580000)"); placeholderTextColor: (NeroshopComponents.Style.darkTheme) ? "#a9a9a9" : "#696969"
                             color: (NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000" // textColor
                             selectByMouse: true
                             validator: RegExpValidator{ regExp: /[0-9]*/ }

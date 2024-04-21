@@ -138,7 +138,7 @@ int neroshop::Wallet::restore_from_seed(const std::string& seed, uint64_t restor
     wallet_config_obj.m_password = "";
     wallet_config_obj.m_network_type = static_cast<monero::monero_network_type>(Wallet::network_type);
     wallet_config_obj.m_seed = seed;
-    wallet_config_obj.m_restore_height = (restore_height == 0) ? 1570000 : restore_height;//1570000 (stagenet);3120000 (mainnet)
+    wallet_config_obj.m_restore_height = (restore_height == 0) ? 1580000 : restore_height;//1580000 (stagenet);3120000 (mainnet)
     
     try {
         monero_wallet_obj = std::unique_ptr<monero_wallet_full>(monero_wallet_full::create_wallet (wallet_config_obj, nullptr));
@@ -1140,8 +1140,15 @@ std::string neroshop::Wallet::get_seed_language() const {
     }
 }
 //-------------------------------------------------------
-std::vector<std::string> neroshop::Wallet::get_seed_languages() {
-    return monero::monero_wallet_full::get_seed_languages();
+std::vector<std::string> neroshop::Wallet::get_seed_languages() const {
+    switch(wallet_type) {
+        case WalletType::Monero:
+            return monero::monero_wallet_full::get_seed_languages();
+        case WalletType::Wownero:
+            return {};
+        default:
+            return {};
+    }
 }
 //-------------------------------------------------------
 //-------------------------------------------------------
