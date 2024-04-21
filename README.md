@@ -25,8 +25,6 @@ NeroShop is a decentralized peer-to-peer marketplace for trading goods and servi
 
 
 ## Demo
-https://user-images.githubusercontent.com/58671384/219222567-f170f728-be31-43d5-b412-1f456a682bd3.mp4
-
 <details>
 <summary>Click to load images</summary>
     
