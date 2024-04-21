@@ -13,7 +13,7 @@ NeroShop is a decentralized peer-to-peer marketplace for trading goods and servi
 ## Table of contents
 <!-- - [The history behind neroshop](#about)-->
 - [Demo](#demo)
-- [Feature Status](#feature-status) <!-- - [Documentation](#documentation)-->
+- [Project Status](#project-status) <!-- - [Documentation](#documentation)-->
 - [Building neroshop](#building-neroshop)
   - [Dependencies](#dependencies)
   - [Compiling neroshop from source](#compiling-neroshop-from-source)
@@ -54,31 +54,9 @@ NeroShop is a decentralized peer-to-peer marketplace for trading goods and servi
 </details>
 
 
-## Feature Status
-- [ ] Distributed P2P network (urgently seeking assistance with I2P integration/NAT traversal!!!)
-- [ ] Buy and sell products and services with Monero
-- [x] No KYC
-- [x] No censorship (censorship-resistant)
-- [ ] No listing fees, sales tax, or any other fees (except for miner transaction fees and shipping costs)
-    - there will be 0.5% fee for using one of the three payment options (specifically the 2-of-3 escrow system).
-    This is to incentivize arbitrators (who are chosen from sellers with the highest reputation) for disputing 2/3 escrow transactions.
-- [x] Pseudonymous identities 
-    - sellers and buyers are identified by their unique id (monero primary address) and optional display name
-- [x] End-to-end encrypted messaging system for communications between sellers and buyers
-    - generated RSA-4096 private keys will be used to decrypt messages.
-- [ ] Subaddress generator for direct payments without an escrow 
-    - a unique subaddress will be generated from a seller's synced wallet account for each order placed by a customer
-- [x] Built-in Monero wallet with basic functionalities (`transaction history`, `send`, and `receive`)
-- [x] Option to run a local Monero node or connect to remote Monero nodes
-- [ ] Payment address QR codes containing Monero URIs
-- [ ] Option to choose between sending funds directly to a seller or by using a multisignature escrow.
-- [ ] Native I2P support 
-    - i2pd will be built-in (statically linked)
-- [x] Seller reputation system
-- [x] Product rating system (GUI Integration Pending)
-- [x] Wishlists (GUI Integration Pending)
-- [x] Built-in SQLite-powered search engine that can find any listing or seller
-- [ ] Full-featured and user-friendly GUI application (WIP)
+## Project Status
+https://gist.github.com/layters/83efdef0c5ea3d8ff458bfc312d11be3
+
 
 ## Building neroshop
 
@@ -233,11 +211,11 @@ See [Wiki](https://github.com/layters/testshop/wiki/Contributing)
 
 
 ## License
-This project is licensed under the [GNU General Public License v3.0 (GPLv3)](LICENSE)
+This project is licensed under the [GNU General Public License v3.0](LICENSE)
 
 
 ## Donations
-~~Donate if you like, to any of the addresses below. Received payments will be used to reward developers for completing bounties and will also be used to keep the `neroshop.org` domain up and running.~~
+Donate if you like, to any of the addresses below. Received payments will be used to reward developers for completing bounties and will also be used to keep the `neroshop.org` domain up and running.
 
 **Monero (XMR):**
 ```
@@ -278,17 +256,15 @@ WW2pQTQWHpyJf2CHrCmZG7Tn3zBnYRZTH8g4U3pSZf5s6xsTXrZc9odDWmrWzjRc9MMQWrKXxjHsRdzH
 
 
 ## Thanks
-```
-u/EchoingCat — for the revision of the official neroshop logo
+* [u/EchoingCat](https://www.reddit.com/user/EchoingCat/) — for the revision of the official neroshop logo
 
-woodser — for his guidance and for his work on the monero-cpp library which has made the development of this app possible
+* [woodser](https://github.com/woodser) — for his guidance and for his work on the monero-cpp library which has made the development of this app possible
 
-yuriio147 — for his work on various QML components, the currency converter, wallet address qr provider, fixing a major bug in the RSA encryption code, the RSA signing and verifying functions, and for teaching me some Qt/QML techniques
+* [yuriio147](https://github.com/yuriio147) — for his work on various QML components, the currency converter, wallet address qr provider, fixing a major bug in the RSA encryption code, the RSA signing and verifying functions, and for teaching me some Qt/QML techniques
 
-lza_menace — for creating the new monero.fail JSON API endpoint
+* [lza_menace](https://twitter.com/lza_menace) — for creating the new monero.fail JSON API endpoint
 
-everyone in our matrix room — for sharing many great ideas that have been useful to the project
-```
+* everyone in our matrix room — for sharing many great ideas that have been useful to the project
 
 [//]: # (./clean.sh)
 [//]: # (git checkout -b main)
