@@ -204,32 +204,26 @@ std::string neroshop::Node::generate_node_id(const std::string& address, int por
 
 //-----------------------------------------------------------------------------
 
-// Define the list of bootstrap nodes
-std::vector<neroshop::Peer> bootstrap_nodes = {
-    {"node.neroshop.org", NEROSHOP_P2P_DEFAULT_PORT},
-    ////{"127.0.0.1", NEROSHOP_P2P_DEFAULT_PORT}, // Uncomment to test on local network (you are allowed to create multiple separate daemon instances too)
-};
-
 void neroshop::Node::join() {
     if(sockfd < 0) throw std::runtime_error("socket is dead");
 
     // Bootstrap the DHT node with a set of known nodes
-    for (const auto& bootstrap_node : bootstrap_nodes) {
-        std::cout << "\033[35;1mJoining bootstrap node - " << bootstrap_node.address << ":" << bootstrap_node.port << "\033[0m\n";
+    for (const auto& bootstrap_node : BOOTSTRAP_NODES) {
+        std::cout << "\033[35;1mJoining bootstrap node - " << bootstrap_node.first << ":" << bootstrap_node.second << "\033[0m\n";
 
         // Ping each known node to confirm that it is online - the main bootstrapping primitive. If a node replies, and if there is space in the routing table, it will be inserted.
-        if(!ping(bootstrap_node.address, bootstrap_node.port)) {
+        if(!ping(bootstrap_node.first, bootstrap_node.second)) {
             std::cerr << "ping: failed to ping bootstrap node\n"; continue;
         }
         
         // Add the bootstrap node to routing table (optional)
-        auto seed_node = std::make_unique<Node>((bootstrap_node.address == "127.0.0.1") ? this->public_ip_address : bootstrap_node.address, bootstrap_node.port, false);
+        auto seed_node = std::make_unique<Node>((bootstrap_node.first == "127.0.0.1") ? this->public_ip_address : bootstrap_node.first, bootstrap_node.second, false);
         seed_node->set_bootstrap(true);
         Node& seed_node_ref = *seed_node; // take a reference to the Node object (to avoid segfault)
         //routing_table->add_node(std::move(seed_node)); // seed_node becomes invalid after we move ownership to routing table so it cannot be used
         
         // Send a "find_node" message to the bootstrap node and wait for a response message
-        auto nodes = send_find_node(this->id, (bootstrap_node.address == "127.0.0.1") ? "127.0.0.1" : seed_node_ref.get_ip_address(), seed_node_ref.get_port());//std::cout << "Sending find_node message to " << seed_node_ref.get_ip_address() << ":" << seed_node_ref.get_port() << "\n";
+        auto nodes = send_find_node(this->id, (bootstrap_node.first == "127.0.0.1") ? "127.0.0.1" : seed_node_ref.get_ip_address(), seed_node_ref.get_port());//std::cout << "Sending find_node message to " << seed_node_ref.get_ip_address() << ":" << seed_node_ref.get_port() << "\n";
         if(nodes.empty()) {
             std::cerr << "find_node: No nodes found\n"; continue;
         }
@@ -1568,8 +1562,8 @@ bool neroshop::Node::has_value(const std::string& value) const {
 }
 
 bool neroshop::Node::is_hardcoded(const std::string& address, uint16_t port) {
-    for (const auto& bootstrap_node : bootstrap_nodes) {
-        if (neroshop::ip::resolve(bootstrap_node.address) == address && bootstrap_node.port == port) {
+    for (const auto& bootstrap_node : BOOTSTRAP_NODES) {
+        if (neroshop::ip::resolve(bootstrap_node.first) == address && bootstrap_node.second == port) {
             return true;
         }
     }
@@ -1577,16 +1571,16 @@ bool neroshop::Node::is_hardcoded(const std::string& address, uint16_t port) {
 }
 
 bool neroshop::Node::is_hardcoded() const {
-    for (const auto& bootstrap_node : bootstrap_nodes) {
-        auto bootstrap_node_ip = neroshop::ip::resolve(bootstrap_node.address);
+    for (const auto& bootstrap_node : BOOTSTRAP_NODES) {
+        auto bootstrap_node_ip = neroshop::ip::resolve(bootstrap_node.first);
         if (bootstrap_node_ip == this->public_ip_address
-        && bootstrap_node.port == this->get_port()) {
+        && bootstrap_node.second == this->get_port()) {
             return true;
         }
         
         if((bootstrap_node_ip == "127.0.0.1" || bootstrap_node_ip == "0.0.0.0")
-        && bootstrap_node.port == NEROSHOP_P2P_DEFAULT_PORT
-        && bootstrap_node.port == this->get_port()) { // For testing on localhost. Remove this soon!!
+        && bootstrap_node.second == NEROSHOP_P2P_DEFAULT_PORT
+        && bootstrap_node.second == this->get_port()) { // For testing on localhost. Remove this soon!!
             return true;
         }
     }
