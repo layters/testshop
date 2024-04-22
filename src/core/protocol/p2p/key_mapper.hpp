@@ -8,9 +8,9 @@
 
 namespace neroshop {
 
-struct Mapper { // maps search terms to DHT keys
-    Mapper() = default;
-    ~Mapper();
+struct KeyMapper { // maps search terms to DHT keys
+    KeyMapper() = default;
+    ~KeyMapper();
     
     std::unordered_map<std::string, std::vector<std::string>> product_ids;
     std::unordered_map<std::string, std::vector<std::string>> product_names; // maps a product name to a list of corresponding listing keys

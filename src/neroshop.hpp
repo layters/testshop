@@ -33,7 +33,7 @@
 // protocol
 #include "core/protocol/messages/msgpack.hpp"
 #include "core/protocol/p2p/kademlia.hpp"
-#include "core/protocol/p2p/mapper.hpp"
+#include "core/protocol/p2p/key_mapper.hpp"
 #include "core/protocol/p2p/node.hpp"
 #include "core/protocol/p2p/routing_table.hpp"
 #include "core/protocol/p2p/serializer.hpp"

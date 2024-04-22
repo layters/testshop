@@ -10,6 +10,7 @@
 #include <cstdint>
 #include <initializer_list>
 #include <string>
+#include <utility> // std::pair
 
 #if defined(NEROSHOP_USE_QT)
 #include <QStandardPaths>
@@ -111,11 +112,9 @@
 #endif // endif NOT NEROSHOP_USE_QT
 
 namespace neroshop {
-//TODO Add here your network seed or bootstrap nodes
-const std::initializer_list<std::string> BOOTSTRAP_NODES = {
-    "node.neroshop.org:" + std::to_string(NEROSHOP_P2P_DEFAULT_PORT),
-  //"your_seed_ip1.com:8080",
-  //"your_seed_ip2.com:8080",
+
+const std::initializer_list<std::pair<std::string, uint16_t>> BOOTSTRAP_NODES = {
+    {"node.neroshop.org", NEROSHOP_P2P_DEFAULT_PORT},
 };
 
 }

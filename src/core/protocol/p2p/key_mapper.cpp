@@ -1,4 +1,4 @@
-#include "mapper.hpp"
+#include "key_mapper.hpp"
 
 #include <nlohmann/json.hpp>
 
@@ -10,7 +10,7 @@ namespace neroshop_string = neroshop::string;
 
 //-----------------------------------------------------------------------------
 
-neroshop::Mapper::~Mapper() {
+neroshop::KeyMapper::~KeyMapper() {
     product_ids.clear();
     product_names.clear();
     product_categories.clear();
@@ -29,7 +29,7 @@ neroshop::Mapper::~Mapper() {
 
 //-----------------------------------------------------------------------------
 
-void neroshop::Mapper::add(const std::string& key, const std::string& value) {
+void neroshop::KeyMapper::add(const std::string& key, const std::string& value) {
     nlohmann::json json;
     try {
         json = nlohmann::json::parse(value);
@@ -160,7 +160,7 @@ void neroshop::Mapper::add(const std::string& key, const std::string& value) {
     sync(); // Sync to database
 }
 
-void neroshop::Mapper::sync() {
+void neroshop::KeyMapper::sync() {
     db::Sqlite3 * database = neroshop::get_database();
     if(!database) throw std::runtime_error("database is NULL");
     
@@ -457,7 +457,7 @@ void neroshop::Mapper::sync() {
 
 //-----------------------------------------------------------------------------
 
-std::pair<std::string, std::string> neroshop::Mapper::serialize() { // no longer in use
+std::pair<std::string, std::string> neroshop::KeyMapper::serialize() { // no longer in use
     nlohmann::json data;
     //-----------------------------------------------
     // Add user_ids
@@ -610,7 +610,7 @@ std::pair<std::string, std::string> neroshop::Mapper::serialize() { // no longer
 
 //-----------------------------------------------------------------------------
 
-std::vector<std::string> neroshop::Mapper::search_product_by_name(const std::string& product_name) {
+std::vector<std::string> neroshop::KeyMapper::search_product_by_name(const std::string& product_name) {
     std::vector<std::string> matching_keys;
 
     std::string product_name_lower = neroshop_string::lower(product_name);
@@ -632,13 +632,13 @@ std::vector<std::string> neroshop::Mapper::search_product_by_name(const std::str
 //-----------------------------------------------------------------------------
 
 /*int main() {
-    neroshop::Mapper::product_names.insert(std::make_pair("Apple", std::vector<std::string>{"9341dd5ebbe0d457e1306bdb68f2cd13a0d3bac4e582012ae71c2bce47f8bb91"}));
-    neroshop::Mapper::product_names.insert(std::make_pair("Banana", std::vector<std::string>{"8063ed324ad571c0278a1d5d11b5d620a41e605d389e2ad7f268c196f7411035"}));
-    neroshop::Mapper::product_names.emplace(std::make_pair("Cherry", std::vector<std::string>{"f246efebbca8d633d2d9ce15ffd0ffeb6aabeddf19cdc060fe348c282e371b7a"}));
-    neroshop::Mapper::product_names.insert(std::make_pair("Watermelon", std::vector<std::string>{"0fe3907f0c4012aa9967e2dac81ef31c008ebf2b58f36e107c0c9bd61ba9d53e"}));
-    //neroshop::Mapper::product_names.insert(std::make_pair("", std::vector<std::string>{""}));
-    std::cout << "Number of products: " << neroshop::Mapper::product_names.size() << "\n";
-    auto products = neroshop::Mapper::search_product_by_name("er");//("ana");//("app");//"ban");
+    neroshop::KeyMapper::product_names.insert(std::make_pair("Apple", std::vector<std::string>{"9341dd5ebbe0d457e1306bdb68f2cd13a0d3bac4e582012ae71c2bce47f8bb91"}));
+    neroshop::KeyMapper::product_names.insert(std::make_pair("Banana", std::vector<std::string>{"8063ed324ad571c0278a1d5d11b5d620a41e605d389e2ad7f268c196f7411035"}));
+    neroshop::KeyMapper::product_names.emplace(std::make_pair("Cherry", std::vector<std::string>{"f246efebbca8d633d2d9ce15ffd0ffeb6aabeddf19cdc060fe348c282e371b7a"}));
+    neroshop::KeyMapper::product_names.insert(std::make_pair("Watermelon", std::vector<std::string>{"0fe3907f0c4012aa9967e2dac81ef31c008ebf2b58f36e107c0c9bd61ba9d53e"}));
+    //neroshop::KeyMapper::product_names.insert(std::make_pair("", std::vector<std::string>{""}));
+    std::cout << "Number of products: " << neroshop::KeyMapper::product_names.size() << "\n";
+    auto products = neroshop::KeyMapper::search_product_by_name("er");//("ana");//("app");//"ban");
     for(const auto& name : products) {
         std::cout << name << "\n";
     }
