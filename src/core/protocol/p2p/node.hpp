@@ -15,7 +15,7 @@ const int NUM_BITS = 256;
 namespace neroshop {
 
 class RoutingTable; // forward declaration
-class Mapper;
+class KeyMapper;
 
 struct Peer {
     std::string address;
@@ -44,7 +44,7 @@ private:
     // Declare a mutex to protect access to the routing table
     std::shared_mutex node_read_mutex; // Shared mutex for routing table access
     std::shared_mutex node_write_mutex; // Shared mutex for routing table access
-    std::unique_ptr<Mapper> key_mapper;
+    std::unique_ptr<KeyMapper> key_mapper;
     // Generates a node id from address and port combination
     std::string generate_node_id(const std::string& address, int port);
     // Determines if node1 is closer to the target_id than node2

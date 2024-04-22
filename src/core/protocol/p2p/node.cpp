@@ -8,7 +8,7 @@
 #include "../messages/msgpack.hpp"
 #include "../../version.hpp"
 #include "../../tools/base64.hpp"
-#include "mapper.hpp"
+#include "key_mapper.hpp"
 #include "../../tools/string.hpp"
 #include "../../tools/timestamp.hpp"
 #include "../../database/database.hpp"
@@ -162,7 +162,7 @@ neroshop::Node::Node(const std::string& address, int port, bool local) : sockfd(
        
     // Initialize key mapper
     if(!key_mapper.get()) {
-        key_mapper = std::make_unique<Mapper>();
+        key_mapper = std::make_unique<KeyMapper>();
     }
 }
 
