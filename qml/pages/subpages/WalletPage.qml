@@ -265,6 +265,27 @@ Page {
                                 border.width: parent.activeFocus ? 2 : 1
                                 radius: balanceTxColumn.radius
                             }
+                            rightPadding: 15 + resolveButton.width
+                            Button {
+                                id: resolveButton
+                                text: qsTr("resolve")
+                                anchors.right: parent.right
+                                anchors.rightMargin: 10
+                                anchors.verticalCenter: parent.verticalCenter
+                                hoverEnabled: true
+                                visible: false // TODO: show only when addressField.text is valid OpenAlias address
+                                ////onClicked: // TODO: handle OpenAlias resolution 
+                                background: Rectangle {
+                                    color: NeroshopComponents.Style.moneroGrayColor
+                                    radius: 10
+                                }
+                                contentItem: Text {
+                                    text: parent.text
+                                    color: "#ffffff"
+                                    horizontalAlignment: Text.AlignHCenter
+                                    verticalAlignment: Text.AlignVCenter
+                                }
+                            }
                         }
                         // amountField
                         TextField {
