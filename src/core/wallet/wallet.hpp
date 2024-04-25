@@ -187,6 +187,7 @@ public:
     virtual bool is_valid_address(const std::string& address) const;
     static bool is_valid_monero_address(const std::string& address);
     //static bool is_valid_wownero_address(const std::string& address);
+    static bool is_valid_openalias_address(const std::string& address);
     bool is_cryptonote_based() const;
     // friends
     friend class Seller; // seller can access wallet private members
