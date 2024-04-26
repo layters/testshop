@@ -494,7 +494,7 @@ std::vector<std::shared_ptr<monero_transfer>> neroshop::Wallet::get_transfers() 
 }
 //-------------------------------------------------------
 //-------------------------------------------------------
-std::string neroshop::Wallet::generate_uri(const std::string& payment_address, double amount, const std::string& description, const std::string& recipient) {
+std::string neroshop::Wallet::make_uri(const std::string& payment_address, double amount, const std::string& description, const std::string& recipient) {
     bool has_amount = false;
     bool has_recipient = false;
     std::string monero_uri = "monero:" + payment_address;
@@ -515,6 +515,58 @@ std::string neroshop::Wallet::generate_uri(const std::string& payment_address, d
     return monero_uri;
 }
 //-------------------------------------------------------
+bool neroshop::Wallet::parse_uri(const std::string& uri, std::string& payment_address, double& amount, std::string& description, std::string& recipient) {
+    std::string wallet_tx_uri = uri; // Copy to modify
+    // Find position of ":" to determine the end of the coin prefix
+    size_t coin_prefix_end = wallet_tx_uri.find(':'); // 6=monero, 7=wownero
+    if(coin_prefix_end != std::string::npos) {
+        // Extract the coin prefix
+        std::string coin_prefix = wallet_tx_uri.substr(0, coin_prefix_end); // Exclude the ':' character
+        
+        // Find position of ? to separate address and parameters
+        size_t pos = wallet_tx_uri.find('?');
+        if(pos != std::string::npos) {
+            // Extract address
+            payment_address = wallet_tx_uri.substr(coin_prefix_end + 1, pos - coin_prefix_end - 1);
+        
+            // Extract parameters
+            std::string parameters = wallet_tx_uri.substr(pos + 1);
+        
+            // Create a stringstream to parse the parameters
+            std::stringstream ss(parameters);
+        
+            std::string token;
+            while (std::getline(ss, token, '&')) {
+                // Split each parameter by '=' to separate key and value
+                size_t equal_pos = token.find('=');
+                if(equal_pos == std::string::npos) {
+                    // Invalid parameter format
+                    return false;
+                }
+                std::string key = token.substr(0, equal_pos);
+                std::string value = token.substr(equal_pos + 1);
+
+                // URL decode the value
+                value = string_tools::url_decode(value);
+
+                // Assign values to variables based on key
+                if (key == "tx_amount") {
+                    amount = std::stod(neroshop::string::precision(value, 12));
+                } else if (key == "recipient_name") {
+                    recipient = value;
+                } else if (key == "tx_description") {
+                    description = value;
+                }
+            }
+            
+            // URI parsing successful
+            return true;
+        }
+    }
+    
+    // URI parsing failed
+    return false;
+}
 //-------------------------------------------------------
 //-------------------------------------------------------
 //-------------------------------------------------------

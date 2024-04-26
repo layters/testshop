@@ -87,7 +87,8 @@ public:
     unsigned int address_book_add(const std::string& address, std::string description = "");
     void address_book_delete(unsigned int index);
     
-    static std::string generate_uri(const std::string& payment_address, double amount = 0.000000000000, const std::string& description = "", const std::string& recipient = ""); // Generates a monero uri for qr code with the amount embedded into it
+    static std::string make_uri(const std::string& payment_address, double amount = 0.000000000000, const std::string& description = "", const std::string& recipient = ""); // Generates a monero uri for qr code with the amount embedded into it
+    static bool parse_uri(const std::string& uri, std::string& payment_address, double& amount, std::string& description, std::string& recipient);
     
     std::vector<monero::monero_subaddress> get_addresses_all(unsigned int account_idx);
     std::vector<monero::monero_subaddress> get_addresses_used(unsigned int account_idx);
