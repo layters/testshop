@@ -78,6 +78,8 @@ public:
     Q_INVOKABLE bool isSynced() const;
     Q_INVOKABLE bool isDaemonSynced() const;
     Q_INVOKABLE bool fileExists(const QString& filename) const;
+    Q_INVOKABLE bool isValidAddress(const QString& address) const;
+    Q_INVOKABLE bool isValidOpenAliasAddress(const QString& address) const;
     // Callbacks
     void on_sync_progress(uint64_t height, uint64_t start_height, uint64_t end_height, double percent_done, const std::string& message);
     void on_new_block (uint64_t height);

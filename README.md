@@ -215,8 +215,6 @@ This project is licensed under the [GNU General Public License v3.0](LICENSE)
 
 
 ## Donations
-Donate if you like, to any of the addresses below. Received payments will be used to reward developers for completing bounties and will also be used to keep the `neroshop.org` domain up and running.
-
 **Monero (XMR):**
 ```
 83QbQvnnyo7515rEnW8XwF1hbP5qMab6sHXFzP6pg3EKGscgXCbVjbt1FX5SF7AV9p4Ur1tiommuQSzrQQRHkZicVYu6j8Y
@@ -239,20 +237,15 @@ WW2pQTQWHpyJf2CHrCmZG7Tn3zBnYRZTH8g4U3pSZf5s6xsTXrZc9odDWmrWzjRc9MMQWrKXxjHsRdzH
 
 ## Resources
 - Website: [neroshop.org](https://neroshop.org/)
-
-- Neroshop DHT Specification: [specs](https://github.com/layters/specs)
-
-- Wiki: [Wikipage](https://github.com/layters/testshop/wiki)
-
+- DHT Specification: [specs](https://github.com/layters/specs)
 - Git Mirrors: 
     - [Codeberg](https://codeberg.org/layter/neroshop)
     - [Gitea](https://git.wownero.com/layter/neroshop)
-
-- Mail: larteyoh@pm.me
-
-- Matrix: [#neroshop:matrix.org](https://matrix.to/#/#neroshop:matrix.org)
-
-- Matrix 2: [#neroshop-dev:matrix.org](https://matrix.to/#/#neroshop-dev:matrix.org)
+- Lemmy: https://monero.town/c/neroshop
+- Mail: neroshop@protonmail.com
+- Matrix: 
+    - [#neroshop:matrix.org](https://matrix.to/#/#neroshop:matrix.org)
+    - [#neroshop-dev:matrix.org](https://matrix.to/#/#neroshop-dev:matrix.org)
 
 
 ## Thanks
@@ -260,7 +253,7 @@ WW2pQTQWHpyJf2CHrCmZG7Tn3zBnYRZTH8g4U3pSZf5s6xsTXrZc9odDWmrWzjRc9MMQWrKXxjHsRdzH
 
 * [woodser](https://github.com/woodser) — for his guidance and for his work on the monero-cpp library which has made the development of this app possible
 
-* [yuriio147](https://github.com/yuriio147) — for his work on various QML components, the currency converter, wallet address qr provider, fixing a major bug in the RSA encryption code, the RSA signing and verifying functions, and for teaching me some Qt/QML techniques
+* [yuriio147](https://github.com/yuriio147) — for his work on various QML components, the currency converter, wallet address qr provider, image loader and image provider, fixing a major bug in the RSA encryption code, the RSA signing and verifying functions, and for teaching me some Qt/QML techniques
 
 * [lza_menace](https://twitter.com/lza_menace) — for creating the new monero.fail JSON API endpoint
 

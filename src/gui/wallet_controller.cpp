@@ -368,6 +368,16 @@ bool neroshop::WalletController::fileExists(const QString& filename) const {
     return _wallet->file_exists(filename.toStdString());
 }
 
+bool neroshop::WalletController::isValidAddress(const QString& address) const {
+    if (!_wallet) throw std::runtime_error("neroshop::Wallet is not initialized");
+    return _wallet->is_valid_address(address.toStdString());
+}
+
+bool neroshop::WalletController::isValidOpenAliasAddress(const QString& address) const {
+    if (!_wallet) throw std::runtime_error("neroshop::Wallet is not initialized");
+    return _wallet->is_valid_openalias_address(address.toStdString());
+}
+
 // Callbacks
 void neroshop::WalletController::on_sync_progress(uint64_t height, uint64_t start_height, uint64_t end_height, double percent_done, const std::string& message) {
     std::lock_guard<std::mutex> lock(_wallet->wallet_data_mutex);

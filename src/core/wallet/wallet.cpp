@@ -1312,6 +1312,10 @@ bool neroshop::Wallet::is_valid_monero_address(const std::string& address) {
     return ;
 }*/
 //-------------------------------------------------------
+bool neroshop::Wallet::is_valid_openalias_address(const std::string& address) {
+    return (string_tools::is_valid_domain(address) || string_tools::is_email(address));
+}
+//-------------------------------------------------------
 bool neroshop::Wallet::is_cryptonote_based() const {
     return (wallet_type == WalletType::Monero || wallet_type == WalletType::Wownero);
 }

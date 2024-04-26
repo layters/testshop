@@ -54,6 +54,27 @@ static bool is_product_code(const std::string& code) {
            std::regex_match(code, issn) || std::regex_match(code, gtin) || std::regex_match(code, sku) ||
            std::regex_match(code, mpn) || std::regex_match(code, ndc);
 }
+
+// does not work for email-styled addresses
+static bool is_valid_domain(const std::string& domain) {
+    std::regex regex("^[A-Za-z0-9-]+(\\.[A-Za-z0-9-]+)+$"); // Basic domain structure
+
+    if (!std::regex_match(domain, regex)) {
+        return false;
+    }
+
+    std::string lastPart = domain.substr(domain.find_last_of('.') + 1);
+    try {
+        int lastPartInt = std::stoi(lastPart);
+        if (std::to_string(lastPartInt) != lastPart) {
+            return true;
+        }
+    } catch (const std::invalid_argument& e) {
+        return true;
+    }
+
+    return false;
+}
 }
 namespace string {
 	static std::string lower(const std::string& str) 
