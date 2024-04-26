@@ -56,7 +56,7 @@ static bool is_product_code(const std::string& code) {
 }
 
 // does not work for email-styled addresses
-static bool is_valid_openalias_domain(const std::string& domain) {
+static bool is_valid_domain(const std::string& domain) {
     std::regex regex("^[A-Za-z0-9-]+(\\.[A-Za-z0-9-]+)+$"); // Basic domain structure
 
     if (!std::regex_match(domain, regex)) {
