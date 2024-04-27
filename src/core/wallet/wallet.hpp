@@ -82,12 +82,13 @@ public:
     
     virtual void transfer(const std::string& address, double amount);
     virtual void transfer(const std::vector<std::pair<std::string, double>>& payment_addresses);
+    virtual void transfer(const std::string& uri);
     
     std::string address_new() const; // this function has been replaced by create_subaddress() and is deprecated. Will be removed soon
     unsigned int address_book_add(const std::string& address, std::string description = "");
     void address_book_delete(unsigned int index);
     
-    static std::string make_uri(const std::string& payment_address, double amount = 0.000000000000, const std::string& description = "", const std::string& recipient = ""); // Generates a monero uri for qr code with the amount embedded into it
+    virtual std::string make_uri(const std::string& payment_address, double amount = 0.000000000000, const std::string& description = "", const std::string& recipient = "") const; // Generates a monero uri for qr code with the amount embedded into it
     static bool parse_uri(const std::string& uri, std::string& payment_address, double& amount, std::string& description, std::string& recipient);
     
     std::vector<monero::monero_subaddress> get_addresses_all(unsigned int account_idx);

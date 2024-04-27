@@ -27,6 +27,9 @@ public:
     
     void transfer(const std::string& address, double amount) override;
     void transfer(const std::vector<std::pair<std::string, double>>& payment_addresses) override;
+    void transfer(const std::string& uri) override;
+    
+    std::string make_uri(const std::string& payment_address, double amount = 0.000000000000, const std::string& description = "", const std::string& recipient = "") const override;
     
     void set_network_type(WalletNetworkType network_type) override;
     
