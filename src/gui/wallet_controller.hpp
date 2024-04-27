@@ -37,6 +37,8 @@ public:
     Q_INVOKABLE void transfer(const QString& address, double amount);
     Q_INVOKABLE QString signMessage(const QString& message) const;
     Q_INVOKABLE bool verifyMessage(const QString& message, const QString& signature) const;
+    Q_INVOKABLE QString makeUri(const QString& address, double tx_amount, const QString& tx_description, const QString& recipient_name) const;
+    Q_INVOKABLE QVariantMap parseUriToObject(const QString& uri) const;
     
     Q_INVOKABLE double getSyncPercentage() const;
     Q_INVOKABLE unsigned int getSyncHeight() const;

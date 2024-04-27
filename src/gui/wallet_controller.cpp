@@ -112,6 +112,29 @@ bool neroshop::WalletController::verifyMessage(const QString& message, const QSt
     return _wallet->verify_message(message.toStdString(), signature.toStdString());
 }
 
+QString neroshop::WalletController::makeUri(const QString& address, double tx_amount, const QString& tx_description, const QString& recipient_name) const {
+    if(!_wallet) throw std::runtime_error("neroshop::Wallet is not initialized");
+    return QString::fromStdString(_wallet->make_uri(address.toStdString(), tx_amount, tx_description.toStdString(), recipient_name.toStdString()));
+}
+
+QVariantMap neroshop::WalletController::parseUriToObject(const QString& uri) const {
+    if(!_wallet) throw std::runtime_error("neroshop::Wallet is not initialized");
+    QVariantMap uri_object;
+    std::string address;
+    double tx_amount;
+    std::string tx_description;
+    std::string recipient_name;
+    
+    Wallet::parse_uri(uri.toStdString(), address, tx_amount, tx_description, recipient_name);
+    
+    uri_object.insert("address", QString::fromStdString(address));
+    uri_object.insert("tx_amount", tx_amount);
+    uri_object.insert("tx_description", QString::fromStdString(tx_description));
+    uri_object.insert("recipient_name", QString::fromStdString(recipient_name));
+    
+    return uri_object;
+}
+
 int neroshop::WalletController::getWalletType() const {
     if (!_wallet)
         throw std::runtime_error("neroshop::Wallet is not initialized");
