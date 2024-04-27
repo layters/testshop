@@ -75,6 +75,20 @@ static bool is_valid_domain(const std::string& domain) {
 
     return false;
 }
+
+static std::string url_decode(const std::string &value) { 
+    std::stringstream decoded; 
+    size_t i = 0; 
+    while (i < value.size()) { 
+        if (value[i] == '%' && i + 2 < value.size() && isxdigit(value[i + 1]) && isxdigit(value[i + 2])) { 
+            decoded << static_cast<char>(std::stoi(value.substr(i + 1, 2), nullptr, 16)); 
+            i += 3; 
+        } else { 
+            decoded << value[i++]; 
+        } 
+    } 
+    return decoded.str(); 
+}
 }
 namespace string {
 	static std::string lower(const std::string& str) 

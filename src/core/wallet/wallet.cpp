@@ -346,6 +346,67 @@ void neroshop::Wallet::transfer(const std::vector<std::pair<std::string, double>
     monero_utils::free(created_tx);
 }
 //-------------------------------------------------------
+void neroshop::Wallet::transfer(const std::string& uri) {
+    if(!monero_wallet_obj.get()) throw std::runtime_error("monero_wallet_full is not opened");
+    if(!monero_wallet_obj.get()->is_synced()) throw std::runtime_error("wallet is not synced with a daemon");
+    
+    std::string address;
+    double tx_amount = 0.000000000000;
+    std::string tx_description;
+    std::string recipient_name;
+    
+    parse_uri(uri, address, tx_amount, tx_description, recipient_name);
+    
+    std::packaged_task<void(void)> transfer_task([this, address, tx_amount, tx_description, recipient_name]() -> void {
+    // Check if address is valid
+    if(!monero_utils::is_valid_address(address, monero_wallet_obj->get_network_type())) {
+        std::cerr << "\033[1;91mMonero address is invalid" << "\033[0m\n"; return;
+    }
+    // Convert monero to piconero
+    uint64_t monero_to_piconero = tx_amount / PICONERO; //std::cout << neroshop::string::precision(amount, 12) << " xmr to piconero: " << monero_to_piconero << "\n";
+    // Check if amount is zero or too low
+    if((tx_amount < PICONERO) || (monero_to_piconero == 0)) {
+        std::cerr << "\033[1;91mNothing to send (amount is zero)" << "\033[0m\n"; return;
+    }
+    // Check if balance is sufficient
+    std::cout << "Wallet balance (spendable): " << monero_wallet_obj->get_unlocked_balance() << " (picos)\n";
+    std::cout << "Amount to send: " << monero_to_piconero << " (picos)\n";
+    if(monero_wallet_obj->get_unlocked_balance() < monero_to_piconero) {
+        std::cerr << "\033[1;91mWallet balance is insufficient" << "\033[0m\n"; return;
+    }
+    // Send funds from this wallet to the specified address
+    monero_tx_config tx_config;
+    tx_config.m_account_index = 0; // withdraw funds from account at index 0
+    tx_config.m_address = address; // address that will be receiving the funds
+    tx_config.m_amount = monero_to_piconero;
+    tx_config.m_note = tx_description;
+    tx_config.m_recipient_name = recipient_name;
+    tx_config.m_relay = true;
+    // Sweep unlocked balance?
+    if(monero_wallet_obj->get_unlocked_balance() == monero_to_piconero) {
+        std::cout << "\033[1;37mSweeping unlocked balance ...\033[0m\n";
+        tx_config.m_amount = boost::none;
+        monero_wallet_obj->sweep_unlocked(tx_config);return;
+    }    
+    // Create the transaction
+    std::shared_ptr<monero_tx_wallet> sent_tx = monero_wallet_obj->create_tx(tx_config);
+    bool in_pool = sent_tx->m_in_tx_pool.get();  // true
+    // Get tx fee and hash    
+    uint64_t fee = sent_tx->m_fee.get(); // "Are you sure you want to send ...?"
+    std::cout << "Estimated fee: " << (fee * PICONERO) << "\n";
+    //uint64_t deducted_amount = (monero_to_piconero + fee);
+    std::string tx_hash = monero_wallet_obj->relay_tx(*sent_tx); // recipient receives notification within 5 seconds    
+    std::cout << "Tx hash: " << tx_hash << "\n";
+    monero_utils::free(sent_tx);
+    });
+    
+    std::future<void> future_result = transfer_task.get_future();
+    // move the task (function) to a separate thread to prevent blocking of the main thread
+    std::thread worker(std::move(transfer_task));
+    worker.detach();
+}
+//-------------------------------------------------------
+//-------------------------------------------------------
 std::string neroshop::Wallet::sign_message(const std::string& message, monero_message_signature_type signature_type) const {
     switch(wallet_type) {
         case WalletType::Monero:
@@ -494,27 +555,93 @@ std::vector<std::shared_ptr<monero_transfer>> neroshop::Wallet::get_transfers() 
 }
 //-------------------------------------------------------
 //-------------------------------------------------------
-std::string neroshop::Wallet::generate_uri(const std::string& payment_address, double amount, const std::string& description, const std::string& recipient) {
+std::string neroshop::Wallet::make_uri(const std::string& payment_address, double amount, const std::string& description, const std::string& recipient) const {
     bool has_amount = false;
     bool has_recipient = false;
-    std::string monero_uri = "monero:" + payment_address;
+    std::string wallet_tx_uri;
+    switch(wallet_type) {
+        case WalletType::Monero:
+            wallet_tx_uri = "monero:";
+            break;
+        case WalletType::Wownero:
+            wallet_tx_uri = "wownero:";
+            break;
+        default:
+            wallet_tx_uri = ":";
+            break;
+    }
+    if(is_valid_address(payment_address)) {
+        wallet_tx_uri = wallet_tx_uri + payment_address;
+    }
     if(amount > std::stod(neroshop::string::precision("0.000000000000", 12))) {
         //std::cout << "amount (" << neroshop::string::precision(amount, 12) << ") is greater than 0.000000000000\n";
         has_amount = true;
-        monero_uri = monero_uri + "?tx_amount=" + neroshop::string::precision(amount, 12);
+        wallet_tx_uri = wallet_tx_uri + "?tx_amount=" + neroshop::string::precision(amount, 12);
     }
     if(!recipient.empty()) {
         has_recipient = true;
         std::string recipient_name = neroshop::string::swap_all(recipient, " ", "%20");
-        monero_uri = monero_uri + ((has_amount) ? "&recipient_name=" : "?recipient_name=") + recipient_name;
+        wallet_tx_uri = wallet_tx_uri + ((has_amount) ? "&recipient_name=" : "?recipient_name=") + recipient_name;
     }
     if(!description.empty()) {
         std::string tx_description = neroshop::string::swap_all(description, " ", "%20");
-        monero_uri = monero_uri + ((has_amount || has_recipient) ? "&tx_description=" : "?tx_description=") + tx_description;
+        wallet_tx_uri = wallet_tx_uri + ((has_amount || has_recipient) ? "&tx_description=" : "?tx_description=") + tx_description;
     }
-    return monero_uri;
+    return wallet_tx_uri;
 }
 //-------------------------------------------------------
+bool neroshop::Wallet::parse_uri(const std::string& uri, std::string& payment_address, double& amount, std::string& description, std::string& recipient) {
+    std::string wallet_tx_uri = uri; // Copy to modify
+    // Find position of ":" to determine the end of the coin prefix
+    size_t coin_prefix_end = wallet_tx_uri.find(':'); // 6=monero, 7=wownero
+    if(coin_prefix_end != std::string::npos) {
+        // Extract the coin prefix
+        std::string coin_prefix = wallet_tx_uri.substr(0, coin_prefix_end); // Exclude the ':' character
+        
+        // Find position of ? to separate address and parameters
+        size_t pos = wallet_tx_uri.find('?');
+        if(pos != std::string::npos) {
+            // Extract address
+            payment_address = wallet_tx_uri.substr(coin_prefix_end + 1, pos - coin_prefix_end - 1);
+        
+            // Extract parameters
+            std::string parameters = wallet_tx_uri.substr(pos + 1);
+        
+            // Create a stringstream to parse the parameters
+            std::stringstream ss(parameters);
+        
+            std::string token;
+            while (std::getline(ss, token, '&')) {
+                // Split each parameter by '=' to separate key and value
+                size_t equal_pos = token.find('=');
+                if(equal_pos == std::string::npos) {
+                    // Invalid parameter format
+                    return false;
+                }
+                std::string key = token.substr(0, equal_pos);
+                std::string value = token.substr(equal_pos + 1);
+
+                // URL decode the value
+                value = string_tools::url_decode(value);
+
+                // Assign values to variables based on key
+                if (key == "tx_amount") {
+                    amount = std::stod(neroshop::string::precision(value, 12));
+                } else if (key == "recipient_name") {
+                    recipient = value;
+                } else if (key == "tx_description") {
+                    description = value;
+                }
+            }
+            
+            // URI parsing successful
+            return true;
+        }
+    }
+    
+    // URI parsing failed
+    return false;
+}
 //-------------------------------------------------------
 //-------------------------------------------------------
 //-------------------------------------------------------

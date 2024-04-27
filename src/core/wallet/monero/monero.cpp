@@ -287,6 +287,42 @@ void neroshop::MoneroWallet::transfer(const std::vector<std::pair<std::string, d
     monero_utils::free(created_tx);
 }
 //-------------------------------------------------------
+void neroshop::MoneroWallet::transfer(const std::string& uri) {
+    if(!monero_wallet_obj.get()) throw std::runtime_error("monero_wallet_full is not opened");
+    if(!monero_wallet_obj.get()->is_synced()) throw std::runtime_error("wallet is not synced with a daemon");
+    
+    std::string address;
+    double tx_amount = 0.000000000000;
+    std::string tx_description;
+    std::string recipient_name;
+    
+    parse_uri(uri, address, tx_amount, tx_description, recipient_name);
+}
+//-------------------------------------------------------
+//-------------------------------------------------------
+std::string neroshop::MoneroWallet::make_uri(const std::string& payment_address, double amount = 0.000000000000, const std::string& description = "", const std::string& recipient = "") const {
+    bool has_amount = false;
+    bool has_recipient = false;
+    std::string monero_uri = "monero:";
+    if(is_valid_address(payment_address)) {
+        monero_uri = monero_uri + payment_address;
+    }
+    if(amount > std::stod(neroshop::string::precision("0.000000000000", 12))) {
+        has_amount = true;
+        monero_uri = monero_uri + "?tx_amount=" + neroshop::string::precision(amount, 12);
+    }
+    if(!recipient.empty()) {
+        has_recipient = true;
+        std::string recipient_name = neroshop::string::swap_all(recipient, " ", "%20");
+        monero_uri = monero_uri + ((has_amount) ? "&recipient_name=" : "?recipient_name=") + recipient_name;
+    }
+    if(!description.empty()) {
+        std::string tx_description = neroshop::string::swap_all(description, " ", "%20");
+        monero_uri = monero_uri + ((has_amount || has_recipient) ? "&tx_description=" : "?tx_description=") + tx_description;
+    }
+    return monero_uri;
+}
+//-------------------------------------------------------
 //-------------------------------------------------------
 //-------------------------------------------------------
 void neroshop::MoneroWallet::set_network_type(WalletNetworkType network_type) {
