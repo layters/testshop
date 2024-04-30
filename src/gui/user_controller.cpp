@@ -529,6 +529,16 @@ QVariantList neroshop::UserController::getMessages() const {
                 message_object.insert("sender_id", QString::fromStdString(message_decrypted.second));
                 message_object.insert("recipient_id", QString::fromStdString(value_obj["recipient_id"].get<std::string>()));
                 message_object.insert("timestamp", QString::fromStdString(value_obj["timestamp"].get<std::string>()));
+                if(value_obj.contains("signature") && value_obj["signature"].is_string()) {
+                    std::string signature = value_obj["signature"].get<std::string>();
+                    auto verified = _user->get_wallet()->get_monero_wallet()->verify_message(message_decrypted.first, message_decrypted.second, signature).m_is_good;
+                    #ifdef NEROSHOP_DEBUG
+                    std::cout << "\033[1mverified: " << (verified == 1 ? "\033[32mpass" : "\033[91mfail") << "\033[0m\n";
+                    #endif
+                    message_object.insert("verified", verified);
+                } else {
+                    message_object.insert("verified", false);
+                }
             }
             messages_array.append(message_object);
         }
