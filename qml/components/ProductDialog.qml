@@ -433,6 +433,7 @@ Popup {
                             id: addSubCategoryButton
                             width: 50; height: 50
                             text: qsTr("+")
+                            hoverEnabled: true
                             visible: Backend.hasSubCategory(Backend.getCategoryIdByName(productCategoryBox.currentText))
                             background: Rectangle {
                                 color: parent.hovered ? "#698b22" : "#506a1a"//"#605185"
@@ -500,7 +501,8 @@ Popup {
                                 id: removeSubCategoryButton
                                 width: 50; height: 50
                                 text: qsTr("x")
-                                    background: Rectangle {
+                                hoverEnabled: true
+                                background: Rectangle {
                                     color: parent.hovered ? "#b22222" : "#921c1c"
                                     radius: productDialog.inputRadius
                                 }

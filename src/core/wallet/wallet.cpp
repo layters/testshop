@@ -302,7 +302,7 @@ void neroshop::Wallet::transfer(const std::string& address, double amount) {
     worker.detach(); // join may block but detach won't//void transfer_result = future_result.get();
 }
 //-------------------------------------------------------
-void neroshop::Wallet::transfer(const std::vector<std::pair<std::string, double>>& payment_addresses) { // untested
+void neroshop::Wallet::transfer(const std::vector<std::pair<std::string, double>>& payment_addresses) { 
     if(!monero_wallet_obj.get()) throw std::runtime_error("monero_wallet_full is not opened");
     if(!monero_wallet_obj.get()->is_synced()) throw std::runtime_error("wallet is not synced with a daemon");
     
@@ -312,10 +312,10 @@ void neroshop::Wallet::transfer(const std::vector<std::pair<std::string, double>
     
     // Calculate the total amount owed
     double total_amount = 0.000000000000;
-    for (const auto& address : payment_addresses) {
-        total_amount += address.second;
+    for (const auto& recipient : payment_addresses) {
+        total_amount += recipient.second;
     }
-    std::cout << "Total amount to pay: " << total_amount << " (xmr)\n";
+    std::cout << "Total amount to pay: " << std::fixed << std::setprecision(12) << total_amount << " (xmr)\n";
     // Check if balance is sufficient
     uint64_t total_to_piconero = total_amount / PICONERO;
     std::cout << "Wallet balance (spendable): " << monero_wallet_obj->get_unlocked_balance() << " (picos)\n";
@@ -325,19 +325,23 @@ void neroshop::Wallet::transfer(const std::vector<std::pair<std::string, double>
     }
     // Add each destination
     std::vector<std::shared_ptr<monero_destination>> destinations; // specify the recipients and their amounts
-    for(const auto& address : payment_addresses) {
+    for(const auto& recipient : payment_addresses) {
         // Check if address is valid
-        if(!monero_utils::is_valid_address(address.first, monero_wallet_obj->get_network_type())) {
-            neroshop::print(address.first + " is not a valid Monero address", 1);
+        if(!monero_utils::is_valid_address(recipient.first, monero_wallet_obj->get_network_type())) {
+            neroshop::print(recipient.first + " is not a valid Monero address", 1);
             continue; // skip to the next address
         }
         // Convert monero to piconero
-        uint64_t monero_to_piconero = address.second / PICONERO; //std::cout << neroshop::string::precision(address.second, 12) << " xmr to piconero: " << monero_to_piconero << "\n";
-        destinations.push_back(std::make_shared<monero_destination>(address.first, monero_to_piconero));
+        uint64_t monero_to_piconero = recipient.second / PICONERO; //std::cout << neroshop::string::precision(recipient.second, 12) << " xmr to piconero: " << monero_to_piconero << "\n";
+        destinations.push_back(std::make_shared<monero_destination>(recipient.first, monero_to_piconero));
         // Print address and amount
-        std::cout << "Address: " << address.first << ", Amount: " << address.second << std::endl;
+        std::cout << "Address: " << recipient.first << ", Amount: " << recipient.second << std::endl;
     }
     tx_config.m_destinations = destinations;
+    if(tx_config.m_destinations.empty()) {
+        std::cerr << "\033[1;91mNo destinations for this transfer" << "\033[0m\n";
+        return;
+    }
     
     // Create the transaction, confirm with the user, and relay to the network
     std::shared_ptr<monero_tx_wallet> created_tx = monero_wallet_obj->create_tx(tx_config);

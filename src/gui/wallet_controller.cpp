@@ -98,6 +98,20 @@ void neroshop::WalletController::transfer(const QString& address, double amount)
     _wallet->transfer(address.toStdString(), amount);
 }
 
+void neroshop::WalletController::transfer(const QVariantList &recipients) {
+    if (!_wallet) throw std::runtime_error("neroshop::Wallet is not initialized");
+    
+    std::vector<std::pair<std::string, double>> payment_addresses;
+    for (const QVariant &recipient : recipients) {
+        QVariantMap recipientMap = recipient.toMap();
+        QString address = recipientMap["address"].toString();
+        double amount = recipientMap["amount"].toDouble();
+        payment_addresses.push_back(std::make_pair(address.toStdString(), amount));
+    }
+    
+    _wallet->transfer(payment_addresses);
+}
+
 QString neroshop::WalletController::signMessage(const QString& message) const {
     if (!_wallet)
         throw std::runtime_error("neroshop::Wallet is not initialized");

@@ -250,80 +250,156 @@ Page {
                         id: sendTabColumn
                         anchors.fill: parent
                         spacing: 20 // spacing between each item inside the column
-                        // addressField
-                        TextField {
-                            id: addressField
-                            anchors.horizontalCenter: parent.horizontalCenter
-                            width: 500/*parent.width*/; height: 50
-                            placeholderText: qsTr("Receiver address")
-                            color: balanceTxColumn.textColor
-                            selectByMouse: true
-                            maximumLength: 95//200 // TODO: set to 200 when Seraphis goes live
-                            background: Rectangle { 
-                                color: balanceTxColumn.baseColor
-                                border.color: balanceTxColumn.borderColor
-                                border.width: parent.activeFocus ? 2 : 1
-                                radius: balanceTxColumn.radius
-                            }
-                            rightPadding: resolveButton.visible ? (15 + resolveButton.width) : leftPadding
-                            Button {
-                                id: resolveButton
-                                text: qsTr("Resolve")
-                                anchors.right: parent.right
-                                anchors.rightMargin: 10
-                                anchors.verticalCenter: parent.verticalCenter
-                                hoverEnabled: true
-                                visible: Wallet.isValidOpenAliasAddress(addressField.text)
-                                ////onClicked: // TODO: handle OpenAlias resolution 
-                                background: Rectangle {
-                                    color: NeroshopComponents.Style.moneroGrayColor
-                                    radius: 10
-                                }
-                                contentItem: Text {
-                                    text: parent.text
-                                    color: "#ffffff"
-                                    horizontalAlignment: Text.AlignHCenter
-                                    verticalAlignment: Text.AlignVCenter
-                                }
-                            }
+                        ListModel {
+                            id: recipientModel
+                            ListElement {}
                         }
-                        // amountField
-                        TextField {
-                            id: amountField
+                        Repeater {
+                            id: recipientRepeater
+                            model: recipientModel
+                            delegate: Row {
+                                anchors.horizontalCenter: parent.horizontalCenter
+                                spacing: 5
+                                // addressField
+                                TextField {
+                                    id: addressField
+                                    width: 450/*parent.width*/; height: 50
+                                    placeholderText: qsTr("Receiver address")
+                                    color: balanceTxColumn.textColor
+                                    selectByMouse: true
+                                    maximumLength: 95//200 // TODO: set to 200 when Seraphis goes live
+                                    background: Rectangle { 
+                                        color: balanceTxColumn.baseColor
+                                        border.color: balanceTxColumn.borderColor
+                                        border.width: parent.activeFocus ? 2 : 1
+                                        radius: balanceTxColumn.radius
+                                    }
+                                    rightPadding: resolveButton.visible ? (15 + resolveButton.width) : leftPadding
+                                    Button {
+                                        id: resolveButton
+                                        text: qsTr("Resolve")
+                                        anchors.right: parent.right
+                                        anchors.rightMargin: 10
+                                        anchors.verticalCenter: parent.verticalCenter
+                                        hoverEnabled: true
+                                        visible: Wallet.isValidOpenAliasAddress(addressField.text)
+                                        ////onClicked: // TODO: handle OpenAlias resolution 
+                                        background: Rectangle {
+                                            color: NeroshopComponents.Style.moneroGrayColor
+                                            radius: 10
+                                        }
+                                        contentItem: Text {
+                                            text: parent.text
+                                            color: "#ffffff"
+                                            horizontalAlignment: Text.AlignHCenter
+                                            verticalAlignment: Text.AlignVCenter
+                                        }
+                                        MouseArea {
+                                            anchors.fill: parent
+                                            onPressed: mouse.accepted = false
+                                            cursorShape: Qt.PointingHandCursor
+                                        }
+                                    }
+                                }
+                                // amountField
+                                TextField {
+                                    id: amountField
+                                    width: 200/*parent.width*/; height: addressField.height
+                                    placeholderText: qsTr("Amount")//0.000000000000
+                                    color: balanceTxColumn.textColor
+                                    selectByMouse: true
+                                    validator: RegExpValidator{ regExp: new RegExp("^-?[0-9]+(\\.[0-9]{1," + Number(12) + "})?$") }
+                                    background: Rectangle { 
+                                        color: balanceTxColumn.baseColor
+                                        border.color: balanceTxColumn.borderColor
+                                        border.width: parent.activeFocus ? 2 : 1
+                                        radius: balanceTxColumn.radius
+                                    }
+                                    rightPadding: 15 + allButton.width
+                                    Button {
+                                        id: allButton
+                                        text: qsTr("\uf534")
+                                        anchors.right: parent.right
+                                        anchors.rightMargin: 10
+                                        anchors.verticalCenter: parent.verticalCenter
+                                        implicitWidth: 32; implicitHeight: 24
+                                        hoverEnabled: true
+                                        onClicked: amountField.text = Wallet.getBalanceUnlocked().toFixed(12)
+                                        background: Rectangle {
+                                            color: NeroshopComponents.Style.moneroGrayColor
+                                            radius: 10//amountField.background.radius//5
+                                        }
+                                        contentItem: Text {
+                                            text: parent.text
+                                            color: "#ffffff"
+                                            verticalAlignment: Text.AlignVCenter
+                                            horizontalAlignment: Text.AlignHCenter
+                                            font.bold: true
+                                            font.family: FontAwesome.fontFamily
+                                        }
+                                        MouseArea {
+                                            anchors.fill: parent
+                                            onPressed: mouse.accepted = false
+                                            cursorShape: Qt.PointingHandCursor
+                                        }
+                                    }
+                                }
+                                //removeRecipientButton
+                                Button {
+                                    id: removeRecipientButton
+                                    width: 20; height: 20
+                                    anchors.verticalCenter: amountField.verticalCenter
+                                    text: qsTr(FontAwesome.xmark)
+                                    hoverEnabled: true
+                                    visible: (recipientRepeater.count > 1)
+                                    
+                                    background: Rectangle {
+                                        color: "transparent"//parent.hovered ? "firebrick" : "transparent"
+                                        radius: 5
+                                        opacity: 0.7
+                                    }
+                                    contentItem: Text {
+                                        text: parent.text
+                                        color: (NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000"
+                                        verticalAlignment: Text.AlignVCenter
+                                        horizontalAlignment: Text.AlignHCenter
+                                        font.bold: true
+                                        font.family: FontAwesome.fontFamily
+                                    }
+                                    onClicked: {
+                                        recipientModel.remove(index)
+                                    }
+                                    MouseArea {
+                                        anchors.fill: parent
+                                        onPressed: mouse.accepted = false
+                                        cursorShape: Qt.PointingHandCursor
+                                    }
+                                }
+                            } // Row
+                        } // Repeater
+                        // addRecipientButton
+                        Button {
+                            id: addRecipientButton
                             anchors.horizontalCenter: parent.horizontalCenter
-                            width: 500/*parent.width*/; height: 50
-                            placeholderText: qsTr("Amount")//0.000000000000
-                            color: balanceTxColumn.textColor
-                            selectByMouse: true
-                            validator: RegExpValidator{ regExp: new RegExp("^-?[0-9]+(\\.[0-9]{1," + Number(12) + "})?$") }
-                            background: Rectangle { 
-                                color: balanceTxColumn.baseColor
-                                border.color: balanceTxColumn.borderColor
-                                border.width: parent.activeFocus ? 2 : 1
-                                radius: balanceTxColumn.radius
+                            text: qsTr("+ Add Recipient")
+                            width: 140; height: contentItem.content + 30
+                            background: Rectangle {
+                                color: parent.hovered ? "#698b22" : "#506a1a"
+                                radius: 5
                             }
-                            rightPadding: 15 + allButton.width
-                            Button {
-                                id: allButton
-                                text: qsTr("\uf534")
-                                anchors.right: parent.right
-                                anchors.rightMargin: 10
-                                anchors.verticalCenter: parent.verticalCenter
-                                implicitWidth: 32; implicitHeight: 24
-                                hoverEnabled: true
-                                onClicked: amountField.text = Wallet.getBalanceUnlocked().toFixed(12)
-                                background: Rectangle {
-                                    color: NeroshopComponents.Style.moneroGrayColor
-                                    radius: 10//amountField.background.radius//5
-                                }
-                                contentItem: Text {
-                                    text: parent.text
-                                    color: "#ffffff"
-                                    verticalAlignment: Text.AlignVCenter
-                                    horizontalAlignment: Text.AlignHCenter
-                                    font.bold: true
-                                    font.family: FontAwesome.fontFamily
-                                }
+                            contentItem: Text {
+                                text: parent.text
+                                color: "#ffffff"
+                                horizontalAlignment: Text.AlignHCenter
+                                verticalAlignment: Text.AlignVCenter
+                            }
+                            onClicked: {
+                                recipientModel.append({})
+                            }
+                            MouseArea {
+                                anchors.fill: parent
+                                onPressed: mouse.accepted = false
+                                cursorShape: Qt.PointingHandCursor
                             }
                         }
                         // sendButton
@@ -343,11 +419,21 @@ Page {
                                 verticalAlignment: Text.AlignVCenter
                             }
                             onClicked: {
+                                if(!Wallet.isSynced()) {
+                                    messageBox.text = qsTr("wallet must be fully synced with daemon")
+                                    messageBox.open()
+                                    return
+                                }
                                 if(settingsDialog.requirePasswordOnWithdrawal) {
                                     walletPasswordSendPrompt.open()
                                     walletPasswordSendPrompt.editAt(1).forceActiveFocus()
                                 }
-                                else Wallet.transfer(addressField.text, amountField.text)
+                                else Wallet.transfer(recipientRepeater.itemAt(0).children[0].text, recipientRepeater.itemAt(0).children[1].text)
+                            }
+                            MouseArea {
+                                anchors.fill: parent
+                                onPressed: mouse.accepted = false
+                                cursorShape: Qt.PointingHandCursor
                             }
                         }
                     }
@@ -392,10 +478,28 @@ Page {
                                 password_edit.text = ""
                                 return;
                             }
-                            Wallet.transfer(addressField.text, amountField.text)
+                            if(recipientRepeater.count == 1) {
+                                Wallet.transfer(recipientRepeater.itemAt(0).children[0].text, recipientRepeater.itemAt(0).children[1].text)
+                            } else {
+                                let recipients = [];
+                                
+                                for (let i = 0; i < recipientRepeater.count; i++) {
+                                    let address = recipientRepeater.itemAt(i).children[0].text;
+                                    let amount = recipientRepeater.itemAt(i).children[1].text;
+                                    
+                                    // Create an object with address and amount fields
+                                    let recipientObject = {
+                                        address: address,
+                                        amount: amount
+                                    };
+
+                                    // Push the object into the recipients array
+                                    recipients.push(recipientObject);
+                                }
+                                
+                                Wallet.transfer(recipients)
+                            }
                             // TODO: clear address and amount field if transfer was successful
-                            /*addressField.text = ""
-                            amountField.text = ""*/
                             onCloseCallback()
                             close()
                         }

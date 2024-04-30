@@ -35,6 +35,7 @@ public:
     Q_INVOKABLE bool verifyPassword(const QString& password);
     Q_INVOKABLE QVariantMap/*QMap<QString, QVariant>*/ createUniqueSubaddressObject(unsigned int account_idx, const QString & label = "");
     Q_INVOKABLE void transfer(const QString& address, double amount);
+    Q_INVOKABLE void transfer(const QVariantList &recipients);
     Q_INVOKABLE QString signMessage(const QString& message) const;
     Q_INVOKABLE bool verifyMessage(const QString& message, const QString& signature) const;
     Q_INVOKABLE QString makeUri(const QString& address, double tx_amount, const QString& tx_description, const QString& recipient_name) const;
