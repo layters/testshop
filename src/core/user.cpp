@@ -639,6 +639,7 @@ void neroshop::User::send_message(const std::string& recipient_id, const std::st
             data["expiration_date"] = neroshop::timestamp::get_utc_timestamp_after_duration(number, time_unit);
         }
     }
+    data["signature"] = wallet->sign_message(content, monero_message_signature_type::SIGN_WITH_SPEND_KEY);
     
     std::string value = data.dump();
     std::string key = neroshop::crypto::sha3_256(value);//std::cout << "key: " << key << "\nvalue: " << value << "\n";
