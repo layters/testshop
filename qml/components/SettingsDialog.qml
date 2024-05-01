@@ -409,7 +409,7 @@ Popup {
                 //Layout.row: 1
                 Layout.alignment: Qt.AlignHCenter
                 Layout.preferredWidth: settingsStack.contentBoxWidth
-                title: qsTr("Application")
+                title: qsTr("Appearance")
                 //width: scrollView.width//contentWidth // does nothing
                 background: Rectangle {
                     y: parent.topPadding - parent.bottomPadding
