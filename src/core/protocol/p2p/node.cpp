@@ -317,42 +317,42 @@ int neroshop::Node::set(const std::string& key, const std::string& value) {
     std::string metadata = json["metadata"].get<std::string>();
     if(metadata != current_json["metadata"].get<std::string>()) { std::cerr << "\033[91mMetadata mismatch\033[0m\n"; return false; } // metadata is immutable
     if(metadata == "user") {
+        if(!json["monero_address"].is_string()) { return false; }
         std::string user_id = json["monero_address"].get<std::string>();
         if(user_id != current_json["monero_address"].get<std::string>()) { std::cerr << "\033[91mUser ID (Monero Primary Address) mismatch\033[0m\n"; return false; } // monero_address is immutable
     }
     if(metadata == "listing") {
+        if(!json["id"].is_string()) { return false; }
+        if(!json["seller_id"].is_string()) { return false; }
         std::string listing_uuid = json["id"].get<std::string>();
         std::string seller_id = json["seller_id"].get<std::string>(); // seller_id (monero primary address)
         if(listing_uuid != current_json["id"].get<std::string>()) { std::cerr << "\033[91mListing UUID mismatch\033[0m\n"; return false; } // id is immutable
         if(seller_id != current_json["seller_id"].get<std::string>()) { std::cerr << "\033[91mSeller ID mismatch\033[0m\n"; return false; } // seller_id is immutable
     }
     if(metadata == "product_rating" || metadata == "seller_rating") {
+        if(!json["rater_id"].is_string()) { return false; }
         std::string rater_id = json["rater_id"].get<std::string>(); // rater_id (monero primary address)
         if(rater_id != current_json["rater_id"].get<std::string>()) { std::cerr << "\033[91mRater ID mismatch\033[0m\n"; return false; } // rater_id is immutable
     }
     
     // Make sure the signature has been updated (re-signed)
-    if (json.contains("signature")) {
-        assert(json["signature"].is_string());
+    if (json.contains("signature") && json["signature"].is_string()) {
         std::string signature = json["signature"].get<std::string>();
         if(signature == current_json["signature"].get<std::string>()) { std::cerr << "\033[91mSignature is outdated\033[0m\n"; return false; }
     }
     
+    // Note: All messages are unique and cannot be modified once created, so they should not ever be able to pass through this function
     // No "last_updated" field found in the modified value, only the current value, discard the new value (its likely outdated) - untested
-    if(metadata != "message") { // messages cannot be updated
-        if(!json.contains("last_updated") && current_json.contains("last_updated")) {
-            std::cout << "Value for key (" << key << ") is already up to date" << std::endl;
-            return true;
-        }
+    if(!json.contains("last_updated") && current_json.contains("last_updated")) {
+        std::cout << "Value for key (" << key << ") is already up to date" << std::endl;
+        return true;
     }
     // Compare "last_updated" field of modified value and current value - untested
-    if(json.contains("last_updated")) {
-        assert(json["last_updated"].is_string());
+    if(json.contains("last_updated") && json["last_updated"].is_string()) {
         std::string last_updated = json["last_updated"].get<std::string>();
                 
         // Check if current value has a last_updated field too
-        if(current_json.contains("last_updated")) {
-            assert(current_json["last_updated"].is_string());
+        if(current_json.contains("last_updated") && current_json["last_updated"].is_string()) {
             std::string current_last_updated = current_json["last_updated"].get<std::string>();
             // Compare the new json's last_updated timestamp with the current json's own
             // And choose whichever has the most recent timestamp then exit the function
@@ -972,8 +972,14 @@ void neroshop::Node::republish() {
 //-----------------------------------------------------------------------------
 
 bool neroshop::Node::validate(const std::string& key, const std::string& value) {
-    assert(key.length() == 64 && "Key length is not 64 characters");
-    assert(!value.empty() && "Value is empty");
+    if(key.length() != 64) {
+        std::cerr << "Key length is not 64 characters\n";
+        return false;
+    }
+    if(value.empty()) {
+        std::cerr << "Value is empty\n";
+        return false;
+    }
     
     // Ensure that the value is valid JSON
     nlohmann::json json;
@@ -989,7 +995,7 @@ bool neroshop::Node::validate(const std::string& key, const std::string& value) 
         std::cerr << "No metadata found\n";
         return false;
     }
-    assert(json["metadata"].is_string());
+    if(!json["metadata"].is_string()) { return false; }
     std::string metadata = json["metadata"].get<std::string>();
     std::vector<std::string> valid_metadatas = { "user","listing","product_rating","seller_rating","order","message", };
     if (std::find(valid_metadatas.begin(), valid_metadatas.end(), metadata) == valid_metadatas.end()) {
@@ -1006,7 +1012,7 @@ bool neroshop::Node::validate(const std::string& key, const std::string& value) 
     // Check whether data is expired so we don't store it
     db::Sqlite3 * database = neroshop::get_database();
     if(json.contains("expiration_date")) {
-        assert(json["expiration_date"].is_string());
+        if(!json["expiration_date"].is_string()) { return false; }
         std::string expiration_date = json["expiration_date"].get<std::string>();
         if(neroshop_timestamp::is_expired(expiration_date)) {
             // Remove the data from hash table if it was previously stored
@@ -1030,25 +1036,31 @@ bool neroshop::Node::verify(const std::string& value) const {
 
     // Get required fields from the value
     std::string metadata = json["metadata"].get<std::string>();
-    std::string signed_message, signing_address;
+    std::string signed_message, signing_address, signature;
+    // Messages and orders don't need to be verified by peers since they will be encrypted then decrypted and verified by the intended recipient instead
+    if(metadata == "order") { return true; }
+    if(metadata == "message") { return true; }
     if(metadata == "user") {
+        if(!json["monero_address"].is_string()) { return false; }
         signed_message = json["monero_address"].get<std::string>(); // user_id
         signing_address = signed_message; // the monero_address (monero primary address) is both the signed message and the signing address
     }
     if(metadata == "listing") {
+        if(!json["id"].is_string()) { return false; }
         signed_message = json["id"].get<std::string>(); // the id (uuid) is the signed message
+        if(!json["seller_id"].is_string()) { return false; }
         signing_address = json["seller_id"].get<std::string>(); // the seller_id (monero primary address) is the signing address      
     }
     if(metadata == "product_rating" || metadata == "seller_rating") {
+        if(!json["comments"].is_string()) { return false; }
         signed_message = json["comments"].get<std::string>(); // the comments is the signed message
+        if(!json["rater_id"].is_string()) { return false; }
         signing_address = json["rater_id"].get<std::string>(); // the rater_id (monero primary address) is the signing address
     }
-    // Messages and orders don't need to be signed since they will be encrypted??
-    if(metadata == "order") { return true; }
-    if(metadata == "message") { return true; }
-    std::string signature;
+    
+    // Get signature field
     if (json.contains("signature")) {
-        assert(json["signature"].is_string());
+        if(!json["signature"].is_string()) { return false; }
         signature = json["signature"].get<std::string>(); // the signature may have been updated
     }
     
@@ -1160,7 +1172,7 @@ void neroshop::Node::periodic_check() {
 /*bool neroshop::Node::on_keyword_blocked(const nlohmann::json& value) {
     // Note: This code is in the testing stage
     // Block certain keywords/search terms from listings
-    assert(json.contains("metadata"));
+    if(!json.contains("metadata")) { return false; }
     if(json["metadata"] == "listing") {
         //--------------------------------------------
         // Block categories marked as "Illegal"
@@ -1174,7 +1186,7 @@ void neroshop::Node::periodic_check() {
         std::vector<std::string> blocked_tags = { "heroin", "meth", "cp", "child porn" };
         
         if(json["product"].contains("tags")) {
-            assert(json["product"]["tags"].is_array());
+            if(!json["product"]["tags"].is_array()) { return false; }
             std::vector<std::string> product_tags = json["product"]["tags"].get<std::vector<std::string>>();
             // Check if any of the product tags match the blocked tags
             bool has_blocked_tag = std::any_of(product_tags.begin(), product_tags.end(), [&](const std::string& tag) {
