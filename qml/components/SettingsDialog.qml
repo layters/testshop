@@ -1576,6 +1576,93 @@ Item {
                         }
                     }
                 }
+                GroupBox {
+                    title: qsTr("Proxy")
+                    Layout.alignment: Qt.AlignHCenter
+                    Layout.preferredWidth: settingsStack.contentBoxWidth
+                    background: Rectangle {
+                        y: parent.topPadding - parent.bottomPadding
+                        width: parent.width
+                        height: parent.height - parent.topPadding + parent.bottomPadding
+                        color: settingsStack.contentBoxColor
+                        border.color: settingsStack.contentBoxBorderColor
+                        radius: 2
+                    }
+                    
+                    label: Label {
+                        x: parent.leftPadding
+                        width: parent.availableWidth
+                        text: parent.title
+                        color: parent.background.border.color
+                        elide: Text.ElideRight
+                    }
+                    // Proxy settings content
+                    ColumnLayout {
+                        id: proxySetColumn
+                        width: parent.width; height: parent.height//childrenRect.height
+                        Item {
+                            Layout.fillWidth: true
+                            Layout.preferredHeight: childrenRect.height
+                            Text {
+                                anchors.verticalCenter: proxyBox.verticalCenter
+                                text: qsTr("Proxy:")
+                                color: NeroshopComponents.Style.darkTheme ? "#ffffff" : "#000000"
+                            }
+
+                            NeroshopComponents.ComboBox {
+                                id: proxyBox
+                                anchors.right: parent.right
+                                width: settingsStack.comboBoxWidth; indicatorWidth: settingsStack.comboBoxButtonWidth
+                                model: ["None", "Tor", "i2p"]
+                                currentIndex: model.indexOf("None")//model.indexOf(Script.getJsonRootObject()["proxy"]["type"])
+                                onActivated: {
+                                    if(currentText == "None") {
+                                        ProxyManager.stopTorDaemon()
+                                        ProxyManager.useDefaultProxy()
+                                    }
+                                    if(currentText == "Tor") {
+                                        ProxyManager.startTorDaemon() // calls useTorProxy()
+                                    }
+                                    if(currentText == "i2p") {
+                                        ProxyManager.stopTorDaemon()
+                                        ProxyManager.useI2PProxy()
+                                    }
+                                }
+                                onCurrentTextChanged: settingsDialog.save()
+                                color: "#f2f2f2"
+                                indicatorDoNotPassBorder: settingsStack.comboBoxNestedButton
+                            }
+                        }
+                        Item {
+                            Layout.fillWidth: true
+                            Layout.preferredHeight: childrenRect.height
+                            visible: (proxyBox.currentText == "Tor")
+                            ScrollView {
+                                id: processOutputScroller
+                                width: parent.width; height: 125//250
+                                ScrollBar.vertical.policy: ScrollBar.AlwaysOn
+                                // TODO: Scroll to the bottom when new text is added
+                                clip: true
+                                TextArea {
+                                    id: processOutputArea
+                                    text: ProxyManager.torOutput
+                                    wrapMode: Text.Wrap
+                                    selectByMouse: true
+                                    readOnly: true
+                                    color: "#000000"
+                                    onTextChanged: {}
+                            
+                                    background: Rectangle {
+                                        color: "#ffffff"
+                                        border.color: "#404040"
+                                        border.width: parent.activeFocus ? 2 : 1
+                                        radius: 3
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
             }    
         } // StackLayout (settings)
     } // ScrollView 

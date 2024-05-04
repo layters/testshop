@@ -44,7 +44,6 @@ void neroshop::DaemonManager::startDaemonProcess()
     }
     
     // Start the daemon process
-    QProcess daemonProcess;
     daemonProcess.start(program, arguments, QIODevice::ReadWrite);
     if (daemonProcess.waitForStarted()) {
         // Daemon process started successfully
