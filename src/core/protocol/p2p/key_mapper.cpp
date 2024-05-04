@@ -37,12 +37,7 @@ void neroshop::KeyMapper::add(const std::string& key, const std::string& value) 
         std::cerr << "JSON parsing error: " << e.what() << std::endl;
         return;
     }
-    //-----------------------------------------------
-    if (!json.contains("metadata")) {
-        std::cerr << "No metadata found\n";
-        return;
-    }
-    assert(json["metadata"].is_string());
+    
     std::string metadata = json["metadata"].get<std::string>();
 
     //-----------------------------------------------
@@ -62,38 +57,42 @@ void neroshop::KeyMapper::add(const std::string& key, const std::string& value) 
     if(metadata == "listing") {
         // Note: As long as we have the product id, we can find the product_ratings
         // Map a listing's key to product_ids, product_names, product_categories, product_tags, and product_codes
-        assert(json.contains("product") && json["product"].is_object());
-        nlohmann::json product_obj = json["product"];
-        if (product_obj.contains("id") && product_obj["id"].is_string()) {
-            std::string product_id = product_obj["id"].get<std::string>();
-            product_ids[product_id].push_back(key);
-        }        
-        if (product_obj.contains("name") && product_obj["name"].is_string()) {
-            std::string product_name = product_obj["name"].get<std::string>();
-            product_names[product_name].push_back(key);
-        }
-        if (product_obj.contains("category") && product_obj["category"].is_string()) {
-            std::string product_category = product_obj["category"].get<std::string>();
-            product_categories[product_category].push_back(key);
-        }
-        if (product_obj.contains("subcategories") && product_obj["subcategories"].is_array()) {
-            std::vector<std::string> subcategories = product_obj["subcategories"].get<std::vector<std::string>>();
-            for (const auto& product_subcategory : subcategories) {
-                product_categories[product_subcategory].push_back(key);
+        if(json.contains("product") && json["product"].is_object()) {
+            nlohmann::json product_obj = json["product"];
+            if (product_obj.contains("id") && product_obj["id"].is_string()) {
+                std::string product_id = product_obj["id"].get<std::string>();
+                product_ids[product_id].push_back(key);
+            }        
+            if (product_obj.contains("name") && product_obj["name"].is_string()) {
+                std::string product_name = product_obj["name"].get<std::string>();
+                product_names[product_name].push_back(key);
             }
-        }        
-        if (product_obj.contains("tags") && product_obj["tags"].is_array()) {
-            const auto& tags = product_obj["tags"];
-            for (const auto& tag : tags) {
-                if (tag.is_string()) {
-                    std::string product_tag = tag.get<std::string>();
-                    product_tags[product_tag].push_back(key);
+            if (product_obj.contains("category") && product_obj["category"].is_string()) {
+                std::string product_category = product_obj["category"].get<std::string>();
+                product_categories[product_category].push_back(key);
+            }
+            if (product_obj.contains("subcategories") && product_obj["subcategories"].is_array()) {
+                const auto& subcategories = product_obj["subcategories"];
+                for (const auto& subcategory : subcategories) {
+                    if (subcategory.is_string()) {
+                        std::string product_subcategory = subcategory.get<std::string>();
+                        product_categories[product_subcategory].push_back(key);
+                    }
+                }
+            }        
+            if (product_obj.contains("tags") && product_obj["tags"].is_array()) {
+                const auto& tags = product_obj["tags"];
+                for (const auto& tag : tags) {
+                    if (tag.is_string()) {
+                        std::string product_tag = tag.get<std::string>();
+                        product_tags[product_tag].push_back(key);
+                    }
                 }
             }
-        }
-        if (product_obj.contains("code") && product_obj["code"].is_string()) {
-            std::string product_code = product_obj["code"].get<std::string>();
-            product_codes[product_code].push_back(key);
+            if (product_obj.contains("code") && product_obj["code"].is_string()) {
+                std::string product_code = product_obj["code"].get<std::string>();
+                product_codes[product_code].push_back(key);
+            }
         }
         // Map a listing's key to listing_id
         if (json.contains("id") && json["id"].is_string()) {
@@ -123,11 +122,12 @@ void neroshop::KeyMapper::add(const std::string& key, const std::string& value) 
             const auto& order_items = json["items"];
             
             for (const auto& item : order_items) {
-                assert(item.is_object());
-                if (item.contains("seller_id") && item["seller_id"].is_string()) {
-                    std::string seller_id = item["seller_id"].get<std::string>();
-                    order_recipients[seller_id].push_back(key);
-                    std::cout << "seller_id (" << seller_id << ") has been mapped to order key (" << key << ")\n";
+                if(item.is_object()) {
+                    if (item.contains("seller_id") && item["seller_id"].is_string()) {
+                        std::string seller_id = item["seller_id"].get<std::string>();
+                        order_recipients[seller_id].push_back(key);
+                        std::cout << "seller_id (" << seller_id << ") has been mapped to order key (" << key << ")\n";
+                    }
                 }
             }
         }*/

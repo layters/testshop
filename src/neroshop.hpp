@@ -65,6 +65,7 @@
 #include "gui/enum_wrapper.hpp"
 #include "gui/image_loader.hpp"
 #include "gui/image_provider.hpp"
+#include "gui/proxy_manager.hpp"
 #include "gui/script_manager.hpp"
 //#include "gui/table_model.hpp"
 #include "gui/user_controller.hpp"
