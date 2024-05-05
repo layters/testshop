@@ -39,6 +39,8 @@ neroshop::ProxyManager::~ProxyManager() {}
 
 void neroshop::ProxyManager::useDefaultProxy() {
     QNetworkProxy::setApplicationProxy(QNetworkProxy());
+    
+    setTorEnabled(false);
 }
 
 void neroshop::ProxyManager::useTorProxy() {
@@ -47,6 +49,8 @@ void neroshop::ProxyManager::useTorProxy() {
     torProxy.setHostName("127.0.0.1");
     torProxy.setPort(9050);
     QNetworkProxy::setApplicationProxy(torProxy);
+    
+    setTorEnabled(true); // also emits networkProxyChanged() signal
 }
 
 void neroshop::ProxyManager::useI2PProxy() {
@@ -55,6 +59,8 @@ void neroshop::ProxyManager::useI2PProxy() {
     i2pProxy.setHostName("127.0.0.1");
     i2pProxy.setPort(4447);
     QNetworkProxy::setApplicationProxy(i2pProxy);
+    
+    setTorEnabled(false);
 }
 
 QNetworkAccessManager * neroshop::ProxyManager::getNetworkClearnet() const {
@@ -217,8 +223,6 @@ void neroshop::ProxyManager::startTorDaemon() {
     if(isTorRunning()) {
         std::cout << "\033[90mtor was already running in the background\033[0m\n";
         useTorProxy();
-        setTorEnabled(true);
-        std::cout << "Tor is now enabled.\n";
         return;
     }
     
@@ -235,8 +239,6 @@ void neroshop::ProxyManager::startTorDaemon() {
         qint64 pid = torProcess->processId();
         std::cout << "\033[90;1mtor started (pid: " << pid << ")\033[0m\n";
         useTorProxy();
-        setTorEnabled(true);
-        std::cout << "Tor is now enabled.\n";
     } else {
         torOutput.append(QString("%1 is missing so Tor could not be started\n").arg(program));
         emit torOutputChanged(torOutput);
@@ -259,7 +261,7 @@ void neroshop::ProxyManager::startTorDaemon() {
                      [&](int exitCode, QProcess::ExitStatus exitStatus) {
         // Handle process finished event
         qDebug() << "Process finished with exit code:" << exitCode;
-        setTorEnabled(false);
+        setTorEnabled(false); // switch to useDefaultProxy() or?
         emit processFinished(exitCode, exitStatus);
     });
 }
@@ -276,6 +278,7 @@ void neroshop::ProxyManager::setTorEnabled(bool torEnabled) {
     if(m_torEnabled != torEnabled) {
         m_torEnabled = torEnabled;
         emit networkProxyChanged();
+        std::cout << ((m_torEnabled == true) ? "Tor is now enabled.\n" : "Tor has been disabled\n");
     }
 }
 
@@ -284,8 +287,8 @@ QString neroshop::ProxyManager::getTorOutput() const {
 }
 
 QNetworkReply * neroshop::ProxyManager::getUrl(const QString& url) {
-    return torManager->get(QNetworkRequest(QUrl(url)));
-    //clearnetManager->get(QNetworkRequest(QUrl(url)));
+    auto network = getNetwork();
+    return network->get(QNetworkRequest(QUrl(url)));
 }
 
 bool neroshop::ProxyManager::hasTor() {
