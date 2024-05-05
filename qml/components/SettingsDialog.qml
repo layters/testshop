@@ -1614,7 +1614,12 @@ Item {
                                 anchors.right: parent.right
                                 width: settingsStack.comboBoxWidth; indicatorWidth: settingsStack.comboBoxButtonWidth
                                 model: ["None", "Tor", "i2p"]
-                                currentIndex: model.indexOf("None")//model.indexOf(Script.getJsonRootObject()["proxy"]["type"])
+                                currentIndex: ProxyManager.hasTor() ? model.indexOf("Tor") : model.indexOf("None")//model.indexOf(Script.getJsonRootObject()["proxy"]["type"])
+                                Component.onCompleted: {
+                                    if(ProxyManager.hasTor()) {
+                                        ProxyManager.startTorDaemon()
+                                    }
+                                }
                                 onActivated: {
                                     if(currentText == "None") {
                                         ProxyManager.stopTorDaemon()
