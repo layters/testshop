@@ -18,9 +18,9 @@ public:
     ProxyManager(QObject *parent = nullptr);
     ~ProxyManager();
     
-    Q_INVOKABLE static void useDefaultProxy();
-    Q_INVOKABLE static void useTorProxy();
-    Q_INVOKABLE static void useI2PProxy();
+    Q_INVOKABLE void useDefaultProxy();
+    Q_INVOKABLE void useTorProxy();
+    Q_INVOKABLE void useI2PProxy();
     
     Q_INVOKABLE static void downloadTor();
     Q_INVOKABLE void startTorDaemon();

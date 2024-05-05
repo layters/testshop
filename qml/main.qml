@@ -23,8 +23,9 @@ ApplicationWindow {
     width: 1024//Script.getJsonRootObject()["window_width"]
     height: 700//Script.getJsonRootObject()["window_height"]
     minimumWidth: 1024
-    minimumHeight: 700//768
+    minimumHeight: 600//768
     color: NeroshopComponents.Style.getColorsFromTheme()[0]
+    flags: Qt.Window | Qt.WindowMinMaxButtonsHint | Qt.WindowCloseButtonHint
 
     header: Rectangle {
         color: NeroshopComponents.Style.getColorsFromTheme()[1]
