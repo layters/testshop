@@ -21,9 +21,9 @@ ApplicationWindow {
     //visibility: (Script.getJsonRootObject()["window_mode"] == 1) ? "FullScreen" : "Windowed"
     title: qsTr("neroshop" + " v" + neroshopVersion)
     width: 1024//Script.getJsonRootObject()["window_width"]
-    height: 600//Script.getJsonRootObject()["window_height"]
+    height: 720//Script.getJsonRootObject()["window_height"]
     minimumWidth: 1024
-    minimumHeight: 600//768
+    minimumHeight: 600
     color: NeroshopComponents.Style.getColorsFromTheme()[0]
     flags: Qt.Window | Qt.WindowMinMaxButtonsHint | Qt.WindowCloseButtonHint
 
