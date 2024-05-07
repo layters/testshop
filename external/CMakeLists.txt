@@ -54,7 +54,7 @@ foreach(CPP_FILE ${I2PD_CPP_FILES})
 endforeach()
 add_library(${i2pd_target} STATIC ${i2pd_srcs})
 target_include_directories(${i2pd_target} PUBLIC i2pd/libi2pd/)
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-deprecated-declarations") # for deprecated OpenSSL functions
+add_definitions(-DOPENSSL_SUPPRESS_DEPRECATED)
 
 set(i2pd_client_target "i2pdclient")
 set(i2pd_client_srcs )

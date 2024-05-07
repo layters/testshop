@@ -74,7 +74,7 @@ if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
     message(STATUS "Building with clang")
 else()
     message(STATUS "Building with gcc/g++")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC -no-pie -Wno-deprecated-declarations")# -w")# -fsanitize=address") # -no-pie=can run outside terminal
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC -no-pie")# -w")# -fsanitize=address") # -no-pie=can run outside terminal
 endif()
 endif()
 
@@ -122,6 +122,7 @@ set(Boost_NO_BOOST_CMAKE 1)
 set(Boost_USE_MULTITHREADED ON)
 find_package(Boost 1.58 QUIET REQUIRED COMPONENTS chrono date_time filesystem program_options regex serialization wserialization system thread)
 message(STATUS "Using Boost include dir at ${Boost_INCLUDE_DIR}")
+add_definitions(-DBOOST_DISABLE_PRAGMA_MESSAGE)
 
 ######################################
 # OpenSSL
@@ -137,6 +138,7 @@ endif()
 
 find_package(OpenSSL REQUIRED)
 message(STATUS "Using OpenSSL include dir at ${OPENSSL_INCLUDE_DIR}")
+add_definitions(-DOPENSSL_SUPPRESS_DEPRECATED)
 
 if(STATIC AND NOT IOS)
   if(UNIX)
@@ -515,9 +517,7 @@ endif()
 
 ######################################
 add_subdirectory(assets)
-######################################
-# suppress boost warnings
-add_definitions(-DBOOST_DISABLE_PRAGMA_MESSAGE)
+
 ######################################
 # gRPC
 if(NEROSHOP_USE_GRPC)
