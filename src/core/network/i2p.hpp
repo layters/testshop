@@ -1,6 +1,8 @@
 #pragma once
 
-// libi2pd
+#ifndef I2P_HPP_NEROSHOP
+#define I2P_HPP_NEROSHOP
+
 #include <api.h>
 #include <Base.h>
 #include <Blinding.h>
@@ -54,7 +56,12 @@
 #include <TunnelPool.h>
 #include <util.h>
 //#include <version.h>
-// libi2pd_client
+
 #include <SAM.h>
 
-//#include <i2psam.h>
+namespace neroshop {
+
+    bool is_i2pd_running();
+
+}
+#endif

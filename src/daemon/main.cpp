@@ -14,8 +14,11 @@
 #include "../core/tools/logger.hpp"
 #include "../core/version.hpp"
 #include "../core/tools/filesystem.hpp"
+#include "../core/network/i2p.hpp"
 
 #include <cxxopts.hpp>
+
+#include <Daemon.h>
 
 #define NEROMON_TAG "\033[1;95m[neromon]:\033[0m "
 
@@ -220,6 +223,23 @@ int main(int argc, char** argv)
         }
     }
     //-------------------------------------------------------
+    std::thread i2pd_thread([&]() { 
+        if (Daemon.init(argc, argv))
+	    {
+		    if (Daemon.start())
+			    Daemon.run ();
+		    else {
+			    if(neroshop::is_i2pd_running()) {
+		            std::cout << "\033[90mi2pd was already running in the background\033[0m\n";
+		            return;
+		        } else {
+		            throw std::runtime_error("i2pd failed to start");
+		        }
+		    }
+		    Daemon.stop();
+	    }
+	});
+    //-------------------------------------------------------
     neroshop::Node node("0.0.0.0"/*ip_address*/, NEROSHOP_P2P_DEFAULT_PORT, true);
     
     if(result.count("bootstrap")) {   
@@ -244,6 +264,7 @@ int main(int argc, char** argv)
     }
     ipc_thread.join();
     dht_thread.join();
+    i2pd_thread.join();
     
     return 0;
 }
