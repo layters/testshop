@@ -74,7 +74,7 @@ if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
     message(STATUS "Building with clang")
 else()
     message(STATUS "Building with gcc/g++")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC -no-pie -Wno-deprecated-declarations")# -w")# -fsanitize=address") # -no-pie=can run outside terminal
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC -no-pie")# -w")# -fsanitize=address") # -no-pie=can run outside terminal
 endif()
 endif()
 
@@ -122,6 +122,7 @@ set(Boost_NO_BOOST_CMAKE 1)
 set(Boost_USE_MULTITHREADED ON)
 find_package(Boost 1.58 QUIET REQUIRED COMPONENTS chrono date_time filesystem program_options regex serialization wserialization system thread)
 message(STATUS "Using Boost include dir at ${Boost_INCLUDE_DIR}")
+add_definitions(-DBOOST_DISABLE_PRAGMA_MESSAGE)
 
 ######################################
 # OpenSSL
@@ -137,6 +138,7 @@ endif()
 
 find_package(OpenSSL REQUIRED)
 message(STATUS "Using OpenSSL include dir at ${OPENSSL_INCLUDE_DIR}")
+add_definitions(-DOPENSSL_SUPPRESS_DEPRECATED)
 
 if(STATIC AND NOT IOS)
   if(UNIX)
@@ -383,7 +385,7 @@ endif()
 ######################################
 # libi2pd (and i2pd_client)
 set(i2pd_include_dirs ${CMAKE_CURRENT_SOURCE_DIR}/external/i2pd/daemon ${CMAKE_CURRENT_SOURCE_DIR}/external/i2pd/i18n ${CMAKE_CURRENT_SOURCE_DIR}/external/i2pd/libi2pd ${CMAKE_CURRENT_SOURCE_DIR}/external/i2pd/libi2pd_client) # v2.50.2
-set(i2pd_src ${CMAKE_CURRENT_SOURCE_DIR}/build/libi2pdclient.a ${CMAKE_CURRENT_SOURCE_DIR}/build/libi2pd.a ${CMAKE_CURRENT_SOURCE_DIR}/build/libi2pdlang.a)
+set(i2pd_src ${CMAKE_CURRENT_SOURCE_DIR}/build/libi2pdclient.a ${CMAKE_CURRENT_SOURCE_DIR}/build/libi2pd.a ${CMAKE_CURRENT_SOURCE_DIR}/build/libi2pdlang.a ${CMAKE_CURRENT_SOURCE_DIR}/build/libi2pddaemon.a)
 
 ######################################
 # i2psam
@@ -515,9 +517,7 @@ endif()
 
 ######################################
 add_subdirectory(assets)
-######################################
-# suppress boost warnings
-add_definitions(-DBOOST_DISABLE_PRAGMA_MESSAGE)
+
 ######################################
 # gRPC
 if(NEROSHOP_USE_GRPC)
