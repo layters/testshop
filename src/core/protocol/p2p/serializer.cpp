@@ -1,10 +1,8 @@
 #include "serializer.hpp"
 
 #include "../../crypto/sha3.hpp"
-//#include "../../crypto/rsa.hpp" // for signing and verifying data
 #include "../../tools/string.hpp"
 #include "../../tools/timestamp.hpp"
-//#include "../../tools/base64.hpp"
 #include "../../wallet/wallet.hpp"
 #include "../../settings.hpp"
 
@@ -12,37 +10,13 @@
 
 #include <nlohmann/json.hpp>
 
-/** Thoughts and ideas: I think cart and wishlist data should be stored locally in the database file:
-    1. Data privacy: By storing cart and wishlist data locally, you can ensure that sensitive information is not shared across the network or exposed to unauthorized users. This can help to protect users' privacy and ensure that their data is secure.
-    2. Performance: Retrieving data from a local database file can be faster than accessing data stored in a DHT, since it does not require network communication. This can help to improve the performance of your application and provide a better user experience.
-    3. Ease of implementation: Storing data locally in a database file can be easier to implement and maintain than using a DHT. You can use a variety of database technologies and libraries to store and manage your data, and you may be able to take advantage of existing tools and frameworks to simplify development.
-
-
-Yes, you are correct. In a DHT, it's important that the keys for storing and retrieving data are consistent with the key used for routing. The node ID is typically a cryptographic hash and is used for routing, so the key used for storing and retrieving data should also be a hash to ensure that the DHT functions properly.
-
-In your case, if you want to use a UUID as the primary identifier for products, you could hash the UUID to generate a key that can be used in the DHT. Alternatively, you could include the UUID as a field within the product dictionary and hash the entire dictionary to generate the key for the DHT.
-**/
-
 namespace neroshop_crypto = neroshop::crypto;
 namespace neroshop_string = neroshop::string;
-
-// both info hashes (keys) and node ids should use the same hash function to ensure that the distance metric used in the Kademlia routing table is consistent and nodes can effectively search for and store information. Additionally, it simplifies the implementation of the routing table and node lookup algorithms, as only one hash function needs to be used throughout the system.
 
 //-----------------------------------------------------------------------------
 
 std::pair<std::string, std::string/*std::vector<uint8_t>*/> neroshop::Serializer::serialize(const neroshop::Object& obj) {
     nlohmann::json json_object = {};
-    
-    if(std::holds_alternative<User>(obj)) {
-        const User& seller = std::get<User>(obj);
-        json_object["display_name"] = seller.get_name();
-        json_object["monero_address"] = seller.get_id(); // used as identifier
-        std::string public_key = seller.get_public_key();
-        if(!public_key.empty()) json_object["public_key"] = public_key;
-        //json_object["avatar"] = ; // TODO: Avatars
-        //json_object["signature"] = seller.get_wallet()->sign_message(user_id, monero_message_signature_type::SIGN_WITH_SPEND_KEY);
-        json_object["metadata"] = "user";
-    }
     
     if(std::holds_alternative<Listing>(obj)) {
         const Listing& listing = std::get<Listing>(obj);
@@ -172,7 +146,7 @@ std::pair<std::string, std::string/*std::vector<uint8_t>*/> neroshop::Serializer
             cart_item_obj["product_id"] = item.key;
             cart_item_obj["quantity"] = item.quantity;
             cart_item_obj["seller_id"] = item.seller_id;
-            json_object["contents"].push_back(cart_item_obj); // cart_items // TODO: encrypt cart contents
+            json_object["contents"].push_back(cart_item_obj);
         }
         json_object["metadata"] = "cart";
     }
@@ -239,8 +213,6 @@ std::pair<std::string, std::string/*std::vector<uint8_t>*/> neroshop::Serializer
         json_object["timestamp"] = neroshop::timestamp::get_current_utc_timestamp();
         json_object["metadata"] = "seller_rating";
     }    
-    // TODO: Favorites (wishlists). EDIT: Favorites won't be stored in the DHT but will be stored locally
-    // Use versioning or timestamping for updating values in DHT. Keys remain the same.
     //-------------------------------------------------------------
     // Get the `value`
     std::string value = json_object.dump();
@@ -500,53 +472,4 @@ std::shared_ptr<neroshop::User> neroshop::Serializer::deserialize_user(const std
 }
 
 //-----------------------------------------------------------------------------
-
-template <typename... Args>
-std::string neroshop::Serializer::to_json(Args&&... args) {
-    nlohmann::json json_object = nlohmann::json::object({std::forward<Args>(args)...});
-    return json_object.dump();
-}
-
-/*int main() {
-    std::cout << neroshop::Serializer::to_json(std::make_pair("key1", 123), 
-        std::make_pair("key2", "value2"), 
-        std::make_pair("key3", true)) << "\n";
-    std::cout << "\n";
-
-
-    neroshop::Object obj = neroshop::Product { "my_product_uuid", "Nintendo Switch Lite", "A really fun gaming system", 
-        {
-            {.color = "yellow"   , .size = "lite", .weight = .61, .product_code = "00045496882303"}, // 0.61 lbs
-            {.color = "gray"     , .size = "lite", .weight = .61, .product_code = "00045496882280"},
-            {.color = "turquoise", .size = "lite", .weight = .61, .product_code = "00045496882266"},
-            {.color = "coral"    , .size = "lite", .weight = .61, .product_code = "00045496882662"},
-            {.color = "blue"     , .size = "lite", .weight = .61, .product_code = "00045496882716"},
-        },
-        "",//"my_product_code",
-        0, -1,
-        {"video games", "nintendo", "switch lite"}
-    };
-    
-    neroshop::ProductRating pr = { "user1", "Good product", "signed", "product123", 4 };
-    
-    neroshop::SellerRating sr = { "user2", "Fast shipping", "signed", "seller456", 1 };
-    
-    std::pair<std::string, std::vector<uint8_t>> result = neroshop::Serializer::serialize(obj); // pass the variant to the serialize function
-    std::string key = result.first;
-    nlohmann::json value_json = nlohmann::json::from_msgpack(result.second);
-    //std::cout << key << ": " << value_json << "\n";
-    assert(neroshop_crypto::sha3_256(value_json.dump()) == key); // key must be hash of value
-    
-    
-    auto obj2 = neroshop::Serializer::deserialize(result);
-    
-    
-    std::pair<std::string, std::vector<uint8_t>> result2 = neroshop::Serializer::serialize(*obj2); // pass the variant to the serialize function
-    std::string key2 = result2.first;
-    nlohmann::json value_json2 = nlohmann::json::from_msgpack(result2.second);
-    //std::cout << key2 << ": " << value_json2 << "\n";
-    assert(neroshop_crypto::sha3_256(value_json2.dump()) == key2); // key must be hash of value
-    return 0;
-}*/
-// g++ serializer.cpp crypto/sha3_256.cpp tools/logger.cpp price/*.cpp config.cpp script.cpp cart.cpp product.cpp listing.cpp order.cpp database/database.cpp database/sqlite.cpp -o serialize -lcrypto -lssl -I../../external/json/single_include -Icrypto -I../../external/stduuid/include -I../../external/stduuid/ -I../../external/lua/src -L../../build -lsqlite3 -lcurl -llua  
 
