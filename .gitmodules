@@ -7,9 +7,6 @@
 [submodule "external/json"]
 	path = external/json
 	url = https://github.com/nlohmann/json.git
-[submodule "external/raft"]
-	path = external/raft
-	url = https://github.com/willemt/raft.git
 [submodule "external/stduuid"]
 	path = external/stduuid
 	url = https://github.com/mariusbancila/stduuid.git
@@ -19,6 +16,3 @@
 [submodule "external/i2pd"]
 	path = external/i2pd
 	url = https://github.com/PurpleI2P/i2pd.git
-[submodule "external/i2psam"]
-	path = external/i2psam
-	url = https://github.com/i2p/i2psam.git
