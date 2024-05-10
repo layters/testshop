@@ -983,10 +983,12 @@ Item {
             }
                 RowLayout {
                     Layout.alignment: Qt.AlignHCenter | Qt.AlignTop
+                    width: 500
+                    // Default row spacing is 5 so 3 items=2 spaces=width is reduced by 10
                     
                     TextField {
                         id: moneroNodeIPField
-                        Layout.preferredWidth: (moneroNodePortField.width * 3) - parent.spacing // Default row spacing is 5 so the width is reduced by 5
+                        Layout.preferredWidth: 315
                         Layout.preferredHeight: 50
                         placeholderText: qsTr("Custom node IP address"); placeholderTextColor: (NeroshopComponents.Style.darkTheme) ? "#a9a9a9" : "#696969"
                         color: (NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000"
@@ -996,12 +998,12 @@ Item {
                             color: (NeroshopComponents.Style.darkTheme) ? "#101010" : "#ffffff"
                             border.color: (NeroshopComponents.Style.darkTheme) ? "#a9a9a9" : "#696969"
                             radius: 3
-                        }               
+                        }
                     }
                 
                     TextField {
                         id: moneroNodePortField
-                        Layout.preferredWidth: (500 / 4)
+                        Layout.preferredWidth: 125
                         Layout.preferredHeight: 50
                         placeholderText: Wallet.getNetworkPort()
                         placeholderTextColor: (NeroshopComponents.Style.darkTheme) ? "#a9a9a9" : "#696969"
@@ -1013,7 +1015,70 @@ Item {
                             border.color: (NeroshopComponents.Style.darkTheme) ? "#a9a9a9" : "#696969"
                             radius: 3
                         }     
-                    }          
+                    }
+                    
+                    Button {
+                        id: addMoneroNodeButton
+                        Layout.preferredWidth: 50
+                        Layout.preferredHeight: 50
+                        Layout.fillWidth: true
+                        text: qsTr("+")
+                        background: Rectangle {
+                            color: parent.hovered ? "#698b22" : "#506a1a"
+                            radius: 5
+                        }
+                        contentItem: Text {
+                            text: parent.text
+                            color: "#ffffff"
+                            horizontalAlignment: Text.AlignHCenter
+                            verticalAlignment: Text.AlignVCenter
+                        }
+                        onClicked: {
+                            if(moneroNodeIPField.length == 0) {
+                                return
+                            }
+                                
+                            let remoteNodeArray = moneroRemoteNodeList.model
+                            if (!Array.isArray(remoteNodeArray)) return;
+                            
+                            let node_address = (moneroNodePortField.length > 0) ? (moneroNodeIPField.text + ":" + moneroNodePortField.text) : (moneroNodeIPField.text + ":" + moneroNodePortField.placeholderText)// moneroNodeIPField.text.replace(/^(https?:|)\/\//, '')
+                            
+                            let isDuplicate = remoteNodeArray.some(item => {
+                                if (typeof item === "string") {
+                                    return item === node_address;
+                                } else {
+                                    return item.address === node_address;
+                                }
+                            });
+                            
+                            if(isDuplicate) {
+                                console.log(node_address + " has already been added to node list")
+                                return
+                            }
+                            
+                            if(typeof remoteNodeArray[0] === "string") {
+                                remoteNodeArray.push(node_address)
+                            } else {
+                                remoteNodeArray.push({
+                                    available: false,
+                                    address: node_address,
+                                    last_height: "- -"
+                                })
+                            }
+                            moneroRemoteNodeList.model = remoteNodeArray
+                            moneroRemoteNodeList.currentIndex = moneroRemoteNodeList.count - 1
+                            moneroRemoteNodeList.list.positionViewAtIndex(moneroRemoteNodeList.currentIndex, ListView.Contain)
+                            settingsDialog.save()
+                            
+                            moneroNodeIPField.text = ""
+                            moneroNodePortField.text = ""
+                        }
+                        MouseArea {
+                            anchors.fill: parent
+                            onPressed: mouse.accepted = false
+                            cursorShape: Qt.PointingHandCursor
+                        }
+                    }
                 }
                 
                 RowLayout {
@@ -1025,9 +1090,9 @@ Item {
                         Layout.preferredWidth: parent.width////contentItem.contentWidth + 30
                         Layout.preferredHeight: contentItem.contentHeight + 30
                         text: qsTr("Connect")
-                        property bool disabled: !Wallet.opened//{ if(!Wallet.isOpened()) return true; return Wallet.isDaemonSynced() }
+                        enabled: Wallet.opened
                         background: Rectangle {
-                            color: remoteNodeConnectButton.disabled ? NeroshopComponents.Style.moneroGrayColor : NeroshopComponents.Style.moneroOrangeColor
+                            color: !remoteNodeConnectButton.enabled ? NeroshopComponents.Style.moneroGrayColor : NeroshopComponents.Style.moneroOrangeColor
                             radius: 3//6
                         }
                         contentItem: Text {
@@ -1037,7 +1102,7 @@ Item {
                             verticalAlignment: Text.AlignVCenter
                         }
                         onClicked: {
-                            if(remoteNodeConnectButton.disabled) return;
+                            if(!remoteNodeConnectButton.enabled) return;
                             if(!Wallet.isOpened()) {messageBox.text="Wallet must be opened first before connecting to a node";messageBox.open();return;}
                             let remote_node = (moneroNodeIPField.length > 0) ? (moneroNodePortField.length > 0 ? (moneroNodeIPField.text + ":" + moneroNodePortField.text) : (moneroNodeIPField.text + ":" + moneroNodePortField.placeholderText)) : moneroRemoteNodeList.selectedNode.replace(/^(https?:|)\/\//, '')//console.log("remote_node", remote_node)
                             let remote_node_ip = remote_node.split(":")[0]
