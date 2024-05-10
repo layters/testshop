@@ -1,6 +1,7 @@
 #include "proxy_manager.hpp"
 
 #include <QFile>
+#include <QNetworkDiskCache>
 #include <QNetworkProxy>
 #include <QNetworkProxyFactory>
 #include <QNetworkProxyQuery>
@@ -36,6 +37,24 @@ neroshop::ProxyManager::ProxyManager(QObject* parent) : QObject(parent), m_torEn
 }
     
 neroshop::ProxyManager::~ProxyManager() {}
+
+QNetworkAccessManager * neroshop::ProxyManager::create(QObject *parent) {
+    QNetworkAccessManager *networkAccessManager = new QNetworkAccessManager(parent);
+    QNetworkDiskCache *diskCache = new QNetworkDiskCache(parent);
+    diskCache->setCacheDirectory("requestCache");
+    networkAccessManager->setCache(diskCache);
+    
+    if(hasTor() || isTorRunning()) {
+        QNetworkProxy torProxy;
+        torProxy.setType(QNetworkProxy::Socks5Proxy);
+        torProxy.setHostName("127.0.0.1");
+        torProxy.setPort(9050);
+        networkAccessManager->setProxy(torProxy);
+        // Standard QML components like Image or XmlHttpRequest can now make network requests over Tor
+    }
+    
+    return networkAccessManager;
+}
 
 void neroshop::ProxyManager::useDefaultProxy() {
     QNetworkProxy::setApplicationProxy(QNetworkProxy());
@@ -330,6 +349,8 @@ void neroshop::ProxyManager::onReplyFinished(QNetworkReply * reply) {
         // Reply received successfully
         QByteArray data = reply->readAll();
         ////qDebug() << "Data received:" << data;
+        QVariant fromCache = reply->attribute(QNetworkRequest::SourceIsFromCacheAttribute);
+        qDebug() << "page from cache?" << fromCache.toBool();
     } else {
         // Error occurred
         qDebug() << "Network error: " << reply->errorString();

@@ -122,6 +122,7 @@ int main(int argc, char *argv[])
     engine.rootContext()->setContextProperty("DaemonManager", daemonManager);
     ProxyManager * proxyManager = new ProxyManager(&engine);
     engine.rootContext()->setContextProperty("ProxyManager", proxyManager);
+    engine.setNetworkAccessManagerFactory(proxyManager);
     // we can also register an instance of a class instead of the class itself
     WalletController *wallet = new WalletController(&engine);
     engine.rootContext()->setContextProperty("Wallet", wallet);//new WalletController());//qmlRegisterUncreatableType<WalletProxy>("neroshop.Wallet", 1, 0, "Wallet", "Wallet cannot be instantiated directly.");//qmlRegisterType<WalletProxy>("neroshop.Wallet", 1, 0, "Wallet"); // Usage: import neroshop.Wallet  ...  Wallet { id: wallet }
