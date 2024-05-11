@@ -37,7 +37,7 @@ if(NEROSHOP_BUILD_GUI AND NEROSHOP_USE_QT)
     if(CMAKE_VERSION VERSION_LESS "3.7.0")
         set(CMAKE_INCLUDE_CURRENT_DIR ON)
     endif()
-    find_package(Qt5 COMPONENTS Qml Quick Gui Concurrent #[[QuickControls2]])# REQUIRED) # v5.12.8
+    find_package(Qt5 COMPONENTS Qml Quick Gui Concurrent #[[QuickControls2]])# REQUIRED) # v5.15.x
     # add the qml.qrc file
     qt5_add_resources(neroshop_res qml.qrc)#qt_add_resources# <= introduced in Qt 5.15 and higher
 endif()
@@ -384,7 +384,7 @@ endif()
 
 ######################################
 # libi2pd (and i2pd_client)
-set(i2pd_include_dirs ${CMAKE_CURRENT_SOURCE_DIR}/external/i2pd/daemon ${CMAKE_CURRENT_SOURCE_DIR}/external/i2pd/i18n ${CMAKE_CURRENT_SOURCE_DIR}/external/i2pd/libi2pd ${CMAKE_CURRENT_SOURCE_DIR}/external/i2pd/libi2pd_client) # v2.50.2
+set(i2pd_include_dirs ${CMAKE_CURRENT_SOURCE_DIR}/external/i2pd/daemon ${CMAKE_CURRENT_SOURCE_DIR}/external/i2pd/i18n ${CMAKE_CURRENT_SOURCE_DIR}/external/i2pd/libi2pd ${CMAKE_CURRENT_SOURCE_DIR}/external/i2pd/libi2pd_client)
 set(i2pd_src ${CMAKE_CURRENT_SOURCE_DIR}/build/libi2pdclient.a ${CMAKE_CURRENT_SOURCE_DIR}/build/libi2pd.a ${CMAKE_CURRENT_SOURCE_DIR}/build/libi2pdlang.a ${CMAKE_CURRENT_SOURCE_DIR}/build/libi2pddaemon.a)
 
 ######################################
