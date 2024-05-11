@@ -5,18 +5,21 @@
 
 #include <QObject>
 #include <QNetworkAccessManager>
+#include <QQmlNetworkAccessManagerFactory>
 #include <QNetworkReply>
 #include <QProcess>
 
 namespace neroshop {
     
-class ProxyManager : public QObject {
+class ProxyManager : public QObject, public QQmlNetworkAccessManagerFactory {
     Q_OBJECT
     Q_PROPERTY(bool torEnabled READ isTorEnabled NOTIFY networkProxyChanged)
     Q_PROPERTY(QString torOutput READ getTorOutput NOTIFY torOutputChanged)
 public:
     ProxyManager(QObject *parent = nullptr);
     ~ProxyManager();
+    
+    QNetworkAccessManager * create(QObject *parent) override;
     
     Q_INVOKABLE void useDefaultProxy();
     Q_INVOKABLE void useTorProxy();

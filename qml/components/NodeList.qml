@@ -12,6 +12,8 @@ Item {
     property bool selectedNodeStatus: (listView.currentItem == null) ? "" : listView.currentItem.children[2].selectedNodeStatus
     property alias currentIndex: listView.currentIndex
     property alias model: listView.model
+    property alias count: listView.count
+    property alias list: listView
     
     ColumnLayout {
         anchors.fill: parent

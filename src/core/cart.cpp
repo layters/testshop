@@ -201,18 +201,10 @@ neroshop::CartError neroshop::Cart::add(const std::string& user_id, const std::s
     return CartError::Ok;
 }
 ////////////////////
-void neroshop::Cart::add(const std::string& user_id, const neroshop::Product& item, int quantity) {
-    add(user_id, item.get_id(), quantity);
-}
-////////////////////
 void neroshop::Cart::remove(const std::string& user_id, const std::string& listing_key, int quantity) {
     neroshop::db::Sqlite3 * database = neroshop::get_database();
     if(!database) throw std::runtime_error("database is NULL");
     
-}
-////////////////////
-void neroshop::Cart::remove(const std::string& user_id, const neroshop::Product& item, int quantity) {
-    remove(user_id, item.get_id(), quantity);
 }
 ////////////////////
 void neroshop::Cart::empty() {
@@ -223,7 +215,7 @@ void neroshop::Cart::empty() {
     contents.clear();
 }
 ////////////////////
-void neroshop::Cart::change_quantity(const std::string& user_id, const neroshop::Product& item, int quantity) {
+void neroshop::Cart::change_quantity(const std::string& user_id, const std::string& listing_key, int quantity) {
 }
 ////////////////////
 ////////////////////
@@ -308,10 +300,6 @@ bool neroshop::Cart::in_cart(const std::string& listing_key) const {
         }
     }
     return false;
-}
-////////////////////
-bool neroshop::Cart::in_cart(const neroshop::Product& item) const {
-    return in_cart(item.get_id());
 }
 ////////////////////
 ////////////////////

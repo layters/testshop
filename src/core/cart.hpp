@@ -1,4 +1,5 @@
-//#pragma once
+#pragma once
+
 #ifndef CART_HPP_NEROSHOP
 #define CART_HPP_NEROSHOP
 
@@ -33,18 +34,16 @@ public:
     Cart();
     ~Cart();
     CartError add(const std::string& user_id, const std::string& listing_key, int quantity = 1);
-    void add(const std::string& user_id, const neroshop::Product& item, int quantity = 1);
     void remove(const std::string& user_id, const std::string& listing_key, int quantity = 1);
-    void remove(const std::string& user_id, const neroshop::Product& item, int quantity = 1);
 
     void empty(); // remove all items from cart
-    void change_quantity(const std::string& user_id, const neroshop::Product& item, int quantity); // set_quantity is private so you can only change item quantity from this function
+    void change_quantity(const std::string& user_id, const std::string& listing_key, int quantity);
     //void move_to_wishlist();
     //void save_for_later();
-    //void shift_up(const neroshop::Product& item);
-    //void shift_down(const neroshop::Product& item);
-	//void swap_positions(const neroshop::Product& item1, const neroshop::Product& item2);
-	//void checkout(); // user's cart contents impact inventory availability. Only after purchase will actual inventory decrease
+    //void shift_up(const std::string& listing_key);
+    //void shift_down(const std::string& listing_key);
+	//void swap_positions(const std::string& listing_key1, const std::string& listing_key2);
+	//void checkout(); // Only after purchase will actual inventory decrease
 	void print_cart();
 	// setters
 	// getters
@@ -73,8 +72,6 @@ public:
 	bool is_empty() const;
     bool is_full() const; // cart is full (has reached max items)
 	bool in_cart(const std::string& listing_key) const;
-	bool in_cart(const neroshop::Product& item) const;
-	//bool validate_item(const neroshop::Product& item) const;
 	// friends - can access cart's private members
 	friend class User;
 	friend class Buyer;
@@ -88,7 +85,7 @@ private:
     std::vector<CartItem> contents;
     static unsigned int max_items; // cart can only hold up to 10 unique items
     static unsigned int max_quantity; // the max quantity each item can add up to is 100, so 10 items can each have a quantity of 10, making the total number of items 100
-    void load(const std::string& user_id); // loads cart data in-memory (called on user login)
+    void load(const std::string& user_id); // loads cart data from database to memory (called on user login)
     void set_id(const std::string& id);
     void set_owner_id(const std::string& owner_id);
     void set_contents(const std::vector<CartItem>& contents);
