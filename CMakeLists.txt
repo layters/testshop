@@ -385,7 +385,8 @@ endif()
 ######################################
 # libi2pd (and i2pd_client)
 set(i2pd_include_dirs ${CMAKE_CURRENT_SOURCE_DIR}/external/i2pd/daemon ${CMAKE_CURRENT_SOURCE_DIR}/external/i2pd/i18n ${CMAKE_CURRENT_SOURCE_DIR}/external/i2pd/libi2pd ${CMAKE_CURRENT_SOURCE_DIR}/external/i2pd/libi2pd_client)
-set(i2pd_src ${CMAKE_CURRENT_SOURCE_DIR}/build/libi2pdclient.a ${CMAKE_CURRENT_SOURCE_DIR}/build/libi2pd.a ${CMAKE_CURRENT_SOURCE_DIR}/build/libi2pdlang.a ${CMAKE_CURRENT_SOURCE_DIR}/build/libi2pddaemon.a)
+set(i2pd_src ${CMAKE_CURRENT_SOURCE_DIR}/build/libi2pdclient.a ${CMAKE_CURRENT_SOURCE_DIR}/build/libi2pd.a ${CMAKE_CURRENT_SOURCE_DIR}/build/libi2pdlang.a)
+set(i2pd_daemon_src ${CMAKE_CURRENT_SOURCE_DIR}/build/libi2pddaemon.a)
 
 ######################################
 # i2psam
@@ -487,7 +488,7 @@ add_executable(${daemon_executable} src/daemon/main.cpp ${daemon_src})#target_li
 install(TARGETS ${daemon_executable} DESTINATION bin)
 target_compile_definitions(${daemon_executable} PRIVATE NEROSHOP_DEBUG)
 target_include_directories(${daemon_executable} PRIVATE #[[${CMAKE_CURRENT_SOURCE_DIR}/src/]] ${monero_include_dirs} ${monero_cpp_include_dir} ${sqlite_include_dir} ${json_include_dir} ${zlib_include_dir} ${i2pd_include_dirs} ${cxxopts_include_dir})
-target_link_libraries(${daemon_executable} ${i2pd_src} ${monero_cpp_src} ${sqlite_src} ${monero_src} ${zlib_src})#set(CMAKE_CXX_LINK_EXECUTABLE "${CMAKE_CXX_LINK_EXECUTABLE} -ldl") # fixes undefined reference to symbol 'dlsym@@GLIBC_2.2.5' error
+target_link_libraries(${daemon_executable} ${i2pd_src} ${i2pd_daemon_src} ${monero_cpp_src} ${sqlite_src} ${monero_src} ${zlib_src})#set(CMAKE_CXX_LINK_EXECUTABLE "${CMAKE_CXX_LINK_EXECUTABLE} -ldl") # fixes undefined reference to symbol 'dlsym@@GLIBC_2.2.5' error
 
 ######################################
 # neroshop-console
