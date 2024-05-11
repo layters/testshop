@@ -44,7 +44,7 @@ QNetworkAccessManager * neroshop::ProxyManager::create(QObject *parent) {
     diskCache->setCacheDirectory("requestCache");
     networkAccessManager->setCache(diskCache);
     
-    if(hasTor() || isTorRunning()) {
+    if(isTorEnabled() && isTorRunning()) {
         QNetworkProxy torProxy;
         torProxy.setType(QNetworkProxy::Socks5Proxy);
         torProxy.setHostName("127.0.0.1");
