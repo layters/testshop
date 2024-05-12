@@ -78,7 +78,7 @@ https://gist.github.com/layters/83efdef0c5ea3d8ff458bfc312d11be3
 | [linenoise](https://github.com/antirez/linenoise)                  | ?                  | command line interface                                                 | :heavy_check_mark: :white_square_button: :package: |
 | [lua](https://www.lua.org/)                                        | 5.1.5              | configuration script                                                   | :heavy_check_mark: :package:                       |
 | [cxxopts](https://github.com/jarro2783/cxxopts)                    | ?                  | command line option parser                                             | :heavy_check_mark: :package:                       |
-| [libi2pd](https://github.com/PurpleI2P/i2pd)                       | latest             | network proxy                                                          | :grey_question: :package:                          |
+| [libi2pd](https://github.com/PurpleI2P/i2pd)                       | latest             | network proxy                                                          | :heavy_check_mark: :package:                       |
 | [i2psam](https://github.com/i2p/i2psam)                            | ?                  | network proxy                                                          | :grey_question: :package:                          |
 
 ### Compiling neroshop from source
@@ -243,7 +243,7 @@ WW2pQTQWHpyJf2CHrCmZG7Tn3zBnYRZTH8g4U3pSZf5s6xsTXrZc9odDWmrWzjRc9MMQWrKXxjHsRdzH
     - [Gitea](https://git.wownero.com/layter/neroshop)
 - Lemmy: https://monero.town/c/neroshop
 - Mail: neroshop@protonmail.com
-- Matrix: 
+- Matrix Rooms: 
     - [#neroshop:matrix.org](https://matrix.to/#/#neroshop:matrix.org)
     - [#neroshop-dev:matrix.org](https://matrix.to/#/#neroshop-dev:matrix.org)
 
