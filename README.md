@@ -241,7 +241,7 @@ WW2pQTQWHpyJf2CHrCmZG7Tn3zBnYRZTH8g4U3pSZf5s6xsTXrZc9odDWmrWzjRc9MMQWrKXxjHsRdzH
 - Git Mirrors: 
     - [Codeberg](https://codeberg.org/layter/neroshop)
     - [Gitea](https://git.wownero.com/layter/neroshop)
-    - [Radicle](rad:z2Y72SYpHTkiRXrn4hkZaf1VYhc7J)
+    - [Radicle](https://radicle.xyz): `rad:z2Y72SYpHTkiRXrn4hkZaf1VYhc7J`
 - Lemmy: https://monero.town/c/neroshop
 - Mail: neroshop@protonmail.com
 - Matrix Rooms: 
