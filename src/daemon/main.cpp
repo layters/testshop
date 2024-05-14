@@ -108,10 +108,10 @@ void rpc_server(const std::string& address) {
 //-----------------------------------------------------------------------------
 
 void ipc_server(Node& node) {
-    // Prevent bootstrap node from being accepted by IPC server 
+    // Prevent seed node from being accepted by IPC server 
     // since its only meant to act as an initial contact point for new nodes joining the network
     if (node.is_hardcoded()) {
-        std::cout << "Bootstrap node is not allowed to use the local IPC server. Please start another daemon instance to use the GUI\n";
+        std::cout << "Seed node is not allowed to use the local IPC server. Please start another daemon instance to use the GUI\n";
         return;
     }
     
@@ -167,7 +167,7 @@ void dht_server(Node& node) {
     // Join the DHT network
     if (!node.is_hardcoded()) {
         //std::shared_lock<std::shared_mutex> read_lock(node_mutex);
-        node.join(); // A bootstrap node cannot join the network
+        node.join(); // A seed node cannot join the network
     }
     
     if(node.is_hardcoded()) {

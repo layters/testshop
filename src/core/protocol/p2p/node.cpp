@@ -12,6 +12,7 @@
 #include "../../tools/string.hpp"
 #include "../../tools/timestamp.hpp"
 #include "../../database/database.hpp"
+//#include "../../network/i2p.hpp"
 
 #include <nlohmann/json.hpp>
 
@@ -484,7 +485,7 @@ void neroshop::Node::rebuild_routing_table() {
             if(port == 0) continue;
             
             if(!ping((ip_address == this->public_ip_address) ? "127.0.0.1" : ip_address, port)) {
-                std::cerr << "ping: failed to ping bootstrap node\n"; 
+                std::cerr << "ping: failed to ping node\n"; 
                 // Remove unresponsive nodes from database
                 database->execute_params("DELETE FROM routing_table WHERE ip_address = ?1 AND port = ?2", { ip_address, std::to_string(port) });
                 continue;
@@ -1220,7 +1221,7 @@ void neroshop::Node::on_ping(const std::vector<uint8_t>& buffer, const struct so
             bool node_exists = routing_table->has_node((sender_ip == "127.0.0.1") ? this->public_ip_address : sender_ip, sender_port);
             if (!node_exists) {
                 auto node_that_pinged = std::make_unique<Node>((sender_ip == "127.0.0.1") ? this->public_ip_address : sender_ip, sender_port, false);
-                if(!node_that_pinged->is_hardcoded()) { // To prevent the bootstrap node from being stored in the routing table
+                if(!node_that_pinged->is_hardcoded()) { // To prevent the seed node from being stored in the routing table
                     routing_table->add_node(std::move(node_that_pinged)); // Already has internal write_lock
                     persist_routing_table((sender_ip == "127.0.0.1") ? this->public_ip_address : sender_ip, sender_port);
                     routing_table->print_table();
@@ -1600,7 +1601,7 @@ bool neroshop::Node::is_hardcoded() const {
 }
 
 bool neroshop::Node::is_bootstrap_node() const {
-    return (bootstrap == true) || is_hardcoded();
+    return (bootstrap == true);// || is_hardcoded();
 }
 
 bool neroshop::Node::is_dead() const {
