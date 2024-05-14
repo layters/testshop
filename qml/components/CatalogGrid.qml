@@ -202,7 +202,7 @@ GridView {
                 Component.onCompleted: {
                     if (contentHeight > productNameText.maximumHeight) {
                         console.log("contentHeight has exceeded maximumHeight", contentHeight)
-                        font.pointSize = Qt.application.font.pointSize
+                        font.pointSize = (contentHeight >= 140) ? 9 : Qt.application.font.pointSize
                     }
                     //console.log("productNameText.height",productNameText.height)
                 }
