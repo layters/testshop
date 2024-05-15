@@ -207,7 +207,7 @@ make -j$(nproc)
 
 
 ## Contributing
-See [Wiki](https://github.com/layters/testshop/wiki/Contributing)
+See [Wiki](https://github.com/layters/testshop/wiki)
 
 
 ## License
