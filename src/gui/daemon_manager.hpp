@@ -35,6 +35,7 @@ public:
     static bool isDaemonRunningAlready(); // checks if daemon is already running in background
     static bool isDaemonServerBound();
     Q_INVOKABLE bool isDaemonConnected() const; // when GUI client has connected to daemon server
+    static bool isDaemonDHTServerBound();
 
 public slots:
     void startDaemonProcess(/*const QString &daemonPath*/);
