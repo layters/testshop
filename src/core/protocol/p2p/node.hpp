@@ -52,6 +52,7 @@ private:
     //---------------------------------------------------
     int set(const std::string& key, const std::string& value); // Updates the value without changing the key. set cannot be accessed directly but only through put
     bool verify(const std::string& value) const;
+    void expire(const std::string& key, const std::string& value); // Removes any expired data from hash table
 public:
     Node(const std::string& address, int port, bool local); // Binds a socket to a port and initializes the DHT
     //Node(const Node& other); // Copy constructor
@@ -85,6 +86,7 @@ public:
     void run_optimized(); // Uses less CPU than run but slower to process requests
     void periodic_check();
     void periodic_refresh(); // Periodic republishing
+    void periodic_purge(); // Periodically purges expired data
     void republish();
     bool validate(const std::string& key, const std::string& value); // Validates data before storing it
     //---------------------------------------------------

@@ -939,7 +939,8 @@ void neroshop::Node::send_map(const std::string& address, int port) {
         // Show response
         std::cout << ((map_response_message.contains("error")) ? ("\033[91m") : ("\033[92m")) << map_response_message.dump() << "\033[0m\n";
     }
-    if(map_sent && !data.empty()) std::cout << "\033[93mIndexing data distributed to " << address << ":" << port << "\033[0m\n";
+    
+    if(map_sent && !data.empty()) { std::cout << "Sent map request to \033[36m" << address << ":" << port << "\033[0m\n"; }
 }
 
 std::vector<neroshop::Peer> neroshop::Node::send_get_providers(const std::string& data_hash) {
@@ -1001,13 +1002,11 @@ std::vector<neroshop::Peer> neroshop::Node::send_get_providers(const std::string
 //-----------------------------------------------------------------------------
 
 void neroshop::Node::republish() {
-    for (const auto& pair : data) {
-        const std::string& key = pair.first;
-        const std::string& value = pair.second;
-
+    for (const auto& [key, value] : data) {
         send_put(key, value);
     }
-    if(!data.empty()) std::cout << "\033[93mData republished\033[0m\n";
+    
+    if(!data.empty()) { std::cout << "\033[93mData republished\033[0m\n"; }
 }
 
 //-----------------------------------------------------------------------------
@@ -1137,6 +1136,60 @@ bool neroshop::Node::verify(const std::string& value) const {
 
 //-----------------------------------------------------------------------------
 
+void neroshop::Node::expire(const std::string& key, const std::string& value) {
+    db::Sqlite3 * database = neroshop::get_database();
+    
+    nlohmann::json json;
+    try {
+        json = nlohmann::json::parse(value);
+    } catch (const nlohmann::json::parse_error& e) {
+        std::cerr << "JSON parsing error: " << e.what() << std::endl;
+        return; // Invalid value, exit function
+    }
+    
+    if(json.contains("expiration_date")) {
+        if(!json["expiration_date"].is_string()) { 
+            if(remove(key) == true) {
+                int error = database->execute_params("DELETE FROM mappings WHERE key = ?1", { key });
+            }
+            return; // Invalid expiration_date, exit function
+        }
+        std::string expiration_date = json["expiration_date"].get<std::string>();
+        if(neroshop_timestamp::is_expired(expiration_date)) {
+            // Remove the data from hash table if it was previously stored
+            if(has_key(key)) {
+                std::cout << "Data with key (" << key << ") has expired. Removing from hash table ...\n";
+                if(remove(key) == true) {
+                    int error = database->execute_params("DELETE FROM mappings WHERE key = ?1", { key });
+                }
+            }
+        }
+    }
+}
+
+//-----------------------------------------------------------------------------
+
+void neroshop::Node::periodic_purge() {
+    while (true) {
+        {
+            // Acquire the lock before accessing the data
+            std::shared_lock<std::shared_mutex> read_lock(node_read_mutex);
+    
+            if(!data.empty()) { std::cout << "\033[34;1mPerforming periodic data removal\033[0m\n"; }
+            
+            for (const auto& [key, value] : data) {
+                expire(key, value);
+            }
+            
+            // read_lock is released here
+        }
+        
+        std::this_thread::sleep_for(std::chrono::seconds(NEROSHOP_DHT_DATA_PURGE_INTERVAL));
+    }
+}
+
+//-----------------------------------------------------------------------------
+
 void neroshop::Node::periodic_refresh() {
     while (true) {
         {
@@ -1145,9 +1198,7 @@ void neroshop::Node::periodic_refresh() {
             
             // Perform periodic republishing here
             // This code will run concurrently with the listen/receive loop
-            if(!data.empty()) {
-                std::cout << "\033[34;1mPerforming periodic refresh\033[0m\n";
-            }
+            if(!data.empty()) { std::cout << "\033[34;1mPerforming periodic data propagation\033[0m\n"; }
             
             republish();
             
@@ -1155,7 +1206,7 @@ void neroshop::Node::periodic_refresh() {
         }
         
         // Sleep for a specified interval
-        std::this_thread::sleep_for(std::chrono::hours(NEROSHOP_DHT_REPUBLISH_INTERVAL));
+        std::this_thread::sleep_for(std::chrono::seconds(NEROSHOP_DHT_DATA_REPUBLISH_INTERVAL));
     }
 }
 
@@ -1178,7 +1229,7 @@ void neroshop::Node::periodic_check() {
                 // Skip the bootstrap nodes from the periodic checks
                 if (node->is_hardcoded()) continue;
                 
-                std::cout << "Performing periodic check on \033[34m" << node_ip << ":" << node_port << "\033[0m\n";
+                std::cout << "Performing periodic node health check on \033[34m" << node_ip << ":" << node_port << "\033[0m\n";
                 
                 // Perform the liveness check on the current node
                 bool pinged = ping(node_ip, node_port);
@@ -1204,7 +1255,7 @@ void neroshop::Node::periodic_check() {
         // Clear the vector for the next iteration
         dead_node_ids.clear();*/
         // Sleep for a specified interval
-        std::this_thread::sleep_for(std::chrono::seconds(NEROSHOP_DHT_PERIODIC_CHECK_INTERVAL));
+        std::this_thread::sleep_for(std::chrono::seconds(NEROSHOP_DHT_NODE_HEALTH_CHECK_INTERVAL));
     }
 }
 
@@ -1342,6 +1393,7 @@ void neroshop::Node::run() {
     // Start a separate thread for periodic checks and republishing
     std::thread periodic_check_thread([this]() { periodic_check(); });
     std::thread periodic_refresh_thread([this]() { periodic_refresh(); });
+    std::thread periodic_purge_thread([this]() { periodic_purge(); });
     
     while (true) {
         std::vector<uint8_t> buffer(NEROSHOP_RECV_BUFFER_SIZE);
@@ -1390,6 +1442,7 @@ void neroshop::Node::run() {
     // Wait for the periodic threads to finish
     periodic_check_thread.join();
     periodic_refresh_thread.join();
+    periodic_purge_thread.join();
 }
 
 // This uses less CPU
@@ -1397,6 +1450,7 @@ void neroshop::Node::run_optimized() {
     // Start a separate thread for periodic checks and republishing
     std::thread periodic_check_thread([this]() { periodic_check(); });
     std::thread periodic_refresh_thread([this]() { periodic_refresh(); });
+    std::thread periodic_purge_thread([this]() { periodic_purge(); });
 
     while (true) {
         fd_set read_set;
@@ -1468,6 +1522,7 @@ void neroshop::Node::run_optimized() {
     // Wait for the periodic threads to finish
     periodic_check_thread.join();    
     periodic_refresh_thread.join();
+    periodic_purge_thread.join();
 }
 
 //-----------------------------------------------------------------------------
