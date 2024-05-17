@@ -168,9 +168,7 @@ void neroshop::DaemonManager::disconnect() {
 double neroshop::DaemonManager::getDaemonProgress() const {
     // Return the progress value (between 0 and 1) based on the daemon state
     if(m_daemonConnected) return 1.0;
-    bool nodeBound = isDaemonDHTServerBound();
-    if(m_daemonRunning && nodeBound) return 0.5; // Waiting for non-hardcoded DHT node to bind. (hardcoded) seed nodes cannot interact with GUI client
-    if(m_daemonRunning && !nodeBound) return 0.5;
+    if(m_daemonRunning) return 0.5; // Waiting or Launching state
     return 0.0;
 }
 
