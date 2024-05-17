@@ -111,7 +111,7 @@ void ipc_server(Node& node) {
     // Prevent seed node from being accepted by IPC server 
     // since its only meant to act as an initial contact point for new nodes joining the network
     if (node.is_hardcoded()) {
-        std::cout << "Seed node is not allowed to use the local IPC server. Please start another daemon instance to use the GUI\n";
+        std::cout << "Seed node is not allowed to use the local IPC server. Please start another daemon instance to use the GUI or CLI\n";
         return;
     }
     

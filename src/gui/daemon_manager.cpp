@@ -175,7 +175,9 @@ double neroshop::DaemonManager::getDaemonProgress() const {
 QString neroshop::DaemonManager::getDaemonStatusText() const {
     // Return the appropriate status text based on the daemon state
     if(m_daemonConnected) return "Connected";
-    if(m_daemonRunning) return "Launching"; // Waiting or Launching state
+    bool nodeBound = isDaemonDHTServerBound();
+    if(m_daemonRunning && nodeBound) return "Waiting for DHT node"; // Waiting for non-hardcoded DHT node to bind. (hardcoded) seed nodes cannot interact with GUI client
+    if(m_daemonRunning && !nodeBound) return "Launching";
     return "Disconnected";
 }
 
@@ -237,5 +239,23 @@ bool neroshop::DaemonManager::isDaemonServerBound() {
 
 bool neroshop::DaemonManager::isDaemonConnected() const {
     return m_daemonConnected;
+}
+
+bool neroshop::DaemonManager::isDaemonDHTServerBound() {
+    int sockfd = socket(AF_INET, SOCK_DGRAM, 0);
+    if (sockfd == -1) {
+        std::cerr << "Failed to create socket\n";
+        return false;
+    }
+
+    struct sockaddr_in serverAddress{};
+    serverAddress.sin_family = AF_INET;
+    serverAddress.sin_addr.s_addr = INADDR_ANY;
+    serverAddress.sin_port = htons(NEROSHOP_P2P_DEFAULT_PORT);
+
+    int result = bind(sockfd, (struct sockaddr*) &serverAddress, sizeof(serverAddress));
+    close(sockfd);
+
+    return (result == -1);
 }
 

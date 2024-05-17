@@ -778,18 +778,58 @@ std::string neroshop::Node::send_get(const std::string& key) {
     query_object["args"]["key"] = key;
     query_object["version"] = std::string(NEROSHOP_DHT_VERSION);
     
-    std::vector<uint8_t> get_message = nlohmann::json::to_msgpack(query_object);
+    //-----------------------------------------------
+    // First, check to see if we have the key before performing any other operations
+    if(has_key(key)) { return find_value(key); }
+    //-----------------------------------------------
+    // Second option is to check our providers to see if any holds the key we are looking for
+    std::vector<neroshop::Peer> my_providers = get_providers(key);
+    if(!my_providers.empty()) {
+        std::cout << "Found " << my_providers.size() << " providers for key (" << key << ")\n";
+        // Now contact each provider for the value to the key
+        for(auto const& peer : my_providers) {
+            // Construct the get query (request)
+            std::string transaction_id = msgpack::generate_transaction_id();
+            query_object["tid"] = transaction_id;
+            std::vector<uint8_t> query_get = nlohmann::json::to_msgpack(query_object);
+            
+            // Send a get request to provider
+            std::string peer_addr = (peer.address == this->public_ip_address) ? "127.0.0.1" : peer.address;
+            std::cout << "Sending get request to \033[36m" << peer_addr << ":" << peer.port << "\033[0m\n";
+            auto receive_buffer = send_query(peer_addr, peer.port, query_get, 2);
+            
+            // Process the response
+            nlohmann::json response_get;
+            try {
+                response_get = nlohmann::json::from_msgpack(receive_buffer);
+            } catch (const std::exception& e) {
+                std::cerr << "Provider \033[91m" << peer_addr << ":" << peer.port << "\033[0m did not respond" << std::endl;
+                remove_provider(key, peer.address, peer.port); // Remove this peer from providers
+                continue; // Skip to next provider if this one is unresponsive
+            }   
+            
+            // Handle the response
+            std::cout << ((response_get.contains("error")) ? ("\033[91m") : ("\033[32m")) << response_get.dump() << "\033[0m\n";
+            if(response_get.contains("error")) { // "Key not found"
+                remove_provider(key, peer.address, peer.port); // Data is lost, remove peer from providers
+                continue; 
+            }
+            if(response_get.contains("response") && response_get["response"].contains("value")) {
+                std::string retrieved_value = response_get["response"]["value"].get<std::string>();
+                if (!retrieved_value.empty()) { 
+                    return retrieved_value;
+                }
+            }
+        }
+    }
     //-----------------------------------------------
     std::vector<Node *> closest_nodes = find_node(key, NEROSHOP_DHT_MAX_CLOSEST_NODES);
     
     std::random_device rd;
     std::mt19937 rng(rd());
     std::shuffle(closest_nodes.begin(), closest_nodes.end(), rng);
-    //-----------------------------------------------
-    // First, check to see if we have the key before performing any other operations
-    if(has_key(key)) return find_value(key);
-    //-----------------------------------------------
-    // Send get message to the closest nodes
+    
+    // Third option is to send get request to the nodes in our routing table that are closest to the key
     for(auto const& node : closest_nodes) {
         if (node->get_status() != NodeStatus::Active) { continue; } // ignore idle nodes
         
