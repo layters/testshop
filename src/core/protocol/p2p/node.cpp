@@ -816,7 +816,7 @@ std::string neroshop::Node::send_get(const std::string& key) {
             }
             if(response_get.contains("response") && response_get["response"].contains("value")) {
                 std::string retrieved_value = response_get["response"]["value"].get<std::string>();
-                if (!retrieved_value.empty()) { 
+                if (validate(key, retrieved_value)) { 
                     return retrieved_value;
                 }
             }
@@ -857,7 +857,7 @@ std::string neroshop::Node::send_get(const std::string& key) {
         }
         if (get_response_message.contains("response") && get_response_message["response"].contains("value")) {
             std::string retrieved_value = get_response_message["response"]["value"].get<std::string>();
-            if (!retrieved_value.empty()) {
+            if (validate(key, retrieved_value)) {
                 value = retrieved_value;
                 break; // Exit the loop if a value is found
             }
