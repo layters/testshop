@@ -1,13 +1,8 @@
 #pragma once
 
-#include "node.hpp"
-#include "routing_table.hpp"
-
-// TODO: DHT blacklisted nodes
-
 namespace neroshop {
 
-enum class KadResultCode {
+enum class DhtResultCode {
     Success = 0,
     Generic, // Generic error code.
     Timeout, // Operation timed out.
@@ -28,49 +23,45 @@ enum class KadResultCode {
     DataVerificationFailed,
 };
 
-namespace kademlia {
-
-static std::string get_result_code_as_string(KadResultCode result_code) {
+static std::string get_dht_result_code_as_string(DhtResultCode result_code) {
     switch (result_code) {
-        case KadResultCode::Success:
+        case DhtResultCode::Success:
             return "Success";
-        case KadResultCode::Generic:
+        case DhtResultCode::Generic:
             return "Error";
-        case KadResultCode::Timeout:
+        case DhtResultCode::Timeout:
             return "Timeout";
-        case KadResultCode::InvalidKey:
+        case DhtResultCode::InvalidKey:
             return "Invalid key";
-        case KadResultCode::InvalidValue:
+        case DhtResultCode::InvalidValue:
             return "Invalid value";
-        case KadResultCode::InvalidToken:
+        case DhtResultCode::InvalidToken:
             return "Invalid token";            
-        case KadResultCode::NodeNotFound:
+        case DhtResultCode::NodeNotFound:
             return "Node not found";
-        case KadResultCode::BucketFull:
+        case DhtResultCode::BucketFull:
             return "Bucket full";
-        case KadResultCode::StoreFailed:
+        case DhtResultCode::StoreFailed:
             return "Store failed";
-        case KadResultCode::StorePartial:
+        case DhtResultCode::StorePartial:
             return "Store partial";            
-        case KadResultCode::RetrieveFailed:
+        case DhtResultCode::RetrieveFailed:
             return "Retrieve failed";
-        case KadResultCode::JoinFailed:
+        case DhtResultCode::JoinFailed:
             return "Join failed";
-        case KadResultCode::PingFailed:
+        case DhtResultCode::PingFailed:
             return "Ping failed";
-        case KadResultCode::InvalidOperation:
+        case DhtResultCode::InvalidOperation:
             return "Invalid operation";
-        case KadResultCode::NetworkError:
+        case DhtResultCode::NetworkError:
             return "Network error";
-        case KadResultCode::InvalidRequest:
+        case DhtResultCode::InvalidRequest:
             return "Invalid request";
-        case KadResultCode::ParseError:
+        case DhtResultCode::ParseError:
             return "Parse error";
         default:
             return "Unknown result code";
     }
-}
-
 }
 
 }

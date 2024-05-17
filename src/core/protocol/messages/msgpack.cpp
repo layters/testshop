@@ -7,7 +7,9 @@
 
 #include "../../version.hpp"
 #include "../../tools/logger.hpp"
-#include "../p2p/kademlia.hpp"
+#include "../p2p/dht_rescode.hpp"
+#include "../p2p/node.hpp"
+#include "../p2p/routing_table.hpp"
 
 
 std::vector<uint8_t> neroshop::msgpack::process(const std::vector<uint8_t>& request, Node& node, bool ipc_mode) {
@@ -24,7 +26,7 @@ std::vector<uint8_t> neroshop::msgpack::process(const std::vector<uint8_t>& requ
     catch(nlohmann::json::parse_error& exception) {
         neroshop::print("Error parsing client request", 1);
         response_object["version"] = std::string(NEROSHOP_DHT_VERSION);//"0.1.0"; // neroshop version
-        response_object["error"]["code"] = static_cast<int>(KadResultCode::ParseError); // "code" MUST be an integer
+        response_object["error"]["code"] = static_cast<int>(DhtResultCode::ParseError); // "code" MUST be an integer
         response_object["error"]["message"] = "Parse error";
         response_object["error"]["data"] = exception.what(); // A Primitive (non-object) or Structured (array) value which may be omitted
         response_object["tid"] = nullptr;
@@ -162,7 +164,7 @@ std::vector<uint8_t> neroshop::msgpack::process(const std::vector<uint8_t>& requ
                     response_object["response"]["value"] = closest_node_value;
                 } else {
                     // Key not found, return error response
-                    code = static_cast<int>(KadResultCode::RetrieveFailed);
+                    code = static_cast<int>(DhtResultCode::RetrieveFailed);
                     response_object["error"]["code"] = code;
                     response_object["error"]["message"] = "Key not found";
                     response_object["tid"] = tid;
@@ -192,7 +194,7 @@ std::vector<uint8_t> neroshop::msgpack::process(const std::vector<uint8_t>& requ
             
             // Key not found, return error response
             if (value.empty()) {
-                code = static_cast<int>(KadResultCode::RetrieveFailed);
+                code = static_cast<int>(DhtResultCode::RetrieveFailed);
                 response_object["error"]["code"] = code;
                 response_object["error"]["message"] = "Key not found";
                 response_object["tid"] = tid;
@@ -216,8 +218,8 @@ std::vector<uint8_t> neroshop::msgpack::process(const std::vector<uint8_t>& requ
         
         // Add the key-value pair to the key-value store
         code = (node.store(key, value) == false) 
-               ? static_cast<int>(KadResultCode::StoreFailed) 
-               : static_cast<int>(KadResultCode::Success);
+               ? static_cast<int>(DhtResultCode::StoreFailed) 
+               : static_cast<int>(DhtResultCode::Success);
             
         if(code == 0) {
             // Map keys to search terms for efficient search operations
@@ -262,8 +264,8 @@ std::vector<uint8_t> neroshop::msgpack::process(const std::vector<uint8_t>& requ
         // Send put messages to the closest nodes in your routing table (IPC mode)
         int put_messages_sent = node.send_put(key, value);
         code = (put_messages_sent <= 0) 
-               ? static_cast<int>(KadResultCode::StoreFailed) 
-               : static_cast<int>(KadResultCode::Success);
+               ? static_cast<int>(DhtResultCode::StoreFailed) 
+               : static_cast<int>(DhtResultCode::Success);
         std::cout << "Number of nodes you've sent a put message to: " << put_messages_sent << "\n";
                    
         // Store the key-value pair in your own node as well
@@ -276,7 +278,7 @@ std::vector<uint8_t> neroshop::msgpack::process(const std::vector<uint8_t>& requ
         // Return success response
         response_object["version"] = std::string(NEROSHOP_DHT_VERSION);
         response_object["response"]["id"] = node.get_id();
-        response_object["response"]["code"] = (code != 0) ? static_cast<int>(KadResultCode::StorePartial) : code;
+        response_object["response"]["code"] = (code != 0) ? static_cast<int>(DhtResultCode::StorePartial) : code;
         response_object["response"]["message"] = (code != 0) ? "Store failed" : "Success";
     }
     //-----------------------------------------------------
