@@ -12,7 +12,8 @@ enum class DhtResultCode {
     NodeNotFound, // The requested node is not found in the DHT.
     BucketFull, // The routing table bucket is full and cannot accept more nodes.
     StoreFailed, // Failed to store the key-value pair in the DHT.
-    StorePartial, StoreToSelf = StorePartial,// Partial success in storing the value - when you fail to store to the closest nodes but succeed in storing in your own node
+    StorePartial, // Stored to less than NEROSHOP_DHT_REPLICATION_FACTOR nodes but not zero nodes
+    StoreToSelf, // Failed to store to the closest nodes but succeeded in storing in your own node
     RetrieveFailed, // Failed to retrieve the value from the DHT.
     JoinFailed, // Failed to join the Kademlia network.
     PingFailed, // Failed to ping the target node.
@@ -44,7 +45,9 @@ static std::string get_dht_result_code_as_string(DhtResultCode result_code) {
         case DhtResultCode::StoreFailed:
             return "Store failed";
         case DhtResultCode::StorePartial:
-            return "Store partial";            
+            return "Store partial";
+        case DhtResultCode::StoreToSelf:
+            return "Store to self";
         case DhtResultCode::RetrieveFailed:
             return "Retrieve failed";
         case DhtResultCode::JoinFailed:

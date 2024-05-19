@@ -45,7 +45,7 @@ RowLayout {
             if(button.text == shopButton.text) {
                 button.checked = true
                 searchBar.children[0].text = ""
-                pageStack.pushPage("qrc:/qml/pages/subpages/DashboardPage.qml", StackView.Immediate)
+                pageStack.pushPage("qrc:/qml/pages/subpages/StorePage.qml", StackView.Immediate)
             }
             if(button.text == messagesButton.text) {
                 button.checked = true

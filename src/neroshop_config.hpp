@@ -42,7 +42,7 @@
 #define NEROSHOP_DHT_MAX_HEALTH_CHECKS       3 // Maximum number of consecutive failed checks before marking the node as dead
 #define NEROSHOP_DHT_NODE_HEALTH_CHECK_INTERVAL   60 // Number of seconds between each periodic health check
 #define NEROSHOP_DHT_DATA_REPUBLISH_INTERVAL      3600 // Number of seconds between each periodic refresh/republishing
-#define NEROSHOP_DHT_DATA_PURGE_INTERVAL          3600 // Number of seconds between the purge of all expired data
+#define NEROSHOP_DHT_DATA_PURGE_INTERVAL          1800 // Number of seconds between the purge of all expired data
 #define NEROSHOP_DHT_MAX_SEARCHES                 3
 
 #define NEROSHOP_MAX_SEARCH_RESULTS          1000

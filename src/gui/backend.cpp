@@ -40,6 +40,7 @@
 #include "../core/tools/process.hpp"
 #include "../core/category.hpp"
 #include "../core/tools/string.hpp"
+#include "../core/tools/timestamp.hpp"
 #include "../core/crypto/rsa.hpp"
 #include "enum_wrapper.hpp"
 
@@ -121,6 +122,11 @@ QString neroshop::Backend::getCurrencySign(const QString& currency) const {
 //----------------------------------------------------------------
 bool neroshop::Backend::isSupportedCurrency(const QString& currency) const {
     return neroshop::Converter::is_supported_currency(currency.toStdString());
+}
+//----------------------------------------------------------------
+//----------------------------------------------------------------
+QString neroshop::Backend::getDurationFromNow(const QString& timestamp) const {
+    return QString::fromStdString(neroshop::timestamp::get_duration_from_now(timestamp.toStdString()));
 }
 //----------------------------------------------------------------
 //----------------------------------------------------------------
@@ -947,6 +953,12 @@ QVariantList neroshop::Backend::getInventory(const QString& user_id, bool hide_i
                     inventory_object.insert("location", QString::fromStdString(value_obj["location"].get<std::string>()));
                 }
                 inventory_object.insert("date", QString::fromStdString(value_obj["date"].get<std::string>()));
+                if(value_obj.contains("quantity_per_order") && value_obj["quantity_per_order"].is_number_integer()) {
+                    inventory_object.insert("quantity_per_order", value_obj["quantity_per_order"].get<int>());
+                }
+                if(value_obj.contains("expiration_date") && value_obj["expiration_date"].is_string()) {
+                    inventory_object.insert("expiration_date", QString::fromStdString(value_obj["expiration_date"].get<std::string>()));
+                }
                 assert(value_obj["product"].is_object());
                 const auto& product_obj = value_obj["product"];
                 ////inventory_object.insert("product_uuid", QString::fromStdString(product_obj["id"].get<std::string>()));
@@ -1080,6 +1092,9 @@ QVariantList neroshop::Backend::getListingsBySearchTerm(const QString& searchTer
                 if(value_obj.contains("quantity_per_order") && value_obj["quantity_per_order"].is_number_integer()) {
                     listing.insert("quantity_per_order", value_obj["quantity_per_order"].get<int>());
                 }
+                if(value_obj.contains("expiration_date") && value_obj["expiration_date"].is_string()) {
+                    listing.insert("expiration_date", QString::fromStdString(value_obj["expiration_date"].get<std::string>()));
+                }
                 assert(value_obj["product"].is_object());
                 const auto& product_obj = value_obj["product"];
                 ////listing.insert("product_uuid", QString::fromStdString(product_obj["id"].get<std::string>()));
@@ -1196,6 +1211,9 @@ QVariantList neroshop::Backend::getListings(int sorting, bool hide_illicit_items
                 listing.insert("date", QString::fromStdString(value_obj["date"].get<std::string>()));
                 if(value_obj.contains("quantity_per_order") && value_obj["quantity_per_order"].is_number_integer()) {
                     listing.insert("quantity_per_order", value_obj["quantity_per_order"].get<int>());
+                }
+                if(value_obj.contains("expiration_date") && value_obj["expiration_date"].is_string()) {
+                    listing.insert("expiration_date", QString::fromStdString(value_obj["expiration_date"].get<std::string>()));
                 }
                 assert(value_obj["product"].is_object());
                 const auto& product_obj = value_obj["product"];
@@ -1419,6 +1437,9 @@ QVariantList neroshop::Backend::getListingsByCategory(int category_id, bool hide
                 listing.insert("date", QString::fromStdString(value_obj["date"].get<std::string>()));
                 if(value_obj.contains("quantity_per_order") && value_obj["quantity_per_order"].is_number_integer()) {
                     listing.insert("quantity_per_order", value_obj["quantity_per_order"].get<int>());
+                }
+                if(value_obj.contains("expiration_date") && value_obj["expiration_date"].is_string()) {
+                    listing.insert("expiration_date", QString::fromStdString(value_obj["expiration_date"].get<std::string>()));
                 }
                 assert(value_obj["product"].is_object());
                 const auto& product_obj = value_obj["product"];

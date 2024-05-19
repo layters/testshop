@@ -92,6 +92,51 @@ std::string neroshop::timestamp::get_most_recent_timestamp(const std::string& ti
     }
 }
 
+std::string neroshop::timestamp::get_duration_from_now(const std::string& timestamp) {
+    // Parse the ISO 8601 timestamp
+    std::tm tm = {};
+    std::istringstream ss(timestamp);
+    ss >> std::get_time(&tm, "%Y-%m-%dT%H:%M:%SZ");
+    if (ss.fail()) {
+        std::cerr << "Failed to parse time" << std::endl;
+        return "";
+    }
+    auto time_point = std::chrono::system_clock::from_time_t(std::mktime(&tm));
+    
+    // Calculate the duration from now to the given timestamp
+    auto now = std::chrono::system_clock::now();
+    auto duration = time_point - now;
+
+    // Define custom duration types for days and weeks
+    using days = std::chrono::duration<int, std::ratio<86400>>;
+    using weeks = std::chrono::duration<int, std::ratio<604800>>;
+
+    // Convert the duration to different units
+    auto minutes = std::chrono::duration_cast<std::chrono::minutes>(duration).count();
+    auto hours = std::chrono::duration_cast<std::chrono::hours>(duration).count();
+    auto total_days = std::chrono::duration_cast<days>(duration).count();
+    auto total_weeks = std::chrono::duration_cast<weeks>(duration).count();
+    
+    // Calculate months and years manually
+    auto now_time_t = std::chrono::system_clock::to_time_t(now);
+    std::tm now_tm = *std::gmtime(&now_time_t);
+    int years = tm.tm_year - now_tm.tm_year;
+    int months = tm.tm_mon - now_tm.tm_mon;
+
+    if (months < 0) {
+        months += 12;
+        years -= 1;
+    }
+
+    // Return the duration
+    if(years > 0) { return ((std::to_string(years) + " years, ") + (std::to_string(months) + " months")); }
+    if(total_weeks > 0) { return (std::to_string(total_weeks) + " weeks"); } // and maybe a few days or so?
+    if(total_days > 0) { return (std::to_string(total_days) + " days"); }
+    if(hours > 0) { return (std::to_string(hours) + " hours"); }
+    if(minutes > 0) { return (std::to_string(minutes) + " minutes"); }
+    return "";
+}
+
 // Convert Unix timestamp to UTC time
 std::tm neroshop::timestamp::unix_timestamp_to_utc(time_t unix_timestamp) {
     std::tm utc_time;

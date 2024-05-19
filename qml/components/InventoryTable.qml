@@ -306,6 +306,7 @@ Item {
                         text: qsTr("Remove")
                         display: AbstractButton.IconOnly
                         hoverEnabled: true
+                        visible: !modelData.hasOwnProperty("expiration_date")
         
                         icon.source: "qrc:/assets/images/trash.png"
                         icon.color: "#b22222"//this.hovered ? "#b22222" : "#ffffff"
@@ -328,6 +329,32 @@ Item {
                             cursorShape: Qt.PointingHandCursor
                         }
                         onClicked: User.delistProduct(modelData.key)
+                    }
+                    // Clock
+                    Text {
+                        id: expirationIcon
+                        x: actionsColumn.x + (actionsColumn.width - this.width) / 2
+                        anchors.verticalCenter: parent.verticalCenter
+                        text: qsTr(FontAwesome.clock)
+                        color: "royalblue"
+                        font.bold: true
+                        font.family: FontAwesome.fontFamily
+                        font.pointSize: 16
+                        property bool hovered: false
+                        visible: modelData.hasOwnProperty("expiration_date")
+                        NeroshopComponents.Hint {
+                            visible: expirationIcon.hovered
+                            height: contentHeight + 20; width: contentWidth + 20
+                            text: qsTr("Expires in %1").arg(modelData.hasOwnProperty("expiration_date") ? Backend.getDurationFromNow(modelData.expiration_date) : "")
+                            pointer.visible: false
+                            timeout: 3000; delay: 0
+                        }
+                        MouseArea {
+                            anchors.fill: parent
+                            hoverEnabled: true
+                            onEntered: parent.hovered = true
+                            onExited: parent.hovered = false
+                        }
                     }
                     /*Label {
                         x: ?Column.x + (?Column.width - this.width) / 2//?.x

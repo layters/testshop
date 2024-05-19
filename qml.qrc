@@ -39,9 +39,9 @@
         <file>qml/pages/ProductPage.qml</file>
         <file>qml/pages/ProfilePage.qml</file>
         <file>qml/pages/subpages/AccountPage.qml</file>
-        <file>qml/pages/subpages/DashboardPage.qml</file>
         <file>qml/pages/subpages/MessagesPage.qml</file>
         <file>qml/pages/subpages/OrdersPage.qml</file>
+        <file>qml/pages/subpages/StorePage.qml</file>
         <file>qml/pages/subpages/WalletPage.qml</file>
         <!-- fonts -->
         <file>assets/fonts/FiraCode-Bold.ttf</file>

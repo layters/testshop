@@ -41,6 +41,7 @@ private:
     std::string public_ip_address;
     bool bootstrap;
     int check_counter; // Counter to track the number of consecutive failed checks
+    mutable std::shared_mutex data_mutex;
     // Declare a mutex to protect access to the routing table
     std::shared_mutex node_read_mutex; // Shared mutex for routing table access
     std::shared_mutex node_write_mutex; // Shared mutex for routing table access

@@ -37,6 +37,8 @@ public:
     Q_INVOKABLE QString getCurrencySign(const QString& currency) const;
     Q_INVOKABLE bool isSupportedCurrency(const QString& currency) const;
     
+    Q_INVOKABLE QString getDurationFromNow(const QString& timestamp) const;
+    
     /*Q_INVOKABLE */static void initializeDatabase(); // Cannot be a Q_INVOKABLE since it will only be used in C++
     static std::string getDatabaseHash();
     
