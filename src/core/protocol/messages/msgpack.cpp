@@ -164,6 +164,7 @@ std::vector<uint8_t> neroshop::msgpack::process(const std::vector<uint8_t>& requ
             } else {
                 // Key not found, return error response
                 code = static_cast<int>(DhtResultCode::RetrieveFailed);
+                response_object["version"] = std::string(NEROSHOP_DHT_VERSION);
                 response_object["error"]["code"] = code;
                 response_object["error"]["message"] = "Key not found";
                 response_object["tid"] = tid;
@@ -195,6 +196,7 @@ std::vector<uint8_t> neroshop::msgpack::process(const std::vector<uint8_t>& requ
         // Key not found, return error response
         if (value.empty()) {
             code = static_cast<int>(DhtResultCode::RetrieveFailed);
+            response_object["version"] = std::string(NEROSHOP_DHT_VERSION);
             response_object["error"]["code"] = code;
             response_object["error"]["message"] = "Key not found";
             response_object["tid"] = tid;
