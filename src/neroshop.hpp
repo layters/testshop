@@ -32,7 +32,7 @@
 #include "core/price/currency_converter.hpp"
 // protocol
 #include "core/protocol/messages/msgpack.hpp"
-#include "core/protocol/p2p/kademlia.hpp"
+#include "core/protocol/p2p/dht_rescode.hpp"
 #include "core/protocol/p2p/key_mapper.hpp"
 #include "core/protocol/p2p/node.hpp"
 #include "core/protocol/p2p/routing_table.hpp"

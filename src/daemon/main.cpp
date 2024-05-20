@@ -5,9 +5,10 @@
 #include <shared_mutex>
 // neroshop
 #include "../core/crypto/sha3.hpp"
-#include "../core/protocol/p2p/node.hpp" // server.hpp included here (hopefully)
+#include "../core/protocol/p2p/node.hpp"
 #include "../core/protocol/p2p/routing_table.hpp"
 #include "../core/protocol/transport/ip_address.hpp"
+#include "../core/protocol/transport/server.hpp"
 #include "../core/protocol/rpc/json_rpc.hpp"
 #include "../core/protocol/messages/msgpack.hpp"
 #include "../core/database/database.hpp"
@@ -244,7 +245,7 @@ int main(int argc, char** argv)
     
     if(result.count("bootstrap")) {   
         std::cout << "Switching to bootstrap mode ...\n";
-        ////node.set_bootstrap(true);
+        node.set_bootstrap(true);
         assert(node.get_ip_address() == NEROSHOP_ANY_ADDRESS && "Bootstrap node is not public");
         // ALWAYS use address "0.0.0.0" for bootstrap nodes so that it is reachable by all nodes in the network, regardless of their location.
     }

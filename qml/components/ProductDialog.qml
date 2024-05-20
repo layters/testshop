@@ -877,6 +877,44 @@ Popup {
                             }
                         }
                     }
+            // productMessageArea
+            Item {
+                Layout.alignment: Qt.AlignHCenter
+                Layout.preferredWidth: childrenRect.width
+                Layout.preferredHeight: childrenRect.height
+                visible: (productPriceField.text.length <= 0)
+                
+                TextArea {
+                    id: productMessageArea
+                    anchors.topMargin: 20
+                    anchors.leftMargin: 20; anchors.rightMargin: 20
+                    width: 500
+                    height: contentHeight + 20
+                    selectByMouse: true
+                    readOnly: true
+                    verticalAlignment: TextEdit.AlignVCenter
+                    wrapMode: TextEdit.Wrap
+                    text: qsTr("Price field has been left blank")
+                    color: (messageCode == 1) ? "#ffd700" : ((NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#404040")
+                    property int messageCode: 1 // 0 = info; 1 = warning
+                    background: Rectangle { 
+                        color: "transparent"
+                        border.color: (parent.messageCode == 1) ? "#ffd700" : "#2196f3"
+                        radius: 3
+                    }            
+                    leftPadding: 30 + warningSign.contentWidth
+                    Text {
+                        id: warningSign
+                        anchors.left: parent.left
+                        anchors.leftMargin: 15
+                        anchors.verticalCenter: parent.verticalCenter                         
+                        text: (parent.messageCode == 1) ? qsTr(FontAwesome.circleExclamation) : qsTr(FontAwesome.circleInfo)
+                        color: (parent.messageCode == 1) ? "#ffd700" : "#2196f3"
+                        font.bold: true
+                        font.family: FontAwesome.fontFamily
+                    }
+                }
+            }        
                     // ListItem to "listings" table
                     Item {
                         Layout.alignment: Qt.AlignHCenter//Qt.AlignRight

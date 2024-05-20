@@ -1,13 +1,8 @@
 #pragma once
 
-#include "node.hpp"
-#include "routing_table.hpp"
-
-// TODO: DHT blacklisted nodes
-
 namespace neroshop {
 
-enum class KadResultCode {
+enum class DhtResultCode {
     Success = 0,
     Generic, // Generic error code.
     Timeout, // Operation timed out.
@@ -17,7 +12,8 @@ enum class KadResultCode {
     NodeNotFound, // The requested node is not found in the DHT.
     BucketFull, // The routing table bucket is full and cannot accept more nodes.
     StoreFailed, // Failed to store the key-value pair in the DHT.
-    StorePartial, StoreToSelf = StorePartial,// Partial success in storing the value - when you fail to store to the closest nodes but succeed in storing in your own node
+    StorePartial, // Stored to less than NEROSHOP_DHT_REPLICATION_FACTOR nodes but not zero nodes
+    StoreToSelf, // Failed to store to the closest nodes but succeeded in storing in your own node
     RetrieveFailed, // Failed to retrieve the value from the DHT.
     JoinFailed, // Failed to join the Kademlia network.
     PingFailed, // Failed to ping the target node.
@@ -28,49 +24,47 @@ enum class KadResultCode {
     DataVerificationFailed,
 };
 
-namespace kademlia {
-
-static std::string get_result_code_as_string(KadResultCode result_code) {
+static std::string get_dht_result_code_as_string(DhtResultCode result_code) {
     switch (result_code) {
-        case KadResultCode::Success:
+        case DhtResultCode::Success:
             return "Success";
-        case KadResultCode::Generic:
+        case DhtResultCode::Generic:
             return "Error";
-        case KadResultCode::Timeout:
+        case DhtResultCode::Timeout:
             return "Timeout";
-        case KadResultCode::InvalidKey:
+        case DhtResultCode::InvalidKey:
             return "Invalid key";
-        case KadResultCode::InvalidValue:
+        case DhtResultCode::InvalidValue:
             return "Invalid value";
-        case KadResultCode::InvalidToken:
+        case DhtResultCode::InvalidToken:
             return "Invalid token";            
-        case KadResultCode::NodeNotFound:
+        case DhtResultCode::NodeNotFound:
             return "Node not found";
-        case KadResultCode::BucketFull:
+        case DhtResultCode::BucketFull:
             return "Bucket full";
-        case KadResultCode::StoreFailed:
+        case DhtResultCode::StoreFailed:
             return "Store failed";
-        case KadResultCode::StorePartial:
-            return "Store partial";            
-        case KadResultCode::RetrieveFailed:
+        case DhtResultCode::StorePartial:
+            return "Store partial";
+        case DhtResultCode::StoreToSelf:
+            return "Store to self";
+        case DhtResultCode::RetrieveFailed:
             return "Retrieve failed";
-        case KadResultCode::JoinFailed:
+        case DhtResultCode::JoinFailed:
             return "Join failed";
-        case KadResultCode::PingFailed:
+        case DhtResultCode::PingFailed:
             return "Ping failed";
-        case KadResultCode::InvalidOperation:
+        case DhtResultCode::InvalidOperation:
             return "Invalid operation";
-        case KadResultCode::NetworkError:
+        case DhtResultCode::NetworkError:
             return "Network error";
-        case KadResultCode::InvalidRequest:
+        case DhtResultCode::InvalidRequest:
             return "Invalid request";
-        case KadResultCode::ParseError:
+        case DhtResultCode::ParseError:
             return "Parse error";
         default:
             return "Unknown result code";
     }
-}
-
 }
 
 }

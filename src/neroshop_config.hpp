@@ -36,13 +36,14 @@
 #define NEROSHOP_DHT_QUERY_RECV_TIMEOUT      5 // A reasonable timeout value for a DHT node could be between 5 to 30 seconds.
 #define NEROSHOP_DHT_PING_MESSAGE_TIMEOUT    2
 #define NEROSHOP_DHT_ROUTING_TABLE_BUCKETS   256 // recommended to use a number of buckets that is equal to the number of bits in the node id (in this case, sha-3-256 so 256 bits)
-#define NEROSHOP_DHT_MAX_BUCKET_SIZE         25 // Each bucket should hold up to 12-25 or 25-50 nodes
+#define NEROSHOP_DHT_MAX_BUCKET_SIZE         20 // Each bucket should hold up to 12-25 or 25-50 nodes
 #define NEROSHOP_DHT_MAX_NODES_PER_BUCKET    NEROSHOP_DHT_MAX_BUCKET_SIZE
 #define NEROSHOP_DHT_MAX_ROUTING_TABLE_NODES NEROSHOP_DHT_ROUTING_TABLE_BUCKETS * NEROSHOP_DHT_MAX_BUCKET_SIZE
 #define NEROSHOP_DHT_MAX_HEALTH_CHECKS       3 // Maximum number of consecutive failed checks before marking the node as dead
-#define NEROSHOP_DHT_PERIODIC_CHECK_INTERVAL 60 // Number of seconds between each periodic health check
-#define NEROSHOP_DHT_REPUBLISH_INTERVAL      1 // Number of hours between each periodic refresh/republishing
-#define NEROSHOP_DHT_MAX_SEARCHES            3
+#define NEROSHOP_DHT_NODE_HEALTH_CHECK_INTERVAL   60 // Number of seconds between each periodic health check
+#define NEROSHOP_DHT_DATA_REPUBLISH_INTERVAL      3600 // Number of seconds between each periodic refresh/republishing
+#define NEROSHOP_DHT_DATA_PURGE_INTERVAL          1800 // Number of seconds between the purge of all expired data
+#define NEROSHOP_DHT_MAX_SEARCHES                 3
 
 #define NEROSHOP_MAX_SEARCH_RESULTS          1000
 

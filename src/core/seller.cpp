@@ -122,6 +122,9 @@ void neroshop::Seller::delist_item(const std::string& listing_key) {
         assert(value_obj.is_object());//std::cout << value_obj.dump(4) << "\n";
         std::string metadata = value_obj["metadata"].get<std::string>();
         if (metadata != "listing") { std::cerr << "Invalid metadata. \"listing\" expected, got \"" << metadata << "\" instead\n"; return; }
+        // Skip if already delisted
+        int quantity = value_obj["quantity"];
+        if(quantity <= 0) { return; }
         // Verify ownership
         std::string seller_id = value_obj["seller_id"].get<std::string>();
         if(seller_id != wallet->get_primary_address()) {
@@ -135,9 +138,9 @@ void neroshop::Seller::delist_item(const std::string& listing_key) {
         if(!self_verified) { neroshop::print("Data verification failed.", 1); return; }
         // Might be a good idea to set the stock quantity to zero beforehand
         value_obj["quantity"] = 0;
-        // Finally, set the expiration date
-        // But extend the expiration date to give enough time for all nodes in the network to update the listing in their hash tables
-        value_obj["expiration_date"] = neroshop::timestamp::get_utc_timestamp_after_duration(24, "hour");
+        // Not possible to remove data from DHT unless it originally had an expiration date
+        // So the least we could do is set the quantity to zero
+        //value_obj["expiration_date"] = neroshop::timestamp::get_utc_timestamp_after_duration(24, "hour");
         // Re-sign to reflect the modification
         std::string signature = wallet->sign_message(listing_id, monero_message_signature_type::SIGN_WITH_SPEND_KEY);
         value_obj["signature"] = signature;

@@ -35,6 +35,7 @@ Object {
     property string arrowAltCircleLeft: "\uf359"
     property string angleLeft: "\uf104"
     property string angleRight: "\uf105"
+    property string clock: "\uf017"
     property string cog: "\uf013"
     property string coin: "\uf85c"
     property string coins: "\uf51e"

@@ -1,6 +1,6 @@
 #include "node.hpp"
 
-#include "kademlia.hpp"
+#include "dht_rescode.hpp"
 #include "../../crypto/sha3.hpp"
 #include "../../crypto/rsa.hpp"
 #include "routing_table.hpp"
@@ -245,20 +245,18 @@ void neroshop::Node::join() {
     routing_table->print_table();
 }
 
-// TODO: create a softer version of the ping-based join() called join_insert() function for storing pre-existing nodes from local database
+// TODO: create a version of the ping-based join() called join_insert() function for storing pre-existing nodes from local database
 
 bool neroshop::Node::ping(const std::string& address, int port) {
-    // In a DHT network, new nodes usually ping a known bootstrap node to join the network. The bootstrap node is typically a well-known node in the network that is stable and has a high probability of being online. When a new node pings the bootstrap node, it receives information about other nodes in the network and can start building its routing table.
-    // Existing nodes usually ping the nodes closest to them in the keyspace to update their routing tables and ensure they are still live and responsive. In a distributed hash table, the closest nodes are determined using the XOR metric on the node IDs.
     return send_ping(address, port);
 }
 
-std::vector<neroshop::Node*> neroshop::Node::find_node(const std::string& target_id, int count) const { 
+std::vector<neroshop::Node*> neroshop::Node::find_node(const std::string& target, int count) const { 
     if(!routing_table.get()) {
         return {};
     }
-    // Get the nodes from the routing table that are closest to the target node
-    std::vector<Node*> closest_nodes = routing_table->find_closest_nodes(target_id, count);
+    // Get the nodes from the routing table that are closest to the target (node id or key)
+    std::vector<Node*> closest_nodes = routing_table->find_closest_nodes(target, count);
     return closest_nodes;
 }
 
@@ -273,12 +271,13 @@ int neroshop::Node::put(const std::string& key, const std::string& value) {
         return false;
     }
     
-    // If node has the key but the value has been altered, verify data integrity and ownership then update the data
+    // If node has the key but the value has been altered, compare both old and new values before updating the value
     if (has_key(key) && get(key) != value) {
         std::cout << "Updating value for key (" << key << ") ...\n";
         return set(key, value);
     }
     
+    //std::unique_lock<std::shared_mutex> lock(data_mutex);
     data[key] = value;
     return has_key(key); // boolean
 }
@@ -287,7 +286,8 @@ int neroshop::Node::store(const std::string& key, const std::string& value) {
     return put(key, value);
 }
 
-std::string neroshop::Node::get(const std::string& key) const {    
+std::string neroshop::Node::get(const std::string& key) const { 
+    //std::shared_lock<std::shared_mutex> lock(data_mutex);
     auto it = data.find(key);
     if (it != data.end()) {
         return it->second;
@@ -300,7 +300,8 @@ std::string neroshop::Node::find_value(const std::string& key) const {
 }
 
 int neroshop::Node::remove(const std::string& key) {
-    data.erase(key);
+    //std::unique_lock<std::shared_mutex> lock(data_mutex);
+    data.erase(key); // causes Segfault when called in thread :(
     return (data.count(key) == 0); // boolean
 }
 
@@ -336,7 +337,7 @@ int neroshop::Node::set(const std::string& key, const std::string& value) {
         if(rater_id != current_json["rater_id"].get<std::string>()) { std::cerr << "\033[91mRater ID mismatch\033[0m\n"; return false; } // rater_id is immutable
     }
     
-    // Make sure the signature has been updated (re-signed)
+    // Make sure the signature has been updated
     if (json.contains("signature") && json["signature"].is_string()) {
         std::string signature = json["signature"].get<std::string>();
         if(signature == current_json["signature"].get<std::string>()) { std::cerr << "\033[91mSignature is outdated\033[0m\n"; return false; }
@@ -447,7 +448,7 @@ void neroshop::Node::persist_routing_table(const std::string& address, int port)
     db::Sqlite3 * database = neroshop::get_database();
     if(!database) throw std::runtime_error("database is NULL");
     
-    if(!database->table_exists("routing_table")) { // or simply "nodes"
+    if(!database->table_exists("routing_table")) { 
         database->execute("CREATE TABLE routing_table("
         "ip_address TEXT, port INTEGER, UNIQUE(ip_address, port));");
     }
@@ -683,17 +684,16 @@ int neroshop::Node::send_put(const std::string& key, const std::string& value) {
     for(auto const& node : closest_nodes) {
         std::string transaction_id = msgpack::generate_transaction_id();
         query_object["tid"] = transaction_id; // tid should be unique for each put message
-        std::vector<uint8_t> put_message = nlohmann::json::to_msgpack(query_object);
+        std::vector<uint8_t> query_put = nlohmann::json::to_msgpack(query_object);
     
         std::string node_ip = (node->get_ip_address() == this->public_ip_address) ? "127.0.0.1" : node->get_ip_address();
         int node_port = node->get_port();
         std::cout << "Sending put request to \033[36m" << node_ip << ":" << node_port << "\033[0m\n";
-        auto receive_buffer = send_query(node_ip, node_port, put_message);
+        auto receive_buffer = send_query(node_ip, node_port, query_put);
         // Process the response here
-        nlohmann::json put_response_message;
+        nlohmann::json response_put;
         try {
-            put_response_message = nlohmann::json::from_msgpack(receive_buffer);
-            add_provider(key, { node->get_ip_address(), node_port });
+            response_put = nlohmann::json::from_msgpack(receive_buffer);
         } catch (const std::exception& e) {
             std::cerr << "Node \033[91m" << node_ip << ":" << node_port << "\033[0m did not respond" << std::endl;
             node->check_counter += 1;
@@ -703,7 +703,10 @@ int neroshop::Node::send_put(const std::string& key, const std::string& value) {
         // Add the node to the sent_nodes set
         sent_nodes.insert(node);
         // Show response and increase count
-        std::cout << ((put_response_message.contains("error")) ? ("\033[91m") : ("\033[32m")) << put_response_message.dump() << "\033[0m\n";
+        std::cout << ((response_put.contains("error")) ? ("\033[91m") : ("\033[32m")) << response_put.dump() << "\033[0m\n";
+        if(response_put.contains("response")) {
+            add_provider(key, { node->get_ip_address(), node_port });
+        }
         nodes_sent_count++;
     }
     //-----------------------------------------------
@@ -739,24 +742,26 @@ int neroshop::Node::send_put(const std::string& key, const std::string& value) {
             for (const auto& replacement_node : replacement_nodes) {
                 std::string transaction_id = msgpack::generate_transaction_id();
                 query_object["tid"] = transaction_id;
-                std::vector<uint8_t> put_message = nlohmann::json::to_msgpack(query_object);
+                std::vector<uint8_t> query_put = nlohmann::json::to_msgpack(query_object);
 
                 std::string node_ip = (replacement_node->get_ip_address() == this->public_ip_address) ? "127.0.0.1" : replacement_node->get_ip_address();
                 int node_port = replacement_node->get_port();
                 std::cout << "Sending put request to \033[36m" << node_ip << ":" << node_port << "\033[0m\n";
-                auto receive_buffer = send_query(node_ip, node_port, put_message);
+                auto receive_buffer = send_query(node_ip, node_port, query_put);
                 // Process the response and update the nodes_sent_count and sent_nodes accordingly
-                nlohmann::json put_response_message;
+                nlohmann::json response_put;
                 try {
-                    put_response_message = nlohmann::json::from_msgpack(receive_buffer);
-                    add_provider(key, { replacement_node->get_ip_address(), node_port });
+                    response_put = nlohmann::json::from_msgpack(receive_buffer);
                 } catch (const std::exception& e) {
                     std::cerr << "Node \033[91m" << node_ip << ":" << node_port << "\033[0m did not respond" << std::endl;
                     replacement_node->check_counter += 1;
                     continue; // Continue with the next replacement node if this one fails
                 }   
                 // Show response and increase count
-                std::cout << ((put_response_message.contains("error")) ? ("\033[91m") : ("\033[32m")) << put_response_message.dump() << "\033[0m\n";
+                std::cout << ((response_put.contains("error")) ? ("\033[91m") : ("\033[32m")) << response_put.dump() << "\033[0m\n";
+                if(response_put.contains("response")) {
+                    add_provider(key, { replacement_node->get_ip_address(), node_port });
+                }
                 nodes_sent_count++;
             }
         }
@@ -816,7 +821,7 @@ std::string neroshop::Node::send_get(const std::string& key) {
             }
             if(response_get.contains("response") && response_get["response"].contains("value")) {
                 std::string retrieved_value = response_get["response"]["value"].get<std::string>();
-                if (!retrieved_value.empty()) { 
+                if (validate(key, retrieved_value)) { 
                     return retrieved_value;
                 }
             }
@@ -835,29 +840,29 @@ std::string neroshop::Node::send_get(const std::string& key) {
         
         std::string transaction_id = msgpack::generate_transaction_id();
         query_object["tid"] = transaction_id; // tid should be unique for each get message
-        std::vector<uint8_t> get_message = nlohmann::json::to_msgpack(query_object);
+        std::vector<uint8_t> query_get = nlohmann::json::to_msgpack(query_object);
     
         std::string node_ip = (node->get_ip_address() == this->public_ip_address) ? "127.0.0.1" : node->get_ip_address();
         int node_port = node->get_port();
         std::cout << "Sending get request to \033[36m" << node_ip << ":" << node_port << "\033[0m\n";
-        auto receive_buffer = send_query(node_ip, node_port, get_message, 2);
+        auto receive_buffer = send_query(node_ip, node_port, query_get, 2);
         // Process the response here
-        nlohmann::json get_response_message;
+        nlohmann::json response_get;
         try {
-            get_response_message = nlohmann::json::from_msgpack(receive_buffer);
+            response_get = nlohmann::json::from_msgpack(receive_buffer);
         } catch (const std::exception& e) {
             std::cerr << "Node \033[91m" << node_ip << ":" << node_port << "\033[0m did not respond" << std::endl;
             node->check_counter += 1;
             continue; // Continue with the next closest node if this one fails
         }   
         // Show response and handle the retrieved value
-        std::cout << ((get_response_message.contains("error")) ? ("\033[91m") : ("\033[32m")) << get_response_message.dump() << "\033[0m\n";
-        if(get_response_message.contains("error")) {
+        std::cout << ((response_get.contains("error")) ? ("\033[91m") : ("\033[32m")) << response_get.dump() << "\033[0m\n";
+        if(response_get.contains("error")) {
             continue; // Skip if error
         }
-        if (get_response_message.contains("response") && get_response_message["response"].contains("value")) {
-            std::string retrieved_value = get_response_message["response"]["value"].get<std::string>();
-            if (!retrieved_value.empty()) {
+        if (response_get.contains("response") && response_get["response"].contains("value")) {
+            std::string retrieved_value = response_get["response"]["value"].get<std::string>();
+            if (validate(key, retrieved_value)) {
                 value = retrieved_value;
                 break; // Exit the loop if a value is found
             }
@@ -939,7 +944,8 @@ void neroshop::Node::send_map(const std::string& address, int port) {
         // Show response
         std::cout << ((map_response_message.contains("error")) ? ("\033[91m") : ("\033[92m")) << map_response_message.dump() << "\033[0m\n";
     }
-    if(map_sent && !data.empty()) std::cout << "\033[93mIndexing data distributed to " << address << ":" << port << "\033[0m\n";
+    
+    if(map_sent && !data.empty()) { std::cout << "Sent map request to \033[36m" << address << ":" << port << "\033[0m\n"; }
 }
 
 std::vector<neroshop::Peer> neroshop::Node::send_get_providers(const std::string& data_hash) {
@@ -952,43 +958,47 @@ std::vector<neroshop::Peer> neroshop::Node::send_get_providers(const std::string
     query_object["args"]["data_hash"] = data_hash;
     query_object["version"] = std::string(NEROSHOP_DHT_VERSION);
     //-----------------------------------------------
-    for (auto& bucket : routing_table->buckets) {
-        for (auto& node : bucket.second) {
-            if (node.get() == nullptr) continue;
-            if (node->get_status() != NodeStatus::Active) continue;
-            // Construct message with a unique tid
-            std::string transaction_id = msgpack::generate_transaction_id();
-            query_object["tid"] = transaction_id;
-            auto get_providers_query = nlohmann::json::to_msgpack(query_object);
-            // Send get_providers query message to each node
-            std::string node_ip = (node->get_ip_address() == this->public_ip_address) ? "127.0.0.1" : node->get_ip_address();
-            int node_port = node->get_port();
-            std::cout << "Sending get_providers request to \033[36m" << node_ip << ":" << node_port << "\033[0m\n";
-            auto receive_buffer = send_query(node_ip, node_port, get_providers_query);
-            // Process the response here
-            nlohmann::json get_providers_response;
-            try {
-                get_providers_response = nlohmann::json::from_msgpack(receive_buffer);
-            } catch (const std::exception& e) {
-                std::cerr << "Node \033[91m" << node_ip << ":" << node_port << "\033[0m did not respond" << std::endl;
-                node->check_counter += 1;
-                continue; // Continue with the next node if this one fails
-            }
-            // Show response and handle the retrieved value
-            std::cout << ((get_providers_response.contains("error")) ? ("\033[91m") : ("\033[32m")) << get_providers_response.dump() << "\033[0m\n";
-            if(get_providers_response.contains("error")) {
-                continue; // Skip if error
-            }
-            if (get_providers_response.contains("response") && get_providers_response["response"].contains("peers")) {
-                for (auto& node_json : get_providers_response["response"]["peers"]) {
-                    if (node_json.contains("ip_address") && node_json.contains("port")) {
-                        std::string ip_address = node_json["ip_address"];
-                        uint16_t port = node_json["port"];
-                        // Check if the IP-port pair is already added
-                        if (unique_peers.insert({ip_address, port}).second) {
-                            Peer provider = Peer{ip_address, port};
-                            peers.push_back(provider);
-                        }
+    std::vector<Node *> closest_nodes = find_node(data_hash, NEROSHOP_DHT_REPLICATION_FACTOR); // 5=replication factor
+    
+    std::random_device rd;
+    std::mt19937 rng(rd());
+    std::shuffle(closest_nodes.begin(), closest_nodes.end(), rng);
+    
+    for (auto const& node : closest_nodes) {
+        if (node == nullptr) continue;
+        if (node->get_status() != NodeStatus::Active) continue;
+        // Construct message with a unique tid
+        std::string transaction_id = msgpack::generate_transaction_id();
+        query_object["tid"] = transaction_id;
+        auto get_providers_query = nlohmann::json::to_msgpack(query_object);
+        // Send get_providers query message to each node
+        std::string node_ip = (node->get_ip_address() == this->public_ip_address) ? "127.0.0.1" : node->get_ip_address();
+        int node_port = node->get_port();
+        std::cout << "Sending get_providers request to \033[36m" << node_ip << ":" << node_port << "\033[0m\n";
+        auto receive_buffer = send_query(node_ip, node_port, get_providers_query);
+        // Process the response here
+        nlohmann::json get_providers_response;
+        try {
+            get_providers_response = nlohmann::json::from_msgpack(receive_buffer);
+        } catch (const std::exception& e) {
+            std::cerr << "Node \033[91m" << node_ip << ":" << node_port << "\033[0m did not respond" << std::endl;
+            node->check_counter += 1;
+            continue; // Continue with the next node if this one fails
+        }
+        // Show response and handle the retrieved value
+        std::cout << ((get_providers_response.contains("error")) ? ("\033[91m") : ("\033[32m")) << get_providers_response.dump() << "\033[0m\n";
+        if(get_providers_response.contains("error")) {
+            continue; // Skip if error
+        }
+        if (get_providers_response.contains("response") && get_providers_response["response"].contains("peers")) {
+            for (auto& node_json : get_providers_response["response"]["peers"]) {
+                if (node_json.contains("ip_address") && node_json.contains("port")) {
+                    std::string ip_address = node_json["ip_address"];
+                    uint16_t port = node_json["port"];
+                    // Check if the IP-port pair is already added
+                    if (unique_peers.insert({ip_address, port}).second) {
+                        Peer provider = Peer{ip_address, port};
+                        peers.push_back(provider);
                     }
                 }
             }
@@ -1001,13 +1011,11 @@ std::vector<neroshop::Peer> neroshop::Node::send_get_providers(const std::string
 //-----------------------------------------------------------------------------
 
 void neroshop::Node::republish() {
-    for (const auto& pair : data) {
-        const std::string& key = pair.first;
-        const std::string& value = pair.second;
-
+    for (const auto& [key, value] : data) {
         send_put(key, value);
     }
-    if(!data.empty()) std::cout << "\033[93mData republished\033[0m\n";
+    
+    if(!data.empty()) { std::cout << "\033[93mData republished\033[0m\n"; }
 }
 
 //-----------------------------------------------------------------------------
@@ -1137,6 +1145,60 @@ bool neroshop::Node::verify(const std::string& value) const {
 
 //-----------------------------------------------------------------------------
 
+void neroshop::Node::expire(const std::string& key, const std::string& value) {
+    db::Sqlite3 * database = neroshop::get_database();
+    
+    nlohmann::json json;
+    try {
+        json = nlohmann::json::parse(value);
+    } catch (const nlohmann::json::parse_error& e) {
+        std::cerr << "JSON parsing error: " << e.what() << std::endl;
+        return; // Invalid value, exit function
+    }
+    
+    if(json.contains("expiration_date")) {
+        if(!json["expiration_date"].is_string()) { 
+            if(remove(key) == true) {
+                int error = database->execute_params("DELETE FROM mappings WHERE key = ?1", { key });
+            }
+            return; // Invalid expiration_date, exit function
+        }
+        std::string expiration_date = json["expiration_date"].get<std::string>();
+        if(neroshop_timestamp::is_expired(expiration_date)) {
+            // Remove the data from hash table if it was previously stored
+            if(has_key(key)) {
+                std::cout << "Data with key (" << key << ") has expired. Removing from hash table ...\n";
+                if(remove(key) == true) {
+                    int error = database->execute_params("DELETE FROM mappings WHERE key = ?1", { key });
+                }
+            }
+        }
+    }
+}
+
+//-----------------------------------------------------------------------------
+
+void neroshop::Node::periodic_purge() {
+    while (true) {
+        {
+            // Acquire the lock before accessing the data
+            std::shared_lock<std::shared_mutex> read_lock(node_read_mutex);
+    
+            if(!data.empty()) { std::cout << "\033[34;1mPerforming periodic data removal\033[0m\n"; }
+            
+            for (const auto& [key, value] : data) {
+                ////expire(key, value);
+            }
+            
+            // read_lock is released here
+        }
+        
+        std::this_thread::sleep_for(std::chrono::seconds(NEROSHOP_DHT_DATA_PURGE_INTERVAL));
+    }
+}
+
+//-----------------------------------------------------------------------------
+
 void neroshop::Node::periodic_refresh() {
     while (true) {
         {
@@ -1145,9 +1207,7 @@ void neroshop::Node::periodic_refresh() {
             
             // Perform periodic republishing here
             // This code will run concurrently with the listen/receive loop
-            if(!data.empty()) {
-                std::cout << "\033[34;1mPerforming periodic refresh\033[0m\n";
-            }
+            if(!data.empty()) { std::cout << "\033[34;1mPerforming periodic data propagation\033[0m\n"; }
             
             republish();
             
@@ -1155,7 +1215,7 @@ void neroshop::Node::periodic_refresh() {
         }
         
         // Sleep for a specified interval
-        std::this_thread::sleep_for(std::chrono::hours(NEROSHOP_DHT_REPUBLISH_INTERVAL));
+        std::this_thread::sleep_for(std::chrono::seconds(NEROSHOP_DHT_DATA_REPUBLISH_INTERVAL));
     }
 }
 
@@ -1178,7 +1238,7 @@ void neroshop::Node::periodic_check() {
                 // Skip the bootstrap nodes from the periodic checks
                 if (node->is_hardcoded()) continue;
                 
-                std::cout << "Performing periodic check on \033[34m" << node_ip << ":" << node_port << "\033[0m\n";
+                std::cout << "Performing periodic node health check on \033[34m" << node_ip << ":" << node_port << "\033[0m\n";
                 
                 // Perform the liveness check on the current node
                 bool pinged = ping(node_ip, node_port);
@@ -1204,7 +1264,7 @@ void neroshop::Node::periodic_check() {
         // Clear the vector for the next iteration
         dead_node_ids.clear();*/
         // Sleep for a specified interval
-        std::this_thread::sleep_for(std::chrono::seconds(NEROSHOP_DHT_PERIODIC_CHECK_INTERVAL));
+        std::this_thread::sleep_for(std::chrono::seconds(NEROSHOP_DHT_NODE_HEALTH_CHECK_INTERVAL));
     }
 }
 
@@ -1258,8 +1318,8 @@ void neroshop::Node::on_ping(const std::vector<uint8_t>& buffer, const struct so
             std::string sender_ip = inet_ntoa(client_addr.sin_addr);
             uint16_t sender_port = (message["args"].contains("port")) ? (uint16_t)message["args"]["port"] : NEROSHOP_P2P_DEFAULT_PORT;
             
-            bool node_exists = routing_table->has_node((sender_ip == "127.0.0.1") ? this->public_ip_address : sender_ip, sender_port);
-            if (!node_exists) {
+            bool has_node = routing_table->has_node((sender_ip == "127.0.0.1") ? this->public_ip_address : sender_ip, sender_port);
+            if (!has_node) {
                 auto node_that_pinged = std::make_unique<Node>((sender_ip == "127.0.0.1") ? this->public_ip_address : sender_ip, sender_port, false);
                 if(!node_that_pinged->is_hardcoded()) { // To prevent the seed node from being stored in the routing table
                     routing_table->add_node(std::move(node_that_pinged)); // Already has internal write_lock
@@ -1285,8 +1345,12 @@ void neroshop::Node::on_map(const std::vector<uint8_t>& buffer, const struct soc
             uint16_t sender_port = (message["args"].contains("port")) ? (uint16_t)message["args"]["port"] : NEROSHOP_P2P_DEFAULT_PORT;
             std::string data_hash = message["args"]["key"].get<std::string>();
             
-            // Save this peer as the provider of this data hash
-            add_provider(data_hash, Peer{ (sender_ip == "127.0.0.1") ? this->public_ip_address : sender_ip, sender_port });
+            // Validate node id
+            std::string calculated_node_id = generate_node_id((sender_ip == "127.0.0.1") ? this->public_ip_address : sender_ip, sender_port);
+            if(sender_id == calculated_node_id) {
+                // Save this peer as the provider of this data hash
+                add_provider(data_hash, Peer{ (sender_ip == "127.0.0.1") ? this->public_ip_address : sender_ip, sender_port });
+            }
         }
     }
 }
@@ -1342,6 +1406,7 @@ void neroshop::Node::run() {
     // Start a separate thread for periodic checks and republishing
     std::thread periodic_check_thread([this]() { periodic_check(); });
     std::thread periodic_refresh_thread([this]() { periodic_refresh(); });
+    std::thread periodic_purge_thread([this]() { periodic_purge(); });
     
     while (true) {
         std::vector<uint8_t> buffer(NEROSHOP_RECV_BUFFER_SIZE);
@@ -1390,6 +1455,7 @@ void neroshop::Node::run() {
     // Wait for the periodic threads to finish
     periodic_check_thread.join();
     periodic_refresh_thread.join();
+    periodic_purge_thread.join();
 }
 
 // This uses less CPU
@@ -1397,6 +1463,7 @@ void neroshop::Node::run_optimized() {
     // Start a separate thread for periodic checks and republishing
     std::thread periodic_check_thread([this]() { periodic_check(); });
     std::thread periodic_refresh_thread([this]() { periodic_refresh(); });
+    std::thread periodic_purge_thread([this]() { periodic_purge(); });
 
     while (true) {
         fd_set read_set;
@@ -1468,6 +1535,7 @@ void neroshop::Node::run_optimized() {
     // Wait for the periodic threads to finish
     periodic_check_thread.join();    
     periodic_refresh_thread.join();
+    periodic_purge_thread.join();
 }
 
 //-----------------------------------------------------------------------------
@@ -1641,7 +1709,7 @@ bool neroshop::Node::is_hardcoded() const {
 }
 
 bool neroshop::Node::is_bootstrap_node() const {
-    return (bootstrap == true);// || is_hardcoded();
+    return (bootstrap == true) || is_hardcoded();
 }
 
 bool neroshop::Node::is_dead() const {
