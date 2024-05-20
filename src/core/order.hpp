@@ -55,7 +55,7 @@ enum class PaymentMethod {
 
 // payment coins (cryptocurrencies used for payments)
 enum class PaymentCoin { 
-    None = -1, // intended for cash and card payments
+    None = -1, // intended for cash, card and precious metal payments
     Monero,
     Wownero,
     //Bitcoin,

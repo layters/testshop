@@ -197,7 +197,6 @@ neroshop::Node::~Node() {
 //-----------------------------------------------------------------------------
 
 std::string neroshop::Node::generate_node_id(const std::string& address, int port) {
-    // TODO: increase randomness by using a hardware identifier while maintaining a stable node id
     std::string node_info = address + ":" + std::to_string(port);
     std::string hash = neroshop_crypto::sha3_256(node_info);
     return hash.substr(0, NUM_BITS / 4);
@@ -620,14 +619,14 @@ bool neroshop::Node::send_ping(const std::string& address, int port) {
     return true;
 }
 
-std::vector<std::unique_ptr<neroshop::Node>> neroshop::Node::send_find_node(const std::string& target_id, const std::string& address, uint16_t port) {
+std::vector<std::unique_ptr<neroshop::Node>> neroshop::Node::send_find_node(const std::string& target, const std::string& address, uint16_t port) {
     std::string transaction_id = msgpack::generate_transaction_id();
 
     nlohmann::json query_object;
     query_object["tid"] = transaction_id;
     query_object["query"] = "find_node";
     query_object["args"]["id"] = this->id;
-    query_object["args"]["target"] = target_id;
+    query_object["args"]["target"] = target;
     query_object["version"] = std::string(NEROSHOP_DHT_VERSION);
     
     auto find_node_message = nlohmann::json::to_msgpack(query_object);
@@ -828,6 +827,8 @@ std::string neroshop::Node::send_get(const std::string& key) {
         }
     }
     //-----------------------------------------------
+    // TODO: check our cache for the key-value pair
+    //-----------------------------------------------
     std::vector<Node *> closest_nodes = find_node(key, NEROSHOP_DHT_MAX_CLOSEST_NODES);
     
     std::random_device rd;
@@ -958,7 +959,7 @@ std::vector<neroshop::Peer> neroshop::Node::send_get_providers(const std::string
     query_object["args"]["data_hash"] = data_hash;
     query_object["version"] = std::string(NEROSHOP_DHT_VERSION);
     //-----------------------------------------------
-    std::vector<Node *> closest_nodes = find_node(data_hash, NEROSHOP_DHT_REPLICATION_FACTOR); // 5=replication factor
+    std::vector<Node *> closest_nodes = find_node(data_hash, NEROSHOP_DHT_MAX_CLOSEST_NODES);
     
     std::random_device rd;
     std::mt19937 rng(rd());
@@ -1361,7 +1362,7 @@ void neroshop::Node::on_map(const std::vector<uint8_t>& buffer, const struct soc
     for (const auto& dead_node_id : node_ids) {
         //std::cout << "Processing dead node ID: " << dead_node_id << std::endl;
 
-        auto closest_nodes = find_node(dead_node_id, NEROSHOP_DHT_REPLICATION_FACTOR);
+        auto closest_nodes = find_node(dead_node_id, NEROSHOP_DHT_MAX_CLOSEST_NODES);
         
         for (auto& routing_table_node : closest_nodes) {
             if (routing_table_node == nullptr) continue;
