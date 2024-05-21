@@ -11,7 +11,7 @@
 
 // Initialize the routing table with a list of nodes
 neroshop::RoutingTable::RoutingTable(const std::vector<Node *>& nodes) : nodes(nodes) {
-    // A single bucket can store up to NEROSHOP_DHT_MAX_BUCKET_SIZE nodes
+    // A single bucket can store up to NEROSHOP_DHT_NODES_PER_BUCKET nodes
     for (int i = 0; i < NEROSHOP_DHT_ROUTING_TABLE_BUCKETS; ++i) {
         buckets.emplace(i, std::vector<std::unique_ptr<Node>>{});
     }//std::cout << "Buckets size: " << buckets.size() << "\n";
@@ -68,7 +68,7 @@ bool neroshop::RoutingTable::add_node(std::unique_ptr<Node> node) {//(const Node
     // Check if bucket splitting is required and perform the split
     // EDIT: The splitting is totally wrong and doesn't work. Thanks a lot ChatGPT ... NOT!
     // Also, this function sometimes causes a segment fault when adding a node to the routing table
-    /*if (bucket.size() > NEROSHOP_DHT_MAX_BUCKET_SIZE) { // buckets have a max size of NEROSHOP_DHT_MAX_BUCKET_SIZE nodes
+    /*if (bucket.size() > NEROSHOP_DHT_NODES_PER_BUCKET) { // buckets have a max size of NEROSHOP_DHT_NODES_PER_BUCKET nodes
         bool split_success = split_bucket(bucket_index);
         if (!split_success) {
             std::cerr << "Error: unable to split bucket " << bucket_index << ".\n";
@@ -316,7 +316,7 @@ bool neroshop::RoutingTable::is_bucket_full(int bucket_index) const {
     }
 
     const std::vector<std::unique_ptr<Node>>& bucket = buckets[bucket_index];
-    return bucket.size() >= NEROSHOP_DHT_MAX_BUCKET_SIZE;
+    return bucket.size() >= NEROSHOP_DHT_NODES_PER_BUCKET;
 }
 
 bool neroshop::RoutingTable::are_buckets_full() const {

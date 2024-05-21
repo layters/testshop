@@ -53,7 +53,7 @@ neroshop::Node::Node(const std::string& address, int port, bool local) : sockfd(
 
         // set a timeout of TIMEOUT_VALUE seconds for recvfrom
         struct timeval tv;
-        tv.tv_sec = NEROSHOP_DHT_QUERY_RECV_TIMEOUT;  // timeout in seconds
+        tv.tv_sec = NEROSHOP_DHT_RECV_TIMEOUT;  // timeout in seconds
         tv.tv_usec = 0; // timeout in microseconds
         if (setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO, (const char*)&tv, sizeof(tv)) < 0) {
             std::cerr << "Error setting socket options" << std::endl;
@@ -591,7 +591,7 @@ bool neroshop::Node::send_ping(const std::string& address, int port) {
     
     auto ping_message = nlohmann::json::to_msgpack(query_object);
     //--------------------------------------------
-    auto receive_buffer = send_query(address, port, ping_message, NEROSHOP_DHT_PING_MESSAGE_TIMEOUT);
+    auto receive_buffer = send_query(address, port, ping_message, NEROSHOP_DHT_PING_TIMEOUT);
     //--------------------------------------------
     // Parse the pong message and extract the transaction ID and response fields
     nlohmann::json pong_message;
@@ -1194,7 +1194,7 @@ void neroshop::Node::periodic_purge() {
             // read_lock is released here
         }
         
-        std::this_thread::sleep_for(std::chrono::seconds(NEROSHOP_DHT_DATA_PURGE_INTERVAL));
+        std::this_thread::sleep_for(std::chrono::seconds(NEROSHOP_DHT_DATA_REMOVAL_INTERVAL));
     }
 }
 
