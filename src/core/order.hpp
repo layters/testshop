@@ -50,12 +50,13 @@ enum class PaymentMethod {
     Cash, 
     Card, // can be either credit, debit, or pre-paid
     Crypto, 
+    DigitalApp, // can be cashapp, paypal, etc.
     Metal, // can be any precious metal
 };
 
 // payment coins (cryptocurrencies used for payments)
 enum class PaymentCoin { 
-    None = -1, // intended for cash and card payments
+    None = -1, // intended for non-crypto payments
     Monero,
     Wownero,
     //Bitcoin,
