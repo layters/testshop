@@ -681,6 +681,8 @@ int neroshop::Node::send_put(const std::string& key, const std::string& value) {
     std::unordered_set<Node*> failed_nodes;
     // Send put message to the closest nodes
     for(auto const& node : closest_nodes) {
+        if (node == nullptr) continue;
+        
         std::string transaction_id = msgpack::generate_transaction_id();
         query_object["tid"] = transaction_id; // tid should be unique for each put message
         std::vector<uint8_t> query_put = nlohmann::json::to_msgpack(query_object);
@@ -841,6 +843,7 @@ std::string neroshop::Node::send_get(const std::string& key) {
     
     // Third option is to send get request to the nodes in our routing table that are closest to the key
     for(auto const& node : closest_nodes) {
+        if (node == nullptr) continue;
         if (node->get_status() != NodeStatus::Active) { continue; } // ignore idle nodes
         
         std::string transaction_id = msgpack::generate_transaction_id();
@@ -895,6 +898,8 @@ void neroshop::Node::send_remove(const std::string& key) {
     //-----------------------------------------------
     // Send remove query message to the closest nodes
     for(auto const& node : closest_nodes) {
+        if (node == nullptr) continue;
+        
         std::string transaction_id = msgpack::generate_transaction_id();
         query_object["tid"] = transaction_id; // tid should be unique for each query
         std::vector<uint8_t> remove_query = nlohmann::json::to_msgpack(query_object);
