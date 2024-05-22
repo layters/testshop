@@ -774,7 +774,7 @@ int neroshop::Node::send_store(const std::string& key, const std::string& value)
 }
 
 std::string neroshop::Node::send_get(const std::string& key) {
-    std::string value;
+    std::string value = "";
 
     nlohmann::json query_object;
     query_object["query"] = "get";
@@ -784,7 +784,13 @@ std::string neroshop::Node::send_get(const std::string& key) {
     
     //-----------------------------------------------
     // First, check to see if we have the key before performing any other operations
-    if(has_key(key)) { return find_value(key); }
+    if(has_key(key)) { 
+        value = get(key);
+        if(validate(key, value)) { return value; }
+    }
+    
+    value = get_cached(key);
+    if(validate(key, value)) { return value; }
     //-----------------------------------------------
     // Second option is to check our providers to see if any holds the key we are looking for
     std::vector<neroshop::Peer> my_providers = get_providers(key);
@@ -819,15 +825,13 @@ std::string neroshop::Node::send_get(const std::string& key) {
                 continue; 
             }
             if(response_get.contains("response") && response_get["response"].contains("value")) {
-                std::string retrieved_value = response_get["response"]["value"].get<std::string>();
-                if (validate(key, retrieved_value)) { 
-                    return retrieved_value;
+                value = response_get["response"]["value"].get<std::string>();
+                if (validate(key, value)) { 
+                    return value;
                 }
             }
         }
     }
-    //-----------------------------------------------
-    // TODO: check our cache for the key-value pair
     //-----------------------------------------------
     std::vector<Node *> closest_nodes = find_node(key, NEROSHOP_DHT_MAX_CLOSEST_NODES);
     
@@ -862,9 +866,8 @@ std::string neroshop::Node::send_get(const std::string& key) {
             continue; // Skip if error
         }
         if (response_get.contains("response") && response_get["response"].contains("value")) {
-            std::string retrieved_value = response_get["response"]["value"].get<std::string>();
-            if (validate(key, retrieved_value)) {
-                value = retrieved_value;
+            value = response_get["response"]["value"].get<std::string>();
+            if (validate(key, value)) {
                 break; // Exit the loop if a value is found
             }
         }
@@ -1175,6 +1178,25 @@ void neroshop::Node::expire(const std::string& key, const std::string& value) {
             }
         }
     }
+}
+
+//-----------------------------------------------------------------------------
+
+void neroshop::Node::cache(const std::string& key, const std::string& value) {
+    db::Sqlite3 * database = neroshop::get_database();
+    
+    if(!database->table_exists("hash_table")) { 
+        database->execute("CREATE TABLE hash_table("
+        "key TEXT, value TEXT, UNIQUE(key));");
+    }
+    
+    bool key_found = database->get_integer_params("SELECT COUNT(*) FROM hash_table WHERE key = ?", { key });
+    if(key_found) {
+        int error = database->execute_params("UPDATE hash_table SET value = ?1 WHERE key = ?2", { value, key });
+        return;
+    }
+    
+    int error = database->execute_params("INSERT INTO hash_table (key, value) VALUES (?1, ?2);", { key, value });
 }
 
 //-----------------------------------------------------------------------------
@@ -1671,6 +1693,17 @@ std::vector<std::pair<std::string, std::string>> neroshop::Node::get_data() cons
 /*const std::unordered_map<std::string, std::string>& neroshop::Node::get_data() const {
     return data;
 }*/
+
+std::string neroshop::Node::get_cached(const std::string& key) {
+    db::Sqlite3 * database = neroshop::get_database();
+    if(!database) throw std::runtime_error("database is NULL");
+    if(!database->table_exists("hash_table")) {
+        return "";
+    }
+    
+    std::string value = database->get_text_params("SELECT value FROM hash_table WHERE key = ?1", { key });
+    return value;
+}
 
 //-----------------------------------------------------------------------------
 

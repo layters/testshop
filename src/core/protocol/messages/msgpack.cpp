@@ -277,6 +277,9 @@ std::vector<uint8_t> neroshop::msgpack::process(const std::vector<uint8_t>& requ
             
             // Map keys to search terms for efficient search operations
             node.map(key, value);
+            
+            // Store your local client's own data in our cache
+            node.cache(key, value);
         }
         
         // Return response or error
