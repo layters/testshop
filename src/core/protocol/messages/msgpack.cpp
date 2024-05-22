@@ -143,19 +143,8 @@ std::vector<uint8_t> neroshop::msgpack::process(const std::vector<uint8_t>& requ
         } else {
             // WARNING!!! THIS CODE BLOCKS THE GUI.
             // If node does not have the key, check the closest nodes to see if they have it
-            std::vector<Node*> closest_nodes = node.find_node(key, NEROSHOP_DHT_MAX_CLOSEST_NODES);
-
-            std::random_device rd;
-            std::mt19937 rng(rd());
-            std::shuffle(closest_nodes.begin(), closest_nodes.end(), rng);
-
             std::string closest_node_value;
-            for (auto const& closest_node : closest_nodes) {
-                closest_node_value = closest_node->send_get(key);
-                if (!closest_node_value.empty()) {
-                    break;
-                }
-            }
+            closest_node_value = node.send_get(key);
 
             if (!closest_node_value.empty()) {
                 response_object["version"] = std::string(NEROSHOP_DHT_VERSION);
