@@ -15,7 +15,7 @@
 #if defined(NEROSHOP_USE_QT)
 #include <QStandardPaths>
 #else
-#include "../src/core/tools/device.hpp"
+#include "core/tools/device.hpp"
 #endif
 
 #define NEROSHOP_IPC_DEFAULT_PORT 57740
@@ -24,40 +24,36 @@
 // This port will allow outside clients to interact with neroshop daemon RPC server
 #define NEROSHOP_RPC_DEFAULT_PORT 50882
 
-#define NEROSHOP_DAEMON_WAIT_TIME 20 // Measured in seconds
-
 #define NEROSHOP_LOOPBACK_ADDRESS            "127.0.0.1"
 #define NEROSHOP_ANY_ADDRESS                 "0.0.0.0"
 
 #define NEROSHOP_RECV_BUFFER_SIZE            4096//8192// no IP packet can be above 64000 (64 KB), not even with fragmentation, thus recv on an UDP socket can at most return 64 KB (and what is not returned is discarded for the current packet!)
 
-#define NEROSHOP_DHT_REPLICATION_FACTOR      10 // 10 to 20 (or even higher) // Usually 3 or 5 but a higher number would improve fault tolerant, mitigating the risk of data loss even if multiple nodes go offline simultaneously. It also helps distribute the load across more nodes, potentially improving read performance by allowing concurrent access from multiple replicas.
+#define NEROSHOP_DHT_REPLICATION_FACTOR      3 // 10 to 20 (or even higher) // Usually 3 or 5 but a higher number would improve fault tolerant, mitigating the risk of data loss even if multiple nodes go offline simultaneously. It also helps distribute the load across more nodes, potentially improving read performance by allowing concurrent access from multiple replicas.
 #define NEROSHOP_DHT_MAX_CLOSEST_NODES       20 // 50 to 100 (or even higher)
-#define NEROSHOP_DHT_QUERY_RECV_TIMEOUT      5 // A reasonable timeout value for a DHT node could be between 5 to 30 seconds.
-#define NEROSHOP_DHT_PING_MESSAGE_TIMEOUT    2
-#define NEROSHOP_DHT_ROUTING_TABLE_BUCKETS   256 // recommended to use a number of buckets that is equal to the number of bits in the node id (in this case, sha-3-256 so 256 bits)
-#define NEROSHOP_DHT_MAX_BUCKET_SIZE         20 // Each bucket should hold up to 12-25 or 25-50 nodes
-#define NEROSHOP_DHT_MAX_NODES_PER_BUCKET    NEROSHOP_DHT_MAX_BUCKET_SIZE
-#define NEROSHOP_DHT_MAX_ROUTING_TABLE_NODES NEROSHOP_DHT_ROUTING_TABLE_BUCKETS * NEROSHOP_DHT_MAX_BUCKET_SIZE
+#define NEROSHOP_DHT_RECV_TIMEOUT            5 // A reasonable query recv timeout value for a DHT node could be between 5 to 30 seconds.
+#define NEROSHOP_DHT_PING_TIMEOUT            2
+#define NEROSHOP_DHT_ROUTING_TABLE_BUCKETS   256 // Recommended to use a number of buckets that is equal to the number of bits in the node id (in this case, sha-3-256 so 256 bits)
+#define NEROSHOP_DHT_NODES_PER_BUCKET        20 // Each bucket should hold up to 20 nodes
+#define NEROSHOP_DHT_MAX_ROUTING_TABLE_NODES NEROSHOP_DHT_ROUTING_TABLE_BUCKETS * NEROSHOP_DHT_NODES_PER_BUCKET // = 5120
 #define NEROSHOP_DHT_MAX_HEALTH_CHECKS       3 // Maximum number of consecutive failed checks before marking the node as dead
-#define NEROSHOP_DHT_NODE_HEALTH_CHECK_INTERVAL   60 // Number of seconds between each periodic health check
-#define NEROSHOP_DHT_DATA_REPUBLISH_INTERVAL      3600 // Number of seconds between each periodic refresh/republishing
-#define NEROSHOP_DHT_DATA_PURGE_INTERVAL          1800 // Number of seconds between the purge of all expired data
-#define NEROSHOP_DHT_MAX_SEARCHES                 3
+#define NEROSHOP_DHT_NODE_HEALTH_CHECK_INTERVAL 300 // Number of seconds between each node health check
+#define NEROSHOP_DHT_DATA_REPUBLISH_INTERVAL    3600 // Number of seconds between each republishing of data
+#define NEROSHOP_DHT_DATA_REMOVAL_INTERVAL      1800 // Number of seconds between each removal of all expired data
 
 #define NEROSHOP_MAX_SEARCH_RESULTS          1000
 
-#define NEROSHOP_PUBLIC_KEY_FILENAME              "<user_id>.pub"
 #define NEROSHOP_PRIVATE_KEY_FILENAME             "<user_id>.key"
-#define NEROSHOP_OPENSSL_PUBLIC_KEY_FILENAME      "<user_id>.pem"
+#define NEROSHOP_PUBLIC_KEY_FILENAME              "<user_id>.pub"
 #define NEROSHOP_OPENSSL_PRIVATE_KEY_FILENAME     "<user_id>.pem"
+#define NEROSHOP_OPENSSL_PUBLIC_KEY_FILENAME      "<user_id>_public.pem"
 #define NEROSHOP_PGP_PRIVATE_KEY_FILENAME         "<user_id>.pgp"
-#define NEROSHOP_PGP_PUBLIC_KEY_FILENAME          "<user_id>.pgp"
+#define NEROSHOP_PGP_PUBLIC_KEY_FILENAME          "<user_id>_public.pgp"
 #define NEROSHOP_PGP_ARMORED_PRIVATE_KEY_FILENAME "<user_id>.asc"
-#define NEROSHOP_PGP_ARMORED_PUBLIC_KEY_FILENAME  "<user_id>.asc"
+#define NEROSHOP_PGP_ARMORED_PUBLIC_KEY_FILENAME  "<user_id>_public.asc"
 
 #define NEROSHOP_RSA_DEFAULT_BIT_LENGTH 4096
-#define NEROSHOP_RSA_DEFAULT_BITS NEROSHOP_RSA_DEFAULT_BIT_LENGTH
+#define NEROSHOP_RSA_DEFAULT_BITS       NEROSHOP_RSA_DEFAULT_BIT_LENGTH
 
 #define NEROSHOP_APPLICATION_NAME       "neroshop"
 #define NEROSHOP_DAEMON_CONFIG_FILENAME "daemon.ini"
@@ -116,6 +112,7 @@ namespace neroshop {
 
 const std::initializer_list<std::pair<std::string, uint16_t>> BOOTSTRAP_NODES = {
     {"node.neroshop.org", NEROSHOP_P2P_DEFAULT_PORT},
+    //{"127.0.0.1", NEROSHOP_P2P_DEFAULT_PORT}
 };
 
 }

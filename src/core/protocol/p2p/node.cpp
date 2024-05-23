@@ -53,7 +53,7 @@ neroshop::Node::Node(const std::string& address, int port, bool local) : sockfd(
 
         // set a timeout of TIMEOUT_VALUE seconds for recvfrom
         struct timeval tv;
-        tv.tv_sec = NEROSHOP_DHT_QUERY_RECV_TIMEOUT;  // timeout in seconds
+        tv.tv_sec = NEROSHOP_DHT_RECV_TIMEOUT;  // timeout in seconds
         tv.tv_usec = 0; // timeout in microseconds
         if (setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO, (const char*)&tv, sizeof(tv)) < 0) {
             std::cerr << "Error setting socket options" << std::endl;
@@ -591,7 +591,7 @@ bool neroshop::Node::send_ping(const std::string& address, int port) {
     
     auto ping_message = nlohmann::json::to_msgpack(query_object);
     //--------------------------------------------
-    auto receive_buffer = send_query(address, port, ping_message, NEROSHOP_DHT_PING_MESSAGE_TIMEOUT);
+    auto receive_buffer = send_query(address, port, ping_message, NEROSHOP_DHT_PING_TIMEOUT);
     //--------------------------------------------
     // Parse the pong message and extract the transaction ID and response fields
     nlohmann::json pong_message;
@@ -681,6 +681,8 @@ int neroshop::Node::send_put(const std::string& key, const std::string& value) {
     std::unordered_set<Node*> failed_nodes;
     // Send put message to the closest nodes
     for(auto const& node : closest_nodes) {
+        if (node == nullptr) continue;
+        
         std::string transaction_id = msgpack::generate_transaction_id();
         query_object["tid"] = transaction_id; // tid should be unique for each put message
         std::vector<uint8_t> query_put = nlohmann::json::to_msgpack(query_object);
@@ -774,7 +776,7 @@ int neroshop::Node::send_store(const std::string& key, const std::string& value)
 }
 
 std::string neroshop::Node::send_get(const std::string& key) {
-    std::string value;
+    std::string value = "";
 
     nlohmann::json query_object;
     query_object["query"] = "get";
@@ -784,7 +786,13 @@ std::string neroshop::Node::send_get(const std::string& key) {
     
     //-----------------------------------------------
     // First, check to see if we have the key before performing any other operations
-    if(has_key(key)) { return find_value(key); }
+    if(has_key(key)) { 
+        value = get(key);
+        if(validate(key, value)) { return value; }
+    }
+    
+    value = get_cached(key);
+    if(validate(key, value)) { return value; }
     //-----------------------------------------------
     // Second option is to check our providers to see if any holds the key we are looking for
     std::vector<neroshop::Peer> my_providers = get_providers(key);
@@ -819,15 +827,13 @@ std::string neroshop::Node::send_get(const std::string& key) {
                 continue; 
             }
             if(response_get.contains("response") && response_get["response"].contains("value")) {
-                std::string retrieved_value = response_get["response"]["value"].get<std::string>();
-                if (validate(key, retrieved_value)) { 
-                    return retrieved_value;
+                value = response_get["response"]["value"].get<std::string>();
+                if (validate(key, value)) { 
+                    return value;
                 }
             }
         }
     }
-    //-----------------------------------------------
-    // TODO: check our cache for the key-value pair
     //-----------------------------------------------
     std::vector<Node *> closest_nodes = find_node(key, NEROSHOP_DHT_MAX_CLOSEST_NODES);
     
@@ -837,6 +843,7 @@ std::string neroshop::Node::send_get(const std::string& key) {
     
     // Third option is to send get request to the nodes in our routing table that are closest to the key
     for(auto const& node : closest_nodes) {
+        if (node == nullptr) continue;
         if (node->get_status() != NodeStatus::Active) { continue; } // ignore idle nodes
         
         std::string transaction_id = msgpack::generate_transaction_id();
@@ -862,9 +869,8 @@ std::string neroshop::Node::send_get(const std::string& key) {
             continue; // Skip if error
         }
         if (response_get.contains("response") && response_get["response"].contains("value")) {
-            std::string retrieved_value = response_get["response"]["value"].get<std::string>();
-            if (validate(key, retrieved_value)) {
-                value = retrieved_value;
+            value = response_get["response"]["value"].get<std::string>();
+            if (validate(key, value)) {
                 break; // Exit the loop if a value is found
             }
         }
@@ -892,6 +898,8 @@ void neroshop::Node::send_remove(const std::string& key) {
     //-----------------------------------------------
     // Send remove query message to the closest nodes
     for(auto const& node : closest_nodes) {
+        if (node == nullptr) continue;
+        
         std::string transaction_id = msgpack::generate_transaction_id();
         query_object["tid"] = transaction_id; // tid should be unique for each query
         std::vector<uint8_t> remove_query = nlohmann::json::to_msgpack(query_object);
@@ -1179,6 +1187,25 @@ void neroshop::Node::expire(const std::string& key, const std::string& value) {
 
 //-----------------------------------------------------------------------------
 
+void neroshop::Node::cache(const std::string& key, const std::string& value) {
+    db::Sqlite3 * database = neroshop::get_database();
+    
+    if(!database->table_exists("hash_table")) { 
+        database->execute("CREATE TABLE hash_table("
+        "key TEXT, value TEXT, UNIQUE(key));");
+    }
+    
+    bool key_found = database->get_integer_params("SELECT COUNT(*) FROM hash_table WHERE key = ?", { key });
+    if(key_found) {
+        int error = database->execute_params("UPDATE hash_table SET value = ?1 WHERE key = ?2", { value, key });
+        return;
+    }
+    
+    int error = database->execute_params("INSERT INTO hash_table (key, value) VALUES (?1, ?2);", { key, value });
+}
+
+//-----------------------------------------------------------------------------
+
 void neroshop::Node::periodic_purge() {
     while (true) {
         {
@@ -1194,7 +1221,7 @@ void neroshop::Node::periodic_purge() {
             // read_lock is released here
         }
         
-        std::this_thread::sleep_for(std::chrono::seconds(NEROSHOP_DHT_DATA_PURGE_INTERVAL));
+        std::this_thread::sleep_for(std::chrono::seconds(NEROSHOP_DHT_DATA_REMOVAL_INTERVAL));
     }
 }
 
@@ -1671,6 +1698,17 @@ std::vector<std::pair<std::string, std::string>> neroshop::Node::get_data() cons
 /*const std::unordered_map<std::string, std::string>& neroshop::Node::get_data() const {
     return data;
 }*/
+
+std::string neroshop::Node::get_cached(const std::string& key) {
+    db::Sqlite3 * database = neroshop::get_database();
+    if(!database) throw std::runtime_error("database is NULL");
+    if(!database->table_exists("hash_table")) {
+        return "";
+    }
+    
+    std::string value = database->get_text_params("SELECT value FROM hash_table WHERE key = ?1", { key });
+    return value;
+}
 
 //-----------------------------------------------------------------------------
 

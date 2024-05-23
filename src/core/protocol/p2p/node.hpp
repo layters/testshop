@@ -90,6 +90,7 @@ public:
     void periodic_purge(); // Periodically purges expired data
     void republish();
     bool validate(const std::string& key, const std::string& value); // Validates data before storing it
+    void cache(const std::string& key, const std::string& value); // Cache data created by local client and data from get requests
     //---------------------------------------------------
     void persist_routing_table(const std::string& address, int port); // JIC bootstrap node faces outage and needs to recover
     void rebuild_routing_table(); // Re-builds routing table from data stored on disk
@@ -130,6 +131,7 @@ public:
     std::vector<std::string> get_keys() const;
     std::vector<std::pair<std::string, std::string>> get_data() const;
     ////Server * get_server() const;
+    std::string get_cached(const std::string& key);
     
     void set_bootstrap(bool bootstrap);
     
