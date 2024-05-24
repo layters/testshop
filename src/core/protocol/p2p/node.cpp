@@ -786,10 +786,7 @@ std::string neroshop::Node::send_get(const std::string& key) {
     
     //-----------------------------------------------
     // First, check to see if we have the key before performing any other operations
-    if(has_key(key)) { 
-        value = get(key);
-        if(validate(key, value)) { return value; }
-    }
+    if(has_key(key)) { return get(key); }
     
     value = get_cached(key);
     if(validate(key, value)) { return value; }
@@ -1035,7 +1032,6 @@ bool neroshop::Node::validate(const std::string& key, const std::string& value) 
         return false;
     }
     if(value.empty()) {
-        std::cerr << "Value is empty\n";
         return false;
     }
     
@@ -1193,6 +1189,7 @@ void neroshop::Node::cache(const std::string& key, const std::string& value) {
     if(!database->table_exists("hash_table")) { 
         database->execute("CREATE TABLE hash_table("
         "key TEXT, value TEXT, UNIQUE(key));");
+        database->execute("CREATE INDEX idx_hash_table_keys ON hash_table(key)");
     }
     
     bool key_found = database->get_integer_params("SELECT COUNT(*) FROM hash_table WHERE key = ?", { key });
@@ -1706,7 +1703,7 @@ std::string neroshop::Node::get_cached(const std::string& key) {
         return "";
     }
     
-    std::string value = database->get_text_params("SELECT value FROM hash_table WHERE key = ?1", { key });
+    std::string value = database->get_text_params("SELECT value FROM hash_table WHERE key = ?1 LIMIT 1", { key });
     return value;
 }
 

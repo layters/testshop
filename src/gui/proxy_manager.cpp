@@ -41,7 +41,8 @@ neroshop::ProxyManager::~ProxyManager() {}
 QNetworkAccessManager * neroshop::ProxyManager::create(QObject *parent) {
     QNetworkAccessManager *networkAccessManager = new QNetworkAccessManager(parent);
     QNetworkDiskCache *diskCache = new QNetworkDiskCache(parent);
-    diskCache->setCacheDirectory("requestCache");
+    QString cacheDir = QStandardPaths::writableLocation(QStandardPaths::CacheLocation);
+    diskCache->setCacheDirectory(cacheDir);
     networkAccessManager->setCache(diskCache);
     
     if(isTorEnabled() && isTorRunning()) {
