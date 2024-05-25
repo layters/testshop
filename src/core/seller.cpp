@@ -572,7 +572,7 @@ unsigned int neroshop::Seller::get_products_count() const {
     neroshop::db::Sqlite3 * database = neroshop::get_database();
     if(!database) throw std::runtime_error("database is NULL");
     
-    int products_listed = database->get_integer_params("SELECT COUNT(key) FROM mappings WHERE search_term = $1 AND content = 'listing';", { get_id() });
+    int products_listed = database->get_integer_params("SELECT COUNT(DISTINCT key) FROM mappings WHERE search_term = $1 AND content = 'listing';", { get_id() });
     return products_listed;
 }
 ////////////////////

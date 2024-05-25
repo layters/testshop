@@ -176,6 +176,7 @@ std::vector<uint8_t> neroshop::msgpack::process(const std::vector<uint8_t>& requ
             response_object["response"]["connected_peers"] = node.get_peer_count();
             response_object["response"]["active_peers"] = node.get_active_peer_count();
             response_object["response"]["idle_peers"] = node.get_idle_peer_count();
+            response_object["tid"] = tid;
             response = nlohmann::json::to_msgpack(response_object);
             return response;
         }
@@ -279,7 +280,7 @@ std::vector<uint8_t> neroshop::msgpack::process(const std::vector<uint8_t>& requ
             node.map(key, value);
             
             // Store your local client's own data in our cache
-            node.cache(key, value);
+            node.cache_hash_table(key, value);
         }
         
         // Return response or error
