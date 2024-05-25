@@ -788,8 +788,8 @@ std::string neroshop::Node::send_get(const std::string& key) {
     // First, check to see if we have the key before performing any other operations
     if(has_key(key)) { return get(key); }
     
-    value = get_cached(key);
-    if(validate(key, value)) { return value; }
+    value = get_hash_table_cached(key);
+    if(!value.empty()) { return value; } // Validate is slow so don't validate our cached hash table
     //-----------------------------------------------
     // Second option is to check our providers to see if any holds the key we are looking for
     std::vector<neroshop::Peer> my_providers = get_providers(key);
@@ -832,13 +832,13 @@ std::string neroshop::Node::send_get(const std::string& key) {
         }
     }
     //-----------------------------------------------
+    // Third option is to send get request to the nodes in our routing table that are closest to the key
     std::vector<Node *> closest_nodes = find_node(key, NEROSHOP_DHT_MAX_CLOSEST_NODES);
     
     std::random_device rd;
     std::mt19937 rng(rd());
     std::shuffle(closest_nodes.begin(), closest_nodes.end(), rng);
     
-    // Third option is to send get request to the nodes in our routing table that are closest to the key
     for(auto const& node : closest_nodes) {
         if (node == nullptr) continue;
         if (node->get_status() != NodeStatus::Active) { continue; } // ignore idle nodes
@@ -1183,7 +1183,7 @@ void neroshop::Node::expire(const std::string& key, const std::string& value) {
 
 //-----------------------------------------------------------------------------
 
-void neroshop::Node::cache(const std::string& key, const std::string& value) {
+void neroshop::Node::cache_hash_table(const std::string& key, const std::string& value) {
     db::Sqlite3 * database = neroshop::get_database();
     
     if(!database->table_exists("hash_table")) { 
@@ -1199,6 +1199,26 @@ void neroshop::Node::cache(const std::string& key, const std::string& value) {
     }
     
     int error = database->execute_params("INSERT INTO hash_table (key, value) VALUES (?1, ?2);", { key, value });
+}
+
+//-----------------------------------------------------------------------------
+
+void neroshop::Node::cache(const std::string& key, const std::string& value) {
+    db::Sqlite3 * database = neroshop::get_database();
+    
+    if(!database->table_exists("cache")) { 
+        database->execute("CREATE TABLE cache("
+        "key TEXT, value TEXT, UNIQUE(key));");
+        database->execute("CREATE INDEX idx_cache_keys ON cache(key)");
+    }
+    
+    bool key_found = database->get_integer_params("SELECT COUNT(*) FROM cache WHERE key = ?", { key });
+    if(key_found) {
+        int error = database->execute_params("UPDATE cache SET value = ?1 WHERE key = ?2", { value, key });
+        return;
+    }
+    
+    int error = database->execute_params("INSERT INTO cache (key, value) VALUES (?1, ?2);", { key, value });
 }
 
 //-----------------------------------------------------------------------------
@@ -1696,7 +1716,7 @@ std::vector<std::pair<std::string, std::string>> neroshop::Node::get_data() cons
     return data;
 }*/
 
-std::string neroshop::Node::get_cached(const std::string& key) {
+std::string neroshop::Node::get_hash_table_cached(const std::string& key) {
     db::Sqlite3 * database = neroshop::get_database();
     if(!database) throw std::runtime_error("database is NULL");
     if(!database->table_exists("hash_table")) {
@@ -1704,6 +1724,17 @@ std::string neroshop::Node::get_cached(const std::string& key) {
     }
     
     std::string value = database->get_text_params("SELECT value FROM hash_table WHERE key = ?1 LIMIT 1", { key });
+    return value;
+}
+
+std::string neroshop::Node::get_cached(const std::string& key) {
+    db::Sqlite3 * database = neroshop::get_database();
+    if(!database) throw std::runtime_error("database is NULL");
+    if(!database->table_exists("cache")) {
+        return "";
+    }
+    
+    std::string value = database->get_text_params("SELECT value FROM cache WHERE key = ?1 LIMIT 1", { key });
     return value;
 }
 
