@@ -1020,7 +1020,7 @@ void neroshop::Node::refresh() {
     std::vector<Node *> closest_nodes = find_node(this->id, NEROSHOP_DHT_MAX_CLOSEST_NODES);
     
     for(const auto& neighbor : closest_nodes) {
-        std::cout << "Sending find_node message to " << neighbor->get_ip_address() << ":" << neighbor->get_port() << "\n";
+        std::cout << "Sending find_node request to " << neighbor->get_ip_address() << ":" << neighbor->get_port() << "\n";
         auto nodes = send_find_node(this->id, (neighbor->get_ip_address() == this->public_ip_address) ? "127.0.0.1" : neighbor->get_ip_address(), neighbor->get_port());
         if(nodes.empty()) {
             std::cerr << "find_node: No nodes found\n"; continue;
@@ -1281,7 +1281,7 @@ void neroshop::Node::periodic_refresh() {
             std::shared_lock<std::shared_mutex> read_lock(node_read_mutex);
             
             
-            std::cout << "\033[34;1mPerforming periodic k-bucket refresh\033[0m\n";
+            if(routing_table->get_node_count() > 0) { std::cout << "\033[34;1mPerforming periodic bucket refresh\033[0m\n"; }
             
             refresh();
             

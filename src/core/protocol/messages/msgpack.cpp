@@ -131,6 +131,7 @@ std::vector<uint8_t> neroshop::msgpack::process(const std::vector<uint8_t>& requ
         auto params_object = request_object["args"];
         assert(params_object["key"].is_string());
         std::string key = params_object["key"].get<std::string>();
+        
         // To get network status
         if(key == "status") {
             response_object["version"] = std::string(NEROSHOP_DHT_VERSION);
@@ -144,7 +145,7 @@ std::vector<uint8_t> neroshop::msgpack::process(const std::vector<uint8_t>& requ
         }
                         
         // Send get messages to the closest nodes in your routing table (IPC mode)
-        // But first, Look up the value in the node's own hash table
+        // But first, look up the value in the node's own hash table
         std::string value = node.send_get(key);
             
         // Key not found, return error response
@@ -258,7 +259,7 @@ std::vector<uint8_t> neroshop::msgpack::process(const std::vector<uint8_t>& requ
         }
     }
     //-----------------------------------------------------
-    response_object["tid"] = tid; // transaction id - MUST be the same as the request object's id
+    response_object["tid"] = tid; // transaction id - MUST be the same as the request object's tid
     response = nlohmann::json::to_msgpack(response_object);
     return response;
 }

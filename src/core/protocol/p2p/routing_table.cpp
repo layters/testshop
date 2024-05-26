@@ -80,14 +80,15 @@ bool neroshop::RoutingTable::add_node(std::unique_ptr<Node> node) {//(const Node
     return true;
 }
 
-bool neroshop::RoutingTable::remove_node(const std::string& node_ip, uint16_t node_port) {
-    assert(node_ip != "127.0.0.1" && "Routing table only stores public IP addresses");
+bool neroshop::RoutingTable::remove_node(const std::string& node_addr, uint16_t node_port) {
+    assert(node_addr != "127.0.0.1" && "Routing table only stores public IP addresses");
+    assert(node_addr != "0.0.0.0" && "Routing table only stores public IP addresses");
     for (auto& bucket : buckets) {
         std::vector<std::unique_ptr<Node>>& nodes = bucket.second;
         std::unique_lock<std::shared_mutex> write_lock(routing_table_mutex);  // Acquire an exclusive lock
         for (auto it = nodes.begin(); it != nodes.end(); /* no increment here */) {
-            if ((*it)->get_ip_address() == node_ip && (*it)->get_port() == node_port) {
-                std::cout << "\033[0;91m" << node_ip << ":" << node_port << "\033[0m removed from routing table\n";
+            if ((*it)->get_ip_address() == node_addr && (*it)->get_port() == node_port) {
+                std::cout << "\033[0;91m" << node_addr << ":" << node_port << "\033[0m removed from routing table\n";
                 it = nodes.erase(it);  // erase returns the iterator to the next valid element
                 return true;
             } else {
@@ -96,7 +97,7 @@ bool neroshop::RoutingTable::remove_node(const std::string& node_ip, uint16_t no
         }
     }
 
-    std::cerr << "Error: node with IP " << node_ip << " and port " << node_port << " not found in the routing table.\n";
+    std::cerr << "Error: node with address " << node_addr << " and port " << node_port << " not found in the routing table.\n";
     return false;
 }
 
@@ -192,6 +193,7 @@ std::optional<std::reference_wrapper<neroshop::Node>> neroshop::RoutingTable::ge
 
     const auto& bucket = buckets[bucket_index];
     for (const auto& node : bucket) {
+        if(node.get() == nullptr) { continue; }
         if (node->get_id() == node_id) {
             return std::ref(*node);
         }
@@ -218,6 +220,7 @@ std::vector<neroshop::Node*> neroshop::RoutingTable::find_closest_nodes(const st
         // Find the closest node(s) in the bucket
         std::map<std::string, neroshop::Node*> closest_nodes_map;
         for (const auto& node : bucket) {
+            if(node.get() == nullptr) { continue; }
             std::string node_hash = node->get_id();
             std::string distance_to_node = calculate_distance(node_hash, key_hash);
             closest_nodes_map[distance_to_node] = node.get();
@@ -239,6 +242,7 @@ std::vector<neroshop::Node*> neroshop::RoutingTable::find_closest_nodes(const st
             if (!left_bucket.empty()) {
                 std::map<std::string, neroshop::Node*> closest_nodes_map;
                 for (const auto& node : left_bucket) {
+                    if(node.get() == nullptr) { continue; }
                     std::string node_hash = node->get_id();
                     std::string distance_to_node = calculate_distance(node_hash, key_hash);
                     closest_nodes_map[distance_to_node] = node.get();
@@ -257,6 +261,7 @@ std::vector<neroshop::Node*> neroshop::RoutingTable::find_closest_nodes(const st
             if (!right_bucket.empty()) {
                 std::map<std::string, neroshop::Node*> closest_nodes_map;
                 for (const auto& node : right_bucket) {
+                    if(node.get() == nullptr) { continue; }
                     std::string node_hash = node->get_id();
                     std::string distance_to_node = calculate_distance(node_hash, key_hash);
                     closest_nodes_map[distance_to_node] = node.get();
@@ -330,10 +335,12 @@ bool neroshop::RoutingTable::are_buckets_full() const {
 
 bool neroshop::RoutingTable::has_node(const std::string& ip_address, uint16_t port) {
     assert(ip_address != "127.0.0.1" && "Routing table only stores public IP addresses");
+    assert(ip_address != "0.0.0.0" && "Routing table only stores public IP addresses");
     // Iterate over the buckets
     for (const auto& bucket : buckets) {
         // Iterate over the nodes in the bucket
         for (const auto& node : bucket.second) {
+            if(node.get() == nullptr) { continue; }
             // Check if the node's IP address and port match
             if (node->get_ip_address() == ip_address && node->get_port() == port) {
                 return true;
@@ -344,22 +351,15 @@ bool neroshop::RoutingTable::has_node(const std::string& ip_address, uint16_t po
     return false;
 }
 
-// CAUTION: node_ids may change so it's recommended to use the alternative has_node() function
 bool neroshop::RoutingTable::has_node(const std::string& node_id) {//const {
-    const std::string& key_hash = calculate_distance(node_id, my_node_id); // Calculate distance from the current node
-    int bucket_index = 0;
-    while (bucket_index < NEROSHOP_DHT_ROUTING_TABLE_BUCKETS && (key_hash[bucket_index] == 0)) {
-        bucket_index++;
-    }
-
-    if (bucket_index >= NEROSHOP_DHT_ROUTING_TABLE_BUCKETS) {
-        return false; // routing table is empty
-    }
-
-    const auto& bucket = buckets[bucket_index];
-    for (const auto& node : bucket) {
-        if (node->get_id() == node_id) {
-            return true;
+    // Iterate over the buckets
+    for (const auto& bucket : buckets) {
+        // Iterate over the nodes in the bucket
+        for (const auto& node : bucket.second) {
+            if(node.get() == nullptr) { continue; }
+            if (node->get_id() == node_id) {
+                return true;
+            }
         }
     }
 
@@ -374,6 +374,7 @@ void neroshop::RoutingTable::print_table() const {
         if (!bucket_nodes.empty()) { // Check if bucket is not empty
             std::cout << "Bucket " << bucket_index << ": ";
             for (auto& node : bucket_nodes) {
+                if(node.get() == nullptr) { continue; }
                 std::cout << node->get_ip_address() << ":" << node->get_port() << " ";
                 //std::cout << "[" << calculate_distance(node->get_id(), my_node_id) << "] ";
             }
