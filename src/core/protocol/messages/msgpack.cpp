@@ -64,7 +64,7 @@ std::vector<uint8_t> neroshop::msgpack::process(const std::vector<uint8_t>& requ
     if(method == "find_node") {
         assert(request_object["args"].is_object());
         auto params_object = request_object["args"];
-        assert(params_object["target"].is_string()); // target node id sought after by the querying node
+        assert(params_object["target"].is_string()); // target (node id or key) sought after by the querying node
         std::string target = params_object["target"].get<std::string>();
         
         response_object["version"] = std::string(NEROSHOP_DHT_VERSION);

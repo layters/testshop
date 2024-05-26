@@ -619,6 +619,9 @@ QVariantList neroshop::Backend::getProductRatings(const QString& product_id) {
                 product_rating_obj.insert("comments", QString::fromStdString(value_obj["comments"].get<std::string>()));
                 product_rating_obj.insert("signature", QString::fromStdString(value_obj["signature"].get<std::string>()));
                 product_rating_obj.insert("stars", value_obj["stars"].get<int>());
+                if(value_obj.contains("expiration_date") && value_obj["expiration_date"].is_string()) {
+                    product_rating_obj.insert("expiration_date", QString::fromStdString(value_obj["expiration_date"].get<std::string>()));
+                }
             }
             
             product_ratings.append(product_rating_obj);
@@ -974,9 +977,20 @@ QVariantList neroshop::Backend::getInventory(const QString& user_id, bool hide_i
                             product_categories.append(QString::fromStdString(subcategory.get<std::string>()));
                         }
                     }
-                    inventory_object.insert("product_categories", product_categories);
                 }
+                inventory_object.insert("product_categories", product_categories);
                 //inventory_object.insert("", QString::fromStdString(product_obj[""].get<std::string>()));
+                // product attributes
+                if (product_obj.contains("attributes") && product_obj["attributes"].is_array()) {
+                    const auto& attributes_array = product_obj["attributes"];
+                    for (const auto& attribute : attributes_array) {
+                        if (attribute.is_object() && attribute.contains("weight")) { // attributes is an array of objects
+                            double weight = attribute["weight"].get<double>();
+                            inventory_object.insert("product_weight", weight);
+                        }
+                    }
+                }
+                // product images
                 if (product_obj.contains("images") && product_obj["images"].is_array()) {
                     const auto& images_array = product_obj["images"];
                     for (const auto& image : images_array) {
@@ -995,7 +1009,7 @@ QVariantList neroshop::Backend::getInventory(const QString& user_id, bool hide_i
                 if (product_obj.contains("thumbnail") && product_obj["thumbnail"].is_string()) {
                     inventory_object.insert("product_thumbnail", QString::fromStdString(product_obj["thumbnail"].get<std::string>()));
                 }
-                // Skip products with illegal categories/subcategories
+                // Skip products with illicit categories/subcategories
                 if (hide_illicit_items) {
                     if(isIllicitItem(inventory_object)) {
                         continue;
@@ -1113,7 +1127,17 @@ QVariantList neroshop::Backend::getListingsBySearchTerm(const QString& searchTer
                 }
                 listing.insert("product_categories", product_categories);
                 //listing.insert("", QString::fromStdString(product_obj[""].get<std::string>()));
-                //listing.insert("", QString::fromStdString(product_obj[""].get<std::string>()));
+                // product attributes
+                if (product_obj.contains("attributes") && product_obj["attributes"].is_array()) {
+                    const auto& attributes_array = product_obj["attributes"];
+                    for (const auto& attribute : attributes_array) {
+                        if (attribute.is_object() && attribute.contains("weight")) { // attributes is an array of objects
+                            double weight = attribute["weight"].get<double>();
+                            listing.insert("product_weight", weight);
+                        }
+                    }
+                }
+                // product images
                 if (product_obj.contains("images") && product_obj["images"].is_array()) {
                     const auto& images_array = product_obj["images"];
                     for (const auto& image : images_array) {
@@ -1129,7 +1153,7 @@ QVariantList neroshop::Backend::getListingsBySearchTerm(const QString& searchTer
                     }
                     listing.insert("product_images", product_images);
                 }
-                // Skip products with illegal categories/subcategories
+                // Skip products with illicit categories/subcategories
                 if (hide_illicit_items) {
                     if(isIllicitItem(listing)) {
                         continue;
@@ -1262,7 +1286,7 @@ QVariantList neroshop::Backend::getListings(int sorting, bool hide_illicit_items
                 if (product_obj.contains("thumbnail") && product_obj["thumbnail"].is_string()) {
                     listing.insert("product_thumbnail", QString::fromStdString(product_obj["thumbnail"].get<std::string>()));
                 }
-                // Skip products with illegal categories/subcategories
+                // Skip products with illicit categories/subcategories
                 if (hide_illicit_items) {
                     if(isIllicitItem(listing)) {
                         continue;
@@ -1458,10 +1482,20 @@ QVariantList neroshop::Backend::getListingsByCategory(int category_id, bool hide
                     }
                 }
                 listing.insert("product_categories", product_categories);
-                //listing.insert("weight", QString::fromStdString(product_obj[""].get<std::string>()));
-                //listing.insert("other_attr", QString::fromStdString(product_obj[""].get<std::string>()));
+                //listing.insert("", QString::fromStdString(product_obj[""].get<std::string>()));
+                // product attributes
+                if (product_obj.contains("attributes") && product_obj["attributes"].is_array()) {
+                    const auto& attributes_array = product_obj["attributes"];
+                    for (const auto& attribute : attributes_array) {
+                        if (attribute.is_object() && attribute.contains("weight")) { // attributes is an array of objects
+                            double weight = attribute["weight"].get<double>();
+                            listing.insert("product_weight", weight);
+                        }
+                    }
+                }
                 //listing.insert("code", QString::fromStdString(product_obj[""].get<std::string>()));
                 //listing.insert("tags", QString::fromStdString(product_obj[""].get<std::string>()));
+                // product images
                 if (product_obj.contains("images") && product_obj["images"].is_array()) {
                     const auto& images_array = product_obj["images"];
                     for (const auto& image : images_array) {
@@ -1477,7 +1511,7 @@ QVariantList neroshop::Backend::getListingsByCategory(int category_id, bool hide
                     }
                     listing.insert("product_images", product_images);
                 }
-                // Skip products with illegal categories/subcategories
+                // Skip products with illicit categories/subcategories
                 if (hide_illicit_items) {
                     if(isIllicitItem(listing)) {
                         continue;
@@ -1598,7 +1632,7 @@ QVariantList neroshop::Backend::sortBy(const QVariantList& catalog, int sorting)
 //----------------------------------------------------------------
 //----------------------------------------------------------------
 bool neroshop::Backend::isIllicitItem(const QVariantMap& listing_obj) {
-    std::string illegal_category_name = predefined_categories[25].name;
+    std::string category_name = predefined_categories[25].name;
     
     if (!listing_obj.contains("product_categories")) {
         std::cerr << "No product categories found\n";
@@ -1606,8 +1640,8 @@ bool neroshop::Backend::isIllicitItem(const QVariantMap& listing_obj) {
     }
     
     QStringList product_categories = listing_obj["product_categories"].toStringList();
-    if(product_categories.contains(QString::fromStdString(illegal_category_name))) {
-        std::cout << listing_obj["product_name"].toString().toStdString() << " contains illegal content so it has been excluded from listings" << "\n";
+    if(product_categories.contains(QString::fromStdString(category_name))) {
+        std::cout << listing_obj["product_name"].toString().toStdString() << " contains illicit content so it has been excluded from listings" << "\n";
         return true;
     }
     return false;
