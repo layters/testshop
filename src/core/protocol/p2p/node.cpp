@@ -1016,6 +1016,33 @@ std::vector<neroshop::Peer> neroshop::Node::send_get_providers(const std::string
 
 //-----------------------------------------------------------------------------
 
+void neroshop::Node::refresh() {
+    std::vector<Node *> closest_nodes = find_node(this->id, NEROSHOP_DHT_MAX_CLOSEST_NODES);
+    
+    for(const auto& neighbor : closest_nodes) {
+        std::cout << "Sending find_node message to " << neighbor->get_ip_address() << ":" << neighbor->get_port() << "\n";
+        auto nodes = send_find_node(this->id, (neighbor->get_ip_address() == this->public_ip_address) ? "127.0.0.1" : neighbor->get_ip_address(), neighbor->get_port());
+        if(nodes.empty()) {
+            std::cerr << "find_node: No nodes found\n"; continue;
+        }
+        
+        // Then add received nodes to the routing table
+        for (auto& node : nodes) {
+            // Ping the received nodes first
+            std::string node_addr = (node->get_ip_address() == this->public_ip_address) ? "127.0.0.1" : node->get_ip_address();
+            if(!ping(node_addr, node->get_port())) {
+                continue; // Skip the node and continue with the next iteration
+            }
+            // Update the routing table with the received node
+            routing_table->add_node(std::move(node));
+        }
+    }
+    
+    routing_table->print_table();
+}
+
+//-----------------------------------------------------------------------------
+
 void neroshop::Node::republish() {
     for (const auto& [key, value] : data) {
         send_put(key, value);
@@ -1253,6 +1280,27 @@ void neroshop::Node::periodic_refresh() {
             // Acquire the lock before accessing the data
             std::shared_lock<std::shared_mutex> read_lock(node_read_mutex);
             
+            
+            std::cout << "\033[34;1mPerforming periodic k-bucket refresh\033[0m\n";
+            
+            refresh();
+            
+            // read_lock is released here
+        }
+        
+        // Sleep for a specified interval
+        std::this_thread::sleep_for(std::chrono::seconds(NEROSHOP_DHT_BUCKET_REFRESH_INTERVAL));
+    }
+}
+
+//-----------------------------------------------------------------------------
+
+void neroshop::Node::periodic_republish() {
+    while (true) {
+        {
+            // Acquire the lock before accessing the data
+            std::shared_lock<std::shared_mutex> read_lock(node_read_mutex);
+            
             // Perform periodic republishing here
             // This code will run concurrently with the listen/receive loop
             if(!data.empty()) { std::cout << "\033[34;1mPerforming periodic data propagation\033[0m\n"; }
@@ -1457,8 +1505,9 @@ void neroshop::Node::run() {
     
     // Start a separate thread for periodic checks and republishing
     std::thread periodic_check_thread([this]() { periodic_check(); });
-    std::thread periodic_refresh_thread([this]() { periodic_refresh(); });
+    std::thread periodic_republish_thread([this]() { periodic_republish(); });
     std::thread periodic_purge_thread([this]() { periodic_purge(); });
+    std::thread periodic_refresh_thread([this]() { periodic_refresh(); });
     
     while (true) {
         std::vector<uint8_t> buffer(NEROSHOP_RECV_BUFFER_SIZE);
@@ -1506,16 +1555,18 @@ void neroshop::Node::run() {
     }
     // Wait for the periodic threads to finish
     periodic_check_thread.join();
-    periodic_refresh_thread.join();
+    periodic_republish_thread.join();
     periodic_purge_thread.join();
+    periodic_refresh_thread.join();
 }
 
 // This uses less CPU
 void neroshop::Node::run_optimized() {
     // Start a separate thread for periodic checks and republishing
     std::thread periodic_check_thread([this]() { periodic_check(); });
-    std::thread periodic_refresh_thread([this]() { periodic_refresh(); });
+    std::thread periodic_republish_thread([this]() { periodic_republish(); });
     std::thread periodic_purge_thread([this]() { periodic_purge(); });
+    std::thread periodic_refresh_thread([this]() { periodic_refresh(); });
 
     while (true) {
         fd_set read_set;
@@ -1586,8 +1637,9 @@ void neroshop::Node::run_optimized() {
     }         
     // Wait for the periodic threads to finish
     periodic_check_thread.join();    
-    periodic_refresh_thread.join();
+    periodic_republish_thread.join();
     periodic_purge_thread.join();
+    periodic_refresh_thread.join();
 }
 
 //-----------------------------------------------------------------------------

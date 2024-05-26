@@ -86,8 +86,10 @@ public:
     void run(); // Main loop that listens for incoming messages
     void run_optimized(); // Uses less CPU than run but slower to process requests
     void periodic_check();
-    void periodic_refresh(); // Periodic republishing
-    void periodic_purge(); // Periodically purges expired data
+    void periodic_refresh(); // Periodically sends find_node queries
+    void periodic_republish(); // Periodically republishes in-memory hash table data
+    void periodic_purge(); // Periodically removes expired in-memory hash table data
+    void refresh();
     void republish();
     bool validate(const std::string& key, const std::string& value); // Validates data before storing it
     void cache_hash_table(const std::string& key, const std::string& value); // Cache data created by local client

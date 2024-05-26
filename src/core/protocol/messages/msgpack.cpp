@@ -144,6 +144,7 @@ std::vector<uint8_t> neroshop::msgpack::process(const std::vector<uint8_t>& requ
         }
                         
         // Send get messages to the closest nodes in your routing table (IPC mode)
+        // But first, Look up the value in the node's own hash table
         std::string value = node.send_get(key);
             
         // Key not found, return error response
