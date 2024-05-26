@@ -1074,6 +1074,7 @@ bool neroshop::Node::validate(const std::string& key, const std::string& value) 
                 std::cout << "Data with key (" << key << ") has expired. Removing from hash table ...\n";
                 if(remove(key) == true) {
                     int error = database->execute_params("DELETE FROM mappings WHERE key = ?1", { key });
+                    error = database->execute_params("DELETE FROM hash_table WHERE key = ?1", { key });
                 }
             }
             return false;
@@ -1165,6 +1166,7 @@ void neroshop::Node::expire(const std::string& key, const std::string& value) {
         if(!json["expiration_date"].is_string()) { 
             if(remove(key) == true) {
                 int error = database->execute_params("DELETE FROM mappings WHERE key = ?1", { key });
+                error = database->execute_params("DELETE FROM hash_table WHERE key = ?1", { key });
             }
             return; // Invalid expiration_date, exit function
         }
@@ -1175,6 +1177,7 @@ void neroshop::Node::expire(const std::string& key, const std::string& value) {
                 std::cout << "Data with key (" << key << ") has expired. Removing from hash table ...\n";
                 if(remove(key) == true) {
                     int error = database->execute_params("DELETE FROM mappings WHERE key = ?1", { key });
+                    error = database->execute_params("DELETE FROM hash_table WHERE key = ?1", { key });
                 }
             }
         }
