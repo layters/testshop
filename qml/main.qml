@@ -367,10 +367,10 @@ ApplicationWindow {
                                 return "#81ac2a"; // Green for 20 to 29 nodes (Optimal network status)
                             } else if (nodeCount >= 10) {
                                 return "#ffa500"; // Yellow for 10 to 19 nodes (Mildly compromised network status)
-                            } else if (nodeCount >= 5) {
-                                return "#ff4500"; // Orangered for 5 to 9 nodes (Moderately compromised network status)
+                            } else if (nodeCount >= 3) {
+                                return "#ff4500"; // Orangered for 3 to 9 nodes (Moderately compromised network status)
                             } else if (nodeCount >= 0) {
-                                return "#b22222"; // Bright red for 0-4 nodes (Severely compromised network status)
+                                return "#b22222"; // Bright red for 0-2 nodes (Severely compromised network status)
                             } else {
                                  return "#808080"; // Gray for -1 nodes (Unknown network status)
                             }
