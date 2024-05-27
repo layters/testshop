@@ -362,7 +362,7 @@ ApplicationWindow {
                             let nodeCount = Number((networkMonitor.networkStatus == null) ? "-1" : (networkMonitor.networkStatus.hasOwnProperty("active_peers") ? networkMonitor.networkStatus.active_peers : "-1"))//Number(peerCounterText.text)
                             // Apply the color-coded scale based on the number of online nodes
                             if (nodeCount >= 20) {
-                                return "#228b22";//"#2e8b57" // Darker shade of green for 30 or more nodes
+                                return "#228b22";//"#2e8b57" // Darker shade of green for 20 or more nodes
                             } else if (nodeCount >= 9) {
                                 return "#81ac2a"; // Green for 9 to 19 nodes (Optimal network status)
                             } else if (nodeCount >= 6) {
