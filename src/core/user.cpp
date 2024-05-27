@@ -22,7 +22,7 @@
 
 ////////////////////
 neroshop::User::User() : wallet(nullptr), id(""), logged(false), account_type(UserAccountType::Guest), cart(nullptr), order_list({}), favorites({}) {
-    cart = std::unique_ptr<Cart>(new Cart());
+    cart = std::unique_ptr<Cart>();
 }
 ////////////////////
 neroshop::User::~User()
