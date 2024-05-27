@@ -361,14 +361,14 @@ ApplicationWindow {
                         color: {
                             let nodeCount = Number((networkMonitor.networkStatus == null) ? "-1" : (networkMonitor.networkStatus.hasOwnProperty("active_peers") ? networkMonitor.networkStatus.active_peers : "-1"))//Number(peerCounterText.text)
                             // Apply the color-coded scale based on the number of online nodes
-                            if (nodeCount >= 30) {
+                            if (nodeCount >= 20) {
                                 return "#228b22";//"#2e8b57" // Darker shade of green for 30 or more nodes
-                            } else if (nodeCount >= 20) {
-                                return "#81ac2a"; // Green for 20 to 29 nodes (Optimal network status)
-                            } else if (nodeCount >= 10) {
-                                return "#ffa500"; // Yellow for 10 to 19 nodes (Mildly compromised network status)
+                            } else if (nodeCount >= 9) {
+                                return "#81ac2a"; // Green for 9 to 19 nodes (Optimal network status)
+                            } else if (nodeCount >= 6) {
+                                return "#ffa500"; // Yellow for 6 to 8 nodes (Mildly compromised network status)
                             } else if (nodeCount >= 3) {
-                                return "#ff4500"; // Orangered for 3 to 9 nodes (Moderately compromised network status)
+                                return "#ff4500"; // Orangered for 3 to 5 nodes (Moderately compromised network status)
                             } else if (nodeCount >= 0) {
                                 return "#b22222"; // Bright red for 0-2 nodes (Severely compromised network status)
                             } else {
