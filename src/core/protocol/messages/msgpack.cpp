@@ -64,7 +64,7 @@ std::vector<uint8_t> neroshop::msgpack::process(const std::vector<uint8_t>& requ
     if(method == "find_node") {
         assert(request_object["args"].is_object());
         auto params_object = request_object["args"];
-        assert(params_object["target"].is_string()); // target node id sought after by the querying node
+        assert(params_object["target"].is_string()); // target (node id or key) sought after by the querying node
         std::string target = params_object["target"].get<std::string>();
         
         response_object["version"] = std::string(NEROSHOP_DHT_VERSION);
@@ -126,49 +126,12 @@ std::vector<uint8_t> neroshop::msgpack::process(const std::vector<uint8_t>& requ
         }
     }
     //-----------------------------------------------------
-    if(method == "get" && ipc_mode == false) { // For Processing Get Requests from Other Nodes:
+    if(method == "get") { // For Sending Get Requests to Other Nodes and For Processing Get Requests from Other Nodes
         assert(request_object["args"].is_object());
         auto params_object = request_object["args"];
         assert(params_object["key"].is_string());
         std::string key = params_object["key"].get<std::string>();
-
-        // Look up the value in the node's own hash table
-        std::string value = node.find_value(key);
-                    
-        if (!value.empty()) {
-            // Key found, return success response with value
-            response_object["version"] = std::string(NEROSHOP_DHT_VERSION);
-            response_object["response"]["id"] = node.get_id();
-            response_object["response"]["value"] = value;
-        } else {
-            // WARNING!!! THIS CODE BLOCKS THE GUI.
-            // If node does not have the key, check the closest nodes to see if they have it
-            std::string closest_node_value;
-            closest_node_value = node.send_get(key);
-
-            if (!closest_node_value.empty()) {
-                response_object["version"] = std::string(NEROSHOP_DHT_VERSION);
-                response_object["response"]["id"] = node.get_id();
-                response_object["response"]["value"] = closest_node_value;
-            } else {
-                // Key not found, return error response
-                code = static_cast<int>(DhtResultCode::RetrieveFailed);
-                response_object["version"] = std::string(NEROSHOP_DHT_VERSION);
-                response_object["error"]["id"] = node.get_id();
-                response_object["error"]["code"] = code;
-                response_object["error"]["message"] = "Key not found";
-                response_object["tid"] = tid;
-                response = nlohmann::json::to_msgpack(response_object);
-                return response;
-            }
-        }
-    } 
-    //-----------------------------------------------------
-    if(method == "get" && ipc_mode == true) { // For Sending Get Requests to Other Nodes
-        assert(request_object["args"].is_object());
-        auto params_object = request_object["args"];
-        assert(params_object["key"].is_string());
-        std::string key = params_object["key"].get<std::string>();
+        
         // To get network status
         if(key == "status") {
             response_object["version"] = std::string(NEROSHOP_DHT_VERSION);
@@ -182,6 +145,7 @@ std::vector<uint8_t> neroshop::msgpack::process(const std::vector<uint8_t>& requ
         }
                         
         // Send get messages to the closest nodes in your routing table (IPC mode)
+        // But first, look up the value in the node's own hash table
         std::string value = node.send_get(key);
             
         // Key not found, return error response
@@ -295,7 +259,7 @@ std::vector<uint8_t> neroshop::msgpack::process(const std::vector<uint8_t>& requ
         }
     }
     //-----------------------------------------------------
-    response_object["tid"] = tid; // transaction id - MUST be the same as the request object's id
+    response_object["tid"] = tid; // transaction id - MUST be the same as the request object's tid
     response = nlohmann::json::to_msgpack(response_object);
     return response;
 }

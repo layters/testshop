@@ -353,9 +353,20 @@ QVariantList neroshop::UserController::getInventory(int sorting) const {
                             product_categories.append(QString::fromStdString(subcategory.get<std::string>()));
                         }
                     }
-                    inventory_object.insert("product_categories", product_categories);
                 }
+                inventory_object.insert("product_categories", product_categories);
                 //inventory_object.insert("", QString::fromStdString(product_obj[""].get<std::string>()));
+                // product attributes
+                if (product_obj.contains("attributes") && product_obj["attributes"].is_array()) {
+                    const auto& attributes_array = product_obj["attributes"];
+                    for (const auto& attribute : attributes_array) {
+                        if (attribute.is_object() && attribute.contains("weight")) { // attributes is an array of objects
+                            double weight = attribute["weight"].get<double>();
+                            inventory_object.insert("product_weight", weight);
+                        }
+                    }
+                }
+                // product images
                 if (product_obj.contains("images") && product_obj["images"].is_array()) {
                     const auto& images_array = product_obj["images"];
                     for (const auto& image : images_array) {
