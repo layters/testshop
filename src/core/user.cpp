@@ -44,54 +44,21 @@ neroshop::User::~User()
 ////////////////////
 ////////////////////
 ////////////////////
-// buyers can only rate seller they have purchased from!!
 void neroshop::User::rate_seller(const std::string& seller_id, int score, const std::string& comments, const std::string& signature) { // perfected 99.9%!!
-    /*neroshop::db::Sqlite3 * database = neroshop::get_database();
-    if(!database) throw std::runtime_error("database is NULL");*/
-    // seller_id cannot be 0 (0 = invalid id)
     if(seller_id.empty()) return;
+    
     // score must be between 0 and 1
     if(score >= 1) score = 1;
     if(score <= 0) score = 0;
-    ////int account_type_id = database->get_integer_params("SELECT account_type_id FROM users WHERE id = $1", { seller_id });//std::string account_type = db.get_column_text("users", "account_type", "id = " + seller_id);
-    ////if(account_type_id != 2) {neroshop::print("This user (id: " + seller_id + ") is not a seller, so they cannot be rated", 2); return;}//if(String::lower(account_type) != "seller") {neroshop::print("You cannot rate a non-seller");return;}
+    
     // Prevent seller from rating him/herself
     if(seller_id == this->id) {
         std::cerr << "\033[91mYou cannot rate yourself\033[0m\n";
         return; // exit function
     }
-    /*// To prevent duplicating seller_id that is has already been rated by this user_id (a user cannot rate the same seller twice, except update his or her score rating for a specific seller_id
-    std::string rated_seller = database->get_text_params("SELECT seller_id FROM seller_ratings "
-        "WHERE seller_id = $1 AND user_id = $2", { seller_id, get_id() });
-	if(rated_seller == seller_id) { 
-	    neroshop::print("You have previously rated this seller (id: " + seller_id + ")", 2);
-	    database->execute_params("UPDATE seller_ratings SET score = $1 WHERE seller_id = $2 AND user_id = $3", { std::to_string(score), seller_id, get_id() });
-	    database->execute_params("UPDATE seller_ratings SET comments = $1 WHERE seller_id = $2 AND user_id = $3", { comments, seller_id, get_id() });
-	    database->execute_params("UPDATE seller_ratings SET signature = $1 WHERE seller_id = $2 AND user_id = $3", { signature, seller_id, get_id() });
-	    neroshop::print("Your rating for seller (id: " + seller_id + ") has been updated to a score of " + ((score != 0) ? "\033[1;32m" : "\033[1;91m") + std::to_string(score) + "\033[0m");
-	        
-	    return; // exit function
-	}
-    // Insert initial values
-    database->execute_params("INSERT INTO seller_ratings (seller_id, score, user_id, comments, signature) "
-        "VALUES ($1, $2, $3, $4, $5)", { seller_id,
-    std::to_string(score), get_id(), comments, signature });
-    neroshop::print("You have rated seller (id: " + seller_id + ") with a score of " + ((score != 0) ? "\033[1;32m" : "\033[1;91m") + std::to_string(score) + "\033[0m");
-    #ifdef NEROSHOP_DEBUG
-    // Get number of seller ratings (for a specific seller_id)
-    unsigned int total_seller_ratings = database->get_integer_params("SELECT COUNT(*) FROM seller_ratings WHERE seller_id = $1", { seller_id });
-    std::cout << "total ratings for seller (id: " << seller_id << "): \033[1;93m" << total_seller_ratings << "\033[0m" << std::endl;
-    // Get seller rating from user (0 = bad, 1 = good)
-    unsigned int good_ratings = database->get_integer_params("SELECT COUNT(score) FROM seller_ratings WHERE seller_id = $1 AND score = $2", { seller_id, std::to_string(1) });
-    std::cout << "number of good ratings for seller (id: " << seller_id << "): \033[1;32m" << good_ratings << "\033[0m" << std::endl;
-    unsigned int bad_ratings  = database->get_integer_params("SELECT COUNT(score) FROM seller_ratings WHERE seller_id = $1 AND score = $2", { seller_id, std::to_string(0) });                
-    std::cout << "number of bad ratings for seller  (id: " << seller_id << "): \033[1;91m" << bad_ratings << "\033[0m" << std::endl;
-    // Calculate seller reputation
-    double reputation = (good_ratings / static_cast<double>(total_seller_ratings)) * 100;
-    std::cout << "reputation of seller (id: " << seller_id << "):\033[0;93m " << static_cast<int>(reputation) << "%\033[0m" << std::endl;
-    #endif  */
-    //----------------------------------------------------------------------------------------------------------
-    // Transition from Sqlite to DHT:
+    
+    // TODO: Buyers should only be allowed to rate sellers they have purchased from
+    
     Client * client = Client::get_main_client();
     //----------------------------------
     std::string command = "SELECT DISTINCT key FROM mappings WHERE search_term = $1 AND content = 'seller_rating'";
@@ -177,71 +144,15 @@ void neroshop::User::rate_seller(const std::string& seller_id, int score, const 
 ////////////////////
 ////////////////////
 void neroshop::User::rate_item(const std::string& product_id, int stars, const std::string& comments, const std::string& signature) { // perfected 99%!!!
-    // If item is not registered
-    if(product_id.empty()) return; // exit function
+    if(product_id.empty()) return;
+    
     // star ratings must be between 1 and 5
     if(stars >= 5) stars = 5;
     if(stars <= 1) stars = 1;
-    /*// Check if user has previously ordered this item
-    bool purchased = false;
-    for(int i = 0; i < get_order_count(); i++) {
-        std::string ordered_item = database->get_text_params("SELECT product_id FROM order_item WHERE product_id = $1 AND order_id = $2", { product_id, std::to_string(get_order(i)->get_id()) });
-        if(ordered_item == product_id) {
-            //std::cout << "You previously ordered this item \033[0;35m(order_id: " << get_order(i)->get_id() << "\033[0m, contains \033[0;93mproduct_id: " << product_id << "\033[0m)" << std::endl;
-            purchased = true; // set purchased to true since user has previously purchased this item
-            break; // break from the for-loop so we don't stay stuck in loop forever
-        }
-    }
-    if(!purchased) {neroshop::print("You must purchase this item (id: " + product_id + ") before rating it");  return;}*/
-    // To prevent duplicating product_id that is has already been rated by this user_id (a user cannot rate (insert star ratings) for the same item twice, except update his or her star rating for a specific item)
-    /*std::string rated_item = database->get_text_params("SELECT product_id FROM product_ratings " 
-        "WHERE product_id = $1 AND user_id = $2", { product_id, get_id() });
-	if(rated_item == product_id) { 
-	    neroshop::print("You have previously rated this item (id: " + product_id + ")", 2);
-	    // if user has previous rated this item, update the user's rating
-	    database->execute_params("UPDATE product_ratings SET stars = $1 WHERE product_id = $2 AND user_id = $3", { std::to_string(stars), product_id, get_id() });
-	    database->execute_params("UPDATE product_ratings SET comments = $1 WHERE product_id = $2 AND user_id = $3", { comments, product_id, get_id() });
-	    database->execute_params("UPDATE product_ratings SET signature = $1 WHERE product_id = $2 AND user_id = $3", { signature, product_id, get_id() });
-	    neroshop::print("Your star rating on item (id: " + product_id + ") has been updated to \033[1;33m" + std::to_string(stars) + "\033[1;37m stars\033[0m");
-	        
-	    return; // exit function
-	}        
-    // Insert initial values
-    database->execute_params("INSERT INTO product_ratings (product_id, stars, user_id, comments, signature) "
-        "VALUES ($1, $2, $3, $4, $5)", { product_id, std::to_string(stars),
-    get_id(), comments, signature });
-    neroshop::print("You have rated item (id: " + product_id + ") with " + ((stars >= 3) ? "\033[1;32m" : "\033[1;91m") + std::to_string(stars) + " \033[0mstars");
-    #ifdef NEROSHOP_DEBUG
-    // Get number of star ratings (for a specific product_id)
-    unsigned int total_star_ratings = database->get_integer_params("SELECT COUNT(*) FROM product_ratings WHERE product_id = $1", { product_id });
-    std::cout << "# star ratings for item (id: " << product_id << "): \033[1;33m" << total_star_ratings << "\033[0m" << std::endl;
-    // Get number of 1, 2, 3, 4, and 5 star_ratings   
-    int one_star_count = database->get_integer_params("SELECT COUNT(stars) FROM product_ratings WHERE product_id = $1 AND stars = $2", { product_id, std::to_string(1) });
-    std::cout << "# of 1 star ratings for item (id: " << product_id << "):\033[0;93m " << one_star_count << "\033[0m" << std::endl;
-    int two_star_count = database->get_integer_params("SELECT COUNT(stars) FROM product_ratings WHERE product_id = $1 AND stars = $2", { product_id, std::to_string(2) });
-    std::cout << "# of 2 star ratings for item (id: " << product_id << "):\033[0;93m " << two_star_count << "\033[0m" << std::endl;
-    int three_star_count = database->get_integer_params("SELECT COUNT(stars) FROM product_ratings WHERE product_id = $1 AND stars = $2", { product_id, std::to_string(3) }); 
-    std::cout << "# of 3 star ratings for item (id: " << product_id << "):\033[0;93m " << three_star_count << "\033[0m" << std::endl;
-    int four_star_count = database->get_integer_params("SELECT COUNT(stars) FROM product_ratings WHERE product_id = $1 AND stars = $2", { product_id, std::to_string(4) });
-    std::cout << "# of 4 star ratings for item (id: " << product_id << "):\033[0;93m " << four_star_count << "\033[0m" << std::endl;
-    int five_star_count = database->get_integer_params("SELECT COUNT(stars) FROM product_ratings WHERE product_id = $1 AND stars = $2", { product_id, std::to_string(5) });        
-    std::cout << "# of 5 star ratings for item (id: " << product_id << "):\033[0;93m " << five_star_count << "\033[0m" << std::endl;
-    // Now calculate average stars
-    // 3 total star ratings:(5, 3, 4) // average = (5 + 3 + 4) / 3 = 4 stars        
-    double average_stars = (
-        (1 * static_cast<double>(one_star_count)) + 
-        (2 * static_cast<double>(two_star_count)) + 
-        (3 * static_cast<double>(three_star_count)) + 
-        (4 * static_cast<double>(four_star_count)) + 
-        (5 * static_cast<double>(five_star_count))) / total_star_ratings;
-    std::cout << "calculated average stars for item (id: " << product_id << "):\033[1;33m " << average_stars << "\033[0m" << std::endl;
-    // Test average at: https://calculator.academy/average-rating-calculator-star-rating/#f1p1|f2p0
-    #endif*/
-    //----------------------------------------------------------------------------------------------------------
-    // Transition from Sqlite to DHT:
+    
+    // TODO: Check if the rater has previously purchased this product to be able to rate it
+    
     Client * client = Client::get_main_client();
-    //----------------------------------
-    // TODO: Check if the rater (you) has previously purchased this product to be able to rate it
     //----------------------------------
     std::string command = "SELECT DISTINCT key FROM mappings WHERE search_term = $1 AND content = 'product_rating'";
     db::Sqlite3 * database = neroshop::get_database(); 
@@ -288,7 +199,22 @@ void neroshop::User::rate_item(const std::string& product_id, int stars, const s
                 std::string rater_id = value_obj["rater_id"].get<std::string>();
                 if(rater_id == this->id) {
                     std::cerr << "\033[91mYou have already rated this product or service\033[0m\n";
-                    // TODO: Update product rating then re-sign it (key will remain the same)
+                    // Self-verify the signature
+                    std::string old_comments = value_obj["comments"].get<std::string>();
+                    std::string old_signature = value_obj["signature"].get<std::string>();
+                    bool self_verified = wallet->verify_message(old_comments, old_signature);
+                    if(!self_verified) { neroshop::print("Data verification failed.", 1); return; }
+                    // Modify/Update the product rating and re-signed to reflect the modification
+                    value_obj["comments"] = comments;
+                    value_obj["stars"] = stars;
+                    assert(old_signature != signature && "Signature is outdated");
+                    value_obj["signature"] = signature;
+                    value_obj["last_updated"] = neroshop::timestamp::get_current_utc_timestamp();
+                    // Send set request containing the updated value with the same key as before
+                    std::string modified_value = value_obj.dump();
+                    std::string response;
+                    client->set(key, modified_value, response); // key MUST remain unchanged!!
+                    std::cout << "Received response (set): " << response << "\n";
                     return;
                 }
             }
@@ -313,28 +239,8 @@ void neroshop::User::rate_item(const std::string& product_id, int stars, const s
 // account-related stuff here
 ////////////////////
 void neroshop::User::delete_account() {
-    if(!is_logged()) {neroshop::print("You are not logged in", 2);return;} // must be logged in to delete your account
-    neroshop::db::Sqlite3 * database = neroshop::get_database();
-    if(!database) throw std::runtime_error("database is NULL");
-    ////database->execute("BEGIN;"); // not necessary unless doing multiple operations
-    ////database->execute("SAVEPOINT before_account_deletion_savepoint;");//ROLLBACK TO before_account_deletion_savepoint;
-    database->execute_params("DELETE FROM users WHERE id = $1", { this->id });
-    neroshop::print("your account has been permanently deleted", 1);
-    // send account to deleted accounts table (or graveyard >:})
-    //if(!database->table_exists("deleted_users")) {
-    //database->create_table("deleted_users");
-    //database->add_column("deleted_users", "name", "text REFERENCES users(name)");//"text");
-    //database->create_index("idx_deleted_users", "deleted_users", "name");
-    //}
-    //database->execute_params("INSERT INTO deleted_users (name) VALUES ($1)", { this->name });
-    // reset user information and logout user
-    set_id(0);
-    name.clear();
-    set_account_type(UserAccountType::Guest);
-    set_logged(false); // logout here (will call on_logout callback, if logged is false)    
-    // end transaction
-    ////database->execute("COMMIT;");
-} // username of deleted accounts should be reused or nah?
+
+}
 ////////////////////
 ////////////////////
 ////////////////////
@@ -360,69 +266,18 @@ void neroshop::User::clear_cart() {
 void neroshop::User::create_order(const std::string& shipping_address) {//const {
     // name(first, last), address1(street, p.o box, company name, etc.), address2(apt number, suite, unit, building, floor, etc.) city, zip/postal_code, state/province/region country, optional(phone, email)
     try {
-    std::shared_ptr<neroshop::Order> order(std::make_shared<neroshop::Order>());//(new neroshop::Order());
-    order->create_order(*cart.get(), shipping_address); // we are using crypto, not debit/credit cards so no billing address is needed
-    order_list.push_back(order); // whether an order fails or succeeds, store it regardless
+        std::shared_ptr<neroshop::Order> order(std::make_shared<neroshop::Order>());//(new neroshop::Order());
+        order->create_order(*cart.get(), shipping_address); // we are using crypto, not debit/credit cards so no billing address is needed
+        order_list.push_back(order); // whether an order fails or succeeds, store it regardless
     } catch(std::exception& e) {
         std::cout << e.what() << "\n";
     }
 }
-// cart->add(ball, 2);
-// cart->add(ring);
-// user->create_order(shipping_addr);
 ////////////////////
-// put this in Buyer::on_login and Seller::on_login
-// Guests orders are not saved to the main database
+// put this in Seller::on_login
 // orders are never deleted, their statuses just change: rejected, failure, delivered, etc.
 void neroshop::User::load_orders() {
-    /*DB::Sqlite3 db("neroshop.db");
-    if(!db.table_exists("orders")) {db.close(); return;} // user probably has no order history
-    // create orders based on user order_ids stored in orders
-    // get last inserted order
-    int last_order = db.get_column_integer("orders ORDER BY id DESC LIMIT 1", "*");//int orders_count = db.row_count("orders");
-    int user_order_count = db.get_column_integer("orders", "COUNT(*)", "user_id = " + get_id());// get number of orders this user has made so far
-    if(user_order_count < 1) neroshop::print("No orders found"); // for this user
-    if(user_order_count > 0) 
-    {   // if user has any orders, load them
-        for(unsigned int i = 1; i <= last_order; i++) { // i is wrong because ids can start from 24, but i starts from 1
-            unsigned int order_id = db.get_column_integer("orders", "id", "id = " + std::to_string(i) + " AND user_id = " + get_id());
-            if(order_id == 0) continue; // skip 0's
-            neroshop::Order * order = new neroshop::Order(order_id);
-            order_list.push_back(order); // store orders for later use
-            neroshop::print("Order (id: " + std::to_string(order->get_id()) + ") has been loaded");
-        }
-    }
-    db.close();*/
-    ////////////////////////////////
-    // postgresql
-    ////////////////////////////////
-#if defined(NEROSHOP_USE_POSTGRESQL)    
-    //database->connect("host=127.0.0.1 port=5432 user=postgres password=postgres dbname=neroshoptest");
-    //if(!database->table_exists("orders")) { return;} // user probably has no order history
-    // first, check if user has any orders
-    int user_order_count = database->get_integer_params("SELECT COUNT(*) FROM orders WHERE user_id = $1", { get_id() });// get number of orders this user has made so far
-    if(user_order_count < 1) {neroshop::print("No order history found on your account");  return;} // for this user    
-    // THIS IS FASTER THAN THE FORMER, SINCE IT DOES NOT LOOP THROUGH ALL THE ORDERS IN THE TABLE orders
-    std::string command = "SELECT id FROM orders WHERE user_id = $1 ORDER BY id"; // sort by id; ASC order is the default (lowest-to-highest)
-    std::vector<const char *> param_values = { get_id().c_str() };
-    PGresult * result = PQexecParams(database->get_handle(), command.c_str(), 1, nullptr, param_values.data(), nullptr, nullptr, 0);
-    int rows = PQntuples(result);//if(rows < 1) {PQclear(result);  return;}    
-    if (PQresultStatus(result) != PGRES_TUPLES_OK) {
-        neroshop::print("User::load_orders(): You have no orders in your account", 2);        
-        PQclear(result);//exit(1);
-        return; // exit so we don't double free "result" or double close the database
-    }
-    for(int i = 0; i < rows; i++) {
-        int order_id = std::stoi(PQgetvalue(result, i, 0));
-        std::shared_ptr<neroshop::Order> order(std::make_shared<neroshop::Order>(order_id));//(new neroshop::Order(order_id));//neroshop::Order * order = new neroshop::Order(order_id);
-        order_list.push_back(order); // store orders for later use        
-        neroshop::print("Order (id: " + std::to_string(order->get_id()) + ") has been loaded");
-    }    
-    PQclear(result);
-    ////////////////////////////////    
-    
-    ////////////////////////////////    
-#endif    
+
 }
 ////////////////////
 ////////////////////
@@ -549,26 +404,7 @@ void neroshop::User::upload_avatar(const std::string& filename) {
 }
 ////////////////////
 void neroshop::User::delete_avatar() {
-#if defined(NEROSHOP_USE_POSTGRESQL)
-    // begin transaction (required when dealing with large objects)
-    database->execute("BEGIN;");
-    /////////////////////////////////////////////////
-    // get avatar oid (large object)
-    Oid avatar_oid = database->get_integer_params("SELECT data FROM avatars WHERE user_id = $1;", { std::to_string(this->id) });//std::cout << avatar_oid << std::endl;
-    if(avatar_oid == InvalidOid) { database->execute("ROLLBACK;"); return; } // ABORT; is the same as ROLLBACK;
-    // delete large object
-    int lo_result = lo_unlink(database->get_handle(), avatar_oid);
-    if(lo_result == -1) {
-        neroshop::print(POSTGRESQL_TAG "lo_unlink failed: " + std::string(PQerrorMessage(database->get_handle())), 1);
-        database->execute("ROLLBACK;"); // abort transaction
-        return;// false;
-    }       
-    neroshop::print("your avatar (oid: " + std::to_string(avatar_oid) + ") has been deleted", 1);    
-    /////////////////////////////////////////////////
-    // end transaction
-    database->execute("COMMIT;");
-    //return true;
-#endif    
+ 
 }
 ////////////////////
 ////////////////////
@@ -810,46 +646,12 @@ bool neroshop::User::is_guest() const {
 ////////////////////
 bool neroshop::User::is_buyer() const// buyer and guests are not required to register, only sellers
 {
-    ////if(id < 1) return false;
-    /*DB::Sqlite3 db("neroshop.db");
-    int account_type_id = db.get_column_integer("users", "account_type_id", "id = " + std::to_string(this->id));//std::string account_type = db.get_column_text("users", "account_type", "id = " + std::to_string(this->id));
-    if(account_type_id <= 0) return false;//if(String::lower(account_type) != "buyer" || account_type.empty()) return false;
-    if(account_type_id != 1) return false; // 1 = buyer
-    db.close();*/
-    ////////////////////////////////
-    // postgresql
-    ////////////////////////////////
-#if defined(NEROSHOP_USE_POSTGRESQL)    
-    //database->connect("host=127.0.0.1 port=5432 user=postgres password=postgres dbname=neroshoptest");
-    int account_type_id = database->get_integer_params("SELECT account_type_id FROM users WHERE id = $1::int", { std::to_string(this->id) });
-    if(account_type_id != 1) {return false;} // 1 = buyer //neroshop::print("User " + name + " is a buyer", 4); // only print when there's an error   
-    
-    ////////////////////////////////
     return true;
-#endif
-    return false;    
 }
 ////////////////////
 bool neroshop::User::is_seller() const
 {
-    ////if(id < 1) return false;//if(String::lower(this->name) == "guest") return false; // reserved name "Guest" for guests only
-    /*DB::Sqlite3 db("neroshop.db");
-    int account_type_id = db.get_column_integer("users", "account_type_id", "id = " + std::to_string(this->id));//std::string account_type = db.get_column_text("users", "account_type", "id = " + std::to_string(this->id));
-    if(account_type_id <= 0) return false;//if(account_type.empty() || String::lower(account_type) != "seller") return false;
-    if(account_type_id != 2) return false; // 2 = seller
-    db.close();*/
-    ////////////////////////////////
-    // postgresql
-    ////////////////////////////////
-#if defined(NEROSHOP_USE_POSTGRESQL)    
-    //database->connect("host=127.0.0.1 port=5432 user=postgres password=postgres dbname=neroshoptest");
-    int account_type_id = database->get_integer_params("SELECT account_type_id FROM users WHERE id = $1::int", { std::to_string(this->id) });
-    if(account_type_id != 2) {return false;} // 2 = seller //neroshop::print("User " + name + " is a seller", 4); // only print when there's an error
-    
-    ////////////////////////////////
     return true;
-#endif
-    return false;    
 }
 ////////////////////
 bool neroshop::User::is_online() const // a user is not created until they are logged so this function can only be called when a user is logged // guests can also use this function so its a bad idea to check if user is logged
@@ -858,77 +660,11 @@ bool neroshop::User::is_online() const // a user is not created until they are l
 }
 ////////////////////
 bool neroshop::User::is_registered() const {
-    /*DB::Sqlite3 db("neroshop.db");
-	// if table Users does not exist, that means no accounts are registered
-	if(!db.table_exists("users")) return false; // if table Users does not exist, no accounts are registered
-	// confirm that this user's id is in the db (to further prove that they are registered)
-	int id = db.get_column_integer("users", "id", "id = " + get_id());
-	if(id <= 0) return false;
-	db.close();*/ // always remember to close db when done :)
-    ////////////////////////////////
-    // postgresql
-    ////////////////////////////////
-#if defined(NEROSHOP_USE_POSTGRESQL)    
-    //database->connect("host=127.0.0.1 port=5432 user=postgres password=postgres dbname=neroshoptest");
-	// if table Users does not exist, that means no accounts are registered
-	if(!database->table_exists("users")) {
-	    ////neroshop::print("Failed to retrieve data (Database is ether missing or corrupted or table users simply does not exist)", 1);
-	    
-	    return false; // failed to retrieve username
-	}
-	// confirm that this user's id is in the db (to further prove that they are registered)
-	int user_id = database->get_integer_params("SELECT id FROM users WHERE id = $1", { get_id() });
-	if(id < 1) {
-	    ////neroshop::print("You are not a registered user", 1);
-	    
-	    return false;    
-    }
-    //neroshop::print("You are a registered user", 3); // only print when there is an error
-    
-    ////////////////////////////////	
     return true;
-#endif
-    return false;    
 }
 ////////////////////
 bool neroshop::User::is_registered(const std::string& name) { // no need to login to prove user is registered, just need to check the db
-    // an empty username is ALWAYS invalid
-    if(name.empty()) return false;
-    ////////////////////////////////
-    // sqlite
-    ////////////////////////////////    
-    /*DB::Sqlite3 db("neroshop.db");
-	// if table Users does not exist, that means no accounts are registered
-	if(!db.table_exists("users")) return false;
-	// confirm that this user's name is in the db (to prove that they are registered)
-	std::string user = db.get_column_text("users", "name", "name = " + DB::Sqlite3::to_sql_string(String::lower(name)));
-	if(user.empty()) return false;
-	if(user != String::lower(name)) return false;
-	db.close();*/ // always remember to close db when done :)
-    ////////////////////////////////
-    // postgresql
-    ////////////////////////////////
-#if defined(NEROSHOP_USE_POSTGRESQL)    
-    //database->connect("host=127.0.0.1 port=5432 user=postgres password=postgres dbname=neroshoptest");
-	// confirm that this user's name is in the db (to prove that they are registered)
-	std::string user = database->get_text_params("SELECT name FROM users WHERE name = $1", { String::lower(name) });
-	// if table users does not exist, that means no accounts are registered
-	if(!database->table_exists("users")) {
-	    neroshop::print("Failed to retrieve data (Database is ether missing or corrupted or table users simply does not exist)", 1);
-	    
-	    return false; // failed to retrieve username
-	}
-	if(user.empty()) {
-	    neroshop::print("No user with such name found: \033[1;97m" + name + "\033[0m", 1); // Found no user with such name
-	    
-	    return false; // no user with such name
-    }
-    //neroshop::print(user + " is a registered user", 3);
-    
-    ////////////////////////////////	
-    return true;
-#endif
-    return false;    
+    return true; 
 }
 ////////////////////
 bool neroshop::User::is_logged() const
@@ -937,30 +673,6 @@ bool neroshop::User::is_logged() const
 }
 ////////////////////
 bool neroshop::User::has_email() const {
-    if(is_guest()) return false;
-    ////////////////////////////////
-    // sqlite
-    ////////////////////////////////
-    /*DB::Sqlite3 db("neroshop.db");
-    std::string email_hash = db.get_column_text("users", "email", "id = " + get_id());
-    if(email_hash.empty()) return false;
-    db.close();*/
-    ////////////////////////////////
-    // postgresql
-    ////////////////////////////////
-#if defined(NEROSHOP_USE_POSTGRESQL)    
-    //database->connect("host=127.0.0.1 port=5432 user=postgres password=postgres dbname=neroshoptest");
-    std::string email = database->get_text_params("SELECT opt_email FROM users WHERE id = $1::int", { get_id() });
-    if(email.empty()) {
-        neroshop::print("no email found on account", 2);
-        
-        return false;
-    }
-    if(!email.empty()) neroshop::print("email found: " + email, 3);
-    
-    ////////////////////////////////
-    return true;
-#endif
     return false;    
 }
 ////////////////////
@@ -980,32 +692,16 @@ bool neroshop::User::has_avatar() const {
 ////////////////////
 ////////////////////
 bool neroshop::User::has_purchased(const std::string& product_id) { // for registered users only//if(!is_logged()) { neroshop::print("You are not logged in", 2); return false; }
-#if defined(NEROSHOP_USE_POSTGRESQL)    
-    // check if user has previously ordered this item (we have the order_ids which we'll need to figure out which order_items belong to each order_id)
-    std::vector<unsigned int> purchases_list = {};
-    for(const auto & orders : order_list) { 
-        int order_item = database->get_integer_params("SELECT product_id FROM order_item WHERE product_id = $1 AND order_id = $2", { product_id, std::to_string(orders->get_id()) });
-        // to-do: check if order was not cancelled or refunded
-        if(order_item < 1) continue; // skip invalid ids
-        if(order_item == product_id) {//std::cout << "user_order_ids: " << orders->get_id() << std::endl;
-            // store purchased product_ids if not yet stored
-            if(std::find(purchases_list.begin(), purchases_list.end(), product_id) == purchases_list.end()) {
-                purchases_list.push_back(order_item);
-            }
-        }
-    }
-    return (std::find(purchases_list.begin(), purchases_list.end(), product_id) != purchases_list.end());
-#endif
-    return false;    
+    return false;
 }
 ////////////////////
-bool neroshop::User::has_favorited(const std::string& listing_key_or_id) {
+bool neroshop::User::has_favorited(const std::string& listing_key) {
     // since we loaded the favorites into memory when the app launched, we should be able to access the pre-loaded favorites and any newly added favorites in the current session without performing any database queries/operations
     for(const auto & favorite : favorites) {
-        // if any favorites items' ids matches "product_id" then return true
-        if(favorite == listing_key_or_id) return true;
+        // if any favorites items' ids matches "listing_key" then return true
+        if(favorite == listing_key) return true;
     }
-    return false;////return (std::find(favorites.begin(), favorites.end(), product_id) != favorites.end()); // this is good for when storing favorites as integers (product_ids)
+    return false;////return (std::find(favorites.begin(), favorites.end(), listing_key) != favorites.end()); // this is good for when storing favorites as integers (product_ids)
 }
 ////////////////////
 bool neroshop::User::has_wallet() const {
