@@ -113,7 +113,7 @@ namespace neroshop {
 
 const std::initializer_list<std::pair<std::string, uint16_t>> BOOTSTRAP_NODES = {
     {"node.neroshop.org", NEROSHOP_P2P_DEFAULT_PORT},
-    //{"127.0.0.1", NEROSHOP_P2P_DEFAULT_PORT}
+    {"127.0.0.1", NEROSHOP_P2P_DEFAULT_PORT}
 };
 
 }
