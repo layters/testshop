@@ -99,7 +99,7 @@ int neroshop::MoneroWallet::create_from_keys(const std::string& primary_address,
 int neroshop::MoneroWallet::restore_from_seed(const std::string& seed, uint64_t restore_height) 
 {
     monero::monero_wallet_config wallet_config_obj;
-    wallet_config_obj.m_path = ""; // set path to "" for an in-memory wallet
+    wallet_config_obj.m_path = ""; // Set path to "" for an in-memory wallet
     wallet_config_obj.m_password = "";
     wallet_config_obj.m_network_type = static_cast<monero::monero_network_type>(Wallet::network_type);
     wallet_config_obj.m_seed = seed;
@@ -131,7 +131,7 @@ int neroshop::MoneroWallet::restore_from_keys(const std::string& primary_address
     }
     
     monero::monero_wallet_config wallet_config_obj;
-    wallet_config_obj.m_path = ""; // set path to "" for an in-memory wallet
+    wallet_config_obj.m_path = ""; // Set path to "" for an in-memory wallet
     wallet_config_obj.m_password = "";
     wallet_config_obj.m_network_type = static_cast<monero::monero_network_type>(Wallet::network_type);
     wallet_config_obj.m_primary_address = primary_address;
@@ -180,6 +180,19 @@ void neroshop::MoneroWallet::close(bool save) {
     if(!monero_wallet_obj.get()) throw std::runtime_error("monero_wallet_full is not opened");
     monero_wallet_obj->close(save);
 }
+//-------------------------------------------------------
+//-------------------------------------------------------
+bool neroshop::MoneroWallet::change_password(const std::string& old_password, const std::string& new_password) {
+    if(!monero_wallet_obj.get()) throw std::runtime_error("monero_wallet_full is not opened");
+    if(!verify_password(old_password)) {
+        std::cout << "\033[1;91mOld password is incorrect\033[0m\n";
+        return false;
+    }
+    monero_wallet_obj->change_password(old_password, new_password);
+    password_hash = sign_message(new_password, monero_message_signature_type::SIGN_WITH_SPEND_KEY);
+    return true;
+}
+//-------------------------------------------------------
 //-------------------------------------------------------
 std::string neroshop::MoneroWallet::sign_message(const std::string& message, monero_message_signature_type signature_type) const {
     if(!monero_wallet_obj.get()) throw std::runtime_error("monero_wallet_full is not opened");

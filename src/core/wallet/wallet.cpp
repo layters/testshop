@@ -244,9 +244,27 @@ std::string neroshop::Wallet::upload(bool open, std::string password) { // opens
     return std::string(filename + ".keys");
 }
 //-------------------------------------------------------
-bool neroshop::Wallet::verify_password(const std::string& password) {
-    assert(!this->password_hash.empty());
-    return verify_message(password, this->password_hash);
+bool neroshop::Wallet::verify_password(const std::string& password) const {
+    assert(!password_hash.empty());
+    return verify_message(password, password_hash);
+}
+//-------------------------------------------------------
+bool neroshop::Wallet::change_password(const std::string& old_password, const std::string& new_password) {
+    switch(wallet_type) {
+        case WalletType::Monero:
+            if(!monero_wallet_obj.get()) throw std::runtime_error("monero_wallet_full is not opened");
+            if(!verify_password(old_password)) {
+                std::cout << "\033[1;91mOld password is incorrect\033[0m\n";
+                return false;
+            }
+            monero_wallet_obj->change_password(old_password, new_password);
+            password_hash = sign_message(new_password, monero_message_signature_type::SIGN_WITH_SPEND_KEY); // Update password hash
+            return true;
+        case WalletType::Wownero:
+            return false;
+        default:
+            return false;
+    }
 }
 //-------------------------------------------------------
 // refer to https://woodser.github.io/monero-cpp/doxygen/structmonero_1_1monero__tx__config.html
