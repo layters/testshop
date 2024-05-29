@@ -184,7 +184,7 @@ std::vector<uint8_t> neroshop::msgpack::process(const std::vector<uint8_t>& requ
         }
         
         // Return response or error
-        if(code != 0) {
+        if(code != static_cast<int>(DhtResultCode::Success)) {
             response_object["version"] = std::string(NEROSHOP_DHT_VERSION);
             response_object["error"]["id"] = node.get_id();
             response_object["error"]["code"] = code;
@@ -248,14 +248,14 @@ std::vector<uint8_t> neroshop::msgpack::process(const std::vector<uint8_t>& requ
         }
         
         // Return response or error
-        if(code != 0 || code != static_cast<int>(DhtResultCode::StorePartial)) {
+        if((code == static_cast<int>(DhtResultCode::Success)) || (code == static_cast<int>(DhtResultCode::StorePartial))) {
+            response_object["version"] = std::string(NEROSHOP_DHT_VERSION);
+            response_object["response"]["id"] = node.get_id();
+        } else {
             response_object["version"] = std::string(NEROSHOP_DHT_VERSION);
             response_object["error"]["id"] = node.get_id();
             response_object["error"]["code"] = code;
             response_object["error"]["message"] = get_dht_result_code_as_string(static_cast<DhtResultCode>(code));
-        } else {
-            response_object["version"] = std::string(NEROSHOP_DHT_VERSION);
-            response_object["response"]["id"] = node.get_id();
         }
     }
     //-----------------------------------------------------
