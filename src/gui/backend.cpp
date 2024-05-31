@@ -425,34 +425,30 @@ bool neroshop::Backend::saveProductImage(const QString& fileName, const QString&
     std::string destinationPath = key_folder + "/" + (image_name_hash + "." + image_ext);
     // Check if image already exists in cache so that we do not export the same image more than once
     if(!neroshop_filesystem::is_file(destinationPath)) {
-        // Image Loader crashes when image resolution is too large (ex. 4096 pixels wide) so we need to scale it!!
+        // Image Loader crashes when certain image dimensions are loaded (ex. 1920×1440, 1920x1920, 2048x2048) so we need to set a maximum image size!!
+        // 1200x1200, 1920x1080, 1920x1200, 1200×1920, 1920×1280, 1280×1920, 1280×1280, 1440×1440 images should work as I've tested them
         QImage sourceImage;
         sourceImage.load(fileName);
         QSize imageSize = sourceImage.size();
-        int maxWidth = 1200; // Set the maximum width for the resized image
-        int maxHeight = 1200; // Set the maximum height for the resized image
+        int maxWidth = 1920; // Set the maximum width for the image
+        int maxHeight = 1280; // Set the maximum height for the image
 
-        // Check if the image size is smaller than the maximum size
-        if (imageSize.width() <= maxWidth && imageSize.height() <= maxHeight) {
+        // If the image size does not exceed the maximum size
+        if ((imageSize.width() <= maxWidth && imageSize.height() <= maxHeight) ||
+            (imageSize.height() <= maxWidth && imageSize.width() <= maxHeight)) {
             // Keep the original image since it's already within the size limits
-        } else {
-            // Calculate the new size while maintaining the aspect ratio
-            QSize newSize = imageSize.scaled(maxWidth, maxHeight, Qt::KeepAspectRatio);
-
-            // Resize the image if it exceeds the maximum dimensions
-            if (imageSize != newSize) {
-                sourceImage = sourceImage.scaled(newSize, Qt::KeepAspectRatio, Qt::SmoothTransformation);
+            // Note: Scaling and saving the original image as QPixmap will alter the original image's size bytes so we want to avoid that at all costs!
+            QFile sourceFile(fileName);
+            if(sourceFile.copy(QString::fromStdString(destinationPath))) {
+                neroshop::print("copied \"" + fileName.toStdString() + "\" to \"" + key_folder + "\"", 3);
+                sourceFile.close();
+                return true;
             }
+            sourceFile.close();
         }
-
-        // Convert the QImage to QPixmap for further processing or saving
-        QPixmap resizedPixmap = QPixmap::fromImage(sourceImage);
-
-        // Save the resized image
-        resizedPixmap.save(QString::fromStdString(destinationPath));
     }
-    neroshop::print("exported \"" + fileName.toStdString() + "\" to \"" + key_folder + "\"", 3);
-    return true;
+    
+    return false;
 }
 //----------------------------------------------------------------
 QVariantMap neroshop::Backend::uploadProductImage(const QString& fileName, int image_id) {

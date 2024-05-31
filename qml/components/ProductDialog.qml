@@ -1047,7 +1047,11 @@ Popup {
                                 Backend.saveProductThumbnail(productImages[0].source, listing_key)
                                 // Save product image(s) to datastore folder
                                 for (let i = 0; i < productImages.length; i++) {
-                                    Backend.saveProductImage(productImages[i].source, listing_key)
+                                    if(!Backend.saveProductImage(productImages[i].source, listing_key)) {
+                                        messageBox.text = qsTr("Failed to save image. Try reducing the resolution")
+                                        messageBox.open()
+                                        return; // exit function
+                                    }
                                 }
                                 // Clear input fields after listing product
                                 productNameField.text = ""

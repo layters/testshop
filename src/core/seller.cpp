@@ -110,7 +110,7 @@ void neroshop::Seller::delist_item(const std::string& listing_key) {
     // Parse the response
     nlohmann::json json = nlohmann::json::parse(response);
     if(json.contains("error")) {
-        neroshop::print("set_stock_quantity: key is lost or missing from DHT", 1);
+        neroshop::print("delist_item: key is lost or missing from DHT", 1);
         return; // Key is lost or missing from DHT, return
     }    
     
@@ -131,14 +131,14 @@ void neroshop::Seller::delist_item(const std::string& listing_key) {
             neroshop::print("delist_item: you cannot delist this since you are not the listing's creator", 1);
             return;
         }
-        // Verify the signature
+        // Verify with the signature
         std::string listing_id = value_obj["id"].get<std::string>();
         std::string old_signature = value_obj["signature"].get<std::string>();
         bool self_verified = wallet->verify_message(listing_id, old_signature);
         if(!self_verified) { neroshop::print("Data verification failed.", 1); return; }
         // Might be a good idea to set the stock quantity to zero beforehand
         value_obj["quantity"] = 0;
-        // Not possible to remove data from DHT unless it originally had an expiration date
+        // Not possible to completely remove data from DHT unless it originally had an expiration date
         // So the least we could do is set the quantity to zero
         //value_obj["expiration_date"] = neroshop::timestamp::get_utc_timestamp_after_duration(24, "hour");
         // Re-sign to reflect the modification
