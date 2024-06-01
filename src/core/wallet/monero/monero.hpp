@@ -22,6 +22,8 @@ public:
     int open(const std::string& path, const std::string& password) override;
     void close(bool save = false) override;
     
+    bool change_password(const std::string& old_password, const std::string& new_password) override;
+    
     std::string sign_message(const std::string& message, monero_message_signature_type signature_type) const override;
     bool verify_message(const std::string& message, const std::string& signature) const override;
     

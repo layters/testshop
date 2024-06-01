@@ -1013,18 +1013,27 @@ Popup {
                                     return; // exit function
                                 }
                                 //---------------------------------------
-                                // TODO: add weight and product_code to attributes list instead
-                                // Attributes will be in JSON format
-                                // Todo: check whether its a product or service
+                                // Create image objects with properties
                                 let productImages = []
                                 for(let i = 0; i < productImageRepeater.count; i++) {
                                     let productImage = productImageRepeater.itemAt(i).children[0].children[0]
                                     if(productImage.status == Image.Ready) { // If image loaded
-                                        console.log("uploading " + Backend.urlToLocalFile(productImage.source) + " to the database")
-                                        let image = Backend.uploadProductImage(Backend.urlToLocalFile(productImage.source), i)
+                                        let image = Backend.uploadImageToObject(Backend.urlToLocalFile(productImage.source), i)
+                                        if(Object.keys(image).length === 0) { return }
+                                        if(!Backend.isSupportedImageDimension(image.width, image.height)) {
+                                            messageBox.text = "Image dimensions must not exceed 1920x1280, 1280x1920, or 1600x1600"
+                                            messageBox.open()
+                                            return; // exit function
+                                        }
+                                        if(!Backend.isSupportedImageSizeBytes(image.size)) {
+                                            messageBox.text = "Image size must not exceed 2 MB"
+                                            messageBox.open()
+                                            return; // exit function
+                                        }
                                         productImages.push(image);
                                     }
                                 }
+                                //---------------------------------------
                                 // List product
                                 let listing_key = User.listProduct(
                                     productNameField.text, 

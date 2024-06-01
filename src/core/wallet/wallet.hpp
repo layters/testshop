@@ -75,7 +75,8 @@ public:
     
     std::string upload(bool open = true, std::string password = "");
     
-    bool verify_password(const std::string& password);
+    bool verify_password(const std::string& password) const;
+    virtual bool change_password(const std::string& old_password, const std::string& new_password);
     
     // todo: create a function that connects a hardware wallet
     monero::monero_subaddress create_subaddress(unsigned int account_idx, const std::string & label = "") const; // generates a new subaddress from main account

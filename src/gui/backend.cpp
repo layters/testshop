@@ -43,6 +43,8 @@
 #include "../core/tools/timestamp.hpp"
 #include "../core/crypto/rsa.hpp"
 #include "enum_wrapper.hpp"
+#include "../core/protocol/p2p/file_piece_hasher.hpp"
+
 
 #include <future>
 #include <thread>
@@ -84,6 +86,27 @@ QImage neroshop::Backend::base64ToImage(const QString& base64Data) {
     reader.setAutoTransform(true);
     const QImage image = reader.read();
     return image;
+}
+//----------------------------------------------------------------
+//----------------------------------------------------------------
+bool neroshop::Backend::isSupportedImageDimension(int width, int height) {
+    // App will crash if images are the following dimensions or larger: 1700×1700, 1800×1800, 1920×1440, 1920x1920, 2048x2048
+    // Image dimensions that have been tested and won't crash the app: 1200x1200, 1920x1080, 1920x1200, 1200×1920, 1920×1280, 1280×1920, 1280×1280, 1440×1440, 1500×1500, 1600×1600
+    int maxWidth = 1920;
+    int maxHeight = 1280;
+    int maxDimensionsRange = 1600; // Support images with dimensions up to the ranges [1600, 1600] since they won't crash the app
+
+    // If the image size does not exceed the dimensions range
+    if ((width <= maxWidth && height <= maxHeight) ||
+        (height <= maxWidth && width <= maxHeight) ||
+        (width <= maxDimensionsRange && height <= maxDimensionsRange)) {
+        return true;
+    }
+    return false;
+}
+//----------------------------------------------------------------
+bool neroshop::Backend::isSupportedImageSizeBytes(int sizeBytes) {
+    return (sizeBytes <= NEROSHOP_MAX_IMAGE_SIZE);
 }
 //----------------------------------------------------------------
 //----------------------------------------------------------------
@@ -425,75 +448,75 @@ bool neroshop::Backend::saveProductImage(const QString& fileName, const QString&
     std::string destinationPath = key_folder + "/" + (image_name_hash + "." + image_ext);
     // Check if image already exists in cache so that we do not export the same image more than once
     if(!neroshop_filesystem::is_file(destinationPath)) {
-        // Image Loader crashes when image resolution is too large (ex. 4096 pixels wide) so we need to scale it!!
         QImage sourceImage;
         sourceImage.load(fileName);
         QSize imageSize = sourceImage.size();
-        int maxWidth = 1200; // Set the maximum width for the resized image
-        int maxHeight = 1200; // Set the maximum height for the resized image
-
-        // Check if the image size is smaller than the maximum size
-        if (imageSize.width() <= maxWidth && imageSize.height() <= maxHeight) {
-            // Keep the original image since it's already within the size limits
-        } else {
-            // Calculate the new size while maintaining the aspect ratio
-            QSize newSize = imageSize.scaled(maxWidth, maxHeight, Qt::KeepAspectRatio);
-
-            // Resize the image if it exceeds the maximum dimensions
-            if (imageSize != newSize) {
-                sourceImage = sourceImage.scaled(newSize, Qt::KeepAspectRatio, Qt::SmoothTransformation);
+        
+        if(isSupportedImageDimension(imageSize.width(), imageSize.height())) {
+            QFile sourceFile(fileName);
+            if(sourceFile.copy(QString::fromStdString(destinationPath))) {
+                neroshop::print("copied \"" + fileName.toStdString() + "\" to \"" + key_folder + "\"", 3);
+                sourceFile.close();
+                return true;
             }
+            sourceFile.close();
         }
-
-        // Convert the QImage to QPixmap for further processing or saving
-        QPixmap resizedPixmap = QPixmap::fromImage(sourceImage);
-
-        // Save the resized image
-        resizedPixmap.save(QString::fromStdString(destinationPath));
     }
-    neroshop::print("exported \"" + fileName.toStdString() + "\" to \"" + key_folder + "\"", 3);
-    return true;
+    
+    return false;
 }
 //----------------------------------------------------------------
-QVariantMap neroshop::Backend::uploadProductImage(const QString& fileName, int image_id) {
+QVariantMap neroshop::Backend::uploadImageToObject(const QString& fileName, int imageId) {
     QVariantMap image;
-    //----------------------------------------
-    // Read image from file and retrieve its contents
-    std::ifstream product_image_file(fileName.toStdString(), std::ios::binary); // std::ios::binary is the same as std::ifstream::binary
-    if(!product_image_file.good()) {
-        std::cout << NEROSHOP_TAG "failed to load " << fileName.toStdString() << std::endl; 
+    
+    // Determine piece length
+    QImage imageFile(fileName);
+    QFileInfo fileInfo(fileName);
+    qint64 size = fileInfo.size();
+    QSize dimensions = imageFile.size();
+    
+    size_t piece_size = 16384; // each file piece will be 16 KB
+    const size_t MEGABYTE = (NEROSHOP_MAX_IMAGE_SIZE / 2);
+    if(size >= NEROSHOP_MAX_IMAGE_SIZE) { piece_size = MEGABYTE; } // If image is 2 MB or more, piece length = 1 MB
+    else if(size >= MEGABYTE) { piece_size = 524288; } // If image is up to 1 MB, piece_size = 512 KB
+    else if(size >= 524288) { piece_size = 262144; } // If image is up to 512 KB, piece_size = 256 KB
+    else if(size >= 262144) { piece_size = 131072; } // If image is up to 256 KB, piece_size = 128 KB
+    else if(size >= 131072) { piece_size = 65536; } // If image is is up to 128 KB, piece_size = 64 KB
+    else if(size >= 65536) { piece_size = 32768; } // If image is is up to 64 KB, piece_size = 32 KB
+    else if(size >= 32768) { piece_size = 16384; } // If image is is up to 32 KB, piece_size = 16 KB
+    
+    // Hash image file pieces
+    neroshop::FilePieceHasher hasher(piece_size);
+    std::vector<neroshop::FilePiece> file_pieces = hasher.hash_file(fileName.toStdString());
+    if(file_pieces.empty()) {
+        std::cerr << "Product upload image is either empty or failed to load\n";
         return {};
     }
-    product_image_file.seekg(0, std::ios::end);
-    size_t size = static_cast<int>(product_image_file.tellg()); // in bytes
-    // Limit product image size to 12582912 bytes (12 megabyte)
-    const int max_bytes = 12582912;
-    double kilobytes = max_bytes / 1024.0;
-    double megabytes = kilobytes / 1024.0;
-    if(size >= max_bytes) {
-        neroshop::print("Product upload image cannot exceed " + std::to_string(megabytes) + " MB (twelve megabyte)", 1);
-        return {};
+    
+    size_t file_size = 0;
+    QStringList piecesList;
+    for (size_t i = 0; i < file_pieces.size(); ++i) {
+        file_size += file_pieces[i].bytes;
+        piecesList.append(QString::fromStdString(file_pieces[i].hash));
     }
-    product_image_file.seekg(0);
-    std::vector<unsigned char> buffer(size);
-    if(!product_image_file.read(reinterpret_cast<char *>(&buffer[0]), size)) {
-        std::cout << NEROSHOP_TAG "error: only " << product_image_file.gcount() << " could be read";
-        return {}; // exit function
-    }
-    product_image_file.close();
-    //----------------------------------------
+    
     // Create the image VariantMap (object)
+    assert(file_size == size);
     std::string image_file = fileName.toStdString(); // Full path with file name
     std::string image_name = image_file.substr(image_file.find_last_of("\\/") + 1);
-    image_name = image_name.substr(0, image_name.find_last_of(".")); // remove ext
+    image_name = image_name.substr(0, image_name.find_last_of(".")); // Remove ext
     std::string image_name_hash = neroshop::crypto::sha256(image_name);
     std::string image_ext = image_file.substr(image_file.find_last_of(".") + 1);
     image["name"] = QString::fromStdString(image_name_hash + "." + image_ext);//fileName;
-    qint64 imageSize64 = static_cast<qint64>(size);
-    image["size"] = QVariant::fromValue(imageSize64);
-    image["id"] = image_id;
+    image["size"] = QVariant::fromValue(static_cast<qint64>(file_size));
+    image["id"] = imageId;
     image["source"] = fileName;
-    //----------------------------------------
+    image["piece_size"] = QVariant::fromValue(static_cast<qint64>(piece_size));
+    image["pieces"] = piecesList;
+    // Extra parameters - will only be used for checking dimensions
+    image["width"] = dimensions.width();
+    image["height"] = dimensions.height();
+    
     return image;
 }
 //----------------------------------------------------------------

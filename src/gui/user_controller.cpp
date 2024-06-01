@@ -87,11 +87,22 @@ int quantity, double price, const QString& currency, const QString& condition, c
     std::vector<Image> imagesVector;
     for (const QVariantMap& imageMap : images) {
         Image image;
+        std::vector<std::string> pieces;
         
         if(imageMap.contains("name")) image.name = imageMap.value("name").toString().toStdString();
         if(imageMap.contains("size")) image.size = imageMap.value("size").toInt();
         if(imageMap.contains("id")) image.id = imageMap.value("id").toInt();
         if(imageMap.contains("source")) image.source = imageMap.value("source").toString().toStdString();
+        if(imageMap.contains("pieces") && imageMap.value("pieces").canConvert<QStringList>()) {
+            QStringList piecesList = imageMap.value("pieces").toStringList();
+            for(const QString& pieceHashStr : piecesList) {
+                pieces.push_back(pieceHashStr.toStdString());
+            }
+            image.pieces = pieces;
+        }
+        if(imageMap.contains("piece_size")) image.piece_size = imageMap.value("piece_size").toInt();
+        if(imageMap.contains("width")) image.width = imageMap.value("width").toInt();
+        if(imageMap.contains("height")) image.height = imageMap.value("height").toInt();
         
         imagesVector.push_back(image);
     }
