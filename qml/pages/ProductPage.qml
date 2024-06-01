@@ -92,6 +92,9 @@ Page {
                                     width = (sourceSize.width < productImage.minImageSize) ? sourceSize.width : productImage.minImageSize
                                     height = (sourceSize.height < productImage.minImageSize) ? sourceSize.height : productImage.minImageSize
                                 }
+                                if(status === Image.Error) {
+                                    source = "image://listing?id=%1&image_id=%2".arg(productPage.model.key).arg("thumbnail.jpg")
+                                }
                             }
                         }
                     }
@@ -113,6 +116,13 @@ Page {
                                     fillMode: Image.PreserveAspectFit
                                     mipmap: true
                                     asynchronous: true
+                                    onStatusChanged: {
+                                        if(status === Image.Error) {
+                                            if(index == 0) {
+                                                source = "image://listing?id=%1&image_id=%2".arg(productPage.model.key).arg("thumbnail.jpg")
+                                            }
+                                        }
+                                    }
                                     MouseArea {
                                         anchors.fill: parent
                                         acceptedButtons: Qt.LeftButton

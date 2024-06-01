@@ -128,6 +128,8 @@ std::pair<std::string, std::string/*std::vector<uint8_t>*/> neroshop::Serializer
                 if(is_thumbnail) { 
                     std::cout << image.name << " \033[1;35mwill be used as thumbnail\033[0m\n";
                 }
+                image_obj["pieces"] = image.pieces;
+                image_obj["piece_size"] = image.piece_size;
                 
                 images_array.push_back(image_obj);
             }

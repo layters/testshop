@@ -68,6 +68,8 @@
 #define NEROSHOP_CATALOG_FOLDER_NAME "listings"
 #define NEROSHOP_AVATAR_FOLDER_NAME  "avatars"
 
+#define NEROSHOP_MAX_IMAGE_SIZE      2097152 // 2 MB
+
 #if defined(NEROSHOP_USE_QT)
 #define NEROSHOP_DEFAULT_CONFIGURATION_PATH    QStandardPaths::writableLocation(QStandardPaths::AppConfigLocation).toStdString()//(QStandardPaths::AppLocalDataLocation).toStdString()
 #define NEROSHOP_DEFAULT_DATABASE_PATH         NEROSHOP_DEFAULT_CONFIGURATION_PATH + "/" + NEROSHOP_DATA_FOLDER_NAME

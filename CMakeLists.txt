@@ -428,6 +428,7 @@ set(neroshop_price_src
 
 set(neroshop_protocol_src 
     ${NEROSHOP_CORE_SRC_DIR}/protocol/messages/msgpack.cpp 
+    ${NEROSHOP_CORE_SRC_DIR}/protocol/p2p/file_piece_hasher.cpp 
     ${NEROSHOP_CORE_SRC_DIR}/protocol/p2p/key_mapper.cpp 
     ${NEROSHOP_CORE_SRC_DIR}/protocol/p2p/node.cpp 
     ${NEROSHOP_CORE_SRC_DIR}/protocol/p2p/routing_table.cpp 
@@ -470,7 +471,7 @@ set(neroshop_core_src
     ${NEROSHOP_CORE_SRC_DIR}/user.cpp 
 )
 
-set(neroshop_client_src ${neroshop_crypto_src} ${neroshop_database_src} ${neroshop_network_src} ${neroshop_price_src} ${NEROSHOP_CORE_SRC_DIR}/protocol/p2p/serializer.cpp ${NEROSHOP_CORE_SRC_DIR}/protocol/rpc/json_rpc.cpp ${NEROSHOP_CORE_SRC_DIR}/protocol/transport/client.cpp ${neroshop_tools_src} ${neroshop_wallet_src} ${NEROSHOP_CORE_SRC_DIR}/cart.cpp ${NEROSHOP_CORE_SRC_DIR}/escrow.cpp ${NEROSHOP_CORE_SRC_DIR}/listing.cpp ${NEROSHOP_CORE_SRC_DIR}/order.cpp ${NEROSHOP_CORE_SRC_DIR}/product.cpp ${NEROSHOP_CORE_SRC_DIR}/seller.cpp ${NEROSHOP_CORE_SRC_DIR}/settings.cpp ${NEROSHOP_CORE_SRC_DIR}/user.cpp)
+set(neroshop_client_src ${neroshop_crypto_src} ${neroshop_database_src} ${neroshop_network_src} ${neroshop_price_src} ${NEROSHOP_CORE_SRC_DIR}/protocol/p2p/file_piece_hasher.cpp ${NEROSHOP_CORE_SRC_DIR}/protocol/p2p/serializer.cpp ${NEROSHOP_CORE_SRC_DIR}/protocol/rpc/json_rpc.cpp ${NEROSHOP_CORE_SRC_DIR}/protocol/transport/client.cpp ${neroshop_tools_src} ${neroshop_wallet_src} ${NEROSHOP_CORE_SRC_DIR}/cart.cpp ${NEROSHOP_CORE_SRC_DIR}/escrow.cpp ${NEROSHOP_CORE_SRC_DIR}/listing.cpp ${NEROSHOP_CORE_SRC_DIR}/order.cpp ${NEROSHOP_CORE_SRC_DIR}/product.cpp ${NEROSHOP_CORE_SRC_DIR}/seller.cpp ${NEROSHOP_CORE_SRC_DIR}/settings.cpp ${NEROSHOP_CORE_SRC_DIR}/user.cpp)
 
 ######################################
 # neroshop tests
@@ -483,7 +484,7 @@ endif()
 ######################################
 # neromon
 set(neroshop_daemon "neromon")
-set(neroshop_daemon_src ${neroshop_crypto_src} ${neroshop_database_src} ${neroshop_network_src} ${NEROSHOP_CORE_SRC_DIR}/protocol/messages/msgpack.cpp ${NEROSHOP_CORE_SRC_DIR}/protocol/p2p/key_mapper.cpp ${NEROSHOP_CORE_SRC_DIR}/protocol/p2p/node.cpp ${NEROSHOP_CORE_SRC_DIR}/protocol/p2p/routing_table.cpp ${NEROSHOP_CORE_SRC_DIR}/protocol/rpc/json_rpc.cpp ${NEROSHOP_CORE_SRC_DIR}/protocol/transport/client.cpp ${NEROSHOP_CORE_SRC_DIR}/protocol/transport/ip_address.cpp ${NEROSHOP_CORE_SRC_DIR}/protocol/transport/server.cpp ${NEROSHOP_CORE_SRC_DIR}/tools/base64.cpp ${NEROSHOP_CORE_SRC_DIR}/tools/logger.cpp ${NEROSHOP_CORE_SRC_DIR}/tools/timestamp.cpp)
+set(neroshop_daemon_src ${neroshop_crypto_src} ${neroshop_database_src} ${neroshop_network_src} ${NEROSHOP_CORE_SRC_DIR}/protocol/messages/msgpack.cpp ${NEROSHOP_CORE_SRC_DIR}/protocol/p2p/file_piece_hasher.cpp ${NEROSHOP_CORE_SRC_DIR}/protocol/p2p/key_mapper.cpp ${NEROSHOP_CORE_SRC_DIR}/protocol/p2p/node.cpp ${NEROSHOP_CORE_SRC_DIR}/protocol/p2p/routing_table.cpp ${NEROSHOP_CORE_SRC_DIR}/protocol/rpc/json_rpc.cpp ${NEROSHOP_CORE_SRC_DIR}/protocol/transport/client.cpp ${NEROSHOP_CORE_SRC_DIR}/protocol/transport/ip_address.cpp ${NEROSHOP_CORE_SRC_DIR}/protocol/transport/server.cpp ${NEROSHOP_CORE_SRC_DIR}/tools/base64.cpp ${NEROSHOP_CORE_SRC_DIR}/tools/logger.cpp ${NEROSHOP_CORE_SRC_DIR}/tools/timestamp.cpp)
 add_executable(${neroshop_daemon} src/daemon/main.cpp ${neroshop_daemon_src})
 install(TARGETS ${neroshop_daemon} DESTINATION bin)
 target_compile_definitions(${neroshop_daemon} PRIVATE NEROSHOP_DEBUG)

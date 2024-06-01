@@ -29,6 +29,9 @@ public:
     QString imageToBase64(const QImage& image); // un-tested
     QImage base64ToImage(const QString& base64Data); // un-tested
     
+    Q_INVOKABLE bool isSupportedImageDimension(int width, int height);
+    Q_INVOKABLE bool isSupportedImageSizeBytes(int sizeBytes);
+    
     Q_INVOKABLE double weightToKg(double amount, const QString& unit_name) const;
     Q_INVOKABLE double lgToKg(double amount) const;
 
@@ -72,7 +75,7 @@ public:
     Q_INVOKABLE bool saveAvatarImage(const QString& fileName, const QString& userAccountKey);
         
     // Products should be registered so that sellers can list pre-existing products without the need to duplicate a product which is unnecessary and can make the database bloated
-    Q_INVOKABLE QVariantMap uploadProductImage(const QString& filename, int image_id); // constructs image object rather than upload it
+    Q_INVOKABLE QVariantMap uploadImageToObject(const QString& fileName, int imageId); // constructs image object rather than upload it
     Q_INVOKABLE bool saveProductImage(const QString& fileName, const QString& listingKey);
     Q_INVOKABLE bool saveProductThumbnail(const QString& fileName, const QString& listingKey);
 
