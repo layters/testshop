@@ -230,7 +230,7 @@ int main(int argc, char** argv)
 		    if (Daemon.start())
 			    Daemon.run ();
 		    else {
-			    if(neroshop::is_i2pd_running()) {
+			    if(neroshop::is_i2p_running()) {
 		            std::cout << "\033[90mi2pd was already running in the background\033[0m\n";
 		            return;
 		        } else {
