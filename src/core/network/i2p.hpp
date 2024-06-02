@@ -61,7 +61,7 @@
 
 namespace neroshop {
 
-    bool is_i2pd_running();
+    bool is_i2p_running();
 
 }
 #endif

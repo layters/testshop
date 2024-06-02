@@ -67,7 +67,7 @@ https://gist.github.com/layters/83efdef0c5ea3d8ff458bfc312d11be3
 
 |      Library                                                       | Minimum Ver.       |         Purpose                                                        | Status                                             |
 |--------------------------------------------------------------------|--------------------|------------------------------------------------------------------------|----------------------------------------------------|
-| [monero-cpp](https://github.com/monero-ecosystem/monero-cpp)       | latest             | monero wallet and payment system                                       | :heavy_check_mark: :package:                       |
+| [monero-cpp](https://github.com/woodser/monero-cpp)                | latest             | monero wallet and payment system                                       | :heavy_check_mark: :package:                       |
 | [sqlite3](https://sqlite.org/)                                     | 3.38.0             | database management                                                    | :heavy_check_mark: :package:                       |
 | [QR Code generator](https://github.com/nayuki/QR-Code-generator)   | ?                  | qr code generation                                                     | :heavy_check_mark: :package:                       |
 | [json](https://github.com/nlohmann/json/)                          | ?                  | json parsing and msgpack                                               | :heavy_check_mark: :package:                       |
