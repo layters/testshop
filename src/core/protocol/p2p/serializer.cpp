@@ -15,6 +15,44 @@ namespace neroshop_string = neroshop::string;
 
 //-----------------------------------------------------------------------------
 
+void set_expiration(nlohmann::json& json_object, const std::string& metadata) {
+    if(metadata == "user" || metadata == "seller_rating") { return; } // Never expires
+    
+    nlohmann::json settings = nlohmann::json::parse(neroshop::load_json(), nullptr, false);
+    if(settings.is_discarded()) {
+        if(metadata == "order") {
+            json_object["expiration_date"] = neroshop::timestamp::get_utc_timestamp_after_duration(2, "years"); // default: 2 years
+        }
+        if(metadata == "message") {
+            json_object["expiration_date"] = neroshop::timestamp::get_utc_timestamp_after_duration(30, "days"); // default: 30 days
+        }
+    } else {
+        std::string expires_in = settings["data_expiration"][metadata].get<std::string>();
+        if(neroshop::string::contains(expires_in, "Never") && 
+            (metadata == "listing" || metadata == "product_rating")) { 
+            return; 
+        }
+        
+        std::regex pattern("(\\d+) (\\w+)"); // Regular expression to match number followed by text
+        std::smatch match;
+        if (!std::regex_search(expires_in, match, pattern)) {
+            throw std::runtime_error("Malformed or invalid expiration (settings.json)");
+        }
+        
+        if (std::regex_search(expires_in, match, pattern)) {
+            std::string number_str = match[1].str();
+            int number = std::stoi(number_str);
+
+            std::string time_unit = match[2].str();
+            if(!time_unit.empty() && time_unit.back() != 's') { time_unit.push_back('s'); }
+            
+            json_object["expiration_date"] = neroshop::timestamp::get_utc_timestamp_after_duration(number, time_unit);
+        }
+    }
+}
+
+//-----------------------------------------------------------------------------
+
 std::pair<std::string, std::string/*std::vector<uint8_t>*/> neroshop::Serializer::serialize(const neroshop::Object& obj) {
     nlohmann::json json_object = {};
     
@@ -36,7 +74,6 @@ std::pair<std::string, std::string/*std::vector<uint8_t>*/> neroshop::Serializer
         if(quantity_per_order > 0) {
             json_object["quantity_per_order"] = quantity_per_order;
         }
-        json_object["metadata"] = "listing";
         // Include the product serialization within the listing serialization
         assert(listing.get_product() != nullptr);
         const Product& product = *listing.get_product();
@@ -137,6 +174,8 @@ std::pair<std::string, std::string/*std::vector<uint8_t>*/> neroshop::Serializer
         }
         //------------------------------
         json_object["product"] = product_obj;
+        json_object["metadata"] = "listing";
+        set_expiration(json_object, json_object["metadata"].get<std::string>());
     }
     
     if(std::holds_alternative<Cart>(obj)) { 
@@ -175,23 +214,7 @@ std::pair<std::string, std::string/*std::vector<uint8_t>*/> neroshop::Serializer
             json_object["items"].push_back(order_item_obj); // order_items // TODO: encrypt order items
         }
         json_object["metadata"] = "order";
-        nlohmann::json settings = nlohmann::json::parse(neroshop::load_json(), nullptr, false);
-        if(settings.is_discarded()) {
-            json_object["expiration_date"] = neroshop::timestamp::get_utc_timestamp_after_duration(2, "year"); // default: 2 years
-        } else {
-            std::string expires_in = settings["data_expiration"]["order"].get<std::string>();
-            std::regex pattern("(\\d+) (\\w+)"); // Regular expression to match number followed by text
-            std::smatch match;
-            if (std::regex_search(expires_in, match, pattern)) {
-                std::string number_str = match[1].str();
-                int number = std::stoi(number_str);
-                std::string time_unit = match[2].str();
-                if (!time_unit.empty() && time_unit.back() == 's' && time_unit.size() > 1) {
-                    time_unit.pop_back(); // Remove the last character ('s')
-                }
-                json_object["expiration_date"] = neroshop::timestamp::get_utc_timestamp_after_duration(number, time_unit);
-            }
-        }
+        set_expiration(json_object, json_object["metadata"].get<std::string>());
     }
     
     if(std::holds_alternative<ProductRating>(obj)) {
@@ -203,6 +226,7 @@ std::pair<std::string, std::string/*std::vector<uint8_t>*/> neroshop::Serializer
         json_object["signature"] = product_rating.signature;
         json_object["timestamp"] = neroshop::timestamp::get_current_utc_timestamp();
         json_object["metadata"] = "product_rating";
+        set_expiration(json_object, json_object["metadata"].get<std::string>());
     }
     
     if(std::holds_alternative<SellerRating>(obj)) {

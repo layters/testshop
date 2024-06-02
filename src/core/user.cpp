@@ -454,24 +454,21 @@ void neroshop::User::send_message(const std::string& recipient_id, const std::st
     data["metadata"] = "message";
     nlohmann::json settings = nlohmann::json::parse(neroshop::load_json(), nullptr, false);
     if(settings.is_discarded()) {
-        data["expiration_date"] = neroshop::timestamp::get_utc_timestamp_after_duration(30, "day"); // default: 30 days
+        data["expiration_date"] = neroshop::timestamp::get_utc_timestamp_after_duration(30, "days"); // default: 30 days
     } else {
         std::string expires_in = settings["data_expiration"]["message"].get<std::string>();
-        if(neroshop::string::contains(expires_in, "Never")) return;
-        std::regex pattern("(\\d+) (\\w+)"); // Regular expression to match number followed by text
+        std::regex pattern("(\\d+) (\\w+)");
         std::smatch match;
+        if (!std::regex_search(expires_in, match, pattern)) {
+            throw std::runtime_error("Malformed or invalid expiration (settings.json)");
+        }
         if (std::regex_search(expires_in, match, pattern)) {
-            std::string number_str = match[1].str(); // Extract the matched number
-            int number = std::stoi(number_str); // Convert the matched number to an integer
+            std::string number_str = match[1].str();
+            int number = std::stoi(number_str);
 
-            std::string time_unit = match[2].str(); // Extract the matched text
-            if (!time_unit.empty() && time_unit.back() == 's' && time_unit.size() > 1) {// Check if the string ends with 's' and has more than one character
-                time_unit.pop_back(); // Remove the last character ('s')
-            }
-            #ifdef NEROSHOP_DEBUG0
-            std::cout << "Extracted number: " << number << std::endl;
-            std::cout << "Extracted text: " << time_unit << std::endl;
-            #endif
+            std::string time_unit = match[2].str();
+            if(!time_unit.empty() && time_unit.back() != 's') { time_unit.push_back('s'); }
+            
             data["expiration_date"] = neroshop::timestamp::get_utc_timestamp_after_duration(number, time_unit);
         }
     }
