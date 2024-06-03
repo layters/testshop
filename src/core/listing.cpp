@@ -4,9 +4,11 @@
 
 #include "product.hpp"
 
-neroshop::Listing::Listing() : quantity(0), price(0.00), quantity_per_order(0) {}
+namespace neroshop {
 
-neroshop::Listing::Listing(const std::string& id, const Product& product, const std::string& seller_id, unsigned int quantity,
+Listing::Listing() : quantity(0), price(0.00), quantity_per_order(0) {}
+
+Listing::Listing(const std::string& id, const Product& product, const std::string& seller_id, unsigned int quantity,
         double price, const std::string& currency, const std::string& condition, const std::string& location, const std::string& date, const std::string& signature,
         unsigned int quantity_per_order)
     : id(id), product(std::make_unique<Product>(product)), seller_id(seller_id), quantity(quantity),
@@ -14,14 +16,14 @@ neroshop::Listing::Listing(const std::string& id, const Product& product, const 
       quantity_per_order(quantity_per_order)
 {}
 
-neroshop::Listing::Listing(const Listing& other)
+Listing::Listing(const Listing& other)
     : id(other.id), product(std::make_unique<Product>(*other.product)), seller_id(other.seller_id), quantity(other.quantity),
       price(other.price), currency(other.currency), condition(other.condition), location(other.location),
       date(other.date), signature(other.signature),
       quantity_per_order(other.quantity_per_order)
 {}
 
-neroshop::Listing::Listing(Listing&& other) noexcept
+Listing::Listing(Listing&& other) noexcept
     : id(std::move(other.id)), product(std::move(other.product)), seller_id(std::move(other.seller_id)),
       quantity(std::exchange(other.quantity, 0)), price(std::exchange(other.price, 0.0)),
       currency(std::move(other.currency)), condition(std::move(other.condition)), location(std::move(other.location)),
@@ -31,7 +33,7 @@ neroshop::Listing::Listing(Listing&& other) noexcept
 
 //-----------------------------------------------------------------------------
 
-neroshop::Listing& neroshop::Listing::operator=(const neroshop::Listing& other)
+neroshop::Listing& Listing::operator=(const neroshop::Listing& other)
 {
     if (this != &other) {
         id = other.id;
@@ -49,7 +51,7 @@ neroshop::Listing& neroshop::Listing::operator=(const neroshop::Listing& other)
     return *this;
 }
 
-neroshop::Listing& neroshop::Listing::operator=(neroshop::Listing&& other) noexcept
+neroshop::Listing& Listing::operator=(neroshop::Listing&& other) noexcept
 {
     if (this != &other) {
         id = std::move(other.id);
@@ -69,7 +71,7 @@ neroshop::Listing& neroshop::Listing::operator=(neroshop::Listing&& other) noexc
 
 //-----------------------------------------------------------------------------
 
-void neroshop::Listing::print_listing()
+void Listing::print_listing()
 {
     std::cout << "Listing ID: " << id << std::endl;
     std::cout << "Seller ID: " << seller_id << std::endl;
@@ -92,106 +94,108 @@ void neroshop::Listing::print_listing()
 
 //-----------------------------------------------------------------------------
 
-void neroshop::Listing::set_id(const std::string& id) { 
+void Listing::set_id(const std::string& id) { 
     this->id = id; 
 }
 
-void neroshop::Listing::set_product_id(const std::string& product_id) { 
+void Listing::set_product_id(const std::string& product_id) { 
     if (product == nullptr) {
         throw std::runtime_error("product is nullptr");
     }
     this->product->set_id(product_id);
 }
 
-void neroshop::Listing::set_seller_id(const std::string& seller_id) { 
+void Listing::set_seller_id(const std::string& seller_id) { 
     this->seller_id = seller_id; 
 }
 
-void neroshop::Listing::set_quantity(unsigned int quantity) { 
+void Listing::set_quantity(unsigned int quantity) { 
     this->quantity = quantity; 
 }
 
-void neroshop::Listing::set_price(double price) { 
+void Listing::set_price(double price) { 
     this->price = price; 
 }
 
-void neroshop::Listing::set_currency(const std::string& currency) { 
+void Listing::set_currency(const std::string& currency) { 
     this->currency = currency; 
 }
 
-void neroshop::Listing::set_condition(const std::string& condition) { 
+void Listing::set_condition(const std::string& condition) { 
     this->condition = condition; 
 }
 
-void neroshop::Listing::set_location(const std::string& location) { 
+void Listing::set_location(const std::string& location) { 
     this->location = location; 
 }
 
-void neroshop::Listing::set_date(const std::string& date) { 
+void Listing::set_date(const std::string& date) { 
     this->date = date; 
 }
 
-void neroshop::Listing::set_product(const Product& product) {
+void Listing::set_product(const Product& product) {
     this->product = std::make_unique<Product>(product);
 }
 
-void neroshop::Listing::set_signature(const std::string& signature) {
+void Listing::set_signature(const std::string& signature) {
     this->signature = signature;
 }
 
-void neroshop::Listing::set_quantity_per_order(unsigned int quantity_per_order) {
+void Listing::set_quantity_per_order(unsigned int quantity_per_order) {
     this->quantity_per_order = quantity_per_order;
 }
 
 //-----------------------------------------------------------------------------
 
-std::string neroshop::Listing::get_id() const {
+std::string Listing::get_id() const {
     return id;
 }
 
-std::string neroshop::Listing::get_product_id() const {
+std::string Listing::get_product_id() const {
     if (product.get() == nullptr) {
         throw std::runtime_error("product is nullptr");
     }
     return product->get_id();
 }
 
-std::string neroshop::Listing::get_seller_id() const {
+std::string Listing::get_seller_id() const {
     return seller_id;
 }
 
-int neroshop::Listing::get_quantity() const {
+int Listing::get_quantity() const {
     return quantity;
 }
 
-double neroshop::Listing::get_price() const {
+double Listing::get_price() const {
     return price;
 }
 
-std::string neroshop::Listing::get_currency() const {
+std::string Listing::get_currency() const {
     return currency;
 }
 
-std::string neroshop::Listing::get_condition() const {
+std::string Listing::get_condition() const {
     return condition;
 }
 
-std::string neroshop::Listing::get_location() const {
+std::string Listing::get_location() const {
     return location;
 }
 
-std::string neroshop::Listing::get_date() const {
+std::string Listing::get_date() const {
     return date;
 }
 
-neroshop::Product * neroshop::Listing::get_product() const {
+neroshop::Product * Listing::get_product() const {
     return product.get();
 }
 
-std::string neroshop::Listing::get_signature() const {
+std::string Listing::get_signature() const {
     return signature;
 }
 
-int neroshop::Listing::get_quantity_per_order() const {
+int Listing::get_quantity_per_order() const {
     return quantity_per_order;
+}
+
 }

@@ -17,21 +17,23 @@
 #include "filesystem.hpp" // neroshop::filesystem
 #include "string.hpp"
 
-neroshop::Process::Process()
+namespace neroshop {
+
+Process::Process()
 {
 #ifdef __gnu_linux__
     handle = -1; // default
 #endif
 }
 ////////////////////
-neroshop::Process::Process(const std::string& program, const std::string& arg) : Process()
+Process::Process(const std::string& program, const std::string& arg) : Process()
 {
     if(!create(program, arg)) {
 		neroshop::print("Process creation failed", 1);
 	}
 }
 ////////////////////
-neroshop::Process::~Process()
+Process::~Process()
 {
 #ifdef __gnu_linux__
 #ifdef DOKUN_DEBUG0
@@ -41,9 +43,9 @@ neroshop::Process::~Process()
 	terminate(); // kill pid
 }
 ////////////////////
-std::vector<std::tuple<std::string, int, bool>> neroshop::Process::process_list({});
+std::vector<std::tuple<std::string, int, bool>> Process::process_list({});
 ////////////////////	
-void * neroshop::Process::open()
+void * Process::open()
 {
 #ifdef _WIN32
 	this->handle = static_cast<void *>(OpenProcess(PROCESS_ALL_ACCESS, FALSE, GetCurrentProcessId()));
@@ -54,7 +56,7 @@ void * neroshop::Process::open()
     return nullptr;
 }
 ////////////////////
-bool neroshop::Process::create(const std::string& program, const std::string& argument)
+bool Process::create(const std::string& program, const std::string& argument)
 {
 #ifdef _WIN32
     STARTUPINFO si;
@@ -115,7 +117,7 @@ bool neroshop::Process::create(const std::string& program, const std::string& ar
 	return true;
 }
 ////////////////////
-bool neroshop::Process::terminate()
+bool Process::terminate()
 {
 #ifdef _WIN32
 	return (TerminateProcess(static_cast<HANDLE>(this->handle), 0) != 0);
@@ -137,7 +139,7 @@ bool neroshop::Process::terminate()
     return false;
 }
 ////////////////////
-bool neroshop::Process::terminate(const Process& process)
+bool Process::terminate(const Process& process)
 {
 #ifdef _WIN32
 	return (TerminateProcess(static_cast<HANDLE>(process.get_handle()), 0) != 0);
@@ -149,7 +151,7 @@ bool neroshop::Process::terminate(const Process& process)
     return false;
 }
 ////////////////////
-void neroshop::Process::terminate_by_process_id(int process_id) {
+void Process::terminate_by_process_id(int process_id) {
 #ifdef __gnu_linux__
     while(process_id != -1) {
         if(kill(static_cast<pid_t>(process_id), SIGTERM) < 0) // kill all instances of this process    
@@ -158,16 +160,16 @@ void neroshop::Process::terminate_by_process_id(int process_id) {
 #endif    
 }
 ////////////////////
-void neroshop::Process::terminate_by_process_name(const std::string& process_name) {
+void Process::terminate_by_process_name(const std::string& process_name) {
 #ifdef __gnu_linux__    
-    while(neroshop::Process::get_process_by_name(process_name) != -1) {// while this process is still running
-        if(kill(static_cast<pid_t>(neroshop::Process::get_process_by_name(process_name)), SIGTERM) < 0) // kill all instances of this process    
+    while(Process::get_process_by_name(process_name) != -1) {// while this process is still running
+        if(kill(static_cast<pid_t>(Process::get_process_by_name(process_name)), SIGTERM) < 0) // kill all instances of this process    
             std::cout << "FAILED to kill process " << process_name << std::endl;
     }
 #endif
 }
 ////////////////////
-void neroshop::Process::exit(int code)
+void Process::exit(int code)
 {
 #ifdef _WIN32
 	ExitProcess(code);
@@ -179,7 +181,7 @@ void neroshop::Process::exit(int code)
 ////////////////////
 ////////////////////
 ////////////////////
-void neroshop::Process::show_processes(void) { // displays all processes from current session
+void Process::show_processes(void) { // displays all processes from current session
     for(int i = 0; i < process_list.size(); i++) {
         std::cout 
         << "\033[1;35;49mprocess[" << i << "] ("
@@ -195,23 +197,23 @@ void neroshop::Process::show_processes(void) { // displays all processes from cu
 ////////////////////
 ////////////////////
 #ifdef _WIN32
-void * neroshop::Process::get_handle() const
+void * Process::get_handle() const
 {
 	return this->handle;
 }
 #endif
 ////////////////////
 #ifdef __gnu_linux__
-int neroshop::Process::get_handle() const
+int Process::get_handle() const
 {
 	return handle;
 }
 ////////////////////
-std::string neroshop::Process::get_name() const {
+std::string Process::get_name() const {
     return name;
 }
 ////////////////////
-int neroshop::Process::get_process_by_name(const std::string& process_name) { // UPDATE(2022-02-05): this doesn't work as well as I expected it to :/
+int Process::get_process_by_name(const std::string& process_name) { // UPDATE(2022-02-05): this doesn't work as well as I expected it to :/
     int pid = -1;
     // Open the /proc directory
     DIR *dp = opendir("/proc");
@@ -252,7 +254,7 @@ int neroshop::Process::get_process_by_name(const std::string& process_name) { //
 }
 #endif
 ////////////////////
-void * neroshop::Process::get_active()
+void * Process::get_active()
 {
 #ifdef _WIN32
 	return static_cast<void *>(GetCurrentProcess());
@@ -260,4 +262,6 @@ void * neroshop::Process::get_active()
 #ifdef __gnu_linux__
 #endif	
     return nullptr;
+}
+
 }

@@ -12,23 +12,25 @@
 #include "../tools/logger.hpp"
 #include "../tools/string.hpp"
 #include "currency_map.hpp" // neroshop::CurrencyMap
+
+namespace neroshop {
 //-------------------------------------------------------
 //-------------------------------------------------------
-std::string neroshop::Converter::json_string ("");
+std::string Converter::json_string ("");
 //-------------------------------------------------------
 //-------------------------------------------------------
-double neroshop::Converter::to_kg(double amount, const std::string& unit_name) {
+double Converter::to_kg(double amount, const std::string& unit_name) {
     if(neroshop::string::lower(unit_name) == "lb" || neroshop::string::lower(unit_name) == "lbs" || neroshop::string::lower(unit_name) == "pound") {return lb_to_kg(amount);}
     return 0.0;
 }
 //-------------------------------------------------------
-double neroshop::Converter::lb_to_kg(double lb) {
+double Converter::lb_to_kg(double lb) {
     double lb2kg = 0.45359237; // 1 lb = 0.45359237 kg
     return lb * lb2kg;
 }
 //-------------------------------------------------------
 //-------------------------------------------------------
-std::unique_ptr<neroshop::PriceApi> neroshop::Converter::make_price_source(PriceSource source)
+std::unique_ptr<neroshop::PriceApi> Converter::make_price_source(PriceSource source)
 {
     switch (source) {
         // Crypto Data Aggregators
@@ -53,7 +55,7 @@ std::unique_ptr<neroshop::PriceApi> neroshop::Converter::make_price_source(Price
     return nullptr;
 }
 //-------------------------------------------------------
-double neroshop::Converter::get_price(neroshop::Currency from, neroshop::Currency to) {
+double Converter::get_price(neroshop::Currency from, neroshop::Currency to) {
     const std::vector<neroshop::PriceSource> SOURCES_TO_USE{
         neroshop::PriceSource::CoinMarketCap,
         neroshop::PriceSource::CoinGecko,
@@ -78,20 +80,20 @@ double neroshop::Converter::get_price(neroshop::Currency from, neroshop::Currenc
     return 0.0;
 }
 //-------------------------------------------------------
-double neroshop::Converter::convert_to_xmr(double amount, const std::string& currency) {
+double Converter::convert_to_xmr(double amount, const std::string& currency) {
     std::string map_key = neroshop::string::upper(currency);
     
     if(neroshop::CurrencyMap.count(map_key) > 0) {
         auto map_value = neroshop::CurrencyMap[map_key];
         neroshop::Currency from_currency = std::get<0>(map_value);        
-        double rate = neroshop::Converter::get_price(neroshop::Currency::XMR, from_currency); // 1 xmr = ? currency//std::cout << amount << " " << map_key << " is equal to " << neroshop::string::precision((amount / rate), 12) << " XMR\n";
+        double rate = Converter::get_price(neroshop::Currency::XMR, from_currency); // 1 xmr = ? currency//std::cout << amount << " " << map_key << " is equal to " << neroshop::string::precision((amount / rate), 12) << " XMR\n";
         return (amount / rate);
     }
     neroshop::print(neroshop::string::upper(currency) + " is not supported", 1);
     return 0.0;
 }
 //-------------------------------------------------------
-std::vector<std::string> neroshop::Converter::get_currency_list() {
+std::vector<std::string> Converter::get_currency_list() {
     std::vector<std::string> currency_list;
     for (const auto& [key, value] : neroshop::CurrencyMap) {
         currency_list.push_back(key);
@@ -99,7 +101,7 @@ std::vector<std::string> neroshop::Converter::get_currency_list() {
     return currency_list;
 }
 //-------------------------------------------------------
-int neroshop::Converter::get_currency_decimals(const std::string& currency) {
+int Converter::get_currency_decimals(const std::string& currency) {
     auto map_key = neroshop::string::upper(currency);
     // Check if key exists in std::map
     if(neroshop::CurrencyMap.count(map_key) > 0) {
@@ -110,19 +112,19 @@ int neroshop::Converter::get_currency_decimals(const std::string& currency) {
     return 2;
 }
 //-------------------------------------------------------
-double neroshop::Converter::get_xmr_price(const std::string& currency) {
+double Converter::get_xmr_price(const std::string& currency) {
     auto map_key = neroshop::string::upper(currency);
     // Check if key exists in std::map
     if(neroshop::CurrencyMap.count(map_key) > 0) {////if(neroshop::CurrencyMap.find(map_key) != neroshop::CurrencyMap.end()) {
         auto map_value = neroshop::CurrencyMap[map_key];
         neroshop::Currency preferred_currency = std::get<0>(map_value);
-        return neroshop::Converter::get_price(neroshop::Currency::XMR, preferred_currency);
+        return Converter::get_price(neroshop::Currency::XMR, preferred_currency);
     }
     neroshop::print(neroshop::string::upper(currency) + " is not supported", 1);
     return 0.0;
 }
 //-------------------------------------------------------
-std::string neroshop::Converter::get_currency_sign(const std::string& currency_code) {
+std::string Converter::get_currency_sign(const std::string& currency_code) {
     if(neroshop::string::lower(currency_code) == "usd") return "$";// or US$
     if(neroshop::string::lower(currency_code) == "eur") return "€";
     if(neroshop::string::lower(currency_code) == "jpy") return "¥";
@@ -143,7 +145,7 @@ std::string neroshop::Converter::get_currency_sign(const std::string& currency_c
     return "";
 } // https://www.xe.com/symbols.php
 //-------------------------------------------------------
-neroshop::Currency neroshop::Converter::get_currency_enum(const std::string& currency) {
+neroshop::Currency Converter::get_currency_enum(const std::string& currency) {
     auto map_key = neroshop::string::upper(currency);
     if(neroshop::CurrencyMap.count(map_key) > 0) {
         auto map_value = neroshop::CurrencyMap[map_key];
@@ -154,14 +156,14 @@ neroshop::Currency neroshop::Converter::get_currency_enum(const std::string& cur
 //-------------------------------------------------------
 //-------------------------------------------------------
 //-------------------------------------------------------
-bool neroshop::Converter::is_supported_currency(const std::string& currency_code) {
+bool Converter::is_supported_currency(const std::string& currency_code) {
     return (neroshop::CurrencyMap.count(neroshop::string::upper(currency_code)) > 0);
 }
 //-------------------------------------------------------
 //-------------------------------------------------------
 //-------------------------------------------------------
 //-------------------------------------------------------
-double neroshop::Converter::convert_xmr(double quantity, std::string currency, bool to) { //to: if we want currency->xmr (true) or rather xmr->currency (false)
+double Converter::convert_xmr(double quantity, std::string currency, bool to) { //to: if we want currency->xmr (true) or rather xmr->currency (false)
 #if !defined(NEROSHOP_USE_QT)    
     std::map<std::string, std::string>  currency_to_id_coinmarketcap = {
         {"usd", "2781"}, {"aud", "2782"}, {"cad", "2784"}, {"chf", "2785"}, {"cny", "2787"}, {"eur", "2790"},
@@ -286,7 +288,7 @@ double neroshop::Converter::convert_xmr(double quantity, std::string currency, b
 //-------------------------------------------------------
 //-------------------------------------------------------
 //-------------------------------------------------------
-bool neroshop::Converter::request(const std::string& url)
+bool Converter::request(const std::string& url)
 {
 #if !defined(NEROSHOP_USE_QT)
     // parse raw json str
@@ -300,8 +302,8 @@ bool neroshop::Converter::request(const std::string& url)
         //curl_easy_setopt(curl, CURLOPT_IPRESOLVE, CURL_IPRESOLVE_V4); // opt - Don't bother trying IPv6, which would increase DNS resolution time.
         //curl_easy_setopt(curl, CURLOPT_TIMEOUT, 10); // opt - don't wait forever, time out after 10 secs
         //curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L); // opt follow https redirects if necessary
-        curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, neroshop::Converter::write_callback);
-        curl_easy_setopt(curl, CURLOPT_WRITEDATA, &neroshop::Converter::json_string);//&buffer);
+        curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, Converter::write_callback);
+        curl_easy_setopt(curl, CURLOPT_WRITEDATA, &Converter::json_string);//&buffer);
         res = curl_easy_perform(curl);
         //curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &http_code); // opt
         if(res != CURLE_OK) {
@@ -316,13 +318,13 @@ bool neroshop::Converter::request(const std::string& url)
     return true;
 }
 //-------------------------------------------------------
-std::string neroshop::Converter::get_json() // const; // returns whole json as a string
+std::string Converter::get_json() // const; // returns whole json as a string
 {
     return json_string;
 }
 //-------------------------------------------------------
 //-------------------------------------------------------
-std::size_t neroshop::Converter::write_callback(char* in, std::size_t size, std::size_t num, std::string* out)
+std::size_t Converter::write_callback(char* in, std::size_t size, std::size_t num, std::string* out)
 {
     const std::size_t total_bytes = size * num;
     if(total_bytes) {
@@ -335,3 +337,4 @@ std::size_t neroshop::Converter::write_callback(char* in, std::size_t size, std:
 //-------------------------------------------------------
 //-------------------------------------------------------
 //-------------------------------------------------------
+}

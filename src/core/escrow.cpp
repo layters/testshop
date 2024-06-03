@@ -1,11 +1,13 @@
 #include "escrow.hpp"
 
-void neroshop::Escrow::test_multisig_participants(const std::vector<neroshop::Wallet *>& participants, int M, int N, bool test_tx) {
+namespace neroshop {
+
+void Escrow::test_multisig_participants(const std::vector<neroshop::Wallet *>& participants, int M, int N, bool test_tx) {
     std::cout << "test_multisig_participants(" + std::to_string(M) + ", " + std::to_string(N) + ")\n";
     assert((N == participants.size()) && std::string("Number of participants must be equal to N (" + std::to_string(N) + ")").c_str());
 }
 
-void neroshop::Escrow::test_create_multisig_wallet(int M, int N) {
+void Escrow::test_create_multisig_wallet(int M, int N) {
     std::cout << "Creating " + std::to_string(M) + "/" + std::to_string(N) + " multisig wallet\n";
     
     // create participating wallets
@@ -67,6 +69,8 @@ void neroshop::Escrow::test_create_multisig_wallet(int M, int N) {
         assert(N == static_cast<int>(info.m_num_participants));
         wallet->get_monero_wallet()->close(true);
     }
+}
+
 }
 
 /*int main() {

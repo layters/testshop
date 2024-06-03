@@ -18,16 +18,18 @@
 #include <cmath> // floor
 #include <random>
 
-neroshop::Seller::Seller()
+namespace neroshop {
+
+Seller::Seller()
 {}
 ////////////////////
 ////////////////////
-neroshop::Seller::Seller(const std::string& name) : Seller() {
+Seller::Seller(const std::string& name) : Seller() {
     set_name(name);
 }
 ////////////////////
 ////////////////////
-neroshop::Seller::~Seller() {
+Seller::~Seller() {
     // clear customer orders
     customer_order_list.clear(); // will reset (delete) all customer orders
 #ifdef NEROSHOP_DEBUG    
@@ -40,10 +42,10 @@ neroshop::Seller::~Seller() {
 ////////////////////
 ////////////////////
 ////////////////////
-std::string neroshop::Seller::list_item(
+std::string Seller::list_item(
     const std::string& name,
     const std::string& description,
-    const std::vector<Attribute>& attributes,
+    const std::vector<ProductAttribute>& attributes,
     const std::string& product_code,
     int category_id,
     const std::vector<int>& subcategory_ids,
@@ -99,7 +101,7 @@ std::string neroshop::Seller::list_item(
     return key;
 }
 ////////////////////
-void neroshop::Seller::delist_item(const std::string& listing_key) {
+void Seller::delist_item(const std::string& listing_key) {
     // Transition from Sqlite to DHT:
     Client * client = Client::get_main_client();
     // TODO: remove product from table cart_item, table images, table products, and table product_ratings as well
@@ -159,7 +161,7 @@ void neroshop::Seller::delist_item(const std::string& listing_key) {
 // and should respond swiftly
 // if seller accepts the order, then an address will be generated from seller's wallet and sent to the customer
 // if seller rejects the order, their stock_qty is increased by the failed order's qty
-void neroshop::Seller::load_customer_orders() {
+void Seller::load_customer_orders() {
     /*db::Sqlite3 db("neroshop.db");
     ///////////
     if(!db.table_exists("order_item")) return; // seller has probably never received an order from a customer before
@@ -235,7 +237,7 @@ void neroshop::Seller::load_customer_orders() {
 }
 ////////////////////
 // THIS FUNCTION WILL BE LISTENING FOR ANY NEW (PENDING) ORDERS AT ALL TIMES
-void neroshop::Seller::update_customer_orders() { // this function is faster (I think) than load_customer_orders()
+void Seller::update_customer_orders() { // this function is faster (I think) than load_customer_orders()
 #if defined(NEROSHOP_USE_POSTGRESQL)    
     //database->connect("host=127.0.0.1 port=5432 user=postgres password=postgres dbname=neroshoptest");
     ////////////////////////////////
@@ -317,7 +319,7 @@ void neroshop::Seller::update_customer_orders() { // this function is faster (I 
 ////////////////////
 // setters - item and inventory-related stuff
 ////////////////////
-void neroshop::Seller::set_stock_quantity(const std::string& listing_key, int quantity) {
+void Seller::set_stock_quantity(const std::string& listing_key, int quantity) {
     // Transition from Sqlite to DHT:
     Client * client = Client::get_main_client();
 
@@ -381,7 +383,7 @@ void neroshop::Seller::set_stock_quantity(const std::string& listing_key, int qu
 ////////////////////
 // getters - seller rating system
 ////////////////////
-unsigned int neroshop::Seller::get_good_ratings() const {
+unsigned int Seller::get_good_ratings() const {
     /*db::Sqlite3 db("neroshop.db");
     if(db.table_exists("seller_ratings")) {
         unsigned int good_ratings_count = db.get_column_integer("seller_ratings", "COUNT(score)", "seller_id = " + get_id() + " AND score = " + std::to_string(1));
@@ -401,7 +403,7 @@ unsigned int neroshop::Seller::get_good_ratings() const {
 #endif	
     return 0;
 }
-unsigned int neroshop::Seller::get_bad_ratings() const {
+unsigned int Seller::get_bad_ratings() const {
     /*db::Sqlite3 db("neroshop.db");
     if(db.table_exists("seller_ratings")) {
         unsigned int bad_ratings_count = db.get_column_integer("seller_ratings", "COUNT(score)", "seller_id = " + get_id() + " AND score = " + std::to_string(0));
@@ -422,7 +424,7 @@ unsigned int neroshop::Seller::get_bad_ratings() const {
     return 0;	
 }
 ////////////////////
-unsigned int neroshop::Seller::get_ratings_count() const {
+unsigned int Seller::get_ratings_count() const {
     /*db::Sqlite3 db("neroshop.db");
     if(db.table_exists("seller_ratings")) {
         unsigned int ratings_count = db.get_column_integer("seller_ratings", "COUNT(*)", "seller_id = " + get_id());
@@ -443,11 +445,11 @@ unsigned int neroshop::Seller::get_ratings_count() const {
     return 0;
 }
 ////////////////////
-unsigned int neroshop::Seller::get_total_ratings() const {
+unsigned int Seller::get_total_ratings() const {
     return get_ratings_count();
 }
 ////////////////////
-unsigned int neroshop::Seller::get_reputation() const {
+unsigned int Seller::get_reputation() const {
     /*neroshop::db::Sqlite3 * database = neroshop::get_database();
     if(!database) throw std::runtime_error("database is NULL");
     // Get seller reputation as percentage
@@ -461,7 +463,7 @@ unsigned int neroshop::Seller::get_reputation() const {
     return 0;
 }
 ////////////////////
-std::vector<unsigned int> neroshop::Seller::get_top_rated_sellers(unsigned int limit) {
+std::vector<unsigned int> Seller::get_top_rated_sellers(unsigned int limit) {
 #if defined(NEROSHOP_USE_POSTGRESQL)    
     // get n seller_ids with the most positive (good) ratings
     // ISSUE: both seller_4 and seller_1 have the same number of 1_score_values but seller_1 has the highest reputation and it places seller_4 first [solved - by using reputation in addition]
@@ -507,17 +509,17 @@ std::vector<unsigned int> neroshop::Seller::get_top_rated_sellers(unsigned int l
 ////////////////////
 // getters - order-related stuff
 ////////////////////
-unsigned int neroshop::Seller::get_customer_order(unsigned int index) const {
+unsigned int Seller::get_customer_order(unsigned int index) const {
     if(customer_order_list.empty()) return 0;//return nullptr;
-    if(index > (customer_order_list.size() - 1)) throw std::out_of_range("neroshop::Seller::get_customer_order(): attempt to access invalid index");
+    if(index > (customer_order_list.size() - 1)) throw std::out_of_range("Seller::get_customer_order(): attempt to access invalid index");
     return customer_order_list[index];
 }
 ////////////////////
-unsigned int neroshop::Seller::get_customer_order_count() const {
+unsigned int Seller::get_customer_order_count() const {
     return customer_order_list.size();
 }
 ////////////////////
-std::vector<int> neroshop::Seller::get_pending_customer_orders() {
+std::vector<int> Seller::get_pending_customer_orders() {
 #if defined(NEROSHOP_USE_POSTGRESQL)
     std::vector<int> pending_order_list;
     ////////////////////////////////
@@ -568,7 +570,7 @@ std::vector<int> neroshop::Seller::get_pending_customer_orders() {
 ////////////////////
 // getters - sales and statistics-related stuff
 ////////////////////
-unsigned int neroshop::Seller::get_products_count() const {
+unsigned int Seller::get_products_count() const {
     neroshop::db::Sqlite3 * database = neroshop::get_database();
     if(!database) throw std::runtime_error("database is NULL");
     
@@ -576,7 +578,7 @@ unsigned int neroshop::Seller::get_products_count() const {
     return products_listed;
 }
 ////////////////////
-unsigned int neroshop::Seller::get_sales_count() const {
+unsigned int Seller::get_sales_count() const {
 #if defined(NEROSHOP_USE_POSTGRESQL)
     // should item not be considered sold until the order is done processing or nah ?
 	int items_sold = database->get_integer_params("SELECT SUM(item_qty) FROM order_item WHERE seller_id = $1;", { get_id() });
@@ -585,7 +587,7 @@ unsigned int neroshop::Seller::get_sales_count() const {
     return 0;	
 }
 ////////////////////
-unsigned int neroshop::Seller::get_units_sold(const std::string& product_id) const {
+unsigned int Seller::get_units_sold(const std::string& product_id) const {
 #if defined(NEROSHOP_USE_POSTGRESQL)
     int units_sold = database->get_integer_params("SELECT SUM(item_qty) FROM order_item WHERE product_id = $1 AND seller_id = $2", { product_id, get_id() });
     return units_sold;
@@ -593,11 +595,11 @@ unsigned int neroshop::Seller::get_units_sold(const std::string& product_id) con
     return 0;    
 }
 ////////////////////
-unsigned int neroshop::Seller::get_units_sold(const neroshop::Product& item) const {
+unsigned int Seller::get_units_sold(const neroshop::Product& item) const {
     return get_units_sold(item.get_id());
 }
 ////////////////////
-double neroshop::Seller::get_sales_profit() const {
+double Seller::get_sales_profit() const {
 #if defined(NEROSHOP_USE_POSTGRESQL)
     double profit_from_sales = database->get_real_params("SELECT SUM(item_price * item_qty) FROM order_item WHERE seller_id = $1;", { get_id() });//neroshop::print("The overall profit made from all sales combined is: $" + std::to_string(profit_from_sales), 3);
     return profit_from_sales;
@@ -605,7 +607,7 @@ double neroshop::Seller::get_sales_profit() const {
     return 0.0;
 }
 ////////////////////
-double neroshop::Seller::get_profits_made(const std::string& product_id) const {
+double Seller::get_profits_made(const std::string& product_id) const {
 #if defined(NEROSHOP_USE_POSTGRESQL)
     double item_profits = database->get_real_params("SELECT SUM(item_price * item_qty) FROM order_item WHERE product_id = $1 AND seller_id = $2;", { product_id, get_id() });//std::string item_name = database->get_text_params("SELECT name FROM item WHERE id = $1", { product_id });neroshop::print("The overall profit made from \"" + item_name + "\" is: $" + std::to_string(item_profits), 3);
     return item_profits;
@@ -613,11 +615,11 @@ double neroshop::Seller::get_profits_made(const std::string& product_id) const {
     return 0.0;
 }
 ////////////////////
-double neroshop::Seller::get_profits_made(const neroshop::Product& item) const {
+double Seller::get_profits_made(const neroshop::Product& item) const {
     return get_profits_made(item.get_id());
 }
 ////////////////////
-unsigned int neroshop::Seller::get_product_id_with_most_sales() const { // this function is preferred over the "_by_mode" version as it provides the most accurate best-selling product_id result
+unsigned int Seller::get_product_id_with_most_sales() const { // this function is preferred over the "_by_mode" version as it provides the most accurate best-selling product_id result
 #if defined(NEROSHOP_USE_POSTGRESQL)    
     // get the item with the biggest quantity sold (returns multiple results but I've limited it to 1)
     int item_with_biggest_qty = database->get_integer_params("SELECT product_id FROM order_item WHERE seller_id = $1 GROUP BY product_id ORDER BY SUM(item_qty) DESC LIMIT 1;", { get_id() }); // from the biggest to smallest sum of item_qty
@@ -630,7 +632,7 @@ unsigned int neroshop::Seller::get_product_id_with_most_sales() const { // this 
     return 0;    
 }
 ////////////////////
-unsigned int neroshop::Seller::get_product_id_with_most_orders() const {
+unsigned int Seller::get_product_id_with_most_orders() const {
 #if defined(NEROSHOP_USE_POSTGRESQL)
     // get the item with the most occurences in all orders - if two items are the most occuring then it will select the lowest product_id of the two (unless I add DESC)
     int item_with_most_occurrences = database->get_integer_params("SELECT MODE() WITHIN GROUP (ORDER BY product_id) FROM order_item WHERE seller_id = $1;", { get_id() });
@@ -651,7 +653,7 @@ unsigned int neroshop::Seller::get_product_id_with_most_orders() const {
 ////////////////////
 // boolean
 ////////////////////
-bool neroshop::Seller::has_listed(const std::string& product_id) const {
+bool Seller::has_listed(const std::string& product_id) const {
 #if defined(NEROSHOP_USE_POSTGRESQL)
 	bool listed = (database->get_text_params("SELECT EXISTS(SELECT product_id FROM inventory WHERE product_id = $1 AND seller_id = $2);", { product_id, get_id() }) == "t") ? true : false;
 	return listed;
@@ -659,11 +661,11 @@ bool neroshop::Seller::has_listed(const std::string& product_id) const {
     return false;	
 }
 ////////////////////
-bool neroshop::Seller::has_listed(const neroshop::Product& item) const {
+bool Seller::has_listed(const neroshop::Product& item) const {
     return has_listed(item.get_id());
 }
 ////////////////////
-bool neroshop::Seller::has_stock(const std::string& product_id) const {
+bool Seller::has_stock(const std::string& product_id) const {
 #if defined(NEROSHOP_USE_POSTGRESQL)
     bool in_stock = (database->get_text_params("SELECT EXISTS(SELECT product_id FROM inventory WHERE product_id = $1 AND seller_id = $2 AND stock_qty > 0);", { product_id, get_id() }) == "t") ? true : false;
     return in_stock;
@@ -671,7 +673,7 @@ bool neroshop::Seller::has_stock(const std::string& product_id) const {
     return false;    
 }
 ////////////////////
-bool neroshop::Seller::has_stock(const neroshop::Product& item) const {
+bool Seller::has_stock(const neroshop::Product& item) const {
     return has_stock(item.get_id());
 }
 ////////////////////
@@ -679,7 +681,7 @@ bool neroshop::Seller::has_stock(const neroshop::Product& item) const {
 ////////////////////
 // callbacks
 ////////////////////
-neroshop::User * neroshop::Seller::on_login(const neroshop::Wallet& wallet) { // assumes user data already exists in database
+neroshop::User * Seller::on_login(const neroshop::Wallet& wallet) { // assumes user data already exists in database
     std::string monero_primary_address = wallet.get_primary_address();
     if(!wallet.is_valid_address(monero_primary_address)) {
         neroshop::print("Invalid monero address");
@@ -704,7 +706,7 @@ neroshop::User * neroshop::Seller::on_login(const neroshop::Wallet& wallet) { //
     return user;
 }
 ////////////////////
-void neroshop::Seller::on_order_received(std::string& subaddress) {
+void Seller::on_order_received(std::string& subaddress) {
     if(!wallet.get()) throw std::runtime_error("wallet has not been initialized");
     if(!wallet->get_monero_wallet()) throw std::runtime_error("monero_wallet_full is not opened");
     // TODO: check if order type is a direct pay/no escrow before generating a new subaddress
@@ -732,3 +734,4 @@ void neroshop::Seller::on_order_received(std::string& subaddress) {
 ////////////////////
 ////////////////////
 ////////////////////
+}

@@ -19,6 +19,8 @@
 
 #include <filesystem>
 
+namespace neroshop {
+
 const static std::string lua_string = R"(monero = {
     nodes = {
         mainnet = {
@@ -73,9 +75,9 @@ wownero = {
     }
 })";
 //----------------------------------------------------------------
-lua_State * neroshop::lua_state(luaL_newstate());
+lua_State * lua_state(luaL_newstate());
 //----------------------------------------------------------------
-bool neroshop::load_lua() {
+bool load_lua() {
         ////std::string user = neroshop::device::get_user();
         // "/home/<user>/.config/neroshop"
         std::string configuration_path = NEROSHOP_DEFAULT_CONFIGURATION_PATH;
@@ -92,7 +94,7 @@ bool neroshop::load_lua() {
         return true;
 	}
 //----------------------------------------------------------------
-bool neroshop::export_lua() {
+bool export_lua() {
     ////std::string user = neroshop::device::get_user();
     std::string text(lua_string);
         // "/home/<user>/.config/neroshop"
@@ -129,7 +131,7 @@ bool neroshop::export_lua() {
         return true;		
 	}
 //----------------------------------------------------------------
-extern bool neroshop::open_lua() {
+extern bool open_lua() {
     if(!neroshop::export_lua()) { 
         if(!neroshop::load_lua()) {
             neroshop::print("Failed to load configuration file", 1);
@@ -139,7 +141,7 @@ extern bool neroshop::open_lua() {
     return true;
 }
 //----------------------------------------------------------------
-bool neroshop::load_nodes_from_memory() {
+bool load_nodes_from_memory() {
     // Load and compile the Lua code into a Lua function
     int result = luaL_loadstring(lua_state, lua_string.c_str()); // pushes the compiled Lua chunk (function) onto the stack
     if (result != LUA_OK) {
@@ -163,11 +165,11 @@ bool neroshop::load_nodes_from_memory() {
     return true;    
 }
 //----------------------------------------------------------------
-lua_State * neroshop::get_lua_state() {
+lua_State * get_lua_state() {
 	return lua_state;
 }
 //----------------------------------------------------------------
-bool neroshop::create_json() {
+bool create_json() {
     std::string config_path = NEROSHOP_DEFAULT_CONFIGURATION_PATH;
     std::string settings_filename = NEROSHOP_SETTINGS_FILENAME;
     std::string config_file = config_path + "/" + settings_filename;
@@ -364,7 +366,7 @@ bool neroshop::create_json() {
     return true;
 }
 //----------------------------------------------------------------
-std::string neroshop::load_json() {
+std::string load_json() {
     std::string config_path = NEROSHOP_DEFAULT_CONFIGURATION_PATH;
     std::string settings_filename = NEROSHOP_SETTINGS_FILENAME;
     std::string config_file = config_path + "/" + settings_filename;
@@ -404,7 +406,7 @@ std::string neroshop::load_json() {
     return "";
 }
 //----------------------------------------------------------------
-bool neroshop::open_json(std::string& out) {
+bool open_json(std::string& out) {
     if(!create_json()) {
         std::string out = load_json();
         if(out.empty()) {
@@ -415,7 +417,7 @@ bool neroshop::open_json(std::string& out) {
     return true;
 }
 //----------------------------------------------------------------
-void neroshop::modify_json(const std::string& settings) { // saves settings
+void modify_json(const std::string& settings) { // saves settings
     std::string config_path = NEROSHOP_DEFAULT_CONFIGURATION_PATH;
     std::string settings_filename = NEROSHOP_SETTINGS_FILENAME;
     std::string config_file = config_path + "/" + settings_filename;
@@ -453,4 +455,5 @@ void neroshop::modify_json(const std::string& settings) { // saves settings
     #endif    
 }
 //----------------------------------------------------------------
+}
 

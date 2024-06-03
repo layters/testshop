@@ -10,13 +10,15 @@
 #include <cmath>
 #include <filesystem>
 
-neroshop::Wallet::Wallet(WalletType wallet_type) : wallet_type(wallet_type), monero_wallet_obj(nullptr),
+namespace neroshop {
+
+Wallet::Wallet(WalletType wallet_type) : wallet_type(wallet_type), monero_wallet_obj(nullptr),
     process(nullptr), percentage(0.0)
 {}
 //-------------------------------------------------------
-neroshop::WalletNetworkType neroshop::Wallet::network_type(WalletNetworkType::Stagenet);
+neroshop::WalletNetworkType Wallet::network_type(WalletNetworkType::Stagenet);
 //-------------------------------------------------------
-neroshop::Wallet::~Wallet() 
+Wallet::~Wallet() 
 {
     if(monero_wallet_obj.get()) {
         // remove listener
@@ -43,7 +45,7 @@ neroshop::Wallet::~Wallet()
 // 	Thought: account creation date could be used as the wallet's restore height
 //-------------------------------------------------------
 // Reminder: path is the path and name of the wallet without the .keys extension
-int neroshop::Wallet::create_random(const std::string& password, const std::string& confirm_pwd, const std::string& path) {
+int Wallet::create_random(const std::string& password, const std::string& confirm_pwd, const std::string& path) {
     if(confirm_pwd != password) {
         neroshop::print("Wallet passwords do not match", 1);
         return static_cast<int>(WalletError::PasswordsDoNotMatch);
@@ -74,7 +76,7 @@ int neroshop::Wallet::create_random(const std::string& password, const std::stri
     return static_cast<int>(WalletError::Ok);
 }
 //-------------------------------------------------------
-int neroshop::Wallet::create_from_seed(const std::string& seed, const std::string& password, const std::string& confirm_pwd, const std::string& path) {
+int Wallet::create_from_seed(const std::string& seed, const std::string& password, const std::string& confirm_pwd, const std::string& path) {
     if(confirm_pwd != password) {
         neroshop::print("Wallet passwords do not match", 1);
         return static_cast<int>(WalletError::PasswordsDoNotMatch);
@@ -102,7 +104,7 @@ int neroshop::Wallet::create_from_seed(const std::string& seed, const std::strin
 }
 //-------------------------------------------------------
 // To restore a view-only wallet, leave the spend key blank
-int neroshop::Wallet::create_from_keys(const std::string& primary_address, const std::string& view_key, const std::string& spend_key, const std::string& password, const std::string &confirm_pwd, const std::string& path) {
+int Wallet::create_from_keys(const std::string& primary_address, const std::string& view_key, const std::string& spend_key, const std::string& password, const std::string &confirm_pwd, const std::string& path) {
     if(confirm_pwd != password) {
         neroshop::print("Wallet passwords do not match", 1);
         return static_cast<int>(WalletError::PasswordsDoNotMatch);
@@ -131,7 +133,7 @@ int neroshop::Wallet::create_from_keys(const std::string& primary_address, const
     return static_cast<int>(WalletError::Ok);
 }
 //-------------------------------------------------------
-int neroshop::Wallet::restore_from_seed(const std::string& seed, uint64_t restore_height) 
+int Wallet::restore_from_seed(const std::string& seed, uint64_t restore_height) 
 {
     monero::monero_wallet_config wallet_config_obj;
     wallet_config_obj.m_path = ""; // set path to "" for an in-memory wallet
@@ -157,7 +159,7 @@ int neroshop::Wallet::restore_from_seed(const std::string& seed, uint64_t restor
     return static_cast<int>(WalletError::Ok);
 }
 //-------------------------------------------------------
-int neroshop::Wallet::restore_from_keys(const std::string& primary_address, const std::string& view_key, const std::string& spend_key)
+int Wallet::restore_from_keys(const std::string& primary_address, const std::string& view_key, const std::string& spend_key)
 {
     // Check validity of primary address
     if(!monero_utils::is_valid_address(primary_address, static_cast<monero::monero_network_type>(Wallet::network_type))) {
@@ -182,7 +184,7 @@ int neroshop::Wallet::restore_from_keys(const std::string& primary_address, cons
     return static_cast<int>(WalletError::Ok);
 }
 //-------------------------------------------------------
-int neroshop::Wallet::open(const std::string& path, const std::string& password) { 
+int Wallet::open(const std::string& path, const std::string& password) { 
     if(!monero::monero_wallet_full::wallet_exists(path)) { 
         return static_cast<int>(WalletError::DoesNotExist);
     }
@@ -213,7 +215,7 @@ int neroshop::Wallet::open(const std::string& path, const std::string& password)
     return static_cast<int>(WalletError::Ok);
 }
 //-------------------------------------------------------
-void neroshop::Wallet::close(bool save) 
+void Wallet::close(bool save) 
 {
     switch(wallet_type) {
         case WalletType::Monero:
@@ -227,10 +229,10 @@ void neroshop::Wallet::close(bool save)
     }
 }
 //-------------------------------------------------------
-std::string neroshop::Wallet::upload(bool open, std::string password) { // opens the wallet file
+std::string Wallet::upload(bool open, std::string password) { // opens the wallet file
     // open file dialog to retrieve walletfile path
     // reminder: use this function for an upload button instead
-    //           then call neroshop::Wallet::open when user presses a "submit" button.
+    //           then call Wallet::open when user presses a "submit" button.
     char file[1024];
 #ifdef __gnu_linux__
     FILE *f = popen("zenity --file-selection --title \"Select Wallet\"", "r");//--filename "/home/${USER}/"
@@ -240,16 +242,16 @@ std::string neroshop::Wallet::upload(bool open, std::string password) { // opens
     std::string filename(file); // "wallet.keys" file
     filename = filename.substr(0, filename.find(".")); // remove ".keys" extension
     if(!monero::monero_wallet_full::wallet_exists(filename + ".keys")) { neroshop::print("wallet not found", 1); return ""; } // check if wallet file is valid (or exists)
-    if(open == true) neroshop::Wallet::open(filename, password);// will apply ".keys" ext to the wallet file
+    if(open == true) Wallet::open(filename, password);// will apply ".keys" ext to the wallet file
     return std::string(filename + ".keys");
 }
 //-------------------------------------------------------
-bool neroshop::Wallet::verify_password(const std::string& password) const {
+bool Wallet::verify_password(const std::string& password) const {
     assert(!password_hash.empty());
     return verify_message(password, password_hash);
 }
 //-------------------------------------------------------
-bool neroshop::Wallet::change_password(const std::string& old_password, const std::string& new_password) {
+bool Wallet::change_password(const std::string& old_password, const std::string& new_password) {
     switch(wallet_type) {
         case WalletType::Monero:
             if(!monero_wallet_obj.get()) throw std::runtime_error("monero_wallet_full is not opened");
@@ -269,7 +271,7 @@ bool neroshop::Wallet::change_password(const std::string& old_password, const st
 //-------------------------------------------------------
 // refer to https://woodser.github.io/monero-cpp/doxygen/structmonero_1_1monero__tx__config.html
 //-------------------------------------------------------
-void neroshop::Wallet::transfer(const std::string& address, double amount) {
+void Wallet::transfer(const std::string& address, double amount) {
     if(!monero_wallet_obj.get()) throw std::runtime_error("monero_wallet_full is not opened");
     if(!monero_wallet_obj.get()->is_synced()) throw std::runtime_error("wallet is not synced with a daemon");
     std::packaged_task<void(void)> transfer_task([this, address, amount]() -> void {
@@ -320,7 +322,7 @@ void neroshop::Wallet::transfer(const std::string& address, double amount) {
     worker.detach(); // join may block but detach won't//void transfer_result = future_result.get();
 }
 //-------------------------------------------------------
-void neroshop::Wallet::transfer(const std::vector<std::pair<std::string, double>>& payment_addresses) { 
+void Wallet::transfer(const std::vector<std::pair<std::string, double>>& payment_addresses) { 
     if(!monero_wallet_obj.get()) throw std::runtime_error("monero_wallet_full is not opened");
     if(!monero_wallet_obj.get()->is_synced()) throw std::runtime_error("wallet is not synced with a daemon");
     
@@ -368,7 +370,7 @@ void neroshop::Wallet::transfer(const std::vector<std::pair<std::string, double>
     monero_utils::free(created_tx);
 }
 //-------------------------------------------------------
-void neroshop::Wallet::transfer(const std::string& uri) {
+void Wallet::transfer(const std::string& uri) {
     if(!monero_wallet_obj.get()) throw std::runtime_error("monero_wallet_full is not opened");
     if(!monero_wallet_obj.get()->is_synced()) throw std::runtime_error("wallet is not synced with a daemon");
     
@@ -429,7 +431,7 @@ void neroshop::Wallet::transfer(const std::string& uri) {
 }
 //-------------------------------------------------------
 //-------------------------------------------------------
-std::string neroshop::Wallet::sign_message(const std::string& message, monero_message_signature_type signature_type) const {
+std::string Wallet::sign_message(const std::string& message, monero_message_signature_type signature_type) const {
     switch(wallet_type) {
         case WalletType::Monero:
             if(!monero_wallet_obj.get()) throw std::runtime_error("monero_wallet_full is not opened");
@@ -441,7 +443,7 @@ std::string neroshop::Wallet::sign_message(const std::string& message, monero_me
     }
 }
 //-------------------------------------------------------
-bool neroshop::Wallet::verify_message(const std::string& message, const std::string& signature) const {
+bool Wallet::verify_message(const std::string& message, const std::string& signature) const {
     switch(wallet_type) {
         case WalletType::Monero:
             if(!monero_wallet_obj.get()) throw std::runtime_error("monero_wallet_full is not opened");
@@ -454,7 +456,7 @@ bool neroshop::Wallet::verify_message(const std::string& message, const std::str
 }
 //-------------------------------------------------------
 //-------------------------------------------------------
-monero::monero_subaddress neroshop::Wallet::create_subaddress(unsigned int account_idx, const std::string & label) const {
+monero::monero_subaddress Wallet::create_subaddress(unsigned int account_idx, const std::string & label) const {
     if(!monero_wallet_obj.get()) throw std::runtime_error("monero_wallet_full is not opened");
     monero_subaddress subaddress = monero_wallet_obj->create_subaddress(account_idx, label);
     // we have to make sure that each newly generated subaddress is unique (meaning it has never been used)
@@ -465,12 +467,12 @@ monero::monero_subaddress neroshop::Wallet::create_subaddress(unsigned int accou
 }
 //-------------------------------------------------------
 //-------------------------------------------------------
-void neroshop::Wallet::set_wallet_type(WalletType wallet_type) {
+void Wallet::set_wallet_type(WalletType wallet_type) {
     this->wallet_type = wallet_type;
 }
 //-------------------------------------------------------
 // NOTE: It is IMPOSSIBLE to change the network type of a pre-existing monero wallet, but it can be set before its creation
-void neroshop::Wallet::set_network_type(WalletNetworkType network_type) {
+void Wallet::set_network_type(WalletNetworkType network_type) {
     auto current_network_type = get_wallet_network_type();
     if(current_network_type == network_type) {
         return;
@@ -488,7 +490,7 @@ void neroshop::Wallet::set_network_type(WalletNetworkType network_type) {
     Wallet::network_type = network_type;
 }
 //-------------------------------------------------------
-void neroshop::Wallet::set_network_type_by_string(const std::string& network_type) {
+void Wallet::set_network_type_by_string(const std::string& network_type) {
     if(network_type == "mainnet") set_network_type(WalletNetworkType::Mainnet);
     if(network_type == "testnet") set_network_type(WalletNetworkType::Testnet);
     if(network_type == "stagenet") set_network_type(WalletNetworkType::Stagenet);
@@ -496,7 +498,7 @@ void neroshop::Wallet::set_network_type_by_string(const std::string& network_typ
 }
 //-------------------------------------------------------
 //-------------------------------------------------------
-std::string neroshop::Wallet::address_new() const {
+std::string Wallet::address_new() const {
     if(!monero_wallet_obj.get()) throw std::runtime_error("monero_wallet_full is not opened");
     // Create a subaddress within an account (account 0 to be specific).
     monero_subaddress subaddress = monero_wallet_obj->create_subaddress(0);
@@ -509,17 +511,17 @@ std::string neroshop::Wallet::address_new() const {
     //subaddress_list.push_back(subaddress.m_address.get());
 }
 //-------------------------------------------------------
-unsigned int neroshop::Wallet::address_book_add(const std::string& address, std::string description) {
+unsigned int Wallet::address_book_add(const std::string& address, std::string description) {
     if(!monero_wallet_obj.get()) throw std::runtime_error("monero_wallet_full is not opened");
     return monero_wallet_obj->add_address_book_entry(address, description);
 }
 //-------------------------------------------------------
-void neroshop::Wallet::address_book_delete(unsigned int index) {
+void Wallet::address_book_delete(unsigned int index) {
     if(!monero_wallet_obj.get()) throw std::runtime_error("monero_wallet_full is not opened");
     monero_wallet_obj->delete_address_book_entry(index);
 }
 //-------------------------------------------------------
-std::vector<monero::monero_subaddress> neroshop::Wallet::get_addresses_all(unsigned int account_idx) {
+std::vector<monero::monero_subaddress> Wallet::get_addresses_all(unsigned int account_idx) {
     if(!monero_wallet_obj.get()) throw std::runtime_error("monero_wallet_full is not opened");
     if(!monero_wallet_obj.get()->is_synced()) throw std::runtime_error("wallet is not synced with a daemon");
     std::vector<monero::monero_subaddress> addresses = {};
@@ -531,7 +533,7 @@ std::vector<monero::monero_subaddress> neroshop::Wallet::get_addresses_all(unsig
     return addresses;
 }
 
-std::vector<monero::monero_subaddress> neroshop::Wallet::get_addresses_used(unsigned int account_idx) {
+std::vector<monero::monero_subaddress> Wallet::get_addresses_used(unsigned int account_idx) {
     if(!monero_wallet_obj.get()) throw std::runtime_error("monero_wallet_full is not opened");
     if(!monero_wallet_obj.get()->is_synced()) throw std::runtime_error("wallet is not synced with a daemon");
     std::vector<monero::monero_subaddress> addresses = {};
@@ -545,7 +547,7 @@ std::vector<monero::monero_subaddress> neroshop::Wallet::get_addresses_used(unsi
     return addresses;
 }
 
-std::vector<monero::monero_subaddress> neroshop::Wallet::get_addresses_unused(unsigned int account_idx) {
+std::vector<monero::monero_subaddress> Wallet::get_addresses_unused(unsigned int account_idx) {
     if(!monero_wallet_obj.get()) throw std::runtime_error("monero_wallet_full is not opened");
     if(!monero_wallet_obj.get()->is_synced()) throw std::runtime_error("wallet is not synced with a daemon");
     std::vector<monero::monero_subaddress> addresses = {};
@@ -564,7 +566,7 @@ std::vector<monero::monero_subaddress> neroshop::Wallet::get_addresses_unused(un
 }
 
 //-------------------------------------------------------
-std::vector<std::shared_ptr<monero_transfer>> neroshop::Wallet::get_transfers() {
+std::vector<std::shared_ptr<monero_transfer>> Wallet::get_transfers() {
     std::promise<std::vector<std::shared_ptr<monero_transfer>>> my_promise;
     auto async_future = std::async(std::launch::async, [&my_promise, this]() -> void/*std::vector<std::shared_ptr<monero_transfer>>*/ {
         monero_transfer_query transfer_query; // optional
@@ -577,7 +579,7 @@ std::vector<std::shared_ptr<monero_transfer>> neroshop::Wallet::get_transfers() 
 }
 //-------------------------------------------------------
 //-------------------------------------------------------
-std::string neroshop::Wallet::make_uri(const std::string& payment_address, double amount, const std::string& description, const std::string& recipient) const {
+std::string Wallet::make_uri(const std::string& payment_address, double amount, const std::string& description, const std::string& recipient) const {
     bool has_amount = false;
     bool has_recipient = false;
     std::string wallet_tx_uri;
@@ -612,7 +614,7 @@ std::string neroshop::Wallet::make_uri(const std::string& payment_address, doubl
     return wallet_tx_uri;
 }
 //-------------------------------------------------------
-bool neroshop::Wallet::parse_uri(const std::string& uri, std::string& payment_address, double& amount, std::string& description, std::string& recipient) {
+bool Wallet::parse_uri(const std::string& uri, std::string& payment_address, double& amount, std::string& description, std::string& recipient) {
     std::string wallet_tx_uri = uri; // Copy to modify
     // Find position of ":" to determine the end of the coin prefix
     size_t coin_prefix_end = wallet_tx_uri.find(':'); // 6=monero, 7=wownero
@@ -669,7 +671,7 @@ bool neroshop::Wallet::parse_uri(const std::string& uri, std::string& payment_ad
 //-------------------------------------------------------
 // override
 //-------------------------------------------------------
-void neroshop::Wallet::on_sync_progress(uint64_t height, uint64_t start_height, uint64_t end_height, double percent_done, const std::string& message) {
+void Wallet::on_sync_progress(uint64_t height, uint64_t start_height, uint64_t end_height, double percent_done, const std::string& message) {
 	    // all of this takes place in a separate thread
 	    // if monero_wallet is already synced, skip this function (this function keeps spamming throughout the entire app session -.-)
 	    if(monero_wallet_obj.get()->is_synced()) return;
@@ -699,7 +701,7 @@ void neroshop::Wallet::on_sync_progress(uint64_t height, uint64_t start_height, 
         if(percent_done == 1) this->height = end_height;
 }
 //-------------------------------------------------------
-void neroshop::Wallet::on_output_received(const monero_output_wallet& output) {
+void Wallet::on_output_received(const monero_output_wallet& output) {
         // if wallet is not fully synced with a daemon, skip this function
         if(!monero_wallet_obj.get()) return;
         if(!monero_wallet_obj.get()->is_synced()) return;
@@ -727,7 +729,7 @@ void neroshop::Wallet::on_output_received(const monero_output_wallet& output) {
         }
 }
 //-------------------------------------------------------
-void neroshop::Wallet::on_balances_changed(uint64_t new_balance, uint64_t new_unlocked_balance) {
+void Wallet::on_balances_changed(uint64_t new_balance, uint64_t new_unlocked_balance) {
         // if wallet is not fully synced with a daemon, skip this function
         if(!monero_wallet_obj.get()) return;
         if(!monero_wallet_obj.get()->is_synced()) return;
@@ -752,7 +754,7 @@ void neroshop::Wallet::on_balances_changed(uint64_t new_balance, uint64_t new_un
 // daemon
 //-------------------------------------------------------
 // open the daemon before opening the wallet
-void neroshop::Wallet::daemon_open(const std::string& daemon_dir, bool confirm_external_bind, bool restricted_rpc, std::string data_dir, unsigned int restore_height) 
+void Wallet::daemon_open(const std::string& daemon_dir, bool confirm_external_bind, bool restricted_rpc, std::string data_dir, unsigned int restore_height) 
 {
     auto wallet_network_type = get_wallet_network_type();
     const std::string port = WalletNetworkPortMap[wallet_network_type][0];
@@ -783,7 +785,7 @@ void neroshop::Wallet::daemon_open(const std::string& daemon_dir, bool confirm_e
     std::cout << "\033[1;90;49m" << "started monerod (ID:" << monerod << ")\033[0m" << std::endl;
 }
 //-------------------------------------------------------
-bool neroshop::Wallet::daemon_connect_local(const std::string& username, const std::string& password) { // connect to a running daemon (node)
+bool Wallet::daemon_connect_local(const std::string& username, const std::string& password) { // connect to a running daemon (node)
     if(!monero_wallet_obj.get()) throw std::runtime_error("monero_wallet_full is not opened");
     
     auto wallet_network_type = get_wallet_network_type();
@@ -828,7 +830,7 @@ bool neroshop::Wallet::daemon_connect_local(const std::string& username, const s
     return synced;
 }
 //-------------------------------------------------------
-void neroshop::Wallet::daemon_connect_remote(const std::string& ip, const std::string& port, const std::string& username, const std::string& password, const monero_wallet_listener* listener) {
+void Wallet::daemon_connect_remote(const std::string& ip, const std::string& port, const std::string& username, const std::string& password, const monero_wallet_listener* listener) {
     if(!monero_wallet_obj.get()) throw std::runtime_error("monero_wallet_full is not opened");
     
     const std::string node_uri = "http://" + ip + ":" + port;
@@ -857,7 +859,7 @@ void neroshop::Wallet::daemon_connect_remote(const std::string& ip, const std::s
     }  
 }
 //-------------------------------------------------------
-void neroshop::Wallet::daemon_close() {
+void Wallet::daemon_close() {
     if(!process) throw std::runtime_error("process is not initialized");
 #ifdef __gnu_linux__
     int monerod = process->get_handle();
@@ -867,7 +869,7 @@ void neroshop::Wallet::daemon_close() {
 }
 //-------------------------------------------------------
 //-------------------------------------------------------
-void neroshop::Wallet::wallet_info() {
+void Wallet::wallet_info() {
     if(!monero_wallet_obj.get()) throw std::runtime_error("monero_wallet_full is not opened");
     // wallet must be synced with a daemon in order to get the *most recent* wallet info
     if(!monero_wallet_obj.get()->is_synced()) throw std::runtime_error("wallet is not synced with a daemon");
@@ -900,16 +902,16 @@ void neroshop::Wallet::wallet_info() {
 //-------------------------------------------------------
 // setters
 //-------------------------------------------------------
-void neroshop::Wallet::set_tx_note(const std::string& txid, const std::string& tx_note) {}
+void Wallet::set_tx_note(const std::string& txid, const std::string& tx_note) {}
 //-------------------------------------------------------
 //-------------------------------------------------------
 // getters
 //-------------------------------------------------------
-neroshop::WalletType neroshop::Wallet::get_wallet_type() const {
+neroshop::WalletType Wallet::get_wallet_type() const {
     return wallet_type;
 }
 //-------------------------------------------------------
-neroshop::WalletNetworkType neroshop::Wallet::get_wallet_network_type() const {
+neroshop::WalletNetworkType Wallet::get_wallet_network_type() const {
     switch(wallet_type) {
         case WalletType::Monero:
             if(!monero_wallet_obj.get()) return network_type;
@@ -921,11 +923,11 @@ neroshop::WalletNetworkType neroshop::Wallet::get_wallet_network_type() const {
     }
 }
 //-------------------------------------------------------
-neroshop::WalletNetworkType neroshop::Wallet::get_network_type() {
+neroshop::WalletNetworkType Wallet::get_network_type() {
     return network_type;
 }
 //-------------------------------------------------------
-std::string neroshop::Wallet::get_wallet_network_type_as_string() const {
+std::string Wallet::get_wallet_network_type_as_string() const {
     auto wallet_network_type = get_wallet_network_type();
     switch(wallet_network_type) {
         case WalletNetworkType::Mainnet: return "mainnet"; // 0
@@ -935,7 +937,7 @@ std::string neroshop::Wallet::get_wallet_network_type_as_string() const {
     }
 }
 //-------------------------------------------------------
-std::string neroshop::Wallet::get_network_type_as_string() {
+std::string Wallet::get_network_type_as_string() {
     switch(network_type) {
         case WalletNetworkType::Mainnet: return "mainnet"; // 0
         case WalletNetworkType::Testnet: return "testnet"; // 1
@@ -945,7 +947,7 @@ std::string neroshop::Wallet::get_network_type_as_string() {
 }
 //-------------------------------------------------------
 //-------------------------------------------------------
-std::string neroshop::Wallet::get_network_port() const {
+std::string Wallet::get_network_port() const {
     auto wallet_network_type = get_wallet_network_type();
     switch(wallet_type) {
         case WalletType::Monero:
@@ -958,33 +960,33 @@ std::string neroshop::Wallet::get_network_port() const {
 }
 //-------------------------------------------------------
 //-------------------------------------------------------
-double neroshop::Wallet::get_sync_percentage() const {
+double Wallet::get_sync_percentage() const {
     std::lock_guard<std::mutex> lock(wallet_data_mutex);
     return percentage;
 }
 //-------------------------------------------------------
-unsigned long long neroshop::Wallet::get_sync_height() const {
+unsigned long long Wallet::get_sync_height() const {
     std::lock_guard<std::mutex> lock(wallet_data_mutex);
     return height;
 }
 //-------------------------------------------------------
-unsigned long long neroshop::Wallet::get_sync_start_height() const {
+unsigned long long Wallet::get_sync_start_height() const {
     std::lock_guard<std::mutex> lock(wallet_data_mutex);
     return start_height;
 }
 //-------------------------------------------------------
-unsigned long long neroshop::Wallet::get_sync_end_height() const {
+unsigned long long Wallet::get_sync_end_height() const {
     std::lock_guard<std::mutex> lock(wallet_data_mutex);
     return end_height;
 }
 //-------------------------------------------------------
-std::string neroshop::Wallet::get_sync_message() const {
+std::string Wallet::get_sync_message() const {
     std::lock_guard<std::mutex> lock(wallet_data_mutex);
     return message;
 }
 //-------------------------------------------------------
 //-------------------------------------------------------
-std::string neroshop::Wallet::get_primary_address() const {
+std::string Wallet::get_primary_address() const {
     switch(wallet_type) {
         case WalletType::Monero:
             if(!monero_wallet_obj.get()) throw std::runtime_error("monero_wallet_full is not opened");
@@ -996,7 +998,7 @@ std::string neroshop::Wallet::get_primary_address() const {
     }
 }
 //-------------------------------------------------------
-std::string neroshop::Wallet::get_address(unsigned int index) const {
+std::string Wallet::get_address(unsigned int index) const {
     switch(wallet_type) {
         case WalletType::Monero:
             if(!monero_wallet_obj.get()) throw std::runtime_error("monero_wallet_full is not opened");
@@ -1008,7 +1010,7 @@ std::string neroshop::Wallet::get_address(unsigned int index) const {
     }
 }
 //-------------------------------------------------------
-unsigned int neroshop::Wallet::get_address_count() const {  
+unsigned int Wallet::get_address_count() const {  
     switch(wallet_type) {
         case WalletType::Monero:
             if(!monero_wallet_obj.get()) throw std::runtime_error("monero_wallet_full is not opened");
@@ -1021,7 +1023,7 @@ unsigned int neroshop::Wallet::get_address_count() const {
 }
 //-------------------------------------------------------
 //-------------------------------------------------------
-uint64_t neroshop::Wallet::get_balance_raw() const {
+uint64_t Wallet::get_balance_raw() const {
     switch(wallet_type) {
         case WalletType::Monero:
             if(!monero_wallet_obj.get()) throw std::runtime_error("monero_wallet_full is not opened");
@@ -1033,7 +1035,7 @@ uint64_t neroshop::Wallet::get_balance_raw() const {
     }
 }
 //-------------------------------------------------------
-uint64_t neroshop::Wallet::get_balance_raw(unsigned int account_index) const {
+uint64_t Wallet::get_balance_raw(unsigned int account_index) const {
     switch(wallet_type) {
         case WalletType::Monero:
             if(!monero_wallet_obj.get()) throw std::runtime_error("monero_wallet_full is not opened");
@@ -1045,7 +1047,7 @@ uint64_t neroshop::Wallet::get_balance_raw(unsigned int account_index) const {
     }
 }
 //------------------------------------------------------- for some reason, "account.m_subaddresses[i].m_address.get()" fails, but "monero_wallet_obj->get_account(0, true).m_subaddresses.size()" usually succeeds ...-> https://stackoverflow.com/questions/68733975/difficult-to-understand-runtime-error-this-is-initialized-failure-in-boost#comment121472560_68733975
-uint64_t neroshop::Wallet::get_balance_raw(unsigned int account_index, unsigned int subaddress_index) const {
+uint64_t Wallet::get_balance_raw(unsigned int account_index, unsigned int subaddress_index) const {
     switch(wallet_type) {
         case WalletType::Monero:
             if(!monero_wallet_obj.get()) throw std::runtime_error("monero_wallet_full is not opened");
@@ -1057,7 +1059,7 @@ uint64_t neroshop::Wallet::get_balance_raw(unsigned int account_index, unsigned 
     }
 }
 //-------------------------------------------------------
-uint64_t neroshop::Wallet::get_unlocked_balance_raw() const {
+uint64_t Wallet::get_unlocked_balance_raw() const {
     switch(wallet_type) {
         case WalletType::Monero:
             if(!monero_wallet_obj.get()) throw std::runtime_error("monero_wallet_full is not opened");
@@ -1069,7 +1071,7 @@ uint64_t neroshop::Wallet::get_unlocked_balance_raw() const {
     }
 }
 //-------------------------------------------------------
-uint64_t neroshop::Wallet::get_unlocked_balance_raw(unsigned int account_index) const {
+uint64_t Wallet::get_unlocked_balance_raw(unsigned int account_index) const {
     switch(wallet_type) {
         case WalletType::Monero:
             if(!monero_wallet_obj.get()) throw std::runtime_error("monero_wallet_full is not opened");
@@ -1081,7 +1083,7 @@ uint64_t neroshop::Wallet::get_unlocked_balance_raw(unsigned int account_index) 
     }         
 }
 //-------------------------------------------------------
-uint64_t neroshop::Wallet::get_unlocked_balance_raw(unsigned int account_index, unsigned int subaddress_index) const {
+uint64_t Wallet::get_unlocked_balance_raw(unsigned int account_index, unsigned int subaddress_index) const {
     switch(wallet_type) {
         case WalletType::Monero:
             if(!monero_wallet_obj.get()) throw std::runtime_error("monero_wallet_full is not opened");
@@ -1094,7 +1096,7 @@ uint64_t neroshop::Wallet::get_unlocked_balance_raw(unsigned int account_index, 
 }
 //-------------------------------------------------------
 //-------------------------------------------------------
-double neroshop::Wallet::get_balance() const {
+double Wallet::get_balance() const {
     switch(wallet_type) {
         case WalletType::Monero:
             return get_balance_raw() * PICONERO;
@@ -1105,7 +1107,7 @@ double neroshop::Wallet::get_balance() const {
     }
 }
 //-------------------------------------------------------
-double neroshop::Wallet::get_balance(unsigned int account_index) const {
+double Wallet::get_balance(unsigned int account_index) const {
     switch(wallet_type) {
         case WalletType::Monero:
             return get_balance_raw(account_index) * PICONERO;
@@ -1116,7 +1118,7 @@ double neroshop::Wallet::get_balance(unsigned int account_index) const {
     }
 }
 //-------------------------------------------------------
-double neroshop::Wallet::get_balance(unsigned int account_index, unsigned int subaddress_index) const {
+double Wallet::get_balance(unsigned int account_index, unsigned int subaddress_index) const {
     switch(wallet_type) {
         case WalletType::Monero:
             return get_balance_raw(account_index, subaddress_index) * PICONERO;
@@ -1127,7 +1129,7 @@ double neroshop::Wallet::get_balance(unsigned int account_index, unsigned int su
     }
 }
 //-------------------------------------------------------
-double neroshop::Wallet::get_unlocked_balance() const {
+double Wallet::get_unlocked_balance() const {
     switch(wallet_type) {
         case WalletType::Monero:
             return get_unlocked_balance_raw() * PICONERO;
@@ -1138,7 +1140,7 @@ double neroshop::Wallet::get_unlocked_balance() const {
     }
 }
 //-------------------------------------------------------
-double neroshop::Wallet::get_unlocked_balance(unsigned int account_index) const {
+double Wallet::get_unlocked_balance(unsigned int account_index) const {
     switch(wallet_type) {
         case WalletType::Monero:
             return get_unlocked_balance_raw(account_index) * PICONERO;
@@ -1149,7 +1151,7 @@ double neroshop::Wallet::get_unlocked_balance(unsigned int account_index) const 
     }
 }
 //-------------------------------------------------------
-double neroshop::Wallet::get_unlocked_balance(unsigned int account_index, unsigned int subaddress_index) const {
+double Wallet::get_unlocked_balance(unsigned int account_index, unsigned int subaddress_index) const {
     switch(wallet_type) {
         case WalletType::Monero:
             return get_unlocked_balance_raw(account_index, subaddress_index) * PICONERO;
@@ -1160,7 +1162,7 @@ double neroshop::Wallet::get_unlocked_balance(unsigned int account_index, unsign
     }
 }
 //-------------------------------------------------------
-std::vector<std::string> neroshop::Wallet::get_transactions() const {
+std::vector<std::string> Wallet::get_transactions() const {
     std::vector<std::string> txs_list;
     /* ****
     // query incoming transfers to account 0
@@ -1187,14 +1189,14 @@ std::vector<std::string> neroshop::Wallet::get_transactions() const {
     return txs_list;
 }
 //-------------------------------------------------------
-unsigned int neroshop::Wallet::get_transactions_count() const {return 0;}
+unsigned int Wallet::get_transactions_count() const {return 0;}
 //-------------------------------------------------------
 //-------------------------------------------------------
 //-------------------------------------------------------
 //-------------------------------------------------------
 //-------------------------------------------------------
 //-------------------------------------------------------
-std::string neroshop::Wallet::get_last_subaddress() const 
+std::string Wallet::get_last_subaddress() const 
 {
     if(!monero_wallet_obj.get()) throw std::runtime_error("monero_wallet_full is not opened");
     // unless wallet is synced to a daemon, you will not be able to get the *most recent* last subaddress created
@@ -1204,7 +1206,7 @@ std::string neroshop::Wallet::get_last_subaddress() const
 }
 //-------------------------------------------------------
 //-------------------------------------------------------
-std::string neroshop::Wallet::get_private_view_key() const {
+std::string Wallet::get_private_view_key() const {
     switch(wallet_type) {
         case WalletType::Monero:
             if(!monero_wallet_obj.get()) throw std::runtime_error("monero_wallet_full is not opened");
@@ -1216,7 +1218,7 @@ std::string neroshop::Wallet::get_private_view_key() const {
     }
 }
 //-------------------------------------------------------
-std::string neroshop::Wallet::get_public_view_key() const {
+std::string Wallet::get_public_view_key() const {
     switch(wallet_type) {
         case WalletType::Monero:
             if(!monero_wallet_obj.get()) throw std::runtime_error("monero_wallet_full is not opened");
@@ -1228,7 +1230,7 @@ std::string neroshop::Wallet::get_public_view_key() const {
     }
 }
 //-------------------------------------------------------
-std::pair<std::string, std::string> neroshop::Wallet::get_view_keys() const {
+std::pair<std::string, std::string> Wallet::get_view_keys() const {
     switch(wallet_type) {
         case WalletType::Monero:
             if(!monero_wallet_obj.get()) throw std::runtime_error("monero_wallet_full is not opened");
@@ -1240,7 +1242,7 @@ std::pair<std::string, std::string> neroshop::Wallet::get_view_keys() const {
     }
 }
 //-------------------------------------------------------
-std::string neroshop::Wallet::get_private_spend_key() const {
+std::string Wallet::get_private_spend_key() const {
     switch(wallet_type) {
         case WalletType::Monero:
             if(!monero_wallet_obj.get()) throw std::runtime_error("monero_wallet_full is not opened");
@@ -1252,7 +1254,7 @@ std::string neroshop::Wallet::get_private_spend_key() const {
     }
 }
 //-------------------------------------------------------
-std::string neroshop::Wallet::get_public_spend_key() const {
+std::string Wallet::get_public_spend_key() const {
     switch(wallet_type) {
         case WalletType::Monero:
             if(!monero_wallet_obj.get()) throw std::runtime_error("monero_wallet_full is not opened");
@@ -1264,7 +1266,7 @@ std::string neroshop::Wallet::get_public_spend_key() const {
     }
 }
 //-------------------------------------------------------
-std::pair<std::string, std::string> neroshop::Wallet::get_spend_keys() const {
+std::pair<std::string, std::string> Wallet::get_spend_keys() const {
     switch(wallet_type) {
         case WalletType::Monero:
             if(!monero_wallet_obj.get()) throw std::runtime_error("monero_wallet_full is not opened");
@@ -1276,7 +1278,7 @@ std::pair<std::string, std::string> neroshop::Wallet::get_spend_keys() const {
     }
 }
 //-------------------------------------------------------
-std::string neroshop::Wallet::get_seed() const {
+std::string Wallet::get_seed() const {
     switch(wallet_type) {
         case WalletType::Monero:
             if(!monero_wallet_obj.get()) throw std::runtime_error("monero_wallet_full is not opened");
@@ -1288,7 +1290,7 @@ std::string neroshop::Wallet::get_seed() const {
     }
 }
 //-------------------------------------------------------
-std::string neroshop::Wallet::get_seed_language() const {
+std::string Wallet::get_seed_language() const {
     switch(wallet_type) {
         case WalletType::Monero:
             if(!monero_wallet_obj.get()) throw std::runtime_error("monero_wallet_full is not opened");
@@ -1300,7 +1302,7 @@ std::string neroshop::Wallet::get_seed_language() const {
     }
 }
 //-------------------------------------------------------
-std::vector<std::string> neroshop::Wallet::get_seed_languages() const {
+std::vector<std::string> Wallet::get_seed_languages() const {
     switch(wallet_type) {
         case WalletType::Monero:
             return monero::monero_wallet_full::get_seed_languages();
@@ -1312,7 +1314,7 @@ std::vector<std::string> neroshop::Wallet::get_seed_languages() const {
 }
 //-------------------------------------------------------
 //-------------------------------------------------------
-std::string neroshop::Wallet::get_path() const {
+std::string Wallet::get_path() const {
     switch(wallet_type) {
         case WalletType::Monero:
             if(!monero_wallet_obj.get()) throw std::runtime_error("monero_wallet_full is not opened");
@@ -1324,12 +1326,12 @@ std::string neroshop::Wallet::get_path() const {
     }
 }
 //-------------------------------------------------------
-std::string neroshop::Wallet::get_type() const {
+std::string Wallet::get_type() const {
     if(!monero_wallet_obj.get()) throw std::runtime_error("monero_wallet_full is not opened");
     return "";
 }
 //-------------------------------------------------------
-unsigned int neroshop::Wallet::get_daemon_height() const {
+unsigned int Wallet::get_daemon_height() const {
     switch(wallet_type) {
         case WalletType::Monero:
             if(!monero_wallet_obj.get()) throw std::runtime_error("monero_wallet_full is not opened");
@@ -1341,7 +1343,7 @@ unsigned int neroshop::Wallet::get_daemon_height() const {
     }
 }
 //-------------------------------------------------------
-unsigned int neroshop::Wallet::get_height() const {
+unsigned int Wallet::get_height() const {
     switch(wallet_type) {
         case WalletType::Monero:
             if(!monero_wallet_obj.get()) throw std::runtime_error("monero_wallet_full is not opened");
@@ -1353,7 +1355,7 @@ unsigned int neroshop::Wallet::get_height() const {
     }
 }
 //-------------------------------------------------------
-unsigned int neroshop::Wallet::get_height_by_date(int year, int month, int day) const {
+unsigned int Wallet::get_height_by_date(int year, int month, int day) const {
     switch(wallet_type) {
         case WalletType::Monero:
             if(!monero_wallet_obj.get()) throw std::runtime_error("monero_wallet_full is not opened");
@@ -1365,7 +1367,7 @@ unsigned int neroshop::Wallet::get_height_by_date(int year, int month, int day) 
     }
 }
 //-------------------------------------------------------
-std::string neroshop::Wallet::get_version() const {
+std::string Wallet::get_version() const {
     switch(wallet_type) {
         case WalletType::Monero:
             if(!monero_wallet_obj.get()) throw std::runtime_error("monero_wallet_full is not opened");
@@ -1379,7 +1381,7 @@ std::string neroshop::Wallet::get_version() const {
 }
 //-------------------------------------------------------
 //-------------------------------------------------------
-void * neroshop::Wallet::get_handle() const {
+void * Wallet::get_handle() const {
     switch(wallet_type) {
         case WalletType::Monero:
             return monero_wallet_obj.get();
@@ -1390,14 +1392,14 @@ void * neroshop::Wallet::get_handle() const {
     }
 }
 //-------------------------------------------------------
-monero_wallet_full * neroshop::Wallet::get_monero_wallet() const
+monero_wallet_full * Wallet::get_monero_wallet() const
 {
     return monero_wallet_obj.get();
 }
 //-------------------------------------------------------
 //-------------------------------------------------------
 //-------------------------------------------------------
-bool neroshop::Wallet::is_opened() const {
+bool Wallet::is_opened() const {
     switch(wallet_type) {
         case WalletType::Monero:
             return (monero_wallet_obj != nullptr);
@@ -1408,7 +1410,7 @@ bool neroshop::Wallet::is_opened() const {
     }
 }
 //-------------------------------------------------------
-bool neroshop::Wallet::is_connected_to_daemon() const {
+bool Wallet::is_connected_to_daemon() const {
     switch(wallet_type) {
         case WalletType::Monero:
             if(!monero_wallet_obj.get()) throw std::runtime_error("monero_wallet_full is not opened");
@@ -1420,7 +1422,7 @@ bool neroshop::Wallet::is_connected_to_daemon() const {
     }
 }
 //-------------------------------------------------------
-bool neroshop::Wallet::is_synced() const {
+bool Wallet::is_synced() const {
     switch(wallet_type) {
         case WalletType::Monero:
             if(!monero_wallet_obj.get()) throw std::runtime_error("monero_wallet_full is not opened");
@@ -1432,7 +1434,7 @@ bool neroshop::Wallet::is_synced() const {
     }
 }
 //-------------------------------------------------------
-bool neroshop::Wallet::is_daemon_synced() const {
+bool Wallet::is_daemon_synced() const {
     switch(wallet_type) {
         case WalletType::Monero:
             if(!monero_wallet_obj.get()) throw std::runtime_error("monero_wallet_full is not opened");
@@ -1448,11 +1450,11 @@ bool neroshop::Wallet::is_daemon_synced() const {
 }
 //-------------------------------------------------------
 //-------------------------------------------------------
-bool neroshop::Wallet::file_exists(const std::string& filename) const {
+bool Wallet::file_exists(const std::string& filename) const {
     return monero::monero_wallet_full::wallet_exists(filename + ".keys");
 }
 //-------------------------------------------------------
-bool neroshop::Wallet::is_valid_address(const std::string& address) const {
+bool Wallet::is_valid_address(const std::string& address) const {
     auto wallet_network_type = get_wallet_network_type();
     switch(wallet_type) {
         case WalletType::Monero:
@@ -1464,19 +1466,21 @@ bool neroshop::Wallet::is_valid_address(const std::string& address) const {
     }
 }
 //-------------------------------------------------------
-bool neroshop::Wallet::is_valid_monero_address(const std::string& address) {
+bool Wallet::is_valid_monero_address(const std::string& address) {
     return monero_utils::is_valid_address(address, static_cast<monero::monero_network_type>(Wallet::network_type));
 }
 //-------------------------------------------------------
-/*bool neroshop::Wallet::is_valid_wownero_address(const std::string& address) {
+/*bool Wallet::is_valid_wownero_address(const std::string& address) {
     return ;
 }*/
 //-------------------------------------------------------
-bool neroshop::Wallet::is_valid_openalias_address(const std::string& address) {
+bool Wallet::is_valid_openalias_address(const std::string& address) {
     return (string_tools::is_valid_domain(address) || string_tools::is_email(address));
 }
 //-------------------------------------------------------
-bool neroshop::Wallet::is_cryptonote_based() const {
+bool Wallet::is_cryptonote_based() const {
     return (wallet_type == WalletType::Monero || wallet_type == WalletType::Wownero);
 }
 //-------------------------------------------------------
+
+}

@@ -5,7 +5,9 @@
 #include <openssl/buffer.h>
 #include <fstream>
 
-std::string neroshop::base64_encode(const std::string& input) {
+namespace neroshop {
+
+std::string base64_encode(const std::string& input) {
     // Create a BIO object for Base64 encoding
     BIO* b64 = BIO_new(BIO_f_base64());
     BIO_set_flags(b64, BIO_FLAGS_BASE64_NO_NL);
@@ -31,7 +33,7 @@ std::string neroshop::base64_encode(const std::string& input) {
     return encoded_data;
 }
 
-std::string neroshop::base64_decode(const std::string& encoded) {
+std::string base64_decode(const std::string& encoded) {
     // Create a BIO object for Base64 decoding
     BIO* b64 = BIO_new(BIO_f_base64());
     BIO_set_flags(b64, BIO_FLAGS_BASE64_NO_NL);
@@ -58,7 +60,7 @@ std::string neroshop::base64_decode(const std::string& encoded) {
 
 //----------------------------------------------------------------------------
 
-std::string neroshop::base64_image_encode(const std::string& image_path) {
+std::string base64_image_encode(const std::string& image_path) {
     // Open the image file
     std::ifstream image_file(image_path, std::ios::binary);
     if (!image_file.is_open()) {
@@ -100,7 +102,7 @@ std::string neroshop::base64_image_encode(const std::string& image_path) {
     return encoded_data;
 }
 
-std::vector<char> neroshop::base64_image_decode(const std::string& encoded) {
+std::vector<char> base64_image_decode(const std::string& encoded) {
     // Create a BIO object for Base64 decoding
     BIO* b64 = BIO_new(BIO_f_base64());
     BIO_set_flags(b64, BIO_FLAGS_BASE64_NO_NL);
@@ -126,6 +128,7 @@ std::vector<char> neroshop::base64_image_decode(const std::string& encoded) {
 }
 
 //----------------------------------------------------------------------------
+}
 
 /*int main() {
     std::string input = "Hello, World!";

@@ -12,12 +12,14 @@
 #include "tools/timestamp.hpp"
 
 #include <unordered_set>
+
+namespace neroshop {
 ////////////////////
-neroshop::Order::Order() : status(OrderStatus::New), subtotal(0.00), discount(0.00), shipping_cost(0.00), total(0.00), 
+Order::Order() : status(OrderStatus::New), subtotal(0.00), discount(0.00), shipping_cost(0.00), total(0.00), 
     payment_option(PaymentOption::Escrow), payment_coin(PaymentCoin::Monero), delivery_option(DeliveryOption::Delivery)
 {}
 
-neroshop::Order::Order(const std::string& id, const std::string& date, OrderStatus status, const std::string& customer_id,
+Order::Order(const std::string& id, const std::string& date, OrderStatus status, const std::string& customer_id,
 	    double subtotal, double discount, double shipping_cost, double total, PaymentOption payment_option,
 	    PaymentCoin payment_coin, DeliveryOption delivery_option, const std::string& notes,
 	    const std::vector<OrderItem>& items)
@@ -26,7 +28,7 @@ neroshop::Order::Order(const std::string& id, const std::string& date, OrderStat
 	  delivery_option(delivery_option), notes(notes), items(items)
 {}
 
-neroshop::Order::~Order() {
+Order::~Order() {
 #ifdef NEROSHOP_DEBUG
     std::cout << "order deleted\n";
 #endif    
@@ -64,7 +66,7 @@ static nlohmann::json get_listing_object(const std::string& listing_key) {
     return nlohmann::json(); // Return an empty JSON object if "value" is not found or not a string
 }
 ////////////////////
-void neroshop::Order::create_order(const neroshop::Cart& cart, const std::string& shipping_address) {
+void Order::create_order(const neroshop::Cart& cart, const std::string& shipping_address) {
     // Transition from Sqlite to DHT:
     if(cart.is_empty()) {
         neroshop::print("You are unable to place an order because your cart is empty", 1);
@@ -214,7 +216,7 @@ void neroshop::Order::create_order(const neroshop::Cart& cart, const std::string
     const_cast<neroshop::Cart&>(cart).empty();
 }
 ////////////////////
-void neroshop::Order::create_order_batch(const neroshop::Cart& cart, const std::string& shipping_address) {
+void Order::create_order_batch(const neroshop::Cart& cart, const std::string& shipping_address) {
     if(cart.is_empty()) {
         neroshop::print("You are unable to place an order because your cart is empty", 1);
         return;
@@ -364,7 +366,7 @@ void neroshop::Order::create_order_batch(const neroshop::Cart& cart, const std::
     const_cast<neroshop::Cart&>(cart).empty();    
 }
 ////////////////////
-void neroshop::Order::cancel_order()
+void Order::cancel_order()
 {
     // cannot cancel order if it has been at least 12 hours or more
     // sellers can request that a buyer cancels an order
@@ -372,23 +374,23 @@ void neroshop::Order::cancel_order()
     set_status( OrderStatus::Cancelled );
 }
 ////////////////////
-void neroshop::Order::change_order()
+void Order::change_order()
 {}
 ////////////////////
 ////////////////////
-void neroshop::Order::set_id(const std::string& id) {
+void Order::set_id(const std::string& id) {
     this->id = id;
 }
 
-void neroshop::Order::set_date(const std::string& date) {
+void Order::set_date(const std::string& date) {
     this->date = date;
 }
 
-void neroshop::Order::set_status(OrderStatus status) { 
+void Order::set_status(OrderStatus status) { 
     this->status = status;
 }
 
-void neroshop::Order::set_status_by_string(const std::string& status) {
+void Order::set_status_by_string(const std::string& status) {
     if(status == "New") set_status(OrderStatus::New);
     if(status == "Pending") set_status(OrderStatus::Pending);
     if(status == "Processing") set_status(OrderStatus::Processing);
@@ -403,74 +405,74 @@ void neroshop::Order::set_status_by_string(const std::string& status) {
     //if(status == "") set_status(OrderStatus::);
 }
 
-void neroshop::Order::set_customer_id(const std::string& customer_id) {
+void Order::set_customer_id(const std::string& customer_id) {
     this->customer_id = customer_id;
 }
 
-void neroshop::Order::set_subtotal(double subtotal) {
+void Order::set_subtotal(double subtotal) {
     this->subtotal = subtotal;
 }
 
-void neroshop::Order::set_discount(double discount) {
+void Order::set_discount(double discount) {
     this->discount = discount;
 }
 
-void neroshop::Order::set_shipping_cost(double shipping_cost) {
+void Order::set_shipping_cost(double shipping_cost) {
     this->shipping_cost = shipping_cost;
 }
 
-void neroshop::Order::set_total(double total) {
+void Order::set_total(double total) {
     this->total = total;
 }
 
-void neroshop::Order::set_payment_option(PaymentOption payment_option) {
+void Order::set_payment_option(PaymentOption payment_option) {
     this->payment_option = payment_option;
 }
 
-void neroshop::Order::set_payment_option_by_string(const std::string& payment_option) {
+void Order::set_payment_option_by_string(const std::string& payment_option) {
     if(payment_option == "Escrow") set_payment_option(PaymentOption::Escrow);
     if(payment_option == "Multisig") set_payment_option(PaymentOption::Multisig);
     if(payment_option == "Finalize") set_payment_option(PaymentOption::Finalize);
 }
 
-void neroshop::Order::set_payment_coin(PaymentCoin payment_coin) {
+void Order::set_payment_coin(PaymentCoin payment_coin) {
     this->payment_coin = payment_coin;
 }
 
-void neroshop::Order::set_payment_coin_by_string(const std::string& payment_coin) {
+void Order::set_payment_coin_by_string(const std::string& payment_coin) {
     if(payment_coin == "None") set_payment_coin(PaymentCoin::None);
     if(payment_coin == "Monero") set_payment_coin(PaymentCoin::Monero);
     if(payment_coin == "Wownero") set_payment_coin(PaymentCoin::Wownero);
     //if(payment_coin == "") set_payment_coin(PaymentCoin::);
 }
 
-void neroshop::Order::set_delivery_option(DeliveryOption delivery_option) {
+void Order::set_delivery_option(DeliveryOption delivery_option) {
     this->delivery_option = delivery_option;
 }
 
-void neroshop::Order::set_delivery_option_by_string(const std::string& delivery_option) {
+void Order::set_delivery_option_by_string(const std::string& delivery_option) {
     if(delivery_option == "Delivery") set_delivery_option(DeliveryOption::Delivery);
     if(delivery_option == "Pickup") set_delivery_option(DeliveryOption::Pickup);
 }
 
-void neroshop::Order::set_notes(const std::string& notes) {
+void Order::set_notes(const std::string& notes) {
     this->notes = notes;
 }
 
-void neroshop::Order::set_items(const std::vector<OrderItem>& items) {
+void Order::set_items(const std::vector<OrderItem>& items) {
     this->items = items;
 }
 ////////////////////
 ////////////////////
-std::string neroshop::Order::get_id() const {
+std::string Order::get_id() const {
     return id;
 }
 
-neroshop::OrderStatus neroshop::Order::get_status() const {
+neroshop::OrderStatus Order::get_status() const {
     return status;
 }
 
-std::string neroshop::Order::get_status_as_string() const {
+std::string Order::get_status_as_string() const {
     switch(status) {
         case OrderStatus::New: return "New";
         case OrderStatus::Pending: return "Pending";
@@ -488,35 +490,35 @@ std::string neroshop::Order::get_status_as_string() const {
     }
 }
 
-std::string neroshop::Order::get_date() const {
+std::string Order::get_date() const {
     return date;
 }
 
-std::string neroshop::Order::get_customer_id() const {
+std::string Order::get_customer_id() const {
     return customer_id;
 }
 
-double neroshop::Order::get_subtotal() const {
+double Order::get_subtotal() const {
     return subtotal;
 }
 
-double neroshop::Order::get_discount() const {
+double Order::get_discount() const {
     return discount;
 }
 
-double neroshop::Order::get_shipping_cost() const {
+double Order::get_shipping_cost() const {
     return shipping_cost;
 }
 
-double neroshop::Order::get_total() const {
+double Order::get_total() const {
     return total;
 }
 
-neroshop::PaymentOption neroshop::Order::get_payment_option() const {
+neroshop::PaymentOption Order::get_payment_option() const {
     return payment_option;
 }
 
-std::string neroshop::Order::get_payment_option_as_string() const {
+std::string Order::get_payment_option_as_string() const {
     switch(payment_option) {
         case PaymentOption::Escrow: return "Escrow";
         case PaymentOption::Multisig: return "Multisig";
@@ -525,11 +527,11 @@ std::string neroshop::Order::get_payment_option_as_string() const {
     }
 }
 
-neroshop::PaymentCoin neroshop::Order::get_payment_coin() const {
+neroshop::PaymentCoin Order::get_payment_coin() const {
     return payment_coin;
 }
 
-std::string neroshop::Order::get_payment_coin_as_string() const {
+std::string Order::get_payment_coin_as_string() const {
     switch(payment_coin) {
         case PaymentCoin::None: return "None";
         case PaymentCoin::Monero: return "Monero";
@@ -539,11 +541,11 @@ std::string neroshop::Order::get_payment_coin_as_string() const {
     }
 }
 
-neroshop::DeliveryOption neroshop::Order::get_delivery_option() const {
+neroshop::DeliveryOption Order::get_delivery_option() const {
     return delivery_option;
 }
 
-std::string neroshop::Order::get_delivery_option_as_string() const {
+std::string Order::get_delivery_option_as_string() const {
     switch(delivery_option) {
         case DeliveryOption::Delivery: return "Delivery";
         case DeliveryOption::Pickup: return "Pickup";
@@ -551,17 +553,18 @@ std::string neroshop::Order::get_delivery_option_as_string() const {
     }
 }
 
-std::string neroshop::Order::get_notes() const {
+std::string Order::get_notes() const {
     return notes;
 }
 
-std::vector<neroshop::OrderItem> neroshop::Order::get_items() const {
+std::vector<neroshop::OrderItem> Order::get_items() const {
     return items;
 }
 ////////////////////
 ////////////////////
-bool neroshop::Order::is_cancelled() const {
+bool Order::is_cancelled() const {
     return (status == OrderStatus::Cancelled);
 }
 ////////////////////
 ////////////////////
+}

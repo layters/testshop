@@ -31,7 +31,9 @@ namespace neroshop_crypto = neroshop::crypto;
 namespace neroshop_timestamp = neroshop::timestamp;
 namespace neroshop_string = neroshop::string;
 
-neroshop::Node::Node(const std::string& address, int port, bool local) : sockfd(-1), bootstrap(false), check_counter(0) { 
+namespace neroshop {
+
+Node::Node(const std::string& address, int port, bool local) : sockfd(-1), bootstrap(false), check_counter(0) { 
     // Convert URL to IP (in case it happens to be a url)
     std::string ip_address = neroshop::ip::resolve(address);
     // Generate a random node ID - use public ip address for uniqueness
@@ -167,7 +169,7 @@ neroshop::Node::Node(const std::string& address, int port, bool local) : sockfd(
     }
 }
 
-neroshop::Node::Node(Node&& other) noexcept
+Node::Node(Node&& other) noexcept
     : id(std::move(other.id)),
       version(std::move(other.version)),
       data(std::move(other.data)),
@@ -187,7 +189,7 @@ neroshop::Node::Node(Node&& other) noexcept
     // ... reset other members ...
 }
 
-neroshop::Node::~Node() {
+Node::~Node() {
     if(sockfd > 0) {
         close(sockfd);
         sockfd = -1;
@@ -196,7 +198,7 @@ neroshop::Node::~Node() {
 
 //-----------------------------------------------------------------------------
 
-std::string neroshop::Node::generate_node_id(const std::string& address, int port) {
+std::string Node::generate_node_id(const std::string& address, int port) {
     std::string node_info = address + ":" + std::to_string(port);
     std::string hash = neroshop_crypto::sha3_256(node_info);
     return hash.substr(0, NUM_BITS / 4);
@@ -204,7 +206,7 @@ std::string neroshop::Node::generate_node_id(const std::string& address, int por
 
 //-----------------------------------------------------------------------------
 
-void neroshop::Node::join() {
+void Node::join() {
     if(sockfd < 0) throw std::runtime_error("socket is dead");
 
     // Bootstrap the DHT node with a set of known nodes
@@ -246,11 +248,11 @@ void neroshop::Node::join() {
 
 // TODO: create a version of the ping-based join() called join_insert() function for storing pre-existing nodes from local database
 
-bool neroshop::Node::ping(const std::string& address, int port) {
+bool Node::ping(const std::string& address, int port) {
     return send_ping(address, port);
 }
 
-std::vector<neroshop::Node*> neroshop::Node::find_node(const std::string& target, int count) const { 
+std::vector<neroshop::Node*> Node::find_node(const std::string& target, int count) const { 
     if(!routing_table.get()) {
         return {};
     }
@@ -259,7 +261,7 @@ std::vector<neroshop::Node*> neroshop::Node::find_node(const std::string& target
     return closest_nodes;
 }
 
-int neroshop::Node::put(const std::string& key, const std::string& value) {
+int Node::put(const std::string& key, const std::string& value) {
     // If data is a duplicate, skip it and return success (true)
     if (has_key(key) && get(key) == value) {
         std::cout << "Data already exists. Skipping ...\n";
@@ -281,11 +283,11 @@ int neroshop::Node::put(const std::string& key, const std::string& value) {
     return has_key(key); // boolean
 }
 
-int neroshop::Node::store(const std::string& key, const std::string& value) {    
+int Node::store(const std::string& key, const std::string& value) {    
     return put(key, value);
 }
 
-std::string neroshop::Node::get(const std::string& key) const { 
+std::string Node::get(const std::string& key) const { 
     //std::shared_lock<std::shared_mutex> lock(data_mutex);
     auto it = data.find(key);
     if (it != data.end()) {
@@ -294,21 +296,21 @@ std::string neroshop::Node::get(const std::string& key) const {
     return "";
 }
 
-std::string neroshop::Node::find_value(const std::string& key) const {
+std::string Node::find_value(const std::string& key) const {
     return get(key);
 }
 
-int neroshop::Node::remove(const std::string& key) {
+int Node::remove(const std::string& key) {
     //std::unique_lock<std::shared_mutex> lock(data_mutex);
     data.erase(key); // causes Segfault when called in thread :(
     return (data.count(key) == 0); // boolean
 }
 
-void neroshop::Node::map(const std::string& key, const std::string& value) {
+void Node::map(const std::string& key, const std::string& value) {
     key_mapper->add(key, value);
 }
 
-int neroshop::Node::set(const std::string& key, const std::string& value) {
+int Node::set(const std::string& key, const std::string& value) {
     nlohmann::json json = nlohmann::json::parse(value); // Already validated in put() so we just need to parse it without checking for errors
     
     std::string current_value = get(key);
@@ -373,7 +375,7 @@ int neroshop::Node::set(const std::string& key, const std::string& value) {
     return has_key(key); // boolean
 }
 
-void neroshop::Node::add_provider(const std::string& data_hash, const Peer& peer) {
+void Node::add_provider(const std::string& data_hash, const Peer& peer) {
     // Check if the data_hash is already in the providers map
     auto it = providers.find(data_hash);
     if (it != providers.end()) {
@@ -395,7 +397,7 @@ void neroshop::Node::add_provider(const std::string& data_hash, const Peer& peer
     }
 }
 
-void neroshop::Node::remove_providers(const std::string& data_hash) {
+void Node::remove_providers(const std::string& data_hash) {
     // Find the data_hash entry in the providers map
     auto it = providers.find(data_hash);
     if (it != providers.end()) {
@@ -404,7 +406,7 @@ void neroshop::Node::remove_providers(const std::string& data_hash) {
     }
 }
 
-void neroshop::Node::remove_provider(const std::string& data_hash, const std::string& address, int port) {
+void Node::remove_provider(const std::string& data_hash, const std::string& address, int port) {
     // Find the data_hash entry in the providers map
     auto it = providers.find(data_hash);
     if (it != providers.end()) {
@@ -426,7 +428,7 @@ void neroshop::Node::remove_provider(const std::string& data_hash, const std::st
     }
 }
 
-std::vector<neroshop::Peer> neroshop::Node::get_providers(const std::string& data_hash) const {
+std::vector<neroshop::Peer> Node::get_providers(const std::string& data_hash) const {
     std::vector<Peer> peers = {};
 
     // Check if data_hash is in providers
@@ -441,7 +443,7 @@ std::vector<neroshop::Peer> neroshop::Node::get_providers(const std::string& dat
 
 //-------------------------------------------------------------------------------------
 
-void neroshop::Node::persist_routing_table(const std::string& address, int port) {
+void Node::persist_routing_table(const std::string& address, int port) {
     if(!is_hardcoded()) return; // Regular nodes cannot run this function
     
     db::Sqlite3 * database = neroshop::get_database();
@@ -455,7 +457,7 @@ void neroshop::Node::persist_routing_table(const std::string& address, int port)
     database->execute_params("INSERT INTO routing_table (ip_address, port) VALUES (?1, ?2);", { address, std::to_string(port) });
 }
 
-void neroshop::Node::rebuild_routing_table() {
+void Node::rebuild_routing_table() {
     if(!is_hardcoded()) return; // Regular nodes cannot run this function
     
     db::Sqlite3 * database = neroshop::get_database();
@@ -503,7 +505,7 @@ void neroshop::Node::rebuild_routing_table() {
 
 //-------------------------------------------------------------------------------------
 
-std::vector<uint8_t> neroshop::Node::send_query(const std::string& address, uint16_t port, const std::vector<uint8_t>& message, int recv_timeout) {
+std::vector<uint8_t> Node::send_query(const std::string& address, uint16_t port, const std::vector<uint8_t>& message, int recv_timeout) {
     // Step 2: Resolve the hostname and construct a destination address
     struct addrinfo hints, *res;
     memset(&hints, 0, sizeof(hints));
@@ -576,7 +578,7 @@ std::vector<uint8_t> neroshop::Node::send_query(const std::string& address, uint
 
 //-----------------------------------------------------------------------------
 
-bool neroshop::Node::send_ping(const std::string& address, int port) {
+bool Node::send_ping(const std::string& address, int port) {
     // Create the ping message
     std::string transaction_id = msgpack::generate_transaction_id();
     nlohmann::json query_object;
@@ -619,7 +621,7 @@ bool neroshop::Node::send_ping(const std::string& address, int port) {
     return true;
 }
 
-std::vector<std::unique_ptr<neroshop::Node>> neroshop::Node::send_find_node(const std::string& target, const std::string& address, uint16_t port) {
+std::vector<std::unique_ptr<neroshop::Node>> Node::send_find_node(const std::string& target, const std::string& address, uint16_t port) {
     std::string transaction_id = msgpack::generate_transaction_id();
 
     nlohmann::json query_object;
@@ -659,7 +661,7 @@ std::vector<std::unique_ptr<neroshop::Node>> neroshop::Node::send_find_node(cons
     return nodes;
 }
 
-int neroshop::Node::send_put(const std::string& key, const std::string& value) {
+int Node::send_put(const std::string& key, const std::string& value) {
     
     nlohmann::json query_object;
     query_object["query"] = "put";
@@ -771,11 +773,11 @@ int neroshop::Node::send_put(const std::string& key, const std::string& value) {
     return nodes_sent_count;
 }
 
-int neroshop::Node::send_store(const std::string& key, const std::string& value) {
+int Node::send_store(const std::string& key, const std::string& value) {
     return send_put(key, value);
 }
 
-std::string neroshop::Node::send_get(const std::string& key) {
+std::string Node::send_get(const std::string& key) {
     std::string value = "";
 
     nlohmann::json query_object;
@@ -876,11 +878,11 @@ std::string neroshop::Node::send_get(const std::string& key) {
     return value;
 }
 
-std::string neroshop::Node::send_find_value(const std::string& key) {
+std::string Node::send_find_value(const std::string& key) {
     return send_get(key);
 }
 
-void neroshop::Node::send_remove(const std::string& key) {
+void Node::send_remove(const std::string& key) {
     nlohmann::json query_object;
     query_object["query"] = "remove";
     query_object["args"]["key"] = key;
@@ -920,7 +922,7 @@ void neroshop::Node::send_remove(const std::string& key) {
     //-----------------------------------------------
 }
 
-void neroshop::Node::send_map(const std::string& address, int port) {
+void Node::send_map(const std::string& address, int port) {
     nlohmann::json query_object;
     query_object["query"] = "map";
     query_object["args"]["id"] = this->id;
@@ -954,7 +956,7 @@ void neroshop::Node::send_map(const std::string& address, int port) {
     if(map_sent && !data.empty()) { std::cout << "Sent map request to \033[36m" << address << ":" << port << "\033[0m\n"; }
 }
 
-std::vector<neroshop::Peer> neroshop::Node::send_get_providers(const std::string& data_hash) {
+std::vector<neroshop::Peer> Node::send_get_providers(const std::string& data_hash) {
     std::vector<neroshop::Peer> peers = {};
     std::set<std::pair<std::string, uint16_t>> unique_peers; // Set to store unique IP-port pairs
     //-----------------------------------------------
@@ -1016,7 +1018,7 @@ std::vector<neroshop::Peer> neroshop::Node::send_get_providers(const std::string
 
 //-----------------------------------------------------------------------------
 
-void neroshop::Node::refresh() {
+void Node::refresh() {
     std::vector<Node *> closest_nodes = find_node(this->id, NEROSHOP_DHT_MAX_CLOSEST_NODES);
     
     for(const auto& neighbor : closest_nodes) {
@@ -1043,7 +1045,7 @@ void neroshop::Node::refresh() {
 
 //-----------------------------------------------------------------------------
 
-void neroshop::Node::republish() {
+void Node::republish() {
     for (const auto& [key, value] : data) {
         send_put(key, value);
     }
@@ -1053,7 +1055,7 @@ void neroshop::Node::republish() {
 
 //-----------------------------------------------------------------------------
 
-bool neroshop::Node::validate(const std::string& key, const std::string& value) {
+bool Node::validate(const std::string& key, const std::string& value) {
     if(key.length() != 64) {
         std::cerr << "Key length is not 64 characters\n";
         return false;
@@ -1113,7 +1115,7 @@ bool neroshop::Node::validate(const std::string& key, const std::string& value) 
 
 //-----------------------------------------------------------------------------
 
-bool neroshop::Node::verify(const std::string& value) const {
+bool Node::verify(const std::string& value) const {
     nlohmann::json json = nlohmann::json::parse(value);
 
     // Get required fields from the value
@@ -1178,7 +1180,7 @@ bool neroshop::Node::verify(const std::string& value) const {
 
 //-----------------------------------------------------------------------------
 
-void neroshop::Node::expire(const std::string& key, const std::string& value) {
+void Node::expire(const std::string& key, const std::string& value) {
     db::Sqlite3 * database = neroshop::get_database();
     
     nlohmann::json json;
@@ -1213,7 +1215,7 @@ void neroshop::Node::expire(const std::string& key, const std::string& value) {
 
 //-----------------------------------------------------------------------------
 
-void neroshop::Node::cache_hash_table(const std::string& key, const std::string& value) {
+void Node::cache_hash_table(const std::string& key, const std::string& value) {
     db::Sqlite3 * database = neroshop::get_database();
     
     if(!database->table_exists("hash_table")) { 
@@ -1233,7 +1235,7 @@ void neroshop::Node::cache_hash_table(const std::string& key, const std::string&
 
 //-----------------------------------------------------------------------------
 
-void neroshop::Node::cache(const std::string& key, const std::string& value) {
+void Node::cache(const std::string& key, const std::string& value) {
     db::Sqlite3 * database = neroshop::get_database();
     
     if(!database->table_exists("cache")) { 
@@ -1253,7 +1255,7 @@ void neroshop::Node::cache(const std::string& key, const std::string& value) {
 
 //-----------------------------------------------------------------------------
 
-void neroshop::Node::periodic_purge() {
+void Node::periodic_purge() {
     while (true) {
         {
             // Acquire the lock before accessing the data
@@ -1274,7 +1276,7 @@ void neroshop::Node::periodic_purge() {
 
 //-----------------------------------------------------------------------------
 
-void neroshop::Node::periodic_refresh() {
+void Node::periodic_refresh() {
     while (true) {
         {
             // Acquire the lock before accessing the data
@@ -1295,7 +1297,7 @@ void neroshop::Node::periodic_refresh() {
 
 //-----------------------------------------------------------------------------
 
-void neroshop::Node::periodic_republish() {
+void Node::periodic_republish() {
     while (true) {
         {
             // Acquire the lock before accessing the data
@@ -1317,7 +1319,7 @@ void neroshop::Node::periodic_republish() {
 
 //-----------------------------------------------------------------------------
 
-void neroshop::Node::periodic_check() {
+void Node::periodic_check() {
     ////std::vector<std::string> dead_node_ids {};
     while(true) {
         {
@@ -1366,7 +1368,7 @@ void neroshop::Node::periodic_check() {
 
 //-----------------------------------------------------------------------------
 
-/*bool neroshop::Node::on_keyword_blocked(const nlohmann::json& value) {
+/*bool Node::on_keyword_blocked(const nlohmann::json& value) {
     // Note: This code is in the testing stage
     // Block certain keywords/search terms from listings
     if(!json.contains("metadata")) { return false; }
@@ -1406,7 +1408,7 @@ void neroshop::Node::periodic_check() {
 
 //-----------------------------------------------------------------------------
 
-void neroshop::Node::on_ping(const std::vector<uint8_t>& buffer, const struct sockaddr_in& client_addr) {
+void Node::on_ping(const std::vector<uint8_t>& buffer, const struct sockaddr_in& client_addr) {
     if (buffer.size() > 0) {
         nlohmann::json message = nlohmann::json::from_msgpack(buffer);
         if (message.contains("query") && message["query"] == "ping") {
@@ -1436,7 +1438,7 @@ void neroshop::Node::on_ping(const std::vector<uint8_t>& buffer, const struct so
 
 //-----------------------------------------------------------------------------
 
-void neroshop::Node::on_map(const std::vector<uint8_t>& buffer, const struct sockaddr_in& client_addr) {
+void Node::on_map(const std::vector<uint8_t>& buffer, const struct sockaddr_in& client_addr) {
     if (buffer.size() > 0) {
         nlohmann::json message = nlohmann::json::from_msgpack(buffer);
         if (message.contains("query") && message["query"] == "map") {
@@ -1457,7 +1459,7 @@ void neroshop::Node::on_map(const std::vector<uint8_t>& buffer, const struct soc
 
 //-----------------------------------------------------------------------------
 
-/*void neroshop::Node::on_dead_node(const std::vector<std::string>& node_ids) {
+/*void Node::on_dead_node(const std::vector<std::string>& node_ids) {
     for (const auto& dead_node_id : node_ids) {
         //std::cout << "Processing dead node ID: " << dead_node_id << std::endl;
 
@@ -1498,7 +1500,7 @@ void neroshop::Node::on_map(const std::vector<uint8_t>& buffer, const struct soc
 
 //-----------------------------------------------------------------------------
 
-void neroshop::Node::run() {
+void Node::run() {
     
     run_optimized();
     return;
@@ -1561,7 +1563,7 @@ void neroshop::Node::run() {
 }
 
 // This uses less CPU
-void neroshop::Node::run_optimized() {
+void Node::run_optimized() {
     // Start a separate thread for periodic checks and republishing
     std::thread periodic_check_thread([this]() { periodic_check(); });
     std::thread periodic_republish_thread([this]() { periodic_republish(); });
@@ -1644,11 +1646,11 @@ void neroshop::Node::run_optimized() {
 
 //-----------------------------------------------------------------------------
 
-std::string neroshop::Node::get_id() const {
+std::string Node::get_id() const {
     return id;
 }
 
-std::string neroshop::Node::get_ip_address() const {
+std::string Node::get_ip_address() const {
     const int ADDRSTRLEN = (storage.ss_family == AF_INET6) ? INET6_ADDRSTRLEN : INET_ADDRSTRLEN;
     char ip_address[ADDRSTRLEN] = {0};
 
@@ -1662,21 +1664,21 @@ std::string neroshop::Node::get_ip_address() const {
     return std::string(ip_address);
 }
 
-std::string neroshop::Node::get_local_ip_address() const {
+std::string Node::get_local_ip_address() const {
     return get_ip_address();
 }
 
-std::string neroshop::Node::get_device_ip_address() const {
+std::string Node::get_device_ip_address() const {
     std::future<std::string> result = std::async(std::launch::async, neroshop::get_device_ip_address);
     return result.get();
 }
 
-std::string neroshop::Node::get_public_ip_address() const {
+std::string Node::get_public_ip_address() const {
     std::future<std::string> result = std::async(std::launch::async, neroshop::get_public_ip_address);
     return result.get();
 }
 
-uint16_t neroshop::Node::get_port() const {
+uint16_t Node::get_port() const {
     uint16_t port = 0;
     
     if(storage.ss_family == AF_INET) {
@@ -1695,19 +1697,19 @@ uint16_t neroshop::Node::get_port() const {
     return port;
 }
 
-/*neroshop::Server * neroshop::Node::get_server() const {
+/*neroshop::Server * Node::get_server() const {
     return server.get();
 }*/
 
-neroshop::RoutingTable * neroshop::Node::get_routing_table() const {
+neroshop::RoutingTable * Node::get_routing_table() const {
     return routing_table.get();
 }
 
-int neroshop::Node::get_peer_count() const {
+int Node::get_peer_count() const {
     return routing_table->get_node_count();
 }
 
-int neroshop::Node::get_active_peer_count() const {
+int Node::get_active_peer_count() const {
     int active_count = 0;
     for (auto& bucket : routing_table->buckets) {
         for (auto& node : bucket.second) {
@@ -1720,7 +1722,7 @@ int neroshop::Node::get_active_peer_count() const {
     return active_count;
 }
 
-int neroshop::Node::get_idle_peer_count() const {
+int Node::get_idle_peer_count() const {
     int idle_count = 0;
     for (auto& bucket : routing_table->buckets) {
         for (auto& node : bucket.second) {
@@ -1733,21 +1735,21 @@ int neroshop::Node::get_idle_peer_count() const {
     return idle_count;
 }
 
-neroshop::NodeStatus neroshop::Node::get_status() const {
+neroshop::NodeStatus Node::get_status() const {
     if(check_counter == 0) return NodeStatus::Active;
     if(check_counter <= (NEROSHOP_DHT_MAX_HEALTH_CHECKS - 1)) return NodeStatus::Idle;
     if(check_counter >= NEROSHOP_DHT_MAX_HEALTH_CHECKS) return NodeStatus::Inactive;
     return NodeStatus::Inactive;
 }
 
-std::string neroshop::Node::get_status_as_string() const {
+std::string Node::get_status_as_string() const {
     if(check_counter == 0) return "Active";
     if(check_counter <= (NEROSHOP_DHT_MAX_HEALTH_CHECKS - 1)) return "Idle";
     if(check_counter >= NEROSHOP_DHT_MAX_HEALTH_CHECKS) return "Inactive";
     return "Unknown";
 }
 
-std::vector<std::string> neroshop::Node::get_keys() const {
+std::vector<std::string> Node::get_keys() const {
     std::vector<std::string> keys;
 
     for (const auto& pair : data) {
@@ -1757,7 +1759,7 @@ std::vector<std::string> neroshop::Node::get_keys() const {
     return keys;
 }
 
-std::vector<std::pair<std::string, std::string>> neroshop::Node::get_data() const {
+std::vector<std::pair<std::string, std::string>> Node::get_data() const {
     std::vector<std::pair<std::string, std::string>> data_vector;
 
     for (const auto& pair : data) {
@@ -1767,11 +1769,11 @@ std::vector<std::pair<std::string, std::string>> neroshop::Node::get_data() cons
     return data_vector;
 }
 
-/*const std::unordered_map<std::string, std::string>& neroshop::Node::get_data() const {
+/*const std::unordered_map<std::string, std::string>& Node::get_data() const {
     return data;
 }*/
 
-std::string neroshop::Node::get_hash_table_cached(const std::string& key) {
+std::string Node::get_hash_table_cached(const std::string& key) {
     db::Sqlite3 * database = neroshop::get_database();
     if(!database) throw std::runtime_error("database is NULL");
     if(!database->table_exists("hash_table")) {
@@ -1782,7 +1784,7 @@ std::string neroshop::Node::get_hash_table_cached(const std::string& key) {
     return value;
 }
 
-std::string neroshop::Node::get_cached(const std::string& key) {
+std::string Node::get_cached(const std::string& key) {
     db::Sqlite3 * database = neroshop::get_database();
     if(!database) throw std::runtime_error("database is NULL");
     if(!database->table_exists("cache")) {
@@ -1795,11 +1797,11 @@ std::string neroshop::Node::get_cached(const std::string& key) {
 
 //-----------------------------------------------------------------------------
 
-bool neroshop::Node::has_key(const std::string& key) const {
+bool Node::has_key(const std::string& key) const {
     return (data.count(key) > 0);
 }
 
-bool neroshop::Node::has_value(const std::string& value) const {
+bool Node::has_value(const std::string& value) const {
     for (const auto& pair : data) {
         if (pair.second == value) {
             return true;
@@ -1808,7 +1810,7 @@ bool neroshop::Node::has_value(const std::string& value) const {
     return false;
 }
 
-bool neroshop::Node::is_hardcoded(const std::string& address, uint16_t port) {
+bool Node::is_hardcoded(const std::string& address, uint16_t port) {
     for (const auto& bootstrap_node : BOOTSTRAP_NODES) {
         if (neroshop::ip::resolve(bootstrap_node.first) == address && bootstrap_node.second == port) {
             return true;
@@ -1817,7 +1819,7 @@ bool neroshop::Node::is_hardcoded(const std::string& address, uint16_t port) {
     return false;
 }
 
-bool neroshop::Node::is_hardcoded() const {
+bool Node::is_hardcoded() const {
     for (const auto& bootstrap_node : BOOTSTRAP_NODES) {
         auto bootstrap_node_ip = neroshop::ip::resolve(bootstrap_node.first);
         if (bootstrap_node_ip == this->public_ip_address
@@ -1834,17 +1836,18 @@ bool neroshop::Node::is_hardcoded() const {
     return false;
 }
 
-bool neroshop::Node::is_bootstrap_node() const {
+bool Node::is_bootstrap_node() const {
     return (bootstrap == true) || is_hardcoded();
 }
 
-bool neroshop::Node::is_dead() const {
+bool Node::is_dead() const {
     return (check_counter >= NEROSHOP_DHT_MAX_HEALTH_CHECKS);
 }
 
 //-----------------------------------------------------------------------------
 
-void neroshop::Node::set_bootstrap(bool bootstrap) {
+void Node::set_bootstrap(bool bootstrap) {
     this->bootstrap = bootstrap;
 }
 
+}
