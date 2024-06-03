@@ -9,7 +9,7 @@
 
 namespace neroshop {
 
-struct Attribute {
+struct ProductAttribute {
     std::string color;
     std::string size; // ex. small, medium, large, etc.
     double weight = 0.00;
@@ -33,15 +33,15 @@ struct Attribute {
 class Product { // can also be used for Services
 public:
     Product();
-    Product(const std::string& id, const std::string& name, const std::string& description, const std::vector<Attribute>& attributes, const std::string& code, unsigned int category_id, const std::vector<int>& subcategory_ids, const std::vector<std::string>& tags, const std::vector<Image>& images);
+    Product(const std::string& id, const std::string& name, const std::string& description, const std::vector<ProductAttribute>& attributes, const std::string& code, unsigned int category_id, const std::vector<int>& subcategory_ids, const std::vector<std::string>& tags, const std::vector<Image>& images);
     Product(const Product& other);// copy constructor
     Product(Product&& other) noexcept; // move constructor
     
     Product& operator=(const Product&); // copy assignment operator
     Product& operator=(Product&&) noexcept; // move assignment operator
     
-    void add_attribute(const Attribute& attribute);
-    void add_variant(const Attribute& variant);
+    void add_attribute(const ProductAttribute& attribute);
+    void add_variant(const ProductAttribute& variant);
     void add_tag(const std::string& tag);
     void add_image(const Image& image);
     void print_product();
@@ -52,8 +52,8 @@ public:
     void set_color(const std::string& color, int index = 0);
     void set_size(const std::string& size, int index = 0);
     void set_weight(double weight, int index = 0);
-    void set_attributes(const std::vector<Attribute>& attributes);
-    void set_variants(const std::vector<Attribute>& variants);
+    void set_attributes(const std::vector<ProductAttribute>& attributes);
+    void set_variants(const std::vector<ProductAttribute>& variants);
     void set_code(const std::string& code);
     void set_category(const std::string& category);
     void set_category_id(unsigned int category_id);
@@ -67,8 +67,8 @@ public:
     std::string get_color(int index = 0) const;
     std::string get_size(int index = 0) const;
     double get_weight(int index = 0) const;
-    std::vector<Attribute> get_attributes() const;
-    std::vector<Attribute> get_variants() const;
+    std::vector<ProductAttribute> get_attributes() const;
+    std::vector<ProductAttribute> get_variants() const;
     std::string get_code() const;
     int get_category_id() const;
     std::string get_category_as_string() const;
@@ -81,7 +81,7 @@ private:
     std::string id;
     std::string name;
     std::string description;
-    std::vector<Attribute> attributes;
+    std::vector<ProductAttribute> attributes;
     std::string code; // optional - main product code
     unsigned int category_id;
     std::vector<int> subcategory_ids; // optional

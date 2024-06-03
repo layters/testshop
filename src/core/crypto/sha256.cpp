@@ -7,7 +7,11 @@
 
 #include <iomanip> // std::setfill, std::setw
 
-std::string neroshop::crypto::sha256(const std::string& plain_text) {
+namespace neroshop {
+
+namespace crypto {
+
+std::string sha256(const std::string& plain_text) {
     // EVP (recommended over legacy "SHA256_" functions which are deprecated in OpenSSL 3.0)
     EVP_MD_CTX * context = EVP_MD_CTX_new();
     if(context == nullptr) { neroshop::print("EVP_MD_CTX_new failed", 1); return ""; }
@@ -39,6 +43,10 @@ std::string neroshop::crypto::sha256(const std::string& plain_text) {
     
     EVP_MD_CTX_free(context); // renamed from "EVP_MD_CTX_destroy" in 1.1.0, same with EVP_MD_CTX_create => EVP_MD_CTX_new
     return output;
+}
+
+}
+
 }
 
 /*int main() {

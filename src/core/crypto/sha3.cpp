@@ -9,7 +9,11 @@
 #include <vector> // std::vector
 #include <memory> // std::unique_ptr
 
-std::string neroshop::crypto::sha3_256(const std::string& plain_text) {
+namespace neroshop {
+
+namespace crypto {
+
+std::string sha3_256(const std::string& plain_text) {
     // EVP (recommended over legacy "SHA256_" functions which are deprecated in OpenSSL 3.0)
     std::unique_ptr<EVP_MD_CTX, decltype(&EVP_MD_CTX_free)> context(EVP_MD_CTX_new(), &EVP_MD_CTX_free);
     if(context == nullptr) { neroshop::print("EVP_MD_CTX_new failed", 1); return ""; }
@@ -39,7 +43,7 @@ std::string neroshop::crypto::sha3_256(const std::string& plain_text) {
     return output;
 }
 
-std::string neroshop::crypto::sha3_512(const std::string& plain_text) {
+std::string sha3_512(const std::string& plain_text) {
     // EVP (recommended over legacy "SHA512_" functions which are deprecated in OpenSSL 3.0)
     std::unique_ptr<EVP_MD_CTX, decltype(&EVP_MD_CTX_free)> context(EVP_MD_CTX_new(), &EVP_MD_CTX_free);
     if(context == nullptr) { neroshop::print("EVP_MD_CTX_new failed", 1); return ""; }
@@ -67,6 +71,10 @@ std::string neroshop::crypto::sha3_512(const std::string& plain_text) {
     std::string output = ss.str();
     
     return output;
+}
+
+}
+
 }
 
 /*int main() {

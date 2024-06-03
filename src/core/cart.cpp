@@ -4,13 +4,14 @@
 #include "tools/logger.hpp"
 #include "protocol/transport/client.hpp"
 
+namespace neroshop {
 ////////////////////
-neroshop::Cart::Cart() : id("") {} // Note: cart can only hold up to 10 unique items. Cart items can only add up to a quantity of 100
+Cart::Cart() : id("") {} // Note: cart can only hold up to 10 unique items. Cart items can only add up to a quantity of 100
 ////////////////////
-unsigned int neroshop::Cart::max_items(10); 
-unsigned int neroshop::Cart::max_quantity(100);
+unsigned int Cart::max_items(10); 
+unsigned int Cart::max_quantity(100);
 ////////////////////
-neroshop::Cart::~Cart() {
+Cart::~Cart() {
     contents.clear(); // this should reset/delete all cart items (if they happen to be dynamic objects)
 #ifdef NEROSHOP_DEBUG
     std::cout << "cart deleted\n";
@@ -51,7 +52,7 @@ static nlohmann::json get_listing_object(const std::string& listing_key) {
 
 ////////////////////
 ////////////////////
-void neroshop::Cart::load(const std::string& user_id) {
+void Cart::load(const std::string& user_id) {
     neroshop::db::Sqlite3 * database = neroshop::get_database();
     if(!database) throw std::runtime_error("database is NULL");
     // Set the cart's id
@@ -126,7 +127,7 @@ void neroshop::Cart::load(const std::string& user_id) {
     //print_cart();
 }
 ////////////////////
-neroshop::CartError neroshop::Cart::add(const std::string& user_id, const std::string& listing_key, int quantity) {
+neroshop::CartError Cart::add(const std::string& user_id, const std::string& listing_key, int quantity) {
     neroshop::db::Sqlite3 * database = neroshop::get_database();
     if(!database) throw std::runtime_error("database is NULL");
     if(quantity < 1) return CartError::ItemQuantityNotSpecified;
@@ -201,13 +202,13 @@ neroshop::CartError neroshop::Cart::add(const std::string& user_id, const std::s
     return CartError::Ok;
 }
 ////////////////////
-void neroshop::Cart::remove(const std::string& user_id, const std::string& listing_key, int quantity) {
+void Cart::remove(const std::string& user_id, const std::string& listing_key, int quantity) {
     neroshop::db::Sqlite3 * database = neroshop::get_database();
     if(!database) throw std::runtime_error("database is NULL");
     
 }
 ////////////////////
-void neroshop::Cart::empty() {
+void Cart::empty() {
     if(id.empty()) { neroshop::print("No cart found", 1); return; }
     neroshop::db::Sqlite3 * database = neroshop::get_database();
     if(!database) throw std::runtime_error("database is NULL");
@@ -215,13 +216,13 @@ void neroshop::Cart::empty() {
     contents.clear();
 }
 ////////////////////
-void neroshop::Cart::change_quantity(const std::string& user_id, const std::string& listing_key, int quantity) {
+void Cart::change_quantity(const std::string& user_id, const std::string& listing_key, int quantity) {
 }
 ////////////////////
 ////////////////////
 ////////////////////
 ////////////////////
-void neroshop::Cart::print_cart() {
+void Cart::print_cart() {
     for (const auto& item : contents) { 
         std::cout << item.key << " (x" << item.quantity << "), sold by " << item.seller_id << std::endl; 
     }
@@ -231,38 +232,38 @@ void neroshop::Cart::print_cart() {
 ////////////////////
 ////////////////////
 ////////////////////
-void neroshop::Cart::set_id(const std::string& id) {
+void Cart::set_id(const std::string& id) {
     this->id = id;
 }
 
-void neroshop::Cart::set_owner_id(const std::string& owner_id) {
+void Cart::set_owner_id(const std::string& owner_id) {
     this->owner_id = owner_id;
 }
 
-void neroshop::Cart::set_contents(const std::vector<CartItem>& contents) {
+void Cart::set_contents(const std::vector<CartItem>& contents) {
     this->contents = contents;
 }
 ////////////////////
 ////////////////////
 ////////////////////
-std::string neroshop::Cart::get_id() const {
+std::string Cart::get_id() const {
     return id;
 }
 ////////////////////
-std::string neroshop::Cart::get_owner_id() const {
+std::string Cart::get_owner_id() const {
     return owner_id;
 }
 ////////////////////
 ////////////////////
-int neroshop::Cart::get_max_items() {
+int Cart::get_max_items() {
     return max_items;
 }
 ////////////////////
-int neroshop::Cart::get_max_quantity() {
+int Cart::get_max_quantity() {
     return max_quantity;
 }
 ////////////////////
-int neroshop::Cart::get_quantity() const {
+int Cart::get_quantity() const {
     int quantity = 0;
     for (const auto& item : contents) {
         quantity += item.quantity;
@@ -270,11 +271,11 @@ int neroshop::Cart::get_quantity() const {
     return quantity;
 }
 ////////////////////
-int neroshop::Cart::get_contents_count() const {
+int Cart::get_contents_count() const {
     return contents.size();
 }
 ////////////////////
-std::size_t neroshop::Cart::get_listing_index(const std::string& listing_key) {
+std::size_t Cart::get_listing_index(const std::string& listing_key) {
     auto it = std::find_if(contents.begin(), contents.end(), [&listing_key](const CartItem& item) {
         return item.key == listing_key;
     });
@@ -284,16 +285,16 @@ std::size_t neroshop::Cart::get_listing_index(const std::string& listing_key) {
 ////////////////////
 ////////////////////
 ////////////////////
-bool neroshop::Cart::is_empty() const {
+bool Cart::is_empty() const {
     return contents.empty();
 }
 ////////////////////
-bool neroshop::Cart::is_full() const {
+bool Cart::is_full() const {
     int quantity = get_quantity();
     return ((contents.size() >= max_items) || (quantity >= max_quantity)); // either cart.contents has reached its capacity (max_items:10) or all items have a combined quantity of 100 (max_quantity:100)
 }
 ////////////////////
-bool neroshop::Cart::in_cart(const std::string& listing_key) const {
+bool Cart::in_cart(const std::string& listing_key) const {
     for (const auto& item : contents) {
         if (item.key == listing_key) {
             return true;
@@ -305,3 +306,4 @@ bool neroshop::Cart::in_cart(const std::string& listing_key) const {
 ////////////////////
 ////////////////////
 ////////////////////
+}

@@ -8,7 +8,11 @@
 #include "../../neroshop_config.hpp" // NEROSHOP_RSA_DEFAULT_BITS
 #include "../tools/logger.hpp" // neroshop::print
 
-EVP_PKEY * neroshop::crypto::rsa_generate_keys_get() {
+namespace neroshop {
+
+namespace crypto {
+
+EVP_PKEY * rsa_generate_keys_get() {
     // Generate public/private key pairs
     EVP_PKEY_CTX * ctx = EVP_PKEY_CTX_new_id(EVP_PKEY_RSA, nullptr);
     EVP_PKEY * pkey = nullptr;
@@ -34,7 +38,7 @@ EVP_PKEY * neroshop::crypto::rsa_generate_keys_get() {
     return pkey;
 }
 //-----------------------------------------------------------------------------
-bool neroshop::crypto::rsa_generate_keys(std::string public_key_filename, std::string private_key_filename) {
+bool rsa_generate_keys(std::string public_key_filename, std::string private_key_filename) {
     // create a context
     EVP_PKEY_CTX * ctx = EVP_PKEY_CTX_new_id(EVP_PKEY_RSA, nullptr); // https://www.openssl.org/docs/man1.1.1/man3/EVP_PKEY_keygen.html
     EVP_PKEY * pkey = nullptr;
@@ -65,7 +69,7 @@ bool neroshop::crypto::rsa_generate_keys(std::string public_key_filename, std::s
     return true;
 }
 //-----------------------------------------------------------------------------
-bool neroshop::crypto::rsa_generate_keys_ex() {
+bool rsa_generate_keys_ex() {
 #if !defined(NEROSHOP_OPENSSL_3_0) || !defined(NEROSHOP_OPENSSL_3)
     neroshop::print("error: NEROSHOP_OPENSSL_3_0 not defined", 1);
     return false;
@@ -87,7 +91,7 @@ bool neroshop::crypto::rsa_generate_keys_ex() {
 }
 //-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
-bool neroshop::crypto::rsa_save_public_key(const EVP_PKEY * pkey, std::string filename) {
+bool rsa_save_public_key(const EVP_PKEY * pkey, std::string filename) {
     BIO	* bio_public = BIO_new_file(filename.c_str(), "w+"); // or .pub
     if(PEM_write_bio_PUBKEY(bio_public, const_cast<EVP_PKEY *>(pkey)) != 1) {
     //if(PEM_write_bio_RSAPublicKey(bp_public, const_cast<RSA *>(rsa)) != 1) { // deprecated in OpenSSL 3.0
@@ -101,7 +105,7 @@ bool neroshop::crypto::rsa_save_public_key(const EVP_PKEY * pkey, std::string fi
     return true;
 }
 //-----------------------------------------------------------------------------
-bool neroshop::crypto::rsa_save_private_key(const EVP_PKEY * pkey, std::string filename) {
+bool rsa_save_private_key(const EVP_PKEY * pkey, std::string filename) {
     BIO	* bio_private = BIO_new_file(filename.c_str(), "w+"); // or .key
     if(PEM_write_bio_PKCS8PrivateKey(bio_private, const_cast<EVP_PKEY *>(pkey), nullptr, nullptr, 0, nullptr, nullptr) != 1) { // same as PEM_write_bio_PrivateKey - both use PKCS#8 format which supports all algorithms including RSA // TODO: add encryption e.g: EVP_aes_256_cbc() (in arg 3) using a passphrase/password (in arg 4) and passphrase_len (in arg 5)
     //if(PEM_write_bio_RSAPrivateKey(bp_private, const_cast<RSA *>(rsa), nullptr, nullptr, 0, nullptr, nullptr) != 1) { // deprecated in OpenSSL 3.0
@@ -115,7 +119,7 @@ bool neroshop::crypto::rsa_save_private_key(const EVP_PKEY * pkey, std::string f
     return true;
 }
 //-----------------------------------------------------------------------------
-bool neroshop::crypto::rsa_save_keys(const EVP_PKEY * pkey, std::string public_key_file, std::string private_key_file) {
+bool rsa_save_keys(const EVP_PKEY * pkey, std::string public_key_file, std::string private_key_file) {
     if(!rsa_save_public_key(pkey, public_key_file)) return false;
     if(!rsa_save_private_key(pkey, private_key_file)) return false;
     return true;
@@ -123,7 +127,7 @@ bool neroshop::crypto::rsa_save_keys(const EVP_PKEY * pkey, std::string public_k
 //-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
 // refer to: https://www.openssl.org/docs/man3.0/man3/EVP_PKEY_encrypt.html
-std::string neroshop::crypto::rsa_encrypt_message(const EVP_PKEY * key, const std::string& in) {
+std::string rsa_encrypt_message(const EVP_PKEY * key, const std::string& in) {
     unsigned char * out;
     size_t outlen, inlen = in.size();
     ENGINE * eng = nullptr;
@@ -168,7 +172,7 @@ std::string neroshop::crypto::rsa_encrypt_message(const EVP_PKEY * key, const st
 }
 //-----------------------------------------------------------------------------
 // refer to: https://www.openssl.org/docs/man3.0/man3/EVP_PKEY_decrypt.html
-std::string neroshop::crypto::rsa_decrypt_message(const EVP_PKEY * key, const std::string& in) {
+std::string rsa_decrypt_message(const EVP_PKEY * key, const std::string& in) {
     unsigned char * out;
     size_t outlen, inlen = in.size();
     ENGINE * eng = nullptr;
@@ -212,7 +216,7 @@ std::string neroshop::crypto::rsa_decrypt_message(const EVP_PKEY * key, const st
     return plain_text;
 }
 //-----------------------------------------------------------------------------
-std::string neroshop::crypto::rsa_public_encrypt(const std::string& public_key, const std::string& plain_text) {
+std::string rsa_public_encrypt(const std::string& public_key, const std::string& plain_text) {
     // write the public key to a BIO
     BIO * bio_public = BIO_new(BIO_s_mem());
     if(BIO_write(bio_public, public_key.c_str(), public_key.length()) <= 0) {
@@ -239,7 +243,7 @@ std::string neroshop::crypto::rsa_public_encrypt(const std::string& public_key, 
     return cipher_text;
 }
 //-----------------------------------------------------------------------------
-std::string neroshop::crypto::rsa_private_decrypt(const std::string& private_key, const std::string& cipher_text) {
+std::string rsa_private_decrypt(const std::string& private_key, const std::string& cipher_text) {
     // write the private key to a BIO
     BIO * bio_private = BIO_new(BIO_s_mem());
     if(BIO_write(bio_private, private_key.c_str(), private_key.length()) <= 0) {
@@ -267,7 +271,7 @@ std::string neroshop::crypto::rsa_private_decrypt(const std::string& private_key
 }
 //-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
-void neroshop::crypto::rsa_public_encrypt_fp(const std::string& public_key, const std::string& plain_text, std::ofstream& file) {
+void rsa_public_encrypt_fp(const std::string& public_key, const std::string& plain_text, std::ofstream& file) {
     // encrypt plain text
     std::string cipher_text = rsa_public_encrypt(public_key, plain_text);
 #ifdef NEROSHOP_DEBUG    
@@ -284,7 +288,7 @@ void neroshop::crypto::rsa_public_encrypt_fp(const std::string& public_key, cons
     file.close();
 }
 //-----------------------------------------------------------------------------
-void neroshop::crypto::rsa_private_decrypt_fp(const std::string& private_key, std::string& plain_text, std::ifstream& file) {
+void rsa_private_decrypt_fp(const std::string& private_key, std::string& plain_text, std::ifstream& file) {
     // load cipher text from file    
     ////std::ifstream file ("cipher_text.txt", std::ios::binary);
     if(!file.is_open()) { 
@@ -302,7 +306,7 @@ void neroshop::crypto::rsa_private_decrypt_fp(const std::string& private_key, st
 }
 //-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
-std::string neroshop::crypto::rsa_get_public_key(const EVP_PKEY * pkey) {
+std::string rsa_get_public_key(const EVP_PKEY * pkey) {
     BIO * out = BIO_new(BIO_s_mem());
     if(PEM_write_bio_PUBKEY(out, const_cast<EVP_PKEY *>(pkey)) != 1) {
     //if(PEM_write_bio_RSAPublicKey(out, const_cast<RSA *>(rsa)) != 1) { // deprecated in OpenSSL 3.0
@@ -319,7 +323,7 @@ std::string neroshop::crypto::rsa_get_public_key(const EVP_PKEY * pkey) {
     return public_key;
 }
 //-----------------------------------------------------------------------------
-std::string neroshop::crypto::rsa_get_private_key(const EVP_PKEY * pkey) {
+std::string rsa_get_private_key(const EVP_PKEY * pkey) {
     BIO	* out = BIO_new(BIO_s_mem());
     if(PEM_write_bio_PKCS8PrivateKey(out, const_cast<EVP_PKEY *>(pkey), nullptr, nullptr, 0, nullptr, nullptr) != 1) { // same as PEM_write_bio_PrivateKey - both use PKCS#8 format which supports all algorithms including RSA // to-do: add encryption e.g: EVP_aes_256_cbc() (in arg 3) using a passphrase/password (in arg 4) and passphrase_len (in arg 5)
     //if(PEM_write_bio_RSAPrivateKey(bp_private, const_cast<RSA *>(rsa), nullptr, nullptr, 0, nullptr, nullptr) != 1) { // deprecated in OpenSSL 3.0
@@ -336,7 +340,7 @@ std::string neroshop::crypto::rsa_get_private_key(const EVP_PKEY * pkey) {
     return private_key;
 }
 //-----------------------------------------------------------------------------
-std::pair<std::string, std::string> neroshop::crypto::rsa_get_keys(const EVP_PKEY * pkey) {
+std::pair<std::string, std::string> rsa_get_keys(const EVP_PKEY * pkey) {
     std::string public_key = rsa_get_public_key(pkey);
     std::string private_key = rsa_get_private_key(pkey);
     auto key_pair = std::make_pair(public_key, private_key);
@@ -345,7 +349,7 @@ std::pair<std::string, std::string> neroshop::crypto::rsa_get_keys(const EVP_PKE
 //-----------------------------------------------------------------------------
 // refer to: https://www.openssl.org/docs/man3.0/man3/EVP_PKEY_sign.html
 //           https://www.openssl.org/docs/man3.0/man3/EVP_PKEY_verify.html
-std::string neroshop::crypto::rsa_sign_message(const EVP_PKEY *key, const std::string &message)
+std::string rsa_sign_message(const EVP_PKEY *key, const std::string &message)
 {
     // NB: assumes signing_key and md are set up before the next
     // step. signing_key must be an RSA private key and md must
@@ -424,7 +428,7 @@ std::string neroshop::crypto::rsa_sign_message(const EVP_PKEY *key, const std::s
     return signature;
 }
 //-----------------------------------------------------------------------------
-bool neroshop::crypto::rsa_verify_signature(const EVP_PKEY * verify_key, const std::string& message, const std::string& signature)
+bool rsa_verify_signature(const EVP_PKEY * verify_key, const std::string& message, const std::string& signature)
 {
     // NB: assumes verify_key, sig, siglen md and mdlen are already set up
     // and that verify_key is an RSA public key
@@ -495,7 +499,7 @@ bool neroshop::crypto::rsa_verify_signature(const EVP_PKEY * verify_key, const s
 }
 //-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
-std::string neroshop::crypto::rsa_private_sign(const std::string& private_key, const std::string& message) {
+std::string rsa_private_sign(const std::string& private_key, const std::string& message) {
     // Write the private key to a BIO
     BIO * bio_private = BIO_new(BIO_s_mem());
     if(BIO_write(bio_private, private_key.c_str(), private_key.length()) <= 0) {
@@ -519,7 +523,7 @@ std::string neroshop::crypto::rsa_private_sign(const std::string& private_key, c
     return signature;
 }
 //-----------------------------------------------------------------------------
-bool neroshop::crypto::rsa_public_verify(const std::string& public_key, const std::string& message, const std::string& signature) {
+bool rsa_public_verify(const std::string& public_key, const std::string& message, const std::string& signature) {
     // Write the public key to a BIO
     BIO * bio_public = BIO_new(BIO_s_mem());
     if(BIO_write(bio_public, public_key.c_str(), public_key.length()) <= 0) {
@@ -541,6 +545,10 @@ bool neroshop::crypto::rsa_public_verify(const std::string& public_key, const st
     EVP_PKEY_free(pkey);
     // Return the verification result
     return verified;
+}
+
+}
+
 }
 
 /*int main() {

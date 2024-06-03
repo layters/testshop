@@ -20,12 +20,13 @@
 #include <fstream>
 #include <regex>
 
+namespace neroshop {
 ////////////////////
-neroshop::User::User() : wallet(nullptr), id(""), logged(false), account_type(UserAccountType::Guest), cart(nullptr), order_list({}), favorites({}) {
+User::User() : wallet(nullptr), id(""), logged(false), account_type(UserAccountType::Guest), cart(nullptr), order_list({}), favorites({}) {
     cart = std::unique_ptr<Cart>(new Cart());
 }
 ////////////////////
-neroshop::User::~User()
+User::~User()
 {
     // clear private key
     private_key.clear();
@@ -44,7 +45,7 @@ neroshop::User::~User()
 ////////////////////
 ////////////////////
 ////////////////////
-void neroshop::User::rate_seller(const std::string& seller_id, int score, const std::string& comments, const std::string& signature) { // perfected 99.9%!!
+void User::rate_seller(const std::string& seller_id, int score, const std::string& comments, const std::string& signature) { // perfected 99.9%!!
     if(seller_id.empty()) return;
     
     // score must be between 0 and 1
@@ -143,7 +144,7 @@ void neroshop::User::rate_seller(const std::string& seller_id, int score, const 
 } 
 ////////////////////
 ////////////////////
-void neroshop::User::rate_item(const std::string& product_id, int stars, const std::string& comments, const std::string& signature) { // perfected 99%!!!
+void User::rate_item(const std::string& product_id, int stars, const std::string& comments, const std::string& signature) { // perfected 99%!!!
     if(product_id.empty()) return;
     
     // star ratings must be between 1 and 5
@@ -151,6 +152,7 @@ void neroshop::User::rate_item(const std::string& product_id, int stars, const s
     if(stars <= 1) stars = 1;
     
     // TODO: Check if the rater has previously purchased this product to be able to rate it
+    // TODO: If corresponding listing has an expiration date, add an expiration date to product rating too
     
     Client * client = Client::get_main_client();
     //----------------------------------
@@ -238,7 +240,7 @@ void neroshop::User::rate_item(const std::string& product_id, int stars, const s
 ////////////////////
 // account-related stuff here
 ////////////////////
-void neroshop::User::delete_account() {
+void User::delete_account() {
 
 }
 ////////////////////
@@ -246,16 +248,16 @@ void neroshop::User::delete_account() {
 ////////////////////
 // cart-related stuff here
 ////////////////////
-int neroshop::User::add_to_cart(const std::string& listing_key, int quantity) {
+int User::add_to_cart(const std::string& listing_key, int quantity) {
     neroshop::CartError error = cart->add(this->id, listing_key, quantity);
     return static_cast<int>(error);
 }
 ////////////////////
-void neroshop::User::remove_from_cart(const std::string& listing_key, int quantity) {
+void User::remove_from_cart(const std::string& listing_key, int quantity) {
     cart->remove(this->id, listing_key, quantity);
 }
 ////////////////////
-void neroshop::User::clear_cart() {
+void User::clear_cart() {
     cart->empty();
 }
 ////////////////////
@@ -263,7 +265,7 @@ void neroshop::User::clear_cart() {
 ////////////////////
 // order-related stuff here
 ////////////////////
-void neroshop::User::create_order(const std::string& shipping_address) {//const {
+void User::create_order(const std::string& shipping_address) {//const {
     // name(first, last), address1(street, p.o box, company name, etc.), address2(apt number, suite, unit, building, floor, etc.) city, zip/postal_code, state/province/region country, optional(phone, email)
     try {
         std::shared_ptr<neroshop::Order> order(std::make_shared<neroshop::Order>());//(new neroshop::Order());
@@ -276,7 +278,7 @@ void neroshop::User::create_order(const std::string& shipping_address) {//const 
 ////////////////////
 // put this in Seller::on_login
 // orders are never deleted, their statuses just change: rejected, failure, delivered, etc.
-void neroshop::User::load_orders() {
+void User::load_orders() {
 
 }
 ////////////////////
@@ -284,7 +286,7 @@ void neroshop::User::load_orders() {
 ////////////////////
 // favorite-or-wishlist-related stuff
 ////////////////////
-void neroshop::User::add_to_favorites(const std::string& listing_key) {
+void User::add_to_favorites(const std::string& listing_key) {
     db::Sqlite3 * database = neroshop::get_database();
 
     // check if item is already in favorites so that we do not add the same item more than once
@@ -303,7 +305,7 @@ void neroshop::User::add_to_favorites(const std::string& listing_key) {
     }
 }
 ////////////////////
-void neroshop::User::remove_from_favorites(const std::string& listing_key) {
+void User::remove_from_favorites(const std::string& listing_key) {
     db::Sqlite3 * database = neroshop::get_database();
     
     // check if item has already been removed from favorites so that we don't have to remove it more than once
@@ -328,7 +330,7 @@ void neroshop::User::remove_from_favorites(const std::string& listing_key) {
     }
 }
 ////////////////////
-void neroshop::User::clear_favorites() {
+void User::clear_favorites() {
     db::Sqlite3 * database = neroshop::get_database();
     
     // first check if favorites (database table) is empty
@@ -345,7 +347,7 @@ void neroshop::User::clear_favorites() {
     if(favorites.empty()) neroshop::print("your favorites have been cleared"); // confirm that favorites has been cleared
 }
 ////////////////////
-void neroshop::User::load_favorites() {
+void User::load_favorites() {
     favorites.clear();    
     db::Sqlite3 * database = neroshop::get_database();
     std::string command = "SELECT DISTINCT listing_key FROM favorites WHERE user_id = ?1;";
@@ -380,7 +382,7 @@ void neroshop::User::load_favorites() {
 ////////////////////
 // avatar-related stuff here
 ////////////////////
-void neroshop::User::upload_avatar(const std::string& filename) {
+void User::upload_avatar(const std::string& filename) {
     // Get image size
     std::ifstream image_file(filename, std::ios::binary);
     if(!image_file.good()) {
@@ -403,12 +405,12 @@ void neroshop::User::upload_avatar(const std::string& filename) {
     avatar = std::make_unique<Image>(std::move(image));
 }
 ////////////////////
-void neroshop::User::delete_avatar() {
+void User::delete_avatar() {
  
 }
 ////////////////////
 ////////////////////
-void neroshop::User::send_message(const std::string& recipient_id, const std::string& content, const std::string& public_key) {
+void User::send_message(const std::string& recipient_id, const std::string& content, const std::string& public_key) {
     if(recipient_id == this->id) {
         neroshop::print("You cannot message yourself", 1);
         return;
@@ -486,7 +488,7 @@ void neroshop::User::send_message(const std::string& recipient_id, const std::st
     #endif
 }
 ////////////////////
-std::pair<std::string, std::string> neroshop::User::decrypt_message(const std::string& content_encoded, const std::string& sender_encoded) {
+std::pair<std::string, std::string> User::decrypt_message(const std::string& content_encoded, const std::string& sender_encoded) {
     // Decode encoded sender
     std::string sender_decoded = neroshop::base64_decode(sender_encoded);
     
@@ -513,16 +515,16 @@ std::pair<std::string, std::string> neroshop::User::decrypt_message(const std::s
 }
 ////////////////////
 ////////////////////
-void neroshop::User::set_public_key(const std::string& public_key) {
+void User::set_public_key(const std::string& public_key) {
     // TODO: validate public key before setting it
     this->public_key = public_key;
 }
 ////////////////////
-void neroshop::User::set_private_key(const std::string& private_key) {
+void User::set_private_key(const std::string& private_key) {
     this->private_key = private_key;
 }
 ////////////////////
-void neroshop::User::set_wallet(const neroshop::Wallet& wallet) {
+void User::set_wallet(const neroshop::Wallet& wallet) {
     std::unique_ptr<neroshop::Wallet> user_wallet(&const_cast<neroshop::Wallet&>(wallet));
     this->wallet = std::move(user_wallet);
 }
@@ -530,23 +532,23 @@ void neroshop::User::set_wallet(const neroshop::Wallet& wallet) {
 ////////////////////
 ////////////////////
 ////////////////////
-//void neroshop::User::set_id(unsigned int id) {
+//void User::set_id(unsigned int id) {
 //    this->id = id;
 //}
 ////////////////////
-void neroshop::User::set_id(const std::string& id) {
+void User::set_id(const std::string& id) {
     this->id = id;
 }
 ////////////////////
-void neroshop::User::set_name(const std::string& name) {
+void User::set_name(const std::string& name) {
     this->name = name;
 }
 ////////////////////
-void neroshop::User::set_account_type(UserAccountType account_type) {
+void User::set_account_type(UserAccountType account_type) {
     this->account_type = account_type;
 }
 ////////////////////
-void neroshop::User::set_logged(bool logged) { // protected function, so only derived classes can use this
+void User::set_logged(bool logged) { // protected function, so only derived classes can use this
     this->logged = logged;
     if(!logged) logout(); // call on_logout() (callback)
 }
@@ -555,23 +557,23 @@ void neroshop::User::set_logged(bool logged) { // protected function, so only de
 ////////////////////
 ////////////////////
 ////////////////////
-//unsigned int neroshop::User::get_id() const {
+//unsigned int User::get_id() const {
 //    return id;
 //}
 ////////////////////
-std::string neroshop::User::get_id() const {
+std::string User::get_id() const {
     return id;
 }
 ////////////////////
-std::string neroshop::User::get_name() const {
+std::string User::get_name() const {
     return name;
 }
 ////////////////////
-UserAccountType neroshop::User::get_account_type() const {
+UserAccountType User::get_account_type() const {
     return account_type;
 }
 ////////////////////
-std::string neroshop::User::get_account_type_string() const {
+std::string User::get_account_type_string() const {
     switch(this->account_type) {
         case UserAccountType::Guest: return "Guest"; break;
         case UserAccountType::Buyer: return "Buyer"; break;
@@ -580,38 +582,38 @@ std::string neroshop::User::get_account_type_string() const {
     }
 }
 ////////////////////
-neroshop::Image * neroshop::User::get_avatar() const {
+neroshop::Image * User::get_avatar() const {
     return avatar.get();
 }
 
-std::string neroshop::User::get_public_key() const {
+std::string User::get_public_key() const {
     return public_key;
 }
 
-std::string neroshop::User::get_private_key() const {
+std::string User::get_private_key() const {
     return private_key;
 }
 ////////////////////
-neroshop::Wallet * neroshop::User::get_wallet() const {
+neroshop::Wallet * User::get_wallet() const {
     return wallet.get();
 }
 ////////////////////
 ////////////////////
-neroshop::Cart * neroshop::User::get_cart() const {
+neroshop::Cart * User::get_cart() const {
     return cart.get();
 }
 ////////////////////
 ////////////////////
-neroshop::Order * neroshop::User::get_order(unsigned int index) const {
-    if(index > (order_list.size() - 1)) throw std::out_of_range("neroshop::User::get_order(): attempt to access invalid index");
+neroshop::Order * User::get_order(unsigned int index) const {
+    if(index > (order_list.size() - 1)) throw std::out_of_range("User::get_order(): attempt to access invalid index");
     return order_list[index].get();
 }
 ////////////////////
-unsigned int neroshop::User::get_order_count() const {
+unsigned int User::get_order_count() const {
     return order_list.size();
 }
 ////////////////////
-std::vector<neroshop::Order *> neroshop::User::get_order_list() const {
+std::vector<neroshop::Order *> User::get_order_list() const {
     std::vector<neroshop::Order *> orders = {};
     for(const auto & order : order_list) {//for(int o = 0; o < order_list.size(); o++) {
         orders.push_back(order.get());//(order_list[o].get());
@@ -620,60 +622,60 @@ std::vector<neroshop::Order *> neroshop::User::get_order_list() const {
 }
 ////////////////////
 ////////////////////
-std::string neroshop::User::get_favorite(unsigned int index) const {
-    if(index > (favorites.size() - 1)) throw std::out_of_range("neroshop::User::get_favorites(): attempt to access invalid index");
+std::string User::get_favorite(unsigned int index) const {
+    if(index > (favorites.size() - 1)) throw std::out_of_range("User::get_favorites(): attempt to access invalid index");
     return favorites[index];
 }
 ////////////////////
-unsigned int neroshop::User::get_favorites_count() const {
+unsigned int User::get_favorites_count() const {
     return favorites.size();
 }
 ////////////////////
-std::vector<std::string> neroshop::User::get_favorites() const {
+std::vector<std::string> User::get_favorites() const {
     return favorites;
 }
 ////////////////////
 ////////////////////
 ////////////////////
 ////////////////////
-bool neroshop::User::is_guest() const {
+bool User::is_guest() const {
     if(is_logged()) return false;
     return true; // guests (buyers) are not required to register // guests are buyers by default, except their data is not stored
 }
 ////////////////////
-bool neroshop::User::is_buyer() const// buyer and guests are not required to register, only sellers
+bool User::is_buyer() const// buyer and guests are not required to register, only sellers
 {
     return true;
 }
 ////////////////////
-bool neroshop::User::is_seller() const
+bool User::is_seller() const
 {
     return true;
 }
 ////////////////////
-bool neroshop::User::is_online() const // a user is not created until they are logged so this function can only be called when a user is logged // guests can also use this function so its a bad idea to check if user is logged
+bool User::is_online() const // a user is not created until they are logged so this function can only be called when a user is logged // guests can also use this function so its a bad idea to check if user is logged
 {
     return Client::get_main_client()->is_connected();// && is_logged()); // user must be both connected to the network and logged in
 }
 ////////////////////
-bool neroshop::User::is_registered() const {
+bool User::is_registered() const {
     return true;
 }
 ////////////////////
-bool neroshop::User::is_registered(const std::string& name) { // no need to login to prove user is registered, just need to check the db
+bool User::is_registered(const std::string& name) { // no need to login to prove user is registered, just need to check the db
     return true; 
 }
 ////////////////////
-bool neroshop::User::is_logged() const
+bool User::is_logged() const
 {
     return logged;
 }
 ////////////////////
-bool neroshop::User::has_email() const {
+bool User::has_email() const {
     return false;    
 }
 ////////////////////
-bool neroshop::User::has_avatar() const {
+bool User::has_avatar() const {
     neroshop::db::Sqlite3 * database = neroshop::get_database();
     if(!database) throw std::runtime_error("database is NULL");
     // If id is zero (this means the user does not exist)
@@ -688,11 +690,11 @@ bool neroshop::User::has_avatar() const {
 }
 ////////////////////
 ////////////////////
-bool neroshop::User::has_purchased(const std::string& product_id) { // for registered users only//if(!is_logged()) { neroshop::print("You are not logged in", 2); return false; }
+bool User::has_purchased(const std::string& product_id) { // for registered users only//if(!is_logged()) { neroshop::print("You are not logged in", 2); return false; }
     return false;
 }
 ////////////////////
-bool neroshop::User::has_favorited(const std::string& listing_key) {
+bool User::has_favorited(const std::string& listing_key) {
     // since we loaded the favorites into memory when the app launched, we should be able to access the pre-loaded favorites and any newly added favorites in the current session without performing any database queries/operations
     for(const auto & favorite : favorites) {
         // if any favorites items' ids matches "listing_key" then return true
@@ -701,13 +703,13 @@ bool neroshop::User::has_favorited(const std::string& listing_key) {
     return false;////return (std::find(favorites.begin(), favorites.end(), listing_key) != favorites.end()); // this is good for when storing favorites as integers (product_ids)
 }
 ////////////////////
-bool neroshop::User::has_wallet() const {
+bool User::has_wallet() const {
     if(!wallet.get()) return false; // wallet is nullptr
     if(!wallet->get_monero_wallet()) return false; // wallet not opened
     return true;
 }
 ////////////////////
-bool neroshop::User::has_wallet_synced() const {
+bool User::has_wallet_synced() const {
     if(!has_wallet()) return false; // wallet is either nullptr or not opened
     if(!wallet->get_monero_wallet()->is_synced()) return false; // wallet not synced to daemon
     return true;
@@ -717,11 +719,11 @@ bool neroshop::User::has_wallet_synced() const {
 ////////////////////
 // callbacks
 ////////////////////
-//User * neroshop::User::on_login(const std::string& username) {return nullptr;} // this function does nothing
+//User * User::on_login(const std::string& username) {return nullptr;} // this function does nothing
 ////////////////////
-void neroshop::User::on_order_received() {} // for sellers to implement // this function does nothing
+void User::on_order_received() {} // for sellers to implement // this function does nothing
 ////////////////////
-void neroshop::User::logout() {
+void User::logout() {
     //edit: guests can definitely logout too//if(is_guest()) return; // guests don't have an account so therefore they cannot logout
     // do something when logged is set to false ...
     // reset private members to their default values
@@ -738,3 +740,4 @@ void neroshop::User::logout() {
 ////////////////////
 ////////////////////
 ////////////////////
+}

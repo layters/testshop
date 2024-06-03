@@ -1,10 +1,16 @@
 #include "wownero.hpp"
 
 #include "../../tools/string.hpp"
+#include "../../settings.hpp" // language
 
-neroshop::WowneroWallet::WowneroWallet() : Wallet(WalletType::Wownero)
-{}
+#include <nlohmann/json.hpp>
+
+namespace neroshop {
+
+WowneroWallet::WowneroWallet() : Wallet(WalletType::Wownero) {}
 //-------------------------------------------------------
-neroshop::WowneroWallet::~WowneroWallet() {}
+WowneroWallet::~WowneroWallet() {}
 //-------------------------------------------------------
 //-------------------------------------------------------
+
+}

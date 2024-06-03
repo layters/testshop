@@ -11,8 +11,11 @@
 #include "../p2p/node.hpp"
 #include "../p2p/routing_table.hpp"
 
+namespace neroshop {
 
-std::vector<uint8_t> neroshop::msgpack::process(const std::vector<uint8_t>& request, Node& node, bool ipc_mode) {
+namespace msgpack {
+
+std::vector<uint8_t> process(const std::vector<uint8_t>& request, Node& node, bool ipc_mode) {
     nlohmann::json request_object;
     
     nlohmann::json response_object;
@@ -266,7 +269,7 @@ std::vector<uint8_t> neroshop::msgpack::process(const std::vector<uint8_t>& requ
 
 //-----------------------------------------------------------------------------
 
-std::string neroshop::msgpack::generate_secret(int length) {
+std::string generate_secret(int length) {
     std::string secret(length, ' ');
     RAND_bytes((unsigned char*)&secret[0], length);
     return secret;
@@ -274,7 +277,7 @@ std::string neroshop::msgpack::generate_secret(int length) {
 
 //-----------------------------------------------------------------------------
 
-std::string neroshop::msgpack::generate_token(const std::string& node_id, const std::string& data_hash, const std::string& secret) {
+std::string generate_token(const std::string& node_id, const std::string& data_hash, const std::string& secret) {
     std::string token;
     uint8_t token_data[EVP_MAX_MD_SIZE];
     unsigned int token_length = 0;
@@ -296,7 +299,7 @@ std::string neroshop::msgpack::generate_token(const std::string& node_id, const 
 
 
 //-----------------------------------------------------------------------------
-std::string neroshop::msgpack::generate_transaction_id() {
+std::string generate_transaction_id() {
     std::random_device rd;
     std::mt19937 gen(rd());
     std::uniform_int_distribution<std::uint32_t> dis(0, std::numeric_limits<std::uint32_t>::max());
@@ -315,7 +318,7 @@ std::string neroshop::msgpack::generate_transaction_id() {
 }
 //-----------------------------------------------------------------------------
 
-bool neroshop::msgpack::send_data(int sockfd, const std::vector<uint8_t>& packed) {
+bool send_data(int sockfd, const std::vector<uint8_t>& packed) {
     if(sockfd < 0) throw std::runtime_error("socket is dead");
 
     /*nlohmann::json j = {{"foo", "bar"}, {"baz", 1}};
@@ -331,7 +334,7 @@ bool neroshop::msgpack::send_data(int sockfd, const std::vector<uint8_t>& packed
     return true;
 }
 
-std::string neroshop::msgpack::receive_data(int sockfd) {
+std::string receive_data(int sockfd) {
     if(sockfd < 0) throw std::runtime_error("socket is dead");
         
     const int BUFFER_SIZE = 4096;
@@ -360,5 +363,9 @@ std::string neroshop::msgpack::receive_data(int sockfd) {
     }
     
     return json_str;
+
+}
+
+}
 
 }

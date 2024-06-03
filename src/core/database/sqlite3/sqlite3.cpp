@@ -7,21 +7,25 @@
 #include <sstream>
 #include <stdexcept> // std::runtime_error
 
-neroshop::db::Sqlite3::Sqlite3() : handle(nullptr), opened(false) {}
+namespace neroshop {
+
+namespace db {
+
+Sqlite3::Sqlite3() : handle(nullptr), opened(false) {}
 ////////////////////
-neroshop::db::Sqlite3::Sqlite3(const std::string& filename) : Sqlite3()
+Sqlite3::Sqlite3(const std::string& filename) : Sqlite3()
 {
 	if(!open(filename)) {
 		throw std::runtime_error(std::string("sqlite3_open: ") + std::string(sqlite3_errmsg(handle)));
     }
 }
 ////////////////////
-neroshop::db::Sqlite3::~Sqlite3() {
+Sqlite3::~Sqlite3() {
     close();
 }
 ////////////////////
 // SQLite database should only need to be opened once per application session and closed once when the application is terminated
-bool neroshop::db::Sqlite3::open(const std::string& filename)
+bool Sqlite3::open(const std::string& filename)
 {
     if(opened) {
         neroshop::print("database is already opened", 2);
@@ -43,7 +47,7 @@ bool neroshop::db::Sqlite3::open(const std::string& filename)
 	return true;
 }
 ////////////////////
-void neroshop::db::Sqlite3::close() {
+void Sqlite3::close() {
     if(!handle) {
         return;
 	}
@@ -54,11 +58,11 @@ void neroshop::db::Sqlite3::close() {
     // TODO: dump logs
 }
 ////////////////////
-int neroshop::db::Sqlite3::execute(const std::string& command) 
+int Sqlite3::execute(const std::string& command) 
 {
     if(!handle) throw std::runtime_error("database is not connected");
 	char * error_message = 0;
-	int result = sqlite3_exec(handle, command.c_str(), neroshop::db::Sqlite3::callback, 0, &error_message);
+	int result = sqlite3_exec(handle, command.c_str(), Sqlite3::callback, 0, &error_message);
 	if (result != SQLITE_OK) {
 		neroshop::print("sqlite3_exec: " + std::string(error_message), 1);
 		logger.push_back(std::make_pair(result, std::string(error_message)));
@@ -68,7 +72,7 @@ int neroshop::db::Sqlite3::execute(const std::string& command)
 	return result;
 }
 ////////////////////
-int neroshop::db::Sqlite3::execute_params(const std::string& command, const std::vector<std::string>& args) {
+int Sqlite3::execute_params(const std::string& command, const std::vector<std::string>& args) {
     if(!handle) throw std::runtime_error("database is not connected");
     // Prepare statement
     sqlite3_stmt * statement = nullptr;
@@ -115,15 +119,15 @@ int neroshop::db::Sqlite3::execute_params(const std::string& command, const std:
 ////////////////////
 ////////////////////
 ////////////////////
-std::string neroshop::db::Sqlite3::get_sqlite_version() {
+std::string Sqlite3::get_sqlite_version() {
     return sqlite3_libversion();
 }
 ////////////////////
-sqlite3 * neroshop::db::Sqlite3::get_handle() const {
+sqlite3 * Sqlite3::get_handle() const {
     return handle;
 }
 ////////////////////
-void * neroshop::db::Sqlite3::get_blob(const std::string& command) {
+void * Sqlite3::get_blob(const std::string& command) {
     if(!handle) throw std::runtime_error("database is not connected");
     sqlite3_stmt * statement = nullptr;
     int result = sqlite3_prepare_v2(handle, command.c_str(), -1, &statement, nullptr);
@@ -158,7 +162,7 @@ void * neroshop::db::Sqlite3::get_blob(const std::string& command) {
     return blob;
 }
 ////////////////////
-void * neroshop::db::Sqlite3::get_blob_params(const std::string& command, const std::vector<std::string>& args) {
+void * Sqlite3::get_blob_params(const std::string& command, const std::vector<std::string>& args) {
 	if(!handle) throw std::runtime_error("database is not connected");
     sqlite3_stmt * statement = nullptr;
     int result = sqlite3_prepare_v2(handle, command.c_str(), -1, &statement, nullptr);
@@ -197,7 +201,7 @@ void * neroshop::db::Sqlite3::get_blob_params(const std::string& command, const 
     return blob;
 }
 ////////////////////
-std::string neroshop::db::Sqlite3::get_text(const std::string& command) {//const {
+std::string Sqlite3::get_text(const std::string& command) {//const {
     if(!handle) throw std::runtime_error("database is not connected");
     sqlite3_stmt * stmt = nullptr;
     int result = sqlite3_prepare_v2(handle, command.c_str(), -1, &stmt, nullptr);
@@ -232,7 +236,7 @@ std::string neroshop::db::Sqlite3::get_text(const std::string& command) {//const
     return text;
 }
 ////////////////////
-std::string neroshop::db::Sqlite3::get_text_params(const std::string& command, const std::vector<std::string>& args) {//const {
+std::string Sqlite3::get_text_params(const std::string& command, const std::vector<std::string>& args) {//const {
     if(!handle) throw std::runtime_error("database is not connected");
     // Prepare statement
     sqlite3_stmt * statement = nullptr;
@@ -275,7 +279,7 @@ std::string neroshop::db::Sqlite3::get_text_params(const std::string& command, c
     return text;
 }
 ////////////////////
-int neroshop::db::Sqlite3::get_integer(const std::string& command) {
+int Sqlite3::get_integer(const std::string& command) {
     if(!handle) throw std::runtime_error("database is not connected");
     sqlite3_stmt * statement = nullptr;
     int result = sqlite3_prepare_v2(handle, command.c_str(), -1, &statement, nullptr);
@@ -310,7 +314,7 @@ int neroshop::db::Sqlite3::get_integer(const std::string& command) {
     return number;
 }
 ////////////////////
-int neroshop::db::Sqlite3::get_integer_params(const std::string& command, const std::vector<std::string>& args) {
+int Sqlite3::get_integer_params(const std::string& command, const std::vector<std::string>& args) {
     if(!handle) throw std::runtime_error("database is not connected");
     // Prepare statement
     sqlite3_stmt * statement = nullptr;
@@ -353,7 +357,7 @@ int neroshop::db::Sqlite3::get_integer_params(const std::string& command, const 
     return number;
 }
 ////////////////////
-double neroshop::db::Sqlite3::get_real(const std::string& command) {
+double Sqlite3::get_real(const std::string& command) {
     if(!handle) throw std::runtime_error("database is not connected");
     sqlite3_stmt * stmt = nullptr;
     int result = sqlite3_prepare_v2(handle, command.c_str(), -1, &stmt, nullptr);
@@ -388,7 +392,7 @@ double neroshop::db::Sqlite3::get_real(const std::string& command) {
     return number;
 }
 ////////////////////
-double neroshop::db::Sqlite3::get_real_params(const std::string& command, const std::vector<std::string>& args) {
+double Sqlite3::get_real_params(const std::string& command, const std::vector<std::string>& args) {
     if(!handle) throw std::runtime_error("database is not connected");
     // Prepare statement
     sqlite3_stmt * statement = nullptr;
@@ -431,7 +435,7 @@ double neroshop::db::Sqlite3::get_real_params(const std::string& command, const 
     return number;
 }
 ////////////////////
-std::vector<std::string> neroshop::db::Sqlite3::get_rows(const std::string& command) {
+std::vector<std::string> Sqlite3::get_rows(const std::string& command) {
     if(!handle) throw std::runtime_error("database is not connected");
     sqlite3_stmt * stmt = nullptr;
     std::vector<std::string> row_values = {};
@@ -469,11 +473,11 @@ std::vector<std::string> neroshop::db::Sqlite3::get_rows(const std::string& comm
 }
 ////////////////////
 ////////////////////
-std::pair<int, std::string> neroshop::db::Sqlite3::get_error() const {
+std::pair<int, std::string> Sqlite3::get_error() const {
     return logger.back();
 }
 ////////////////////
-std::string neroshop::db::Sqlite3::get_select() {
+std::string Sqlite3::get_select() {
     std::string json = json_object.dump();
     json_object.clear();
     return json;
@@ -481,26 +485,26 @@ std::string neroshop::db::Sqlite3::get_select() {
 ////////////////////
 ////////////////////
 ////////////////////
-bool neroshop::db::Sqlite3::is_open() const {
+bool Sqlite3::is_open() const {
     return (opened == true);
 }
 ////////////////////
-bool neroshop::db::Sqlite3::table_exists(const std::string& table_name) {
+bool Sqlite3::table_exists(const std::string& table_name) {
     std::string command = "SELECT count(*) FROM sqlite_master WHERE type = 'table' AND name = $1;";
     return get_integer_params(command, { table_name });
 }
 ////////////////////
-/*bool neroshop::db::Sqlite3::rowid_exists(const std::string& table_name, int rowid) {
+/*bool Sqlite3::rowid_exists(const std::string& table_name, int rowid) {
      int rowid = database->get_integer_params("SELECT id FROM $1 WHERE id = $2", { table_name, rowid });
      return (rowid != 0);
 }*/
 ////////////////////
 ////////////////////
-nlohmann::json neroshop::db::Sqlite3::json_object;//({});
+nlohmann::json Sqlite3::json_object;//({});
 ////////////////////
-//std::vector<std::string> neroshop::db::Sqlite3::select_result {};//std::vector<std::pair<int, std::string>> neroshop::db::Sqlite3::logger {{}};
+//std::vector<std::string> Sqlite3::select_result {};//std::vector<std::pair<int, std::string>> Sqlite3::logger {{}};
 ////////////////////
-int neroshop::db::Sqlite3::callback(void *not_used, int argc, char **argv, char **az_col_name)
+int Sqlite3::callback(void *not_used, int argc, char **argv, char **az_col_name)
 {
     // Note: This callback is only used when sqlite3_exec / execute() is called and will NOT work with sqlite3_prepare+sqlite3_step+sqlite3_finalize / execute_params
     nlohmann::json row;
@@ -519,3 +523,6 @@ int neroshop::db::Sqlite3::callback(void *not_used, int argc, char **argv, char 
 ////////////////////
 ////////////////////
 ////////////////////
+}
+
+}

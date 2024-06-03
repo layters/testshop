@@ -8,16 +8,18 @@
 
 #include <nlohmann/json.hpp>
 
-neroshop::Client::Client() : sockfd(-1), socket_type(SocketType::Socket_TCP) {
+namespace neroshop {
+
+Client::Client() : sockfd(-1), socket_type(SocketType::Socket_TCP) {
     create();
 }
 ////////////////////
-neroshop::Client::Client(int sockfd, struct sockaddr_in client_addr) {
+Client::Client(int sockfd, struct sockaddr_in client_addr) {
     this->sockfd = sockfd;
     this->addr = client_addr;
 }
 ////////////////////
-neroshop::Client::~Client() {
+Client::~Client() {
     if(sockfd > 0) {
         shutdown();
         close();
@@ -25,7 +27,7 @@ neroshop::Client::~Client() {
     }
 }
 ////////////////////
-void neroshop::Client::create() {
+void Client::create() {
     #if defined(__gnu_linux__) && defined(NEROSHOP_USE_SYSTEM_SOCKETS)
     if(sockfd > 0) return; // socket must be -1 before a new one can be created (if socket is not null then it means it was never closed)
 	sockfd = ::socket(AF_INET, (socket_type == SocketType::Socket_UDP) ? SOCK_DGRAM : SOCK_STREAM, 0);
@@ -48,7 +50,7 @@ void neroshop::Client::create() {
     #endif
 }
 ////////////////////
-bool neroshop::Client::connect(unsigned int port, std::string address) {
+bool Client::connect(unsigned int port, std::string address) {
     // Clear the address structure
     memset(&this->addr, 0, sizeof(this->addr));
     
@@ -104,7 +106,7 @@ bool neroshop::Client::connect(unsigned int port, std::string address) {
     return false;*/
 }
 ////////////////////
-void neroshop::Client::write(const std::string& text) {
+void Client::write(const std::string& text) {
     #if defined(__gnu_linux__) && defined(NEROSHOP_USE_SYSTEM_SOCKETS)
 	ssize_t write_result = ::write(sockfd, text.c_str(), text.length());
 	if(write_result < 0) { // -1 = error
@@ -113,7 +115,7 @@ void neroshop::Client::write(const std::string& text) {
     #endif
 }
 ////////////////////
-std::string neroshop::Client::read()
+std::string Client::read()
 {
     #if defined(__gnu_linux__) && defined(NEROSHOP_USE_SYSTEM_SOCKETS)
     char buffer[1024];
@@ -127,7 +129,7 @@ std::string neroshop::Client::read()
     return "";
 }
 ////////////////////
-void neroshop::Client::send(const std::vector<uint8_t>& message) {
+void Client::send(const std::vector<uint8_t>& message) {
     assert(socket_type == SocketType::Socket_TCP && "Socket is not TCP");
     // ::send - instead of sending to a specific destination like sendto, send on SOCK_STREAM (TCP) socket sends the data to the connected socket, and returns the number of bytes sent.
     ssize_t sent_bytes = ::send(sockfd, message.data(), message.size(), 0);
@@ -136,7 +138,7 @@ void neroshop::Client::send(const std::vector<uint8_t>& message) {
     }
 }
 ////////////////////
-void neroshop::Client::send_to(const std::vector<uint8_t>& message, const struct sockaddr_in& dest_addr) {
+void Client::send_to(const std::vector<uint8_t>& message, const struct sockaddr_in& dest_addr) {
     assert(socket_type == SocketType::Socket_UDP && "Socket is not UDP");
     // ::sendto()
     ssize_t sent_bytes = ::sendto(sockfd, message.data(), message.size(), 0, (struct sockaddr*)&dest_addr, sizeof(dest_addr));
@@ -145,7 +147,7 @@ void neroshop::Client::send_to(const std::vector<uint8_t>& message, const struct
     }    
 }
 ////////////////////
-ssize_t neroshop::Client::receive(std::vector<uint8_t>& message) {
+ssize_t Client::receive(std::vector<uint8_t>& message) {
     assert(socket_type == SocketType::Socket_TCP && "Socket is not TCP");
 
     const int BUFFER_SIZE = 4096;
@@ -178,7 +180,7 @@ ssize_t neroshop::Client::receive(std::vector<uint8_t>& message) {
     return total_recv;
 }
 ////////////////////
-ssize_t neroshop::Client::receive_from(std::vector<uint8_t>& message, const struct sockaddr_in& addr) {
+ssize_t Client::receive_from(std::vector<uint8_t>& message, const struct sockaddr_in& addr) {
     assert(socket_type == SocketType::Socket_UDP && "Socket is not UDP");
     
     const int BUFFER_SIZE = 4096;
@@ -197,7 +199,7 @@ ssize_t neroshop::Client::receive_from(std::vector<uint8_t>& message, const stru
     return recv_bytes;
 }
 ////////////////////
-void neroshop::Client::put(const std::string& key, const std::string& value, std::string& reply) {
+void Client::put(const std::string& key, const std::string& value, std::string& reply) {
     // Send put - no id or tid required for IPC client requests. The DHT server will deal with that
     nlohmann::json args_obj = { {"key", key}, {"value", value} };
     nlohmann::json query_object = { {"version", std::string(NEROSHOP_DHT_VERSION)}, {"query", "put"}, {"args", args_obj}, {"tid", nullptr} };
@@ -218,7 +220,7 @@ void neroshop::Client::put(const std::string& key, const std::string& value, std
     }
 }
 
-void neroshop::Client::get(const std::string& key, std::string& reply) {
+void Client::get(const std::string& key, std::string& reply) {
     // Send get - no id or tid required for IPC client requests. The DHT server will deal with that
     nlohmann::json args_obj = { {"key", key} };
     nlohmann::json query_object = { {"version", std::string(NEROSHOP_DHT_VERSION)}, {"query", "get"}, {"args", args_obj}, {"tid", nullptr} };
@@ -239,7 +241,7 @@ void neroshop::Client::get(const std::string& key, std::string& reply) {
     }    
 }
 
-void neroshop::Client::set(const std::string& key, const std::string& value, std::string& reply) {
+void Client::set(const std::string& key, const std::string& value, std::string& reply) {
     // Send set - no id or tid required for IPC client requests. The DHT server will deal with that
     nlohmann::json args_obj = { {"key", key}, {"value", value} };
     nlohmann::json query_object = { {"version", std::string(NEROSHOP_DHT_VERSION)}, {"query", "set"}, {"args", args_obj}, {"tid", nullptr} };
@@ -260,35 +262,35 @@ void neroshop::Client::set(const std::string& key, const std::string& value, std
     }
 }
 ////////////////////	
-void neroshop::Client::close() {
+void Client::close() {
 	::close(sockfd);
 }
 ////////////////////
-void neroshop::Client::shutdown() {
+void Client::shutdown() {
     ::shutdown(sockfd, SHUT_RDWR); // SHUT_RD, SHUT_WR, SHUT_RDWR
 }
 ////////////////////
 ////////////////////
-void neroshop::Client::disconnect() { // if only shutdown() is called, the client socket will still be alive which is why we must call close() as well
+void Client::disconnect() { // if only shutdown() is called, the client socket will still be alive which is why we must call close() as well
 	shutdown();
 	close();
 }
 ////////////////////
-bool neroshop::Client::reconnect(unsigned int port, std::string address) { // kill socket first before attempting to re-connect
+bool Client::reconnect(unsigned int port, std::string address) { // kill socket first before attempting to re-connect
     close();
     return connect(port, address);
 }
 ////////////////////
-neroshop::Client * neroshop::Client::get_main_client() {
+neroshop::Client * Client::get_main_client() {
     static neroshop::Client client_obj {};
     return &client_obj;
 }
 ////////////////////
-int neroshop::Client::get_socket() const {
+int Client::get_socket() const {
     return sockfd;
 }
 ////////////////////
-int neroshop::Client::get_max_buffer_recv_size() const {
+int Client::get_max_buffer_recv_size() const {
     int max_buffer_size;
     socklen_t bufferSizeLen = sizeof(max_buffer_size);
     if (getsockopt(sockfd, SOL_SOCKET, SO_RCVBUF, &max_buffer_size, &bufferSizeLen) == 0) {
@@ -302,9 +304,10 @@ int neroshop::Client::get_max_buffer_recv_size() const {
 }
 ////////////////////
 ////////////////////
-bool neroshop::Client::is_connected() const { // https://stackoverflow.com/a/4142038 // can only work when close() is called
+bool Client::is_connected() const { // https://stackoverflow.com/a/4142038 // can only work when close() is called
     return (sockfd != -1);
 }
 ////////////////////
 ////////////////////
 ////////////////////
+}

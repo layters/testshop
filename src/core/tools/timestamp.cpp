@@ -5,7 +5,11 @@
 #include <sstream>
 #include <boost/date_time.hpp> // only 'cause monero uses boost
 
-std::string neroshop::timestamp::get_utc_timestamp_after_duration(int duration, const std::string& time_unit) {
+namespace neroshop {
+
+namespace timestamp {
+
+std::string get_utc_timestamp_after_duration(int duration, const std::string& time_unit) {
     // Get the current UTC time
     boost::posix_time::ptime now = boost::posix_time::second_clock::universal_time();
 
@@ -51,7 +55,7 @@ std::string neroshop::timestamp::get_utc_timestamp_after_duration(int duration, 
     return oss.str();
 }
 
-std::string neroshop::timestamp::get_current_utc_timestamp() {
+std::string get_current_utc_timestamp() {
     auto now = std::chrono::system_clock::now();
     auto in_time_t = std::chrono::system_clock::to_time_t(now); // current time
     std::stringstream datetime;
@@ -60,7 +64,7 @@ std::string neroshop::timestamp::get_current_utc_timestamp() {
     return utc_timestamp;
 }
 
-bool neroshop::timestamp::is_expired(const std::string& expiration_date) {
+bool is_expired(const std::string& expiration_date) {
     // Get the current UTC time
     std::time_t current_time = std::time(nullptr);
     std::tm* current_tm = std::gmtime(&current_time);
@@ -74,7 +78,7 @@ bool neroshop::timestamp::is_expired(const std::string& expiration_date) {
     return (std::mktime(&expiration_tm) <= std::mktime(current_tm));
 }
 
-std::string neroshop::timestamp::get_most_recent_timestamp(const std::string& timestamp1, const std::string& timestamp2) {
+std::string get_most_recent_timestamp(const std::string& timestamp1, const std::string& timestamp2) {
     std::tm tm1{};
     std::istringstream ss1(timestamp1);
     ss1 >> std::get_time(&tm1, "%Y-%m-%dT%H:%M:%SZ");
@@ -92,7 +96,7 @@ std::string neroshop::timestamp::get_most_recent_timestamp(const std::string& ti
     }
 }
 
-std::string neroshop::timestamp::get_duration_from_now(const std::string& timestamp) {
+std::string get_duration_from_now(const std::string& timestamp) {
     // Parse the ISO 8601 timestamp
     std::tm tm = {};
     std::istringstream ss(timestamp);
@@ -138,16 +142,20 @@ std::string neroshop::timestamp::get_duration_from_now(const std::string& timest
 }
 
 // Convert Unix timestamp to UTC time
-std::tm neroshop::timestamp::unix_timestamp_to_utc(time_t unix_timestamp) {
+std::tm unix_timestamp_to_utc(time_t unix_timestamp) {
     std::tm utc_time;
     gmtime_r(&unix_timestamp, &utc_time);
     return utc_time;
 }
 
 // Convert UTC time to Unix timestamp
-time_t neroshop::timestamp::utc_to_unix_timestamp(const std::string& utc_time_str) {
+time_t utc_to_unix_timestamp(const std::string& utc_time_str) {
     std::tm utc_time = {};
     std::istringstream ss(utc_time_str);
     ss >> std::get_time(&utc_time, "%Y-%m-%dT%H:%M:%SZ");
     return timegm(&utc_time);
+}
+
+}
+
 }

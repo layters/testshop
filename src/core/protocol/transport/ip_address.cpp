@@ -11,6 +11,8 @@
 #include <string>
 #include <cstring>
 
+namespace neroshop {
+
 std::vector<std::string> IP_SOURCES = {
     "http://httpbin.org/ip", 
     "https://api.ip.sb/ip", 
@@ -26,7 +28,7 @@ std::vector<std::string> IP_SOURCES = {
     "https://checkip.amazonaws.com/"
 };
 
-std::string neroshop::get_public_ip_address() {
+std::string get_public_ip_address() {
     struct addrinfo hints, *res;
     int sockfd;
     std::string ip_address;
@@ -89,7 +91,7 @@ std::string neroshop::get_public_ip_address() {
     return ip_address;
 }
 
-std::string neroshop::get_public_ip_address_tor() {
+std::string get_public_ip_address_tor() {
     struct addrinfo hints, *res;
     int sockfd;
     std::string ip_address;
@@ -158,7 +160,7 @@ std::string neroshop::get_public_ip_address_tor() {
     return ip_address;
 }
 
-std::string neroshop::get_device_ip_address() {
+std::string get_device_ip_address() {
     int sockfd;
     char buffer[1024];
     struct sockaddr_in serv_addr;
@@ -177,7 +179,7 @@ std::string neroshop::get_device_ip_address() {
     return inet_ntoa(serv_addr.sin_addr);
 }
 
-std::string neroshop::ip::resolve(const std::string& url) {
+std::string ip::resolve(const std::string& url) {
     addrinfo hints{}, *res;
     hints.ai_family = AF_UNSPEC; // Allow IPv4 or IPv6
     hints.ai_socktype = SOCK_STREAM; // TCP
@@ -206,7 +208,7 @@ std::string neroshop::ip::resolve(const std::string& url) {
 }
 
 // Function to resolve hostname to IP address
-std::vector<std::string> neroshop::ip::resolve_v2(const std::string& hostname) {
+std::vector<std::string> ip::resolve_v2(const std::string& hostname) {
     std::vector<std::string> ips;
     struct addrinfo hints, *res;
     int status;
@@ -251,14 +253,14 @@ std::vector<std::string> neroshop::ip::resolve_v2(const std::string& hostname) {
 }
 
 // The is_valid_url function assumes that a valid URL starts with a scheme (such as "http" or "https") and contains a host name, so it would consider "router.bittorrent.com" as not a valid URL
-bool neroshop::is_valid_url(const std::string& url) {
+bool is_valid_url(const std::string& url) {
   static const std::regex pattern(
       R"(^(https?|ftp):\/\/([A-Za-z0-9\-\.]+)(?::(\d+))?([\/|\?].*)?$)");
 
   return std::regex_match(url, pattern);
 }
 
-bool neroshop::is_host_reachable(const std::string& hostname) {
+bool is_host_reachable(const std::string& hostname) {
     addrinfo hints{};
     hints.ai_family = AF_INET;
     hints.ai_socktype = SOCK_STREAM;
@@ -283,7 +285,7 @@ bool neroshop::is_host_reachable(const std::string& hostname) {
     return reachable;
 }
 
-int neroshop::get_ip_type(const std::string& address) {
+int get_ip_type(const std::string& address) {
     // Use getaddrinfo to resolve the address to a sockaddr_storage structure that can hold both IPv4 and IPv6 addresses
     // Determine the address family of the IP address
     int addr_family = AF_UNSPEC;
@@ -295,7 +297,7 @@ int neroshop::get_ip_type(const std::string& address) {
     return addr_family;
 }
 
-bool neroshop::create_sockaddr(const std::string& address, int port, struct sockaddr_storage& node_addr) {
+bool create_sockaddr(const std::string& address, int port, struct sockaddr_storage& node_addr) {
     memset(&node_addr, 0, sizeof(node_addr));
         
     if(!is_hostname(address)) { // works with url, ipv4 and ipv6 addresses
@@ -337,17 +339,17 @@ bool neroshop::create_sockaddr(const std::string& address, int port, struct sock
     return true;
 }
 
-bool neroshop::is_ipv4(const std::string& address) {
+bool is_ipv4(const std::string& address) {
     static const std::regex ipv4_regex("^([0-9]{1,3}\\.){3}[0-9]{1,3}$");
     return std::regex_match(address, ipv4_regex);
 }
 
-bool neroshop::is_ipv6(const std::string& address) {
+bool is_ipv6(const std::string& address) {
     static const std::regex ipv6_regex("^(([0-9a-fA-F]{1,4}:){7}[0-9a-fA-F]{1,4}|[0-9a-fA-F]{1,4}(:[0-9a-fA-F]{1,4}){0,6})$");
     return std::regex_match(address, ipv6_regex);
 }
 
-bool neroshop::is_hostname(const std::string& address) {
+bool is_hostname(const std::string& address) {
     addrinfo hints = {};
     hints.ai_flags = AI_CANONNAME;
 
@@ -361,7 +363,7 @@ bool neroshop::is_hostname(const std::string& address) {
     return true;
 }
 
-std::tuple<std::string, int> neroshop::parse_multiaddress(const std::string& multiaddress) {
+std::tuple<std::string, int> parse_multiaddress(const std::string& multiaddress) {
     std::regex pattern("/ip[46]/((?:\\d{1,3}\\.){3}\\d{1,3}|\\[[0-9a-fA-F:]+\\])/tcp/(\\d+)");
 
     std::smatch match;
@@ -377,7 +379,7 @@ std::tuple<std::string, int> neroshop::parse_multiaddress(const std::string& mul
     return std::tuple<std::string, int>(); // This creates a new tuple with an empty string ("") and zero integer value (0).
 }
 
-bool neroshop::ip::is_localhost(const char* ip_str) {
+bool ip::is_localhost(const char* ip_str) {
     struct in_addr ip_addr;
     if (inet_pton(AF_INET, ip_str, &ip_addr) == 1) {
         // IPv4
@@ -390,6 +392,8 @@ bool neroshop::ip::is_localhost(const char* ip_str) {
 
     // Invalid IP address
     return false;
+}
+
 }
 
 /*int main() {

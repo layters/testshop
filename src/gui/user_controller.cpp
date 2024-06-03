@@ -27,11 +27,11 @@ int quantity, double price, const QString& currency, const QString& condition, c
         throw std::runtime_error("neroshop::User is not initialized");
     auto seller = dynamic_cast<neroshop::Seller *>(_user.get());
     
-    std::vector<Attribute> attributesVector;
+    std::vector<ProductAttribute> attributesVector;
     for (const QVariantMap& attributeMap : attributes) {
-        Attribute attribute;
+        ProductAttribute attribute;
 
-        // Extract values from QVariantMap and assign them to the corresponding members of the Attribute struct
+        // Extract values from QVariantMap and assign them to the corresponding members of the ProductAttribute struct
         if (attributeMap.contains("color")) attribute.color = attributeMap.value("color").toString().toStdString();
         if (attributeMap.contains("size")) attribute.size = attributeMap.value("size").toString().toStdString();
         if (attributeMap.contains("weight")) attribute.weight = attributeMap.value("weight").toDouble();

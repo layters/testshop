@@ -15,7 +15,9 @@
 #endif
 #include <iostream>
 
-bool neroshop::is_i2p_running() {
+namespace neroshop {
+
+bool is_i2p_running() {
     int sockfd = socket(AF_INET, SOCK_STREAM, 0);
     if (sockfd == -1) {
         std::cerr << "Error: Socket creation failed" << std::endl;
@@ -42,6 +44,8 @@ bool neroshop::is_i2p_running() {
         close(sockfd);
         return true;
     }
+}
+
 }
 
 static int i2pd_sam_test() {

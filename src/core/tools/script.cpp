@@ -4,26 +4,25 @@
 #include "filesystem.hpp"
 #include "string.hpp"
 
-neroshop::Script::Script(void)
-{
-	//Factory::get_script_factory()->store(this);
-}
+namespace neroshop {
+
+Script::Script(void) {}
 //////////
-neroshop::Script::Script(lua_State *L, const std::string& file_name) : Script()
+Script::Script(lua_State *L, const std::string& file_name) : Script()
 {
 	if(load(L, file_name) == 0) {
 		neroshop::print("Could not load from file: " + file_name);
 	}
 }
 //////////
-neroshop::Script::~Script(void)
+Script::~Script(void)
 {
 	//lua_close(L);
 }
 //////////
-std::vector<std::string> neroshop::Script::cache	({});
+std::vector<std::string> Script::cache	({});
 //////////
-bool neroshop::Script::load(lua_State * L, const std::string& file_name)
+bool Script::load(lua_State * L, const std::string& file_name)
 {
 	if(!std::filesystem::is_regular_file(file_name))
 	{
@@ -44,7 +43,7 @@ bool neroshop::Script::load(lua_State * L, const std::string& file_name)
 	return true;
 }
 //////////
-int neroshop::Script::load(lua_State *L) // non static
+int Script::load(lua_State *L) // non static
 { 
 	luaL_checktype(L, 1, LUA_TTABLE);
 	luaL_checktype(L, 2, LUA_TSTRING);
@@ -59,19 +58,19 @@ int neroshop::Script::load(lua_State *L) // non static
 	return 1;
 }
 //////////
-bool neroshop::Script::load_script(lua_State *L, const std::string& file_name)
+bool Script::load_script(lua_State *L, const std::string& file_name)
 {	
 	Script script_ptr;
 	return script_ptr.load (L, file_name);
 }
 //////////
-int neroshop::Script::load_script(lua_State *L) // static
+int Script::load_script(lua_State *L) // static
 {
-	lua_pushboolean(L, neroshop::Script::load_script (L, lua_tostring(L, -1)));
+	lua_pushboolean(L, Script::load_script (L, lua_tostring(L, -1)));
 	return 1;
 }
 //////////
-bool neroshop::Script::load_directory(lua_State * L, const std::string& path)
+bool Script::load_directory(lua_State * L, const std::string& path)
 {
 	if(!std::filesystem::is_directory(path)) {
 	    std::filesystem::create_directories(path);
@@ -89,13 +88,13 @@ bool neroshop::Script::load_directory(lua_State * L, const std::string& path)
 	return true;	
 }
 //////////
-int neroshop::Script::load_directory(lua_State *L)
+int Script::load_directory(lua_State *L)
 {
-	lua_pushboolean( L, neroshop::Script::load_directory( L, lua_tostring(L, -1) ) );
+	lua_pushboolean( L, Script::load_directory( L, lua_tostring(L, -1) ) );
 	return 1;
 }
 //////////
-bool neroshop::Script::execute(lua_State * L, const std::string& command)
+bool Script::execute(lua_State * L, const std::string& command)
 {
 	if(luaL_dostring(L, command.c_str()) != 0) {
 		return false;
@@ -103,9 +102,9 @@ bool neroshop::Script::execute(lua_State * L, const std::string& command)
     return true;	
 }
 //////////
-int neroshop::Script::execute(lua_State *L)
+int Script::execute(lua_State *L)
 {
-	lua_pushboolean(L, neroshop::Script::execute(L, lua_tostring(L, -1)));
+	lua_pushboolean(L, Script::execute(L, lua_tostring(L, -1)));
 	return 1;	
 }
 //////////
@@ -113,7 +112,7 @@ int neroshop::Script::execute(lua_State *L)
 //////////
 //////////
 //////////
-void neroshop::Script::unload(std::string file_name)
+void Script::unload(std::string file_name)
 {
 	for(int i = 0; i < cache.size(); i++)
 	{
@@ -125,7 +124,7 @@ void neroshop::Script::unload(std::string file_name)
 	}
 }
 //////////
-void neroshop::Script::generate(const char * script) // generate a main.lua (sets up a window, draws all created objects, etc.)
+void Script::generate(const char * script) // generate a main.lua (sets up a window, draws all created objects, etc.)
 {
 	if( !script)
 	{
@@ -162,7 +161,7 @@ void neroshop::Script::generate(const char * script) // generate a main.lua (set
 	file.close();
 }                                  
 //////////
-int neroshop::Script::generate(lua_State *L)
+int Script::generate(lua_State *L)
 {
     luaL_checktype(L, 1, LUA_TTABLE);
 	luaL_optstring(L, 2, "main.lua");
@@ -175,7 +174,7 @@ int neroshop::Script::generate(lua_State *L)
 	return 0;
 }
 //////////
-void neroshop::Script::write(std::string code)
+void Script::write(std::string code)
 {
 	if(!is_script()) // not loaded?
 	{
@@ -192,7 +191,7 @@ void neroshop::Script::write(std::string code)
 	file.close();
 }  
 //////////
-int neroshop::Script::write(lua_State *L)
+int Script::write(lua_State *L)
 {
     luaL_checktype(L, 1, LUA_TTABLE);
 	luaL_checktype(L, 2, LUA_TSTRING);
@@ -205,7 +204,7 @@ int neroshop::Script::write(lua_State *L)
 	return 0;
 }
 //////////
-void neroshop::Script::copy(std::string file_name)
+void Script::copy(std::string file_name)
 {
 	std::ifstream file(file_name.c_str());
 	if(!file.is_open())
@@ -218,7 +217,7 @@ void neroshop::Script::copy(std::string file_name)
 	content = stream.str();
 } // get_content() -> neroshop::string::replace()   you can replace any string from the lua file with anything
 //////////
-int neroshop::Script::copy(lua_State *L)
+int Script::copy(lua_State *L)
 {
     luaL_checktype(L, 1, LUA_TTABLE);
 	luaL_checktype(L, 2, LUA_TSTRING);
@@ -232,7 +231,7 @@ int neroshop::Script::copy(lua_State *L)
 }
 //////////
 //////////
-bool neroshop::Script::save(lua_State *L, const std::string& table) // saves a table and its keys to a text file
+bool Script::save(lua_State *L, const std::string& table) // saves a table and its keys to a text file
 {
     if(table.empty()) return false;
 	std::string file_name = table + ".txt";
@@ -340,13 +339,13 @@ bool neroshop::Script::save(lua_State *L, const std::string& table) // saves a t
 	return true;
 }
 //////////
-int neroshop::Script::save(lua_State *L)
+int Script::save(lua_State *L)
 {
 	lua_pushboolean(L, save(L, lua_tostring(L, -1)) );
 	return 1;
 }
 //////////
-void neroshop::Script::save_cache()
+void Script::save_cache()
 {
     if(cache.empty()) return; // cache is empty, so return (since there is nothing to save)
     ////////////////////////
@@ -375,7 +374,7 @@ void neroshop::Script::save_cache()
     // open file for writing
     std::ofstream cfile;
     cfile.open ("script_cache.txt", std::ios::out | std::ios::app); // std::ios::out is default mode for ofstream (writing to file)
-    if(!cfile.is_open()) {neroshop::print(std::string("neroshop::Script::save_cache : Could not open file: ") + "script_cache.txt");return;}
+    if(!cfile.is_open()) {neroshop::print(std::string("Script::save_cache : Could not open file: ") + "script_cache.txt");return;}
     for(int i = 0; i < cache.size(); i++)
     {
         if(!cache[i].empty()) cfile << cache[i] << std::endl;
@@ -386,7 +385,7 @@ void neroshop::Script::save_cache()
 // getters
 //////////
 //////////
-void neroshop::Script::get_table(lua_State *L, const std::string& table) // can also get subtables
+void Script::get_table(lua_State *L, const std::string& table) // can also get subtables
 {
 	if(!neroshop::string::contains(table, ".")) // no dots
 	{
@@ -415,7 +414,7 @@ void neroshop::Script::get_table(lua_State *L, const std::string& table) // can 
 }
 //////////
 //////////
-std::string neroshop::Script::get_string(lua_State * L, const std::string& key)
+std::string Script::get_string(lua_State * L, const std::string& key)
 {
     if(!neroshop::string::contains(key, "."))
 	{
@@ -446,7 +445,7 @@ std::string neroshop::Script::get_string(lua_State * L, const std::string& key)
 	return "";	
 }
 //////////
-int neroshop::Script::get_boolean(lua_State * L, const std::string& key)
+int Script::get_boolean(lua_State * L, const std::string& key)
 {
     if(!neroshop::string::contains(key, "."))
 	{
@@ -473,7 +472,7 @@ int neroshop::Script::get_boolean(lua_State * L, const std::string& key)
 	return -1;	
 }
 //////////
-double neroshop::Script::get_number(lua_State * L, const std::string& key)
+double Script::get_number(lua_State * L, const std::string& key)
 {
     if(!neroshop::string::contains(key, "."))
 	{
@@ -500,7 +499,7 @@ double neroshop::Script::get_number(lua_State * L, const std::string& key)
 	return -1;		
 }
 //////////
-void * neroshop::Script::get_userdata(lua_State * L, const std::string& key)
+void * Script::get_userdata(lua_State * L, const std::string& key)
 {
 	if(!neroshop::string::contains(key, "."))
 	{
@@ -527,7 +526,7 @@ void * neroshop::Script::get_userdata(lua_State * L, const std::string& key)
 	return nullptr;	
 }
 //////////
-lua_CFunction neroshop::Script::get_function(lua_State * L, const std::string& key)
+lua_CFunction Script::get_function(lua_State * L, const std::string& key)
 {
 	if(!neroshop::string::contains(key, "."))
 	{
@@ -554,7 +553,7 @@ lua_CFunction neroshop::Script::get_function(lua_State * L, const std::string& k
 	return nullptr;
 }
 //////////
-lua_State * neroshop::Script::get_thread (lua_State * L, const std::string& key)
+lua_State * Script::get_thread (lua_State * L, const std::string& key)
 {
     if(!neroshop::string::contains(key, "."))
 	{
@@ -581,7 +580,7 @@ lua_State * neroshop::Script::get_thread (lua_State * L, const std::string& key)
 	return nullptr; // default
 }
 //////////
-void * neroshop::Script::get_pointer(lua_State * L, const std::string& key)
+void * Script::get_pointer(lua_State * L, const std::string& key)
 {
     if(!neroshop::string::contains(key, "."))
 	{
@@ -607,10 +606,10 @@ void * neroshop::Script::get_pointer(lua_State * L, const std::string& key)
 	return nullptr; // default
 }
 //////////
-std::vector<std::string> neroshop::Script::get_table_string(lua_State * L, const std::string& table)
+std::vector<std::string> Script::get_table_string(lua_State * L, const std::string& table)
 {
 	std::vector<std::string> string_array;
-    neroshop::Script::get_table(L, table.c_str()); // get table
+    Script::get_table(L, table.c_str()); // get table
 	if(lua_istable(L, 1))
 	{
 	// get table size
@@ -630,10 +629,10 @@ std::vector<std::string> neroshop::Script::get_table_string(lua_State * L, const
     return 	string_array;
 }
 //////////
-std::vector<double> neroshop::Script::get_table_number(lua_State * L, const std::string& table)
+std::vector<double> Script::get_table_number(lua_State * L, const std::string& table)
 {
 	std::vector<double> number_array;
-    neroshop::Script::get_table(L, table.c_str()); // get table
+    Script::get_table(L, table.c_str()); // get table
 	if(lua_istable(L, 1))
 	{
 	// get table size
@@ -653,10 +652,10 @@ std::vector<double> neroshop::Script::get_table_number(lua_State * L, const std:
 	return number_array;
 }
 //////////
-std::vector<int> neroshop::Script::get_table_integer(lua_State * L, const std::string& table)
+std::vector<int> Script::get_table_integer(lua_State * L, const std::string& table)
 {
 	std::vector<int> number_array;
-    neroshop::Script::get_table(L, table.c_str()); // get table
+    Script::get_table(L, table.c_str()); // get table
 	if(lua_istable(L, 1))
 	{
 	// get table size
@@ -676,10 +675,10 @@ std::vector<int> neroshop::Script::get_table_integer(lua_State * L, const std::s
 	return number_array;
 }
 //////////
-std::vector<float> neroshop::Script::get_table_float(lua_State * L, const std::string& table)
+std::vector<float> Script::get_table_float(lua_State * L, const std::string& table)
 {
 	std::vector<float> number_array;
-    neroshop::Script::get_table(L, table.c_str()); // get table
+    Script::get_table(L, table.c_str()); // get table
 	if(lua_istable(L, 1))
 	{
 	// get table size
@@ -699,15 +698,15 @@ std::vector<float> neroshop::Script::get_table_float(lua_State * L, const std::s
 	return number_array;
 }
 //////////
-std::vector<double> neroshop::Script::get_table_double(lua_State * L, const std::string& table)
+std::vector<double> Script::get_table_double(lua_State * L, const std::string& table)
 {
     return get_table_number(L, table);
 }
 //////////
-std::vector<const void *> neroshop::Script::get_table_pointer(lua_State * L, const std::string& table) // can be a userdata, a table, a thread, or a function
+std::vector<const void *> Script::get_table_pointer(lua_State * L, const std::string& table) // can be a userdata, a table, a thread, or a function
 {
 	std::vector<const void *> pointer_array;
-    neroshop::Script::get_table(L, table.c_str()); // get table
+    Script::get_table(L, table.c_str()); // get table
 	if(lua_istable(L, 1))
 	{
 	// get table size
@@ -727,7 +726,7 @@ std::vector<const void *> neroshop::Script::get_table_pointer(lua_State * L, con
     return 	pointer_array;
 }
 //////////
-bool neroshop::Script::call(lua_State * L, const std::string& function, int returns)
+bool Script::call(lua_State * L, const std::string& function, int returns)
 {
 	if(!neroshop::string::contains(function, "."))
 	{
@@ -756,7 +755,7 @@ bool neroshop::Script::call(lua_State * L, const std::string& function, int retu
     return false;	
 }
 //////////
-std::string neroshop::Script::get_type(lua_State * L, const std::string& object) // can only handle up to 10 nested tables MAX
+std::string Script::get_type(lua_State * L, const std::string& object) // can only handle up to 10 nested tables MAX
 {
     lua_settop (L, 0);// clear stack
     if(!neroshop::string::contains(object, "."))
@@ -965,7 +964,7 @@ std::string neroshop::Script::get_type(lua_State * L, const std::string& object)
 //////////
 //////////
 //////////
-int neroshop::Script::table_not_mt(lua_State *L, std::string class_name) // soon to be replaced by neroshop::Script::table
+int Script::table_not_mt(lua_State *L, std::string class_name) // soon to be replaced by Script::table
 {
 	lua_newtable(L);
 	lua_newtable(L); 
@@ -977,7 +976,7 @@ int neroshop::Script::table_not_mt(lua_State *L, std::string class_name) // soon
 	return 0;
 }
 ////////////
-int neroshop::Script::table(lua_State *L, std::string class_name) // the base table itself will also be a metatable
+int Script::table(lua_State *L, std::string class_name) // the base table itself will also be a metatable
 {
 	lua_newtable(L); // create {} table: 0x242e040
 	lua_pushvalue(L, -1); // push the same table again {} table: 0x242e040
@@ -986,7 +985,7 @@ int neroshop::Script::table(lua_State *L, std::string class_name) // the base ta
 	return 0;
 }
 ////////////
-int neroshop::Script::function(lua_State *L, std::string table_name, std::string function_name, lua_CFunction function)
+int Script::function(lua_State *L, std::string table_name, std::string function_name, lua_CFunction function)
 {
 	lua_getglobal(L, table_name.c_str());
 	if(!lua_istable(L, -1))	
@@ -1000,7 +999,7 @@ int neroshop::Script::function(lua_State *L, std::string table_name, std::string
 	return 0;
 }
 ////////////
-int neroshop::Script:: member (lua_State *L, std::string table_name, std::string value_name, std::string value, int type)
+int Script:: member (lua_State *L, std::string table_name, std::string value_name, std::string value, int type)
 {
 	if( type == LUA_TSTRING )
 	{
@@ -1040,7 +1039,7 @@ int neroshop::Script:: member (lua_State *L, std::string table_name, std::string
 	return 0;
 }
 ////////////
-int neroshop::Script:: member (lua_State *L, std::string table_name, std::string value_name, int value, int type)
+int Script:: member (lua_State *L, std::string table_name, std::string value_name, int value, int type)
 {
 	if( type == LUA_TNUMBER )
 	{
@@ -1072,7 +1071,7 @@ int neroshop::Script:: member (lua_State *L, std::string table_name, std::string
 	return 0;
 }
 ////////////
-int neroshop::Script:: global (lua_State *L, std::string function_name, lua_CFunction function)
+int Script:: global (lua_State *L, std::string function_name, lua_CFunction function)
 {
 	lua_pushcfunction(L, function);
 	lua_setglobal(L, function_name.c_str());
@@ -1080,28 +1079,28 @@ int neroshop::Script:: global (lua_State *L, std::string function_name, lua_CFun
 	return 0;
 }
 ////////////
-int neroshop::Script:: global (lua_State *L, std::string variable_name, std::string value)
+int Script:: global (lua_State *L, std::string variable_name, std::string value)
 {
 	lua_pushstring(L, value.c_str());
 	lua_setglobal(L, variable_name.c_str());
 	return 0;
 }
 ////////////
-int neroshop::Script:: global (lua_State *L, std::string variable_name, int value)
+int Script:: global (lua_State *L, std::string variable_name, int value)
 {
 	lua_pushnumber(L, value);
 	lua_setglobal(L, variable_name.c_str());
 	return 0;
 }
 ////////////
-int neroshop::Script:: global (lua_State *L, std::string variable_name, bool value)
+int Script:: global (lua_State *L, std::string variable_name, bool value)
 {
 	lua_pushboolean(L, value);
 	lua_setglobal(L, variable_name.c_str());
 	return 0;
 }
 ////////////
-int neroshop::Script:: inherit (lua_State *L, std::string base_table, std::string sub_table)
+int Script:: inherit (lua_State *L, std::string base_table, std::string sub_table)
 {
 	lua_getglobal(L, sub_table.c_str());
 	if(!lua_istable(L, -1))	
@@ -1120,7 +1119,7 @@ int neroshop::Script:: inherit (lua_State *L, std::string base_table, std::strin
 	return 0;
 }
 ////////////
-int neroshop::Script::attach(lua_State *L, std::string base_table, std::string sub_table)
+int Script::attach(lua_State *L, std::string base_table, std::string sub_table)
 {
     lua_getglobal(L, base_table.c_str());
 	if(!lua_istable(L, -1))	
@@ -1152,12 +1151,12 @@ int neroshop::Script::attach(lua_State *L, std::string base_table, std::string s
 //////////
 //////////
 //////////
-std::string neroshop::Script::get_file()
+std::string Script::get_file()
 {
 	return file;
 }       
 //////////         
-int neroshop::Script::get_file(lua_State *L)
+int Script::get_file(lua_State *L)
 {
 	luaL_checktype(L, 1, LUA_TTABLE);
 	lua_getfield(L, 1, "udata");
@@ -1171,7 +1170,7 @@ int neroshop::Script::get_file(lua_State *L)
 	return 1;
 }
 //////////
-std::string neroshop::Script::get_content()
+std::string Script::get_content()
 {
 	if(!is_script()) // not loaded before?
 	{
@@ -1183,12 +1182,12 @@ std::string neroshop::Script::get_content()
 //////////
 //////////
 //////////
-int neroshop::Script::get_count()
+int Script::get_count()
 {
 	return cache.size();
 } 
 //////////
-int neroshop::Script::get_count(lua_State *L)
+int Script::get_count(lua_State *L)
 {
 	luaL_checktype(L, 1, LUA_TTABLE);
     lua_getfield(L, 1, "udata");
@@ -1204,7 +1203,7 @@ int neroshop::Script::get_count(lua_State *L)
 //////////
 //////////
 //////////
-bool neroshop::Script::is_script() // returns true if script has a file name( meaning the script is loaded)
+bool Script::is_script() // returns true if script has a file name( meaning the script is loaded)
 {
 	if(get_file().empty()) // no file attached to script object
 	{
@@ -1213,7 +1212,7 @@ bool neroshop::Script::is_script() // returns true if script has a file name( me
 	return true;
 }
 //////////
-bool neroshop::Script::is_script(std::string file_name) // returns true if a script has been loaded (previously)
+bool Script::is_script(std::string file_name) // returns true if a script has been loaded (previously)
 {
 	for (unsigned int i = 0; i < cache.size(); i++)
 	{	
@@ -1225,14 +1224,14 @@ bool neroshop::Script::is_script(std::string file_name) // returns true if a scr
 	return false;
 }
 //////////
-int neroshop::Script::is_script(lua_State *L)
+int Script::is_script(lua_State *L)
 {
-	lua_pushboolean(L, neroshop::Script::is_script(lua_tostring(L, -1)));
+	lua_pushboolean(L, Script::is_script(lua_tostring(L, -1)));
 	return 1;
 }
 //////////
 //////////
-int neroshop::Script::new_(lua_State *L)
+int Script::new_(lua_State *L)
 {
     std::string file_name = lua_tostring(L, -1);
     // clear stack
@@ -1248,7 +1247,7 @@ int neroshop::Script::new_(lua_State *L)
 	else *script = new Script();
 	lua_setfield(L, 1, "udata");
 	// non-static load function
-	lua_pushcfunction(L, neroshop::Script::load);
+	lua_pushcfunction(L, Script::load);
 	lua_setfield(L, 1, "load");
 	// return table
 	if(lua_istable(L, -1))
@@ -1257,3 +1256,4 @@ int neroshop::Script::new_(lua_State *L)
 	return 1;
 }
 //////////
+}

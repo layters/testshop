@@ -13,6 +13,7 @@
 namespace neroshop_crypto = neroshop::crypto;
 namespace neroshop_string = neroshop::string;
 
+namespace neroshop {
 //-----------------------------------------------------------------------------
 
 void set_expiration(nlohmann::json& json_object, const std::string& metadata) {
@@ -53,7 +54,7 @@ void set_expiration(nlohmann::json& json_object, const std::string& metadata) {
 
 //-----------------------------------------------------------------------------
 
-std::pair<std::string, std::string/*std::vector<uint8_t>*/> neroshop::Serializer::serialize(const neroshop::Object& obj) {
+std::pair<std::string, std::string/*std::vector<uint8_t>*/> Serializer::serialize(const neroshop::Object& obj) {
     nlohmann::json json_object = {};
     
     if(std::holds_alternative<Listing>(obj)) {
@@ -268,7 +269,7 @@ std::pair<std::string, std::string/*std::vector<uint8_t>*/> neroshop::Serializer
 
 //-----------------------------------------------------------------------------
 
-std::shared_ptr<neroshop::Object> neroshop::Serializer::deserialize(const std::pair<std::string, std::string/*std::vector<uint8_t>*/>& data) {//const neroshop::Object& neroshop::Serializer::deserialize(const std::pair<std::string, std::vector<uint8_t>>& data) {
+std::shared_ptr<neroshop::Object> Serializer::deserialize(const std::pair<std::string, std::string/*std::vector<uint8_t>*/>& data) {//const neroshop::Object& Serializer::deserialize(const std::pair<std::string, std::vector<uint8_t>>& data) {
     // First element of the pair is the key
     std::string key = data.first;
     // Second element of the pair is the serialized value
@@ -302,7 +303,7 @@ std::shared_ptr<neroshop::Object> neroshop::Serializer::deserialize(const std::p
         product.set_description(product_value["description"].get<std::string>());
         if(product_value.contains("attributes")) assert(product_value["attributes"].is_array());
         for (const auto& attribute : product_value["attributes"]) {
-            Attribute attr {};
+            ProductAttribute attr {};
             if (attribute.contains("color")) attr.color = attribute["color"].get<std::string>();
             if (attribute.contains("size")) attr.size = attribute["size"].get<std::string>();
             if (attribute.contains("weight")) attr.weight = attribute["weight"].get<double>();
@@ -429,7 +430,7 @@ std::shared_ptr<neroshop::Object> neroshop::Serializer::deserialize(const std::p
 
 //-----------------------------------------------------------------------------
 
-std::pair<std::string, std::string> neroshop::Serializer::serialize(const User& user) {
+std::pair<std::string, std::string> Serializer::serialize(const User& user) {
     nlohmann::json json_object = {};
     const Seller* seller = dynamic_cast<const Seller*>(&user);
     
@@ -475,7 +476,7 @@ std::pair<std::string, std::string> neroshop::Serializer::serialize(const User& 
 
 //-----------------------------------------------------------------------------
 
-std::shared_ptr<neroshop::User> neroshop::Serializer::deserialize_user(const std::pair<std::string, std::string>& data) {
+std::shared_ptr<neroshop::User> Serializer::deserialize_user(const std::pair<std::string, std::string>& data) {
     // First element of the pair is the key
     std::string key = data.first;
     // Second element of the pair the value
@@ -498,4 +499,4 @@ std::shared_ptr<neroshop::User> neroshop::Serializer::deserialize_user(const std
 }
 
 //-----------------------------------------------------------------------------
-
+}

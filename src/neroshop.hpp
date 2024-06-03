@@ -33,6 +33,7 @@
 // protocol
 #include "core/protocol/messages/msgpack.hpp"
 #include "core/protocol/p2p/dht_rescode.hpp"
+#include "core/protocol/p2p/file_piece_hasher.hpp"
 #include "core/protocol/p2p/key_mapper.hpp"
 #include "core/protocol/p2p/node.hpp"
 #include "core/protocol/p2p/routing_table.hpp"
