@@ -9,14 +9,15 @@ namespace neroshop_tools = neroshop::tools;
 
 static void print_commands() {
     std::map<std::string, std::string> commands { // std::map sorts command names in alphabetical order
-        {"help        ", "Display list of available commands"},
-        {"exit        ", "Exit CLI"},
-        {"version     ", "Show version"},
-        {"monero_nodes", "Display a list of monero nodes"},
-        {"query       ", "Execute an SQLite query"},
-        {"curl_version", "Show libcurl version"},
-        {"get         ", "Get the value for a key from DHT network"},
-        {"status      ", "Get network status from local daemon server"}
+        {"help         ", "Display list of available commands"},
+        {"exit         ", "Exit CLI"},
+        {"version      ", "Show version"},
+        {"monero_nodes ", "Display a list of monero nodes"},
+        {"query        ", "Execute an SQLite query"},
+        {"curl_version ", "Show libcurl version"},
+        {"get          ", "Get the value for a key from DHT network"},
+        {"status       ", "Get network status from local daemon server"},
+        {"create_wallet", "Create a new Monero wallet"}
         //,{"", ""}
     };
     std::cout << "Usage: " << "[COMMAND] ...\n\n";
@@ -122,17 +123,100 @@ int main(int argc, char** argv) {
         }     
         else if(command == "register") {
             User user;
-            //user.set_name("Jack");
-            //user.set_public_key("<public_key>");
-            //user.set_id("<monero_addr>");
+            std::string display_name;
+            std::string monero_address;
+            std::string public_key;
+            std::string private_key;
+            // No avatars for CLI (yet)
+            
+            monero_address_label:
+                std::cout << "Enter monero address: ";
+                std::getline(std::cin, monero_address);
+            if(!Wallet::is_valid_monero_address(monero_address)) {
+                std::cerr << "\033[91mNot a valid monero address\033[0m\n";
+                goto monero_address_label;
+            }
+            //user.set_id(monero_address);
+            
+            public_key_label:
+                std::cout << "Enter RSA public key: ";
+                std::getline(std::cin, public_key);
+            // TODO: validate public key
+            user.set_public_key(public_key);
+                
+            private_key_label:
+                std::cout << "Enter RSA private key (optional): "; // Optional unless you plan on decrypting messages
+                std::getline(std::cin, private_key);
+            // TODO: validate private key
+            if(!private_key.empty()) {
+                user.set_private_key(private_key);
+            }
+                
+            display_name_label:
+                std::cout << "Enter display name (optional): ";
+                std::getline(std::cin, display_name);
+            if(!display_name.empty()) {
+                if(!neroshop::string_tools::is_valid_username(display_name)) {
+                    std::cerr << "\033[91mNot a valid display name: " + display_name << "\033[0m\n";
+                    goto display_name_label;
+                }
+                //user.set_name(display_name);
+            }
+            
             auto data = neroshop::Serializer::serialize(user);
             std::string key = data.first;
             std::string value = data.second;
     
             // Send put and receive response
-            std::string put_response;
-            client->put(key, value, put_response);
-            std::cout << "Received response: " << put_response << "\n";
+            std::string response;
+            client->put(key, value, response);
+            std::cout << "Received response: " << response << "\n";
+        }
+        else if(command == "login") {
+        }
+        else if(command == "create_wallet") {
+            Wallet wallet(WalletType::Monero);
+            std::string password;
+            std::string confirm_pwd;
+            std::string wallet_name;
+            std::string wallet_path;
+            
+            wallet_name_label:
+                std::cout << "Enter wallet name: ";
+                std::getline(std::cin, wallet_name);
+            if(wallet_name.empty()) { wallet_name = "wallet"; }
+            
+            /*wallet_path_label:
+                std::cout << "Enter wallet path (optional): "; // Can be empty
+                std::getline(std::cin, wallet_path);
+            if(!wallet_path.empty()) {
+                wallet_path = wallet_path + "/" + wallet_name; // Fails for some reason
+            }*/
+            if(wallet_path.empty()) { wallet_path = NEROSHOP_DEFAULT_WALLET_DIRECTORY_PATH + "/" + wallet_name; }
+            
+            password_label:
+                std::cout << "Enter wallet password: ";
+                std::getline(std::cin, password);
+            
+            confirm_pwd_label:
+                std::cout << "Confirm wallet password: ";
+                std::getline(std::cin, confirm_pwd);
+            
+            auto wallet_error = wallet.create_random(password, confirm_pwd, wallet_path);
+            if(wallet_error == 0) {
+                std::cout << std::endl;
+                std::cout << "Wallet address: " << wallet.get_primary_address() << std::endl;
+                std::cout << "Balance (not synced): " << std::fixed << std::setprecision(12) << wallet.get_balance() << std::fixed << std::setprecision(2) << std::endl;
+                std::cout << "Unlocked balance (not synced): " << std::fixed << std::setprecision(12) << wallet.get_unlocked_balance() << std::fixed << std::setprecision(2) << std::endl;
+                std::cout << "Mnemonic phrase: " << wallet.get_seed() << std::endl;
+                auto view_keys = wallet.get_view_keys();
+                std::cout << "View keys: \n" << view_keys.first << " (private)\n" << view_keys.second << " (public)" << std::endl;
+                auto spend_keys = wallet.get_spend_keys();
+                std::cout << "Spend keys: \n" << spend_keys.first << " (private)\n" << spend_keys.second << " (public)" << std::endl;
+                //std::cout << ": " << wallet.get_() << std::endl;
+            }
+        }
+        else if(command == "generate_rsa_keys") {
         }
         /*else if(command == "") {
         }*/        
