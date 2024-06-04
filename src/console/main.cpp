@@ -18,7 +18,8 @@ static void print_commands() {
         {"get              ", "Get the value for a key from DHT network"},
         {"status           ", "Get network status from local daemon server"},
         {"create_wallet    ", "Create a new Monero wallet"},
-        {"generate_rsa_keys", "Generate RSA key pairs"}
+        {"generate_rsa_keys", "Generate RSA key pairs"},
+        {"register         ", "Register an account in the DHT network"}
         //,{"", ""}
     };
     std::cout << "Usage: " << "[COMMAND] ...\n\n";
@@ -51,7 +52,7 @@ int main(int argc, char** argv) {
     std::vector<std::string> monero_nodes = Script::get_table_string(lua_state, "monero.nodes." + network_type);
     //-------------------------------------------------------
     Wallet wallet(WalletType::Monero);
-    User user;
+    Seller user;
     //-------------------------------------------------------
     char * line = NULL;
     while((line = linenoise("neroshop-console> ")) != NULL) {
@@ -136,7 +137,6 @@ int main(int argc, char** argv) {
                 std::cerr << "\033[91mPlease create a wallet before registering an account using the 'create_wallet' command\033[0m\n";
                 continue;
             }
-            //user.set_id(user.get_wallet()->get_primary_address());
             
             if(user.get_public_key().empty()) {
                 std::cerr << "\033[91mPlease generate your RSA keys before registering an account using the `generate_rsa_keys` command\033[0m\n";
@@ -150,8 +150,11 @@ int main(int argc, char** argv) {
                     std::cerr << "\033[91mNot a valid display name: " + display_name << "\033[0m\n";
                     continue;
                 }
-                //user.set_name(display_name);
+                user.set_name(display_name);
             }
+            
+            user.set_id(user.get_wallet()->get_primary_address());
+            // TODO: create a cart for user in database
             
             auto data = neroshop::Serializer::serialize(user);
             std::string key = data.first;
