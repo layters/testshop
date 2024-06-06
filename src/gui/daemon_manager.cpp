@@ -175,9 +175,7 @@ double neroshop::DaemonManager::getDaemonProgress() const {
 QString neroshop::DaemonManager::getDaemonStatusText() const {
     // Return the appropriate status text based on the daemon state
     if(m_daemonConnected) return "Connected";
-    bool nodeBound = isDaemonDHTServerBound();
-    if(m_daemonRunning && nodeBound) return "Waiting for DHT node"; // Waiting for non-hardcoded DHT node to bind. (hardcoded) seed nodes cannot interact with GUI client
-    if(m_daemonRunning && !nodeBound) return "Launching";
+    if(m_daemonRunning) return "Launching";
     return "Disconnected";
 }
 
