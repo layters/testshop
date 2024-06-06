@@ -331,34 +331,22 @@ bool neroshop::Backend::saveAvatarImage(const QString& fileName, const QString& 
     std::string destinationPath = key_folder + "/" + (image_name_hash + "." + image_ext);
     // Check if image already exists in cache so that we do not export the same image more than once
     if(!neroshop_filesystem::is_file(destinationPath)) {
-        // Image Loader crashes when image resolution is too large (ex. 4096 pixels wide) so we need to scale it!!
         QImage sourceImage;
         sourceImage.load(fileName);
         QSize imageSize = sourceImage.size();
-        int maxWidth = 200; // Set the maximum width for the resized image
-        int maxHeight = 200; // Set the maximum height for the resized image
-
-        // Check if the image size is smaller than the maximum size
-        if (imageSize.width() <= maxWidth && imageSize.height() <= maxHeight) {
-            // Keep the original image since it's already within the size limits
-        } else {
-            // Calculate the new size while maintaining the aspect ratio
-            QSize newSize = imageSize.scaled(maxWidth, maxHeight, Qt::KeepAspectRatio);
-
-            // Resize the image if it exceeds the maximum dimensions
-            if (imageSize != newSize) {
-                sourceImage = sourceImage.scaled(newSize, Qt::KeepAspectRatio, Qt::SmoothTransformation);
+        
+        if(isSupportedImageDimension(imageSize.width(), imageSize.height())) {
+            QFile sourceFile(fileName);
+            if(sourceFile.copy(QString::fromStdString(destinationPath))) {
+                neroshop::print("copied \"" + fileName.toStdString() + "\" to \"" + key_folder + "\"", 3);
+                sourceFile.close();
+                return true;
             }
+            sourceFile.close();
         }
-
-        // Convert the QImage to QPixmap for further processing or saving
-        QPixmap resizedPixmap = QPixmap::fromImage(sourceImage);
-
-        // Save the resized image
-        resizedPixmap.save(QString::fromStdString(destinationPath));
     }
-    neroshop::print("exported \"" + fileName.toStdString() + "\" to \"" + key_folder + "\"", 3);
-    return true;    
+    
+    return false;
 }
 //----------------------------------------------------------------
 //----------------------------------------------------------------
@@ -1807,7 +1795,7 @@ QVariantList neroshop::Backend::validateDisplayName(const QString& display_name)
 }
 //----------------------------------------------------------------
 // TODO: replace function return type with enum
-QVariantList neroshop::Backend::registerUser(WalletController* wallet_controller, const QString& display_name, UserController * user_controller, const QString& avatar) {
+QVariantList neroshop::Backend::registerUser(WalletController* wallet_controller, const QString& display_name, UserController * user_controller, const QVariantMap& avatarMap) {
     // Make sure daemon is connected first
     if(!DaemonManager::isDaemonServerBound()) {
         return { false, "Please wait for the local daemon IPC server to connect first" };
@@ -1856,8 +1844,26 @@ QVariantList neroshop::Backend::registerUser(WalletController* wallet_controller
     user_controller->_user->set_name(display_name.toStdString());
     user_controller->_user->set_public_key(public_key);
     user_controller->_user->set_private_key(private_key);
-    if(!avatar.isEmpty()) {
-        user_controller->_user->upload_avatar(avatar.toStdString()); // will initialize avatar obj
+    if(!avatarMap.isEmpty()) {
+        Image image;
+        std::vector<std::string> pieces;
+        
+        if(avatarMap.contains("name")) image.name = avatarMap.value("name").toString().toStdString();
+        if(avatarMap.contains("size")) image.size = avatarMap.value("size").toInt();
+        if(avatarMap.contains("id")) image.id = avatarMap.value("id").toInt();
+        if(avatarMap.contains("source")) image.source = avatarMap.value("source").toString().toStdString();
+        if(avatarMap.contains("pieces") && avatarMap.value("pieces").canConvert<QStringList>()) {
+            QStringList piecesList = avatarMap.value("pieces").toStringList();
+            for(const QString& pieceHashStr : piecesList) {
+                pieces.push_back(pieceHashStr.toStdString());
+            }
+            image.pieces = pieces;
+        }
+        if(avatarMap.contains("piece_size")) image.piece_size = avatarMap.value("piece_size").toInt();
+        if(avatarMap.contains("width")) image.width = avatarMap.value("width").toInt();
+        if(avatarMap.contains("height")) image.height = avatarMap.value("height").toInt();
+    
+        user_controller->_user->avatar = std::make_unique<Image>(std::move(image));
     }
     //---------------------------------------------
     // Store login credentials in DHT

@@ -448,6 +448,8 @@ std::pair<std::string, std::string> Serializer::serialize(const User& user) {
         nlohmann::json avatar_obj = {};
         avatar_obj["name"] = avatar->name;
         avatar_obj["size"] = avatar->size;
+        avatar_obj["pieces"] = avatar->pieces;
+        avatar_obj["piece_size"] = avatar->piece_size;
         json_object["avatar"] = avatar_obj;
     }
     std::string signature = seller->get_wallet()->sign_message(user_id, monero_message_signature_type::SIGN_WITH_SPEND_KEY);

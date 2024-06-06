@@ -131,10 +131,24 @@ Page {
         }
         // Do a regex check on the username to make sure that it is valid
         // ...
-        // Make sure username is not taken (requires a database check)
-        // ...
+        // Make sure avatar meets image requirements
+        let avatar = null
+        if(avatarImage.status === Image.Ready) {
+            avatar = Backend.uploadImageToObject(Backend.urlToLocalFile(avatarImage.source), 0)
+            if(Object.keys(avatar).length === 0) { return }
+            if(!Backend.isSupportedImageDimension(avatar.width, avatar.height)) {
+                messageBox.text = "Image dimensions must not exceed 1920x1280, 1280x1920, or 1600x1600"
+                messageBox.open()
+                return; // exit function
+            }
+            if(!Backend.isSupportedImageSizeBytes(avatar.size)) {
+                messageBox.text = "Image size must not exceed 2 MB"
+                messageBox.open()
+                return; // exit function
+            }
+        }
         // Register the wallet primary key to the database
-        let register_result = Backend.registerUser(Wallet, optNameField.text, User, (avatarImage.status === Image.Ready) ? Backend.urlToLocalFile(avatarImage.source) : "")
+        let register_result = Backend.registerUser(Wallet, optNameField.text, User, avatar)
         if(!register_result [0] ) {
             messageBox.text = register_result [1];
             messageBox.open()
