@@ -38,7 +38,7 @@ Popup {
     property alias hideProductDetails: hideProductDetailsSwitch.checked
     property alias gridDetailsAlignCenter: gridDetailsAlignCenterSwitch.checked
     property alias catalogViewBox: viewBox
-    property alias hideIllegalProducts: hideIllegalProductsSwitch.checked
+    property alias hideIllicitProducts: hideIllicitProductsSwitch.checked
     // Monero tab properties
     property alias moneroNodeType: nodeTypeStackLayout.currentIndex//nodeTypeGroup.checkedButton.stackLayoutIndex
     property string moneroNodeAddress: (nodeTypeStackLayout.currentIndex == remoteNodeButton.stackLayoutIndex) ? moneroRemoteNodeList.selectedNode.replace(/^(https?:|)\/\//, '') : (moneroDaemonIPField.placeholderText + ":" + moneroDaemonPortField.placeholderText)
@@ -82,7 +82,7 @@ Popup {
                 hide_product_details: hideProductDetailsSwitch.checked,
                 catalog_view: viewBox.currentText,//currentIndex,
                 grid_details_align_center: gridDetailsAlignCenterSwitch.checked,
-                hide_illegal_products: hideIllegalProductsSwitch.checked,
+                hide_illegal_products: hideIllicitProductsSwitch.checked,
             },
             // nodes / network
             monero: {
@@ -826,22 +826,22 @@ Popup {
                             onToggled: settingsDialog.save()
                         }
                     }
-                    // Show/Hide illegal products
+                    // Show/Hide illicit products
                     Item {
                         Layout.fillWidth: true
                         Layout.preferredHeight: childrenRect.height
                         visible: true // hide this option for now
                         Text {
-                            anchors.verticalCenter: hideIllegalProductsSwitch.verticalCenter
-                            text: qsTr("Hide illegal products:")
+                            anchors.verticalCenter: hideIllicitProductsSwitch.verticalCenter
+                            text: qsTr("Hide illicit products:")
                             color: NeroshopComponents.Style.darkTheme ? "#ffffff" : "#000000"
                         }
                         
                         NeroshopComponents.Switch {
-                            id: hideIllegalProductsSwitch
+                            id: hideIllicitProductsSwitch
                             anchors.right: parent.right; anchors.rightMargin: 5
                             //width: settingsStack.comboBoxWidth
-                            checked: Script.getJsonRootObject()["catalog"]["hide_illegal_products"]//true // ALWAYS hide illegal products by default!!
+                            checked: Script.getJsonRootObject()["catalog"]["hide_illegal_products"]//true // ALWAYS hide illicit products by default!!
                             radius: 13
                             backgroundCheckedColor: "#605185"
                             onToggled: settingsDialog.save()

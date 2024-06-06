@@ -59,7 +59,7 @@ public:
 
     QVariantList validateDisplayName(const QString& display_name) const; // Validates display name based on regex requirements
     
-    Q_INVOKABLE QVariantList registerUser(WalletController* wallet_controller, const QString& display_name, UserController * user_controller, const QString& avatar);
+    Q_INVOKABLE QVariantList registerUser(WalletController* wallet_controller, const QString& display_name, UserController * user_controller, const QVariantMap& avatarMap);
     Q_INVOKABLE int loginWithWalletFile(WalletController* wallet_controller, const QString& path, const QString& password, UserController * user_controller);
     Q_INVOKABLE int loginWithMnemonic(WalletController* wallet_controller, const QString& mnemonic, unsigned int restore_height, UserController * user_controller);
     Q_INVOKABLE int loginWithKeys(WalletController* wallet_controller, UserController * user_controller);

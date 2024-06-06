@@ -91,9 +91,9 @@ public:
     friend class UserController;
     friend class Serializer;
     friend class Seller;
+    void set_id(const std::string& id);
+    void set_name(const std::string& name); // the same for every derived class
 protected: // can only be accessed by classes that inherit from class User (even instants of the bass class User cannot call these functions unless you dynamically cast them into a derived class)
-    void set_id(const std::string& id);//void set_id(unsigned int id);
-    void set_name(const std::string& name); // the same for every derived class 
     void set_account_type(UserAccountType account_type); // either buyer or seller // the same for every derived class 
     void set_logged(bool logged); // the same for every derived class
     void set_online(bool online);
