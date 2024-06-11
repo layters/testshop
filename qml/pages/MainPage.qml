@@ -132,7 +132,7 @@ Page {
         // Do a regex check on the username to make sure that it is valid
         // ...
         // Make sure avatar meets image requirements
-        let avatar = null
+        let avatar = {}
         if(avatarImage.status === Image.Ready) {
             avatar = Backend.uploadImageToObject(Backend.urlToLocalFile(avatarImage.source), 0)
             if(Object.keys(avatar).length === 0) { return }
