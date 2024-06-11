@@ -1760,34 +1760,31 @@ QVariantList neroshop::Backend::validateDisplayName(const QString& display_name)
     if(!neroshop::string_tools::is_valid_username(username)) {
         std::string default_message = "Invalid username: " + username;
         neroshop::print(default_message, 1);
-        if (username.length() < 2) {
-            std::string message = "must be at least 2 characters in length";
+        if (username.length() < NEROSHOP_MIN_USERNAME_LENGTH) {
+            std::string message = std::string("Display name must be at least " + std::to_string(NEROSHOP_MIN_USERNAME_LENGTH) + " characters in length");
             return { false, QString::fromStdString(message) };
         }
-        if (username.length() > 30) {
-            std::string message = "cannot exceed 30 characters in length";
+        if (username.length() > NEROSHOP_MAX_USERNAME_LENGTH) {
+            std::string message = std::string("Display name cannot exceed " + std::to_string(NEROSHOP_MAX_USERNAME_LENGTH) + " characters in length");
             return { false, QString::fromStdString(message) };
         }
         if (std::regex_search(username, std::regex("\\s"))) {
-            std::string message = "cannot contain spaces\n";
+            std::string message = "Display name cannot contain spaces\n";
             return { false, QString::fromStdString(message) };
         }
         if (!std::regex_search(username, std::regex("^[a-zA-Z]"))) {
-            std::string message = "must begin with a letter (cannot start with a symbol or number)";
+            std::string message = "Display name must begin with a letter (cannot start with a symbol or number)";
             return { false, QString::fromStdString(message) };
         }
         if (!std::regex_search(username, std::regex("[a-zA-Z0-9]$"))) {
-            std::string message = "must end with a letter or number (cannot end with a symbol)";
+            std::string message = "Display name must end with a letter or number (cannot end with a symbol)";
             return { false, QString::fromStdString(message) };
         }
         if (std::regex_search(username, std::regex("[^a-zA-Z0-9._-]"))) {
-            std::string message = "contains invalid symbol(s) (only '.', '_', and '-' are allowed in between the display name)";
+            std::string message = "Display name contains invalid symbol(s) (only '.', '_', and '-' are allowed in between the display name)";
             return { false, QString::fromStdString(message) };
         }
-        if (username == "Guest") {
-            std::string message = "name \"Guest\" is reserved for guests only and cannot be used by any other user";
-            return { false, QString::fromStdString(message) };
-        }
+        
         return { false, QString::fromStdString(default_message) };
     }
 
