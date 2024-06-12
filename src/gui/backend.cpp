@@ -154,6 +154,7 @@ QString neroshop::Backend::getDurationFromNow(const QString& timestamp) const {
 //----------------------------------------------------------------
 //----------------------------------------------------------------
 //----------------------------------------------------------------
+// TODO: only daemon should be able to initialize the database
 void neroshop::Backend::initializeDatabase() {
     db::Sqlite3 * database = neroshop::get_database();
     database->execute("BEGIN;");
@@ -187,35 +188,6 @@ void neroshop::Backend::initializeDatabase() {
         database->execute("CREATE UNIQUE INDEX index_cart_item ON cart_item (cart_id, listing_key);"); // cart_id and listing_key duo MUST be unique for each row
     }
     
-    // orders (purchase_orders)
-    if(!database->table_exists("orders")) { // TODO: rename to order_requests or nah?
-        database->execute("CREATE TABLE orders(uuid TEXT NOT NULL PRIMARY KEY);");//database->execute("ALTER TABLE orders ADD COLUMN ?col ?datatype;");
-        database->execute("ALTER TABLE orders ADD COLUMN created_at TEXT DEFAULT CURRENT_TIMESTAMP;"); // creation_date // to get UTC time: set to datetime('now');
-        //database->execute("ALTER TABLE orders ADD COLUMN number TEXT;"); // uuid
-        database->execute("ALTER TABLE orders ADD COLUMN status TEXT;");
-        database->execute("ALTER TABLE orders ADD COLUMN customer_id TEXT REFERENCES users(monero_address);"); // the user that placed the order
-        // Data below this comment will be stored in order_data as JSON TEXT
-        //database->execute("ALTER TABLE orders ADD COLUMN weight REAL;"); // weight of all order items combined - not essential
-        database->execute("ALTER TABLE orders ADD COLUMN subtotal INTEGER;");
-        database->execute("ALTER TABLE orders ADD COLUMN discount INTEGER;");
-        //database->execute("ALTER TABLE orders ADD COLUMN shipping_method TEXT;");
-        database->execute("ALTER TABLE orders ADD COLUMN shipping_cost INTEGER;");
-        database->execute("ALTER TABLE orders ADD COLUMN total INTEGER;");
-        database->execute("ALTER TABLE orders ADD COLUMN payment_option TEXT;"); // escrow (2 of 3), multisig (2 of 2), finalize (no escrow)
-        database->execute("ALTER TABLE orders ADD COLUMN coin TEXT;"); // monero, wownero
-        database->execute("ALTER TABLE orders ADD COLUMN notes TEXT;"); // additional message for seller
-        //database->execute("ALTER TABLE orders ADD COLUMN order_data TEXT;"); // encrypted JSON
-        // order_item
-        // TODO: remove order_item table and replace it with order_data JSON column
-        database->execute("CREATE TABLE order_item(id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT, "
-        "order_id TEXT REFERENCES orders(uuid) ON DELETE CASCADE, "
-        "product_id TEXT REFERENCES products(uuid), "
-        "seller_id TEXT REFERENCES users(monero_address), "
-        "quantity INTEGER"
-        ");");
-        //database->execute("ALTER TABLE order_item ADD COLUMN unit_price ?datatype;");
-        //database->execute("ALTER TABLE order_item ADD COLUMN ?col ?datatype;");
-    }
     //-------------------------
     database->execute("COMMIT;");
 }

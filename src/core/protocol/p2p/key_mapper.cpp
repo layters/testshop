@@ -23,6 +23,7 @@ KeyMapper::~KeyMapper() {
     user_ids.clear();
     display_names.clear();
     order_ids.clear();
+    order_recipients.clear();
     product_ratings.clear();
     seller_ratings.clear();
     messages.clear();
@@ -118,7 +119,7 @@ void KeyMapper::add(const std::string& key, const std::string& value) {
             std::string order_id = json["id"].get<std::string>();
             order_ids[order_id].push_back(key);
         }
-        /*// Map seller_ids to orders
+        // Map seller_ids to orders
         if(json.contains("items") && json["items"].is_array()) {
             const auto& order_items = json["items"];
             
@@ -131,7 +132,7 @@ void KeyMapper::add(const std::string& key, const std::string& value) {
                     }
                 }
             }
-        }*/
+        }
     }    
     //-----------------------------------------------
     if(metadata == "product_rating") {
