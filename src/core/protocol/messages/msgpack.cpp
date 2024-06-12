@@ -92,18 +92,18 @@ std::vector<uint8_t> process(const std::vector<uint8_t>& request, Node& node, bo
         std::cout << "message type is a get_providers\n"; // 
         assert(request_object["args"].is_object());
         auto params_object = request_object["args"];
-        assert(params_object["data_hash"].is_string()); // info hash
-        std::string data_hash = params_object["data_hash"].get<std::string>();
+        assert(params_object["key"].is_string());
+        std::string key = params_object["key"].get<std::string>();
         
         response_object["version"] = std::string(NEROSHOP_DHT_VERSION);
         response_object["response"]["id"] = node.get_id();
         // Check if the queried node has peers for the requested infohash
-        std::vector<Peer> peers = node.get_providers(data_hash);
+        std::vector<Peer> peers = node.get_providers(key);
         if(peers.empty()) {
             // WARNING!!! THIS CODE BLOCKS THE GUI.
             // If the queried node has no peers for the requested infohash,
             // return the K closest nodes in the routing table to the requested infohash
-            std::vector<Node*> closest_nodes = node.find_node(data_hash, NEROSHOP_DHT_MAX_CLOSEST_NODES);
+            std::vector<Node*> closest_nodes = node.find_node(key, NEROSHOP_DHT_MAX_CLOSEST_NODES);
             std::vector<nlohmann::json> nodes_array;
             for (const auto& n : closest_nodes) {
                 nlohmann::json node_object = {

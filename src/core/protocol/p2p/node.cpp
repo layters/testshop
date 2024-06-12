@@ -956,17 +956,17 @@ void Node::send_map(const std::string& address, int port) {
     if(map_sent && !data.empty()) { std::cout << "Sent map request to \033[36m" << address << ":" << port << "\033[0m\n"; }
 }
 
-std::vector<neroshop::Peer> Node::send_get_providers(const std::string& data_hash) {
+std::vector<neroshop::Peer> Node::send_get_providers(const std::string& key) {
     std::vector<neroshop::Peer> peers = {};
     std::set<std::pair<std::string, uint16_t>> unique_peers; // Set to store unique IP-port pairs
     //-----------------------------------------------
     nlohmann::json query_object;
     query_object["query"] = "get_providers";
     query_object["args"]["id"] = this->id;
-    query_object["args"]["data_hash"] = data_hash;
+    query_object["args"]["key"] = key;
     query_object["version"] = std::string(NEROSHOP_DHT_VERSION);
     //-----------------------------------------------
-    std::vector<Node *> closest_nodes = find_node(data_hash, NEROSHOP_DHT_MAX_CLOSEST_NODES);
+    std::vector<Node *> closest_nodes = find_node(key, NEROSHOP_DHT_MAX_CLOSEST_NODES);
     
     std::random_device rd;
     std::mt19937 rng(rd());
@@ -1425,13 +1425,13 @@ void Node::on_map(const std::vector<uint8_t>& buffer, const struct sockaddr_in& 
             std::string sender_id = message["args"]["id"].get<std::string>();
             std::string sender_ip = inet_ntoa(client_addr.sin_addr);
             uint16_t sender_port = (message["args"].contains("port")) ? (uint16_t)message["args"]["port"] : NEROSHOP_P2P_DEFAULT_PORT;
-            std::string data_hash = message["args"]["key"].get<std::string>();
+            std::string key = message["args"]["key"].get<std::string>();
             
             // Validate node id
             std::string calculated_node_id = generate_node_id((sender_ip == "127.0.0.1") ? this->public_ip_address : sender_ip, sender_port);
             if(sender_id == calculated_node_id) {
                 // Save this peer as the provider of this data hash
-                add_provider(data_hash, Peer{ (sender_ip == "127.0.0.1") ? this->public_ip_address : sender_ip, sender_port });
+                add_provider(key, Peer{ (sender_ip == "127.0.0.1") ? this->public_ip_address : sender_ip, sender_port });
             }
         }
     }
