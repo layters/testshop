@@ -69,6 +69,8 @@
 #define NEROSHOP_AVATAR_FOLDER_NAME  "avatars"
 
 #define NEROSHOP_MAX_IMAGE_SIZE      2097152 // 2 MB
+#define NEROSHOP_MIN_USERNAME_LENGTH 2
+#define NEROSHOP_MAX_USERNAME_LENGTH 30
 
 #if defined(NEROSHOP_USE_QT)
 #define NEROSHOP_DEFAULT_CONFIGURATION_PATH    QStandardPaths::writableLocation(QStandardPaths::AppConfigLocation).toStdString()//(QStandardPaths::AppLocalDataLocation).toStdString()
