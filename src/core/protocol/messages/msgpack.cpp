@@ -125,7 +125,7 @@ std::vector<uint8_t> process(const std::vector<uint8_t>& request, Node& node, bo
                 peers_array.push_back(peer_object);
                 //std::cout << "Peer IP address: " << p.address << ", Peer port: " << p.port << std::endl;
             }
-            response_object["response"]["peers"] = peers_array; // If the queried node has peers for the infohash, they are returned in a key "values" as a list of strings. Each string containing "compact" format peer information for a single peer
+            response_object["response"]["values"] = peers_array; // If the queried node has peers for the infohash, they are returned in a key "values" as a list of strings. Each string containing "compact" format peer information for a single peer
         }
     }
     //-----------------------------------------------------

@@ -998,8 +998,8 @@ std::vector<neroshop::Peer> Node::send_get_providers(const std::string& key) {
         if(get_providers_response.contains("error")) {
             continue; // Skip if error
         }
-        if (get_providers_response.contains("response") && get_providers_response["response"].contains("peers")) {
-            for (auto& node_json : get_providers_response["response"]["peers"]) {
+        if (get_providers_response.contains("response") && get_providers_response["response"].contains("values")) {
+            for (auto& node_json : get_providers_response["response"]["values"]) {
                 if (node_json.contains("ip_address") && node_json.contains("port")) {
                     std::string ip_address = node_json["ip_address"];
                     uint16_t port = node_json["port"];
