@@ -243,11 +243,11 @@ std::vector<uint8_t> process(const std::vector<uint8_t>& request, Node& node, bo
                 code = static_cast<int>(DhtResultCode::StoreToSelf);
             }
             
+            // Store your local client's own data on-disk (in case of outage)
+            node.cache(key, value);
+            
             // Map keys to search terms for efficient search operations
             node.map(key, value);
-            
-            // Store your local client's own data in our cache
-            node.cache_hash_table(key, value);
         }
         
         // Return response or error

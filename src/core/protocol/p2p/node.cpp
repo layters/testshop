@@ -790,7 +790,7 @@ std::string Node::send_get(const std::string& key) {
     // First, check to see if we have the key before performing any other operations
     if(has_key(key)) { return get(key); }
     
-    value = get_hash_table_cached(key);
+    value = get_cached(key);
     if(!value.empty()) { return value; } // Validate is slow so don't validate our cached hash table
     //-----------------------------------------------
     // Second option is to check our providers to see if any holds the key we are looking for
@@ -1215,7 +1215,7 @@ void Node::expire(const std::string& key, const std::string& value) {
 
 //-----------------------------------------------------------------------------
 
-void Node::cache_hash_table(const std::string& key, const std::string& value) {
+void Node::cache(const std::string& key, const std::string& value) {
     db::Sqlite3 * database = neroshop::get_database();
     
     if(!database->table_exists("hash_table")) { 
@@ -1231,26 +1231,6 @@ void Node::cache_hash_table(const std::string& key, const std::string& value) {
     }
     
     int error = database->execute_params("INSERT INTO hash_table (key, value) VALUES (?1, ?2);", { key, value });
-}
-
-//-----------------------------------------------------------------------------
-
-void Node::cache(const std::string& key, const std::string& value) {
-    db::Sqlite3 * database = neroshop::get_database();
-    
-    if(!database->table_exists("cache")) { 
-        database->execute("CREATE TABLE cache("
-        "key TEXT, value TEXT, UNIQUE(key));");
-        database->execute("CREATE INDEX idx_cache_keys ON cache(key)");
-    }
-    
-    bool key_found = database->get_integer_params("SELECT COUNT(*) FROM cache WHERE key = ?", { key });
-    if(key_found) {
-        int error = database->execute_params("UPDATE cache SET value = ?1 WHERE key = ?2", { value, key });
-        return;
-    }
-    
-    int error = database->execute_params("INSERT INTO cache (key, value) VALUES (?1, ?2);", { key, value });
 }
 
 //-----------------------------------------------------------------------------
@@ -1773,7 +1753,7 @@ std::vector<std::pair<std::string, std::string>> Node::get_data() const {
     return data;
 }*/
 
-std::string Node::get_hash_table_cached(const std::string& key) {
+std::string Node::get_cached(const std::string& key) {
     db::Sqlite3 * database = neroshop::get_database();
     if(!database) throw std::runtime_error("database is NULL");
     if(!database->table_exists("hash_table")) {
@@ -1781,17 +1761,6 @@ std::string Node::get_hash_table_cached(const std::string& key) {
     }
     
     std::string value = database->get_text_params("SELECT value FROM hash_table WHERE key = ?1 LIMIT 1", { key });
-    return value;
-}
-
-std::string Node::get_cached(const std::string& key) {
-    db::Sqlite3 * database = neroshop::get_database();
-    if(!database) throw std::runtime_error("database is NULL");
-    if(!database->table_exists("cache")) {
-        return "";
-    }
-    
-    std::string value = database->get_text_params("SELECT value FROM cache WHERE key = ?1 LIMIT 1", { key });
     return value;
 }
 
