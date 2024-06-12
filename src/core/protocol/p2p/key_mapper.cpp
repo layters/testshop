@@ -128,7 +128,6 @@ void KeyMapper::add(const std::string& key, const std::string& value) {
                     if (item.contains("seller_id") && item["seller_id"].is_string()) {
                         std::string seller_id = item["seller_id"].get<std::string>();
                         order_recipients[seller_id].push_back(key);
-                        std::cout << "seller_id (" << seller_id << ") has been mapped to order key (" << key << ")\n";
                     }
                 }
             }
@@ -389,7 +388,27 @@ void KeyMapper::sync() {
                 database->execute_params(insert_query, { search_term, key, content });
             }
         }
-    }    
+    }
+    // Insert data from 'order_recipients'
+    for (const auto& entry : order_recipients) {
+        const std::string& search_term = entry.first;
+        const std::vector<std::string>& keys = entry.second;
+        const std::string content = "order";
+
+        for (const std::string& key : keys) {
+            // Ignore any empty keys
+            if(key.empty() || key.length() != 64) continue;
+            // Check if the record already exists
+            std::string select_query = "SELECT COUNT(*) FROM mappings WHERE search_term = ? AND key = ?;";
+            bool exists = database->get_integer_params(select_query, { search_term, key });
+            
+            // If no duplicate record found, perform insertion
+            if(!exists) {
+                std::string insert_query = "INSERT INTO mappings (search_term, key, content) VALUES (?, ?, ?);";
+                database->execute_params(insert_query, { search_term, key, content });
+            }
+        }
+    }
     //-----------------------------------------------
     // Insert data from 'product_ratings'
     for (const auto& entry : product_ratings) {
