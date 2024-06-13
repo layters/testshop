@@ -122,13 +122,13 @@ Page {
         NeroshopComponents.TabBar {
             id: tabBar
             Layout.alignment: Qt.AlignHCenter
-            model: ["Transactions", "Send", "Receive", "\uf013"]
+            model: ["Transactions", "Send", "Receive"/*, "\uf013"*/]
             color0: NeroshopComponents.Style.moneroOrangeColor
             Component.onCompleted: {
                 buttonAt(0).checked = true
-                buttonAt(3).width = 50
+                /*buttonAt(3).width = 50
                 buttonAt(3).contentItem.font.bold = true
-                buttonAt(3).contentItem.font.family = FontAwesome.fontFamily
+                buttonAt(3).contentItem.font.family = FontAwesome.fontFamily*/
             }
         }               
         
