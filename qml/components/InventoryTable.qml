@@ -300,14 +300,13 @@ Item {
                     }
                     } // Item
                     Button {
-                        x: actionsColumn.x + (actionsColumn.width - this.width) / 2//actions.x
+                        id: removeButton
+                        x: expirationIcon.visible ? (actionsColumn.x + (actionsColumn.width - (this.width + expirationIcon.width + 5)) / 2) : (actionsColumn.x + (actionsColumn.width - this.width) / 2)
                         anchors.verticalCenter: parent.verticalCenter
                         //width: 32; height: 32
                         text: qsTr("Remove")
                         display: AbstractButton.IconOnly
                         hoverEnabled: true
-                        visible: !modelData.hasOwnProperty("expiration_date")
-        
                         icon.source: "qrc:/assets/images/trash.png"
                         icon.color: "#b22222"//this.hovered ? "#b22222" : "#ffffff"
                         background: Rectangle {
@@ -333,7 +332,7 @@ Item {
                     // Clock
                     Text {
                         id: expirationIcon
-                        x: actionsColumn.x + (actionsColumn.width - this.width) / 2
+                        x: removeButton.x + removeButton.width + 5
                         anchors.verticalCenter: parent.verticalCenter
                         text: qsTr(FontAwesome.clock)
                         color: "royalblue"
