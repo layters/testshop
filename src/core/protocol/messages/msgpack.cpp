@@ -89,21 +89,18 @@ std::vector<uint8_t> process(const std::vector<uint8_t>& request, Node& node, bo
     }
     //-----------------------------------------------------
     if(method == "get_providers") {
-        std::cout << "message type is a get_providers\n"; // 
         assert(request_object["args"].is_object());
         auto params_object = request_object["args"];
-        assert(params_object["data_hash"].is_string()); // info hash
-        std::string data_hash = params_object["data_hash"].get<std::string>();
+        assert(params_object["key"].is_string());
+        std::string key = params_object["key"].get<std::string>();
         
         response_object["version"] = std::string(NEROSHOP_DHT_VERSION);
         response_object["response"]["id"] = node.get_id();
-        // Check if the queried node has peers for the requested infohash
-        std::vector<Peer> peers = node.get_providers(data_hash);
+        // Check if the queried node has peers for the requested key
+        std::vector<Peer> peers = node.get_providers(key);
         if(peers.empty()) {
-            // WARNING!!! THIS CODE BLOCKS THE GUI.
-            // If the queried node has no peers for the requested infohash,
-            // return the K closest nodes in the routing table to the requested infohash
-            std::vector<Node*> closest_nodes = node.find_node(data_hash, NEROSHOP_DHT_MAX_CLOSEST_NODES);
+            // WARNING!!! THIS CODE MAY BLOCK THE GUI.
+            std::vector<Node*> closest_nodes = node.find_node(key, NEROSHOP_DHT_MAX_CLOSEST_NODES);
             std::vector<nlohmann::json> nodes_array;
             for (const auto& n : closest_nodes) {
                 nlohmann::json node_object = {
@@ -125,11 +122,35 @@ std::vector<uint8_t> process(const std::vector<uint8_t>& request, Node& node, bo
                 peers_array.push_back(peer_object);
                 //std::cout << "Peer IP address: " << p.address << ", Peer port: " << p.port << std::endl;
             }
-            response_object["response"]["peers"] = peers_array; // If the queried node has peers for the infohash, they are returned in a key "values" as a list of strings. Each string containing "compact" format peer information for a single peer
+            response_object["response"]["values"] = peers_array; // If the queried node has peers for the infohash, they are returned in a key "values" as a list of strings. Each string containing "compact" format peer information for a single peer
         }
     }
     //-----------------------------------------------------
-    if(method == "get") { // For Sending Get Requests to Other Nodes and For Processing Get Requests from Other Nodes
+    if(method == "get" && ipc_mode == false) { // For Processing Get Requests From Other Nodes
+        assert(request_object["args"].is_object());
+        auto params_object = request_object["args"];
+        assert(params_object["key"].is_string());
+        std::string key = params_object["key"].get<std::string>();
+        
+        std::string value = node.get(key);
+        
+        if (value.empty()) {
+            code = static_cast<int>(DhtResultCode::RetrieveFailed);
+            response_object["version"] = std::string(NEROSHOP_DHT_VERSION);
+            response_object["error"]["id"] = node.get_id();
+            response_object["error"]["code"] = code;
+            response_object["error"]["message"] = "Key not found";
+            response_object["tid"] = tid;
+            response = nlohmann::json::to_msgpack(response_object);
+            return response;
+        } else {
+            response_object["version"] = std::string(NEROSHOP_DHT_VERSION);
+            response_object["response"]["id"] = node.get_id();
+            response_object["response"]["value"] = value;
+        }
+    }
+    //-----------------------------------------------------
+    if(method == "get" && ipc_mode == true) { // For Sending Get Requests to Other Nodes and For Processing Get Requests from Other Nodes
         assert(request_object["args"].is_object());
         auto params_object = request_object["args"];
         assert(params_object["key"].is_string());
@@ -243,11 +264,11 @@ std::vector<uint8_t> process(const std::vector<uint8_t>& request, Node& node, bo
                 code = static_cast<int>(DhtResultCode::StoreToSelf);
             }
             
+            // Store your local client's own data on-disk (in case of outage)
+            node.cache(key, value);
+            
             // Map keys to search terms for efficient search operations
             node.map(key, value);
-            
-            // Store your local client's own data in our cache
-            node.cache_hash_table(key, value);
         }
         
         // Return response or error

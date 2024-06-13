@@ -790,7 +790,7 @@ std::string Node::send_get(const std::string& key) {
     // First, check to see if we have the key before performing any other operations
     if(has_key(key)) { return get(key); }
     
-    value = get_hash_table_cached(key);
+    value = get_cached(key);
     if(!value.empty()) { return value; } // Validate is slow so don't validate our cached hash table
     //-----------------------------------------------
     // Second option is to check our providers to see if any holds the key we are looking for
@@ -956,17 +956,17 @@ void Node::send_map(const std::string& address, int port) {
     if(map_sent && !data.empty()) { std::cout << "Sent map request to \033[36m" << address << ":" << port << "\033[0m\n"; }
 }
 
-std::vector<neroshop::Peer> Node::send_get_providers(const std::string& data_hash) {
+std::vector<neroshop::Peer> Node::send_get_providers(const std::string& key) {
     std::vector<neroshop::Peer> peers = {};
     std::set<std::pair<std::string, uint16_t>> unique_peers; // Set to store unique IP-port pairs
     //-----------------------------------------------
     nlohmann::json query_object;
     query_object["query"] = "get_providers";
     query_object["args"]["id"] = this->id;
-    query_object["args"]["data_hash"] = data_hash;
+    query_object["args"]["key"] = key;
     query_object["version"] = std::string(NEROSHOP_DHT_VERSION);
     //-----------------------------------------------
-    std::vector<Node *> closest_nodes = find_node(data_hash, NEROSHOP_DHT_MAX_CLOSEST_NODES);
+    std::vector<Node *> closest_nodes = find_node(key, NEROSHOP_DHT_MAX_CLOSEST_NODES);
     
     std::random_device rd;
     std::mt19937 rng(rd());
@@ -998,8 +998,8 @@ std::vector<neroshop::Peer> Node::send_get_providers(const std::string& data_has
         if(get_providers_response.contains("error")) {
             continue; // Skip if error
         }
-        if (get_providers_response.contains("response") && get_providers_response["response"].contains("peers")) {
-            for (auto& node_json : get_providers_response["response"]["peers"]) {
+        if (get_providers_response.contains("response") && get_providers_response["response"].contains("values")) {
+            for (auto& node_json : get_providers_response["response"]["values"]) {
                 if (node_json.contains("ip_address") && node_json.contains("port")) {
                     std::string ip_address = node_json["ip_address"];
                     uint16_t port = node_json["port"];
@@ -1215,7 +1215,7 @@ void Node::expire(const std::string& key, const std::string& value) {
 
 //-----------------------------------------------------------------------------
 
-void Node::cache_hash_table(const std::string& key, const std::string& value) {
+void Node::cache(const std::string& key, const std::string& value) {
     db::Sqlite3 * database = neroshop::get_database();
     
     if(!database->table_exists("hash_table")) { 
@@ -1231,26 +1231,6 @@ void Node::cache_hash_table(const std::string& key, const std::string& value) {
     }
     
     int error = database->execute_params("INSERT INTO hash_table (key, value) VALUES (?1, ?2);", { key, value });
-}
-
-//-----------------------------------------------------------------------------
-
-void Node::cache(const std::string& key, const std::string& value) {
-    db::Sqlite3 * database = neroshop::get_database();
-    
-    if(!database->table_exists("cache")) { 
-        database->execute("CREATE TABLE cache("
-        "key TEXT, value TEXT, UNIQUE(key));");
-        database->execute("CREATE INDEX idx_cache_keys ON cache(key)");
-    }
-    
-    bool key_found = database->get_integer_params("SELECT COUNT(*) FROM cache WHERE key = ?", { key });
-    if(key_found) {
-        int error = database->execute_params("UPDATE cache SET value = ?1 WHERE key = ?2", { value, key });
-        return;
-    }
-    
-    int error = database->execute_params("INSERT INTO cache (key, value) VALUES (?1, ?2);", { key, value });
 }
 
 //-----------------------------------------------------------------------------
@@ -1445,13 +1425,13 @@ void Node::on_map(const std::vector<uint8_t>& buffer, const struct sockaddr_in& 
             std::string sender_id = message["args"]["id"].get<std::string>();
             std::string sender_ip = inet_ntoa(client_addr.sin_addr);
             uint16_t sender_port = (message["args"].contains("port")) ? (uint16_t)message["args"]["port"] : NEROSHOP_P2P_DEFAULT_PORT;
-            std::string data_hash = message["args"]["key"].get<std::string>();
+            std::string key = message["args"]["key"].get<std::string>();
             
             // Validate node id
             std::string calculated_node_id = generate_node_id((sender_ip == "127.0.0.1") ? this->public_ip_address : sender_ip, sender_port);
             if(sender_id == calculated_node_id) {
                 // Save this peer as the provider of this data hash
-                add_provider(data_hash, Peer{ (sender_ip == "127.0.0.1") ? this->public_ip_address : sender_ip, sender_port });
+                add_provider(key, Peer{ (sender_ip == "127.0.0.1") ? this->public_ip_address : sender_ip, sender_port });
             }
         }
     }
@@ -1773,7 +1753,7 @@ std::vector<std::pair<std::string, std::string>> Node::get_data() const {
     return data;
 }*/
 
-std::string Node::get_hash_table_cached(const std::string& key) {
+std::string Node::get_cached(const std::string& key) {
     db::Sqlite3 * database = neroshop::get_database();
     if(!database) throw std::runtime_error("database is NULL");
     if(!database->table_exists("hash_table")) {
@@ -1781,17 +1761,6 @@ std::string Node::get_hash_table_cached(const std::string& key) {
     }
     
     std::string value = database->get_text_params("SELECT value FROM hash_table WHERE key = ?1 LIMIT 1", { key });
-    return value;
-}
-
-std::string Node::get_cached(const std::string& key) {
-    db::Sqlite3 * database = neroshop::get_database();
-    if(!database) throw std::runtime_error("database is NULL");
-    if(!database->table_exists("cache")) {
-        return "";
-    }
-    
-    std::string value = database->get_text_params("SELECT value FROM cache WHERE key = ?1 LIMIT 1", { key });
     return value;
 }
 
