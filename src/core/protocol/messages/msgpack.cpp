@@ -132,7 +132,12 @@ std::vector<uint8_t> process(const std::vector<uint8_t>& request, Node& node, bo
         assert(params_object["key"].is_string());
         std::string key = params_object["key"].get<std::string>();
         
-        std::string value = node.get(key);
+        std::string value;
+        if(!node.has_key(key)) {
+            value = node.get_cached(key);
+        } else {
+            value = node.get(key);
+        }
         
         if (value.empty()) {
             code = static_cast<int>(DhtResultCode::RetrieveFailed);
