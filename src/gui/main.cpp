@@ -105,13 +105,12 @@ int main(int argc, char *argv[])
     // custom macros
     engine.rootContext()->setContextProperty("neroshopAppDirPath", QCoreApplication::applicationDirPath());
     engine.rootContext()->setContextProperty("neroshopVersion", NEROSHOP_VERSION);
-    engine.rootContext()->setContextProperty("neroshopDataDirPath", QStandardPaths::writableLocation(QStandardPaths::AppConfigLocation));////QStandardPaths::writableLocation(QStandardPaths::AppLocalDataLocation)); // both "data.sqlite3" and "settings" will be stored here
-    QString defaultWalletDirPath = (isWindows) ? (QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation) + "/neroshop") : (QStandardPaths::writableLocation(QStandardPaths::HomeLocation) + "/neroshop");
-    engine.rootContext()->setContextProperty("neroshopDefaultWalletDirPath", defaultWalletDirPath);
+    engine.rootContext()->setContextProperty("neroshopDataDirPath", QString::fromStdString(NEROSHOP_DEFAULT_CONFIGURATION_PATH));
+    engine.rootContext()->setContextProperty("neroshopDefaultWalletDirPath", QString::fromStdString(NEROSHOP_DEFAULT_WALLET_DIRECTORY_PATH));
     // create neroshop wallet directory
-    if(!neroshop::filesystem::is_directory(defaultWalletDirPath.toStdString())) {
-        neroshop::print(std::string("Creating directory \"") + defaultWalletDirPath.toStdString() + "\"", 3);
-        if(!neroshop::filesystem::make_directory(defaultWalletDirPath.toStdString())) {
+    if(!neroshop::filesystem::is_directory(NEROSHOP_DEFAULT_WALLET_DIRECTORY_PATH)) {
+        neroshop::print(std::string("Creating directory \"") + NEROSHOP_DEFAULT_WALLET_DIRECTORY_PATH + "\"", 3);
+        if(!neroshop::filesystem::make_directory(NEROSHOP_DEFAULT_WALLET_DIRECTORY_PATH)) {
             throw std::runtime_error("Failed to create neroshop wallet dir");
             return 1;
         }
