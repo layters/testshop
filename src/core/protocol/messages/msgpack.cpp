@@ -89,7 +89,6 @@ std::vector<uint8_t> process(const std::vector<uint8_t>& request, Node& node, bo
     }
     //-----------------------------------------------------
     if(method == "get_providers") {
-        std::cout << "message type is a get_providers\n"; // 
         assert(request_object["args"].is_object());
         auto params_object = request_object["args"];
         assert(params_object["key"].is_string());
@@ -97,12 +96,10 @@ std::vector<uint8_t> process(const std::vector<uint8_t>& request, Node& node, bo
         
         response_object["version"] = std::string(NEROSHOP_DHT_VERSION);
         response_object["response"]["id"] = node.get_id();
-        // Check if the queried node has peers for the requested infohash
+        // Check if the queried node has peers for the requested key
         std::vector<Peer> peers = node.get_providers(key);
         if(peers.empty()) {
-            // WARNING!!! THIS CODE BLOCKS THE GUI.
-            // If the queried node has no peers for the requested infohash,
-            // return the K closest nodes in the routing table to the requested infohash
+            // WARNING!!! THIS CODE MAY BLOCK THE GUI.
             std::vector<Node*> closest_nodes = node.find_node(key, NEROSHOP_DHT_MAX_CLOSEST_NODES);
             std::vector<nlohmann::json> nodes_array;
             for (const auto& n : closest_nodes) {
@@ -129,7 +126,31 @@ std::vector<uint8_t> process(const std::vector<uint8_t>& request, Node& node, bo
         }
     }
     //-----------------------------------------------------
-    if(method == "get") { // For Sending Get Requests to Other Nodes and For Processing Get Requests from Other Nodes
+    if(method == "get" && ipc_mode == false) { // For Processing Get Requests From Other Nodes
+        assert(request_object["args"].is_object());
+        auto params_object = request_object["args"];
+        assert(params_object["key"].is_string());
+        std::string key = params_object["key"].get<std::string>();
+        
+        std::string value = node.get(key);
+        
+        if (value.empty()) {
+            code = static_cast<int>(DhtResultCode::RetrieveFailed);
+            response_object["version"] = std::string(NEROSHOP_DHT_VERSION);
+            response_object["error"]["id"] = node.get_id();
+            response_object["error"]["code"] = code;
+            response_object["error"]["message"] = "Key not found";
+            response_object["tid"] = tid;
+            response = nlohmann::json::to_msgpack(response_object);
+            return response;
+        } else {
+            response_object["version"] = std::string(NEROSHOP_DHT_VERSION);
+            response_object["response"]["id"] = node.get_id();
+            response_object["response"]["value"] = value;
+        }
+    }
+    //-----------------------------------------------------
+    if(method == "get" && ipc_mode == true) { // For Sending Get Requests to Other Nodes and For Processing Get Requests from Other Nodes
         assert(request_object["args"].is_object());
         auto params_object = request_object["args"];
         assert(params_object["key"].is_string());
