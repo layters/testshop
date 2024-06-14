@@ -239,7 +239,18 @@ std::pair<std::string, std::string/*std::vector<uint8_t>*/> Serializer::serializ
         json_object["signature"] = seller_rating.signature;
         json_object["timestamp"] = neroshop::timestamp::get_current_utc_timestamp();
         json_object["metadata"] = "seller_rating";
-    }    
+    }
+    
+    if(std::holds_alternative<Message>(obj)) {
+        const Message& message = std::get<Message>(obj);
+        json_object["sender_id"] = message.sender_id;
+        json_object["content"] = message.content;
+        json_object["recipient_id"] = message.recipient_id;
+        json_object["signature"] = message.signature;
+        json_object["timestamp"] = neroshop::timestamp::get_current_utc_timestamp();
+        json_object["metadata"] = "message";
+        set_expiration(json_object, json_object["metadata"].get<std::string>());
+    }
     //-------------------------------------------------------------
     // Get the `value`
     std::string value = json_object.dump();

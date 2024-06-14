@@ -13,10 +13,11 @@
 #include "../../cart.hpp"
 #include "../../order.hpp"
 #include "../../rating.hpp"
+#include "../../message.hpp"
 
 namespace neroshop {
 
-using Object = std::variant<User, Product, Listing, Cart, Order, ProductRating, SellerRating>;
+using Object = std::variant<User, Product, Listing, Cart, Order, ProductRating, SellerRating, Message>;
 
 class Serializer {
 private:
