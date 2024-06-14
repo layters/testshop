@@ -145,9 +145,6 @@ std::vector<uint8_t> process(const std::vector<uint8_t>& request, Node& node, bo
             response_object["error"]["id"] = node.get_id();
             response_object["error"]["code"] = code;
             response_object["error"]["message"] = "Key not found";
-            response_object["tid"] = tid;
-            response = nlohmann::json::to_msgpack(response_object);
-            return response;
         } else {
             response_object["version"] = std::string(NEROSHOP_DHT_VERSION);
             response_object["response"]["id"] = node.get_id();
@@ -155,7 +152,7 @@ std::vector<uint8_t> process(const std::vector<uint8_t>& request, Node& node, bo
         }
     }
     //-----------------------------------------------------
-    if(method == "get" && ipc_mode == true) { // For Sending Get Requests to Other Nodes and For Processing Get Requests from Other Nodes
+    if(method == "get" && ipc_mode == true) { // For Sending Get Requests to Other Nodes
         assert(request_object["args"].is_object());
         auto params_object = request_object["args"];
         assert(params_object["key"].is_string());
@@ -184,14 +181,11 @@ std::vector<uint8_t> process(const std::vector<uint8_t>& request, Node& node, bo
             response_object["error"]["id"] = node.get_id();
             response_object["error"]["code"] = code;
             response_object["error"]["message"] = "Key not found";
-            response_object["tid"] = tid;
-            response = nlohmann::json::to_msgpack(response_object);
-            return response;
+        } else {
+            response_object["version"] = std::string(NEROSHOP_DHT_VERSION);
+            response_object["response"]["id"] = node.get_id();
+            response_object["response"]["value"] = value;
         }
-        // Key found, return success response with value
-        response_object["version"] = std::string(NEROSHOP_DHT_VERSION);
-        response_object["response"]["id"] = node.get_id();
-        response_object["response"]["value"] = value;
     }
     //-----------------------------------------------------
     if(method == "put" && ipc_mode == false) { // For Processing Put Requests from Other Nodes - If ipc_mode is false, it means the "put" message is being processed from other nodes. In this case, the key-value pair is stored in the node's own key-value store using the node.store(key, value) function.
