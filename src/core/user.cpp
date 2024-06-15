@@ -417,7 +417,7 @@ void User::send_message(const std::string& recipient_id, const std::string& cont
     }
     
     // Construct message
-    nlohmann::json data;
+    Message message;
     //----------------------------------------------------
     int padding_overhead = 42; // only an estimate - probably accurate since I tested it once
     int MAX_DATA_LENGTH_BYTES = (NEROSHOP_RSA_DEFAULT_BITS / 8) - padding_overhead; // RSA-OAEP padding reduces the max data size by 41 to 66 bytes :(
@@ -426,7 +426,7 @@ void User::send_message(const std::string& recipient_id, const std::string& cont
     
     // Convert to base64 (for transmission)
     std::string sender_encoded = neroshop::base64_encode(sender_encrypted);
-    data["sender_id"] = sender_encoded;
+    message.sender_id = sender_encoded;
     
     #ifdef NEROSHOP_DEBUG0
     std::cout << "sender (base64 encoded): " << sender_encoded << std::endl;
@@ -443,7 +443,7 @@ void User::send_message(const std::string& recipient_id, const std::string& cont
     
     // Convert to base64 (for transmission)
     std::string message_encoded = neroshop::base64_encode(message_encrypted);
-    data["content"] = message_encoded;
+    message.content = message_encoded;
 
     #ifdef NEROSHOP_DEBUG0
     std::cout << "message (base64 encoded): " << message_encoded << std::endl;
@@ -451,33 +451,12 @@ void User::send_message(const std::string& recipient_id, const std::string& cont
     std::cout << "message (base64 decoded): " << message_decoded << std::endl << std::endl;
     #endif
     //----------------------------------------------------
-    data["recipient_id"] = recipient_id;
-    data["timestamp"] = neroshop::timestamp::get_current_utc_timestamp();
-    data["metadata"] = "message";
-    nlohmann::json settings = nlohmann::json::parse(neroshop::load_json(), nullptr, false);
-    if(settings.is_discarded()) {
-        data["expiration_date"] = neroshop::timestamp::get_utc_timestamp_after_duration(30, "days"); // default: 30 days
-    } else {
-        std::string expires_in = settings["data_expiration"]["message"].get<std::string>();
-        std::regex pattern("(\\d+) (\\w+)");
-        std::smatch match;
-        if (!std::regex_search(expires_in, match, pattern)) {
-            throw std::runtime_error("Malformed or invalid expiration (settings.json)");
-        }
-        if (std::regex_search(expires_in, match, pattern)) {
-            std::string number_str = match[1].str();
-            int number = std::stoi(number_str);
-
-            std::string time_unit = match[2].str();
-            if(!time_unit.empty() && time_unit.back() != 's') { time_unit.push_back('s'); }
-            
-            data["expiration_date"] = neroshop::timestamp::get_utc_timestamp_after_duration(number, time_unit);
-        }
-    }
-    data["signature"] = wallet->sign_message(content, monero_message_signature_type::SIGN_WITH_SPEND_KEY);
+    message.recipient_id = recipient_id;
+    message.signature = wallet->sign_message(content, monero_message_signature_type::SIGN_WITH_SPEND_KEY);
     
-    std::string value = data.dump();
-    std::string key = neroshop::crypto::sha3_256(value);//std::cout << "key: " << key << "\nvalue: " << value << "\n";
+    auto data = Serializer::serialize(message);
+    std::string key = data.first;
+    std::string value = data.second;//std::cout << "key: " << key << "\nvalue: " << value << "\n";
     
     // Send put request to neighboring nodes (and your node too JIC)
     Client * client = Client::get_main_client();

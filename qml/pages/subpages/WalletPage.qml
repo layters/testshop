@@ -122,13 +122,13 @@ Page {
         NeroshopComponents.TabBar {
             id: tabBar
             Layout.alignment: Qt.AlignHCenter
-            model: ["Transactions", "Send", "Receive", "\uf013"]
+            model: ["Transactions", "Send", "Receive"/*, "\uf013"*/]
             color0: NeroshopComponents.Style.moneroOrangeColor
             Component.onCompleted: {
                 buttonAt(0).checked = true
-                buttonAt(3).width = 50
+                /*buttonAt(3).width = 50
                 buttonAt(3).contentItem.font.bold = true
-                buttonAt(3).contentItem.font.family = FontAwesome.fontFamily
+                buttonAt(3).contentItem.font.family = FontAwesome.fontFamily*/
             }
         }               
         
@@ -144,7 +144,7 @@ Page {
                             
                 Flickable {
                     anchors.fill: parent
-                    contentWidth: parent.width/*950*/; contentHeight: (75 * txList.count) + (txList.spacing * (txList.count - 1))
+                    contentWidth: parent.width; contentHeight: (75 * txList.count) + (txList.spacing * (txList.count - 1))
                     clip: true
                     ScrollBar.vertical: ScrollBar {
                         policy: ScrollBar.AsNeeded//AlwaysOff
@@ -157,81 +157,141 @@ Page {
                         spacing: 7
                         Component.onCompleted: console.log("tx count", /*txRepeater.*/count)
                         model: Wallet.transfers
-                        delegate: Rectangle {
-                            color: balanceTxColumn.baseColor
-                            width: /*950*/parent.width; height: 75//150
-                            radius: 5
-                            Rectangle {
-                                anchors.verticalCenter: parent.verticalCenter
-                                anchors.left: parent.left; anchors.leftMargin: 5
-                                width: parent.height - 10; height: width
-                                color: "transparent"
-                                border.color: balanceTxColumn.borderColor
+                        delegate: Item {
+                            width: parent.width
+                            height: 100
+                            Column {
+                                anchors.fill: parent
+                                Rectangle {
+                                    color: balanceTxColumn.baseColor
+                                    width: parent.width; height: 75//150
+                                    radius: 5
+                                    Rectangle {
+                                        anchors.verticalCenter: parent.verticalCenter
+                                        anchors.left: parent.left; anchors.leftMargin: 5
+                                        width: parent.height - 10; height: width
+                                        color: "transparent"
+                                        border.color: balanceTxColumn.borderColor
                                     
-                                Text {
-                                    anchors.centerIn: parent
-                                    text: modelData.is_incoming ? "\uf063" : "\uf062"
-                                    color: (!Wallet.opened) ? "#ffffff" : (modelData.is_incoming ? "#2cba78" : "#c32235")
-                                    font.bold: true; font.family: FontAwesome.fontFamily
-                                    font.pixelSize: 32
-                                }
-                            }
-                            Column {
-                                anchors.left: parent.children[0].right; anchors.leftMargin: 20
-                                anchors.verticalCenter: parent.verticalCenter
-                                spacing: 1
-                                Text {
-                                    text: modelData.is_incoming ? qsTr("Received") : qsTr("Sent")
-                                    color: balanceTxColumn.textColor
-                                }
-                                Text {
-                                    text: "2024-01-01 00:00" // TODO: get actual tx date and time
-                                    color: "#777"
-                                    font.pointSize: 10
-                                    visible: false // <- hide this for now
-                                }
-                            }
-                            Column {
-                                anchors.horizontalCenter: parent.horizontalCenter
-                                anchors.verticalCenter: parent.verticalCenter
-                                Text {
-                                    text: (!Wallet.opened) ? "" : qsTr("%1 %2").arg(modelData.is_incoming ? "+" : "-").arg(modelData.amount.toFixed(12))
-                                    color: (!Wallet.opened) ? "#ffffff" : (modelData.is_incoming ? "#2cba78" : "#c32235")
-                                    font.bold: true
-                                }
-                                Text {
-                                    text: (!Wallet.opened) ? "" : qsTr("%1 %2%3 %4").arg(modelData.is_incoming ? "+" : "-").arg(Backend.getCurrencySign(priceDisplayText.currency)).arg(CurrencyExchangeRates.getXmrPrice(priceDisplayText.currency) * modelData.amount.toFixed(12)).arg(priceDisplayText.currency.toUpperCase())
-                                    color: "#777"
-                                    font.pointSize: 10
-                                    visible: (Wallet.getWalletType() == 0 && priceDisplayText.currency != "XMR")
-                                }
-                            }
-                            Button {
-                                anchors.right: parent.right; anchors.rightMargin: 20
-                                anchors.verticalCenter: parent.verticalCenter
-                                width: contentItem.contentWidth + 20; height: contentItem.contentHeight + 20
-                                text: qsTr("View")
-                                background: Rectangle {
-                                    color: "transparent"
-                                    border.color: balanceTxColumn.borderColor
-                                    radius: 3
-                                }
-                                contentItem: Text {
-                                    text: parent.text
-                                    color: balanceTxColumn.textColor
-                                    horizontalAlignment: Text.AlignHCenter
-                                    verticalAlignment: Text.AlignVCenter
-                                }
-                                onClicked: {
-                                    let network_type = Wallet.getNetworkTypeString()
-                                    if(network_type != "mainnet") {
-                                        Qt.openUrlExternally("https://" + network_type + "." + settingsDialog.blockExplorer)
-                                        return
+                                        Text {
+                                            anchors.centerIn: parent
+                                            text: modelData.is_incoming ? "\uf063" : "\uf062"
+                                            color: (!Wallet.opened) ? "#ffffff" : (modelData.is_incoming ? "#2cba78" : "#c32235")
+                                            font.bold: true; font.family: FontAwesome.fontFamily
+                                            font.pixelSize: 32
+                                        }
                                     }
-                                    Qt.openUrlExternally("https://" + settingsDialog.blockExplorer)
+                                    Column {
+                                        anchors.left: parent.children[0].right; anchors.leftMargin: 20
+                                        anchors.verticalCenter: parent.verticalCenter
+                                        spacing: 1
+                                        Text {
+                                            text: modelData.is_incoming ? qsTr("Received") : qsTr("Sent")
+                                            color: balanceTxColumn.textColor
+                                        }
+                                        Text {
+                                            text: "2024-01-01 00:00" // TODO: get actual tx date and time
+                                            color: "#777"
+                                            font.pointSize: 10
+                                            visible: false // <- hide this for now
+                                        }
+                                    }
+                                    Column {
+                                        anchors.horizontalCenter: parent.horizontalCenter
+                                        anchors.verticalCenter: parent.verticalCenter
+                                        Text {
+                                            text: (!Wallet.opened) ? "" : qsTr("%1 %2").arg(modelData.is_incoming ? "+" : "-").arg(modelData.amount.toFixed(12))
+                                            color: (!Wallet.opened) ? "#ffffff" : (modelData.is_incoming ? "#2cba78" : "#c32235")
+                                            font.bold: true
+                                        }
+                                        Text {
+                                            text: (!Wallet.opened) ? "" : qsTr("%1 %2%3 %4").arg(modelData.is_incoming ? "+" : "-").arg(Backend.getCurrencySign(priceDisplayText.currency)).arg(CurrencyExchangeRates.getXmrPrice(priceDisplayText.currency) * modelData.amount.toFixed(12)).arg(priceDisplayText.currency.toUpperCase())
+                                            color: "#777"
+                                            font.pointSize: 10
+                                            visible: (Wallet.getWalletType() == 0 && priceDisplayText.currency != "XMR")
+                                        }
+                                    }
+                                    Row {
+                                        anchors.right: parent.right; anchors.rightMargin: 20
+                                        anchors.verticalCenter: parent.verticalCenter
+                                        spacing: 10
+                                        Button {
+                                            width: contentItem.contentWidth + 20; height: contentItem.contentHeight + 20
+                                            text: qsTr("Open in browser")
+                                            display: AbstractButton.IconOnly
+                                            icon.source: "qrc:/assets/images/external_link.png"
+                                            icon.color: "#ffffff"
+                                            hoverEnabled: true
+                                            background: Rectangle {
+                                                color: "transparent"
+                                                border.color: parent.hovered ? balanceTxColumn.borderColor : color
+                                                radius: 3
+                                            }
+                                            onClicked: {
+                                                let network_type = Wallet.getNetworkTypeString()
+                                                if(network_type != "mainnet") {
+                                                    Qt.openUrlExternally("https://" + network_type + "." + settingsDialog.blockExplorer)
+                                                    return
+                                                }
+                                                Qt.openUrlExternally("https://" + settingsDialog.blockExplorer)
+                                            }
+                                            MouseArea { 
+                                                anchors.fill: parent
+                                                onPressed: mouse.accepted = false // without this, Button.onClicked won't work
+                                                cursorShape: Qt.PointingHandCursor
+                                            }
+                                            NeroshopComponents.Hint {
+                                                visible: parent.hovered
+                                                height: contentHeight + 20; width: contentWidth + 20
+                                                text: parent.text
+                                                pointer.visible: false
+                                                timeout: 1000; delay: 0
+                                            }
+                                        }
+                                        // Show more button
+                                        Text {
+                                            anchors.verticalCenter: parent.verticalCenter
+                                            text: txDetailsRect.visible ? qsTr(FontAwesome.chevronUp) : qsTr(FontAwesome.chevronDown)
+                                            color: "#ffffff"
+                                            font.bold: true
+                                            font.family: FontAwesome.fontFamily
+                                            font.pointSize: 16
+                                            property bool hovered: false
+                                            MouseArea {
+                                                anchors.fill: parent
+                                                hoverEnabled: true
+                                                onEntered: parent.hovered = true
+                                                onExited: parent.hovered = false
+                                                cursorShape: Qt.PointingHandCursor
+                                                onClicked: {
+                                                    if(!txDetailsRect.visible) {
+                                                        txDetailsRect.visible = true
+                                                        return
+                                                    }
+                                                    if(txDetailsRect.visible) {
+                                                        txDetailsRect.visible = false
+                                                        return
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
                                 }
-                            }
-                        }
+                                // TX details rect
+                                Rectangle {
+                                    id: txDetailsRect
+                                    anchors.horizontalCenter: parent.horizontalCenter
+                                    width: parent.width - 10
+                                    height: 25
+                                    color: "lightgrey"
+                                    visible: false
+                                    Text {
+                                        anchors.centerIn: parent
+                                        text: "Additional Transaction Details"
+                                    }
+                                }
+                            } // Column
+                        } // Item delegate
                     }
                 }
             }
