@@ -159,12 +159,13 @@ Page {
                         model: Wallet.transfers
                         delegate: Item {
                             width: parent.width
-                            height: 100
+                            height: txDetailsRect.visible ? (txRect.height + txDetailsRect.height) : txRect.height
                             Column {
                                 anchors.fill: parent
                                 Rectangle {
+                                    id: txRect
                                     color: balanceTxColumn.baseColor
-                                    width: parent.width; height: 75//150
+                                    width: parent.width; height: 75
                                     radius: 5
                                     Rectangle {
                                         anchors.verticalCenter: parent.verticalCenter
@@ -220,7 +221,7 @@ Page {
                                             text: qsTr("Open in browser")
                                             display: AbstractButton.IconOnly
                                             icon.source: "qrc:/assets/images/external_link.png"
-                                            icon.color: "#ffffff"
+                                            icon.color: balanceTxColumn.textColor
                                             hoverEnabled: true
                                             background: Rectangle {
                                                 color: "transparent"
@@ -252,7 +253,7 @@ Page {
                                         Text {
                                             anchors.verticalCenter: parent.verticalCenter
                                             text: txDetailsRect.visible ? qsTr(FontAwesome.chevronUp) : qsTr(FontAwesome.chevronDown)
-                                            color: "#ffffff"
+                                            color: balanceTxColumn.textColor
                                             font.bold: true
                                             font.family: FontAwesome.fontFamily
                                             font.pointSize: 16
@@ -283,11 +284,12 @@ Page {
                                     anchors.horizontalCenter: parent.horizontalCenter
                                     width: parent.width - 10
                                     height: 25
-                                    color: "lightgrey"
+                                    color: balanceTxColumn.baseColor
                                     visible: false
                                     Text {
                                         anchors.centerIn: parent
                                         text: "Additional Transaction Details"
+                                        color: balanceTxColumn.textColor
                                     }
                                 }
                             } // Column
