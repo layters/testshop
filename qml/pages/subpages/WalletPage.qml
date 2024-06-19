@@ -169,13 +169,12 @@ Page {
                                     radius: 5
                                     Rectangle {
                                         anchors.verticalCenter: parent.verticalCenter
-                                        anchors.left: parent.left; anchors.leftMargin: 5
-                                        width: parent.height - 10; height: width
+                                        anchors.left: parent.left; anchors.leftMargin: 20
+                                        width: childrenRect.width; height: childrenRect.height
                                         color: "transparent"
-                                        border.color: balanceTxColumn.borderColor
+                                        //border.color: balanceTxColumn.borderColor
                                     
                                         Text {
-                                            anchors.centerIn: parent
                                             text: modelData.is_incoming ? "\uf063" : "\uf062"
                                             color: (!Wallet.opened) ? "#ffffff" : (modelData.is_incoming ? "#2cba78" : "#c32235")
                                             font.bold: true; font.family: FontAwesome.fontFamily
@@ -283,13 +282,38 @@ Page {
                                     id: txDetailsRect
                                     anchors.horizontalCenter: parent.horizontalCenter
                                     width: parent.width - 10
-                                    height: 25
+                                    height: 225
                                     color: balanceTxColumn.baseColor
                                     visible: false
-                                    Text {
-                                        anchors.centerIn: parent
-                                        text: "Additional Transaction Details"
-                                        color: balanceTxColumn.textColor
+                                    Column {
+                                        anchors.fill: parent
+                                        anchors.margins: 20
+                                        spacing: 15
+                                        Text {
+                                            text: qsTr("Fee: %1").arg("")
+                                            color: balanceTxColumn.textColor
+                                        }
+                                        Text {
+                                            text: qsTr("Transaction ID: %1").arg("")
+                                            color: balanceTxColumn.textColor
+                                        }
+                                        Text {
+                                            text: qsTr("Destination address: %1").arg("")
+                                            color: balanceTxColumn.textColor
+                                            visible: !modelData.is_incoming
+                                        }
+                                        Text {
+                                            text: qsTr("Block height: %1").arg("")
+                                            color: balanceTxColumn.textColor
+                                        }
+                                        Text {
+                                            text: qsTr("Notes: %1").arg("")
+                                            color: balanceTxColumn.textColor
+                                        }
+                                        Text {
+                                            text: qsTr("Timestamp: %1").arg("")
+                                            color: balanceTxColumn.textColor
+                                        }
                                     }
                                 }
                             } // Column
