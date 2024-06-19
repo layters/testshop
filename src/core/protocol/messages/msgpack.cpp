@@ -99,19 +99,7 @@ std::vector<uint8_t> process(const std::vector<uint8_t>& request, Node& node, bo
         // Check if the queried node has peers for the requested key
         std::vector<Peer> peers = node.get_providers(key);
         if(peers.empty()) {
-            // WARNING!!! THIS CODE MAY BLOCK THE GUI.
-            std::vector<Node*> closest_nodes = node.find_node(key, NEROSHOP_DHT_MAX_CLOSEST_NODES);
-            std::vector<nlohmann::json> nodes_array;
-            for (const auto& n : closest_nodes) {
-                nlohmann::json node_object = {
-                    {"id", n->get_id()},
-                    {"ip_address", n->get_ip_address()},
-                    {"port", n->get_port()}
-                };
-                nodes_array.push_back(node_object);
-                //std::cout << "Node ID: " << n->get_id() << ", Node IP address: " << n->get_ip_address() << ", Node port: " << n->get_port() << std::endl;
-            }
-            response_object["response"]["nodes"] = nodes_array; // If the queried node has no peers for the infohash, a key "nodes" is returned containing the K nodes in the queried nodes routing table closest to the infohash supplied in the query
+            response_object["response"]["values"] = nlohmann::json::array();
         } else {
             std::vector<nlohmann::json> peers_array;
             for (const auto& p : peers) {
