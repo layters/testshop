@@ -282,6 +282,7 @@ QVariantList neroshop::WalletController::getTransfers() const {
     std::packaged_task<QVariantList(void)> get_transfers_task([this]() -> QVariantList {
         monero_transfer_query transfer_query; // optional
         auto transfers = _wallet->get_monero_wallet()->get_transfers(transfer_query);
+        //auto txs = _wallet->get_monero_wallet()->get_txs();//(transfer_query);
 
         QVariantList transfers_list;
 
@@ -296,6 +297,8 @@ QVariantList neroshop::WalletController::getTransfers() const {
             monero_tx_wallet * tx_wallet = transfer->m_tx.get(); // refer to: https://woodser.github.io/monero-cpp/doxygen/structmonero_1_1monero__tx__wallet.html
             ////transfer_object.insert("", tx_wallet->);
             //std::cout << ": " << tx_wallet-> << "\n";
+            
+            // TODO: get fees, tx id, block height, note, and timestamp
         
             transfers_list.append(transfer_object);
         }
