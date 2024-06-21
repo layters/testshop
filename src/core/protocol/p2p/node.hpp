@@ -78,6 +78,7 @@ public:
     std::string send_find_value(const std::string& key);
     void send_remove(const std::string& key);
     void send_map(const std::string& address, int port); // Distributes indexing data to a single node
+    void send_map_v2(const std::string& address, int port);
     std::vector<Peer> send_get_providers(const std::string& data_hash);
     //---------------------------------------------------
     ////std::vector<Node*> lookup(const std::string& key); // In Kademlia, the primary purpose of the lookup function is to find the nodes responsible for storing a particular key in the DHT, rather than retrieving the actual value of the key. The lookup function helps in locating the nodes that are likely to have the key or be able to provide information about it.
@@ -92,7 +93,7 @@ public:
     void refresh();
     void republish();
     bool validate(const std::string& key, const std::string& value); // Validates data before storing it
-    void cache(const std::string& key, const std::string& value); // Cache data created by local client
+    int cache(const std::string& key, const std::string& value); // Cache data created by local client
     //---------------------------------------------------
     void persist_routing_table(const std::string& address, int port); // JIC bootstrap node faces outage and needs to recover
     void rebuild_routing_table(); // Re-builds routing table from data stored on disk
@@ -141,6 +142,7 @@ public:
     bool is_hardcoded() const;
     static bool is_hardcoded(const std::string& address, uint16_t port);
     bool has_key(const std::string& key) const;
+    bool has_key_cached(const std::string& key) const;
     bool has_value(const std::string& value) const;
     bool is_dead() const;
 };

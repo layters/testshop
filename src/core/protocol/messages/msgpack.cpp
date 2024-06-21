@@ -246,13 +246,10 @@ std::vector<uint8_t> process(const std::vector<uint8_t>& request, Node& node, bo
         }
                    
         // Store the key-value pair in your own node as well
-        if(node.store(key, value)) {
+        if(node.cache(key, value)) {
             if(put_messages_sent == 0) { 
                 code = static_cast<int>(DhtResultCode::StoreToSelf);
             }
-            
-            // Store your local client's own data on-disk (in case of outage)
-            node.cache(key, value);
             
             // Map keys to search terms for efficient search operations
             node.map(key, value);

@@ -447,7 +447,7 @@ void Node::persist_routing_table(const std::string& address, int port) {
     if(!is_hardcoded()) return; // Regular nodes cannot run this function
     
     db::Sqlite3 * database = neroshop::get_database();
-    if(!database) throw std::runtime_error("database is NULL");
+    if(!database) throw std::runtime_error("database is not opened");
     
     if(!database->table_exists("routing_table")) { 
         database->execute("CREATE TABLE routing_table("
@@ -461,7 +461,7 @@ void Node::rebuild_routing_table() {
     if(!is_hardcoded()) return; // Regular nodes cannot run this function
     
     db::Sqlite3 * database = neroshop::get_database();
-    if(!database) throw std::runtime_error("database is NULL");
+    if(!database) throw std::runtime_error("database is not opened");
     if(!database->table_exists("routing_table")) {
         return; // Table does not exist, exit function
     }
@@ -610,7 +610,7 @@ bool Node::send_ping(const std::string& address, int port) {
     std::cout << "\033[32m" << pong_message.dump() << "\033[0m\n";
     std::string received_transaction_id = pong_message["tid"].get<std::string>();
     auto response_object = pong_message["response"];
-    std::string response_id = response_object["id"].get<std::string>();
+    std::string node_id = response_object["id"].get<std::string>();
     
     // Check that the pong message corresponds to the ping message
     if (received_transaction_id != transaction_id) {
@@ -790,8 +790,10 @@ std::string Node::send_get(const std::string& key) {
     // First, check to see if we have the key before performing any other operations
     if(has_key(key)) { return get(key); }
     
-    value = get_cached(key);
-    if(!value.empty()) { return value; } // Validate is slow so don't validate our cached hash table
+    if(has_key_cached(key)) {
+        value = get_cached(key);
+        if(!value.empty()) { return value; } // Validate is slow so don't validate our cached hash table
+    }
     //-----------------------------------------------
     // Second option is to check our providers to see if any holds the key we are looking for
     std::vector<neroshop::Peer> my_providers = get_providers(key);
@@ -834,43 +836,43 @@ std::string Node::send_get(const std::string& key) {
         }
     }
     //-----------------------------------------------
-    // Third option is to send get request to the nodes in our routing table that are closest to the key
-    std::vector<Node *> closest_nodes = find_node(key, NEROSHOP_DHT_MAX_CLOSEST_NODES);
-    
-    std::random_device rd;
-    std::mt19937 rng(rd());
-    std::shuffle(closest_nodes.begin(), closest_nodes.end(), rng);
-    
-    for(auto const& node : closest_nodes) {
-        if (node == nullptr) continue;
-        if (node->get_status() != NodeStatus::Active) { continue; } // ignore idle nodes
-        
-        std::string transaction_id = msgpack::generate_transaction_id();
-        query_object["tid"] = transaction_id; // tid should be unique for each get message
-        std::vector<uint8_t> query_get = nlohmann::json::to_msgpack(query_object);
-    
-        std::string node_ip = (node->get_ip_address() == this->public_ip_address) ? "127.0.0.1" : node->get_ip_address();
-        int node_port = node->get_port();
-        std::cout << "Sending get request to \033[36m" << node_ip << ":" << node_port << "\033[0m\n";
-        auto receive_buffer = send_query(node_ip, node_port, query_get, 2);
-        // Process the response here
-        nlohmann::json response_get;
-        try {
-            response_get = nlohmann::json::from_msgpack(receive_buffer);
-        } catch (const std::exception& e) {
-            std::cerr << "Node \033[91m" << node_ip << ":" << node_port << "\033[0m did not respond" << std::endl;
-            node->check_counter += 1;
-            continue; // Continue with the next closest node if this one fails
-        }   
-        // Show response and handle the retrieved value
-        std::cout << ((response_get.contains("error")) ? ("\033[91m") : ("\033[32m")) << response_get.dump() << "\033[0m\n";
-        if(response_get.contains("error")) {
-            continue; // Skip if error
-        }
-        if (response_get.contains("response") && response_get["response"].contains("value")) {
-            value = response_get["response"]["value"].get<std::string>();
-            if (validate(key, value)) {
-                break; // Exit the loop if a value is found
+    // Third option is to send a get_providers request to the nodes in our routing table that are closest to the key
+    // Then get the value for the given key from the received providers
+    std::vector<neroshop::Peer> providers = send_get_providers(key);
+    if(!providers.empty()) {
+        std::cout << "Found " << providers.size() << " providers for key (" << key << ")\n";
+        for(auto const& peer : providers) {
+            // Construct the get query (request)
+            std::string transaction_id = msgpack::generate_transaction_id();
+            query_object["tid"] = transaction_id;
+            std::vector<uint8_t> query_get = nlohmann::json::to_msgpack(query_object);
+            
+            // Send a get request to provider
+            std::string peer_addr = (peer.address == this->public_ip_address) ? "127.0.0.1" : peer.address;
+            std::cout << "Sending get request to \033[36m" << peer_addr << ":" << peer.port << "\033[0m\n";
+            auto receive_buffer = send_query(peer_addr, peer.port, query_get, 2);
+            
+            // Process the response
+            nlohmann::json response_get;
+            try {
+                response_get = nlohmann::json::from_msgpack(receive_buffer);
+            } catch (const std::exception& e) {
+                std::cerr << "Provider \033[91m" << peer_addr << ":" << peer.port << "\033[0m did not respond" << std::endl;
+                remove_provider(key, peer.address, peer.port); // Remove this peer from providers
+                continue; // Skip to next provider if this one is unresponsive
+            }   
+            
+            // Handle the response
+            std::cout << ((response_get.contains("error")) ? ("\033[91m") : ("\033[32m")) << response_get.dump() << "\033[0m\n";
+            if(response_get.contains("error")) { // "Key not found"
+                remove_provider(key, peer.address, peer.port); // Data is lost, remove peer from providers
+                continue; 
+            }
+            if(response_get.contains("response") && response_get["response"].contains("value")) {
+                value = response_get["response"]["value"].get<std::string>();
+                if (validate(key, value)) { 
+                    return value;
+                }
             }
         }
     }
@@ -887,7 +889,6 @@ void Node::send_remove(const std::string& key) {
     query_object["query"] = "remove";
     query_object["args"]["key"] = key;
     query_object["version"] = std::string(NEROSHOP_DHT_VERSION);
-    // TODO: this should only work on expired data!!!
     //-----------------------------------------------
     std::vector<Node *> closest_nodes = find_node(key, NEROSHOP_DHT_MAX_CLOSEST_NODES);
     
@@ -956,6 +957,65 @@ void Node::send_map(const std::string& address, int port) {
     if(map_sent && !data.empty()) { std::cout << "Sent map request to \033[36m" << address << ":" << port << "\033[0m\n"; }
 }
 
+void Node::send_map_v2(const std::string& address, int port) {
+    db::Sqlite3 * database = neroshop::get_database();
+    if(!database) throw std::runtime_error("database is not opened");
+    if(!database->table_exists("hash_table")) {
+        return; // Table does not exist, exit function
+    }
+    
+    nlohmann::json query_object;
+    query_object["query"] = "map";
+    query_object["args"]["id"] = this->id;
+    query_object["args"]["port"] = get_port(); // the port of the peer that is announcing itself (map will also be used to "announce" the peer or provider)
+    query_object["version"] = std::string(NEROSHOP_DHT_VERSION);
+    
+    // Prepare statement
+    std::string command = "SELECT key, value FROM hash_table;";
+    sqlite3_stmt * stmt = nullptr;
+    if(sqlite3_prepare_v2(database->get_handle(), command.c_str(), -1, &stmt, nullptr) != SQLITE_OK) {
+        std::cout << "\033[91msqlite3_prepare_v2: " + std::string(sqlite3_errmsg(database->get_handle())) << "\033[0m" << std::endl;
+        return;
+    }
+    // Check if there is any data returned by the statement
+    if(sqlite3_column_count(stmt) > 0) {
+        std::cout << "\033[35;1mSending hash table map from cache ...\033[0m" << std::endl;
+    }
+    // Get all table values row by row
+    while(sqlite3_step(stmt) == SQLITE_ROW) {
+        std::string key, value;
+        for(int i = 0; i < sqlite3_column_count(stmt); i++) {
+            if(i == 0) {
+                key = (sqlite3_column_text(stmt, i) == nullptr) ? "" : reinterpret_cast<const char *>(sqlite3_column_text(stmt, i));
+                if(key.empty()) { continue; }
+            }
+            if(i == 1) {
+                value = (sqlite3_column_text(stmt, i) == nullptr) ? "" : reinterpret_cast<const char *>(sqlite3_column_text(stmt, i));
+                if(value.empty()) { continue; }
+            }
+            
+            query_object["args"]["key"] = key;
+            query_object["args"]["value"] = value;
+            std::string transaction_id = msgpack::generate_transaction_id();
+            query_object["tid"] = transaction_id; // tid should be unique for each map message
+            std::vector<uint8_t> map_message = nlohmann::json::to_msgpack(query_object);
+
+            auto receive_buffer = send_query(address, port, map_message);
+            // Process the response here
+            nlohmann::json map_response_message;
+            try {
+                map_response_message = nlohmann::json::from_msgpack(receive_buffer);
+            } catch (const std::exception& e) {
+                std::cerr << "Node \033[91m" << address << ":" << port << "\033[0m did not respond to send_map" << std::endl;
+            }
+            // Show response
+            std::cout << ((map_response_message.contains("error")) ? ("\033[91m") : ("\033[92m")) << map_response_message.dump() << "\033[0m\n";
+        }
+    }
+    // Finalize statement
+    sqlite3_finalize(stmt);
+}
+
 std::vector<neroshop::Peer> Node::send_get_providers(const std::string& key) {
     std::vector<neroshop::Peer> peers = {};
     std::set<std::pair<std::string, uint16_t>> unique_peers; // Set to store unique IP-port pairs
@@ -999,10 +1059,10 @@ std::vector<neroshop::Peer> Node::send_get_providers(const std::string& key) {
             continue; // Skip if error
         }
         if (get_providers_response.contains("response") && get_providers_response["response"].contains("values")) {
-            for (auto& node_json : get_providers_response["response"]["values"]) {
-                if (node_json.contains("ip_address") && node_json.contains("port")) {
-                    std::string ip_address = node_json["ip_address"];
-                    uint16_t port = node_json["port"];
+            for (auto& values_json : get_providers_response["response"]["values"]) {
+                if (values_json.contains("ip_address") && values_json.contains("port")) {
+                    std::string ip_address = values_json["ip_address"];
+                    uint16_t port = values_json["port"];
                     // Check if the IP-port pair is already added
                     if (unique_peers.insert({ip_address, port}).second) {
                         Peer provider = Peer{ip_address, port};
@@ -1025,7 +1085,7 @@ void Node::refresh() {
         std::cout << "Sending find_node request to " << neighbor->get_ip_address() << ":" << neighbor->get_port() << "\n";
         auto nodes = send_find_node(this->id, (neighbor->get_ip_address() == this->public_ip_address) ? "127.0.0.1" : neighbor->get_ip_address(), neighbor->get_port());
         if(nodes.empty()) {
-            std::cerr << "find_node: No nodes found\n"; continue;
+            std::cerr << "find_node: No unique nodes found\n"; continue;
         }
         
         // Then add received nodes to the routing table
@@ -1215,22 +1275,27 @@ void Node::expire(const std::string& key, const std::string& value) {
 
 //-----------------------------------------------------------------------------
 
-void Node::cache(const std::string& key, const std::string& value) {
+int Node::cache(const std::string& key, const std::string& value) {
     db::Sqlite3 * database = neroshop::get_database();
+    int rescode = SQLITE_OK;
     
     if(!database->table_exists("hash_table")) { 
-        database->execute("CREATE TABLE hash_table("
+        rescode = database->execute("CREATE TABLE hash_table("
         "key TEXT, value TEXT, UNIQUE(key));");
-        database->execute("CREATE INDEX idx_hash_table_keys ON hash_table(key)");
+        if(rescode != SQLITE_OK) { throw std::runtime_error("Error creating on-disk hash table"); }
+        
+        rescode = database->execute("CREATE INDEX idx_hash_table_keys ON hash_table(key)");
+        if(rescode != SQLITE_OK) { std::cerr << "\033[0;91mError creating index for on-disk hash table\033[0m" << std::endl; }
     }
     
     bool key_found = database->get_integer_params("SELECT COUNT(*) FROM hash_table WHERE key = ?", { key });
     if(key_found) {
-        int error = database->execute_params("UPDATE hash_table SET value = ?1 WHERE key = ?2", { value, key });
-        return;
+        rescode = database->execute_params("UPDATE hash_table SET value = ?1 WHERE key = ?2", { value, key });
+        return (rescode == SQLITE_OK);
     }
     
-    int error = database->execute_params("INSERT INTO hash_table (key, value) VALUES (?1, ?2);", { key, value });
+    rescode = database->execute_params("INSERT INTO hash_table (key, value) VALUES (?1, ?2);", { key, value });
+    return (rescode == SQLITE_OK);
 }
 
 //-----------------------------------------------------------------------------
@@ -1408,7 +1473,7 @@ void Node::on_ping(const std::vector<uint8_t>& buffer, const struct sockaddr_in&
                         routing_table->print_table();
                     
                         // Redistribute your indexing data to the new node that recently joined the network to make product/service listings more easily discoverable by the new node
-                        send_map((sender_ip == this->public_ip_address) ? "127.0.0.1" : sender_ip, sender_port);
+                        send_map_v2((sender_ip == this->public_ip_address) ? "127.0.0.1" : sender_ip, sender_port);
                     }
                 }
             }
@@ -1436,47 +1501,6 @@ void Node::on_map(const std::vector<uint8_t>& buffer, const struct sockaddr_in& 
         }
     }
 }
-
-//-----------------------------------------------------------------------------
-
-/*void Node::on_dead_node(const std::vector<std::string>& node_ids) {
-    for (const auto& dead_node_id : node_ids) {
-        //std::cout << "Processing dead node ID: " << dead_node_id << std::endl;
-
-        auto closest_nodes = find_node(dead_node_id, NEROSHOP_DHT_MAX_CLOSEST_NODES);
-        
-        for (auto& routing_table_node : closest_nodes) {
-            if (routing_table_node == nullptr) continue;
-            std::string routing_table_node_ip = (routing_table_node->get_ip_address() == this->public_ip_address) ? "127.0.0.1" : routing_table_node->get_ip_address();
-            uint16_t routing_table_node_port = routing_table_node->get_port();
-            
-            // Skip the bootstrap nodes (as they are not involved in the replacement of dead nodes)
-            if (routing_table_node->is_hardcoded()) continue;
-                
-            // Send find_node to make up for dead nodes
-            auto nodes = send_find_node(dead_node_id, routing_table_node_ip, routing_table_node_port);
-            if(nodes.empty()) {
-                std::cerr << "find_node: No nodes found\n"; continue;
-            }
-                
-            // Then add nodes to the routing table
-            for (auto node : nodes) {
-                if (node->get_id() == dead_node_id) continue; // ignore the dead node
-                // Ping the received nodes before adding them
-                std::string node_ip = (node->get_ip_address() == this->public_ip_address) ? "127.0.0.1" : node->get_ip_address();
-                uint16_t node_port = node->get_port();
-                if(!ping(node_ip, node_port)) {
-                    node->check_counter++;
-                    continue; // Skip the node and continue with the next iteration
-                }
-                // Update the routing table with the received nodes
-                if(!routing_table->has_node(node->public_ip_address, node_port)) {
-                    routing_table->add_node(std::unique_ptr<neroshop::Node>(node));
-                }
-            }    
-        }
-    }
-}*/
 
 //-----------------------------------------------------------------------------
 
@@ -1755,7 +1779,7 @@ std::vector<std::pair<std::string, std::string>> Node::get_data() const {
 
 std::string Node::get_cached(const std::string& key) {
     db::Sqlite3 * database = neroshop::get_database();
-    if(!database) throw std::runtime_error("database is NULL");
+    if(!database) throw std::runtime_error("database is not opened");
     if(!database->table_exists("hash_table")) {
         return "";
     }
@@ -1768,6 +1792,14 @@ std::string Node::get_cached(const std::string& key) {
 
 bool Node::has_key(const std::string& key) const {
     return (data.count(key) > 0);
+}
+
+bool Node::has_key_cached(const std::string& key) const {
+    db::Sqlite3 * database = neroshop::get_database();
+    if(!database) { throw std::runtime_error("database is not opened"); }
+    if(!database->table_exists("hash_table")) { return false; }
+    
+    return database->get_integer_params("SELECT EXISTS(SELECT key FROM hash_table WHERE key = ?1);", { key });
 }
 
 bool Node::has_value(const std::string& value) const {
