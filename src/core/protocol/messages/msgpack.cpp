@@ -10,6 +10,7 @@
 #include "../p2p/dht_rescode.hpp"
 #include "../p2p/node.hpp"
 #include "../p2p/routing_table.hpp"
+#include "../../database/database.hpp"
 
 namespace neroshop {
 
@@ -57,7 +58,7 @@ std::vector<uint8_t> process(const std::vector<uint8_t>& request, Node& node, bo
         return {};
     }
     auto tid = (ipc_mode) ? nullptr : request_object["tid"];
-    int code = 0;
+    int code = static_cast<int>(DhtResultCode::Success);
     //-----------------------------------------------------
     if(method == "ping") {
         response_object["version"] = std::string(NEROSHOP_DHT_VERSION);
@@ -122,7 +123,9 @@ std::vector<uint8_t> process(const std::vector<uint8_t>& request, Node& node, bo
         
         std::string value;
         if(!node.has_key(key)) {
-            value = node.get_cached(key);
+            if(node.has_key_cached(key)) {
+                value = node.get_cached(key);
+            }
         } else {
             value = node.get(key);
         }
@@ -158,11 +161,8 @@ std::vector<uint8_t> process(const std::vector<uint8_t>& request, Node& node, bo
             return response;
         }
                         
-        // Send get messages to the closest nodes in your routing table (IPC mode)
-        // But first, look up the value in the node's own hash table
         std::string value = node.send_get(key);
             
-        // Key not found, return error response
         if (value.empty()) {
             code = static_cast<int>(DhtResultCode::RetrieveFailed);
             response_object["version"] = std::string(NEROSHOP_DHT_VERSION);
@@ -184,17 +184,14 @@ std::vector<uint8_t> process(const std::vector<uint8_t>& request, Node& node, bo
         assert(params_object["value"].is_string());
         std::string value = params_object["value"].get<std::string>();
         
-        // Add the key-value pair to the key-value store
         code = (node.store(key, value) == false) 
                ? static_cast<int>(DhtResultCode::StoreFailed) 
                : static_cast<int>(DhtResultCode::Success);
             
-        if(code == 0) {
-            // Map keys to search terms for efficient search operations
+        if(code == static_cast<int>(DhtResultCode::Success)) {
             node.map(key, value);
         }
         
-        // Return response or error
         if(code != static_cast<int>(DhtResultCode::Success)) {
             response_object["version"] = std::string(NEROSHOP_DHT_VERSION);
             response_object["error"]["id"] = node.get_id();
@@ -214,19 +211,15 @@ std::vector<uint8_t> process(const std::vector<uint8_t>& request, Node& node, bo
         assert(params_object["value"].is_string());
         std::string value = params_object["value"].get<std::string>();
         
-        // Since we are not storing in hash table, we must validate the data before mapping it
         if(node.validate(key, value)) {
-        
-            // Store indexing data in database on receiving a "map" request
             node.map(key, value);
         }
     
-        // Return success response
         response_object["version"] = std::string(NEROSHOP_DHT_VERSION);
         response_object["response"]["id"] = node.get_id();
     }
     //-----------------------------------------------------
-    if((method == "set" || method == "put") && ipc_mode == true) { // For Sending Put Requests to Other Nodes - If ipc_mode is true, it means the "put" message is being sent from the local IPC client. In this case, the node.send_put(key, value) function is called to send the put message to the closest nodes in the routing table. Additionally, you can add a line of code to store the key-value pair in the local node's own hash table as well
+    if((method == "set" || method == "put") && ipc_mode == true) { // For Sending Put Requests to Other Nodes
         assert(request_object["args"].is_object());
         auto params_object = request_object["args"];
         assert(params_object["key"].is_string());
@@ -246,16 +239,16 @@ std::vector<uint8_t> process(const std::vector<uint8_t>& request, Node& node, bo
         }
                    
         // Store the key-value pair in your own node as well
-        if(node.cache(key, value)) {
+        if(node.store(key, value)) {
             if(put_messages_sent == 0) { 
                 code = static_cast<int>(DhtResultCode::StoreToSelf);
             }
             
-            // Map keys to search terms for efficient search operations
+            node.cache(key, value);
+            
             node.map(key, value);
         }
         
-        // Return response or error
         if((code == static_cast<int>(DhtResultCode::Success)) || (code == static_cast<int>(DhtResultCode::StorePartial))) {
             response_object["version"] = std::string(NEROSHOP_DHT_VERSION);
             response_object["response"]["id"] = node.get_id();
@@ -266,6 +259,39 @@ std::vector<uint8_t> process(const std::vector<uint8_t>& request, Node& node, bo
             response_object["error"]["message"] = get_dht_result_code_as_string(static_cast<DhtResultCode>(code));
         }
     }
+    //-----------------------------------------------------
+    if(method == "remove" && ipc_mode == true) {
+        assert(request_object["args"].is_object());
+        auto params_object = request_object["args"];
+        assert(params_object["key"].is_string());
+        std::string key = params_object["key"].get<std::string>();
+        
+        if(node.has_key(key)) {
+            code = (node.remove(key) == false) 
+                ? static_cast<int>(DhtResultCode::RemoveFailed) 
+                : static_cast<int>(DhtResultCode::Success);
+        }
+        
+        db::Sqlite3 * database = neroshop::get_database();
+        if(!database) throw std::runtime_error("database is not opened");
+        if(node.has_key_cached(key)) {
+            code = (database->execute_params("DELETE FROM hash_table WHERE key = ?1", { key }) != SQLITE_OK)
+                ? static_cast<int>(DhtResultCode::RemoveFailed) 
+                : static_cast<int>(DhtResultCode::Success);
+        }
+        
+        database->execute_params("DELETE FROM mappings WHERE key = ?1", { key });
+        
+        if(code != static_cast<int>(DhtResultCode::Success)) {
+            response_object["version"] = std::string(NEROSHOP_DHT_VERSION);
+            response_object["error"]["id"] = node.get_id();
+            response_object["error"]["code"] = code;
+            response_object["error"]["message"] = get_dht_result_code_as_string(static_cast<DhtResultCode>(code));
+        } else {
+            response_object["version"] = std::string(NEROSHOP_DHT_VERSION);
+            response_object["response"]["id"] = node.get_id();
+        }
+    }    
     //-----------------------------------------------------
     response_object["tid"] = tid; // transaction id - MUST be the same as the request object's tid
     response = nlohmann::json::to_msgpack(response_object);

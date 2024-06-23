@@ -791,8 +791,7 @@ std::string Node::send_get(const std::string& key) {
     if(has_key(key)) { return get(key); }
     
     if(has_key_cached(key)) {
-        value = get_cached(key);
-        if(!value.empty()) { return value; } // Validate is slow so don't validate our cached hash table
+        return get_cached(key); // Validate is slow so don't validate our cached hash table (for now)
     }
     //-----------------------------------------------
     // Second option is to check our providers to see if any holds the key we are looking for
@@ -958,18 +957,13 @@ void Node::send_map(const std::string& address, int port) {
 }
 
 void Node::send_map_v2(const std::string& address, int port) {
+    if(is_hardcoded()) return; // Hardcoded nodes cannot run this function
+    
     db::Sqlite3 * database = neroshop::get_database();
     if(!database) throw std::runtime_error("database is not opened");
     if(!database->table_exists("hash_table")) {
         return; // Table does not exist, exit function
     }
-    
-    nlohmann::json query_object;
-    query_object["query"] = "map";
-    query_object["args"]["id"] = this->id;
-    query_object["args"]["port"] = get_port(); // the port of the peer that is announcing itself (map will also be used to "announce" the peer or provider)
-    query_object["version"] = std::string(NEROSHOP_DHT_VERSION);
-    
     // Prepare statement
     std::string command = "SELECT key, value FROM hash_table;";
     sqlite3_stmt * stmt = nullptr;
@@ -982,38 +976,48 @@ void Node::send_map_v2(const std::string& address, int port) {
         std::cout << "\033[35;1mSending hash table map from cache ...\033[0m" << std::endl;
     }
     // Get all table values row by row
+    std::unordered_map<std::string, std::string> hash_table;
     while(sqlite3_step(stmt) == SQLITE_ROW) {
         std::string key, value;
         for(int i = 0; i < sqlite3_column_count(stmt); i++) {
             if(i == 0) {
                 key = (sqlite3_column_text(stmt, i) == nullptr) ? "" : reinterpret_cast<const char *>(sqlite3_column_text(stmt, i));
-                if(key.empty()) { continue; }
             }
             if(i == 1) {
                 value = (sqlite3_column_text(stmt, i) == nullptr) ? "" : reinterpret_cast<const char *>(sqlite3_column_text(stmt, i));
-                if(value.empty()) { continue; }
             }
             
-            query_object["args"]["key"] = key;
-            query_object["args"]["value"] = value;
-            std::string transaction_id = msgpack::generate_transaction_id();
-            query_object["tid"] = transaction_id; // tid should be unique for each map message
-            std::vector<uint8_t> map_message = nlohmann::json::to_msgpack(query_object);
-
-            auto receive_buffer = send_query(address, port, map_message);
-            // Process the response here
-            nlohmann::json map_response_message;
-            try {
-                map_response_message = nlohmann::json::from_msgpack(receive_buffer);
-            } catch (const std::exception& e) {
-                std::cerr << "Node \033[91m" << address << ":" << port << "\033[0m did not respond to send_map" << std::endl;
-            }
-            // Show response
-            std::cout << ((map_response_message.contains("error")) ? ("\033[91m") : ("\033[92m")) << map_response_message.dump() << "\033[0m\n";
+            if(key.empty() || value.empty()) { continue; }
+            
+            hash_table[key] = value;
         }
     }
     // Finalize statement
     sqlite3_finalize(stmt);
+    //------------------------------------------------------
+    nlohmann::json query_object;
+    query_object["query"] = "map";
+    query_object["args"]["id"] = this->id;
+    query_object["args"]["port"] = get_port();
+    query_object["version"] = std::string(NEROSHOP_DHT_VERSION);
+    
+    for (const auto& [key, value] : hash_table) {
+        query_object["args"]["key"] = key;
+        query_object["args"]["value"] = value;
+        std::string transaction_id = msgpack::generate_transaction_id();
+        query_object["tid"] = transaction_id;
+        std::vector<uint8_t> map_request = nlohmann::json::to_msgpack(query_object);
+
+        auto receive_buffer = send_query(address, port, map_request);
+        
+        nlohmann::json map_response;
+        try {
+            map_response = nlohmann::json::from_msgpack(receive_buffer);
+            std::cout << ((map_response.contains("error")) ? ("\033[91m") : ("\033[92m")) << map_response.dump() << "\033[0m\n";
+        } catch (const std::exception& e) {
+            std::cerr << "\033[91mNode " << address << ":" << port << " did not respond to send_map\033[0m" << std::endl;
+        }
+    }
 }
 
 std::vector<neroshop::Peer> Node::send_get_providers(const std::string& key) {
@@ -1472,7 +1476,7 @@ void Node::on_ping(const std::vector<uint8_t>& buffer, const struct sockaddr_in&
                         persist_routing_table((sender_ip == "127.0.0.1") ? this->public_ip_address : sender_ip, sender_port);
                         routing_table->print_table();
                     
-                        // Redistribute your indexing data to the new node that recently joined the network to make product/service listings more easily discoverable by the new node
+                        // Announce your node as a data provider to the new node that recently joined the network to make product/service listings more easily discoverable by the new node
                         send_map_v2((sender_ip == this->public_ip_address) ? "127.0.0.1" : sender_ip, sender_port);
                     }
                 }
@@ -1495,7 +1499,7 @@ void Node::on_map(const std::vector<uint8_t>& buffer, const struct sockaddr_in& 
             // Validate node id
             std::string calculated_node_id = generate_node_id((sender_ip == "127.0.0.1") ? this->public_ip_address : sender_ip, sender_port);
             if(sender_id == calculated_node_id) {
-                // Save this peer as the provider of this data hash
+                // Save this peer as the provider of this key
                 add_provider(key, Peer{ (sender_ip == "127.0.0.1") ? this->public_ip_address : sender_ip, sender_port });
             }
         }
@@ -1779,13 +1783,10 @@ std::vector<std::pair<std::string, std::string>> Node::get_data() const {
 
 std::string Node::get_cached(const std::string& key) {
     db::Sqlite3 * database = neroshop::get_database();
-    if(!database) throw std::runtime_error("database is not opened");
-    if(!database->table_exists("hash_table")) {
-        return "";
-    }
+    if(!database) { throw std::runtime_error("database is not opened"); }
+    if(!database->table_exists("hash_table")) { return ""; }
     
-    std::string value = database->get_text_params("SELECT value FROM hash_table WHERE key = ?1 LIMIT 1", { key });
-    return value;
+    return database->get_text_params("SELECT value FROM hash_table WHERE key = ?1 LIMIT 1", { key });
 }
 
 //-----------------------------------------------------------------------------
@@ -1799,7 +1800,7 @@ bool Node::has_key_cached(const std::string& key) const {
     if(!database) { throw std::runtime_error("database is not opened"); }
     if(!database->table_exists("hash_table")) { return false; }
     
-    return database->get_integer_params("SELECT EXISTS(SELECT key FROM hash_table WHERE key = ?1);", { key });
+    return database->get_integer_params("SELECT EXISTS(SELECT key FROM hash_table WHERE key = ?1)", { key });
 }
 
 bool Node::has_value(const std::string& value) const {

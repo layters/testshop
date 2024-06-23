@@ -22,6 +22,7 @@ enum class DhtResultCode {
     InvalidRequest,
     ParseError,
     DataVerificationFailed,
+    RemoveFailed,
 };
 
 static std::string get_dht_result_code_as_string(DhtResultCode result_code) {
@@ -62,6 +63,8 @@ static std::string get_dht_result_code_as_string(DhtResultCode result_code) {
             return "Invalid request";
         case DhtResultCode::ParseError:
             return "Parse error";
+        case DhtResultCode::RemoveFailed:
+            return "Remove failed";
         default:
             return "Unknown result code";
     }
