@@ -1,5 +1,8 @@
 #pragma once
 
+#include <iostream>
+#include <string>
+
 namespace neroshop {
 
 enum class DhtResultCode {
@@ -22,6 +25,7 @@ enum class DhtResultCode {
     InvalidRequest,
     ParseError,
     DataVerificationFailed,
+    DataRejected,
     RemoveFailed,
 };
 
@@ -63,6 +67,10 @@ static std::string get_dht_result_code_as_string(DhtResultCode result_code) {
             return "Invalid request";
         case DhtResultCode::ParseError:
             return "Parse error";
+        case DhtResultCode::DataVerificationFailed:
+            return "Data verification failed";
+        case DhtResultCode::DataRejected:
+            return "Data rejected";
         case DhtResultCode::RemoveFailed:
             return "Remove failed";
         default:

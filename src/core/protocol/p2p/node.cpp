@@ -662,6 +662,7 @@ std::vector<std::unique_ptr<neroshop::Node>> Node::send_find_node(const std::str
 }
 
 int Node::send_put(const std::string& key, const std::string& value) {
+    if(!is_value_republishable(value)) { return 0; } // Prevent listings from being published
     
     nlohmann::json query_object;
     query_object["query"] = "put";
@@ -1844,6 +1845,21 @@ bool Node::is_bootstrap_node() const {
 
 bool Node::is_dead() const {
     return (check_counter >= NEROSHOP_DHT_MAX_HEALTH_CHECKS);
+}
+
+bool Node::is_value_republishable(const std::string& value) {
+    nlohmann::json json;
+    try {
+        json = nlohmann::json::parse(value);
+    } catch (const nlohmann::json::parse_error& e) {
+        return false; // Invalid value, return false
+    }
+
+    if(!json.contains("metadata")) { return false; }
+    if(!json["metadata"].is_string()) { return false; }
+    std::string metadata = json["metadata"].get<std::string>();
+    
+    return (metadata != "listing");
 }
 
 //-----------------------------------------------------------------------------

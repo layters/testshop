@@ -145,6 +145,7 @@ public:
     bool has_key_cached(const std::string& key) const;
     bool has_value(const std::string& value) const;
     bool is_dead() const;
+    static bool is_value_republishable(const std::string& value);
 };
 
 }

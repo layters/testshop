@@ -237,6 +237,10 @@ std::vector<uint8_t> process(const std::vector<uint8_t>& request, Node& node, bo
         if((put_messages_sent < NEROSHOP_DHT_REPLICATION_FACTOR) && (put_messages_sent > 0)) {
             code = static_cast<int>(DhtResultCode::StorePartial);
         }
+        
+        if((!Node::is_value_republishable(value)) && (put_messages_sent == 0)) {
+            code = static_cast<int>(DhtResultCode::DataRejected);
+        }
                    
         // Store the key-value pair in your own node as well
         if(node.store(key, value)) {
