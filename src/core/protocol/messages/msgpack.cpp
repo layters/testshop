@@ -187,10 +187,6 @@ std::vector<uint8_t> process(const std::vector<uint8_t>& request, Node& node, bo
                ? static_cast<int>(DhtResultCode::StoreFailed) 
                : static_cast<int>(DhtResultCode::Success);
             
-        if(code == static_cast<int>(DhtResultCode::Success)) {
-            node.map(key, value);
-        }
-        
         if(code != static_cast<int>(DhtResultCode::Success)) {
             response_object["version"] = std::string(NEROSHOP_DHT_VERSION);
             response_object["error"]["id"] = node.get_id();
@@ -237,10 +233,6 @@ std::vector<uint8_t> process(const std::vector<uint8_t>& request, Node& node, bo
             code = static_cast<int>(DhtResultCode::StorePartial);
         }
         
-        if((!Node::is_value_republishable(value)) && (put_messages_sent == 0)) {
-            code = static_cast<int>(DhtResultCode::DataRejected);
-        }
-                   
         // Store the key-value pair in your own node as well
         if(node.store(key, value)) {
             if(put_messages_sent == 0) { 
@@ -296,7 +288,7 @@ std::vector<uint8_t> process(const std::vector<uint8_t>& request, Node& node, bo
         }
     }    
     //-----------------------------------------------------
-    response_object["tid"] = tid; // transaction id - MUST be the same as the request object's tid
+    response_object["tid"] = tid;
     response = nlohmann::json::to_msgpack(response_object);
     return response;
 }

@@ -317,8 +317,9 @@ QVariantList neroshop::UserController::getInventory(int sorting) const {
             // Parse the response
             nlohmann::json json = nlohmann::json::parse(response);
             if(json.contains("error")) {
-                int rescode = database->execute_params("DELETE FROM mappings WHERE key = ?1", { key.toStdString() });
-                if(rescode != SQLITE_OK) neroshop::print("sqlite error: DELETE failed", 1);
+                std::string response2;
+                client->remove(key.toStdString(), response2);
+                std::cout << "Received response (remove): " << response2 << "\n";
                 //emit productsCountChanged();
                 //emit inventoryChanged();
                 continue; // Key is lost or missing from DHT, skip to next iteration
@@ -536,8 +537,9 @@ QVariantList neroshop::UserController::getMessages() const {
             // Parse the response
             nlohmann::json json = nlohmann::json::parse(response);
             if(json.contains("error")) {
-                int rescode = database->execute_params("DELETE FROM mappings WHERE key = ?1", { key.toStdString() });
-                if(rescode != SQLITE_OK) neroshop::print("sqlite error: DELETE failed", 1);
+                std::string response2;
+                client->remove(key.toStdString(), response2);
+                std::cout << "Received response (remove): " << response2 << "\n";
                 continue; // Key is lost or missing from DHT, skip to next iteration
             }
             

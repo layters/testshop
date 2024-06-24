@@ -583,8 +583,9 @@ QVariantList neroshop::Backend::getProductRatings(const QString& product_id) {
             // Parse the response
             nlohmann::json json = nlohmann::json::parse(response);
             if(json.contains("error")) {
-                int rescode = database->execute_params("DELETE FROM mappings WHERE key = ?1", { key.toStdString() });
-                if(rescode != SQLITE_OK) neroshop::print("sqlite error: DELETE failed", 1);
+                std::string response2;
+                client->remove(key.toStdString(), response2);
+                std::cout << "Received response (remove): " << response2 << "\n";
                 //emit productRatingsChanged();
                 continue; // Key is lost or missing from DHT, skip to next iteration
             }
@@ -721,8 +722,9 @@ QVariantList neroshop::Backend::getSellerRatings(const QString& user_id) {
             // Parse the response
             nlohmann::json json = nlohmann::json::parse(response);
             if(json.contains("error")) {
-                int rescode = database->execute_params("DELETE FROM mappings WHERE key = ?1", { key.toStdString() });
-                if(rescode != SQLITE_OK) neroshop::print("sqlite error: DELETE failed", 1);
+                std::string response2;
+                client->remove(key.toStdString(), response2);
+                std::cout << "Received response (remove): " << response2 << "\n";
                 //emit sellerRatingsChanged();
                 continue; // Key is lost or missing from DHT, skip to next iteration
             }
@@ -792,8 +794,9 @@ QVariantMap neroshop::Backend::getUser(const QString& user_id) {
     // Parse the response
     nlohmann::json json = nlohmann::json::parse(response);
     if(json.contains("error")) {
-        int rescode = database->execute_params("DELETE FROM mappings WHERE key = ?1", { key });
-        if(rescode != SQLITE_OK) neroshop::print("sqlite error: DELETE failed", 1);
+        std::string response2;
+        client->remove(key, response2);
+        std::cout << "Received response (remove): " << response2 << "\n";
         return {}; // Key is lost or missing from DHT, skip to next iteration
     }
     
@@ -851,8 +854,9 @@ int neroshop::Backend::getStockAvailable(const QString& product_id) {
     // Parse the response
     nlohmann::json json = nlohmann::json::parse(response);
     if(json.contains("error")) {
-        int rescode = database->execute_params("DELETE FROM mappings WHERE key = ?1", { key });
-        if(rescode != SQLITE_OK) neroshop::print("sqlite error: DELETE failed", 1);
+        std::string response2;
+        client->remove(key, response2);
+        std::cout << "Received response (remove): " << response2 << "\n";
         return 0; // Key is lost or missing from DHT, return 
     }    
     
@@ -915,8 +919,9 @@ QVariantList neroshop::Backend::getInventory(const QString& user_id, bool hide_i
             // Parse the response
             nlohmann::json json = nlohmann::json::parse(response);
             if(json.contains("error")) {
-                int rescode = database->execute_params("DELETE FROM mappings WHERE key = ?1", { key.toStdString() });
-                if(rescode != SQLITE_OK) neroshop::print("sqlite error: DELETE failed", 1);
+                std::string response2;
+                client->remove(key.toStdString(), response2);
+                std::cout << "Received response (remove): " << response2 << "\n";
                 continue; // Key is lost or missing from DHT, skip to next iteration
             }
             
@@ -1061,8 +1066,9 @@ QVariantList neroshop::Backend::getListingsBySearchTerm(const QString& searchTer
             // Parse the response
             nlohmann::json json = nlohmann::json::parse(response);
             if(json.contains("error")) { 
-                int rescode = database->execute_params("DELETE FROM mappings WHERE key = ?1", { key.toStdString() });
-                if(rescode != SQLITE_OK) neroshop::print("sqlite error: DELETE failed", 1);
+                std::string response2;
+                client->remove(key.toStdString(), response2);
+                std::cout << "Received response (remove): " << response2 << "\n";
                 //emit categoryProductCountChanged();//(category_id);
                 //emit searchResultsChanged();
                 continue; // Key is lost or missing from DHT, skip to next iteration
@@ -1190,8 +1196,9 @@ QVariantList neroshop::Backend::getListings(int sorting, bool hide_illicit_items
             // Parse the response
             nlohmann::json json = nlohmann::json::parse(response);
             if(json.contains("error")) {
-                int rescode = database->execute_params("DELETE FROM mappings WHERE key = ?1", { key.toStdString() });
-                if(rescode != SQLITE_OK) neroshop::print("sqlite error: DELETE failed", 1);
+                std::string response2;
+                client->remove(key.toStdString(), response2);
+                std::cout << "Received response (remove): " << response2 << "\n";
                 //emit categoryProductCountChanged();//(category_id);
                 //emit searchResultsChanged();
                 continue; // Key is lost or missing from DHT, skip to next iteration
@@ -1416,8 +1423,9 @@ QVariantList neroshop::Backend::getListingsByCategory(int category_id, bool hide
             // Parse the response
             nlohmann::json json = nlohmann::json::parse(response);
             if(json.contains("error")) {
-                int rescode = database->execute_params("DELETE FROM mappings WHERE key = ?1", { key.toStdString() });
-                if(rescode != SQLITE_OK) neroshop::print("sqlite error: DELETE failed", 1);
+                std::string response2;
+                client->remove(key.toStdString(), response2);
+                std::cout << "Received response (remove): " << response2 << "\n";
                 //emit categoryProductCountChanged();//(category_id);
                 //emit searchResultsChanged();
                 continue; // Key is lost or missing from DHT, skip to next iteration
