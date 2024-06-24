@@ -29,13 +29,13 @@ std::vector<uint8_t> process(const std::vector<uint8_t>& request, Node& node, bo
     }
     catch(nlohmann::json::parse_error& exception) {
         neroshop::print("Error parsing client request", 1);
-        response_object["version"] = std::string(NEROSHOP_DHT_VERSION);//"0.1.0"; // neroshop version
-        response_object["error"]["code"] = static_cast<int>(DhtResultCode::ParseError); // "code" MUST be an integer
+        response_object["version"] = std::string(NEROSHOP_DHT_VERSION);
+        response_object["error"]["code"] = static_cast<int>(DhtResultCode::ParseError);
         response_object["error"]["message"] = "Parse error";
-        response_object["error"]["data"] = exception.what(); // A Primitive (non-object) or Structured (array) value which may be omitted
+        response_object["error"]["data"] = exception.what();
         response_object["tid"] = nullptr;
         response = nlohmann::json::to_msgpack(response_object);
-        #ifdef NEROSHOP_DEBUG//0
+        #ifdef NEROSHOP_DEBUG
         std::cout << "Response output:\n\033[91m" << response_object.dump(4) << "\033[0m\n";
         #endif
         return response;//return response_object.dump(4);
@@ -50,7 +50,7 @@ std::vector<uint8_t> process(const std::vector<uint8_t>& request, Node& node, bo
     // "args" must contain the querying node's ID 
     assert(request_object["args"].is_object());
     auto params_object = request_object["args"];
-    if(!ipc_mode) assert(params_object["id"].is_string()); // querying node's id
+    if(!ipc_mode) assert(params_object["id"].is_string());
     std::string requester_node_id = (ipc_mode) ? node.get_id() : params_object["id"].get<std::string>();
     
     if(!request_object.contains("tid") && !ipc_mode) {
@@ -68,7 +68,7 @@ std::vector<uint8_t> process(const std::vector<uint8_t>& request, Node& node, bo
     if(method == "find_node") {
         assert(request_object["args"].is_object());
         auto params_object = request_object["args"];
-        assert(params_object["target"].is_string()); // target (node id or key) sought after by the querying node
+        assert(params_object["target"].is_string());
         std::string target = params_object["target"].get<std::string>();
         
         response_object["version"] = std::string(NEROSHOP_DHT_VERSION);
@@ -97,8 +97,8 @@ std::vector<uint8_t> process(const std::vector<uint8_t>& request, Node& node, bo
         
         response_object["version"] = std::string(NEROSHOP_DHT_VERSION);
         response_object["response"]["id"] = node.get_id();
-        // Check if the queried node has peers for the requested key
         std::vector<Peer> peers = node.get_providers(key);
+        if(node.has_key(key)) { peers.push_back(Peer{ node.public_ip_address, node.get_port() }); }
         if(peers.empty()) {
             response_object["response"]["values"] = nlohmann::json::array();
         } else {
@@ -109,9 +109,8 @@ std::vector<uint8_t> process(const std::vector<uint8_t>& request, Node& node, bo
                     {"port", p.port}
                 };
                 peers_array.push_back(peer_object);
-                //std::cout << "Peer IP address: " << p.address << ", Peer port: " << p.port << std::endl;
             }
-            response_object["response"]["values"] = peers_array; // If the queried node has peers for the infohash, they are returned in a key "values" as a list of strings. Each string containing "compact" format peer information for a single peer
+            response_object["response"]["values"] = peers_array;
         }
     }
     //-----------------------------------------------------
@@ -176,7 +175,7 @@ std::vector<uint8_t> process(const std::vector<uint8_t>& request, Node& node, bo
         }
     }
     //-----------------------------------------------------
-    if(method == "put" && ipc_mode == false) { // For Processing Put Requests from Other Nodes - If ipc_mode is false, it means the "put" message is being processed from other nodes. In this case, the key-value pair is stored in the node's own key-value store using the node.store(key, value) function.
+    if(method == "put" && ipc_mode == false) { // For Processing Put Requests from Other Nodes
         assert(request_object["args"].is_object());
         auto params_object = request_object["args"];
         assert(params_object["key"].is_string());

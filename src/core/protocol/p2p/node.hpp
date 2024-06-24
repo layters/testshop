@@ -14,7 +14,7 @@ const int NUM_BITS = 256;
 
 namespace neroshop {
 
-class RoutingTable; // forward declaration
+class RoutingTable;
 class KeyMapper;
 
 struct Peer {
@@ -38,7 +38,9 @@ private:
     std::unique_ptr<RoutingTable> routing_table; // Pointer to the node's routing table
     friend class RoutingTable;
     friend class Server;
+public:
     std::string public_ip_address;
+private:
     bool bootstrap;
     int check_counter; // Counter to track the number of consecutive failed checks
     mutable std::shared_mutex data_mutex;
