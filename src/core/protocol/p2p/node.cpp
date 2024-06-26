@@ -600,7 +600,7 @@ bool Node::send_ping(const std::string& address, int port) {
     try {
         pong_message = nlohmann::json::from_msgpack(receive_buffer);
     } catch (const std::exception& e) {
-        std::cerr << "Node \033[91m" << address << ":" << port << "\033[0m did not respond" << std::endl;
+        std::cerr << "\033[91mNode " << address << ":" << port << " did not respond\033[0m" << std::endl;
         return false;
     }
     if (!pong_message.contains("response") || pong_message.contains("error")) {
@@ -1855,11 +1855,13 @@ bool Node::is_value_republishable(const std::string& value) {
         return false; // Invalid value, return false
     }
 
+    if(!json.is_object()) { return false; }
     if(!json.contains("metadata")) { return false; }
     if(!json["metadata"].is_string()) { return false; }
     std::string metadata = json["metadata"].get<std::string>();
     
-    return (metadata != "listing");
+    std::vector<std::string> non_publishable_metadatas = { "listing" };
+    return (std::find(non_publishable_metadatas.begin(), non_publishable_metadatas.end(), metadata) == non_publishable_metadatas.end());
 }
 
 //-----------------------------------------------------------------------------
