@@ -10,6 +10,7 @@
 #include "../p2p/dht_rescode.hpp"
 #include "../p2p/node.hpp"
 #include "../p2p/routing_table.hpp"
+#include "../../database/database.hpp"
 
 namespace neroshop {
 
@@ -28,13 +29,13 @@ std::vector<uint8_t> process(const std::vector<uint8_t>& request, Node& node, bo
     }
     catch(nlohmann::json::parse_error& exception) {
         neroshop::print("Error parsing client request", 1);
-        response_object["version"] = std::string(NEROSHOP_DHT_VERSION);//"0.1.0"; // neroshop version
-        response_object["error"]["code"] = static_cast<int>(DhtResultCode::ParseError); // "code" MUST be an integer
+        response_object["version"] = std::string(NEROSHOP_DHT_VERSION);
+        response_object["error"]["code"] = static_cast<int>(DhtResultCode::ParseError);
         response_object["error"]["message"] = "Parse error";
-        response_object["error"]["data"] = exception.what(); // A Primitive (non-object) or Structured (array) value which may be omitted
+        response_object["error"]["data"] = exception.what();
         response_object["tid"] = nullptr;
         response = nlohmann::json::to_msgpack(response_object);
-        #ifdef NEROSHOP_DEBUG//0
+        #ifdef NEROSHOP_DEBUG
         std::cout << "Response output:\n\033[91m" << response_object.dump(4) << "\033[0m\n";
         #endif
         return response;//return response_object.dump(4);
@@ -49,7 +50,7 @@ std::vector<uint8_t> process(const std::vector<uint8_t>& request, Node& node, bo
     // "args" must contain the querying node's ID 
     assert(request_object["args"].is_object());
     auto params_object = request_object["args"];
-    if(!ipc_mode) assert(params_object["id"].is_string()); // querying node's id
+    if(!ipc_mode) assert(params_object["id"].is_string());
     std::string requester_node_id = (ipc_mode) ? node.get_id() : params_object["id"].get<std::string>();
     
     if(!request_object.contains("tid") && !ipc_mode) {
@@ -57,7 +58,7 @@ std::vector<uint8_t> process(const std::vector<uint8_t>& request, Node& node, bo
         return {};
     }
     auto tid = (ipc_mode) ? nullptr : request_object["tid"];
-    int code = 0;
+    int code = static_cast<int>(DhtResultCode::Success);
     //-----------------------------------------------------
     if(method == "ping") {
         response_object["version"] = std::string(NEROSHOP_DHT_VERSION);
@@ -67,7 +68,7 @@ std::vector<uint8_t> process(const std::vector<uint8_t>& request, Node& node, bo
     if(method == "find_node") {
         assert(request_object["args"].is_object());
         auto params_object = request_object["args"];
-        assert(params_object["target"].is_string()); // target (node id or key) sought after by the querying node
+        assert(params_object["target"].is_string());
         std::string target = params_object["target"].get<std::string>();
         
         response_object["version"] = std::string(NEROSHOP_DHT_VERSION);
@@ -96,22 +97,10 @@ std::vector<uint8_t> process(const std::vector<uint8_t>& request, Node& node, bo
         
         response_object["version"] = std::string(NEROSHOP_DHT_VERSION);
         response_object["response"]["id"] = node.get_id();
-        // Check if the queried node has peers for the requested key
         std::vector<Peer> peers = node.get_providers(key);
+        if(node.has_key(key)) { peers.push_back(Peer{ node.public_ip_address, node.get_port() }); }
         if(peers.empty()) {
-            // WARNING!!! THIS CODE MAY BLOCK THE GUI.
-            std::vector<Node*> closest_nodes = node.find_node(key, NEROSHOP_DHT_MAX_CLOSEST_NODES);
-            std::vector<nlohmann::json> nodes_array;
-            for (const auto& n : closest_nodes) {
-                nlohmann::json node_object = {
-                    {"id", n->get_id()},
-                    {"ip_address", n->get_ip_address()},
-                    {"port", n->get_port()}
-                };
-                nodes_array.push_back(node_object);
-                //std::cout << "Node ID: " << n->get_id() << ", Node IP address: " << n->get_ip_address() << ", Node port: " << n->get_port() << std::endl;
-            }
-            response_object["response"]["nodes"] = nodes_array; // If the queried node has no peers for the infohash, a key "nodes" is returned containing the K nodes in the queried nodes routing table closest to the infohash supplied in the query
+            response_object["response"]["values"] = nlohmann::json::array();
         } else {
             std::vector<nlohmann::json> peers_array;
             for (const auto& p : peers) {
@@ -120,9 +109,8 @@ std::vector<uint8_t> process(const std::vector<uint8_t>& request, Node& node, bo
                     {"port", p.port}
                 };
                 peers_array.push_back(peer_object);
-                //std::cout << "Peer IP address: " << p.address << ", Peer port: " << p.port << std::endl;
             }
-            response_object["response"]["values"] = peers_array; // If the queried node has peers for the infohash, they are returned in a key "values" as a list of strings. Each string containing "compact" format peer information for a single peer
+            response_object["response"]["values"] = peers_array;
         }
     }
     //-----------------------------------------------------
@@ -134,7 +122,9 @@ std::vector<uint8_t> process(const std::vector<uint8_t>& request, Node& node, bo
         
         std::string value;
         if(!node.has_key(key)) {
-            value = node.get_cached(key);
+            if(node.has_key_cached(key)) {
+                value = node.get_cached(key);
+            }
         } else {
             value = node.get(key);
         }
@@ -170,11 +160,8 @@ std::vector<uint8_t> process(const std::vector<uint8_t>& request, Node& node, bo
             return response;
         }
                         
-        // Send get messages to the closest nodes in your routing table (IPC mode)
-        // But first, look up the value in the node's own hash table
         std::string value = node.send_get(key);
             
-        // Key not found, return error response
         if (value.empty()) {
             code = static_cast<int>(DhtResultCode::RetrieveFailed);
             response_object["version"] = std::string(NEROSHOP_DHT_VERSION);
@@ -188,7 +175,7 @@ std::vector<uint8_t> process(const std::vector<uint8_t>& request, Node& node, bo
         }
     }
     //-----------------------------------------------------
-    if(method == "put" && ipc_mode == false) { // For Processing Put Requests from Other Nodes - If ipc_mode is false, it means the "put" message is being processed from other nodes. In this case, the key-value pair is stored in the node's own key-value store using the node.store(key, value) function.
+    if(method == "put" && ipc_mode == false) { // For Processing Put Requests from Other Nodes
         assert(request_object["args"].is_object());
         auto params_object = request_object["args"];
         assert(params_object["key"].is_string());
@@ -196,17 +183,10 @@ std::vector<uint8_t> process(const std::vector<uint8_t>& request, Node& node, bo
         assert(params_object["value"].is_string());
         std::string value = params_object["value"].get<std::string>();
         
-        // Add the key-value pair to the key-value store
         code = (node.store(key, value) == false) 
                ? static_cast<int>(DhtResultCode::StoreFailed) 
                : static_cast<int>(DhtResultCode::Success);
             
-        if(code == 0) {
-            // Map keys to search terms for efficient search operations
-            node.map(key, value);
-        }
-        
-        // Return response or error
         if(code != static_cast<int>(DhtResultCode::Success)) {
             response_object["version"] = std::string(NEROSHOP_DHT_VERSION);
             response_object["error"]["id"] = node.get_id();
@@ -226,19 +206,15 @@ std::vector<uint8_t> process(const std::vector<uint8_t>& request, Node& node, bo
         assert(params_object["value"].is_string());
         std::string value = params_object["value"].get<std::string>();
         
-        // Since we are not storing in hash table, we must validate the data before mapping it
         if(node.validate(key, value)) {
-        
-            // Store indexing data in database on receiving a "map" request
             node.map(key, value);
         }
     
-        // Return success response
         response_object["version"] = std::string(NEROSHOP_DHT_VERSION);
         response_object["response"]["id"] = node.get_id();
     }
     //-----------------------------------------------------
-    if((method == "set" || method == "put") && ipc_mode == true) { // For Sending Put Requests to Other Nodes - If ipc_mode is true, it means the "put" message is being sent from the local IPC client. In this case, the node.send_put(key, value) function is called to send the put message to the closest nodes in the routing table. Additionally, you can add a line of code to store the key-value pair in the local node's own hash table as well
+    if((method == "set" || method == "put") && ipc_mode == true) { // For Sending Put Requests to Other Nodes
         assert(request_object["args"].is_object());
         auto params_object = request_object["args"];
         assert(params_object["key"].is_string());
@@ -256,21 +232,18 @@ std::vector<uint8_t> process(const std::vector<uint8_t>& request, Node& node, bo
         if((put_messages_sent < NEROSHOP_DHT_REPLICATION_FACTOR) && (put_messages_sent > 0)) {
             code = static_cast<int>(DhtResultCode::StorePartial);
         }
-                   
+        
         // Store the key-value pair in your own node as well
         if(node.store(key, value)) {
             if(put_messages_sent == 0) { 
                 code = static_cast<int>(DhtResultCode::StoreToSelf);
             }
             
-            // Store your local client's own data on-disk (in case of outage)
             node.cache(key, value);
             
-            // Map keys to search terms for efficient search operations
             node.map(key, value);
         }
         
-        // Return response or error
         if((code == static_cast<int>(DhtResultCode::Success)) || (code == static_cast<int>(DhtResultCode::StorePartial))) {
             response_object["version"] = std::string(NEROSHOP_DHT_VERSION);
             response_object["response"]["id"] = node.get_id();
@@ -282,7 +255,40 @@ std::vector<uint8_t> process(const std::vector<uint8_t>& request, Node& node, bo
         }
     }
     //-----------------------------------------------------
-    response_object["tid"] = tid; // transaction id - MUST be the same as the request object's tid
+    if(method == "remove" && ipc_mode == true) {
+        assert(request_object["args"].is_object());
+        auto params_object = request_object["args"];
+        assert(params_object["key"].is_string());
+        std::string key = params_object["key"].get<std::string>();
+        
+        if(node.has_key(key)) {
+            code = (node.remove(key) == false) 
+                ? static_cast<int>(DhtResultCode::RemoveFailed) 
+                : static_cast<int>(DhtResultCode::Success);
+        }
+        
+        db::Sqlite3 * database = neroshop::get_database();
+        if(!database) throw std::runtime_error("database is not opened");
+        if(node.has_key_cached(key)) {
+            code = (database->execute_params("DELETE FROM hash_table WHERE key = ?1", { key }) != SQLITE_OK)
+                ? static_cast<int>(DhtResultCode::RemoveFailed) 
+                : static_cast<int>(DhtResultCode::Success);
+        }
+        
+        database->execute_params("DELETE FROM mappings WHERE key = ?1", { key });
+        
+        if(code != static_cast<int>(DhtResultCode::Success)) {
+            response_object["version"] = std::string(NEROSHOP_DHT_VERSION);
+            response_object["error"]["id"] = node.get_id();
+            response_object["error"]["code"] = code;
+            response_object["error"]["message"] = get_dht_result_code_as_string(static_cast<DhtResultCode>(code));
+        } else {
+            response_object["version"] = std::string(NEROSHOP_DHT_VERSION);
+            response_object["response"]["id"] = node.get_id();
+        }
+    }    
+    //-----------------------------------------------------
+    response_object["tid"] = tid;
     response = nlohmann::json::to_msgpack(response_object);
     return response;
 }

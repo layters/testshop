@@ -124,9 +124,6 @@ void Seller::delist_item(const std::string& listing_key) {
         assert(value_obj.is_object());//std::cout << value_obj.dump(4) << "\n";
         std::string metadata = value_obj["metadata"].get<std::string>();
         if (metadata != "listing") { std::cerr << "Invalid metadata. \"listing\" expected, got \"" << metadata << "\" instead\n"; return; }
-        // Skip if already delisted
-        int quantity = value_obj["quantity"];
-        if(quantity <= 0) { return; }
         // Verify ownership
         std::string seller_id = value_obj["seller_id"].get<std::string>();
         if(seller_id != wallet->get_primary_address()) {
@@ -138,20 +135,9 @@ void Seller::delist_item(const std::string& listing_key) {
         std::string old_signature = value_obj["signature"].get<std::string>();
         bool self_verified = wallet->verify_message(listing_id, old_signature);
         if(!self_verified) { neroshop::print("Data verification failed.", 1); return; }
-        // Might be a good idea to set the stock quantity to zero beforehand
-        value_obj["quantity"] = 0;
-        // Not possible to completely remove data from DHT unless it originally had an expiration date
-        // So the least we could do is set the quantity to zero
-        //value_obj["expiration_date"] = neroshop::timestamp::get_utc_timestamp_after_duration(24, "hour");
-        // Re-sign to reflect the modification
-        std::string signature = wallet->sign_message(listing_id, monero_message_signature_type::SIGN_WITH_SPEND_KEY);
-        value_obj["signature"] = signature;
-        value_obj["last_updated"] = neroshop::timestamp::get_current_utc_timestamp();
-        // Send set request containing the updated value with the same key as before
-        std::string modified_value = value_obj.dump();
-        std::string response;
-        client->set(listing_key, modified_value, response);
-        std::cout << "Received response (set): " << response << "\n";
+        // Remove listing from database
+        client->remove(listing_key, response);
+        std::cout << "Received response (remove): " << response << "\n";
     }
 }
 ////////////////////
