@@ -779,8 +779,6 @@ int Node::send_store(const std::string& key, const std::string& value) {
 }
 
 std::string Node::send_get(const std::string& key) {
-    std::string value = "";
-
     nlohmann::json query_object;
     query_object["query"] = "get";
     query_object["args"]["id"] = this->id;
@@ -828,7 +826,7 @@ std::string Node::send_get(const std::string& key) {
                 continue; 
             }
             if(response_get.contains("response") && response_get["response"].contains("value")) {
-                value = response_get["response"]["value"].get<std::string>();
+                auto value = response_get["response"]["value"].get<std::string>();
                 if (validate(key, value)) { 
                     return value;
                 }
@@ -869,7 +867,7 @@ std::string Node::send_get(const std::string& key) {
                 continue; 
             }
             if(response_get.contains("response") && response_get["response"].contains("value")) {
-                value = response_get["response"]["value"].get<std::string>();
+                auto value = response_get["response"]["value"].get<std::string>();
                 if (validate(key, value)) { 
                     return value;
                 }
@@ -877,7 +875,7 @@ std::string Node::send_get(const std::string& key) {
         }
     }
     //-----------------------------------------------
-    return value;
+    return "";
 }
 
 std::string Node::send_find_value(const std::string& key) {
