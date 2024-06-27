@@ -98,7 +98,7 @@ std::vector<uint8_t> process(const std::vector<uint8_t>& request, Node& node, bo
         response_object["version"] = std::string(NEROSHOP_DHT_VERSION);
         response_object["response"]["id"] = node.get_id();
         std::vector<Peer> peers = node.get_providers(key);
-        if(node.has_key(key)) { peers.push_back(Peer{ node.public_ip_address, node.get_port() }); }
+        if(node.has_key(key) || node.has_key_cached(key)) { peers.push_back(Peer{ node.public_ip_address, node.get_port() }); }
         if(peers.empty()) {
             response_object["response"]["values"] = nlohmann::json::array();
         } else {
