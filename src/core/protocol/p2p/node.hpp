@@ -9,6 +9,7 @@
 #include <memory> // std::unique_ptr
 #include <functional> // std::function
 #include <shared_mutex>
+#include <deque>
 
 const int NUM_BITS = 256;
 
@@ -29,7 +30,7 @@ private:
     std::string id;
     std::string version;
     std::unordered_map<std::string, std::string> data; // internal hash table that stores key-value pairs 
-    std::unordered_map<std::string, std::vector<Peer>> providers; // maps a data's hash (key) to a vector of Peers who have the data
+    std::unordered_map<std::string, std::deque<Peer>> providers; // maps a data's hash (key) to a vector of Peers who have the data
     ////std::unique_ptr<Server> server;// a node acts as a server so it should have a server object
     int sockfd;
     struct sockaddr_in sockin; // IPV4
@@ -81,7 +82,7 @@ public:
     void send_remove(const std::string& key);
     void send_map(const std::string& address, int port); // Distributes indexing data to a single node
     void send_map_v2(const std::string& address, int port);
-    std::vector<Peer> send_get_providers(const std::string& data_hash);
+    std::deque<Peer> send_get_providers(const std::string& data_hash);
     //---------------------------------------------------
     ////std::vector<Node*> lookup(const std::string& key); // In Kademlia, the primary purpose of the lookup function is to find the nodes responsible for storing a particular key in the DHT, rather than retrieving the actual value of the key. The lookup function helps in locating the nodes that are likely to have the key or be able to provide information about it.
     //---------------------------------------------------
@@ -115,11 +116,12 @@ public:
     std::string get(const std::string& key) const; // A query to get a specific value stored in the DHT.         // Retrieves the value associated with the key from the DHT
     std::string find_value(const std::string& key) const;
     int remove(const std::string& key); // Remove a key-value pair from the DHT
+    int remove_all(); // Remove all data from in-memory hash table
     void map(const std::string& key, const std::string& value); // Maps search terms to keys
     void add_provider(const std::string& data_hash, const Peer& peer);
     void remove_providers(const std::string& data_hash);
     void remove_provider(const std::string& data_hash, const std::string& address, int port);
-    std::vector<Peer> get_providers(const std::string& data_hash) const; // A query to get a list of peers for a specific torrent or infohash.
+    std::deque<Peer> get_providers(const std::string& data_hash) const; // A query to get a list of peers for a specific torrent or infohash.
     //---------------------------------------------------
     std::string get_id() const; // get ID of this node
     std::string get_ip_address() const;

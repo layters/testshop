@@ -306,6 +306,11 @@ int Node::remove(const std::string& key) {
     return (data.count(key) == 0); // boolean
 }
 
+int Node::remove_all() {
+    data.clear();
+    return data.empty();
+}
+
 void Node::map(const std::string& key, const std::string& value) {
     key_mapper->add(key, value);
 }
@@ -392,7 +397,7 @@ void Node::add_provider(const std::string& data_hash, const Peer& peer) {
         //std::cout << "Provider (\033[36m" << peer.address + ":" + std::to_string(peer.port) << "\033[0m) for hash (" << data_hash << ") has been added" << std::endl;
     } else {
         // If the data_hash is not in the map, create a new vector of peers and add the peer
-        providers.emplace(data_hash, std::vector<Peer>{peer});
+        providers.emplace(data_hash, std::deque<Peer>{peer});
         //std::cout << "Provider (\033[36m" << peer.address + ":" + std::to_string(peer.port) << "\033[0m) for hash (" << data_hash << ") has been added (0)" << std::endl;
     }
 }
@@ -428,8 +433,8 @@ void Node::remove_provider(const std::string& data_hash, const std::string& addr
     }
 }
 
-std::vector<neroshop::Peer> Node::get_providers(const std::string& data_hash) const {
-    std::vector<Peer> peers = {};
+std::deque<neroshop::Peer> Node::get_providers(const std::string& data_hash) const {
+    std::deque<Peer> peers = {};
 
     // Check if data_hash is in providers
     auto data_hash_it = providers.find(data_hash);
@@ -779,8 +784,6 @@ int Node::send_store(const std::string& key, const std::string& value) {
 }
 
 std::string Node::send_get(const std::string& key) {
-    std::string value = "";
-
     nlohmann::json query_object;
     query_object["query"] = "get";
     query_object["args"]["id"] = this->id;
@@ -796,7 +799,7 @@ std::string Node::send_get(const std::string& key) {
     }
     //-----------------------------------------------
     // Second option is to check our providers to see if any holds the key we are looking for
-    std::vector<neroshop::Peer> my_providers = get_providers(key);
+    auto my_providers = get_providers(key);
     if(!my_providers.empty()) {
         std::cout << "Found " << my_providers.size() << " providers for key (" << key << ")\n";
         // Now contact each provider for the value to the key
@@ -828,7 +831,7 @@ std::string Node::send_get(const std::string& key) {
                 continue; 
             }
             if(response_get.contains("response") && response_get["response"].contains("value")) {
-                value = response_get["response"]["value"].get<std::string>();
+                auto value = response_get["response"]["value"].get<std::string>();
                 if (validate(key, value)) { 
                     return value;
                 }
@@ -838,7 +841,7 @@ std::string Node::send_get(const std::string& key) {
     //-----------------------------------------------
     // Third option is to send a get_providers request to the nodes in our routing table that are closest to the key
     // Then get the value for the given key from the received providers
-    std::vector<neroshop::Peer> providers = send_get_providers(key);
+    auto providers = send_get_providers(key);
     if(!providers.empty()) {
         std::cout << "Found " << providers.size() << " providers for key (" << key << ")\n";
         for(auto const& peer : providers) {
@@ -869,7 +872,7 @@ std::string Node::send_get(const std::string& key) {
                 continue; 
             }
             if(response_get.contains("response") && response_get["response"].contains("value")) {
-                value = response_get["response"]["value"].get<std::string>();
+                auto value = response_get["response"]["value"].get<std::string>();
                 if (validate(key, value)) { 
                     return value;
                 }
@@ -877,7 +880,7 @@ std::string Node::send_get(const std::string& key) {
         }
     }
     //-----------------------------------------------
-    return value;
+    return "";
 }
 
 std::string Node::send_find_value(const std::string& key) {
@@ -1021,8 +1024,8 @@ void Node::send_map_v2(const std::string& address, int port) {
     }
 }
 
-std::vector<neroshop::Peer> Node::send_get_providers(const std::string& key) {
-    std::vector<neroshop::Peer> peers = {};
+std::deque<neroshop::Peer> Node::send_get_providers(const std::string& key) {
+    std::deque<neroshop::Peer> peers = {};
     std::set<std::pair<std::string, uint16_t>> unique_peers; // Set to store unique IP-port pairs
     //-----------------------------------------------
     nlohmann::json query_object;
