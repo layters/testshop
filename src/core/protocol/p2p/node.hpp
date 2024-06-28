@@ -115,6 +115,7 @@ public:
     std::string get(const std::string& key) const; // A query to get a specific value stored in the DHT.         // Retrieves the value associated with the key from the DHT
     std::string find_value(const std::string& key) const;
     int remove(const std::string& key); // Remove a key-value pair from the DHT
+    int remove_all(); // Remove all data from in-memory hash table
     void map(const std::string& key, const std::string& value); // Maps search terms to keys
     void add_provider(const std::string& data_hash, const Peer& peer);
     void remove_providers(const std::string& data_hash);

@@ -306,6 +306,11 @@ int Node::remove(const std::string& key) {
     return (data.count(key) == 0); // boolean
 }
 
+int Node::remove_all() {
+    data.clear();
+    return data.empty();
+}
+
 void Node::map(const std::string& key, const std::string& value) {
     key_mapper->add(key, value);
 }
