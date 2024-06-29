@@ -158,7 +158,7 @@ Page {
                         Component.onCompleted: console.log("tx count", /*txRepeater.*/count)
                         model: Wallet.transfers
                         delegate: Item {
-                            width: parent.width
+                            width: txList.width
                             height: txDetailsRect.visible ? (txRect.height + txDetailsRect.height) : txRect.height
                             Column {
                                 anchors.fill: parent
@@ -229,11 +229,20 @@ Page {
                                             }
                                             onClicked: {
                                                 let network_type = Wallet.getNetworkTypeString()
+                                                let url = "https://" + settingsDialog.blockExplorer
                                                 if(network_type != "mainnet") {
-                                                    Qt.openUrlExternally("https://" + network_type + "." + settingsDialog.blockExplorer)
+                                                    if(settingsDialog.blockExplorer == "xmrchain.net") {
+                                                        url = "https://" + network_type + "." + settingsDialog.blockExplorer + "/search?value=%1".arg(modelData.tx_id)
+                                                    }
+                                                    Qt.openUrlExternally(url)
                                                     return
                                                 }
-                                                Qt.openUrlExternally("https://" + settingsDialog.blockExplorer)
+                                                
+                                                if(settingsDialog.blockExplorer == "xmrchain.net") {
+                                                    url = url + "/tx/%1".arg(modelData.tx_id)
+                                                }
+                                                
+                                                Qt.openUrlExternally(url)
                                             }
                                             MouseArea { 
                                                 anchors.fill: parent
@@ -290,14 +299,14 @@ Page {
                                         anchors.margins: 20
                                         spacing: 15
                                         Text {
-                                            text: qsTr("Fee: %1").arg("")
+                                            text: qsTr("Fee: %1").arg(modelData.fee)
                                             color: balanceTxColumn.textColor
                                         }
                                         Text {
-                                            text: qsTr("Transaction ID: %1").arg("")
+                                            text: qsTr("Transaction ID: %1").arg(modelData.tx_id)
                                             color: balanceTxColumn.textColor
                                         }
-                                        Text {
+                                        /*Text {
                                             text: qsTr("Destination address: %1").arg("")
                                             color: balanceTxColumn.textColor
                                             visible: !modelData.is_incoming
@@ -313,7 +322,7 @@ Page {
                                         Text {
                                             text: qsTr("Timestamp: %1").arg("")
                                             color: balanceTxColumn.textColor
-                                        }
+                                        }*/
                                     }
                                 }
                             } // Column

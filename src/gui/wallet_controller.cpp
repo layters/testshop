@@ -1,5 +1,7 @@
 #include "wallet_controller.hpp"
 
+#include "../core/tools/string.hpp"
+
 neroshop::WalletController::WalletController(QObject *parent) : QObject(parent)
 {
     _wallet = std::make_unique<neroshop::Wallet>(WalletType::Monero); // TODO: replace with: std::make_unique<neroshop::MoneroWallet>();
@@ -297,8 +299,30 @@ QVariantList neroshop::WalletController::getTransfers() const {
             monero_tx_wallet * tx_wallet = transfer->m_tx.get(); // refer to: https://woodser.github.io/monero-cpp/doxygen/structmonero_1_1monero__tx__wallet.html
             ////transfer_object.insert("", tx_wallet->);
             //std::cout << ": " << tx_wallet-> << "\n";
+            //--------------------------------------------------------
+            rapidjson::Document doc;
+            doc.SetObject(); // Set it as an empty object
+            rapidjson::Value value = tx_wallet->to_rapidjson_val(doc.GetAllocator());
             
-            // TODO: get fees, tx id, block height, note, and timestamp
+            rapidjson::StringBuffer buffer;
+            rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
+            value.Accept(writer);
+
+            std::string jsonStr = buffer.GetString();
+            doc.Parse(jsonStr.c_str());
+            //--------------------------------------------------------
+            if (doc.HasMember("fee") && doc["fee"].IsInt()) {
+                uint64_t fee = doc["fee"].GetInt();
+                std::string feeStr = neroshop::string::precision((fee * PICONERO), 12);
+                transfer_object.insert("fee", QString::fromStdString(feeStr));
+            }
+            if (doc.HasMember("hash") && doc["hash"].IsString()) {
+                std::string txId = doc["hash"].GetString();
+                transfer_object.insert("tx_id", QString::fromStdString(txId));
+                transfer_object.insert("hash", QString::fromStdString(txId));
+            }
+
+            // TODO: get block height, note, and timestamp
         
             transfers_list.append(transfer_object);
         }
