@@ -1739,7 +1739,7 @@ int Node::get_idle_peer_count() const {
     for (auto& bucket : routing_table->buckets) {
         for (auto& node : bucket.second) {
             if (node.get() == nullptr) continue;
-            if (node->get_status() == NodeStatus::Idle) {
+            if (node->get_status() == NodeStatus::Inactive) {
                 idle_count++;
             }
         }
@@ -1749,15 +1749,15 @@ int Node::get_idle_peer_count() const {
 
 neroshop::NodeStatus Node::get_status() const {
     if(check_counter == 0) return NodeStatus::Active;
-    if(check_counter <= (NEROSHOP_DHT_MAX_HEALTH_CHECKS - 1)) return NodeStatus::Idle;
-    if(check_counter >= NEROSHOP_DHT_MAX_HEALTH_CHECKS) return NodeStatus::Inactive;
+    if(check_counter <= (NEROSHOP_DHT_MAX_HEALTH_CHECKS - 1)) return NodeStatus::Inactive;
+    if(check_counter >= NEROSHOP_DHT_MAX_HEALTH_CHECKS) return NodeStatus::Dead;
     return NodeStatus::Inactive;
 }
 
 std::string Node::get_status_as_string() const {
     if(check_counter == 0) return "Active";
-    if(check_counter <= (NEROSHOP_DHT_MAX_HEALTH_CHECKS - 1)) return "Idle";
-    if(check_counter >= NEROSHOP_DHT_MAX_HEALTH_CHECKS) return "Inactive";
+    if(check_counter <= (NEROSHOP_DHT_MAX_HEALTH_CHECKS - 1)) return "Inactive";
+    if(check_counter >= NEROSHOP_DHT_MAX_HEALTH_CHECKS) return "Dead";
     return "Unknown";
 }
 
