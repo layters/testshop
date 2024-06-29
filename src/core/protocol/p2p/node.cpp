@@ -590,9 +590,9 @@ bool Node::send_ping(const std::string& address, int port) {
     query_object["tid"] = transaction_id;
     query_object["query"] = "ping";
     query_object["args"]["id"] = this->id;
-    int my_port = get_port();
-    if(my_port != NEROSHOP_P2P_DEFAULT_PORT) {
-        query_object["args"]["port"] = my_port; // for testing on local network. This cannot be removed since the two primary sockets used in the protocol have different ports with the "port" being the actual port
+    int our_port = get_port();
+    if(our_port != NEROSHOP_P2P_DEFAULT_PORT) {
+        query_object["args"]["port"] = our_port; // for testing on local network. This cannot be removed since the two primary sockets used in the protocol have different ports with the "port" being the actual port
     }
     query_object["version"] = std::string(NEROSHOP_DHT_VERSION);
     
@@ -799,11 +799,11 @@ std::string Node::send_get(const std::string& key) {
     }
     //-----------------------------------------------
     // Second option is to check our providers to see if any holds the key we are looking for
-    auto my_providers = get_providers(key);
-    if(!my_providers.empty()) {
-        std::cout << "Found " << my_providers.size() << " providers for key (" << key << ")\n";
+    auto our_providers = get_providers(key);
+    if(!our_providers.empty()) {
+        std::cout << "Found " << our_providers.size() << " providers for key (" << key << ")\n";
         // Now contact each provider for the value to the key
-        for(auto const& peer : my_providers) {
+        for(auto const& peer : our_providers) {
             // Construct the get query (request)
             std::string transaction_id = msgpack::generate_transaction_id();
             query_object["tid"] = transaction_id;
@@ -1739,7 +1739,7 @@ int Node::get_idle_peer_count() const {
     for (auto& bucket : routing_table->buckets) {
         for (auto& node : bucket.second) {
             if (node.get() == nullptr) continue;
-            if (node->get_status() == NodeStatus::Idle) {
+            if (node->get_status() == NodeStatus::Inactive) {
                 idle_count++;
             }
         }
@@ -1749,15 +1749,15 @@ int Node::get_idle_peer_count() const {
 
 neroshop::NodeStatus Node::get_status() const {
     if(check_counter == 0) return NodeStatus::Active;
-    if(check_counter <= (NEROSHOP_DHT_MAX_HEALTH_CHECKS - 1)) return NodeStatus::Idle;
-    if(check_counter >= NEROSHOP_DHT_MAX_HEALTH_CHECKS) return NodeStatus::Inactive;
+    if(check_counter <= (NEROSHOP_DHT_MAX_HEALTH_CHECKS - 1)) return NodeStatus::Inactive;
+    if(check_counter >= NEROSHOP_DHT_MAX_HEALTH_CHECKS) return NodeStatus::Dead;
     return NodeStatus::Inactive;
 }
 
 std::string Node::get_status_as_string() const {
     if(check_counter == 0) return "Active";
-    if(check_counter <= (NEROSHOP_DHT_MAX_HEALTH_CHECKS - 1)) return "Idle";
-    if(check_counter >= NEROSHOP_DHT_MAX_HEALTH_CHECKS) return "Inactive";
+    if(check_counter <= (NEROSHOP_DHT_MAX_HEALTH_CHECKS - 1)) return "Inactive";
+    if(check_counter >= NEROSHOP_DHT_MAX_HEALTH_CHECKS) return "Dead";
     return "Unknown";
 }
 

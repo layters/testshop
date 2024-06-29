@@ -23,7 +23,7 @@ struct Peer {
     int port;
 };
 
-enum class NodeStatus { Inactive, Idle, Active };
+enum class NodeStatus { Dead, Inactive, Active };
 
 class Node {
 private:
