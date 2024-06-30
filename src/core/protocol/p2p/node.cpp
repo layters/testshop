@@ -667,7 +667,7 @@ std::vector<std::unique_ptr<neroshop::Node>> Node::send_find_node(const std::str
 }
 
 int Node::send_put(const std::string& key, const std::string& value) {
-    if(!is_value_republishable(value)) { return 0; } // Prevent listings from being published
+    if(!is_value_publishable(value)) { return 0; } // Prevent listings from being published
     
     nlohmann::json query_object;
     query_object["query"] = "put";
@@ -1850,7 +1850,7 @@ bool Node::is_dead() const {
     return (check_counter >= NEROSHOP_DHT_MAX_HEALTH_CHECKS);
 }
 
-bool Node::is_value_republishable(const std::string& value) {
+bool Node::is_value_publishable(const std::string& value) {
     nlohmann::json json;
     try {
         json = nlohmann::json::parse(value);
