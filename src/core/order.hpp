@@ -75,6 +75,11 @@ enum class DeliveryMethod {
     Digitally,
 };
 
+enum class DeliveryItemType {
+    Envelope = 0,
+    ParcelPackage,
+};
+
 struct OrderItem {
     std::string key;
     unsigned int quantity = 0;
