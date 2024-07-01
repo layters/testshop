@@ -684,7 +684,7 @@ Popup {
                             id: blockExplorerBox
                             anchors.right: parent.right
                             width: settingsStack.comboBoxWidth; indicatorWidth: settingsStack.comboBoxButtonWidth
-                            model: ["xmrchain.net"]
+                            model: ["xmrchain.net", "monerohash.com/explorer", "localmonero.co/blocks"]
                             currentIndex: model.indexOf(Script.getJsonRootObject()["monero"]["wallet"]["block_explorer"])
                             onCurrentTextChanged: settingsDialog.save()
                             color: "#f2f2f2"
