@@ -238,7 +238,9 @@ Page {
                                                     return
                                                 }
                                                 
-                                                if(settingsDialog.blockExplorer == "xmrchain.net") {
+                                                if(settingsDialog.blockExplorer == "xmrchain.net" ||
+                                                   settingsDialog.blockExplorer == "monerohash.com/explorer" ||
+                                                   settingsDialog.blockExplorer == "localmonero.co/blocks") {
                                                     url = url + "/tx/%1".arg(modelData.tx_id)
                                                 }
                                                 
