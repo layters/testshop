@@ -52,6 +52,7 @@ enum class PaymentMethod {
     Crypto, 
     DigitalApp, // can be cashapp, paypal, etc.
     Metal, // can be any precious metal
+    Goldback,
 };
 
 // payment coins (cryptocurrencies used for payments)
