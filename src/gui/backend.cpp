@@ -455,9 +455,11 @@ QVariantMap neroshop::Backend::uploadImageToObject(const QString& fileName, int 
     
     size_t file_size = 0;
     QStringList piecesList;
+    QByteArray imageData;
     for (size_t i = 0; i < file_pieces.size(); ++i) {
         file_size += file_pieces[i].bytes;
         piecesList.append(QString::fromStdString(file_pieces[i].hash));
+        imageData.append(reinterpret_cast<const char*>(file_pieces[i].data.data()), static_cast<int>(file_pieces[i].data.size()));
     }
     
     // Create the image VariantMap (object)
@@ -473,6 +475,7 @@ QVariantMap neroshop::Backend::uploadImageToObject(const QString& fileName, int 
     image["source"] = fileName;
     image["piece_size"] = QVariant::fromValue(static_cast<qint64>(piece_size));
     image["pieces"] = piecesList;
+    image["data"] = imageData;
     // Extra parameters - will only be used for checking dimensions
     image["width"] = dimensions.width();
     image["height"] = dimensions.height();
