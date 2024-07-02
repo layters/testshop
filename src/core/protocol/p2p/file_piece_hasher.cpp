@@ -23,7 +23,7 @@ std::vector<FilePiece> FilePieceHasher::hash_file(const std::string& filename) {
         if (bytes_read > 0) {
             std::string buffer_str(buffer.begin(), buffer.begin() + bytes_read);
             std::string hash = crypto::sha3_256(buffer_str);
-            piece_hashes.push_back(FilePiece{ hash, bytes_read });
+            piece_hashes.push_back(FilePiece{ hash, bytes_read, std::vector<unsigned char>(buffer.begin(), buffer.begin() + bytes_read) });
         }
     }
     

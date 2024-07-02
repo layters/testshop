@@ -11,7 +11,7 @@ namespace neroshop {
 struct FilePiece {
     std::string hash;
     size_t bytes = 0;
-    //std::vector<unsigned char> data;
+    std::vector<unsigned char> data;
 };
 
 class FilePieceHasher {

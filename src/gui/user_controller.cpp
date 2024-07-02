@@ -88,6 +88,7 @@ int quantity, double price, const QString& currency, const QString& condition, c
     for (const QVariantMap& imageMap : images) {
         Image image;
         std::vector<std::string> pieces;
+        std::vector<unsigned char> data;
         
         if(imageMap.contains("name")) image.name = imageMap.value("name").toString().toStdString();
         if(imageMap.contains("size")) image.size = imageMap.value("size").toInt();
@@ -101,6 +102,14 @@ int quantity, double price, const QString& currency, const QString& condition, c
             image.pieces = pieces;
         }
         if(imageMap.contains("piece_size")) image.piece_size = imageMap.value("piece_size").toInt();
+        if(imageMap.contains("data") && imageMap.value("data").canConvert<QByteArray>()) {
+            QByteArray imageData = imageMap.value("data").toByteArray();
+            data.reserve(imageData.size());  // Reserve space to avoid reallocations
+            for (int i = 0; i < imageData.size(); ++i) {
+                data.push_back(static_cast<unsigned char>(imageData.at(i)));
+            }
+            image.data = data;
+        }
         if(imageMap.contains("width")) image.width = imageMap.value("width").toInt();
         if(imageMap.contains("height")) image.height = imageMap.value("height").toInt();
         
