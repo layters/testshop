@@ -155,6 +155,7 @@ std::vector<uint8_t> process(const std::vector<uint8_t>& request, Node& node, bo
             response_object["response"]["connected_peers"] = node.get_peer_count();
             response_object["response"]["active_peers"] = node.get_active_peer_count();
             response_object["response"]["idle_peers"] = node.get_idle_peer_count();
+            response_object["response"]["data_count"] = node.get_data_count();
             response_object["tid"] = tid;
             response = nlohmann::json::to_msgpack(response_object);
             return response;
