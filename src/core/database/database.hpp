@@ -7,6 +7,7 @@
 namespace neroshop {
 
 db::Sqlite3 * get_database();
+db::Sqlite3 * get_user_database();
 
 }
 #endif

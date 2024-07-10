@@ -250,15 +250,10 @@ WW2pQTQWHpyJf2CHrCmZG7Tn3zBnYRZTH8g4U3pSZf5s6xsTXrZc9odDWmrWzjRc9MMQWrKXxjHsRdzH
 
 
 ## Thanks
-* [u/EchoingCat](https://www.reddit.com/user/EchoingCat/) — for the revision of the official neroshop logo
-
-* [woodser](https://github.com/woodser) — for his guidance and for his work on the monero-cpp library which has made the development of this app possible
-
-* [yuriio147](https://github.com/yuriio147) — for his work on various QML components, the currency converter, wallet address qr provider, image loader and image provider, fixing a major bug in the RSA encryption code, the RSA signing and verifying functions, and for teaching me some Qt/QML techniques
-
-* [lza_menace](https://twitter.com/lza_menace) — for creating the new monero.fail JSON API endpoint
-
-* everyone in our matrix room — for sharing many great ideas that have been useful to the project
+* [yuriio147](https://github.com/yuriio147)
+* [u/EchoingCat](https://www.reddit.com/user/EchoingCat/)
+* [woodser](https://github.com/woodser)
+* [lza_menace](https://twitter.com/lza_menace)
 
 [//]: # (./clean.sh)
 [//]: # (git checkout -b main)

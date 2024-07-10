@@ -47,11 +47,8 @@
 #define NEROSHOP_PRIVATE_KEY_FILENAME             "<user_id>.key"
 #define NEROSHOP_PUBLIC_KEY_FILENAME              "<user_id>.pub"
 #define NEROSHOP_OPENSSL_PRIVATE_KEY_FILENAME     "<user_id>.pem"
-#define NEROSHOP_OPENSSL_PUBLIC_KEY_FILENAME      "<user_id>_public.pem"
 #define NEROSHOP_PGP_PRIVATE_KEY_FILENAME         "<user_id>.pgp"
-#define NEROSHOP_PGP_PUBLIC_KEY_FILENAME          "<user_id>_public.pgp"
 #define NEROSHOP_PGP_ARMORED_PRIVATE_KEY_FILENAME "<user_id>.asc"
-#define NEROSHOP_PGP_ARMORED_PUBLIC_KEY_FILENAME  "<user_id>_public.asc"
 
 #define NEROSHOP_RSA_DEFAULT_BIT_LENGTH 4096
 #define NEROSHOP_RSA_DEFAULT_BITS       NEROSHOP_RSA_DEFAULT_BIT_LENGTH
@@ -62,6 +59,7 @@
 #define NEROSHOP_SETTINGS_FILENAME      "settings.json"
 #define NEROSHOP_NODES_FILENAME         "nodes.lua"
 #define NEROSHOP_LOG_FILENAME           "neroshop.log"
+#define NEROSHOP_USERDATA_FILENAME      "user.sqlite3"
 
 #define NEROSHOP_KEYS_FOLDER_NAME    "keys"
 #define NEROSHOP_DATA_FOLDER_NAME    "datastore"

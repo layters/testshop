@@ -223,6 +223,11 @@ int main(int argc, char** argv)
             throw std::runtime_error("Failed to create neroshop data dir");
         }
     }
+    
+    db::Sqlite3 * database = neroshop::get_database();
+    if(!database->table_exists("mappings")) { 
+        database->execute("CREATE VIRTUAL TABLE mappings USING fts5(search_term, key, content, tokenize='porter unicode61');");
+    }
     //-------------------------------------------------------
     std::thread i2pd_thread([&]() { 
         if (Daemon.init(argc, argv))

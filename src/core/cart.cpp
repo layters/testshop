@@ -22,8 +22,6 @@ Cart::~Cart() {
 static nlohmann::json get_listing_object(const std::string& listing_key) {
     neroshop::Client * client = neroshop::Client::get_main_client();
     
-    neroshop::db::Sqlite3 * database = neroshop::get_database();
-    if(!database) throw std::runtime_error("database is NULL");
     // Get the value of the corresponding key from the DHT
     std::string response;
     client->get(listing_key, response);
@@ -32,8 +30,9 @@ static nlohmann::json get_listing_object(const std::string& listing_key) {
     nlohmann::json json = nlohmann::json::parse(response);
     if(json.contains("error")) {
         std::cout << "get_available_stock: listing key is lost or missing from DHT\n";
-        int rescode = database->execute_params("DELETE FROM mappings WHERE key = ?1", { listing_key });
-        if(rescode != SQLITE_OK) neroshop::print("sqlite error: DELETE failed", 1);
+        std::string response2;
+        client->remove(listing_key, response2);
+        std::cout << "Received response (remove): " << response2 << "\n";
         return nlohmann::json(); // Key is lost or missing from DHT
     }
     
@@ -53,7 +52,7 @@ static nlohmann::json get_listing_object(const std::string& listing_key) {
 ////////////////////
 ////////////////////
 void Cart::load(const std::string& user_id) {
-    neroshop::db::Sqlite3 * database = neroshop::get_database();
+    neroshop::db::Sqlite3 * database = neroshop::get_user_database();
     if(!database) throw std::runtime_error("database is NULL");
     // Set the cart's id
     this->id = database->get_text_params("SELECT uuid FROM cart WHERE user_id = $1", { user_id });
@@ -128,7 +127,7 @@ void Cart::load(const std::string& user_id) {
 }
 ////////////////////
 neroshop::CartError Cart::add(const std::string& user_id, const std::string& listing_key, int quantity) {
-    neroshop::db::Sqlite3 * database = neroshop::get_database();
+    neroshop::db::Sqlite3 * database = neroshop::get_user_database();
     if(!database) throw std::runtime_error("database is NULL");
     if(quantity < 1) return CartError::ItemQuantityNotSpecified;
     std::string item_name = listing_key;
@@ -203,14 +202,14 @@ neroshop::CartError Cart::add(const std::string& user_id, const std::string& lis
 }
 ////////////////////
 void Cart::remove(const std::string& user_id, const std::string& listing_key, int quantity) {
-    neroshop::db::Sqlite3 * database = neroshop::get_database();
+    neroshop::db::Sqlite3 * database = neroshop::get_user_database();
     if(!database) throw std::runtime_error("database is NULL");
     
 }
 ////////////////////
 void Cart::empty() {
     if(id.empty()) { neroshop::print("No cart found", 1); return; }
-    neroshop::db::Sqlite3 * database = neroshop::get_database();
+    neroshop::db::Sqlite3 * database = neroshop::get_user_database();
     if(!database) throw std::runtime_error("database is NULL");
     database->execute_params("DELETE FROM cart_item WHERE cart_id = $1;", { this->id });
     contents.clear();

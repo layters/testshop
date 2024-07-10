@@ -1296,7 +1296,7 @@ int Node::cache(const std::string& key, const std::string& value) {
         if(rescode != SQLITE_OK) { std::cerr << "\033[0;91mError creating index for on-disk hash table\033[0m" << std::endl; }
     }
     
-    bool key_found = database->get_integer_params("SELECT COUNT(*) FROM hash_table WHERE key = ?", { key });
+    bool key_found = database->get_integer_params("SELECT EXISTS(SELECT key FROM hash_table WHERE key = ?1)", { key });
     if(key_found) {
         rescode = database->execute_params("UPDATE hash_table SET value = ?1 WHERE key = ?2", { value, key });
         return (rescode == SQLITE_OK);
@@ -1787,6 +1787,19 @@ std::vector<std::pair<std::string, std::string>> Node::get_data() const {
 
 int Node::get_data_count() const {
     return data.size();
+}
+
+int Node::get_data_ram_usage() const {
+    size_t total_size = sizeof(data);
+    
+    for(const auto& [key, value] : data) {
+        total_size += sizeof(std::pair<const std::string, std::string>);
+        total_size += key.capacity();
+        total_size += value.capacity();
+    }
+
+    // Note: this does not account for internal hash table overhead, which can vary by implementation
+    return total_size;
 }
 
 std::string Node::get_cached(const std::string& key) {

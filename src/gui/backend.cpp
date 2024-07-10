@@ -154,15 +154,9 @@ QString neroshop::Backend::getDurationFromNow(const QString& timestamp) const {
 //----------------------------------------------------------------
 //----------------------------------------------------------------
 //----------------------------------------------------------------
-// TODO: only daemon should be able to initialize the database
 void neroshop::Backend::initializeDatabase() {
-    db::Sqlite3 * database = neroshop::get_database();
+    db::Sqlite3 * database = neroshop::get_user_database();
     database->execute("BEGIN;");
-    
-    // mappings
-    if(!database->table_exists("mappings")) { 
-        database->execute("CREATE VIRTUAL TABLE mappings USING fts5(search_term, key, content, tokenize='porter unicode61');");
-    }
     
     // favorites (wishlists)
     if(!database->table_exists("favorites")) {
@@ -1781,7 +1775,7 @@ QVariantList neroshop::Backend::registerUser(WalletController* wallet_controller
         return { false, "Please wait for the local daemon IPC server to connect first" };
     }
     //---------------------------------------------
-    db::Sqlite3 * database = neroshop::get_database();
+    db::Sqlite3 * database = neroshop::get_user_database();
     if(!database) throw std::runtime_error("database is NULL");
     //---------------------------------------------
     // Validate display name
@@ -1827,6 +1821,7 @@ QVariantList neroshop::Backend::registerUser(WalletController* wallet_controller
     if(!avatarMap.isEmpty()) {
         Image image;
         std::vector<std::string> pieces;
+        std::vector<unsigned char> data;
         
         if(avatarMap.contains("name")) image.name = avatarMap.value("name").toString().toStdString();
         if(avatarMap.contains("size")) image.size = avatarMap.value("size").toInt();
@@ -1840,6 +1835,14 @@ QVariantList neroshop::Backend::registerUser(WalletController* wallet_controller
             image.pieces = pieces;
         }
         if(avatarMap.contains("piece_size")) image.piece_size = avatarMap.value("piece_size").toInt();
+        if(avatarMap.contains("data") && avatarMap.value("data").canConvert<QByteArray>()) {
+            QByteArray imageData = avatarMap.value("data").toByteArray();
+            data.reserve(imageData.size());  // Reserve space to avoid reallocations
+            for (int i = 0; i < imageData.size(); ++i) {
+                data.push_back(static_cast<unsigned char>(imageData.at(i)));
+            }
+            image.data = data;
+        }
         if(avatarMap.contains("width")) image.width = avatarMap.value("width").toInt();
         if(avatarMap.contains("height")) image.height = avatarMap.value("height").toInt();
     
@@ -2130,6 +2133,16 @@ QVariantMap neroshop::Backend::getNetworkStatus() const {
     if (response_obj.contains("idle_peers") && response_obj["idle_peers"].is_number_integer()) {
         int idle_peers = response_obj["idle_peers"].get<int>();
         network_status["idle_peers"] = idle_peers;
+    }
+    
+    if (response_obj.contains("data_count") && response_obj["data_count"].is_number_integer()) {
+        int data_count = response_obj["data_count"].get<int>();
+        network_status["data_count"] = data_count;
+    }
+    
+    if (response_obj.contains("data_ram_usage") && response_obj["data_ram_usage"].is_number_integer()) {
+        int data_ram_usage = response_obj["data_ram_usage"].get<int>();
+        network_status["data_ram_usage"] = data_ram_usage;
     }
     
     return network_status;

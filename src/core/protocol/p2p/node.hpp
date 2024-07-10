@@ -138,6 +138,7 @@ public:
     std::vector<std::string> get_keys() const;
     std::vector<std::pair<std::string, std::string>> get_data() const;
     int get_data_count() const; // Returns the total number of in-memory hash table data
+    int get_data_ram_usage() const;
     ////Server * get_server() const;
     std::string get_cached(const std::string& key);
     
