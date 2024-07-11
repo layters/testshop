@@ -341,10 +341,18 @@ Item {
                         font.pointSize: 16
                         property bool hovered: false
                         visible: modelData.hasOwnProperty("expiration_date")
+                        property string message: {
+                            if(modelData.hasOwnProperty("expiration_date")) { 
+                                if(Backend.getDurationFromNow(modelData.expiration_date) != "") {
+                                    return "Expires in %1".arg(Backend.getDurationFromNow(modelData.expiration_date))
+                                }
+                            }
+                            return "Expired"
+                        }
                         NeroshopComponents.Hint {
                             visible: expirationIcon.hovered
                             height: contentHeight + 20; width: contentWidth + 20
-                            text: qsTr("Expires in %1").arg(modelData.hasOwnProperty("expiration_date") ? Backend.getDurationFromNow(modelData.expiration_date) : "")
+                            text: expirationIcon.message
                             pointer.visible: false
                             timeout: 3000; delay: 0
                         }

@@ -130,13 +130,15 @@ public:
     std::string get_public_ip_address() const;
     uint16_t get_port() const;
     RoutingTable * get_routing_table() const;
-    int get_peer_count() const;
+    int get_peer_count() const; // Returns the total number of nodes in routing table
     int get_active_peer_count() const;
     int get_idle_peer_count() const;
     NodeStatus get_status() const;
     std::string get_status_as_string() const;
     std::vector<std::string> get_keys() const;
     std::vector<std::pair<std::string, std::string>> get_data() const;
+    int get_data_count() const; // Returns the total number of in-memory hash table data
+    int get_data_ram_usage() const;
     ////Server * get_server() const;
     std::string get_cached(const std::string& key);
     

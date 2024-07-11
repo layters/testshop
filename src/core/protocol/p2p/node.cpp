@@ -252,7 +252,7 @@ bool Node::ping(const std::string& address, int port) {
     return send_ping(address, port);
 }
 
-std::vector<neroshop::Node*> Node::find_node(const std::string& target, int count) const { 
+std::vector<Node*> Node::find_node(const std::string& target, int count) const { 
     if(!routing_table.get()) {
         return {};
     }
@@ -433,7 +433,7 @@ void Node::remove_provider(const std::string& data_hash, const std::string& addr
     }
 }
 
-std::deque<neroshop::Peer> Node::get_providers(const std::string& data_hash) const {
+std::deque<Peer> Node::get_providers(const std::string& data_hash) const {
     std::deque<Peer> peers = {};
 
     // Check if data_hash is in providers
@@ -626,7 +626,7 @@ bool Node::send_ping(const std::string& address, int port) {
     return true;
 }
 
-std::vector<std::unique_ptr<neroshop::Node>> Node::send_find_node(const std::string& target, const std::string& address, uint16_t port) {
+std::vector<std::unique_ptr<Node>> Node::send_find_node(const std::string& target, const std::string& address, uint16_t port) {
     std::string transaction_id = msgpack::generate_transaction_id();
 
     nlohmann::json query_object;
@@ -1024,8 +1024,8 @@ void Node::send_map_v2(const std::string& address, int port) {
     }
 }
 
-std::deque<neroshop::Peer> Node::send_get_providers(const std::string& key) {
-    std::deque<neroshop::Peer> peers = {};
+std::deque<Peer> Node::send_get_providers(const std::string& key) {
+    std::deque<Peer> peers = {};
     std::set<std::pair<std::string, uint16_t>> unique_peers; // Set to store unique IP-port pairs
     //-----------------------------------------------
     nlohmann::json query_object;
@@ -1296,7 +1296,7 @@ int Node::cache(const std::string& key, const std::string& value) {
         if(rescode != SQLITE_OK) { std::cerr << "\033[0;91mError creating index for on-disk hash table\033[0m" << std::endl; }
     }
     
-    bool key_found = database->get_integer_params("SELECT COUNT(*) FROM hash_table WHERE key = ?", { key });
+    bool key_found = database->get_integer_params("SELECT EXISTS(SELECT key FROM hash_table WHERE key = ?1)", { key });
     if(key_found) {
         rescode = database->execute_params("UPDATE hash_table SET value = ?1 WHERE key = ?2", { value, key });
         return (rescode == SQLITE_OK);
@@ -1709,11 +1709,11 @@ uint16_t Node::get_port() const {
     return port;
 }
 
-/*neroshop::Server * Node::get_server() const {
+/*Server * Node::get_server() const {
     return server.get();
 }*/
 
-neroshop::RoutingTable * Node::get_routing_table() const {
+RoutingTable * Node::get_routing_table() const {
     return routing_table.get();
 }
 
@@ -1747,7 +1747,7 @@ int Node::get_idle_peer_count() const {
     return idle_count;
 }
 
-neroshop::NodeStatus Node::get_status() const {
+NodeStatus Node::get_status() const {
     if(check_counter == 0) return NodeStatus::Active;
     if(check_counter <= (NEROSHOP_DHT_MAX_HEALTH_CHECKS - 1)) return NodeStatus::Inactive;
     if(check_counter >= NEROSHOP_DHT_MAX_HEALTH_CHECKS) return NodeStatus::Dead;
@@ -1784,6 +1784,23 @@ std::vector<std::pair<std::string, std::string>> Node::get_data() const {
 /*const std::unordered_map<std::string, std::string>& Node::get_data() const {
     return data;
 }*/
+
+int Node::get_data_count() const {
+    return data.size();
+}
+
+int Node::get_data_ram_usage() const {
+    size_t total_size = sizeof(data);
+    
+    for(const auto& [key, value] : data) {
+        total_size += sizeof(std::pair<const std::string, std::string>);
+        total_size += key.capacity();
+        total_size += value.capacity();
+    }
+
+    // Note: this does not account for internal hash table overhead, which can vary by implementation
+    return total_size;
+}
 
 std::string Node::get_cached(const std::string& key) {
     db::Sqlite3 * database = neroshop::get_database();

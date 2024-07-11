@@ -38,8 +38,6 @@ Order::~Order() {
 static nlohmann::json get_listing_object(const std::string& listing_key) {
     neroshop::Client * client = neroshop::Client::get_main_client();
     
-    neroshop::db::Sqlite3 * database = neroshop::get_database();
-    if(!database) throw std::runtime_error("database is NULL");
     // Get the value of the corresponding key from the DHT
     std::string response;
     client->get(listing_key, response);
@@ -48,8 +46,9 @@ static nlohmann::json get_listing_object(const std::string& listing_key) {
     nlohmann::json json = nlohmann::json::parse(response);
     if(json.contains("error")) {
         std::cout << "get_listing_object: listing key is lost or missing from DHT\n";
-        int rescode = database->execute_params("DELETE FROM mappings WHERE key = ?1", { listing_key });
-        if(rescode != SQLITE_OK) neroshop::print("sqlite error: DELETE failed", 1);
+        std::string response2;
+        client->remove(listing_key, response2);
+        std::cout << "Received response (remove): " << response2 << "\n";
         return nlohmann::json(); // Key is lost or missing from DHT
     }
     

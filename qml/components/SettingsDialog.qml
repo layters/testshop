@@ -17,8 +17,7 @@ Popup {
     id: settingsDialog
     visible: false
     modal: true//clip: true
-    closePolicy: Popup.CloseOnEscape    
-    property bool hideTabText: false
+    closePolicy: Popup.CloseOnEscape
     property alias currentIndex: settingsStack.currentIndex
     // General tab properties
     property alias theme: themeBox
@@ -110,7 +109,7 @@ Popup {
                 ////user: userExpBox.currentText,
                 listing: listingExpBox.currentText,
                 product_rating: productRatingExpBox.currentText,
-                seller_rating: sellerRatingExpBox.currentText,
+                ////seller_rating: sellerRatingExpBox.currentText,
                 order: orderExpBox.currentText,
                 message: messageExpBox.currentText,
             },
@@ -203,8 +202,7 @@ Popup {
                     settingsStack.currentIndex = 0
                     resetScrollBar()
                 }
-                //display: (hideTabText) ? AbstractButton.IconOnly : AbstractButton.TextBesideIcon
-                //icon.source: "file:///" + neroshopResourcesDirPath + "/cog.png"//"/tools.png"
+                display: AbstractButton.TextOnly
                 checkable: true
                 checked: (settingsStack.currentIndex == 0)                
                 background: Rectangle {
@@ -228,7 +226,7 @@ Popup {
             }
             
             TabButton { 
-                text: (hideTabText) ? qsTr(FontAwesome.monero) : qsTr("Network")//.arg(FontAwesome.monero)
+                text: qsTr("Network")
                 width: implicitWidth + 20
                 onClicked: {
                     settingsStack.currentIndex = 1
@@ -853,9 +851,9 @@ Popup {
             
         } // generalSettings ColumnLayout
         
-        // Monero settings
+        // Network settings
             ColumnLayout {
-                id: moneroSettings
+                id: networkSettings
                 Layout.minimumWidth: parent.width - 10 // 10 is the scrollView's right margin
                 Layout.minimumHeight: 500 // Increase this value whenever more items are added inside the scrollview
                 //rowSpacing:  // The default value is 5 but we'll set this later
@@ -957,7 +955,7 @@ Popup {
                     currentIndex: Script.getJsonRootObject()["monero"]["daemon"]["node_type"]
                     
 Item {
-    Layout.preferredWidth: localNodeColumn.childrenRect.width
+    Layout.preferredWidth: remoteNodeColumn.childrenRect.width
     Layout.preferredHeight: remoteNodeColumn.childrenRect.height
     ColumnLayout {
         id: remoteNodeColumn
@@ -1477,8 +1475,41 @@ Item {
         }
     }                
                 } // Item 1
-                } // StackLayout (node)             
-            } // moneroSettings
+                } // StackLayout (node)
+                // DHT section of network settings
+                Column {     
+                    Layout.alignment: Qt.AlignHCenter | Qt.AlignTop//; Layout.topMargin: 1
+                    Layout.preferredWidth: 500//Layout.fillWidth: true
+                    Layout.preferredHeight: childrenRect.height
+                    spacing: 5
+                    Text {
+                        text: qsTr("Hash table size: %1").arg((networkMonitor.networkStatus === null) ? "-1" : networkMonitor.networkStatus.data_count)
+                        color: (NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000"
+                        font.bold: true
+                    }
+                    Text {
+                        text: qsTr("Estimated RAM usage: %1 bytes").arg((networkMonitor.networkStatus === null) ? "-1" : networkMonitor.networkStatus.data_ram_usage)
+                        color: (NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000"
+                        font.bold: true
+                    }
+                    //ProgressBar???
+                    Button {
+                        width: parent.width
+                        text: qsTr("Clear hash table")
+                        background: Rectangle {
+                            color: "#b22222"
+                            radius: 5
+                        }
+                        contentItem: Text {
+                            text: parent.text
+                            color: "#ffffff"
+                            horizontalAlignment: Text.AlignHCenter
+                            verticalAlignment: Text.AlignVCenter
+                        }
+                        onClicked: {}
+                    }
+                }
+            } // networkSettings
             
             // Privacy settings
             ColumnLayout {
@@ -1487,6 +1518,7 @@ Item {
                 spacing: 30
                 
                 GroupBox {
+                    id: proxyGroupBox
                     title: qsTr("Proxy")
                     Layout.alignment: Qt.AlignHCenter
                     Layout.preferredWidth: settingsStack.contentBoxWidth
@@ -1499,12 +1531,36 @@ Item {
                         radius: 2
                     }
                     
-                    label: Label {
+                    label: Row { // GroupBox label prop must be an Item that visualizes title prop
                         x: parent.leftPadding
                         width: parent.availableWidth
-                        text: parent.title
-                        color: parent.background.border.color
-                        elide: Text.ElideRight
+                        spacing: 10
+                        Label {
+                            text: proxyGroupBox.title
+                            color: proxyGroupBox.background.border.color
+                            elide: Text.ElideRight
+                        }
+                        Text {
+                            text: qsTr(FontAwesome.questionCircle)
+                            color: "#708090"
+                            font.bold: true
+                            font.family: FontAwesome.fontFamily
+                            anchors.verticalCenter: parent.children[0].verticalCenter
+                            property bool hovered: false
+                            NeroshopComponents.Hint {
+                                x: parent.width + 10; y: ((parent.height - height) / 2)
+                                visible: parent.hovered
+                                width: 400 + 20; height: contentHeight + 20
+                                text: qsTr("Route network requests made to\n price aggregators, exchanges, and dicebear\n via clearnet, Tor, or i2p")
+                                pointer.visible: false
+                            }
+                            MouseArea { 
+                                anchors.fill: parent
+                                hoverEnabled: true
+                                onEntered: parent.hovered = true
+                                onExited: parent.hovered = false
+                            }
+                        }
                     }
                     // Proxy settings content
                     ColumnLayout {
@@ -1611,7 +1667,8 @@ Item {
                         // User account data expiration
                         Item {
                             Layout.fillWidth: true
-                            Layout.preferredHeight: childrenRect.height                        
+                            Layout.preferredHeight: childrenRect.height
+                            visible: false
                             Text {
                                 anchors.verticalCenter: userExpBox.verticalCenter
                                 text: qsTr("User accounts:")
@@ -1675,7 +1732,8 @@ Item {
                         // Seller rating expiration
                         Item {
                             Layout.fillWidth: true
-                            Layout.preferredHeight: childrenRect.height                        
+                            Layout.preferredHeight: childrenRect.height
+                            visible: false
                             Text {
                                 anchors.verticalCenter: sellerRatingExpBox.verticalCenter
                                 text: qsTr("Seller ratings:")

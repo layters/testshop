@@ -155,6 +155,8 @@ std::vector<uint8_t> process(const std::vector<uint8_t>& request, Node& node, bo
             response_object["response"]["connected_peers"] = node.get_peer_count();
             response_object["response"]["active_peers"] = node.get_active_peer_count();
             response_object["response"]["idle_peers"] = node.get_idle_peer_count();
+            response_object["response"]["data_count"] = node.get_data_count();
+            response_object["response"]["data_ram_usage"] = node.get_data_ram_usage();
             response_object["tid"] = tid;
             response = nlohmann::json::to_msgpack(response_object);
             return response;
@@ -222,7 +224,6 @@ std::vector<uint8_t> process(const std::vector<uint8_t>& request, Node& node, bo
         assert(params_object["value"].is_string());
         std::string value = params_object["value"].get<std::string>();
         
-        // Send put messages to the closest nodes in your routing table (IPC mode)
         int put_messages_sent = node.send_put(key, value);
         code = (put_messages_sent <= 0) 
                ? static_cast<int>(DhtResultCode::StoreFailed) 
@@ -233,15 +234,17 @@ std::vector<uint8_t> process(const std::vector<uint8_t>& request, Node& node, bo
             code = static_cast<int>(DhtResultCode::StorePartial);
         }
         
-        // Store the key-value pair in your own node as well
         if(node.store(key, value)) {
-            if(put_messages_sent == 0) { 
-                code = static_cast<int>(DhtResultCode::StoreToSelf);
+            if(node.cache(key, value)) {
+                if(put_messages_sent == 0) { 
+                    code = static_cast<int>(DhtResultCode::StoreToSelf);
+                }
+                if(!Node::is_value_publishable(value)) {
+                    code = static_cast<int>(DhtResultCode::Success);
+                }
+                
+                node.map(key, value);
             }
-            
-            node.cache(key, value);
-            
-            node.map(key, value);
         }
         
         if((code == static_cast<int>(DhtResultCode::Success)) || (code == static_cast<int>(DhtResultCode::StorePartial))) {
@@ -269,13 +272,17 @@ std::vector<uint8_t> process(const std::vector<uint8_t>& request, Node& node, bo
         
         db::Sqlite3 * database = neroshop::get_database();
         if(!database) throw std::runtime_error("database is not opened");
-        if(node.has_key_cached(key)) {
+        if(database->get_integer_params("SELECT EXISTS(SELECT key FROM hash_table WHERE key = ?1)", { key }) == 1) {
             code = (database->execute_params("DELETE FROM hash_table WHERE key = ?1", { key }) != SQLITE_OK)
                 ? static_cast<int>(DhtResultCode::RemoveFailed) 
                 : static_cast<int>(DhtResultCode::Success);
         }
         
-        database->execute_params("DELETE FROM mappings WHERE key = ?1", { key });
+        if(database->get_integer_params("SELECT EXISTS(SELECT key FROM mappings WHERE key = ?1)", { key }) == 1) {
+            code = (database->execute_params("DELETE FROM mappings WHERE key = ?1", { key }) != SQLITE_OK)
+                ? static_cast<int>(DhtResultCode::RemoveFailed) 
+                : static_cast<int>(DhtResultCode::Success);
+        }
         
         if(code != static_cast<int>(DhtResultCode::Success)) {
             response_object["version"] = std::string(NEROSHOP_DHT_VERSION);
@@ -286,7 +293,23 @@ std::vector<uint8_t> process(const std::vector<uint8_t>& request, Node& node, bo
             response_object["version"] = std::string(NEROSHOP_DHT_VERSION);
             response_object["response"]["id"] = node.get_id();
         }
-    }    
+    }
+    //-----------------------------------------------------
+    if(method == "remove_all" && ipc_mode == true) {
+        code = (node.remove_all() == false) 
+            ? static_cast<int>(DhtResultCode::RemoveFailed) 
+            : static_cast<int>(DhtResultCode::Success);
+            
+        if(code != static_cast<int>(DhtResultCode::Success)) {
+            response_object["version"] = std::string(NEROSHOP_DHT_VERSION);
+            response_object["error"]["id"] = node.get_id();
+            response_object["error"]["code"] = code;
+            response_object["error"]["message"] = get_dht_result_code_as_string(static_cast<DhtResultCode>(code));
+        } else {
+            response_object["version"] = std::string(NEROSHOP_DHT_VERSION);
+            response_object["response"]["id"] = node.get_id();
+        }
+    }
     //-----------------------------------------------------
     response_object["tid"] = tid;
     response = nlohmann::json::to_msgpack(response_object);
