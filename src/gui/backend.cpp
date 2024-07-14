@@ -2099,16 +2099,11 @@ int neroshop::Backend::loginWithHW(WalletController* wallet_controller, UserCont
 //----------------------------------------------------------------
 //----------------------------------------------------------------
 QVariantMap neroshop::Backend::getNetworkStatus() const {
-    // Make sure daemon is connected first
-    if(!DaemonManager::isDaemonServerBound()) {
-        return {};
-    }
+    if(!DaemonManager::isDaemonServerBound()) { return {}; }
     
     Client * client = Client::get_main_client();
-    
-    // Get network status from local node in IPC mode
     std::string response;
-    client->get("status", response); //std::cout << "Received response (get): " << response << "\n";
+    client->get("status", response);//std::cout << "Received response (get): " << response << "\n";
     
     // Parse the response
     nlohmann::json json = nlohmann::json::parse(response);
@@ -2145,7 +2140,57 @@ QVariantMap neroshop::Backend::getNetworkStatus() const {
         network_status["data_ram_usage"] = data_ram_usage;
     }
     
+    if (response_obj.contains("host") && response_obj["host"].is_string()) {
+        std::string host = response_obj["host"].get<std::string>();
+        network_status["host"] = QString::fromStdString(host);
+    }
+    
+    if (response_obj.contains("peers") && response_obj["peers"].is_array()) {
+        const auto& peers_array = response_obj["peers"];
+        QVariantList peersList;
+        
+        for(const auto& peer : peers_array) {
+            if(peer.is_object()) {
+                QVariantMap peerObject;
+                if(peer.contains("id") && peer["id"].is_string()) {
+                    peerObject.insert("id", QString::fromStdString(peer["id"].get<std::string>()));
+                }
+                if(peer.contains("address") && peer["address"].is_string()) {
+                    peerObject.insert("address", QString::fromStdString(peer["address"].get<std::string>()));
+                }
+                if(peer.contains("port") && peer["port"].is_number_integer()) {
+                    peerObject.insert("port", peer["port"].get<int>());
+                }
+                if(peer.contains("status") && peer["status"].is_number_integer()) {
+                    int status = peer["status"].get<int>();
+                    peerObject.insert("status", status);
+                    if(status == 0) {
+                        peerObject.insert("status_str", "Dead");
+                    }
+                    if(status == 1) {
+                        peerObject.insert("status_str", "Inactive");
+                    }
+                    if(status == 2) {
+                        peerObject.insert("status_str", "Active");
+                    }
+                }
+                //if(peer.contains("distance") && peer["distance"].is_()) {}
+                peersList.append(peerObject);
+            }
+        }
+        
+        network_status["peers"] = peersList;
+    }
+    
     return network_status;
+}
+//----------------------------------------------------------------
+void neroshop::Backend::clearHashTable() {
+    if(!DaemonManager::isDaemonServerBound()) { return; }
+    
+    Client * client = Client::get_main_client();
+    std::string response;
+    client->clear(response);//std::cout << "Received response (clear): " << response << "\n";
 }
 //----------------------------------------------------------------
 

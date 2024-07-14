@@ -115,6 +115,7 @@ public:
     bool isIllicitItem(const QVariantMap& listing_obj);
     
     Q_INVOKABLE QVariantMap getNetworkStatus() const;
+    Q_INVOKABLE void clearHashTable();
 
 signals:
     //void categoryProductCountChanged();//(int category_id);

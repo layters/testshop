@@ -16,6 +16,7 @@
         <file>qml/components/NavigationalBar.qml</file>
         <file>qml/components/NodeList.qml</file>
         <file>qml/components/PaginationBar.qml</file>
+        <file>qml/components/PeerList.qml</file>
         <file>qml/components/ProductDialog.qml</file>
         <file>qml/components/ProgressBar.qml</file>
         <file>qml/components/qmldir</file>

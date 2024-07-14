@@ -993,7 +993,7 @@ Item {
                         selectByMouse: true
                 
                         background: Rectangle { 
-                            color: (NeroshopComponents.Style.darkTheme) ? "#101010" : "#ffffff"
+                            color: (NeroshopComponents.Style.darkTheme) ? (NeroshopComponents.Style.themeName == "PurpleDust" ? "#4b4751" : "#4c4c4c") : "#ffffff"
                             border.color: (NeroshopComponents.Style.darkTheme) ? "#a9a9a9" : "#696969"
                             radius: 3
                         }
@@ -1009,7 +1009,7 @@ Item {
                         selectByMouse: true
                 
                         background: Rectangle { 
-                            color: (NeroshopComponents.Style.darkTheme) ? "#101010" : "#ffffff"
+                            color: moneroNodeIPField.background.color
                             border.color: (NeroshopComponents.Style.darkTheme) ? "#a9a9a9" : "#696969"
                             radius: 3
                         }     
@@ -1090,7 +1090,7 @@ Item {
                         text: qsTr("Connect")
                         enabled: Wallet.opened
                         background: Rectangle {
-                            color: !remoteNodeConnectButton.enabled ? NeroshopComponents.Style.moneroGrayColor : NeroshopComponents.Style.moneroOrangeColor
+                            color: !remoteNodeConnectButton.enabled ? NeroshopComponents.Style.disabledColor : NeroshopComponents.Style.moneroOrangeColor
                             radius: 3//6
                         }
                         contentItem: Text {
@@ -1110,6 +1110,11 @@ Item {
                             if(Wallet.isConnectedToDaemon()) {
                                 moneroDaemonSyncBar.title = settingsDialog.moneroNodeAddress
                             }
+                        }
+                        MouseArea {
+                            anchors.fill: parent
+                            onPressed: mouse.accepted = false
+                            cursorShape: Qt.PointingHandCursor
                         }
                     }
                 }                
@@ -1158,7 +1163,7 @@ Item {
                     text: Script.getJsonRootObject()["monero"]["daemon"]["executable"]////moneroDaemonFileDialog.file
                 
                     background: Rectangle { 
-                        color: (NeroshopComponents.Style.darkTheme) ? "#101010" : "#ffffff"
+                        color: (NeroshopComponents.Style.darkTheme) ? (NeroshopComponents.Style.themeName == "PurpleDust" ? "#4b4751" : "#4c4c4c") : "#ffffff"
                         border.color: (NeroshopComponents.Style.darkTheme) ? "#a9a9a9" : "#696969"
                         radius: 3
                     }       
@@ -1202,7 +1207,7 @@ Item {
                     text: Script.getJsonRootObject()["monero"]["daemon"]["data_dir"]
                     
                     background: Rectangle { 
-                        color: (NeroshopComponents.Style.darkTheme) ? "#101010" : "#ffffff"
+                        color: (NeroshopComponents.Style.darkTheme) ? (NeroshopComponents.Style.themeName == "PurpleDust" ? "#4b4751" : "#4c4c4c") : "#ffffff"
                         border.color: (NeroshopComponents.Style.darkTheme) ? "#a9a9a9" : "#696969"
                         radius: 3
                     }      
@@ -1244,7 +1249,7 @@ Item {
                         readOnly: localNodeButton.checked
                 
                         background: Rectangle { 
-                            color: (NeroshopComponents.Style.darkTheme) ? "#101010" : "#ffffff"
+                            color: (NeroshopComponents.Style.darkTheme) ? (NeroshopComponents.Style.themeName == "PurpleDust" ? "#4b4751" : "#4c4c4c") : "#ffffff"
                             border.color: (NeroshopComponents.Style.darkTheme) ? "#a9a9a9" : "#696969"
                             radius: 3
                         }               
@@ -1261,7 +1266,7 @@ Item {
                         readOnly: localNodeButton.checked
                 
                         background: Rectangle { 
-                            color: (NeroshopComponents.Style.darkTheme) ? "#101010" : "#ffffff"
+                            color: (NeroshopComponents.Style.darkTheme) ? (NeroshopComponents.Style.themeName == "PurpleDust" ? "#4b4751" : "#4c4c4c") : "#ffffff"
                             border.color: (NeroshopComponents.Style.darkTheme) ? "#a9a9a9" : "#696969"
                             radius: 3
                         }     
@@ -1281,7 +1286,7 @@ Item {
                         selectByMouse: true
                 
                         background: Rectangle { 
-                            color: (NeroshopComponents.Style.darkTheme) ? "#101010" : "#ffffff"
+                            color: (NeroshopComponents.Style.darkTheme) ? (NeroshopComponents.Style.themeName == "PurpleDust" ? "#4b4751" : "#4c4c4c") : "#ffffff"
                             border.color: (NeroshopComponents.Style.darkTheme) ? "#a9a9a9" : "#696969"
                             radius: 3
                         }               
@@ -1298,7 +1303,7 @@ Item {
                         inputMethodHints: Qt.ImhSensitiveData
                 
                         background: Rectangle { 
-                            color: (NeroshopComponents.Style.darkTheme) ? "#101010" : "#ffffff"
+                            color: (NeroshopComponents.Style.darkTheme) ? (NeroshopComponents.Style.themeName == "PurpleDust" ? "#4b4751" : "#4c4c4c") : "#ffffff"
                             border.color: (NeroshopComponents.Style.darkTheme) ? "#a9a9a9" : "#696969"
                             radius: 3
                         }     
@@ -1315,7 +1320,7 @@ Item {
                         selectByMouse: true
                 
                         background: Rectangle { 
-                            color: (NeroshopComponents.Style.darkTheme) ? "#101010" : "#ffffff"
+                            color: (NeroshopComponents.Style.darkTheme) ? (NeroshopComponents.Style.themeName == "PurpleDust" ? "#4b4751" : "#4c4c4c") : "#ffffff"
                             border.color: (NeroshopComponents.Style.darkTheme) ? "#a9a9a9" : "#696969"
                             radius: 3
                         }               
@@ -1394,6 +1399,11 @@ Item {
                            /*if(!Wallet.isOpened()) return; // no need for this if we are only launching the monerod executable
                            Wallet.daemonConnect()//(moneroDaemonRpcLoginUser.text, moneroDaemonRpcLoginPwd.text)*/
                         }
+                        MouseArea {
+                            anchors.fill: parent
+                            onPressed: mouse.accepted = false
+                            cursorShape: Qt.PointingHandCursor
+                        }
                     }
                     
                     Button {
@@ -1401,11 +1411,9 @@ Item {
                         Layout.preferredWidth: 250////contentItem.contentWidth + 30
                         Layout.preferredHeight: contentItem.contentHeight + 30
                         text: qsTr("Connect")
-                        property bool disabled: !Wallet.opened/*{
-                            return (!Backend.isWalletDaemonRunning() || !Wallet.isOpened()) // doesn't work :(
-                        }*/
+                        enabled: Wallet.opened
                         background: Rectangle {
-                            color: localNodeConnectButton.disabled ? NeroshopComponents.Style.moneroGrayColor : NeroshopComponents.Style.moneroOrangeColor
+                            color: !localNodeConnectButton.enabled ? NeroshopComponents.Style.disabledColor : NeroshopComponents.Style.moneroOrangeColor
                             radius: 3
                         }
                         contentItem: Text {
@@ -1416,7 +1424,7 @@ Item {
                         }
                         onClicked: {
                             //localNodeConnectButton.disabled = (!Backend.isWalletDaemonRunning() || !Wallet.isOpened()) // doesn't work :(
-                            if(localNodeConnectButton.disabled) return; // button is disabled, exit function
+                            if(!localNodeConnectButton.enabled) return; // button is disabled, exit function
                             if(!Wallet.opened) {messageBox.text="Wallet must be opened first before connecting to a node";messageBox.open();return;} // make sure wallet is opened beforehand
                             if(Wallet.isDaemonSynced()) return; // local node is already synced so there's no need to connect to it again
                             ////if(!Backend.isWalletDaemonRunning()) {messageBox.text="monerod must be launched first before connecting to it";messageBox.open();return;}
@@ -1424,6 +1432,11 @@ Item {
                             if(Wallet.isConnectedToDaemon()) {
                                 moneroDaemonSyncBar.title = settingsDialog.moneroNodeAddress
                             }
+                        }
+                        MouseArea {
+                            anchors.fill: parent
+                            onPressed: mouse.accepted = false
+                            cursorShape: Qt.PointingHandCursor
                         }
                     }                    
                 }
@@ -1478,17 +1491,56 @@ Item {
                 } // StackLayout (node)
                 // DHT section of network settings
                 Column {     
-                    Layout.alignment: Qt.AlignHCenter | Qt.AlignTop//; Layout.topMargin: 1
+                    Layout.alignment: Qt.AlignHCenter | Qt.AlignTop
                     Layout.preferredWidth: 500//Layout.fillWidth: true
                     Layout.preferredHeight: childrenRect.height
                     spacing: 5
-                    Text {
-                        text: qsTr("Hash table size: %1").arg((networkMonitor.networkStatus === null) ? "-1" : networkMonitor.networkStatus.data_count)
-                        color: (NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000"
-                        font.bold: true
+                    Column {
+                        width: parent.width
+                        spacing: 2
+                        Text {
+                            text: qsTr("My IP address")
+                            color: (NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000"
+                            font.bold: true
+                        }
+                        TextField {
+                            width: parent.width
+                            text: qsTr((networkMonitor.networkStatus == null) ? "" : (networkMonitor.networkStatus.hasOwnProperty("host") ? networkMonitor.networkStatus.host : ""))
+                            color: (NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000"
+                            selectByMouse: true
+                            readOnly: true
+                            background: Rectangle { 
+                                color: (NeroshopComponents.Style.darkTheme) ? (NeroshopComponents.Style.themeName == "PurpleDust" ? "#4b4751" : "#4c4c4c") : "#ffffff"
+                                border.color: (NeroshopComponents.Style.darkTheme) ? "#a9a9a9" : "#696969"
+                                radius: 3
+                            }
+                        }
+                    }
+                    Frame {
+                        width: 500
+                        height: 300//200
+                        background: Rectangle {
+                            radius: 3
+                            color: "transparent"
+                            border.color: (NeroshopComponents.Style.darkTheme) ? (NeroshopComponents.Style.themeName == "PurpleDust" ? "#7d7d97" : "#a8a8a8") : "#989999"
+                            //border.width: 1
+                        }
+
+                        NeroshopComponents.PeerList {
+                            id: peerList
+                            anchors.fill: parent
+                            currentIndex: 0
+                        }
                     }
                     Text {
-                        text: qsTr("Estimated RAM usage: %1 bytes").arg((networkMonitor.networkStatus === null) ? "-1" : networkMonitor.networkStatus.data_ram_usage)
+                        id: hashTableSizeText
+                        text: qsTr("Hash table size: %1").arg(hashTableSizeText.value)
+                        color: (NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000"
+                        font.bold: true
+                        property int value: (networkMonitor.networkStatus == null) ? -1 : (networkMonitor.networkStatus.hasOwnProperty("data_count") ? networkMonitor.networkStatus.data_count : -1)
+                    }
+                    Text {
+                        text: qsTr("Estimated RAM usage: %1 bytes").arg((networkMonitor.networkStatus == null) ? "-1" : (networkMonitor.networkStatus.hasOwnProperty("data_ram_usage") ? networkMonitor.networkStatus.data_ram_usage : "-1"))
                         color: (NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000"
                         font.bold: true
                     }
@@ -1496,8 +1548,10 @@ Item {
                     Button {
                         width: parent.width
                         text: qsTr("Clear hash table")
+                        enabled: (Number(hashTableSizeText.value) > 0)
+                        hoverEnabled: true
                         background: Rectangle {
-                            color: "#b22222"
+                            color: !parent.enabled ? "#808080" : "#b22222"
                             radius: 5
                         }
                         contentItem: Text {
@@ -1506,7 +1560,15 @@ Item {
                             horizontalAlignment: Text.AlignHCenter
                             verticalAlignment: Text.AlignVCenter
                         }
-                        onClicked: {}
+                        onClicked: {
+                            Backend.clearHashTable()
+                        }
+                        
+                        MouseArea {
+                            anchors.fill: parent
+                            onPressed: mouse.accepted = false
+                            cursorShape: Qt.PointingHandCursor
+                        }
                     }
                 }
             } // networkSettings

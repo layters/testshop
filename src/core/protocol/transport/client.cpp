@@ -282,6 +282,26 @@ void Client::remove(const std::string& key, std::string& reply) {
         std::cerr << "An error occurred: " << "Node was disconnected" << std::endl;
     }
 }
+
+void Client::clear(std::string& reply) {
+    nlohmann::json args_obj = nlohmann::json::object();
+    nlohmann::json query_object = { {"version", std::string(NEROSHOP_DHT_VERSION)}, {"query", "clear"}, {"args", args_obj}, {"tid", nullptr} };
+    std::vector<uint8_t> packed_data = nlohmann::json::to_msgpack(query_object);
+    send(packed_data);
+    // Receive response
+    try {
+        std::vector<uint8_t> response;
+        receive(response);
+        try {
+            nlohmann::json response_object = nlohmann::json::from_msgpack(response);
+            reply = response_object.dump();//return response_object.dump();
+        } catch (const nlohmann::detail::parse_error& e) {
+            std::cerr << "Failed to parse server response: " << e.what() << std::endl;
+        }
+    } catch (const nlohmann::detail::parse_error& e) {
+        std::cerr << "An error occurred: " << "Node was disconnected" << std::endl;
+    }
+}
 ////////////////////	
 void Client::close() {
 	::close(sockfd);

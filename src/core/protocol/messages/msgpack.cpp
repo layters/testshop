@@ -157,6 +157,22 @@ std::vector<uint8_t> process(const std::vector<uint8_t>& request, Node& node, bo
             response_object["response"]["idle_peers"] = node.get_idle_peer_count();
             response_object["response"]["data_count"] = node.get_data_count();
             response_object["response"]["data_ram_usage"] = node.get_data_ram_usage();
+            response_object["response"]["host"] = node.public_ip_address + ":" + std::to_string(node.get_port());
+            auto peers_list = node.get_peers();
+            if(!peers_list.empty()) {
+                std::vector<nlohmann::json> peers_array;
+                for (const auto& peer : peers_list) {
+                    nlohmann::json peer_object = {
+                        {"address", peer.address},
+                        {"port", peer.port},
+                        {"id", peer.id},
+                        {"status", static_cast<int>(peer.status)},
+                        //{"distance", peer.distance},
+                    };
+                    peers_array.push_back(peer_object);
+                }
+                response_object["response"]["peers"] = peers_array;
+            }
             response_object["tid"] = tid;
             response = nlohmann::json::to_msgpack(response_object);
             return response;
@@ -295,7 +311,7 @@ std::vector<uint8_t> process(const std::vector<uint8_t>& request, Node& node, bo
         }
     }
     //-----------------------------------------------------
-    if(method == "remove_all" && ipc_mode == true) {
+    if(method == "clear" && ipc_mode == true) {
         code = (node.remove_all() == false) 
             ? static_cast<int>(DhtResultCode::RemoveFailed) 
             : static_cast<int>(DhtResultCode::Success);

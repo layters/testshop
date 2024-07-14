@@ -696,7 +696,7 @@ int Node::send_put(const std::string& key, const std::string& value) {
         std::vector<uint8_t> query_put = nlohmann::json::to_msgpack(query_object);
     
         std::string node_ip = (node->get_ip_address() == this->public_ip_address) ? "127.0.0.1" : node->get_ip_address();
-        int node_port = node->get_port();
+        uint16_t node_port = node->get_port();
         std::cout << "Sending put request to \033[36m" << node_ip << ":" << node_port << "\033[0m\n";
         auto receive_buffer = send_query(node_ip, node_port, query_put);
         // Process the response here
@@ -754,7 +754,7 @@ int Node::send_put(const std::string& key, const std::string& value) {
                 std::vector<uint8_t> query_put = nlohmann::json::to_msgpack(query_object);
 
                 std::string node_ip = (replacement_node->get_ip_address() == this->public_ip_address) ? "127.0.0.1" : replacement_node->get_ip_address();
-                int node_port = replacement_node->get_port();
+                uint16_t node_port = replacement_node->get_port();
                 std::cout << "Sending put request to \033[36m" << node_ip << ":" << node_port << "\033[0m\n";
                 auto receive_buffer = send_query(node_ip, node_port, query_put);
                 // Process the response and update the nodes_sent_count and sent_nodes accordingly
@@ -1125,56 +1125,93 @@ void Node::republish() {
 
 bool Node::validate(const std::string& key, const std::string& value) {
     if(key.length() != 64) {
-        std::cerr << "Key length is not 64 characters\n";
-        return false;
-    }
-    if(value.empty()) {
+        std::cerr << "\033[91mInvalid key length\033[0m\n";
         return false;
     }
     
     // Ensure that the value is valid JSON
+    if(value.empty()) { return false; }
     nlohmann::json json;
     try {
         json = nlohmann::json::parse(value);
     } catch (const nlohmann::json::parse_error& e) {
-        std::cerr << "JSON parsing error: " << e.what() << std::endl;
-        return false; // Invalid value, return false
+        std::cerr << "\033[91mJSON parsing error: " << e.what() << "\033[0m" << std::endl;
+        return false;
     }
     
     // Make sure value contains a valid metadata field
-    if(!json.contains("metadata")) {
-        std::cerr << "No metadata found\n";
-        return false;
-    }
+    if(!json.is_object()) { return false; }
+    if(!json.contains("metadata")) { return false; }
     if(!json["metadata"].is_string()) { return false; }
     std::string metadata = json["metadata"].get<std::string>();
     std::vector<std::string> valid_metadatas = { "user","listing","product_rating","seller_rating","order","message", };
     if (std::find(valid_metadatas.begin(), valid_metadatas.end(), metadata) == valid_metadatas.end()) {
-        std::cerr << metadata << " is not a VALID metadata\n";
+        std::cerr << "\033[91mInvalid metadata field: " << metadata << "\033[0m\n";
+        return false;
+    }
+    
+    if(!validate_fields(value)) {
         return false;
     }
     
     // Verify the value using the signature field
     if(!verify(value)) {
-        std::cerr << "Verification failed\n";
         return false;
     }
     
-    // Check whether data is expired so we don't store it
+    // Reject expired data and remove if previously stored
     db::Sqlite3 * database = neroshop::get_database();
     if(json.contains("expiration_date")) {
         if(!json["expiration_date"].is_string()) { return false; }
         std::string expiration_date = json["expiration_date"].get<std::string>();
-        if(neroshop_timestamp::is_expired(expiration_date)) {
-            // Remove the data from hash table if it was previously stored
+        if(neroshop::timestamp::is_expired(expiration_date)) {
+            std::cerr << "\033[91mData has expired\033[0m\n";
             if(has_key(key)) {
-                std::cout << "Data with key (" << key << ") has expired. Removing from hash table ...\n";
-                if(remove(key) == true) {
-                    int error = database->execute_params("DELETE FROM mappings WHERE key = ?1", { key });
-                    error = database->execute_params("DELETE FROM hash_table WHERE key = ?1", { key });
-                }
+                remove(key);
+            }
+            if(database->get_integer_params("SELECT EXISTS(SELECT key FROM hash_table WHERE key = ?1)", { key }) == 1) {
+                database->execute_params("DELETE FROM hash_table WHERE key = ?1", { key });
+            }
+            if(database->get_integer_params("SELECT EXISTS(SELECT key FROM mappings WHERE key = ?1)", { key }) == 1) {
+                database->execute_params("DELETE FROM mappings WHERE key = ?1", { key });
             }
             return false;
+        }
+    }
+    
+    return true;
+}
+
+//-----------------------------------------------------------------------------
+
+bool Node::validate_fields(const std::string& value) {
+    nlohmann::json json = nlohmann::json::parse(value);
+    std::string metadata = json["metadata"].get<std::string>();
+    
+    if(metadata == "user") {
+        if (!json.contains("created_at") && !json["created_at"].is_string()) { return false; }
+        if (!json.contains("monero_address") && !json["monero_address"].is_string()) { return false; }
+        if (!json.contains("public_key") && !json["public_key"].is_string()) { return false; }
+        if (!json.contains("signature") && !json["signature"].is_string()) { return false; }
+        // Optional fields
+        if (json.contains("avatar")) { 
+            if(!json["avatar"].is_object()) { return false; }
+            const auto& avatar = json["avatar"];
+            if(!avatar.contains("name") && !avatar["name"].is_string()) { return false; }
+            if(!avatar.contains("size") && !avatar["size"].is_number_integer()) { return false; }
+            if(!avatar.contains("pieces") && !avatar["pieces"].is_array()) { return false; }
+            if(!avatar.contains("piece_size") && !avatar["piece_size"].is_number_integer()) { return false; }
+        }
+        if (json.contains("display_name")) { 
+            if(!json["display_name"].is_string()) { return false; }
+            std::string display_name = json["display_name"].get<std::string>();
+            if(!neroshop::string_tools::is_valid_username(display_name)) {
+                return false;
+            }
+            if((display_name.length() < NEROSHOP_MIN_USERNAME_LENGTH) ||
+                (display_name.length() > NEROSHOP_MAX_USERNAME_LENGTH)) {
+                return false;
+            }
         }
     }
     
@@ -1191,7 +1228,7 @@ bool Node::verify(const std::string& value) const {
     std::string signed_message, signing_address, signature;
     // Messages and orders don't need to be verified by peers since they will be encrypted then decrypted and verified by the intended recipient instead
     if(metadata == "order") { return true; }
-    if(metadata == "message") { return true; }
+    if(metadata == "message") { return true; } // Signing address is encrypted
     if(metadata == "user") {
         if(!json["monero_address"].is_string()) { return false; }
         signed_message = json["monero_address"].get<std::string>(); // user_id
@@ -1219,11 +1256,11 @@ bool Node::verify(const std::string& value) const {
     // Validate signing address and signature
     auto network_type = monero_network_type::STAGENET;
     if(!monero_utils::is_valid_address(signing_address, network_type)) {
-        std::cerr << "Invalid signing address\n"; 
+        std::cerr << "\033[91mInvalid signing address\033[0m\n";
         return false;
     }
-    if(signature.length() != 93 || !neroshop_string::contains_first_of(signature, "Sig")) { 
-        std::cerr << "Invalid signature\n"; 
+    if(signature.length() != 93 || !neroshop::string::contains_first_of(signature, "Sig")) { 
+        std::cerr << "\033[91mInvalid signature\033[0m\n";
         return false;
     }
     
@@ -1235,7 +1272,7 @@ bool Node::verify(const std::string& value) const {
     std::unique_ptr<monero::monero_wallet_full> monero_wallet_obj = std::unique_ptr<monero_wallet_full>(monero_wallet_full::create_wallet (wallet_config_obj, nullptr));
     bool verified = monero_wallet_obj->verify_message(signed_message, signing_address, signature).m_is_good;
     if(!verified) {
-        std::cerr << "\033[91mMessage verification failed\033[0m" << std::endl;
+        std::cerr << "\033[91mData verification failed\033[0m" << std::endl;
         monero_wallet_obj->close(false);
         monero_wallet_obj.reset();
         return false;
@@ -1715,6 +1752,23 @@ uint16_t Node::get_port() const {
 
 RoutingTable * Node::get_routing_table() const {
     return routing_table.get();
+}
+
+std::vector<Peer> Node::get_peers() const {
+    std::vector<Peer> peers_list;
+    for (auto& bucket : routing_table->buckets) {
+        for (auto& node : bucket.second) {
+            if (node.get() == nullptr) continue;
+            Peer peer;
+            peer.address = node->get_ip_address();
+            peer.port = node->get_port();
+            peer.id = node->get_id();
+            peer.status = node->get_status();
+            //peer.distance = node->get_distance(this->id);
+            peers_list.push_back(peer);
+        }
+    }
+    return peers_list;
 }
 
 int Node::get_peer_count() const {

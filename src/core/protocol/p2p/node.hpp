@@ -18,12 +18,15 @@ namespace neroshop {
 class RoutingTable;
 class KeyMapper;
 
+enum class NodeStatus { Dead, Inactive, Active };
+
 struct Peer {
     std::string address;
-    int port;
+    uint16_t port;
+    std::string id;
+    NodeStatus status;
+    //std::string distance;
 };
-
-enum class NodeStatus { Dead, Inactive, Active };
 
 class Node {
 private:
@@ -57,6 +60,7 @@ private:
     int set(const std::string& key, const std::string& value); // Updates the value without changing the key. set cannot be accessed directly but only through put
     bool verify(const std::string& value) const;
     void expire(const std::string& key, const std::string& value); // Removes any expired data from hash table
+    bool validate_fields(const std::string& value);
 public:
     Node(const std::string& address, int port, bool local); // Binds a socket to a port and initializes the DHT
     //Node(const Node& other); // Copy constructor
@@ -130,6 +134,7 @@ public:
     std::string get_public_ip_address() const;
     uint16_t get_port() const;
     RoutingTable * get_routing_table() const;
+    std::vector<Peer> get_peers() const; // Returns a list of connected peers
     int get_peer_count() const; // Returns the total number of nodes in routing table
     int get_active_peer_count() const;
     int get_idle_peer_count() const;
