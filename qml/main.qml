@@ -269,7 +269,7 @@ ApplicationWindow {
                         x: parent.x + (parent.width - this.width) / 2 // Popups don't have anchors :(
                         height: contentHeight + 20; width: (contentWidth > parent.width) ? 300 : parent.width
                         bottomMargin : footer.height + 5
-                        text: qsTr("neromon\n%1 %2").arg(DaemonManager.daemonStatusText/*(parent.value <= 0.0) ? "Disconnected" : ((parent.value > 0.0 && parent.value < 1.0) ? "Synchronizing" : "Connected")*/).arg((parent.value > 0.0 && parent.value < 1.0) ? ("(" + (parent.value * 100).toString() + "%)") : "")
+                        text: qsTr("%1\n%2 %3").arg((parent.value == 1.0) ? ((networkMonitor.networkStatus == null) ? "neromon" : (networkMonitor.networkStatus.hasOwnProperty("host") ? networkMonitor.networkStatus.host : "neromon")) : "neromon").arg(DaemonManager.daemonStatusText).arg((parent.value > 0.0 && parent.value < 1.0) ? ("(" + (parent.value * 100).toString() + "%)") : "")
                         pointer.visible: false
                     }
                 }      

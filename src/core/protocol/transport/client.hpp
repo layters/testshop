@@ -58,6 +58,7 @@ public:
 	void get(const std::string& key, std::string& response);
 	void set(const std::string& key, const std::string& value, std::string& response);
 	void remove(const std::string& key, std::string& response);
+	void clear(std::string& response);
 	void close(); // kills socket
 	void shutdown(); // shuts down connection (disconnects from server)
     void disconnect(); // breaks connection to server then closes the client socket // combination of shutdown() and close()
