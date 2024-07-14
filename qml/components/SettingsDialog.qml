@@ -1180,7 +1180,7 @@ Item {
                         hoverEnabled: true
                         onClicked: moneroDaemonFileDialog.open()
                         background: Rectangle {
-                            color: NeroshopComponents.Style.moneroGrayColor
+                            color: "#808080"
                             radius: 5
                         }
                         contentItem: Text {
@@ -1222,7 +1222,7 @@ Item {
                         hoverEnabled: true
                         onClicked: moneroDataDirFolderDialog.open()
                         background: Rectangle {
-                            color: NeroshopComponents.Style.moneroGrayColor
+                            color: "#808080"
                             radius: 5
                         }
                         contentItem: Text {
