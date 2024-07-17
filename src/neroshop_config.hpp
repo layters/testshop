@@ -75,21 +75,21 @@
 #define NEROSHOP_DEFAULT_DATABASE_PATH         NEROSHOP_DEFAULT_CONFIGURATION_PATH + "/" + NEROSHOP_DATA_FOLDER_NAME
 #define NEROSHOP_DEFAULT_KEYS_PATH             NEROSHOP_DEFAULT_CONFIGURATION_PATH + "/" + NEROSHOP_KEYS_FOLDER_NAME
 #if defined(_WIN32)
-#define NEROSHOP_DEFAULT_WALLET_DIRECTORY_PATH (QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation) + "/neroshop").toStdString()
+#define NEROSHOP_DEFAULT_WALLET_DIRECTORY_PATH (QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation) + "/neroshop/wallet").toStdString()
 #else
-#define NEROSHOP_DEFAULT_WALLET_DIRECTORY_PATH (QStandardPaths::writableLocation(QStandardPaths::HomeLocation) + "/neroshop").toStdString()
+#define NEROSHOP_DEFAULT_WALLET_DIRECTORY_PATH (QStandardPaths::writableLocation(QStandardPaths::HomeLocation) + "/neroshop/wallet").toStdString()
 #endif
 #endif // endif NEROSHOP_USE_QT
 
 #if !defined(NEROSHOP_USE_QT)
 #if defined(_WIN32)
 #define NEROSHOP_DEFAULT_CONFIGURATION_PATH "C:/Users/" + neroshop::device::get_user() + "/AppData/Local/neroshop"//"C:/ProgramData/neroshop"
-#define NEROSHOP_DEFAULT_WALLET_DIRECTORY_PATH "C:/Users/" + neroshop::device::get_user() + "/Documents" + "/neroshop"
+#define NEROSHOP_DEFAULT_WALLET_DIRECTORY_PATH "C:/Users/" + neroshop::device::get_user() + "/Documents" + "/neroshop/wallet"
 #endif
 
 #if defined(__linux__) && !defined(__ANDROID__)
 #define NEROSHOP_DEFAULT_CONFIGURATION_PATH "/home/" + neroshop::device::get_user() + "/.config/neroshop"//"/etc/xdg/neroshop"//"/home/" + neroshop::device::get_user() + "/.local/share/neroshop"
-#define NEROSHOP_DEFAULT_WALLET_DIRECTORY_PATH "/home/" + neroshop::device::get_user() + "/neroshop"
+#define NEROSHOP_DEFAULT_WALLET_DIRECTORY_PATH "/home/" + neroshop::device::get_user() + "/neroshop/wallet"
 #endif
 
 #if defined(__APPLE__) && defined(__MACH__)

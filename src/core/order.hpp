@@ -7,6 +7,9 @@
 #include <string>
 #include <vector>
 
+#include "payment.hpp"
+#include "delivery.hpp"
+
 namespace neroshop {
 
 class Cart; // forward declaration
@@ -24,100 +27,6 @@ enum class OrderStatus {
     Returned, // Order has been returned
     Disputed, // Customer has initiated a dispute process
     Declined, // Order was declined by the seller
-};
-
-// payment status
-enum class PaymentStatus {
-    Pending, // Payment has been initiated but has not been received yet
-    Confirmed, // Payment has been confirmed and accepted by the blockchain network
-    Completed, // Payment has been successfully completed and the transaction is final
-    Partial, // Payment has been partially completed or only a portion of the requested amount has been received
-    Refunded, // Payment has been refunded
-    Expired, // Payment window has expired and the transaction cannot be completed
-    Released, // Payment has been released to the seller after the transaction is complete
-    Held, // Payment is being held in escrow until the transaction is completed or resolved
-};
-
-// payment options
-enum class PaymentOption {
-    Escrow = 0, // 2 of 3
-    Multisig, // 2 of 2
-    Finalize, // no escrow (Note: all non-crypto payments are finalize by default)
-};
-
-// payment methods - may not be necessary since only crypto will be used
-enum class PaymentMethod {
-    Cash, 
-    Card, // can be either credit, debit, or pre-paid
-    Crypto, 
-    DigitalApp, // can be cashapp, paypal, etc.
-    Metal, // can be any precious metal
-    Goldback,
-};
-
-// payment coins (cryptocurrencies used for payments)
-enum class PaymentCoin { 
-    None = -1, // intended for non-crypto payments
-    Monero,
-    Wownero,
-    //Bitcoin,
-};
-
-// delivery options
-enum class DeliveryOption {
-    Delivery = 0,
-    Pickup, // can include Dead drops and In-Store/Curbside pickups
-};
-
-// delivery methods (does not apply to Pickup or Dead drop)
-enum class DeliveryMethod {
-    Mail = 0,
-    Courier,
-    Digital,
-};
-
-// delivery package type (does not apply to Digital deliveries)
-enum class PackageType {
-    Parcel = 0, // can include poly mailers, boxes, etc.
-    Envelope,
-    Box,
-    Pallet,
-};
-
-enum class ShippingOption {
-    Standard, // 3-7 business days depending on country, cost: $5.00
-    Expedited, // (Priority) // 1-3 business days domestically, 3-5 days internationally, cost: $15.00
-    Express, // 1-2 days domestically, 1-5 days internationally, cost: $25.00
-    /*NextDay,
-    Overnight = NextDay,*/
-    SameDay,
-    LocalDelivery = SameDay,
-    International, // 1-4 weeks
-    EcoFriendly,
-};
-
-enum class CourierService {
-    DHL,
-    FedEx,
-    UPS,
-    USPS,
-    Aramex,
-    TNT,
-    CanadaPost,
-    DBSchenker,
-    Purolator,
-    RLCarriers, // R+L Carriers
-    YRCFreight,
-    DTDC,
-    BlueDart,
-    PostNL,
-    RoyalMail,
-    AustraliaPost,
-    JapanPost,
-    DeutschePost,
-    LaPoste,
-    Correos,
-    PosteItaliane,
 };
 
 struct OrderItem {

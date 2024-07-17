@@ -178,7 +178,7 @@ Page {
         id: walletFileDialog
         fileMode: FileDialog.OpenFile
         currentFile: walletFileField.text // currentFile is deprecated since Qt 6.3. Use selectedFile instead
-        folder: (isWindows) ? StandardPaths.writableLocation(StandardPaths.DocumentsLocation) + "/neroshop" : StandardPaths.writableLocation(StandardPaths.HomeLocation) + "/neroshop"//StandardPaths.writableLocation(StandardPaths.AppDataLocation) // refer to https://doc.qt.io/qt-5/qstandardpaths.html#StandardLocation-enum
+        folder: (isWindows) ? StandardPaths.writableLocation(StandardPaths.DocumentsLocation) + "/neroshop/wallet" : StandardPaths.writableLocation(StandardPaths.HomeLocation) + "/neroshop/wallet"//StandardPaths.writableLocation(StandardPaths.AppDataLocation) // refer to https://doc.qt.io/qt-5/qstandardpaths.html#StandardLocation-enum
         nameFilters: ["Wallet files (*.keys)"]
         ////options: FileDialog.ReadOnly // will not allow you to create folders while file dialog is opened
         onAccepted: {
@@ -191,7 +191,7 @@ Page {
     FolderDialog {
         id: walletFolderDialog
         currentFolder: walletPathField.text
-        folder: (isWindows) ? StandardPaths.writableLocation(StandardPaths.DocumentsLocation) + "/neroshop" : StandardPaths.writableLocation(StandardPaths.HomeLocation) + "/neroshop"
+        folder: (isWindows) ? StandardPaths.writableLocation(StandardPaths.DocumentsLocation) + "/neroshop/wallet" : StandardPaths.writableLocation(StandardPaths.HomeLocation) + "/neroshop/wallet"
     }
     ///////////////////////////
     StackLayout { // Perfect for a stack of items where only one item is visible at a time//ColumnLayout { // From top to bottom

@@ -202,7 +202,10 @@ void Product::set_category_id(unsigned int category_id) {
 void Product::set_subcategories(const std::vector<std::string>& subcategories) {
     std::vector<int> subcategory_id_vector {};
     for (const std::string& subcategory : subcategories) {
-        int subcategory_id = get_category_id_by_name(subcategory);
+        int subcategory_id = get_category_id_by_name(subcategory); // Category name
+        if(subcategory_id == -1) {
+            subcategory_id = get_subcategory_id_by_name(subcategory); // Unique subcategory name
+        }
         subcategory_id_vector.push_back(subcategory_id);
     }
     set_subcategory_ids(subcategory_id_vector);
