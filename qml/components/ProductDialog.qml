@@ -675,6 +675,273 @@ Popup {
                     }
                 }
             } 
+            // Seller-accepted payment options
+            Item {
+                id: paymentOptionsItem
+                Layout.alignment: Qt.AlignHCenter
+                Layout.preferredWidth: childrenRect.width
+                Layout.preferredHeight: childrenRect.height
+                property var paymentOptions: [
+                    { name: "Escrow" },
+                    { name: "Multisig" },
+                    { name: "Finalize" }
+                ]
+                function isPaymentOptionSelected() {
+                    // Check if at least one checkbox is checked
+                    for (let i = 0; i < paymentOptionsRepeater.count; ++i) {
+                        if (paymentOptionsRepeater.itemAt(i).checked) {
+                            return true;
+                        }
+                    }
+                    return false;
+                }
+                function getSelectedPaymentOptions() {
+                    let selectedNames = [];
+                    for (let i = 0; i < paymentOptionsRepeater.count; ++i) {
+                        if (paymentOptionsRepeater.itemAt(i).checked) {
+                            selectedNames.push(paymentOptionsRepeater.itemAt(i).text);
+                        }
+                    }
+                    return selectedNames;
+                }
+                function uncheckAllPaymentOptions() {
+                    for (let i = 0; i < paymentOptionsRepeater.count; ++i) {
+                        paymentOptionsRepeater.itemAt(i).checked = false
+                    }
+                }
+    
+                Column {
+                    spacing: productDialog.titleSpacing
+                    Row {
+                        spacing: 10
+                        Text {
+                            text: "Payment options"
+                            color: productDialog.palette.text
+                            font.bold: true
+                        }
+                        Text {
+                            text: qsTr(FontAwesome.questionCircle)
+                            color: productDialog.optTextColor
+                            font.bold: true
+                            anchors.verticalCenter: parent.children[0].verticalCenter
+                            property bool hovered: false
+                            NeroshopComponents.Hint {
+                                //x: parent.width + 10; y: ((parent.height - height) / 2)
+                                visible: parent.hovered
+                                height: contentHeight + 20; width: contentWidth + 20
+                                text: qsTr("-- Select all that apply --\nEscrow: 2 of 3 Multisig\nMultisig: 2 of 2 Multisig\nFinalize: Direct payment")
+                                pointer.visible: false;
+                            }
+                            MouseArea { 
+                                anchors.fill: parent
+                                hoverEnabled: true
+                                onEntered: parent.hovered = true
+                                onExited: parent.hovered = false
+                            }
+                        }
+                    }
+                    // Checkboxes for payment options
+                    Frame {
+                        width: 500; height: 30//50//80 - for Flow
+                        background: Rectangle {
+                            color: "transparent"//productDialog.inputBaseColor
+                            //border.color: productDialog.inputBorderColor
+                            radius: productDialog.inputRadius
+                        }
+                        Row {//Flow {
+                            anchors.fill: parent/*width: width + (paymentOptionsRepeater.count * spacing); height: parent.height
+                            anchors.horizontalCenter: parent.horizontalCenter*/
+                            spacing: 100
+                            Repeater {
+                                id: paymentOptionsRepeater
+                                model: paymentOptionsItem.paymentOptions
+                                delegate: NeroshopComponents.CheckBox {
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    text: modelData.name
+                                    textColor: productDialog.inputTextColor
+                                    color: "transparent"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            // Seller-accepted payment coins
+            Item {
+                id: paymentCoinsItem
+                Layout.alignment: Qt.AlignHCenter
+                Layout.preferredWidth: childrenRect.width
+                Layout.preferredHeight: childrenRect.height
+                property var paymentCoins: [
+                    { name: "Monero", selected: true }
+                ]
+                function isPaymentCoinSelected() {
+                    // Check if at least one checkbox is checked
+                    for (let i = 0; i < paymentCoinsRepeater.count; ++i) {
+                        if (paymentCoinsRepeater.itemAt(i).checked) {
+                            return true;
+                        }
+                    }
+                    return false;
+                }
+                function getSelectedPaymentCoins() {
+                    let selectedNames = [];
+                    for (let i = 0; i < paymentCoinsRepeater.count; ++i) {
+                        if (paymentCoinsRepeater.itemAt(i).checked) {
+                            selectedNames.push(paymentCoinsRepeater.itemAt(i).text);
+                        }
+                    }
+                    return selectedNames;
+                }
+                function uncheckAllPaymentCoins() {
+                    for (let i = 0; i < paymentCoinsRepeater.count; ++i) {
+                        paymentCoinsRepeater.itemAt(i).checked = false
+                    }
+                }
+    
+                Column {
+                    spacing: productDialog.titleSpacing
+                    Row {
+                        spacing: 10
+                        Text {
+                            text: "Payment coins"
+                            color: productDialog.palette.text
+                            font.bold: true
+                        }
+                        Text {
+                            text: qsTr(FontAwesome.questionCircle)
+                            color: productDialog.optTextColor
+                            font.bold: true
+                            anchors.verticalCenter: parent.children[0].verticalCenter
+                            property bool hovered: false
+                            NeroshopComponents.Hint {
+                                visible: parent.hovered
+                                height: contentHeight + 20; width: contentWidth + 20
+                                text: qsTr("-- Select all that apply --")
+                                pointer.visible: false;
+                            }
+                            MouseArea { 
+                                anchors.fill: parent
+                                hoverEnabled: true
+                                onEntered: parent.hovered = true
+                                onExited: parent.hovered = false
+                            }
+                        }
+                    }
+                    // Checkboxes for payment coins
+                    Frame {
+                        width: 500; height: 30//50//80 - for Flow
+                        background: Rectangle {
+                            color: "transparent"//productDialog.inputBaseColor
+                            //border.color: productDialog.inputBorderColor
+                            radius: productDialog.inputRadius
+                        }
+                        Row {//Flow {
+                            anchors.fill: parent
+                            spacing: 100
+                            Repeater {
+                                id: paymentCoinsRepeater
+                                model: paymentCoinsItem.paymentCoins
+                                delegate: NeroshopComponents.CheckBox {
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    text: modelData.name
+                                    checked: modelData.selected
+                                    textColor: productDialog.inputTextColor
+                                    color: "transparent"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            // Seller-accepted payment delivery options
+            Item {
+                id: deliveryOptionsItem
+                Layout.alignment: Qt.AlignHCenter
+                Layout.preferredWidth: childrenRect.width
+                Layout.preferredHeight: childrenRect.height
+                property var deliveryOptions: [
+                    { name: "Delivery" },
+                    { name: "Pickup" }
+                ]
+                function isDeliveryOptionSelected() {
+                    // Check if at least one checkbox is checked
+                    for (let i = 0; i < deliveryOptionsRepeater.count; ++i) {
+                        if (deliveryOptionsRepeater.itemAt(i).checked) {
+                            return true;
+                        }
+                    }
+                    return false;
+                }
+                function getSelectedDeliveryOptions() {
+                    let selectedNames = [];
+                    for (let i = 0; i < deliveryOptionsRepeater.count; ++i) {
+                        if (deliveryOptionsRepeater.itemAt(i).checked) {
+                            selectedNames.push(deliveryOptionsRepeater.itemAt(i).text);
+                        }
+                    }
+                    return selectedNames;
+                }
+                function uncheckAllDeliveryOptions() {
+                    for (let i = 0; i < deliveryOptionsRepeater.count; ++i) {
+                        deliveryOptionsRepeater.itemAt(i).checked = false
+                    }
+                }
+    
+                Column {
+                    spacing: productDialog.titleSpacing
+                    Row {
+                        spacing: 10
+                        Text {
+                            text: "Delivery options"
+                            color: productDialog.palette.text
+                            font.bold: true
+                        }
+                        Text {
+                            text: qsTr(FontAwesome.questionCircle)
+                            color: productDialog.optTextColor
+                            font.bold: true
+                            anchors.verticalCenter: parent.children[0].verticalCenter
+                            property bool hovered: false
+                            NeroshopComponents.Hint {
+                                visible: parent.hovered
+                                height: contentHeight + 20; width: contentWidth + 20
+                                text: qsTr("-- Select all that apply --")
+                                pointer.visible: false;
+                            }
+                            MouseArea { 
+                                anchors.fill: parent
+                                hoverEnabled: true
+                                onEntered: parent.hovered = true
+                                onExited: parent.hovered = false
+                            }
+                        }
+                    }
+                    // Checkboxes for delivery options
+                    Frame {
+                        width: 500; height: 30//50//80 - for Flow
+                        background: Rectangle {
+                            color: "transparent"//productDialog.inputBaseColor
+                            //border.color: productDialog.inputBorderColor
+                            radius: productDialog.inputRadius
+                        }
+                        Row {//Flow {
+                            anchors.fill: parent
+                            spacing: 100
+                            Repeater {
+                                id: deliveryOptionsRepeater
+                                model: deliveryOptionsItem.deliveryOptions
+                                delegate: NeroshopComponents.CheckBox {
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    text: modelData.name
+                                    textColor: productDialog.inputTextColor
+                                    color: "transparent"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
             // todo: Shipping details                   
                     //Product description and bullet points
                     Item {
@@ -1013,6 +1280,22 @@ Popup {
                                     return; // exit function
                                 }
                                 //---------------------------------------
+                                // One or more payment option must be selected
+                                if(!paymentOptionsItem.isPaymentOptionSelected()) {
+                                    messageBox.text = "At least one payment option must be selected"
+                                    messageBox.open()
+                                    return; // exit function
+                                }
+                                console.log("paymentOptionsItem.getSelectedPaymentOptions()",paymentOptionsItem.getSelectedPaymentOptions())
+                                //---------------------------------------
+                                // One or more delivery option must be selected
+                                if(!deliveryOptionsItem.isDeliveryOptionSelected()) {
+                                    messageBox.text = "At least one delivery option must be selected"
+                                    messageBox.open()
+                                    return; // exit function
+                                }
+                                console.log("deliveryOptionsItem.getSelectedDeliveryOptions()",deliveryOptionsItem.getSelectedDeliveryOptions())
+                                //---------------------------------------
                                 // Create image objects with properties
                                 let productImages = []
                                 for(let i = 0; i < productImageRepeater.count; i++) {
@@ -1071,6 +1354,9 @@ Popup {
                                 productDescriptionEdit.text = ""
                                 productTagsField.clearTags()
                                 quantityPerOrderField.text = ""
+                                paymentOptionsItem.uncheckAllPaymentOptions()
+                                ////paymentCoinsItem.uncheckAllPaymentCoins()
+                                deliveryOptionsItem.uncheckAllDeliveryOptions()
                                 // Clear upload images as well
                                 for(let i = 0; i < productImageRepeater.count; i++) {
                                     let productImage = productImageRepeater.itemAt(i).children[0].children[0]

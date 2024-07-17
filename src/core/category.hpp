@@ -49,7 +49,7 @@ const std::vector<Category> predefined_categories = {
 };
 
 const std::vector<Subcategory> predefined_subcategories = { 
-    // For each category is a subcategory (for example, the books, movies, and music categories can fall under the digital goods subcategory if they are digital rather than physical)
+    // For each category is a subcategory (for example, the books, movies, and music categories can fall under the digital goods subcategory, and vice versa if they are digital rather than physical)
     // Digital Goods
     { static_cast<unsigned int>(predefined_categories.size() + 0), predefined_categories[5].name, predefined_categories[5].description, predefined_categories[5].thumbnail, 7 },
     { static_cast<unsigned int>(predefined_categories.size() + 1), predefined_categories[5].name, predefined_categories[5].description, predefined_categories[5].thumbnail, 8 },
