@@ -75,6 +75,42 @@ std::pair<std::string, std::string/*std::vector<uint8_t>*/> Serializer::serializ
         if(quantity_per_order > 0) {
             json_object["quantity_per_order"] = quantity_per_order;
         }
+        auto payment_coins = listing.get_payment_coins();
+        if(!payment_coins.empty()) {
+            nlohmann::json payment_coins_array = {};
+            for(const auto& payment_coin : payment_coins) {
+                std::string payment_coin_str = get_payment_coin_as_string(payment_coin);
+                payment_coins_array.push_back(payment_coin_str);
+            }
+            json_object["payment_coins"] = payment_coins_array;
+        }
+        auto payment_options = listing.get_payment_options();
+        if(!payment_options.empty()) {
+            nlohmann::json payment_options_array = {};
+            for(const auto& payment_option : payment_options) {
+                std::string payment_option_str = get_payment_option_as_string(payment_option);
+                payment_options_array.push_back(payment_option_str);
+            }
+            json_object["payment_options"] = payment_options_array;
+        }
+        auto delivery_options = listing.get_delivery_options();
+        if(!delivery_options.empty()) {
+            nlohmann::json delivery_options_array = {};
+            for(const auto& delivery_option : delivery_options) {
+                std::string delivery_option_str = get_delivery_option_as_string(delivery_option);
+                delivery_options_array.push_back(delivery_option_str);
+            }
+            json_object["delivery_options"] = delivery_options_array;
+        }
+        auto shipping_options = listing.get_shipping_options();
+        if(!shipping_options.empty()) {
+            nlohmann::json shipping_options_array = {};
+            for(const auto& shipping_option : shipping_options) {
+                std::string shipping_option_str = get_shipping_option_as_string(shipping_option);
+                shipping_options_array.push_back(shipping_option_str);
+            }
+            json_object["shipping_options"] = shipping_options_array;
+        }
         // Include the product serialization within the listing serialization
         assert(listing.get_product() != nullptr);
         const Product& product = *listing.get_product();
