@@ -7,6 +7,7 @@
 #include <memory> // std::unique_ptr
 #include <string>
 #include <vector>
+#include <set>
 
 #include "user.hpp"
 
@@ -37,7 +38,12 @@ public:
 	    /*double discount = 0.00, unsigned int discounted_items = 1, unsigned int discount_times = 1, std::string discount_expiry = "0000-00-00 00:00:00", */
 	    const std::string& condition, 
 	    const std::string& location,
-	    unsigned int quantity_per_order
+	    unsigned int quantity_per_order, 
+	    /*PaymentMethod payment_method,*/ 
+	    const std::set<PaymentCoin>& payment_coins, 
+        const std::set<PaymentOption>& payment_options, 
+        const std::set<DeliveryOption>& delivery_options,
+        const std::set<ShippingOption>& shipping_options
 	) const; // adds an item to the inventory
 	////void list_item(const neroshop::Product& item, unsigned int stock_qty, double sales_price = 0.00, std::string currency = "usd", double discount = 0.00, unsigned int discounted_items = 1, unsigned int discount_times = 1, std::string discount_expiry = ""/*"0000-00-00 00:00:00"*/, std::string condition = "new");
 	void delist_item(const std::string& listing_key); // deletes an item from the inventory

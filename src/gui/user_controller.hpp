@@ -46,7 +46,12 @@ public:
         const QString& currency, 
         const QString& condition, 
         const QString& location, 
-        int quantity_per_order
+        int quantity_per_order, 
+        /*int payment_method,*/ 
+        const QList<int>& payment_coins, 
+        const QList<int>& payment_options, 
+        const QList<int>& delivery_options,
+        const QList<int>& shipping_options
     );
     Q_INVOKABLE void delistProduct(const QString& listing_key);
     Q_INVOKABLE void delistProducts(const QStringList& listing_keys);

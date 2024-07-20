@@ -16,7 +16,7 @@
 namespace neroshop {
 ////////////////////
 Order::Order() : status(OrderStatus::New), subtotal(0.00), discount(0.00), shipping_cost(0.00), total(0.00), 
-    payment_option(PaymentOption::Escrow), payment_coin(PaymentCoin::Monero), delivery_option(DeliveryOption::Delivery)
+    payment_option(PaymentOption::Escrow), payment_coin(PaymentCoin::Monero), delivery_option(DeliveryOption::Shipping)
 {}
 
 Order::Order(const std::string& id, const std::string& date, OrderStatus status, const std::string& customer_id,
@@ -161,7 +161,7 @@ void Order::create_order(const neroshop::Cart& cart, const std::string& shipping
     std::string customer_id = cart.owner_id;
     auto payment_option = PaymentOption::Escrow;
     auto payment_coin = PaymentCoin::Monero;
-    auto delivery_option = DeliveryOption::Delivery;
+    auto delivery_option = DeliveryOption::Shipping;
     std::string notes = shipping_address;
     
     /*std::string signature = wallet->sign_message(order_id, monero_message_signature_type::SIGN_WITH_SPEND_KEY);//std::cout << "signature: " << signature << "\n\n";
@@ -306,7 +306,7 @@ void Order::create_order_batch(const neroshop::Cart& cart, const std::string& sh
         std::string customer_id = cart.owner_id;
         auto payment_option = PaymentOption::Escrow;
         auto payment_coin = PaymentCoin::Monero;
-        auto delivery_option = DeliveryOption::Delivery;
+        auto delivery_option = DeliveryOption::Shipping;
         std::string notes = shipping_address;
     
         /*std::string signature = wallet->sign_message(order_id, monero_message_signature_type::SIGN_WITH_SPEND_KEY);//std::cout << "signature: " << signature << "\n\n";
@@ -424,6 +424,19 @@ void Order::set_total(double total) {
     this->total = total;
 }
 
+void Order::set_payment_method(PaymentMethod payment_method) {
+    this->payment_method = payment_method;
+}
+
+void Order::set_payment_method_by_string(const std::string& payment_method) {
+    if(payment_method == "Crypto") set_payment_method(PaymentMethod::Crypto);
+    if(payment_method == "Cash") set_payment_method(PaymentMethod::Cash);
+    if(payment_method == "Card") set_payment_method(PaymentMethod::Card);
+    if(payment_method == "DigitalApp") set_payment_method(PaymentMethod::DigitalApp);
+    if(payment_method == "PreciousMetal") set_payment_method(PaymentMethod::PreciousMetal);
+    if(payment_method == "Goldback") set_payment_method(PaymentMethod::Goldback);
+}
+
 void Order::set_payment_option(PaymentOption payment_option) {
     this->payment_option = payment_option;
 }
@@ -450,8 +463,9 @@ void Order::set_delivery_option(DeliveryOption delivery_option) {
 }
 
 void Order::set_delivery_option_by_string(const std::string& delivery_option) {
-    if(delivery_option == "Delivery") set_delivery_option(DeliveryOption::Delivery);
+    if(delivery_option == "Shipping") set_delivery_option(DeliveryOption::Shipping);
     if(delivery_option == "Pickup") set_delivery_option(DeliveryOption::Pickup);
+    if(delivery_option == "Digital") set_delivery_option(DeliveryOption::Digital);
 }
 
 void Order::set_notes(const std::string& notes) {
@@ -513,6 +527,22 @@ double Order::get_total() const {
     return total;
 }
 
+PaymentMethod Order::get_payment_method() const {
+    return payment_method;
+}
+
+std::string Order::get_payment_method_as_string() const {
+    switch(payment_method) {
+        case PaymentMethod::Crypto: return "Crypto";
+        case PaymentMethod::Cash: return "Cash";
+        case PaymentMethod::Card: return "Card";
+        case PaymentMethod::DigitalApp: return "DigitalApp";
+        case PaymentMethod::PreciousMetal: return "PreciousMetal";
+        case PaymentMethod::Goldback: return "Goldback";
+        default: return "Crypto";
+    }
+}
+
 neroshop::PaymentOption Order::get_payment_option() const {
     return payment_option;
 }
@@ -546,9 +576,10 @@ neroshop::DeliveryOption Order::get_delivery_option() const {
 
 std::string Order::get_delivery_option_as_string() const {
     switch(delivery_option) {
-        case DeliveryOption::Delivery: return "Delivery";
+        case DeliveryOption::Shipping: return "Shipping";
         case DeliveryOption::Pickup: return "Pickup";
-        default: return "Delivery";
+        case DeliveryOption::Digital: return "Digital";
+        default: return "Shipping";
     }
 }
 

@@ -17,13 +17,6 @@ enum class PaymentStatus {
     Held, // Payment is being held in escrow until the transaction is completed or resolved
 };
 
-// payment options
-enum class PaymentOption {
-    Escrow = 0, // 2 of 3
-    Multisig, // 2 of 2
-    Finalize, // Direct payment (all non-crypto payment methods are finalize by default)
-};
-
 // payment methods - may not be necessary since only crypto will be used
 enum class PaymentMethod {
     Crypto = 0,
@@ -34,11 +27,50 @@ enum class PaymentMethod {
     Goldback,
 };
 
+// payment options
+enum class PaymentOption {
+    Escrow = 0, // 2 of 3
+    Multisig, // 2 of 2
+    Finalize, // Direct payment (all non-crypto payment methods are finalize by default)
+};
+
 // payment coins (cryptocurrencies used for payments)
 enum class PaymentCoin { 
     None = -1, // Intended for non-crypto payment methods
     Monero,
     Wownero,
 };
+
+//-----------------------------------------------------------------------------
+
+inline std::string get_payment_method_as_string(PaymentMethod payment_method) {
+    switch(payment_method) {
+        case PaymentMethod::Crypto: return "Crypto";
+        case PaymentMethod::Cash: return "Cash";
+        case PaymentMethod::Card: return "Card";
+        case PaymentMethod::DigitalApp: return "DigitalApp";
+        case PaymentMethod::PreciousMetal: return "PreciousMetal";
+        case PaymentMethod::Goldback: return "Goldback";
+        default: return "";
+    }
+}
+
+inline std::string get_payment_coin_as_string(PaymentCoin payment_coin) {
+    switch(payment_coin) {
+        case PaymentCoin::None: return "None";
+        case PaymentCoin::Monero: return "Monero";
+        case PaymentCoin::Wownero: return "Wownero";
+        default: return "";
+    }
+}
+
+inline std::string get_payment_option_as_string(PaymentOption payment_option) {
+    switch(payment_option) {
+        case PaymentOption::Escrow: return "Escrow";
+        case PaymentOption::Multisig: return "Multisig";
+        case PaymentOption::Finalize: return "Finalize";
+        default: return "";
+    }
+}
 
 }

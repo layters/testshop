@@ -61,6 +61,8 @@ public:
 	double get_discount() const;
 	double get_shipping_cost() const;
 	double get_total() const;
+	PaymentMethod get_payment_method() const;
+	std::string get_payment_method_as_string() const;
 	PaymentOption get_payment_option() const;
 	std::string get_payment_option_as_string() const;
 	PaymentCoin get_payment_coin() const;
@@ -83,6 +85,7 @@ private:
 	double discount;
 	double shipping_cost;
 	double total;
+	PaymentMethod payment_method;
 	PaymentOption payment_option; // "Escrow", "Multisig", "Finalize"
 	PaymentCoin payment_coin; // "Monero"
 	DeliveryOption delivery_option; // "Delivery", "Pickup"
@@ -98,6 +101,8 @@ private:
 	void set_discount(double discount);
 	void set_shipping_cost(double shipping_cost);
 	void set_total(double total);
+	void set_payment_method(PaymentMethod payment_method);
+    void set_payment_method_by_string(const std::string& payment_method);
 	void set_payment_option(PaymentOption payment_option);
 	void set_payment_option_by_string(const std::string& payment_option);
 	void set_payment_coin(PaymentCoin payment_coin);
