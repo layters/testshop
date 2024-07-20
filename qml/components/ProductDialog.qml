@@ -192,7 +192,7 @@ Popup {
                                 x: parent.width + 10; y: ((parent.height - height) / 2) - 3
                                 visible: parent.hovered
                                 height: contentHeight + 20; width: contentWidth + 20
-                                text: qsTr("Total number of items in stock")
+                                text: qsTr("Stock quantity")
                                 pointer.visible: false;// delay: 0
                             }
                             MouseArea { 
@@ -682,9 +682,9 @@ Popup {
                 Layout.preferredWidth: childrenRect.width
                 Layout.preferredHeight: childrenRect.height
                 property var paymentOptions: [
-                    { name: "Escrow" },
-                    { name: "Multisig" },
-                    { name: "Finalize" }
+                    { name: "Escrow", value: 0 },
+                    { name: "Multisig", value: 1 },
+                    { name: "Finalize", value: 2 }
                 ]
                 function isPaymentOptionSelected() {
                     // Check if at least one checkbox is checked
@@ -703,6 +703,15 @@ Popup {
                         }
                     }
                     return selectedNames;
+                }
+                function getSelectedPaymentOptionsValue() {
+                    let selectedValues = [];
+                    for (let i = 0; i < paymentOptionsRepeater.count; ++i) {
+                        if (paymentOptionsRepeater.itemAt(i).checked) {
+                            selectedValues.push(paymentOptionsRepeater.itemAt(i).value);
+                        }
+                    }
+                    return selectedValues;
                 }
                 function uncheckAllPaymentOptions() {
                     for (let i = 0; i < paymentOptionsRepeater.count; ++i) {
@@ -760,6 +769,7 @@ Popup {
                                     text: modelData.name
                                     textColor: productDialog.inputTextColor
                                     color: "transparent"
+                                    property int value: modelData.value
                                 }
                             }
                         }
@@ -773,7 +783,8 @@ Popup {
                 Layout.preferredWidth: childrenRect.width
                 Layout.preferredHeight: childrenRect.height
                 property var paymentCoins: [
-                    { name: "Monero", selected: true }
+                    { name: "Monero", selected: true, value: 0 }/*,
+                    { name: "Wownero", selected: false, value: 1 }*/
                 ]
                 function isPaymentCoinSelected() {
                     // Check if at least one checkbox is checked
@@ -792,6 +803,15 @@ Popup {
                         }
                     }
                     return selectedNames;
+                }
+                function getSelectedPaymentCoinsValue() {
+                    let selectedValues = [];
+                    for (let i = 0; i < paymentCoinsRepeater.count; ++i) {
+                        if (paymentCoinsRepeater.itemAt(i).checked) {
+                            selectedValues.push(paymentCoinsRepeater.itemAt(i).value);
+                        }
+                    }
+                    return selectedValues;
                 }
                 function uncheckAllPaymentCoins() {
                     for (let i = 0; i < paymentCoinsRepeater.count; ++i) {
@@ -848,21 +868,23 @@ Popup {
                                     checked: modelData.selected
                                     textColor: productDialog.inputTextColor
                                     color: "transparent"
+                                    property int value: modelData.value
                                 }
                             }
                         }
                     }
                 }
             }
-            // Seller-accepted payment delivery options
+            // Seller-accepted delivery options
             Item {
                 id: deliveryOptionsItem
                 Layout.alignment: Qt.AlignHCenter
                 Layout.preferredWidth: childrenRect.width
                 Layout.preferredHeight: childrenRect.height
                 property var deliveryOptions: [
-                    { name: "Delivery" },
-                    { name: "Pickup" }
+                    { name: "Shipping", selected: false, value: 0 },
+                    { name: "Pickup", selected: false, value: 1 },
+                    { name: "Digital", selected: (productLocationBox.contentItem.text == "Online") ? true : false, value: 2 }
                 ]
                 function isDeliveryOptionSelected() {
                     // Check if at least one checkbox is checked
@@ -881,6 +903,15 @@ Popup {
                         }
                     }
                     return selectedNames;
+                }
+                function getSelectedDeliveryOptionsValue() {
+                    let selectedValues = [];
+                    for (let i = 0; i < deliveryOptionsRepeater.count; ++i) {
+                        if (deliveryOptionsRepeater.itemAt(i).checked) {
+                            selectedValues.push(deliveryOptionsRepeater.itemAt(i).value);
+                        }
+                    }
+                    return selectedValues;
                 }
                 function uncheckAllDeliveryOptions() {
                     for (let i = 0; i < deliveryOptionsRepeater.count; ++i) {
@@ -934,10 +965,125 @@ Popup {
                                 delegate: NeroshopComponents.CheckBox {
                                     anchors.verticalCenter: parent.verticalCenter
                                     text: modelData.name
+                                    checked: modelData.selected
                                     textColor: productDialog.inputTextColor
                                     color: "transparent"
+                                    property int value: modelData.value
                                 }
                             }
+                        }
+                    }
+                }
+            }
+            // Seller-accepted shipping options
+            Item {
+                id: shippingOptionsItem
+                Layout.alignment: Qt.AlignHCenter
+                Layout.preferredWidth: childrenRect.width
+                Layout.preferredHeight: childrenRect.height
+                visible: deliveryOptionsRepeater.count > 0 && deliveryOptionsRepeater.itemAt(0).checked
+                property var shippingOptions: [
+                    { name: "Standard", selected: true, value: 0 },
+                    { name: "Expedited", selected: false, value: 1 }, // Priority
+                    { name: "Express", selected: false, value: 2 },
+                    { name: "Overnight", selected: false, value: 3 }, // NextDay
+                    { name: "LocalDelivery", selected: false, value: 4 }, // SameDay
+                    { name: "International", selected: false, value: 5 },
+                    { name: "EcoFriendly", selected: false, value: 6 }
+                ]
+                function isShippingOptionSelected() {
+                    // Check if at least one checkbox is checked
+                    for (let i = 0; i < shippingOptionsRepeater.count; ++i) {
+                        if (shippingOptionsRepeater.itemAtIndex(i).children[0].checked) {
+                            return true;
+                        }
+                    }
+                    return false;
+                }
+                function getSelectedShippingOptions() {
+                    let selectedNames = [];
+                    for (let i = 0; i < shippingOptionsRepeater.count; ++i) {
+                        if (shippingOptionsRepeater.itemAtIndex(i).children[0].checked) {
+                            selectedNames.push(shippingOptionsRepeater.itemAtIndex(i).children[0].text);
+                        }
+                    }
+                    return selectedNames;
+                }
+                function getSelectedShippingOptionsValue() {
+                    let selectedValues = [];
+                    for (let i = 0; i < shippingOptionsRepeater.count; ++i) {
+                        if (shippingOptionsRepeater.itemAtIndex(i).children[0].checked) {
+                            selectedValues.push(shippingOptionsRepeater.itemAtIndex(i).children[0].value);
+                        }
+                    }
+                    return selectedValues;
+                }
+                function uncheckAllShippingOptions() {
+                    for (let i = 0; i < shippingOptionsRepeater.count; ++i) {
+                        shippingOptionsRepeater.itemAtIndex(i).children[0].checked = false
+                    }
+                }
+    
+                Column {
+                    spacing: productDialog.titleSpacing
+                    Row {
+                        spacing: 10
+                        Text {
+                            text: "Shipping options"
+                            color: productDialog.palette.text
+                            font.bold: true
+                        }
+                        Text {
+                            text: qsTr(FontAwesome.questionCircle)
+                            color: productDialog.optTextColor
+                            font.bold: true
+                            anchors.verticalCenter: parent.children[0].verticalCenter
+                            property bool hovered: false
+                            NeroshopComponents.Hint {
+                                visible: parent.hovered
+                                height: contentHeight + 20; width: contentWidth + 20
+                                text: qsTr("-- Select all that apply --")
+                                pointer.visible: false;
+                            }
+                            MouseArea { 
+                                anchors.fill: parent
+                                hoverEnabled: true
+                                onEntered: parent.hovered = true
+                                onExited: parent.hovered = false
+                            }
+                        }
+                    }
+                    // Checkboxes for shipping options
+                    Frame {
+                        width: 500; height: 95//70
+                        background: Rectangle {
+                            color: "transparent"//productDialog.inputBaseColor
+                            //border.color: productDialog.inputBorderColor
+                            radius: productDialog.inputRadius
+                        }
+                        GridView {//Grid
+                            anchors.fill: parent
+                            /*columns: 3
+                            rows: 3
+                            rowSpacing: 5
+                            //columnSpacing: 30*/ // <- for regular Grid
+                            cellWidth: 140
+                            cellHeight: 20 + 5 // 20=checkbox height, 5=spacing
+                            //Repeater {
+                                id: shippingOptionsRepeater
+                                model: shippingOptionsItem.shippingOptions
+                                delegate: Item {
+                                    width: childrenRect.width + (children[0].contentItem.contentWidth + children[0].contentItem.leftPadding)
+                                    height: childrenRect.height
+                                    NeroshopComponents.CheckBox {
+                                        text: modelData.name
+                                        checked: modelData.selected
+                                        textColor: productDialog.inputTextColor
+                                        color: "transparent"
+                                        property int value: modelData.value
+                                    }
+                                }
+                            //}
                         }
                     }
                 }
@@ -1288,6 +1434,14 @@ Popup {
                                 }
                                 console.log("paymentOptionsItem.getSelectedPaymentOptions()",paymentOptionsItem.getSelectedPaymentOptions())
                                 //---------------------------------------
+                                // One or more payment coin must be selected
+                                if(!paymentCoinsItem.isPaymentCoinSelected()) {
+                                    messageBox.text = "No payment coin selected"
+                                    messageBox.open()
+                                    return; // exit function
+                                }
+                                console.log("paymentCoinsItem.getSelectedPaymentCoins()",paymentCoinsItem.getSelectedPaymentCoins())
+                                //---------------------------------------
                                 // One or more delivery option must be selected
                                 if(!deliveryOptionsItem.isDeliveryOptionSelected()) {
                                     messageBox.text = "At least one delivery option must be selected"
@@ -1295,6 +1449,25 @@ Popup {
                                     return; // exit function
                                 }
                                 console.log("deliveryOptionsItem.getSelectedDeliveryOptions()",deliveryOptionsItem.getSelectedDeliveryOptions())
+                                //---------------------------------------
+                                // One or more shipping option must be selected
+                                if(!shippingOptionsItem.isShippingOptionSelected() &&
+                                    shippingOptionsItem.visible) {
+                                    messageBox.text = "At least one shipping option must be selected"
+                                    messageBox.open()
+                                    return; // exit function
+                                }
+                                if(shippingOptionsItem.visible) console.log("shippingOptionsItem.getSelectedShippingOptions()",shippingOptionsItem.getSelectedShippingOptions())
+                                //---------------------------------------
+                                // Location must not be "Unspecified" if Pickup delivery option is selected
+                                if(deliveryOptionsRepeater.itemAt(1).checked) {
+                                    if(productLocationBox.contentItem.text == "Unspecified" ||
+                                        productLocationBox.contentItem.text.length < 1) {
+                                        messageBox.text = "Pickup location not specified"
+                                        messageBox.open()
+                                        return
+                                    }
+                                }
                                 //---------------------------------------
                                 // Create image objects with properties
                                 let productImages = []
@@ -1333,7 +1506,11 @@ Popup {
                                     selectedCurrencyText.text, 
                                     productConditionBox.currentText, 
                                     productLocationBox.currentText,
-                                    (quantityPerOrderField.text.length > 0) ? Number(quantityPerOrderField.text) : 0
+                                    (quantityPerOrderField.text.length > 0) ? Number(quantityPerOrderField.text) : 0,
+                                    paymentCoinsItem.getSelectedPaymentCoinsValue(),
+                                    paymentOptionsItem.getSelectedPaymentOptionsValue(),
+                                    deliveryOptionsItem.getSelectedDeliveryOptionsValue(),
+                                    shippingOptionsItem.getSelectedShippingOptionsValue()
                                 )                       
                                 // Save product thumbnail
                                 Backend.saveProductThumbnail(productImages[0].source, listing_key)
@@ -1357,6 +1534,7 @@ Popup {
                                 paymentOptionsItem.uncheckAllPaymentOptions()
                                 ////paymentCoinsItem.uncheckAllPaymentCoins()
                                 deliveryOptionsItem.uncheckAllDeliveryOptions()
+                                shippingOptionsItem.uncheckAllShippingOptions()
                                 // Clear upload images as well
                                 for(let i = 0; i < productImageRepeater.count; i++) {
                                     let productImage = productImageRepeater.itemAt(i).children[0].children[0]

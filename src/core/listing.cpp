@@ -10,17 +10,23 @@ Listing::Listing() : quantity(0), price(0.00), quantity_per_order(0) {}
 
 Listing::Listing(const std::string& id, const Product& product, const std::string& seller_id, unsigned int quantity,
         double price, const std::string& currency, const std::string& condition, const std::string& location, const std::string& date, const std::string& signature,
-        unsigned int quantity_per_order)
+        unsigned int quantity_per_order, PaymentMethod payment_method, const std::set<PaymentCoin>& payment_coins, 
+        const std::set<PaymentOption>& payment_options, const std::set<DeliveryOption>& delivery_options,
+        const std::set<ShippingOption>& shipping_options)
     : id(id), product(std::make_unique<Product>(product)), seller_id(seller_id), quantity(quantity),
       price(price), currency(currency), condition(condition), location(location), date(date), signature(signature),
-      quantity_per_order(quantity_per_order)
+      quantity_per_order(quantity_per_order), payment_method(payment_method), payment_coins(payment_coins),
+      payment_options(payment_options), delivery_options(delivery_options),
+      shipping_options(shipping_options)
 {}
 
 Listing::Listing(const Listing& other)
     : id(other.id), product(std::make_unique<Product>(*other.product)), seller_id(other.seller_id), quantity(other.quantity),
       price(other.price), currency(other.currency), condition(other.condition), location(other.location),
       date(other.date), signature(other.signature),
-      quantity_per_order(other.quantity_per_order)
+      quantity_per_order(other.quantity_per_order), payment_method(other.payment_method), payment_coins(other.payment_coins),
+      payment_options(other.payment_options), delivery_options(other.delivery_options),
+      shipping_options(other.shipping_options)
 {}
 
 Listing::Listing(Listing&& other) noexcept
@@ -47,6 +53,11 @@ neroshop::Listing& Listing::operator=(const neroshop::Listing& other)
         date = other.date;
         signature = other.signature;
         quantity_per_order = other.quantity_per_order;
+        payment_method = other.payment_method;
+        payment_coins = other.payment_coins;
+        payment_options = other.payment_options;
+        delivery_options = other.delivery_options;
+        shipping_options = other.shipping_options;
     }
     return *this;
 }
@@ -71,12 +82,20 @@ neroshop::Listing& Listing::operator=(neroshop::Listing&& other) noexcept
 
 //-----------------------------------------------------------------------------
 
+void Listing::add_payment_coin(PaymentCoin payment_coin) {
+    payment_coins.insert(payment_coin);
+}
+
 void Listing::add_payment_option(PaymentOption payment_option) {
     payment_options.insert(payment_option);
 }
 
 void Listing::add_delivery_option(DeliveryOption delivery_option) {
     delivery_options.insert(delivery_option);
+}
+
+void Listing::add_shipping_option(ShippingOption shipping_option) {
+    shipping_options.insert(shipping_option);
 }
 
 void Listing::print_listing()
@@ -153,12 +172,12 @@ void Listing::set_quantity_per_order(unsigned int quantity_per_order) {
     this->quantity_per_order = quantity_per_order;
 }
 
-/*void Listing::set_payment_method(PaymentMethod payment_method) {
+void Listing::set_payment_method(PaymentMethod payment_method) {
     this->payment_method = payment_method;
-}*/
+}
 
-void Listing::set_payment_coin(PaymentCoin payment_coin) {
-    this->payment_coin = payment_coin;
+void Listing::set_payment_coins(const std::set<PaymentCoin>& payment_coins) {
+    this->payment_coins = payment_coins;
 }
 
 void Listing::set_payment_options(const std::set<PaymentOption>& payment_options) {
@@ -167,6 +186,10 @@ void Listing::set_payment_options(const std::set<PaymentOption>& payment_options
 
 void Listing::set_delivery_options(const std::set<DeliveryOption>& delivery_options) {
     this->delivery_options = delivery_options;
+}
+
+void Listing::set_shipping_options(const std::set<ShippingOption>& shipping_options) {
+    this->shipping_options = shipping_options;
 }
 
 //-----------------------------------------------------------------------------
@@ -226,8 +249,8 @@ PaymentMethod Listing::get_payment_method() const {
     return payment_method;
 }
 
-PaymentCoin Listing::get_payment_coin() const {
-    return payment_coin;
+std::set<PaymentCoin> Listing::get_payment_coins() const {
+    return payment_coins;
 }
 
 std::set<PaymentOption> Listing::get_payment_options() const {
@@ -236,6 +259,10 @@ std::set<PaymentOption> Listing::get_payment_options() const {
 
 std::set<DeliveryOption> Listing::get_delivery_options() const {
     return delivery_options;
+}
+
+std::set<ShippingOption> Listing::get_shipping_options() const {
+    return shipping_options;
 }
 
 }

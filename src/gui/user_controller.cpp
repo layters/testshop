@@ -19,10 +19,28 @@ neroshop::UserController::~UserController() {
     std::cout << "user controller deleted\n";
 }
 //----------------------------------------------------------------
-QString neroshop::UserController::listProduct(const QString& name, const QString& description,
-        const QList<QVariantMap>& attributes, 
-        const QString& product_code, int category_id, const QList<int>& subcategory_ids, const QStringList& tags, const QList<QVariantMap>& images,
-int quantity, double price, const QString& currency, const QString& condition, const QString& location, int quantity_per_order) {
+QString neroshop::UserController::listProduct(
+    const QString& name, 
+    const QString& description,
+    const QList<QVariantMap>& attributes, 
+    const QString& productCode, 
+    int categoryId, 
+    const QList<int>& subcategoryIds, 
+    const QStringList& tags, 
+    const QList<QVariantMap>& images,
+
+    int quantity, 
+    double price, 
+    const QString& currency, 
+    const QString& condition, 
+    const QString& location, 
+    int quantityPerOrder, 
+    /*int paymentMethod,*/ 
+    const QList<int>& paymentCoins, 
+    const QList<int>& paymentOptions, 
+    const QList<int>& deliveryOptions,
+    const QList<int>& shippingOptions
+) {
     if (!_user)
         throw std::runtime_error("neroshop::User is not initialized");
     auto seller = dynamic_cast<neroshop::Seller *>(_user.get());
@@ -74,9 +92,9 @@ int quantity, double price, const QString& currency, const QString& condition, c
         attributesVector.push_back(attribute);
     }
     
-    std::vector<int> subcategoryIdVector;
-    for(const int& subcategory_id : subcategory_ids) {
-        subcategoryIdVector.push_back(subcategory_id);
+    std::vector<int> subcategoryIdsVector;
+    for(const int& subcategoryId : subcategoryIds) {
+        subcategoryIdsVector.push_back(subcategoryId);
     }
     
     std::vector<std::string> tagsVector;
@@ -116,13 +134,33 @@ int quantity, double price, const QString& currency, const QString& condition, c
         imagesVector.push_back(image);
     }
     
+    std::set<PaymentCoin> paymentCoinsSet;
+    for(const int& paymentCoin : paymentCoins) {
+        paymentCoinsSet.insert(static_cast<PaymentCoin>(paymentCoin));
+    }
+    
+    std::set<PaymentOption> paymentOptionsSet;
+    for(const int& paymentOption : paymentOptions) {
+        paymentOptionsSet.insert(static_cast<PaymentOption>(paymentOption));
+    }
+    
+    std::set<DeliveryOption> deliveryOptionsSet;
+    for(const int& deliveryOption : deliveryOptions) {
+        deliveryOptionsSet.insert(static_cast<DeliveryOption>(deliveryOption));
+    }
+    
+    std::set<ShippingOption> shippingOptionsSet;
+    for(const int& shippingOption : shippingOptions) {
+        shippingOptionsSet.insert(static_cast<ShippingOption>(shippingOption));
+    }
+    
     auto listing_key = seller->list_item(
         name.toStdString(), 
         description.toStdString(),
         attributesVector, 
-        product_code.toStdString(),
-        category_id, 
-        subcategoryIdVector,
+        productCode.toStdString(),
+        categoryId, 
+        subcategoryIdsVector,
         tagsVector,
         imagesVector,
         
@@ -131,7 +169,12 @@ int quantity, double price, const QString& currency, const QString& condition, c
         currency.toStdString(), 
         condition.toStdString(), 
         location.toStdString(), 
-        quantity_per_order
+        quantityPerOrder, 
+        /*static_cast<PaymentMethod>(paymentMethod),*/ 
+        paymentCoinsSet, 
+        paymentOptionsSet, 
+        deliveryOptionsSet, 
+        shippingOptionsSet
     );
     emit productsCountChanged();
     emit inventoryChanged();
