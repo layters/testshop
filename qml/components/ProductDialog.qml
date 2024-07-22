@@ -1510,7 +1510,7 @@ Popup {
                                     paymentCoinsItem.getSelectedPaymentCoinsValue(),
                                     paymentOptionsItem.getSelectedPaymentOptionsValue(),
                                     deliveryOptionsItem.getSelectedDeliveryOptionsValue(),
-                                    shippingOptionsItem.getSelectedShippingOptionsValue()
+                                    shippingOptionsItem.visible ? shippingOptionsItem.getSelectedShippingOptionsValue() : []
                                 )                       
                                 // Save product thumbnail
                                 Backend.saveProductThumbnail(productImages[0].source, listing_key)

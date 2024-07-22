@@ -34,7 +34,9 @@ Listing::Listing(Listing&& other) noexcept
       quantity(std::exchange(other.quantity, 0)), price(std::exchange(other.price, 0.0)),
       currency(std::move(other.currency)), condition(std::move(other.condition)), location(std::move(other.location)),
       date(std::move(other.date)), signature(std::move(other.signature)),
-      quantity_per_order(std::exchange(other.quantity_per_order, 0))
+      quantity_per_order(std::exchange(other.quantity_per_order, 0)), payment_method(std::move(other.payment_method)), payment_coins(std::move(other.payment_coins)),
+      payment_options(std::move(other.payment_options)), delivery_options(std::move(other.delivery_options)),
+      shipping_options(std::move(other.shipping_options))
 {}
 
 //-----------------------------------------------------------------------------
@@ -76,6 +78,11 @@ neroshop::Listing& Listing::operator=(neroshop::Listing&& other) noexcept
         date = std::move(other.date);
         signature = std::move(other.signature);
         quantity_per_order = std::exchange(other.quantity_per_order, 0);
+        payment_method = std::move(other.payment_method);
+        payment_coins = std::move(other.payment_coins);
+        payment_options = std::move(other.payment_options);
+        delivery_options = std::move(other.delivery_options);
+        shipping_options = std::move(other.shipping_options);
     }
     return *this;
 }
