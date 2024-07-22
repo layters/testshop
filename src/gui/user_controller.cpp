@@ -399,6 +399,46 @@ QVariantList neroshop::UserController::getInventory(int sorting) const {
                 if(value_obj.contains("quantity_per_order") && value_obj["quantity_per_order"].is_number_integer()) {
                     inventory_object.insert("quantity_per_order", value_obj["quantity_per_order"].get<int>());
                 }
+                if(value_obj.contains("payment_coins") && value_obj["payment_coins"].is_array()) {
+                    const auto& payment_coins_array = value_obj["payment_coins"];
+                    QStringList paymentCoinsList;
+                    for (const auto& payment_coin : payment_coins_array) {
+                        if(payment_coin.is_string()) {
+                            paymentCoinsList << QString::fromStdString(payment_coin);
+                        }
+                    }
+                    inventory_object.insert("payment_coins", paymentCoinsList);
+                }
+                if(value_obj.contains("payment_options") && value_obj["payment_options"].is_array()) {
+                    const auto& payment_options_array = value_obj["payment_options"];
+                    QStringList paymentOptionsList;
+                    for (const auto& payment_option : payment_options_array) {
+                        if(payment_option.is_string()) {
+                            paymentOptionsList << QString::fromStdString(payment_option);
+                        }
+                    }
+                    inventory_object.insert("payment_options", paymentOptionsList);
+                }
+                if(value_obj.contains("delivery_options") && value_obj["delivery_options"].is_array()) {
+                    const auto& delivery_options_array = value_obj["delivery_options"];
+                    QStringList deliveryOptionsList;
+                    for (const auto& delivery_option : delivery_options_array) {
+                        if(delivery_option.is_string()) {
+                            deliveryOptionsList << QString::fromStdString(delivery_option);
+                        }
+                    }
+                    inventory_object.insert("delivery_options", deliveryOptionsList);
+                }                
+                if(value_obj.contains("shipping_options") && value_obj["shipping_options"].is_array()) {
+                    const auto& shipping_options_array = value_obj["shipping_options"];
+                    QStringList shippingOptionsList;
+                    for (const auto& shipping_option : shipping_options_array) {
+                        if(shipping_option.is_string()) {
+                            shippingOptionsList << QString::fromStdString(shipping_option);
+                        }
+                    }
+                    inventory_object.insert("shipping_options", shippingOptionsList);
+                }
                 if(value_obj.contains("expiration_date") && value_obj["expiration_date"].is_string()) {
                     inventory_object.insert("expiration_date", QString::fromStdString(value_obj["expiration_date"].get<std::string>()));
                 }
