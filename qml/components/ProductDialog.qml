@@ -314,9 +314,7 @@ Popup {
                             selectByMouse: true
                             inputMethodHints: Qt.ImhDigitsOnly
                             validator: RegExpValidator{ regExp: /[0-9]*/ }
-                            onTextChanged: {
-                                if (text.length > 2) text = text.substring(0, 2);
-                            }
+                            maximumLength: 2
                             onEditingFinished: {
                                 if (text === "00") text = "";
                                 if (text.startsWith("0")) text = text.substring(1);
