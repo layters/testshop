@@ -199,6 +199,22 @@ void Listing::set_shipping_options(const std::set<ShippingOption>& shipping_opti
     this->shipping_options = shipping_options;
 }
 
+void Listing::set_shipping_cost(ShippingOption shipping_option, double price) {
+    shipping_costs[shipping_option] = price;
+}
+
+void Listing::set_shipping_costs(const std::map<ShippingOption, double>& shipping_costs) {
+    this->shipping_costs = shipping_costs;
+}
+
+void Listing::set_fixed_rate(PaymentCoin payment_coin, double rate) {
+    fixed_rates[payment_coin] = rate;
+}
+
+void Listing::set_fixed_rates(const std::map<PaymentCoin, double>& fixed_rates) {
+    this->fixed_rates = fixed_rates;
+}
+
 //-----------------------------------------------------------------------------
 
 std::string Listing::get_id() const {
@@ -270,6 +286,30 @@ std::set<DeliveryOption> Listing::get_delivery_options() const {
 
 std::set<ShippingOption> Listing::get_shipping_options() const {
     return shipping_options;
+}
+
+double Listing::get_shipping_cost(ShippingOption shipping_option) const {
+    auto it = shipping_costs.find(shipping_option);
+    if (it != shipping_costs.end()) {
+        return it->second;
+    }
+    return 0.0;
+}
+
+std::map<ShippingOption, double> Listing::get_shipping_costs() const {
+    return shipping_costs;
+}
+
+double Listing::get_fixed_rate(PaymentCoin payment_coin) const {
+    auto it = fixed_rates.find(payment_coin);
+    if (it != fixed_rates.end()) {
+        return it->second;
+    }
+    return 0.0;
+}
+
+std::map<PaymentCoin, double> Listing::get_fixed_rates() const {
+    return fixed_rates;
 }
 
 }
