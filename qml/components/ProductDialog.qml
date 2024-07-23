@@ -120,11 +120,34 @@ Popup {
                         
                 Column {
                     spacing: productDialog.titleSpacing
-                    Text {
-                        text: "Price"
-                        color: productDialog.palette.text
-                        font.bold: true
-                    }                        
+                    Row {
+                        spacing: 10
+                        Text {
+                            text: "Price"
+                            color: productDialog.palette.text
+                            font.bold: true
+                        }
+                        Text {
+                            text: qsTr(FontAwesome.questionCircle)
+                            color: productDialog.optTextColor
+                            font.bold: true
+                            anchors.verticalCenter: parent.children[0].verticalCenter
+                            property bool hovered: false
+                            NeroshopComponents.Hint {
+                                x: parent.width + 10; y: ((parent.height - height) / 2) - 3
+                                visible: parent.hovered
+                                height: contentHeight + 20; width: contentWidth + 20
+                                text: qsTr("Price per unit")
+                                pointer.visible: false;
+                            }
+                            MouseArea { 
+                                anchors.fill: parent
+                                hoverEnabled: true
+                                onEntered: parent.hovered = true
+                                onExited: parent.hovered = false
+                            }
+                        }
+                    }
 
                     TextField {
                         id: productPriceField

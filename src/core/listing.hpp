@@ -86,7 +86,7 @@ private:
     std::set<DeliveryOption> delivery_options; // default: [ DeliveryOption::Shipping ]
     std::set<ShippingOption> shipping_options; // default: [ ShippingOption::Standard ]
     std::map<ShippingOption, double> shipping_costs; // should be calculated based on selected shipping option
-    std::map<PaymentCoin, double> fixed_rate; // Set the fixed exchange rate for each payment coin (ex. 1 XMR = $200 USD)
+    std::map<PaymentCoin, double> fixed_rates; // Set the fixed exchange rate for each payment coin (ex. 1 XMR = $200 USD)
 };
 
 }      
