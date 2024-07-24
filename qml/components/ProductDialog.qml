@@ -120,11 +120,34 @@ Popup {
                         
                 Column {
                     spacing: productDialog.titleSpacing
-                    Text {
-                        text: "Price"
-                        color: productDialog.palette.text
-                        font.bold: true
-                    }                        
+                    Row {
+                        spacing: 10
+                        Text {
+                            text: "Price"
+                            color: productDialog.palette.text
+                            font.bold: true
+                        }
+                        Text {
+                            text: qsTr(FontAwesome.questionCircle)
+                            color: productDialog.optTextColor
+                            font.bold: true
+                            anchors.verticalCenter: parent.children[0].verticalCenter
+                            property bool hovered: false
+                            NeroshopComponents.Hint {
+                                x: parent.width + 10; y: ((parent.height - height) / 2) - 3
+                                visible: parent.hovered
+                                height: contentHeight + 20; width: contentWidth + 20
+                                text: qsTr("Price per unit")
+                                pointer.visible: false;
+                            }
+                            MouseArea { 
+                                anchors.fill: parent
+                                hoverEnabled: true
+                                onEntered: parent.hovered = true
+                                onExited: parent.hovered = false
+                            }
+                        }
+                    }
 
                     TextField {
                         id: productPriceField
@@ -274,12 +297,36 @@ Popup {
                     
                     Item {
                         width: 500; height: childrenRect.height
-                        Text {
+                        Row {
                             anchors.left: parent.left
                             anchors.verticalCenter: quantityPerOrderField.verticalCenter
-                            text: qsTr("Quantity per order")
-                            color: productDialog.palette.text
-                            font.pointSize: 10
+                            spacing: 10
+                            Text {
+                                text: qsTr("Quantity per order")
+                                color: productDialog.palette.text
+                                font.pointSize: 10
+                            }
+                            Text {
+                                text: qsTr(FontAwesome.questionCircle)
+                                color: productDialog.optTextColor
+                                font.bold: true
+                                //font.pointSize: 
+                                anchors.verticalCenter: parent.children[0].verticalCenter
+                                property bool hovered: false
+                                NeroshopComponents.Hint {
+                                    x: parent.width + 10; y: ((parent.height - height) / 2)
+                                    visible: parent.hovered
+                                    height: contentHeight + 20; width: contentWidth + 20
+                                    text: qsTr("Limit the quantity a buyer can purchase for each order")
+                                    pointer.visible: false;
+                                }
+                                MouseArea { 
+                                    anchors.fill: parent
+                                    hoverEnabled: true
+                                    onEntered: parent.hovered = true
+                                    onExited: parent.hovered = false
+                                }
+                            }
                         }
                         TextField {
                             id: quantityPerOrderField
@@ -291,9 +338,7 @@ Popup {
                             selectByMouse: true
                             inputMethodHints: Qt.ImhDigitsOnly
                             validator: RegExpValidator{ regExp: /[0-9]*/ }
-                            onTextChanged: {
-                                if (text.length > 2) text = text.substring(0, 2);
-                            }
+                            maximumLength: 2
                             onEditingFinished: {
                                 if (text === "00") text = "";
                                 if (text.startsWith("0")) text = text.substring(1);
@@ -644,7 +689,7 @@ Popup {
                                 x: parent.width + 10; y: ((parent.height - height) / 2) - 3
                                 visible: parent.hovered
                                 height: contentHeight + 20; width: contentWidth + 20
-                                text: qsTr("Ships from")
+                                text: qsTr("Ships from?")
                                 pointer.visible: false;
                             }
                             MouseArea { 
@@ -1307,7 +1352,7 @@ Popup {
                     readOnly: true
                     verticalAlignment: TextEdit.AlignVCenter
                     wrapMode: TextEdit.Wrap
-                    text: qsTr("Price field has been left blank")
+                    text: qsTr("Price field is empty")
                     color: (messageCode == 1) ? "#ffd700" : ((NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#404040")
                     property int messageCode: 1 // 0 = info; 1 = warning
                     background: Rectangle { 

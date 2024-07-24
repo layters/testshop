@@ -50,6 +50,10 @@ public:
     void set_payment_options(const std::set<PaymentOption>& payment_options);
     void set_delivery_options(const std::set<DeliveryOption>& delivery_options);
     void set_shipping_options(const std::set<ShippingOption>& shipping_options);
+    void set_shipping_cost(ShippingOption shipping_option, double price);
+    void set_shipping_costs(const std::map<ShippingOption, double>& shipping_costs);
+    void set_fixed_rate(PaymentCoin payment_coin, double rate);
+    void set_fixed_rates(const std::map<PaymentCoin, double>& fixed_rates);
     
     std::string get_id() const;
     std::string get_product_id() const;
@@ -68,6 +72,10 @@ public:
     std::set<PaymentOption> get_payment_options() const;
     std::set<DeliveryOption> get_delivery_options() const;
     std::set<ShippingOption> get_shipping_options() const;
+    double get_shipping_cost(ShippingOption shipping_option) const;
+    std::map<ShippingOption, double> get_shipping_costs() const;
+    double get_fixed_rate(PaymentCoin payment_coin) const;
+    std::map<PaymentCoin, double> get_fixed_rates() const;
 private:
     std::string id;
     std::string seller_id;
@@ -86,6 +94,7 @@ private:
     std::set<DeliveryOption> delivery_options; // default: [ DeliveryOption::Shipping ]
     std::set<ShippingOption> shipping_options; // default: [ ShippingOption::Standard ]
     std::map<ShippingOption, double> shipping_costs; // should be calculated based on selected shipping option
+    std::map<PaymentCoin, double> fixed_rates; // Set the fixed exchange rate for each payment coin (ex. 1 XMR = $200 USD)
 };
 
 }      
