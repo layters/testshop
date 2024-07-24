@@ -827,6 +827,54 @@ QVariantMap neroshop::Backend::getUser(const QString& user_id) {
     return user_object;
 }
 //----------------------------------------------------------------
+int neroshop::Backend::getAccountAge(const QString& userId) {
+    return neroshop::User::get_account_age(userId.toStdString());
+}
+//----------------------------------------------------------------
+int neroshop::Backend::getAccountAge(const QVariantMap& userMap) {
+    if(!userMap.isEmpty()) {
+        if(userMap.contains("created_at")) {
+            std::string iso8601 = userMap.value("created_at").toString().toStdString();
+            //------------------------------------------------------
+            std::tm t = {};
+            std::istringstream ss(iso8601);
+            ss >> std::get_time(&t, "%Y-%m-%dT%H:%M:%S");
+    
+            // Handling optional fractional seconds and timezone offset
+            if (ss.fail()) {
+                ss.clear();
+                ss.str(iso8601);
+                ss >> std::get_time(&t, "%Y-%m-%dT%H:%M:%S.%f");
+            }
+    
+            if (ss.fail()) {
+                ss.clear();
+                ss.str(iso8601);
+                ss >> std::get_time(&t, "%Y-%m-%dT%H:%M:%SZ");
+            }
+
+            if (ss.fail()) {
+                throw std::runtime_error("Failed to parse ISO 8601 timestamp");
+            }
+            //------------------------------------------------------
+            auto account_creation_time = std::chrono::system_clock::from_time_t(std::mktime(&t));
+            auto now = std::chrono::system_clock::now();
+
+            auto duration = now - account_creation_time;
+
+            using std_chrono_days = std::chrono::duration<int, std::ratio<86400>>;
+            auto days = std::chrono::duration_cast<std_chrono_days>(duration).count();
+            auto years = days / 365;
+            days %= 365;
+            auto months = days / 30;
+            days %= 30;
+
+            return days;
+        }
+    }
+    return -1;
+}
+//----------------------------------------------------------------
 //----------------------------------------------------------------
 int neroshop::Backend::getCartMaximumItems() {
     return neroshop::Cart::get_max_items();

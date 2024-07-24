@@ -102,6 +102,8 @@ public:
     Q_INVOKABLE QString getKeyByUserId(const QString& user_id);
     // User model
     Q_INVOKABLE QVariantMap getUser(const QString& user_id);
+    Q_INVOKABLE int getAccountAge(const QString& userId);
+    Q_INVOKABLE int getAccountAge(const QVariantMap& userMap);
     
     Q_INVOKABLE int getCartMaximumItems();
     Q_INVOKABLE int getCartMaximumQuantity();

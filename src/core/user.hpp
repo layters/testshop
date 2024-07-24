@@ -58,6 +58,8 @@ public:
     UserAccountType get_account_type() const;
     std::string get_account_type_string() const;
     Image * get_avatar() const;
+    int get_account_age() const; // Returns account age (in days)
+    static int get_account_age(const std::string& user_id);
     // buyer-related stuff - getters
     neroshop::Cart * get_cart() const;
     neroshop::Order * get_order(unsigned int index) const;
