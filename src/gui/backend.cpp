@@ -808,20 +808,27 @@ QVariantMap neroshop::Backend::getUser(const QString& user_id) {
         std::string metadata = value_obj["metadata"].get<std::string>();
         if (metadata != "user") { std::cerr << "Invalid metadata. \"user\" expected, got \"" << metadata << "\" instead\n"; return {}; }
         user_object.insert("key", QString::fromStdString(key));
-        if(value_obj.contains("display_name") && value_obj["display_name"].is_string()) {
-            std::string display_name = value_obj["display_name"].get<std::string>();
-            user_object.insert("display_name", QString::fromStdString(display_name));
-        }
-        user_object.insert("monero_address", QString::fromStdString(value_obj["monero_address"].get<std::string>()));
-        user_object.insert("user_id", QString::fromStdString(value_obj["monero_address"].get<std::string>())); // alias
-        user_object.insert("public_key", QString::fromStdString(value_obj["public_key"].get<std::string>()));
         if(value_obj.contains("avatar") && value_obj["avatar"].is_object()) {
             const auto& avatar_obj = value_obj["avatar"];
             QVariantMap avatar;
             avatar.insert("name", QString::fromStdString(avatar_obj["name"].get<std::string>()));
+            avatar.insert("piece_size", avatar_obj["piece_size"].get<int>());
+            QStringList piecesList;
+            for(const auto& piece : avatar_obj["pieces"].get<std::vector<std::string>>()) {
+                piecesList.append(QString::fromStdString(piece));
+            }
+            avatar.insert("pieces", piecesList);
+            avatar.insert("size", avatar_obj["size"].get<int>());
             user_object.insert("avatar", avatar);
         }
+        user_object.insert("created_at", QString::fromStdString(value_obj["created_at"].get<std::string>()));
+        if(value_obj.contains("display_name") && value_obj["display_name"].is_string()) {
+            user_object.insert("display_name", QString::fromStdString(value_obj["display_name"].get<std::string>()));
+        }
+        user_object.insert("monero_address", QString::fromStdString(value_obj["monero_address"].get<std::string>()));
+        user_object.insert("public_key", QString::fromStdString(value_obj["public_key"].get<std::string>()));
         user_object.insert("signature", QString::fromStdString(value_obj["signature"].get<std::string>()));
+        user_object.insert("user_id", QString::fromStdString(value_obj["monero_address"].get<std::string>())); // alias for "monero_address"
     }
 
     return user_object;
