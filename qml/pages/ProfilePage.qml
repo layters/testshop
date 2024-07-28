@@ -628,7 +628,7 @@ Page {
                     }
                     // stats column
                     Column {
-                        id: statsRow
+                        id: statsColumn
                         anchors.top: nameIdColumn.bottom
                         anchors.topMargin: 10
                         anchors.left: profilePictureRect.left
@@ -638,19 +638,10 @@ Page {
                         width: profileCard.width
                         // stats row
                         Row {
-                            id: statsRowActual
+                            id: statsRow
                             spacing: 100
                             // reputation
-                            Column {
-                                spacing: statsRow.textIconSpacing
-                                // Deprecated/Replaced with hint (tooltip). Remove this soon!
-                                /*Text {
-                                    text: "Reputation"
-                                    font.pixelSize: 16//32
-                                    color: (NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000"
-                                }*/
-                                
-                                Row { // place thumbs in this row
+                            Row { // place thumbs in this row
                                     spacing: 5
                                 Rectangle {
                                     //anchors.verticalCenter: parent.verticalCenter
@@ -674,7 +665,7 @@ Page {
                                             Image {
                                                 id: ratingIcon
                                                 source: "qrc:/assets/images/rating.png"
-                                                width: statsRow.iconSize; height: width
+                                                width: statsColumn.iconSize; height: width
                                                 mipmap: true
                                             }
                                 
@@ -722,7 +713,7 @@ Page {
                                 Item {
                                     id: thumbsUpImageItem
                                             anchors.verticalCenter: parent.verticalCenter
-                                            width: childrenRect.width//statsRow.iconSize
+                                            width: childrenRect.width//statsColumn.iconSize
                                             height: childrenRect.height
                                             visible: (thumbsUpImage.status === Image.Ready)
                                     Image {
@@ -770,7 +761,7 @@ Page {
                                 Item {
                                     id: thumbsDownImageItem
                                             anchors.verticalCenter: parent.verticalCenter
-                                            width: childrenRect.width//statsRow.iconSize
+                                            width: childrenRect.width//statsColumn.iconSize
                                             height: childrenRect.height
                                             visible: (thumbsDownImage.status === Image.Ready)
                                     Image {
@@ -805,12 +796,65 @@ Page {
                                         }
                             }
                           } // thumbsDown Rect
+                                Rectangle {
+                                    id: tradesRect
+                                    width: 50 + tradesCountText.contentWidth; height: reputationRect.height
+                                    color: (NeroshopComponents.Style.darkTheme) ? "#101010" : "#efefef"
+                                    border.color: (NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000"
+                                    radius: 3
+                                    property bool hovered: false
+                                    
+                                    Row {
+                                        anchors.centerIn: parent
+                                        spacing: 5
+                                        Item {
+                                            id: tradesIconItem
+                                            anchors.verticalCenter: parent.verticalCenter
+                                            width: childrenRect.width
+                                            height: childrenRect.height
+                                    
+                                            Image {
+                                                id: tradesIcon
+                                                source: "qrc:/assets/images/handshake.png"
+                                                width: statsColumn.iconSize; height: width
+                                                mipmap: true
+                                            }
                                 
-                                } // row containing both thumbs and reputation
-                            } // column for reputation text/reputation stats (can be safely removed)
-                            
+                                            ColorOverlay {
+                                                anchors.fill: tradesIcon
+                                                source: tradesIcon
+                                                color: "blue"
+                                                visible: tradesIcon.visible
+                                            }
+                                        }
+                                    
+                                        Text {
+                                            id: tradesCountText
+                                            anchors.verticalCenter: parent.verticalCenter
+                                            text: "0"//Backend.getSellerSalesCount(salesModel)
+                                            font.pixelSize: 16
+                                            color: (NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000"
+                                        }
+                                    }
+                                    
+                                    NeroshopComponents.Hint {
+                                        y: parent.height + 3
+                                        visible: parent.hovered
+                                        height: contentHeight + 20; width: contentWidth + 20
+                                        text: qsTr("Trades (completed)")
+                                        pointer.visible: false
+                                    }
+                                    
+                                    MouseArea { 
+                                        anchors.fill: parent
+                                        hoverEnabled: true
+                                        onEntered: parent.hovered = true
+                                        onExited: parent.hovered = false
+                                    }
+                                } // trades
+                            } // row containing both thumbs and reputation
                         } // end of statsRow
-                    } // end of statsCol
+                    } // end of statsColumn
             
                     // TODO: show mail letter icon for email, location icon for location, Link icon for website
                 } // profileCard (Rectangle)
@@ -940,6 +984,43 @@ Page {
                         }
                         onClicked: {
                             tabLayout.currentIndex = 1
+                        }
+                    }
+                    
+                    Button {
+                        id: userInfoTabButton
+                        width: (tabsRect.width / tabButtonRow.children.length) - tabButtonRow.anchors.leftMargin/*!ratingsCountRect.visible ? 100 : 100 + ratingsCountText.contentWidth*/; height: 40
+                        text: qsTr("User Info")
+                        autoExclusive: true
+                        checkable: true
+                        background: Rectangle {
+                            color: parent.checked ? tabButtonRow.buttonCheckedColor : tabButtonRow.buttonUncheckedColor
+                            radius: tabButtonRow.buttonRadius
+                            
+                            // To hide bottom radius
+                            Rectangle {
+                                anchors.left: parent.left
+                                anchors.bottom: parent.bottom
+                                width: parent.width
+                                height: 5
+                                color: parent.color
+                            }
+                        }
+                        contentItem: Item {
+                            anchors.fill: parent
+                            Row {
+                                anchors.centerIn: parent
+                                spacing: 10
+                                Text {
+                                    text: userInfoTabButton.text
+                                    color: "#ffffff"
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    font.bold: true
+                                }
+                            }
+                        }
+                        onClicked: {
+                            tabLayout.currentIndex = 2
                         }
                     }
                 }
@@ -1107,6 +1188,56 @@ Page {
                         } // delegate
                     } // ListView
                 } // Flickable
+            }
+            Rectangle {
+                id: userInfoTabItem
+                color: tabLayout.tabItemColor
+                // StackLayout child Items' Layout.fillWidth and Layout.fillHeight properties default to true
+                
+                Flickable {
+                    anchors.fill: parent
+                    contentWidth: parent.width
+                    contentHeight: userInfoTabItemColumn.contentHeight + (userInfoTabItemColumn.margins * 2) // to fill the top + bottom padding
+                    clip: true
+                    ScrollBar.vertical: ScrollBar {
+                        policy: ScrollBar.AlwaysOn//sNeeded
+                    }
+                    Column {
+                        id: userInfoTabItemColumn
+                        anchors.fill: parent
+                        anchors.margins: 15//20
+                        spacing: 10//15
+                        // TODO: Display user info (e.g i2p sessions, last seen, # of trades, account age, etc.)
+                        Text {
+                            text: qsTr("Display name: %1").arg(userModel.hasOwnProperty("display_name") ? userModel.display_name : "(none)")
+                            color: (NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000"
+                        }
+                        Text {
+                            text: qsTr("User ID: %1").arg(userModel.monero_address)
+                            color: (NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000"
+                        }
+                        Text {
+                            text: qsTr("Account age: %1 days old").arg(Backend.getAccountAge(userModel))
+                            color: (NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000"
+                        }
+                        Text {
+                            text: qsTr("Reputation: %1").arg(Backend.getSellerReputation(ratingsModel) + "%")
+                            color: (NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000"
+                        }
+                        Text {
+                            text: qsTr("Positive feedback(s): %1").arg(Backend.getSellerGoodRatings(ratingsModel))
+                            color: (NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000"
+                        }
+                        Text {
+                            text: qsTr("Negative feedback(s): %1").arg(Backend.getSellerBadRatings(ratingsModel))
+                            color: (NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000"
+                        }
+                        /*Text {
+                            text: qsTr(": %1").arg()
+                            color: (NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000"
+                        }*/
+                    }
+                }
             } // StackLayout Item
         } // StackLayout
     } // root ColumnLayout
