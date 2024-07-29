@@ -36,7 +36,7 @@ Item {
             Rectangle {
                 id: checkBoxColumn
                 Layout.preferredWidth: parentBox.width + 50
-                Layout.minimumHeight: 50
+                Layout.minimumHeight: 40
                 color: table.columnColor
                 border.color: table.columnBorderColor
                 radius: table.titleBoxRadius
@@ -51,7 +51,7 @@ Item {
             Rectangle {
                 id: productImageColumn
                 Layout.fillWidth: true
-                Layout.minimumHeight: 50
+                Layout.minimumHeight: 40
                 color: table.columnColor
                 border.color: table.columnBorderColor
                 radius: table.titleBoxRadius
@@ -65,7 +65,7 @@ Item {
             Rectangle {
                 id: productNameColumn
                 Layout.fillWidth: true
-                Layout.minimumHeight: 50
+                Layout.minimumHeight: 40
                 color: table.columnColor
                 border.color: table.columnBorderColor
                 radius: table.titleBoxRadius
@@ -79,7 +79,7 @@ Item {
             Rectangle {
                 id: priceColumn
                 Layout.fillWidth: true
-                Layout.minimumHeight: 50
+                Layout.minimumHeight: 40
                 color: table.columnColor
                 border.color: table.columnBorderColor
                 radius: table.titleBoxRadius
@@ -93,7 +93,7 @@ Item {
             Rectangle {
                 id: productStockQtyColumn
                 Layout.fillWidth: true
-                Layout.minimumHeight: 50
+                Layout.minimumHeight: 40
                 color: table.columnColor
                 border.color: table.columnBorderColor
                 radius: table.titleBoxRadius
@@ -107,7 +107,7 @@ Item {
             Rectangle {
                 id: actionsColumn
                 Layout.fillWidth: true
-                Layout.minimumHeight: 50
+                Layout.minimumHeight: 40
                 color: table.columnColor
                 border.color: table.columnBorderColor
                 radius: table.titleBoxRadius
@@ -121,7 +121,7 @@ Item {
             /*Rectangle {
                 id: ?Column
                 Layout.fillWidth: true
-                Layout.minimumHeight: 50
+                Layout.minimumHeight: 40
                 color: table.columnColor
                 border.color: table.columnBorderColor
                 radius: table.titleBoxRadius
