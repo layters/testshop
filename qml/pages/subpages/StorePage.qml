@@ -400,7 +400,7 @@ Page {
                         Layout.preferredHeight: (40 + inventoryTable.list.height + 25)
                         background: Rectangle {
                             radius: 3
-                            color: "transparent"
+                            color: (NeroshopComponents.Style.darkTheme) ? (NeroshopComponents.Style.themeName == "PurpleDust" ? "#17171c" : "#181a1b") : "#c9c9cd"
                             border.color: "#989999"
                         }
                         NeroshopComponents.InventoryTable {

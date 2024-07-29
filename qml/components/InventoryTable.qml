@@ -13,7 +13,7 @@ Item {
     property real titleBoxRadius: 3
     property real titleBoxSpacing: titleBar.spacing
     property string columnBorderColor: "#989999"////(NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000"
-    property string columnColor: "transparent"//(NeroshopComponents.Style.darkTheme) ? (NeroshopComponents.Style.themeName == "PurpleDust" ? "#0e0e11" : "#101010") : "#f0f0f0"////"transparent"//"#6c6c6f"
+    property string columnColor: listView.cellColor//"transparent"//(NeroshopComponents.Style.darkTheme) ? (NeroshopComponents.Style.themeName == "PurpleDust" ? "#0e0e11" : "#101010") : "#f0f0f0"////"transparent"//"#6c6c6f"
     property alias list: listView
     function removeSelectedItems() { listView.removeSelectedItems() }
     function getSelectionCount() { const selection_count = listView.getSelectedItems().length; return selection_count }

@@ -803,6 +803,7 @@ Page {
                                     border.color: (NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000"
                                     radius: 3
                                     property bool hovered: false
+                                    visible: false // <- hide for now
                                     
                                     Row {
                                         anchors.centerIn: parent
