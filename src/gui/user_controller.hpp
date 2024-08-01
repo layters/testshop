@@ -51,7 +51,9 @@ public:
         const QList<int>& payment_coins, 
         const QList<int>& payment_options, 
         const QList<int>& delivery_options,
-        const QList<int>& shipping_options
+        const QList<int>& shipping_options,
+        const QList<QVariantMap>& shipping_costs,
+        const QList<QVariantMap>& custom_rates
     );
     Q_INVOKABLE void delistProduct(const QString& listing_key);
     Q_INVOKABLE void delistProducts(const QStringList& listing_keys);

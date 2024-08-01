@@ -62,7 +62,9 @@ std::string Seller::list_item(
     const std::set<PaymentCoin>& payment_coins, 
     const std::set<PaymentOption>& payment_options, 
     const std::set<DeliveryOption>& delivery_options,
-    const std::set<ShippingOption>& shipping_options
+    const std::set<ShippingOption>& shipping_options, 
+    const std::map<ShippingOption, double>& shipping_costs,
+    const std::map<PaymentCoin, double>& custom_rates
 ) const
 {
     // Transition from Sqlite to DHT:
@@ -92,7 +94,8 @@ std::string Seller::list_item(
         quantity, price, currency,
         condition, location, created_at, signature, quantity_per_order, 
         PaymentMethod::Crypto/*payment_method*/, payment_coins, 
-        payment_options, delivery_options, shipping_options
+        payment_options, delivery_options, shipping_options, shipping_costs,
+        custom_rates
     };//listing.print_listing();
     
     auto data = Serializer::serialize(listing);

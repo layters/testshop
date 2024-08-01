@@ -401,7 +401,7 @@ Page {
                         background: Rectangle {
                             radius: 3
                             color: (NeroshopComponents.Style.darkTheme) ? (NeroshopComponents.Style.themeName == "PurpleDust" ? "#17171c" : "#181a1b") : "#c9c9cd"
-                            border.color: "#989999"
+                            border.color: inventoryTable.columnBorderColor
                         }
                         NeroshopComponents.InventoryTable {
                             id: inventoryTable

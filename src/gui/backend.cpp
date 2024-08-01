@@ -2313,6 +2313,15 @@ int neroshop::Backend::loginWithHW(WalletController* wallet_controller, UserCont
 }
 //----------------------------------------------------------------
 //----------------------------------------------------------------
+QString neroshop::Backend::getPaymentCoinAsString(int paymentCoin) {
+    return QString::fromStdString(get_payment_coin_as_string(static_cast<PaymentCoin>(paymentCoin)));
+}
+//----------------------------------------------------------------
+QString neroshop::Backend::getShippingOptionAsString(int shippingOption) {
+    return QString::fromStdString(get_shipping_option_as_string(static_cast<ShippingOption>(shippingOption)));
+}
+//----------------------------------------------------------------
+//----------------------------------------------------------------
 QVariantMap neroshop::Backend::getNetworkStatus() const {
     if(!DaemonManager::isDaemonServerBound()) { return {}; }
     

@@ -74,7 +74,6 @@ public:
 
     Q_INVOKABLE bool saveAvatarImage(const QString& fileName, const QString& userAccountKey);
         
-    // Products should be registered so that sellers can list pre-existing products without the need to duplicate a product which is unnecessary and can make the database bloated
     Q_INVOKABLE QVariantMap uploadImageToObject(const QString& fileName, int imageId); // constructs image object rather than upload it
     Q_INVOKABLE bool saveProductImage(const QString& fileName, const QString& listingKey);
     Q_INVOKABLE bool saveProductThumbnail(const QString& fileName, const QString& listingKey);
@@ -115,6 +114,9 @@ public:
     Q_INVOKABLE void createOrder(UserController * user_controller, const QString& shipping_address);
 
     bool isIllicitItem(const QVariantMap& listing_obj);
+    
+    Q_INVOKABLE QString getPaymentCoinAsString(int paymentCoin);
+    Q_INVOKABLE QString getShippingOptionAsString(int shippingOption);
     
     Q_INVOKABLE QVariantMap getNetworkStatus() const;
     Q_INVOKABLE void clearHashTable();

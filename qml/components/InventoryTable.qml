@@ -12,7 +12,7 @@ Item {
     id: table
     property real titleBoxRadius: 3
     property real titleBoxSpacing: titleBar.spacing
-    property string columnBorderColor: "#989999"////(NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000"
+    property string columnBorderColor: (NeroshopComponents.Style.darkTheme) ? "#404040" : "#4d4d4d"
     property string columnColor: listView.cellColor//"transparent"//(NeroshopComponents.Style.darkTheme) ? (NeroshopComponents.Style.themeName == "PurpleDust" ? "#0e0e11" : "#101010") : "#f0f0f0"////"transparent"//"#6c6c6f"
     property alias list: listView
     function removeSelectedItems() { listView.removeSelectedItems() }

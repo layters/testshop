@@ -1114,6 +1114,7 @@ Popup {
                             //columnSpacing: 30*/ // <- for regular Grid
                             cellWidth: 140
                             cellHeight: 20 + 5 // 20=checkbox height, 5=spacing
+                            interactive: false
                             //Repeater {
                                 id: shippingOptionsRepeater
                                 model: shippingOptionsItem.shippingOptions
@@ -1133,7 +1134,173 @@ Popup {
                     }
                 }
             }
-            // todo: Shipping details                   
+            // Seller-defined shipping costs for shipping option(s)
+            Item {
+                id: shippingCostsItem
+                Layout.alignment: Qt.AlignHCenter
+                Layout.preferredWidth: childrenRect.width
+                Layout.preferredHeight: childrenRect.height
+                visible: shippingOptionsItem.visible && shippingOptionsRepeater.count > 0 && shippingOptionsItem.isShippingOptionSelected()
+                function getShippingCosts() {
+                    let shippingCosts = [];
+                    for (let i = 0; i < shippingCostsList.count; i++) {
+                        let item = shippingCostsList.itemAtIndex(i);
+                        let cost = item.children[0].children[1].text
+                        if(Number(cost) > 0.00 && cost.length > 0) {
+                            let shippingCostsObj = {
+                                "shipping_option_str": item.children[0].children[0].text,
+                                "shipping_option": item.children[0].children[0].value,
+                                "cost": Number(cost)
+                            };
+                            shippingCosts.push(shippingCostsObj);
+                            console.log("Shipping option:", shippingCostsObj.shipping_option_str);
+                            console.log("Cost:", shippingCostsObj.cost);
+                        }
+                    }
+                    return shippingCosts;
+                }
+                
+                Column {
+                    spacing: productDialog.titleSpacing
+                    Row {
+                        spacing: 10
+                        Text {
+                            text: "Shipping costs"
+                            color: productDialog.palette.text
+                            font.bold: true
+                        }
+                    }
+                    // ListView for shipping costs
+                    Item {
+                        width: 500; height: children[0].contentHeight
+                        
+                        ListView {
+                            id: shippingCostsList
+                            anchors.fill: parent//width: parent.width
+                            spacing: 5
+                            model: !shippingCostsItem.visible ? [] : shippingOptionsItem.getSelectedShippingOptionsValue()
+                            delegate: Rectangle {
+                                width: ListView.view.width
+                                height: 50
+                                color: "transparent"
+                                border.color: productDialog.inputBorderColor
+                                radius: productDialog.inputRadius
+                                
+                                RowLayout {
+                                    anchors.fill: parent
+                                    anchors.margins: 10 // horizontal margins
+                                    spacing: 10
+                                    
+                                    Text {
+                                        text: Backend.getShippingOptionAsString(modelData)
+                                        color: productDialog.inputTextColor
+                                        property int value: modelData
+                                    }
+                                    
+                                    TextField {
+                                        Layout.fillWidth: true
+                                        placeholderText: qsTr(Number("0.00").toFixed(2))
+                                        validator: RegExpValidator{ regExp: new RegExp("^-?[0-9]+(\\.[0-9]{1," + Backend.getCurrencyDecimals(selectedCurrencyText.text) + "})?$") }
+                                        selectByMouse: true
+                                        background: Rectangle {
+                                            color: "transparent"
+                                            border.color: productDialog.inputBorderColor
+                                            radius: productDialog.inputRadius
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            // Seller-defined custom exchange rates for payment coin(s)
+            Item {
+                id: customRatesItem
+                Layout.alignment: Qt.AlignHCenter
+                Layout.preferredWidth: childrenRect.width
+                Layout.preferredHeight: childrenRect.height
+                visible: paymentCoinsRepeater.count > 0 && paymentCoinsItem.isPaymentCoinSelected() && selectedCurrencyText.text != "XMR"
+                function getCustomRates() {
+                    let customRates = [];
+                    for (let i = 0; i < customRatesList.count; i++) {
+                        let item = customRatesList.itemAtIndex(i);
+                        let rate = item.children[0].children[1].text
+                        if(Number(rate) > 0.00 && rate.length > 0) {
+                            let customRatesObj = {
+                                "payment_coin_str": item.children[0].children[0].text,
+                                "payment_coin": item.children[0].children[0].value,
+                                "rate": Number(rate)
+                            };
+                            customRates.push(customRatesObj);
+                            console.log("Payment coin:", customRatesObj.payment_coin_str);
+                            console.log("Rate:", customRatesObj.rate);
+                        }
+                    }
+                    return customRates;
+                }
+                
+                Column {
+                    spacing: productDialog.titleSpacing
+                    Row {
+                        spacing: 10
+                        Text {
+                            text: "Custom rates"
+                            color: productDialog.palette.text
+                            font.bold: true
+                        }
+                        Text {
+                            text: "(OPTIONAL)"
+                            color: productDialog.optTextColor
+                            font.bold: true
+                            font.pointSize: 8
+                            anchors.verticalCenter: parent.children[0].verticalCenter
+                        }
+                    }
+                    // ListView for custom rates
+                    Item {
+                        width: 500; height: children[0].contentHeight
+                        
+                        ListView {
+                            id: customRatesList
+                            anchors.fill: parent//width: parent.width
+                            spacing: 5
+                            model: !customRatesItem.visible ? [] : paymentCoinsItem.getSelectedPaymentCoinsValue()
+                            delegate: Rectangle {
+                                width: ListView.view.width
+                                height: 50
+                                color: "transparent"
+                                border.color: productDialog.inputBorderColor
+                                radius: productDialog.inputRadius
+                                
+                                RowLayout {
+                                    anchors.fill: parent
+                                    anchors.margins: 10 // horizontal margins
+                                    spacing: 10
+                                    
+                                    Text {
+                                        text: Backend.getPaymentCoinAsString(modelData)
+                                        color: productDialog.inputTextColor
+                                        property int value: modelData
+                                    }
+                                    
+                                    TextField {
+                                        Layout.fillWidth: true
+                                        placeholderText: qsTr("1 XMR = ? %1").arg(selectedCurrencyText.text)
+                                        validator: RegExpValidator{ regExp: new RegExp("^-?[0-9]+(\\.[0-9]{1," + Backend.getCurrencyDecimals(selectedCurrencyText.text) + "})?$") }
+                                        selectByMouse: true
+                                        background: Rectangle {
+                                            color: "transparent"
+                                            border.color: productDialog.inputBorderColor
+                                            radius: productDialog.inputRadius
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
                     //Product description and bullet points
                     Item {
                         //Layout.row: 
@@ -1555,7 +1722,9 @@ Popup {
                                     paymentCoinsItem.getSelectedPaymentCoinsValue(),
                                     paymentOptionsItem.getSelectedPaymentOptionsValue(),
                                     deliveryOptionsItem.getSelectedDeliveryOptionsValue(),
-                                    shippingOptionsItem.visible ? shippingOptionsItem.getSelectedShippingOptionsValue() : []
+                                    shippingOptionsItem.visible ? shippingOptionsItem.getSelectedShippingOptionsValue() : [],
+                                    shippingCostsItem.getShippingCosts(),
+                                    customRatesItem.getCustomRates()
                                 )                       
                                 // Save product thumbnail
                                 Backend.saveProductThumbnail(productImages[0].source, listing_key)
