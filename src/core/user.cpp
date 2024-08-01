@@ -62,7 +62,7 @@ void User::rate_seller(const std::string& seller_id, int score, const std::strin
     
     Client * client = Client::get_main_client();
     //----------------------------------
-    std::string command = "SELECT DISTINCT key FROM mappings WHERE search_term = $1 AND content = 'seller_rating'";
+    std::string command = "SELECT DISTINCT key FROM mappings WHERE search_term = ?1 AND content = 'seller_rating'";
     db::Sqlite3 * database = neroshop::get_database();
     sqlite3_stmt * stmt = nullptr;
 
@@ -157,7 +157,7 @@ void User::rate_item(const std::string& product_id, int stars, const std::string
     
     Client * client = Client::get_main_client();
     //----------------------------------
-    std::string command = "SELECT DISTINCT key FROM mappings WHERE search_term = $1 AND content = 'product_rating'";
+    std::string command = "SELECT DISTINCT key FROM mappings WHERE search_term = ?1 AND content = 'product_rating'";
     db::Sqlite3 * database = neroshop::get_database(); 
     sqlite3_stmt * stmt = nullptr;
 
@@ -616,6 +616,83 @@ std::vector<std::string> User::get_favorites() const {
     return favorites;
 }
 ////////////////////
+////////////////////
+int User::get_account_age(const std::string& user_id) {
+    db::Sqlite3 * database = neroshop::get_database();
+    std::string key = database->get_text_params("SELECT DISTINCT key FROM mappings WHERE search_term = ?1 AND content = 'user' LIMIT 1", { user_id });
+    if(key.empty()) { return -1; }
+    
+    Client * client = Client::get_main_client();
+    std::string response;
+    client->get(key, response);
+    
+    nlohmann::json json = nlohmann::json::parse(response, nullptr, false);
+    if(json.is_discarded()) { return -1; }
+    if(!json.is_object()) { return -1; }
+    if(!json.contains("response")) { return -1; }
+    if(json.contains("error")) {
+        std::string response2;
+        client->remove(key, response2);
+        std::cout << "Received response (remove): " << response2 << "\n";
+        return -1;
+    }
+    
+    std::string iso8601;
+    const auto& response_obj = json["response"];
+    if(!response_obj.is_object()) { return -1; }
+    if(!response_obj.contains("value")) { return -1; }
+    if(!response_obj["value"].is_string()) { return -1; }
+    const auto& value = response_obj["value"].get<std::string>();
+    nlohmann::json value_obj = nlohmann::json::parse(value, nullptr, false);
+    if(value_obj.is_discarded()) { return -1; }
+    if(!value_obj.is_object()) { return -1; }
+    if(!value_obj.contains("metadata")) { return -1; }
+    if(!value_obj["metadata"].is_string()) { return -1; }
+    std::string metadata = value_obj["metadata"].get<std::string>();
+    if (metadata != "user") { std::cerr << "Invalid metadata. \"user\" expected, got \"" << metadata << "\" instead\n"; return -1; }
+    if(!value_obj.contains("created_at")) { return -1; }
+    if(!value_obj["created_at"].is_string()) { return -1; }
+    iso8601 = value_obj["created_at"].get<std::string>();
+    //------------------------------------------------------
+    std::tm t = {};
+    std::istringstream ss(iso8601);
+    ss >> std::get_time(&t, "%Y-%m-%dT%H:%M:%S");
+    
+    // Handling optional fractional seconds and timezone offset
+    if (ss.fail()) {
+        ss.clear();
+        ss.str(iso8601);
+        ss >> std::get_time(&t, "%Y-%m-%dT%H:%M:%S.%f");
+    }
+    
+    if (ss.fail()) {
+        ss.clear();
+        ss.str(iso8601);
+        ss >> std::get_time(&t, "%Y-%m-%dT%H:%M:%SZ");
+    }
+
+    if (ss.fail()) {
+        throw std::runtime_error("Failed to parse ISO 8601 timestamp");
+    }
+    //------------------------------------------------------
+    auto account_creation_time = std::chrono::system_clock::from_time_t(std::mktime(&t));
+    auto now = std::chrono::system_clock::now();
+
+    auto duration = now - account_creation_time;
+
+    using std_chrono_days = std::chrono::duration<int, std::ratio<86400>>;
+    auto days = std::chrono::duration_cast<std_chrono_days>(duration).count();
+    auto years = days / 365;
+    days %= 365;
+    auto months = days / 30;
+    days %= 30;
+
+    return days;
+}
+////////////////////
+int User::get_account_age() const {
+    return get_account_age(this->id);
+}
 ////////////////////
 ////////////////////
 ////////////////////

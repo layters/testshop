@@ -12,12 +12,14 @@ Listing::Listing(const std::string& id, const Product& product, const std::strin
         double price, const std::string& currency, const std::string& condition, const std::string& location, const std::string& date, const std::string& signature,
         unsigned int quantity_per_order, PaymentMethod payment_method, const std::set<PaymentCoin>& payment_coins, 
         const std::set<PaymentOption>& payment_options, const std::set<DeliveryOption>& delivery_options,
-        const std::set<ShippingOption>& shipping_options)
+        const std::set<ShippingOption>& shipping_options, const std::map<ShippingOption, double>& shipping_costs,
+        const std::map<PaymentCoin, double>& custom_rates)
     : id(id), product(std::make_unique<Product>(product)), seller_id(seller_id), quantity(quantity),
       price(price), currency(currency), condition(condition), location(location), date(date), signature(signature),
       quantity_per_order(quantity_per_order), payment_method(payment_method), payment_coins(payment_coins),
       payment_options(payment_options), delivery_options(delivery_options),
-      shipping_options(shipping_options)
+      shipping_options(shipping_options), shipping_costs(shipping_costs),
+      custom_rates(custom_rates)
 {}
 
 Listing::Listing(const Listing& other)
@@ -26,7 +28,8 @@ Listing::Listing(const Listing& other)
       date(other.date), signature(other.signature),
       quantity_per_order(other.quantity_per_order), payment_method(other.payment_method), payment_coins(other.payment_coins),
       payment_options(other.payment_options), delivery_options(other.delivery_options),
-      shipping_options(other.shipping_options)
+      shipping_options(other.shipping_options), shipping_costs(other.shipping_costs),
+      custom_rates(other.custom_rates)
 {}
 
 Listing::Listing(Listing&& other) noexcept
@@ -36,7 +39,8 @@ Listing::Listing(Listing&& other) noexcept
       date(std::move(other.date)), signature(std::move(other.signature)),
       quantity_per_order(std::exchange(other.quantity_per_order, 0)), payment_method(std::move(other.payment_method)), payment_coins(std::move(other.payment_coins)),
       payment_options(std::move(other.payment_options)), delivery_options(std::move(other.delivery_options)),
-      shipping_options(std::move(other.shipping_options))
+      shipping_options(std::move(other.shipping_options)), shipping_costs(std::move(other.shipping_costs)),
+      custom_rates(std::move(other.custom_rates))
 {}
 
 //-----------------------------------------------------------------------------
@@ -60,6 +64,8 @@ neroshop::Listing& Listing::operator=(const neroshop::Listing& other)
         payment_options = other.payment_options;
         delivery_options = other.delivery_options;
         shipping_options = other.shipping_options;
+        shipping_costs = other.shipping_costs;
+        custom_rates = other.custom_rates;
     }
     return *this;
 }
@@ -83,6 +89,8 @@ neroshop::Listing& Listing::operator=(neroshop::Listing&& other) noexcept
         payment_options = std::move(other.payment_options);
         delivery_options = std::move(other.delivery_options);
         shipping_options = std::move(other.shipping_options);
+        shipping_costs = std::move(other.shipping_costs);
+        custom_rates = std::move(other.custom_rates);
     }
     return *this;
 }
@@ -199,20 +207,20 @@ void Listing::set_shipping_options(const std::set<ShippingOption>& shipping_opti
     this->shipping_options = shipping_options;
 }
 
-void Listing::set_shipping_cost(ShippingOption shipping_option, double price) {
-    shipping_costs[shipping_option] = price;
+void Listing::set_shipping_cost(ShippingOption shipping_option, double cost) {
+    shipping_costs[shipping_option] = cost;
 }
 
 void Listing::set_shipping_costs(const std::map<ShippingOption, double>& shipping_costs) {
     this->shipping_costs = shipping_costs;
 }
 
-void Listing::set_fixed_rate(PaymentCoin payment_coin, double rate) {
-    fixed_rates[payment_coin] = rate;
+void Listing::set_custom_rate(PaymentCoin payment_coin, double rate) {
+    custom_rates[payment_coin] = rate;
 }
 
-void Listing::set_fixed_rates(const std::map<PaymentCoin, double>& fixed_rates) {
-    this->fixed_rates = fixed_rates;
+void Listing::set_custom_rates(const std::map<PaymentCoin, double>& custom_rates) {
+    this->custom_rates = custom_rates;
 }
 
 //-----------------------------------------------------------------------------
@@ -300,16 +308,16 @@ std::map<ShippingOption, double> Listing::get_shipping_costs() const {
     return shipping_costs;
 }
 
-double Listing::get_fixed_rate(PaymentCoin payment_coin) const {
-    auto it = fixed_rates.find(payment_coin);
-    if (it != fixed_rates.end()) {
+double Listing::get_custom_rate(PaymentCoin payment_coin) const {
+    auto it = custom_rates.find(payment_coin);
+    if (it != custom_rates.end()) {
         return it->second;
     }
     return 0.0;
 }
 
-std::map<PaymentCoin, double> Listing::get_fixed_rates() const {
-    return fixed_rates;
+std::map<PaymentCoin, double> Listing::get_custom_rates() const {
+    return custom_rates;
 }
 
 }

@@ -111,6 +111,24 @@ std::pair<std::string, std::string/*std::vector<uint8_t>*/> Serializer::serializ
             }
             json_object["shipping_options"] = shipping_options_array;
         }
+        auto shipping_costs = listing.get_shipping_costs();
+        if(!shipping_costs.empty()) {
+            nlohmann::json shipping_costs_object;
+            for (const auto& [shipping_option, cost] : shipping_costs) {
+                std::string shipping_option_str = get_shipping_option_as_string(shipping_option);
+                shipping_costs_object[shipping_option_str] = cost;
+            }
+            json_object["shipping_costs"] = shipping_costs_object;
+        }
+        auto custom_rates = listing.get_custom_rates();
+        if(!custom_rates.empty()) {
+            nlohmann::json custom_rates_object;
+            for (const auto& [payment_coin, rate] : custom_rates) {
+                std::string payment_coin_str = get_payment_coin_as_string(payment_coin);
+                custom_rates_object[payment_coin_str] = rate;
+            }
+            json_object["custom_rates"] = custom_rates_object;
+        }
         // Include the product serialization within the listing serialization
         assert(listing.get_product() != nullptr);
         const Product& product = *listing.get_product();

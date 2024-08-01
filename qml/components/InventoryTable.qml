@@ -12,8 +12,8 @@ Item {
     id: table
     property real titleBoxRadius: 3
     property real titleBoxSpacing: titleBar.spacing
-    property string columnBorderColor: "#989999"////(NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000"
-    property string columnColor: "transparent"//(NeroshopComponents.Style.darkTheme) ? (NeroshopComponents.Style.themeName == "PurpleDust" ? "#0e0e11" : "#101010") : "#f0f0f0"////"transparent"//"#6c6c6f"
+    property string columnBorderColor: (NeroshopComponents.Style.darkTheme) ? "#404040" : "#4d4d4d"
+    property string columnColor: listView.cellColor//"transparent"//(NeroshopComponents.Style.darkTheme) ? (NeroshopComponents.Style.themeName == "PurpleDust" ? "#0e0e11" : "#101010") : "#f0f0f0"////"transparent"//"#6c6c6f"
     property alias list: listView
     function removeSelectedItems() { listView.removeSelectedItems() }
     function getSelectionCount() { const selection_count = listView.getSelectedItems().length; return selection_count }
@@ -36,7 +36,7 @@ Item {
             Rectangle {
                 id: checkBoxColumn
                 Layout.preferredWidth: parentBox.width + 50
-                Layout.minimumHeight: 50
+                Layout.minimumHeight: 40
                 color: table.columnColor
                 border.color: table.columnBorderColor
                 radius: table.titleBoxRadius
@@ -51,7 +51,7 @@ Item {
             Rectangle {
                 id: productImageColumn
                 Layout.fillWidth: true
-                Layout.minimumHeight: 50
+                Layout.minimumHeight: 40
                 color: table.columnColor
                 border.color: table.columnBorderColor
                 radius: table.titleBoxRadius
@@ -65,7 +65,7 @@ Item {
             Rectangle {
                 id: productNameColumn
                 Layout.fillWidth: true
-                Layout.minimumHeight: 50
+                Layout.minimumHeight: 40
                 color: table.columnColor
                 border.color: table.columnBorderColor
                 radius: table.titleBoxRadius
@@ -79,7 +79,7 @@ Item {
             Rectangle {
                 id: priceColumn
                 Layout.fillWidth: true
-                Layout.minimumHeight: 50
+                Layout.minimumHeight: 40
                 color: table.columnColor
                 border.color: table.columnBorderColor
                 radius: table.titleBoxRadius
@@ -93,7 +93,7 @@ Item {
             Rectangle {
                 id: productStockQtyColumn
                 Layout.fillWidth: true
-                Layout.minimumHeight: 50
+                Layout.minimumHeight: 40
                 color: table.columnColor
                 border.color: table.columnBorderColor
                 radius: table.titleBoxRadius
@@ -107,7 +107,7 @@ Item {
             Rectangle {
                 id: actionsColumn
                 Layout.fillWidth: true
-                Layout.minimumHeight: 50
+                Layout.minimumHeight: 40
                 color: table.columnColor
                 border.color: table.columnBorderColor
                 radius: table.titleBoxRadius
@@ -121,7 +121,7 @@ Item {
             /*Rectangle {
                 id: ?Column
                 Layout.fillWidth: true
-                Layout.minimumHeight: 50
+                Layout.minimumHeight: 40
                 color: table.columnColor
                 border.color: table.columnBorderColor
                 radius: table.titleBoxRadius
@@ -256,83 +256,145 @@ Item {
                     Item {
                         x: productStockQtyColumn.x + (productStockQtyColumn.width - this.width) / 2//productStockQtyColumn.x
                         anchors.verticalCenter: parent.verticalCenter
-                    Label {
-                        ////x: productStockQtyColumn.x + (productStockQtyColumn.width - this.width) / 2//productStockQtyColumn.x
-                        ////anchors.verticalCenter: parent.verticalCenter
-                        text: modelData.quantity
-                        visible: true
-                        //Layout.fillWidth: true
-                        color: (NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000"
-                        font.bold: true
-                        elide: Label.ElideRight
-                    }
-                    TextField {//
-                        ////x: productStockQtyColumn.x + (productStockQtyColumn.width - this.width) / 2//productStockQtyColumn.x
-                        ////anchors.verticalCenter: parent.verticalCenter
-                        text: modelData.quantity
-                        visible: false
-                        //Layout.fillWidth: true
-                        color: (NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000"
-                        font.bold: true
-                        // TextField properties
-                        width: contentWidth + 20
-                        selectByMouse: true
-                        inputMethodHints: Qt.ImhDigitsOnly
-                        validator: RegExpValidator{ regExp: /[0-9]*/ }
-                        background: Rectangle { 
-                            color: "transparent"
-                            border.color: "#ffffff"
-                            border.width: parent.activeFocus ? 2 : 1
-                        }
-                        function adjustQuantity() {
-                            if(Number(this.text) >= 999999999) {
-                                this.text = 999999999
+                        width: children[0].width; height: children[0].height
+                        TextField {
+                            id: quantityField
+                            width: contentWidth + 20
+                            text: modelData.quantity
+                            color: (NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000"
+                            font.bold: true
+                            selectByMouse: editIcon.activated ? true : false
+                            inputMethodHints: Qt.ImhDigitsOnly
+                            validator: RegExpValidator{ regExp: /[0-9]*/ }
+                            readOnly: editIcon.activated ? false : true
+                            maximumLength: 9
+                            property string originalText: qsTr("")
+                            background: Rectangle { 
+                                color: "transparent"
+                                border.color: !parent.readOnly ? ((NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000") : "transparent"
+                                border.width: parent.activeFocus ? 2 : 1
+                                radius: 3
                             }
-                            if(Number(this.text) <= 0) {
-                                this.text = 0
+                            function adjustQuantity() {
+                                if(Number(text) >= 999999999) {
+                                    text = 999999999
+                                }
+                                if(Number(this.text) <= 1) {
+                                    text = 1
+                                }
+                            }
+                            Component.onCompleted: {
+                                quantityField.originalText = text
+                            }
+                            /*onEditingFinished: { // Pretty much acts like onFocusChanged
+                                if(editIcon.activated == true) {
+                                    adjustQuantity()
+                                    User.setStockQuantity(modelData.key, text);
+                                    editIcon.activated = false
+                                    console.log("Finished editing")
+                                }
+                            }
+                            onFocusChanged: {
+                                if(!focus) {}
+                            }*/
+                        }
+                        Button {
+                            id: saveQuantityButton
+                            anchors.right: parent.right
+                            anchors.rightMargin: -(width + 5)
+                            anchors.verticalCenter: parent.verticalCenter
+                            text: qsTr("Save")
+                            width: contentItem.contentWidth + 20; height: 32
+                            hoverEnabled: true
+                            visible: !quantityField.readOnly
+                            background: Rectangle {
+                                color: parent.hovered ? "#698b22" : "#506a1a"
+                                radius: 5
+                            }
+                            contentItem: Text {
+                                text: parent.text//qsTr(FontAwesome.check)
+                                color: "#ffffff"
+                                horizontalAlignment: Text.AlignHCenter
+                                verticalAlignment: Text.AlignVCenter
+                            }
+                            onClicked: {
+                                quantityField.adjustQuantity()
+                                User.setStockQuantity(modelData.key, quantityField.text);
+                                editIcon.activated = false
+                                console.log("quantityField.originalText",quantityField.originalText)
+                                console.log("Saved")
+                            }
+                            MouseArea { 
+                                anchors.fill: parent
+                                onPressed: mouse.accepted = false // without this, Button.onClicked won't work
+                                cursorShape: Qt.PointingHandCursor
                             }
                         }
-                        onEditingFinished: {
-                            adjustQuantity()
-                            User.setStockQuantity(modelData.key, this.text);
-                            parent.forceActiveFocus()
-                        }
-                    }
                     } // Item
-                    Button {
-                        id: removeButton
-                        x: expirationIcon.visible ? (actionsColumn.x + (actionsColumn.width - (this.width + expirationIcon.width + 5)) / 2) : (actionsColumn.x + (actionsColumn.width - this.width) / 2)
+                    Text {
+                        id: removeButton // TODO: rename to removeIcon?
+                        x: expirationIcon.visible ? (actionsColumn.x + (actionsColumn.width - (this.width + editIcon.width + 10 + expirationIcon.width + 10)) / 2) : (actionsColumn.x + (actionsColumn.width - (this.width + editIcon.width + 10)) / 2)
                         anchors.verticalCenter: parent.verticalCenter
-                        //width: 32; height: 32
-                        text: qsTr("Remove")
-                        display: AbstractButton.IconOnly
-                        hoverEnabled: true
-                        icon.source: "qrc:/assets/images/trash.png"
-                        icon.color: "#b22222"//this.hovered ? "#b22222" : "#ffffff"
-                        background: Rectangle {
-                            color: "transparent"
-                            border.color: "#b22222"
-                            border.width: parent.hovered ? 1 : 0
-                            radius: 5
-                        }
+                        text: qsTr(FontAwesome.trashCan)
+                        color: "#b22222"
+                        font.bold: true
+                        font.family: FontAwesome.fontFamily
+                        font.pointSize: 16
+                        property bool hovered: false
                         NeroshopComponents.Hint {
                             visible: parent.hovered
                             height: contentHeight + 20; width: contentWidth + 20
-                            text: parent.text
+                            text: qsTr("Remove")
                             pointer.visible: false
                             timeout: 1000; delay: 0
                         }
                         MouseArea { 
                             anchors.fill: parent
-                            onPressed: mouse.accepted = false // without this, Button.onClicked won't work
+                            hoverEnabled: true
+                            onEntered: parent.hovered = true
+                            onExited: parent.hovered = false
+                            onClicked: User.delistProduct(modelData.key)
                             cursorShape: Qt.PointingHandCursor
                         }
-                        onClicked: User.delistProduct(modelData.key)
+                    }
+                    // Pencil
+                    Text {
+                        id: editIcon
+                        x: removeButton.x + removeButton.width + 10
+                        anchors.verticalCenter: parent.verticalCenter
+                        text: qsTr(FontAwesome.pencil)
+                        color: !editIcon.activated ? "#808080" : "#ffc60d"
+                        font.bold: true
+                        font.family: FontAwesome.fontFamily
+                        font.pointSize: 16
+                        property bool hovered: false
+                        //visible: !modelData.hasOwnProperty("expiration_date")
+                        property bool activated: false
+                        NeroshopComponents.Hint {
+                            visible: editIcon.hovered
+                            height: contentHeight + 20; width: contentWidth + 20
+                            text: editIcon.activated ? qsTr("Stop editing") : qsTr("Edit")
+                            pointer.visible: false
+                            timeout: 1000; delay: 0
+                        }
+                        MouseArea {
+                            anchors.fill: parent
+                            hoverEnabled: true
+                            onEntered: parent.hovered = true
+                            onExited: parent.hovered = false
+                            onClicked: {
+                                parent.activated = !parent.activated
+                                if(parent.activated == false) {
+                                    quantityField.text = quantityField.originalText // Restore original text (not saved)
+                                }
+                            }
+                            cursorShape: Qt.PointingHandCursor
+                        }
                     }
                     // Clock
                     Text {
                         id: expirationIcon
-                        x: removeButton.x + removeButton.width + 5
+                        x: /*!editIcon.visible ? (removeButton.x + removeButton.width + 10) : */(editIcon.x + editIcon.width + 10)
                         anchors.verticalCenter: parent.verticalCenter
                         text: qsTr(FontAwesome.clock)
                         color: "royalblue"
@@ -363,16 +425,6 @@ Item {
                             onExited: parent.hovered = false
                         }
                     }
-                    /*Label {
-                        x: ?Column.x + (?Column.width - this.width) / 2//?.x
-                        anchors.verticalCenter: parent.verticalCenter
-                        //width: ?Column.width
-                        text: qsTr("")
-                        ////Layout.fillWidth: true
-                        color: (NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000"
-                        font.bold: true
-                        elide: Label.ElideRight
-                    }*/                                                                                                  
                 }                
             }
         }

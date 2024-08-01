@@ -234,7 +234,7 @@ Page {
                 id: inventoryTabScrollable
                 anchors.fill: parent
                 contentWidth: width
-                contentHeight: 180 + (50 + inventoryTable.list.height)// * 3//+ tabBar.buttonHeight + 20//parent.height
+                contentHeight: 180 + (40 + inventoryTable.list.height + 25)//40=titleBar height, 25=extra height for frame
                 ScrollBar.vertical.policy: ScrollBar.AsNeeded
                 clip: true
                 
@@ -394,10 +394,19 @@ Page {
                         color: "transparent"
                         checked: true
                     }                                
-                    // Inventory table                    
-                    NeroshopComponents.InventoryTable {
-                        id: inventoryTable
+                    // Inventory table    
+                    Frame {      
                         Layout.fillWidth: true
+                        Layout.preferredHeight: (40 + inventoryTable.list.height + 25)
+                        background: Rectangle {
+                            radius: 3
+                            color: (NeroshopComponents.Style.darkTheme) ? (NeroshopComponents.Style.themeName == "PurpleDust" ? "#17171c" : "#181a1b") : "#c9c9cd"
+                            border.color: inventoryTable.columnBorderColor
+                        }
+                        NeroshopComponents.InventoryTable {
+                            id: inventoryTable
+                            width: parent.width
+                        }
                     }
                     // ProductDialog popup
                     NeroshopComponents.ProductDialog {

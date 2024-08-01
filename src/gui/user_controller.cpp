@@ -39,7 +39,9 @@ QString neroshop::UserController::listProduct(
     const QList<int>& paymentCoins, 
     const QList<int>& paymentOptions, 
     const QList<int>& deliveryOptions,
-    const QList<int>& shippingOptions
+    const QList<int>& shippingOptions,
+    const QList<QVariantMap>& shippingCosts,
+    const QList<QVariantMap>& customRates
 ) {
     if (!_user)
         throw std::runtime_error("neroshop::User is not initialized");
@@ -154,6 +156,34 @@ QString neroshop::UserController::listProduct(
         shippingOptionsSet.insert(static_cast<ShippingOption>(shippingOption));
     }
     
+    std::map<ShippingOption, double> shippingCostsMap;
+    for (const QVariantMap& shippingCost : shippingCosts) {
+        if(shippingCost.contains("shipping_option") && shippingCost.contains("cost")) {
+            QVariant shipping_option = shippingCost.value("shipping_option");
+            QVariant cost = shippingCost.value("cost");
+            if(shipping_option.canConvert<int>() && cost.canConvert<double>()) {
+                shippingCostsMap.insert({
+                    static_cast<ShippingOption>(shipping_option.toInt()),
+                    cost.toDouble()
+                });
+            }
+        }
+    }
+    
+    std::map<PaymentCoin, double> customRatesMap;
+    for (const QVariantMap& customRate : customRates) {
+        if(customRate.contains("payment_coin") && customRate.contains("rate")) {
+            QVariant payment_coin = customRate.value("payment_coin");
+            QVariant rate = customRate.value("rate");
+            if(payment_coin.canConvert<int>() && rate.canConvert<double>()) {
+                customRatesMap.insert({
+                    static_cast<PaymentCoin>(payment_coin.toInt()),
+                    rate.toDouble()
+                });
+            }
+        }
+    }
+    
     auto listing_key = seller->list_item(
         name.toStdString(), 
         description.toStdString(),
@@ -174,7 +204,9 @@ QString neroshop::UserController::listProduct(
         paymentCoinsSet, 
         paymentOptionsSet, 
         deliveryOptionsSet, 
-        shippingOptionsSet
+        shippingOptionsSet,
+        shippingCostsMap,
+        customRatesMap
     );
     emit productsCountChanged();
     emit inventoryChanged();

@@ -808,23 +808,78 @@ QVariantMap neroshop::Backend::getUser(const QString& user_id) {
         std::string metadata = value_obj["metadata"].get<std::string>();
         if (metadata != "user") { std::cerr << "Invalid metadata. \"user\" expected, got \"" << metadata << "\" instead\n"; return {}; }
         user_object.insert("key", QString::fromStdString(key));
-        if(value_obj.contains("display_name") && value_obj["display_name"].is_string()) {
-            std::string display_name = value_obj["display_name"].get<std::string>();
-            user_object.insert("display_name", QString::fromStdString(display_name));
-        }
-        user_object.insert("monero_address", QString::fromStdString(value_obj["monero_address"].get<std::string>()));
-        user_object.insert("user_id", QString::fromStdString(value_obj["monero_address"].get<std::string>())); // alias
-        user_object.insert("public_key", QString::fromStdString(value_obj["public_key"].get<std::string>()));
         if(value_obj.contains("avatar") && value_obj["avatar"].is_object()) {
             const auto& avatar_obj = value_obj["avatar"];
             QVariantMap avatar;
             avatar.insert("name", QString::fromStdString(avatar_obj["name"].get<std::string>()));
+            avatar.insert("piece_size", avatar_obj["piece_size"].get<int>());
+            QStringList piecesList;
+            for(const auto& piece : avatar_obj["pieces"].get<std::vector<std::string>>()) {
+                piecesList.append(QString::fromStdString(piece));
+            }
+            avatar.insert("pieces", piecesList);
+            avatar.insert("size", avatar_obj["size"].get<int>());
             user_object.insert("avatar", avatar);
         }
+        user_object.insert("created_at", QString::fromStdString(value_obj["created_at"].get<std::string>()));
+        if(value_obj.contains("display_name") && value_obj["display_name"].is_string()) {
+            user_object.insert("display_name", QString::fromStdString(value_obj["display_name"].get<std::string>()));
+        }
+        user_object.insert("monero_address", QString::fromStdString(value_obj["monero_address"].get<std::string>()));
+        user_object.insert("public_key", QString::fromStdString(value_obj["public_key"].get<std::string>()));
         user_object.insert("signature", QString::fromStdString(value_obj["signature"].get<std::string>()));
+        user_object.insert("user_id", QString::fromStdString(value_obj["monero_address"].get<std::string>())); // alias for "monero_address"
     }
 
     return user_object;
+}
+//----------------------------------------------------------------
+int neroshop::Backend::getAccountAge(const QString& userId) {
+    return neroshop::User::get_account_age(userId.toStdString());
+}
+//----------------------------------------------------------------
+int neroshop::Backend::getAccountAge(const QVariantMap& userMap) {
+    if(!userMap.isEmpty()) {
+        if(userMap.contains("created_at")) {
+            std::string iso8601 = userMap.value("created_at").toString().toStdString();
+            //------------------------------------------------------
+            std::tm t = {};
+            std::istringstream ss(iso8601);
+            ss >> std::get_time(&t, "%Y-%m-%dT%H:%M:%S");
+    
+            // Handling optional fractional seconds and timezone offset
+            if (ss.fail()) {
+                ss.clear();
+                ss.str(iso8601);
+                ss >> std::get_time(&t, "%Y-%m-%dT%H:%M:%S.%f");
+            }
+    
+            if (ss.fail()) {
+                ss.clear();
+                ss.str(iso8601);
+                ss >> std::get_time(&t, "%Y-%m-%dT%H:%M:%SZ");
+            }
+
+            if (ss.fail()) {
+                throw std::runtime_error("Failed to parse ISO 8601 timestamp");
+            }
+            //------------------------------------------------------
+            auto account_creation_time = std::chrono::system_clock::from_time_t(std::mktime(&t));
+            auto now = std::chrono::system_clock::now();
+
+            auto duration = now - account_creation_time;
+
+            using std_chrono_days = std::chrono::duration<int, std::ratio<86400>>;
+            auto days = std::chrono::duration_cast<std_chrono_days>(duration).count();
+            auto years = days / 365;
+            days %= 365;
+            auto months = days / 30;
+            days %= 30;
+
+            return days;
+        }
+    }
+    return -1;
 }
 //----------------------------------------------------------------
 //----------------------------------------------------------------
@@ -2255,6 +2310,15 @@ int neroshop::Backend::loginWithKeys(WalletController* wallet_controller, UserCo
 //----------------------------------------------------------------
 int neroshop::Backend::loginWithHW(WalletController* wallet_controller, UserController * user_controller) {
     return false;
+}
+//----------------------------------------------------------------
+//----------------------------------------------------------------
+QString neroshop::Backend::getPaymentCoinAsString(int paymentCoin) {
+    return QString::fromStdString(get_payment_coin_as_string(static_cast<PaymentCoin>(paymentCoin)));
+}
+//----------------------------------------------------------------
+QString neroshop::Backend::getShippingOptionAsString(int shippingOption) {
+    return QString::fromStdString(get_shipping_option_as_string(static_cast<ShippingOption>(shippingOption)));
 }
 //----------------------------------------------------------------
 //----------------------------------------------------------------
