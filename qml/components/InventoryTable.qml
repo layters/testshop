@@ -271,7 +271,7 @@ Item {
                             property string originalText: qsTr("")
                             background: Rectangle { 
                                 color: "transparent"
-                                border.color: !parent.readOnly ? "#ffffff" : "transparent"
+                                border.color: !parent.readOnly ? ((NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000") : "transparent"
                                 border.width: parent.activeFocus ? 2 : 1
                                 radius: 3
                             }
