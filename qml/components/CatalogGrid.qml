@@ -228,7 +228,12 @@ GridView {
                                 
                     TextField { // Allows us to copy the string unlike Text
                         id: priceMonero
-                        text: qsTr("%1").arg(CurrencyExchangeRates.convertToXmr(Number(modelData.price), modelData.currency).toFixed(Backend.getCurrencyDecimals("XMR")))//.arg("XMR") // TODO: allow users to specificy their preferred number of digits
+                        text: {
+                            if(modelData.currency == "XMR") {
+                                return Number(modelData.price).toFixed(Backend.getCurrencyDecimals(modelData.currency))
+                            }
+                            return CurrencyExchangeRates.convertToXmr(Number(modelData.price), modelData.currency).toFixed(Backend.getCurrencyDecimals("XMR")) // TODO: allow users to specificy their preferred number of digits
+                        }
                         color: (NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000"
                         visible: (settingsDialog.catalogPriceBox.currentIndex == 1) ? false : true//!settingsDialog.hideProductDetails
                         anchors.verticalCenter: moneroSymbol.verticalCenter

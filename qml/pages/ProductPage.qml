@@ -180,7 +180,12 @@ Page {
                                 
                             TextField { 
                                 id: priceMonero
-                                text: qsTr("%1").arg(CurrencyExchangeRates.convertToXmr(Number(productPage.model.price), productPage.model.currency).toFixed(Backend.getCurrencyDecimals("XMR")))//.arg("XMR") // TODO: allow users to specificy their preferred number of digits
+                                text: {
+                                    if(productPage.model.currency == "XMR") {
+                                        return Number(productPage.model.price).toFixed(Backend.getCurrencyDecimals(productPage.model.currency))
+                                    }
+                                    return CurrencyExchangeRates.convertToXmr(Number(productPage.model.price), productPage.model.currency).toFixed(Backend.getCurrencyDecimals("XMR")) // TODO: allow users to specificy their preferred number of digits
+                                }
                                 color: (NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000"
                                 anchors.verticalCenter: moneroSymbol.verticalCenter
                                 font.bold: true
