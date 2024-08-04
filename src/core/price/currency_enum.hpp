@@ -23,6 +23,11 @@ enum class Currency {
     RUB,
     PHP,
     INR,
+    BRL,
+    HKD,
+    KRW,
+    SGD,
+    ZAR,
     // Metals
     XAG,
     XAU,
