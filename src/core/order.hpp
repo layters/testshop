@@ -62,13 +62,9 @@ public:
 	double get_shipping_cost() const;
 	double get_total() const;
 	PaymentMethod get_payment_method() const;
-	std::string get_payment_method_as_string() const;
 	PaymentOption get_payment_option() const;
-	std::string get_payment_option_as_string() const;
 	PaymentCoin get_payment_coin() const;
-	std::string get_payment_coin_as_string() const;
 	DeliveryOption get_delivery_option() const;
-	std::string get_delivery_option_as_string() const;
 	std::string get_notes() const;
 	std::vector<OrderItem> get_items() const;
 	// boolean
