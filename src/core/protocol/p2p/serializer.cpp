@@ -257,6 +257,7 @@ std::pair<std::string, std::string/*std::vector<uint8_t>*/> Serializer::serializ
         json_object["discount"] = order.get_discount();
         json_object["shipping_cost"] = order.get_shipping_cost();
         json_object["total"] = order.get_total();
+        json_object["payment_method"] = get_payment_method_as_string(order.get_payment_method());
         auto payment_coin = order.get_payment_coin();
         if(payment_coin != PaymentCoin::None) {
             json_object["payment_coin"] = get_payment_coin_as_string(payment_coin);
