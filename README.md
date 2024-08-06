@@ -162,7 +162,7 @@ sudo apt install -y libexpat1-dev
 sudo apt-get install -y bison
 sudo apt-get install -y flex
 cd unbound-1.19.0
-./configure --with-libexpat=/usr --with-ssl=/usr
+./configure --with-libexpat=/usr --with-ssl=/usr --enable-static-exe
 make
 sudo make install
 cd ../
