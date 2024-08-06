@@ -257,9 +257,17 @@ std::pair<std::string, std::string/*std::vector<uint8_t>*/> Serializer::serializ
         json_object["discount"] = order.get_discount();
         json_object["shipping_cost"] = order.get_shipping_cost();
         json_object["total"] = order.get_total();
-        json_object["payment_option"] = order.get_payment_option_as_string();
-        if(order.get_payment_coin() != PaymentCoin::None) json_object["coin"] = order.get_payment_coin_as_string();
-        json_object["delivery_option"] = order.get_delivery_option_as_string();
+        json_object["payment_method"] = get_payment_method_as_string(order.get_payment_method());
+        auto payment_coin = order.get_payment_coin();
+        if(payment_coin != PaymentCoin::None) {
+            json_object["payment_coin"] = get_payment_coin_as_string(payment_coin);
+        }
+        json_object["payment_option"] = get_payment_option_as_string(order.get_payment_option());
+        auto delivery_option = order.get_delivery_option();
+        json_object["delivery_option"] = get_delivery_option_as_string(delivery_option);
+        if(delivery_option == DeliveryOption::Shipping) {
+            json_object["shipping_option"] = get_shipping_option_as_string(order.shipping_option);
+        }
         json_object["notes"] = order.get_notes(); // TODO: encrypt notes
         for(const auto& item : order.get_items()) {
             nlohmann::json order_item_obj = {};

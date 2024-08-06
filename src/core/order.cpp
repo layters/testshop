@@ -531,56 +531,16 @@ PaymentMethod Order::get_payment_method() const {
     return payment_method;
 }
 
-std::string Order::get_payment_method_as_string() const {
-    switch(payment_method) {
-        case PaymentMethod::Crypto: return "Crypto";
-        case PaymentMethod::Cash: return "Cash";
-        case PaymentMethod::Card: return "Card";
-        case PaymentMethod::DigitalApp: return "DigitalApp";
-        case PaymentMethod::PreciousMetal: return "PreciousMetal";
-        case PaymentMethod::Goldback: return "Goldback";
-        default: return "Crypto";
-    }
-}
-
 neroshop::PaymentOption Order::get_payment_option() const {
     return payment_option;
-}
-
-std::string Order::get_payment_option_as_string() const {
-    switch(payment_option) {
-        case PaymentOption::Escrow: return "Escrow";
-        case PaymentOption::Multisig: return "Multisig";
-        case PaymentOption::Finalize: return "Finalize";
-        default: return "Escrow";
-    }
 }
 
 neroshop::PaymentCoin Order::get_payment_coin() const {
     return payment_coin;
 }
 
-std::string Order::get_payment_coin_as_string() const {
-    switch(payment_coin) {
-        case PaymentCoin::None: return "None";
-        case PaymentCoin::Monero: return "Monero";
-        case PaymentCoin::Wownero: return "Wownero";
-        //case PaymentCoin::: return "";
-        default: return "Monero";
-    }
-}
-
 neroshop::DeliveryOption Order::get_delivery_option() const {
     return delivery_option;
-}
-
-std::string Order::get_delivery_option_as_string() const {
-    switch(delivery_option) {
-        case DeliveryOption::Shipping: return "Shipping";
-        case DeliveryOption::Pickup: return "Pickup";
-        case DeliveryOption::Digital: return "Digital";
-        default: return "Shipping";
-    }
 }
 
 std::string Order::get_notes() const {
