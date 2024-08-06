@@ -263,7 +263,11 @@ std::pair<std::string, std::string/*std::vector<uint8_t>*/> Serializer::serializ
             json_object["payment_coin"] = get_payment_coin_as_string(payment_coin);
         }
         json_object["payment_option"] = get_payment_option_as_string(order.get_payment_option());
-        json_object["delivery_option"] = get_delivery_option_as_string(order.get_delivery_option());
+        auto delivery_option = order.get_delivery_option();
+        json_object["delivery_option"] = get_delivery_option_as_string(delivery_option);
+        if(delivery_option == DeliveryOption::Shipping) {
+            json_object["shipping_option"] = get_shipping_option_as_string(order.shipping_option);
+        }
         json_object["notes"] = order.get_notes(); // TODO: encrypt notes
         for(const auto& item : order.get_items()) {
             nlohmann::json order_item_obj = {};

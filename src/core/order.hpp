@@ -85,6 +85,7 @@ private:
 	PaymentOption payment_option; // "Escrow", "Multisig", "Finalize"
 	PaymentCoin payment_coin; // "Monero"
 	DeliveryOption delivery_option; // "Delivery", "Pickup"
+	ShippingOption shipping_option;
 	std::string notes; // encrypted note containing sensative information
 	std::vector<OrderItem> items; // <product_id>,<quantity>,<seller_id>
 	// TODO: make cart contents a vector instead of a map so cart items can be in correct order
