@@ -58,8 +58,8 @@ inline std::string get_payment_method_as_string(PaymentMethod payment_method) {
 inline std::string get_payment_coin_as_string(PaymentCoin payment_coin) {
     switch(payment_coin) {
         case PaymentCoin::None: return "None";
-        case PaymentCoin::Monero: return "Monero";
-        case PaymentCoin::Wownero: return "Wownero";
+        case PaymentCoin::Monero: return "XMR";
+        case PaymentCoin::Wownero: return "WOW";
         default: return "";
     }
 }
