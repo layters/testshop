@@ -141,7 +141,7 @@ void Listing::set_id(const std::string& id) {
 }
 
 void Listing::set_product_id(const std::string& product_id) { 
-    if (product == nullptr) {
+    if (product.get() == nullptr) {
         throw std::runtime_error("product is nullptr");
     }
     this->product->set_id(product_id);
