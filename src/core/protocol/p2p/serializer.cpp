@@ -75,6 +75,11 @@ std::pair<std::string, std::string/*std::vector<uint8_t>*/> Serializer::serializ
         if(quantity_per_order > 0) {
             json_object["quantity_per_order"] = quantity_per_order;
         }
+        auto payment_method = listing.get_payment_method(); // only a single payment method (PaymentMethod::Crypto) is supported
+        nlohmann::json payment_methods_array = {};
+        std::string payment_method_str = get_payment_method_as_string(payment_method);
+        payment_methods_array.push_back(payment_method_str);
+        json_object["payment_methods"] = payment_methods_array;
         auto payment_coins = listing.get_payment_coins();
         if(!payment_coins.empty()) {
             nlohmann::json payment_coins_array = {};
