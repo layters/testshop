@@ -1,0 +1,20 @@
+option('NEROSHOP_BUILD_TESTS', type: 'boolean', value: false, 
+    description: 'Build neroshop tests'
+)
+
+option('NEROSHOP_BUILD_CLI', type: 'boolean', value: false, 
+    description: 'Build neroshop CLI'
+)
+
+option('NEROSHOP_BUILD_GUI', type: 'boolean', value: true, 
+    description: 'Build neroshop GUI'
+)
+
+# include(CMakeDependentOption)
+# cmake_dependent_option(['NEROSHOP_USE_QT', 'Build neroshop with Qt', 'ON', 'NEROSHOP_BUILD_GUI', 'OFF'])
+# option(UUID_SYSTEM_GENERATOR "Enable operating system uuid generator" OFF)
+# option(UUID_TIME_GENERATOR "Enable experimental time-based uuid generator" OFF)
+# cmake_dependent_option(['NEROSHOP_USE_SYSTEM_SOCKETS', 'Build neroshop with system sockets', 'ON', 'NOT NEROSHOP_USE_LIBZMQ;NOT NEROSHOP_USE_LIBUV', 'OFF'])
+# cmake_dependent_option(['NEROSHOP_USE_LIBZMQ', 'Build neroshop with LibZMQ', 'ON', 'NOT NEROSHOP_USE_LIBUV;NOT NEROSHOP_USE_SYSTEM_SOCKETS', 'OFF'])
+# option(NEROSHOP_USE_GRPC "Build neroshop with gRPC" OFF)
+# cmake_dependent_option(['NEROSHOP_USE_SYSTEM_GRPC', 'Use system installed gRPC', 'ON', 'NEROSHOP_USE_GRPC;USE_SYSTEM_GRPC', 'OFF'])
