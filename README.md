@@ -257,7 +257,7 @@ WW2pQTQWHpyJf2CHrCmZG7Tn3zBnYRZTH8g4U3pSZf5s6xsTXrZc9odDWmrWzjRc9MMQWrKXxjHsRdzH
 
 [//]: # (./clean.sh)
 [//]: # (git checkout -b main)
-[//]: # (git add .gitignore .gitmodules assets/ cmake/ CMakeLists.txt external/ LICENSE qml/ qml.qrc README.md src/ tests/)
+[//]: # (git add .gitignore .gitmodules assets/ cmake/ CMakeLists.txt external/ LICENSE meson.build meson.options qml/ qml.qrc README.md src/ tests/)
 [//]: # (git commit -m"..."    or    git commit -a --allow-empty-message -m "")
 [//]: # (git push -u origin backup --force)
 [//]: # (https://git.wownero.com/layter/neroshop/settings => Mirror Settings => Synchronize Now)
