@@ -91,10 +91,5 @@ set(i2psam_srcs i2psam/i2psam.cpp)
 add_library(${i2psam_target} STATIC ${i2psam_srcs})
 target_include_directories(${i2psam_target} PUBLIC i2psam/)
 
-#[[
-set(_target "")
-set(_srcs )
-add_library(${} STATIC ${_srcs})
-target_include_directories(${} PUBLIC )
-#set_target_properties(${} PROPERTIES PREFIX "")
-]]
+# cmake .
+# make -j$(nproc)
