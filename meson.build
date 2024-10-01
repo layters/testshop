@@ -208,7 +208,7 @@ zlib_inc = include_directories('external/zlib')#meson.current_source_dir() + '/e
 zlib_dep = declare_dependency(
     include_directories: zlib_inc,
     link_args: ['-lz'],
-    version: '1.2.12'
+    version: '1.2.13'
 )
 
 ######################################

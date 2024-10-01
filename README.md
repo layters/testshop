@@ -1,19 +1,18 @@
-# neroshop - WORK IN PROGRESS (ON HOLD)
+# neroshop - WORK IN PROGRESS
 [![banner](assets/images/appicons/LogoLight250x250.png)](https://github.com/layters/testshop "neroshop logo")
 
 
 NeroShop is a decentralized peer-to-peer marketplace for trading goods and services with [**Monero**](https://getmonero.org/)
 
 
-> __Disclaimer: The neroshop team is comprised of a single developer that operates independently
+> __Disclaimer: The neroshop team operates independently
 > and is not affiliated, associated, authorized, endorsed by, or in any way officially connected
-> with the Monero project, Monero team or any other organization.__
+> with the Monero project, Monero team or any organization.__
 
 
 ## Table of contents
 <!-- - [The history behind neroshop](#about)-->
-- [Demo](#demo)
-- [Project Status](#project-status) <!-- - [Documentation](#documentation)-->
+- [Demo](#demo) <!-- - [Documentation](#documentation)-->
 - [Building neroshop](#building-neroshop)
   - [Dependencies](#dependencies)
   - [Compiling neroshop from source](#compiling-neroshop-from-source)
@@ -54,10 +53,6 @@ NeroShop is a decentralized peer-to-peer marketplace for trading goods and servi
 </details>
 
 
-## Project Status
-https://gist.github.com/layters/83efdef0c5ea3d8ff458bfc312d11be3
-
-
 ## Building neroshop
 
 ### Dependencies
@@ -73,7 +68,7 @@ https://gist.github.com/layters/83efdef0c5ea3d8ff458bfc312d11be3
 | [json](https://github.com/nlohmann/json/)                          | ?                  | json parsing and msgpack                                               | :heavy_check_mark: :package:                       |
 | [curl](https://github.com/curl/curl)                               | ?                  | currency conversion                                                    | :heavy_check_mark: :white_square_button:           |
 | [openssl](https://github.com/openssl/openssl)                      | 1.1.1              | for curl, sha256 sum and message encryption                            | :heavy_check_mark:                                 |
-| [Qt](https://www.qt.io/)                                           | 5.15.x             | graphical user interface                                               | :heavy_check_mark:                                 |
+| [Qt](https://www.qt.io/)                                           | 5.15.0             | graphical user interface                                               | :heavy_check_mark:                                 |
 | [stduuid](https://github.com/mariusbancila/stduuid)                | ?                  | unique id generation                                                   | :heavy_check_mark: :white_square_button: :package: |
 | [linenoise](https://github.com/antirez/linenoise)                  | ?                  | command line interface                                                 | :heavy_check_mark: :white_square_button: :package: |
 | [lua](https://www.lua.org/)                                        | 5.1.5              | configuration script                                                   | :heavy_check_mark: :package:                       |
@@ -106,6 +101,7 @@ git clone --recurse-submodules https://github.com/layters/testshop.git
 cd testshop
 ```
 
+
 **2. Install dependencies**
 
 Debian/Ubuntu
@@ -131,16 +127,11 @@ sudo dnf install boost-static libstdc++-static pkgconf boost-devel openssl-devel
 ```
 
 
-**3. Update monero-cpp submodules**
+**3. Install expat and unbound (May be required to build monero-project on Debian/Ubuntu otherwise, this step can be skipped):**
 ```bash
-cd external/monero-cpp && ./bin/update_submodules.sh
-```
-```bash
-cd external/monero-project
+cd external/monero-cpp/external/monero-project
 ```
 
-
-**4. Install expat and unbound (May be required to build monero-project on Debian/Ubuntu otherwise, this step can be skipped):**
 ```bash
 wget https://github.com/libexpat/libexpat/releases/download/R_2_4_8/expat-2.4.8.tar.bz2
 tar -xf expat-2.4.8.tar.bz2
@@ -169,8 +160,9 @@ cd ../
 ```
 
 <!-- git submodule update --init --force --recursive --> <!-- <= call this before building monero -->
+> Tip: Avoid using the `-j$(nproc)` option if you have <= 4 CPU cores and <= 4GB RAM to prevent system crashes.
 
-**5. Build monero-project to create .a libraries**
+**4. Build monero-project to create .a libraries**
 ```bash
 make release-static -j$(nproc)
 ```
@@ -179,7 +171,7 @@ cd ../../../../
 ```
 
 
-**6. Build neroshop**
+**5. Build neroshop**
 
 To build with [**CMake**](https://cmake.org/):
 
@@ -198,12 +190,11 @@ cmake .. #-DNEROSHOP_BUILD_CLI=1 #-DNEROSHOP_BUILD_TESTS=1
 make -j$(nproc)
 ```
 
-
-**7. Run neroshop**
 ```bash
 # Run neroshop
 ./neroshop
 ```
+> Other supported build systems: [`Meson`](https://mesonbuild.com/)
 
 
 ## Contributing
@@ -236,7 +227,7 @@ WW2pQTQWHpyJf2CHrCmZG7Tn3zBnYRZTH8g4U3pSZf5s6xsTXrZc9odDWmrWzjRc9MMQWrKXxjHsRdzH
 
 
 ## Resources
-- Website: [neroshop.org](https://neroshop.org/)
+- Website: [neroshop.org](https://neroshop.org/) (will be shutting down soon)
 - DHT Specification: [specs](https://github.com/layters/specs)
 - Git Mirrors: 
     - [Codeberg](https://codeberg.org/layter/neroshop)
@@ -244,9 +235,7 @@ WW2pQTQWHpyJf2CHrCmZG7Tn3zBnYRZTH8g4U3pSZf5s6xsTXrZc9odDWmrWzjRc9MMQWrKXxjHsRdzH
     - [Radicle](https://radicle.xyz): `rad:z2Y72SYpHTkiRXrn4hkZaf1VYhc7J`
 - Lemmy: https://monero.town/c/neroshop
 - Mail: neroshop@protonmail.com
-- Matrix Rooms: 
-    - [#neroshop:matrix.org](https://matrix.to/#/#neroshop:matrix.org)
-    - [#neroshop-dev:matrix.org](https://matrix.to/#/#neroshop-dev:matrix.org)
+- Matrix: [#neroshop:matrix.org](https://matrix.to/#/#neroshop:matrix.org)
 
 
 ## Thanks
@@ -255,7 +244,6 @@ WW2pQTQWHpyJf2CHrCmZG7Tn3zBnYRZTH8g4U3pSZf5s6xsTXrZc9odDWmrWzjRc9MMQWrKXxjHsRdzH
 * [woodser](https://github.com/woodser)
 * [lza_menace](https://twitter.com/lza_menace)
 
-[//]: # (./clean.sh)
 [//]: # (git checkout -b main)
 [//]: # (git add .gitignore .gitmodules assets/ cmake/ CMakeLists.txt external/ LICENSE meson.build meson.options qml/ qml.qrc README.md src/ tests/)
 [//]: # (git commit -m"..."    or    git commit -a --allow-empty-message -m "")
