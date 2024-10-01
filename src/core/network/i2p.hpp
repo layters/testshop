@@ -6,7 +6,6 @@
 #include <api.h>
 #include <Base.h>
 #include <Blinding.h>
-#include <ChaCha20.h>
 #include <Config.h>
 #include <CPU.h>
 #include <Crypto.h>
@@ -32,7 +31,6 @@
 #include <NetDb.hpp>
 #include <NetDbRequests.h>
 #include <NTCP2.h>
-#include <Poly1305.h>
 #include <Profiling.h>
 //#include <Queue.h>
 #include <Reseed.h>
