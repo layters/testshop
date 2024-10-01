@@ -12,8 +12,7 @@ NeroShop is a decentralized peer-to-peer marketplace for trading goods and servi
 
 ## Table of contents
 <!-- - [The history behind neroshop](#about)-->
-- [Demo](#demo)
-- [Project Status](#project-status) <!-- - [Documentation](#documentation)-->
+- [Demo](#demo) <!-- - [Documentation](#documentation)-->
 - [Building neroshop](#building-neroshop)
   - [Dependencies](#dependencies)
   - [Compiling neroshop from source](#compiling-neroshop-from-source)
@@ -52,10 +51,6 @@ NeroShop is a decentralized peer-to-peer marketplace for trading goods and servi
 ![MessagesPage](https://github.com/layters/testshop/blob/main/assets/images/screenshots/Messages_Page.png)
 
 </details>
-
-
-## Project Status
-https://gist.github.com/layters/83efdef0c5ea3d8ff458bfc312d11be3
 
 
 ## Building neroshop
@@ -165,7 +160,7 @@ cd ../
 ```
 
 <!-- git submodule update --init --force --recursive --> <!-- <= call this before building monero -->
-> Tip: Don't use the `-j$(nproc)` option if you have 4 or less CPU cores
+> Tip: Avoid using the `-j$(nproc)` option if you have <= 4 CPU cores and <= 4GB RAM to prevent system crashes.
 
 **4. Build monero-project to create .a libraries**
 ```bash
@@ -232,7 +227,7 @@ WW2pQTQWHpyJf2CHrCmZG7Tn3zBnYRZTH8g4U3pSZf5s6xsTXrZc9odDWmrWzjRc9MMQWrKXxjHsRdzH
 
 
 ## Resources
-- Website: [neroshop.org](https://neroshop.org/)
+- Website: [neroshop.org](https://neroshop.org/) (will be shutting down soon)
 - DHT Specification: [specs](https://github.com/layters/specs)
 - Git Mirrors: 
     - [Codeberg](https://codeberg.org/layter/neroshop)
@@ -240,9 +235,7 @@ WW2pQTQWHpyJf2CHrCmZG7Tn3zBnYRZTH8g4U3pSZf5s6xsTXrZc9odDWmrWzjRc9MMQWrKXxjHsRdzH
     - [Radicle](https://radicle.xyz): `rad:z2Y72SYpHTkiRXrn4hkZaf1VYhc7J`
 - Lemmy: https://monero.town/c/neroshop
 - Mail: neroshop@protonmail.com
-- Matrix Rooms: 
-    - [#neroshop:matrix.org](https://matrix.to/#/#neroshop:matrix.org)
-    - [#neroshop-dev:matrix.org](https://matrix.to/#/#neroshop-dev:matrix.org)
+- Matrix: [#neroshop:matrix.org](https://matrix.to/#/#neroshop:matrix.org)
 
 
 ## Thanks
@@ -251,7 +244,6 @@ WW2pQTQWHpyJf2CHrCmZG7Tn3zBnYRZTH8g4U3pSZf5s6xsTXrZc9odDWmrWzjRc9MMQWrKXxjHsRdzH
 * [woodser](https://github.com/woodser)
 * [lza_menace](https://twitter.com/lza_menace)
 
-[//]: # (./clean.sh)
 [//]: # (git checkout -b main)
 [//]: # (git add .gitignore .gitmodules assets/ cmake/ CMakeLists.txt external/ LICENSE meson.build meson.options qml/ qml.qrc README.md src/ tests/)
 [//]: # (git commit -m"..."    or    git commit -a --allow-empty-message -m "")
