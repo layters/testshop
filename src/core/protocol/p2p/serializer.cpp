@@ -205,7 +205,7 @@ std::pair<std::string, std::string/*std::vector<uint8_t>*/> Serializer::serializ
             }
             product_obj["subcategories"] = subcategory_array;
         }
-        std::vector<std::string> tags = product.get_tags();
+        std::set<std::string> tags = product.get_tags();
         if (!tags.empty()) {
             nlohmann::json tags_array = {};
             for (const auto& tag : tags) {
@@ -437,7 +437,7 @@ std::shared_ptr<neroshop::Object> Serializer::deserialize(const std::pair<std::s
         if (product_value.contains("code")) product.set_code(product_value["code"].get<std::string>());
         product.set_category(product_value["category"].get<std::string>());
         if (product_value.contains("subcategories")) product.set_subcategories(product_value["subcategories"].get<std::vector<std::string>>());
-        if (product_value.contains("tags")) product.set_tags(product_value["tags"].get<std::vector<std::string>>());
+        if (product_value.contains("tags")) product.set_tags(product_value["tags"].get<std::set<std::string>>());
         
         listing.set_product(product); // move the object into the shared_ptr
         variant_object = std::make_shared<Object>(std::move(listing));

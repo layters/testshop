@@ -94,14 +94,14 @@ QString neroshop::UserController::listProduct(
         attributesVector.push_back(attribute);
     }
     
-    std::vector<int> subcategoryIdsVector;
+    std::set<int> subcategoryIdsSet;
     for(const int& subcategoryId : subcategoryIds) {
-        subcategoryIdsVector.push_back(subcategoryId);
+        subcategoryIdsSet.insert(subcategoryId);
     }
     
-    std::vector<std::string> tagsVector;
+    std::set<std::string> tagsSet;
     for (const QString& tag : tags) {
-        tagsVector.push_back(tag.toStdString());
+        tagsSet.insert(tag.toStdString());
     }
     
     std::vector<Image> imagesVector;
@@ -190,8 +190,8 @@ QString neroshop::UserController::listProduct(
         attributesVector, 
         productCode.toStdString(),
         categoryId, 
-        subcategoryIdsVector,
-        tagsVector,
+        subcategoryIdsSet,
+        tagsSet,
         imagesVector,
         
         quantity, 

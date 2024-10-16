@@ -4,6 +4,7 @@
 #include <string>
 #include <vector>
 #include <tuple>
+#include <set>
 
 #include "image.hpp"
 
@@ -33,7 +34,7 @@ struct ProductAttribute {
 class Product { // can also be used for Services
 public:
     Product();
-    Product(const std::string& id, const std::string& name, const std::string& description, const std::vector<ProductAttribute>& attributes, const std::string& code, unsigned int category_id, const std::vector<int>& subcategory_ids, const std::vector<std::string>& tags, const std::vector<Image>& images);
+    Product(const std::string& id, const std::string& name, const std::string& description, const std::vector<ProductAttribute>& attributes, const std::string& code, unsigned int category_id, const std::set<int>& subcategory_ids, const std::set<std::string>& tags, const std::vector<Image>& images);
     Product(const Product& other);// copy constructor
     Product(Product&& other) noexcept; // move constructor
     
@@ -58,8 +59,8 @@ public:
     void set_category(const std::string& category);
     void set_category_id(unsigned int category_id);
     void set_subcategories(const std::vector<std::string>& subcategories);
-    void set_subcategory_ids(const std::vector<int>& subcategory_ids);
-    void set_tags(const std::vector<std::string>& tags);
+    void set_subcategory_ids(const std::set<int>& subcategory_ids);
+    void set_tags(const std::set<std::string>& tags);
 
     std::string get_id() const;
     std::string get_name() const;
@@ -72,9 +73,9 @@ public:
     std::string get_code() const;
     int get_category_id() const;
     std::string get_category_as_string() const;
-    std::vector<int> get_subcategory_ids() const;
+    std::set<int> get_subcategory_ids() const;
     std::vector<std::string> get_subcategories_as_string() const;
-    std::vector<std::string> get_tags() const;
+    std::set<std::string> get_tags() const;
     Image get_image(int index) const;
     std::vector<Image> get_images() const;
 private:
@@ -84,8 +85,8 @@ private:
     std::vector<ProductAttribute> attributes;
     std::string code; // optional - main product code
     unsigned int category_id;
-    std::vector<int> subcategory_ids; // optional
-    std::vector<std::string> tags; // optional
+    std::set<int> subcategory_ids; // optional
+    std::set<std::string> tags; // optional
     std::vector<Image> images;
 };
 
