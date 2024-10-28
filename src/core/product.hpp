@@ -74,7 +74,7 @@ public:
     int get_category_id() const;
     std::string get_category_as_string() const;
     std::set<int> get_subcategory_ids() const;
-    std::vector<std::string> get_subcategories_as_string() const;
+    std::set<std::string> get_subcategories_as_string() const;
     std::set<std::string> get_tags() const;
     Image get_image(int index) const;
     std::vector<Image> get_images() const;

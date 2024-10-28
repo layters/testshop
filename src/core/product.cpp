@@ -272,13 +272,14 @@ std::set<int> Product::get_subcategory_ids() const {
     return subcategory_ids;
 }
 
-std::vector<std::string> Product::get_subcategories_as_string() const {
-    std::vector<std::string> subcategory_str_vector {};
+std::set<std::string> Product::get_subcategories_as_string() const {
+    // Subcategories with unique ids may have duplicate names so we should use std::set instead
+    std::set<std::string> subcategory_str_set {};
     for (int subcategory_id : this->subcategory_ids) {
         std::string subcategory = get_subcategory_name_by_id(subcategory_id);
-        subcategory_str_vector.push_back(subcategory);
+        subcategory_str_set.insert(subcategory);
     }
-    return subcategory_str_vector;
+    return subcategory_str_set;
 }
 
 std::set<std::string> Product::get_tags() const {

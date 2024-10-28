@@ -197,7 +197,7 @@ std::pair<std::string, std::string/*std::vector<uint8_t>*/> Serializer::serializ
         std::string product_code = product.get_code();
         if(!product_code.empty()) product_obj["code"] = product_code; // can be left empty esp. if variants have their own product codes
         product_obj["category"] = product.get_category_as_string();
-        std::vector<std::string> subcategories = product.get_subcategories_as_string();
+        std::set<std::string> subcategories = product.get_subcategories_as_string();
         if(!subcategories.empty()) {
             nlohmann::json subcategory_array = {};
             for (const auto& subcategory : subcategories) {
