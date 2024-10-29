@@ -30,6 +30,7 @@
 #include "../core/protocol/transport/client.hpp"
 #include "../core/price/currency_converter.hpp" // neroshop::Converter::is_supported_currency
 #include "../core/price/currency_map.hpp"
+#include "../core/crypto/sha3.hpp"
 #include "../core/crypto/sha256.hpp" // sha256
 #include "../core/database/database.hpp"
 #include "../core/tools/script.hpp"
@@ -280,7 +281,7 @@ bool neroshop::Backend::saveAvatarImage(const QString& fileName, const QString& 
     std::string image_file = fileName.toStdString(); // Full path with file name
     std::string image_name = image_file.substr(image_file.find_last_of("\\/") + 1);// get filename from path (complete base name)
     image_name = image_name.substr(0, image_name.find_last_of(".")); // remove ext
-    std::string image_name_hash = neroshop::crypto::sha256(image_name);
+    std::string image_name_hash = neroshop::crypto::sha3_256(image_name);
     std::string image_ext = image_file.substr(image_file.find_last_of(".") + 1);
     //----------------------------------------
     // datastore/avatars/<account_key>
@@ -385,7 +386,7 @@ bool neroshop::Backend::saveProductImage(const QString& fileName, const QString&
     std::string image_file = fileName.toStdString(); // Full path with file name
     std::string image_name = image_file.substr(image_file.find_last_of("\\/") + 1);// get filename from path (complete base name)
     image_name = image_name.substr(0, image_name.find_last_of(".")); // remove ext
-    std::string image_name_hash = neroshop::crypto::sha256(image_name);
+    std::string image_name_hash = neroshop::crypto::sha3_256(image_name);
     std::string image_ext = image_file.substr(image_file.find_last_of(".") + 1);
     //----------------------------------------    
     // datastore/listings/<listing_key>
@@ -461,7 +462,7 @@ QVariantMap neroshop::Backend::uploadImageToObject(const QString& fileName, int 
     std::string image_file = fileName.toStdString(); // Full path with file name
     std::string image_name = image_file.substr(image_file.find_last_of("\\/") + 1);
     image_name = image_name.substr(0, image_name.find_last_of(".")); // Remove ext
-    std::string image_name_hash = neroshop::crypto::sha256(image_name);
+    std::string image_name_hash = neroshop::crypto::sha3_256(image_name);
     std::string image_ext = image_file.substr(image_file.find_last_of(".") + 1);
     image["name"] = QString::fromStdString(image_name_hash + "." + image_ext);//fileName;
     image["size"] = QVariant::fromValue(static_cast<qint64>(file_size));
