@@ -195,16 +195,18 @@ void Product::set_category(const std::string& category) {
     set_category_id(category_id);
 }
 
-void Product::set_category_id(unsigned int category_id) {
+void Product::set_category_id(int category_id) {
+    if(category_id == -1) { throw std::runtime_error("invalid category id"); }
     this->category_id = category_id;
 }
 
 void Product::set_subcategories(const std::vector<std::string>& subcategories) {
     std::set<int> subcategory_ids_set {};
     for (const std::string& subcategory : subcategories) {
-        int subcategory_id = get_category_id_by_name(subcategory); // Category name
-        if(subcategory_id == -1) {
-            subcategory_id = get_subcategory_id_by_name(subcategory); // Unique subcategory name
+        int subcategory_id = get_subcategory_id_by_name(subcategory);
+        if(subcategory_id == -1) { 
+            std::cerr << "Warning: invalid subcategory id for '" << subcategory << "'\n"; 
+            continue; // Skip this subcategory
         }
         subcategory_ids_set.insert(subcategory_id);
     }

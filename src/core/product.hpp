@@ -57,7 +57,7 @@ public:
     void set_variants(const std::vector<ProductAttribute>& variants);
     void set_code(const std::string& code);
     void set_category(const std::string& category);
-    void set_category_id(unsigned int category_id);
+    void set_category_id(int category_id);
     void set_subcategories(const std::vector<std::string>& subcategories);
     void set_subcategory_ids(const std::set<int>& subcategory_ids);
     void set_tags(const std::set<std::string>& tags);
