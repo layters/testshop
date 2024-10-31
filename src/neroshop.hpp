@@ -67,10 +67,10 @@
 #include "gui/image_loader.hpp"
 #include "gui/image_provider.hpp"
 #include "gui/proxy_manager.hpp"
-#include "gui/script_manager.hpp"
+#include "gui/settings_manager.hpp"
 //#include "gui/table_model.hpp"
-#include "gui/user_controller.hpp"
-#include "gui/wallet_controller.hpp"
+#include "gui/user_manager.hpp"
+#include "gui/wallet_manager.hpp"
 #include "gui/wallet_qr_provider.hpp"
 
 #endif

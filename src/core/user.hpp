@@ -90,7 +90,7 @@ public:
     virtual void on_order_received(); // for sellers only
     // friends
     friend class Backend;
-    friend class UserController;
+    friend class UserManager;
     friend class Serializer;
     friend class Seller;
     void set_id(const std::string& id);

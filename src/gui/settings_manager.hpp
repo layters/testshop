@@ -1,7 +1,7 @@
 #pragma once
 
-#ifndef SCRIPT_MANAGER_HPP_NEROSHOP
-#define SCRIPT_MANAGER_HPP_NEROSHOP
+#ifndef SETTINGS_MANAGER_HPP_NEROSHOP
+#define SETTINGS_MANAGER_HPP_NEROSHOP
 
 #if defined(NEROSHOP_USE_QT)
 #include <QJsonArray>
@@ -13,12 +13,12 @@
 
 namespace neroshop {
 
-class ScriptManager : public QObject {
+class SettingsManager : public QObject {
     Q_OBJECT 
     // properties (for use in QML)
     //Q_PROPERTY(<type> <variable_name> READ ...)
 public:
-    ScriptManager(QObject *parent = nullptr);
+    SettingsManager(QObject *parent = nullptr);
 
     // functions (for use in QML)
     //Q_INVOKABLE <type> getTable(const QString& key) const {}

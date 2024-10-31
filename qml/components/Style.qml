@@ -12,8 +12,8 @@ QtObject {
     property QtObject fontFiraCodeSemiBold: FontLoader { id: _fontFiraCodeSemiBold; source: "qrc:/assets/fonts/FiraCode-SemiBold.ttf" }
     ////readonly property QtObject font<name><style>: FontLoader { id: _font<name><style>; source: "qrc:/assets/fonts/" }
     // General settings
-    property bool darkTheme: Script.getJsonBool("dark_theme")//true
-    property string themeName: Script.getJsonString("theme")//"DefaultDark"
+    property bool darkTheme: Settings.getJsonBool("dark_theme")//true
+    property string themeName: Settings.getJsonString("theme")//"DefaultDark"
     // Colors    
     property string neroshopPurpleColor: "#6b5b95"
     property string neroshopPurpleTintedColor: "#8071a8"

@@ -260,9 +260,9 @@ if get_option('NEROSHOP_BUILD_GUI')
         'src/gui/enum_wrapper.hpp',
         'src/gui/image_loader.hpp',
         'src/gui/proxy_manager.hpp',
-        'src/gui/script_manager.hpp',
-        'src/gui/user_controller.hpp',
-        'src/gui/wallet_controller.hpp',
+        'src/gui/settings_manager.hpp',
+        'src/gui/user_manager.hpp',
+        'src/gui/wallet_manager.hpp',
     )
     qt5_sources = files(
         'src/gui/backend.cpp',
@@ -271,9 +271,9 @@ if get_option('NEROSHOP_BUILD_GUI')
         'src/gui/enum_wrapper.cpp',
         'src/gui/image_loader.cpp',
         'src/gui/proxy_manager.cpp',
-        'src/gui/script_manager.cpp',
-        'src/gui/user_controller.cpp',
-        'src/gui/wallet_controller.cpp',
+        'src/gui/settings_manager.cpp',
+        'src/gui/user_manager.cpp',
+        'src/gui/wallet_manager.cpp',
     )
     moc_output = qt5.compile_moc(sources: qt5_sources, headers: qt5_headers, include_directories: [include_directories('src/gui')], dependencies: qt5_dep)
 endif
@@ -406,7 +406,7 @@ endif
 
 if get_option('NEROSHOP_BUILD_GUI')
     neroshop_gui = 'neroshop'
-    neroshop_gui_srcs = qt5_resources + moc_output + [neroshop_gui_src_dir + '/main.cpp', 'src/gui/script_manager.cpp', 'src/gui/wallet_controller.cpp', 'src/gui/user_controller.cpp', 'src/gui/image_loader.cpp', 'src/gui/image_provider.cpp', 'src/gui/wallet_qr_provider.cpp', 'src/gui/currency_rate_provider.cpp', 'src/gui/daemon_manager.cpp', 'src/gui/enum_wrapper.cpp', 'src/gui/proxy_manager.cpp', 'src/gui/backend.cpp'] + neroshop_client_srcs
+    neroshop_gui_srcs = qt5_resources + moc_output + [neroshop_gui_src_dir + '/main.cpp', 'src/gui/settings_manager.cpp', 'src/gui/wallet_manager.cpp', 'src/gui/user_manager.cpp', 'src/gui/image_loader.cpp', 'src/gui/image_provider.cpp', 'src/gui/wallet_qr_provider.cpp', 'src/gui/currency_rate_provider.cpp', 'src/gui/daemon_manager.cpp', 'src/gui/enum_wrapper.cpp', 'src/gui/proxy_manager.cpp', 'src/gui/backend.cpp'] + neroshop_client_srcs
     executable(neroshop_gui, neroshop_gui_srcs,
         include_directories: [monero_inc, monero_cpp_inc, sqlite3_inc, json_inc, zlib_inc, i2pd_inc, lua_inc, qrcodegen_inc],
         cpp_args: ['-DNEROSHOP_DEBUG', '-DNEROSHOP_USE_SYSTEM_SOCKETS', '-DNEROSHOP_BUILD_GUI', '-DNEROSHOP_USE_QT'] + qt5_widgets_arg,

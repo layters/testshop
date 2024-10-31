@@ -35,7 +35,7 @@
 #include "../core/database/database.hpp"
 #include "../core/tools/script.hpp"
 #include "../core/settings.hpp"
-#include "script_manager.hpp" // neroshop::Script::get_table_string
+#include "settings_manager.hpp" // neroshop::Script::get_table_string
 #include "../core/tools/filesystem.hpp"
 #include "../core/tools/logger.hpp"
 #include "../core/tools/process.hpp"
@@ -1852,8 +1852,8 @@ bool neroshop::Backend::isIllicitItem(const QVariantMap& listing_obj) {
 }
 //----------------------------------------------------------------
 //----------------------------------------------------------------
-void neroshop::Backend::createOrder(UserController * user_controller, const QString& shipping_address) {
-    user_controller->createOrder(shipping_address);
+void neroshop::Backend::createOrder(UserManager * user_manager, const QString& shipping_address) {
+    user_manager->createOrder(shipping_address);
 }
 //----------------------------------------------------------------
 //----------------------------------------------------------------
@@ -1985,7 +1985,7 @@ QVariantList neroshop::Backend::validateDisplayName(const QString& display_name)
 }
 //----------------------------------------------------------------
 // TODO: replace function return type with enum
-QVariantList neroshop::Backend::registerUser(WalletController* wallet_controller, const QString& display_name, UserController * user_controller, const QVariantMap& avatarMap) {
+QVariantList neroshop::Backend::registerUser(WalletManager* wallet_manager, const QString& display_name, UserManager * user_manager, const QVariantMap& avatarMap) {
     // Make sure daemon is connected first
     if(!DaemonManager::isDaemonServerBound()) {
         return { false, "Please wait for the local daemon IPC server to connect first" };
@@ -2003,8 +2003,8 @@ QVariantList neroshop::Backend::registerUser(WalletController* wallet_controller
     }
     //---------------------------------------------
     // Get wallet primary address and check its validity
-    std::string primary_address = wallet_controller->getPrimaryAddress().toStdString();//neroshop::print("Primary address: \033[1;33m" + primary_address + "\033[1;37m\n");
-    if(!wallet_controller->getWallet()->is_valid_address(primary_address)) {
+    std::string primary_address = wallet_manager->getPrimaryAddress().toStdString();//neroshop::print("Primary address: \033[1;33m" + primary_address + "\033[1;37m\n");
+    if(!wallet_manager->getWallet()->is_valid_address(primary_address)) {
         return { false, "Invalid monero address" };
     }
     //---------------------------------------------
@@ -2026,14 +2026,14 @@ QVariantList neroshop::Backend::registerUser(WalletController* wallet_controller
     //---------------------------------------------
     // Note: Multiple users can have the same display_name as long as the id is unique!
     // initialize user obj
-    std::unique_ptr<neroshop::User> seller(neroshop::Seller::on_login(*wallet_controller->getWallet()));
-    user_controller->_user = std::move(seller);
-    if (user_controller->getUser() == nullptr) {
+    std::unique_ptr<neroshop::User> seller(neroshop::Seller::on_login(*wallet_manager->getWallet()));
+    user_manager->_user = std::move(seller);
+    if (user_manager->getUser() == nullptr) {
         return {false, "user is NULL"};
     }
-    user_controller->_user->set_name(display_name.toStdString());
-    user_controller->_user->set_public_key(public_key);
-    user_controller->_user->set_private_key(private_key);
+    user_manager->_user->set_name(display_name.toStdString());
+    user_manager->_user->set_public_key(public_key);
+    user_manager->_user->set_private_key(private_key);
     if(!avatarMap.isEmpty()) {
         Image image;
         std::vector<std::string> pieces;
@@ -2062,7 +2062,7 @@ QVariantList neroshop::Backend::registerUser(WalletController* wallet_controller
         if(avatarMap.contains("width")) image.width = avatarMap.value("width").toInt();
         if(avatarMap.contains("height")) image.height = avatarMap.value("height").toInt();
     
-        user_controller->_user->avatar = std::make_unique<Image>(std::move(image));
+        user_manager->_user->avatar = std::make_unique<Image>(std::move(image));
     }
     //---------------------------------------------
     // Store login credentials in DHT
@@ -2070,7 +2070,7 @@ QVariantList neroshop::Backend::registerUser(WalletController* wallet_controller
     // If client is not connect, return error
     if (!client->is_connected()) return { false, "Not connected to local daemon IPC server" };
     // Serialize user object
-    auto data = Serializer::serialize(*user_controller->_user);
+    auto data = Serializer::serialize(*user_manager->_user);
     std::string key = data.first;
     std::string value = data.second;
     
@@ -2082,18 +2082,18 @@ QVariantList neroshop::Backend::registerUser(WalletController* wallet_controller
     // Create cart for user
     QString cart_uuid = QUuid::createUuid().toString();
     cart_uuid = cart_uuid.remove("{").remove("}"); // remove brackets
-    database->execute_params("INSERT INTO cart (uuid, user_id) VALUES ($1, $2)", { cart_uuid.toStdString(), user_controller->_user->get_id() });
+    database->execute_params("INSERT INTO cart (uuid, user_id) VALUES ($1, $2)", { cart_uuid.toStdString(), user_manager->_user->get_id() });
     // Set cart id
-    user_controller->_user->get_cart()->set_id(cart_uuid.toStdString());
+    user_manager->_user->get_cart()->set_id(cart_uuid.toStdString());
     //---------------------------------------------
-    emit user_controller->userChanged();
-    emit user_controller->userLogged();
+    emit user_manager->userChanged();
+    emit user_manager->userLogged();
     // Display registration message
     neroshop::print(((!display_name.isEmpty()) ? "Welcome to neroshop, " : "Welcome to neroshop") + display_name.toStdString(), 4);
     return { true, QString::fromStdString(key) };
 }
 //----------------------------------------------------------------
-int neroshop::Backend::loginWithWalletFile(WalletController* wallet_controller, const QString& path, const QString& password, UserController * user_controller) { 
+int neroshop::Backend::loginWithWalletFile(WalletManager* wallet_manager, const QString& path, const QString& password, UserManager * user_manager) { 
     db::Sqlite3 * database = neroshop::get_database();
     if(!database) throw std::runtime_error("database is NULL");
     
@@ -2103,8 +2103,8 @@ int neroshop::Backend::loginWithWalletFile(WalletController* wallet_controller, 
         return static_cast<int>(EnumWrapper::LoginError::DaemonIsNotConnected);
     }    
     // Open wallet file
-    std::packaged_task<int(void)> open_wallet_task([wallet_controller, path, password]() -> int {
-        int wallet_error = wallet_controller->open(path, password);
+    std::packaged_task<int(void)> open_wallet_task([wallet_manager, path, password]() -> int {
+        int wallet_error = wallet_manager->open(path, password);
         if(wallet_error != 0) {
             if(wallet_error == static_cast<int>(WalletError::WrongPassword))
                 return static_cast<int>(EnumWrapper::LoginError::WrongPassword);
@@ -2128,7 +2128,7 @@ int neroshop::Backend::loginWithWalletFile(WalletController* wallet_controller, 
     int login_error = future_result.get();
     if(login_error != 0) return login_error;
     // Get the primary address
-    std::string primary_address = wallet_controller->getPrimaryAddress().toStdString();
+    std::string primary_address = wallet_manager->getPrimaryAddress().toStdString();
     //----------------------------------------
     // Check database to see if user key (hash of primary address) exists
     bool user_found = database->get_integer_params("SELECT EXISTS(SELECT * FROM mappings WHERE search_term = ?1 AND content = 'user')", { primary_address });
@@ -2136,16 +2136,16 @@ int neroshop::Backend::loginWithWalletFile(WalletController* wallet_controller, 
     if(!user_found) {
         // In reality, this function will return false if user key is not registered in the database
         neroshop::print("Account not found in database. Please try again or register", 1);
-        wallet_controller->close();
+        wallet_manager->close();
         return static_cast<int>(EnumWrapper::LoginError::UserNotFound);
     }
     // Get the account DHT key
     std::string user_key = database->get_text_params("SELECT key FROM mappings WHERE search_term = ?1 AND content = 'user'", { primary_address });
     // Save user information in memory
     std::string display_name = database->get_text_params("SELECT search_term FROM mappings WHERE key = ?1 AND LENGTH(search_term) <= 30 AND content = 'user'", { user_key });
-    std::unique_ptr<neroshop::User> seller(neroshop::Seller::on_login(*wallet_controller->getWallet()));
-    user_controller->_user = std::move(seller);
-    if(user_controller->getUser() == nullptr) {
+    std::unique_ptr<neroshop::User> seller(neroshop::Seller::on_login(*wallet_manager->getWallet()));
+    user_manager->_user = std::move(seller);
+    if(user_manager->getUser() == nullptr) {
         return static_cast<int>(EnumWrapper::LoginError::UserIsNullPointer);
     }
     //----------------------------------------
@@ -2160,7 +2160,7 @@ int neroshop::Backend::loginWithWalletFile(WalletController* wallet_controller, 
         std::ostringstream buffer;
         buffer << public_key_file.rdbuf();
         std::string public_key = buffer.str();
-        user_controller->_user->set_public_key(public_key);
+        user_manager->_user->set_public_key(public_key);
     }
     //----------------------------------------
     // Load private_key (mandatory)
@@ -2171,16 +2171,16 @@ int neroshop::Backend::loginWithWalletFile(WalletController* wallet_controller, 
     std::ostringstream buffer;
     buffer << private_key_file.rdbuf();
     std::string private_key = buffer.str();    
-    user_controller->_user->set_private_key(private_key); // Set RSA private key
+    user_manager->_user->set_private_key(private_key); // Set RSA private key
     //----------------------------------------
-    emit user_controller->userChanged();
-    emit user_controller->userLogged();
+    emit user_manager->userChanged();
+    emit user_manager->userLogged();
     // Display message
     neroshop::print("Welcome back, user " + ((!display_name.empty()) ? (display_name + " (id: " + primary_address + ")") : primary_address), 4);
     return static_cast<int>(EnumWrapper::LoginError::Ok);
 }
 //----------------------------------------------------------------
-int neroshop::Backend::loginWithMnemonic(WalletController* wallet_controller, const QString& mnemonic, unsigned int restore_height, UserController * user_controller) {
+int neroshop::Backend::loginWithMnemonic(WalletManager* wallet_manager, const QString& mnemonic, unsigned int restore_height, UserManager * user_manager) {
     db::Sqlite3 * database = neroshop::get_database();
     if(!database) throw std::runtime_error("database is NULL");
     
@@ -2190,8 +2190,8 @@ int neroshop::Backend::loginWithMnemonic(WalletController* wallet_controller, co
         return static_cast<int>(EnumWrapper::LoginError::DaemonIsNotConnected);
     }
     // Initialize monero wallet with existing wallet mnemonic
-    std::packaged_task<int(void)> restore_wallet_task([wallet_controller, mnemonic, restore_height]() -> int {
-        int wallet_error = wallet_controller->restoreFromSeed(mnemonic, restore_height);
+    std::packaged_task<int(void)> restore_wallet_task([wallet_manager, mnemonic, restore_height]() -> int {
+        int wallet_error = wallet_manager->restoreFromSeed(mnemonic, restore_height);
         if(wallet_error != 0) {
             if(wallet_error == static_cast<int>(WalletError::IsOpenedByAnotherProgram))
                 return static_cast<int>(EnumWrapper::LoginError::WalletIsOpenedByAnotherProgram);
@@ -2214,23 +2214,23 @@ int neroshop::Backend::loginWithMnemonic(WalletController* wallet_controller, co
     if(login_error != 0) return login_error;
     
     // Get the primary address
-    std::string primary_address = wallet_controller->getPrimaryAddress().toStdString();
+    std::string primary_address = wallet_manager->getPrimaryAddress().toStdString();
     // Check database to see if user key (hash of primary address) exists
     bool user_found = database->get_integer_params("SELECT EXISTS(SELECT * FROM mappings WHERE search_term = ?1 AND content = 'user')", { primary_address });
     // If user key is not found in the database, then create one. This is like registering for an account
     if(!user_found) {
         // In reality, this function will return false if user key is not registered in the database
         neroshop::print("user key not found in database. Please try again or register", 1);
-        wallet_controller->close();
+        wallet_manager->close();
         return static_cast<int>(EnumWrapper::LoginError::UserNotFound);
     }
     // Get the account DHT key
     std::string user_key = database->get_text_params("SELECT key FROM mappings WHERE search_term = ?1 AND content = 'user'", { primary_address });
     // Save user information in memory
     std::string display_name = database->get_text_params("SELECT search_term FROM mappings WHERE key = ?1 AND LENGTH(search_term) <= 30 AND content = 'user'", { user_key });
-    std::unique_ptr<neroshop::User> seller(neroshop::Seller::on_login(*wallet_controller->getWallet()));
-    user_controller->_user = std::move(seller);
-    if(user_controller->getUser() == nullptr) {
+    std::unique_ptr<neroshop::User> seller(neroshop::Seller::on_login(*wallet_manager->getWallet()));
+    user_manager->_user = std::move(seller);
+    if(user_manager->getUser() == nullptr) {
         return static_cast<int>(EnumWrapper::LoginError::UserIsNullPointer);
     }
     
@@ -2245,7 +2245,7 @@ int neroshop::Backend::loginWithMnemonic(WalletController* wallet_controller, co
         std::ostringstream buffer;
         buffer << public_key_file.rdbuf();
         std::string public_key = buffer.str();
-        user_controller->_user->set_public_key(public_key);
+        user_manager->_user->set_public_key(public_key);
     }
     
     // Load private_key (mandatory)
@@ -2256,23 +2256,23 @@ int neroshop::Backend::loginWithMnemonic(WalletController* wallet_controller, co
     std::ostringstream buffer;
     buffer << private_key_file.rdbuf();
     std::string private_key = buffer.str();    
-    user_controller->_user->set_private_key(private_key); // Set RSA private key
+    user_manager->_user->set_private_key(private_key); // Set RSA private key
     
     // Emit signals
-    emit user_controller->userChanged();
-    emit user_controller->userLogged();
+    emit user_manager->userChanged();
+    emit user_manager->userLogged();
 
     // Display message
     neroshop::print("Welcome back, user " + ((!display_name.empty()) ? (display_name + " (id: " + primary_address + ")") : primary_address), 4);
     return static_cast<int>(EnumWrapper::LoginError::Ok);
 }
 //----------------------------------------------------------------
-int neroshop::Backend::loginWithKeys(WalletController* wallet_controller, UserController * user_controller) {
+int neroshop::Backend::loginWithKeys(WalletManager* wallet_manager, UserManager * user_manager) {
 /*
     db::Sqlite3 * database = neroshop::get_database();
     if(!database) throw std::runtime_error("database is NULL");
     // Get the wallet from the wallet controller
-    neroshop::Wallet * wallet = wallet_controller->getWallet();
+    neroshop::Wallet * wallet = wallet_manager->getWallet();
     // Initialize monero wallet with existing wallet mnemonic
     std::string primary_address;
     std::string secret_view_key;
@@ -2284,7 +2284,7 @@ int neroshop::Backend::loginWithKeys(WalletController* wallet_controller, UserCo
     std::cout << "Please enter your secret spend key (optional):\n";
     std::getline(std::cin, secret_spend_key);
     // todo: allow user to specify a custom location for the wallet keyfile or use a default location
-    wallet_controller->restoreFromKeys(primary_address, secret_view_key, secret_spend_key);
+    wallet_manager->restoreFromKeys(primary_address, secret_view_key, secret_spend_key);
     // Get the hash of the primary address
     std::string user_auth_key;// = neroshop::algo::sha256(primary_address);
     ////Validator::generate_sha256_hash(primary_address, user_auth_key); // temp
@@ -2296,7 +2296,7 @@ int neroshop::Backend::loginWithKeys(WalletController* wallet_controller, UserCo
     if(!user_key_found) {
         // In reality, this function will return false if user key is not registered in the database
         neroshop::print("user key not found in database. Please try again or register", 1);
-        wallet_controller->close();
+        wallet_manager->close();
         return false;
     }
     // Save user information in memory
@@ -2309,7 +2309,7 @@ int neroshop::Backend::loginWithKeys(WalletController* wallet_controller, UserCo
     return false;
 }
 //----------------------------------------------------------------
-int neroshop::Backend::loginWithHW(WalletController* wallet_controller, UserController * user_controller) {
+int neroshop::Backend::loginWithHW(WalletManager* wallet_manager, UserManager * user_manager) {
     return false;
 }
 //----------------------------------------------------------------
