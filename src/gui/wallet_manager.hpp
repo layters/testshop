@@ -1,7 +1,7 @@
 #pragma once
 
-#ifndef WALLET_CONTROLLER_HPP_NEROSHOP
-#define WALLET_CONTROLLER_HPP_NEROSHOP
+#ifndef WALLET_MANAGER_HPP_NEROSHOP
+#define WALLET_MANAGER_HPP_NEROSHOP
 
 #if defined(NEROSHOP_USE_QT)
 #include <QObject>
@@ -15,7 +15,7 @@
 
 namespace neroshop {
 
-class WalletController : public QObject, public monero_wallet_listener
+class WalletManager : public QObject, public monero_wallet_listener
 {
     Q_OBJECT 
     // properties (for use in QML)
@@ -99,8 +99,8 @@ private:
     std::unique_ptr<neroshop::Wallet> _wallet;
 
 public:
-    WalletController(QObject *parent = nullptr);
-    ~WalletController();
+    WalletManager(QObject *parent = nullptr);
+    ~WalletManager();
 };
 
 }

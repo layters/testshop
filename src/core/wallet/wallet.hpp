@@ -194,7 +194,7 @@ public:
     bool is_cryptonote_based() const;
     // friends
     friend class Seller; // seller can access wallet private members
-    friend class WalletController;
+    friend class WalletManager;
 protected:
     WalletType wallet_type; // can switch between different wallets
     static WalletNetworkType network_type;

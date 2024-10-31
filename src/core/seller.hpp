@@ -29,8 +29,8 @@ public:
         const std::vector<ProductAttribute>& attributes,
         const std::string& product_code,
         int category_id, 
-        const std::vector<int>& subcategory_ids,
-        const std::vector<std::string>& tags,
+        const std::set<int>& subcategory_ids,
+        const std::set<std::string>& tags,
         const std::vector<Image>& images,
         
 	    unsigned int quantity, 

@@ -123,17 +123,17 @@ int main(int argc, char *argv[])
     engine.rootContext()->setContextProperty("ProxyManager", proxyManager);
     engine.setNetworkAccessManagerFactory(proxyManager);
     // we can also register an instance of a class instead of the class itself
-    WalletController *wallet = new WalletController(&engine);
-    engine.rootContext()->setContextProperty("Wallet", wallet);//new WalletController());//qmlRegisterUncreatableType<WalletProxy>("neroshop.Wallet", 1, 0, "Wallet", "Wallet cannot be instantiated directly.");//qmlRegisterType<WalletProxy>("neroshop.Wallet", 1, 0, "Wallet"); // Usage: import neroshop.Wallet  ...  Wallet { id: wallet }
-    qRegisterMetaType<WalletController*>(); // Wallet can now be used as an argument in function parameters
-    // register script
-    ScriptManager * script_manager = new ScriptManager(&engine);
-    engine.rootContext()->setContextProperty("Script", script_manager);
+    WalletManager *wallet = new WalletManager(&engine);
+    engine.rootContext()->setContextProperty("Wallet", wallet);//new WalletManager());//qmlRegisterUncreatableType<WalletProxy>("neroshop.Wallet", 1, 0, "Wallet", "Wallet cannot be instantiated directly.");//qmlRegisterType<WalletProxy>("neroshop.Wallet", 1, 0, "Wallet"); // Usage: import neroshop.Wallet  ...  Wallet { id: wallet }
+    qRegisterMetaType<WalletManager*>(); // Wallet can now be used as an argument in function parameters
+    // register settings
+    SettingsManager * settings_manager = new SettingsManager(&engine);
+    engine.rootContext()->setContextProperty("Settings", settings_manager);
     // register backend
     engine.rootContext()->setContextProperty("Backend", new Backend(&engine));
     // Register user
-    engine.rootContext()->setContextProperty("User", new UserController(&engine));
-    qRegisterMetaType<UserController *>();
+    engine.rootContext()->setContextProperty("User", new UserManager(&engine));
+    qRegisterMetaType<UserManager *>();
     // Register all enums within the "neroshop" namespace
     ////qmlRegisterUncreatableMetaObject(neroshop::staticMetaObject, "neroshop.namespace", 1, 0, "Neroshop", "Error: only enums");
     // TableModel

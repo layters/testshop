@@ -1,7 +1,7 @@
 #pragma once
 
-#ifndef USER_CONTROLLER_HPP_NEROSHOP
-#define USER_CONTROLLER_HPP_NEROSHOP
+#ifndef USER_MANAGER_HPP_NEROSHOP
+#define USER_MANAGER_HPP_NEROSHOP
 
 #if defined(NEROSHOP_USE_QT)
 #include <QObject>
@@ -10,17 +10,17 @@
 #endif
 #include <memory> // std::unique_ptr
 
-#include "wallet_controller.hpp"
+#include "wallet_manager.hpp"
 
 #include "../core/seller.hpp"////"../core/user.hpp"
 
 namespace neroshop {
 
-class UserController : public QObject, public neroshop::Seller {
+class UserManager : public QObject, public neroshop::Seller {
     Q_OBJECT
 public:
-    UserController(QObject *parent = nullptr);
-    ~UserController();
+    UserManager(QObject *parent = nullptr);
+    ~UserManager();
 
     Q_PROPERTY(neroshop::User* user READ getUser NOTIFY userChanged);
     Q_PROPERTY(bool logged READ isUserLogged NOTIFY userLogged);
@@ -71,7 +71,7 @@ public:
     //Q_INVOKABLE void exportFavoritesData();
     
     //Q_INVOKABLE void setID(const QString& id);
-    //Q_INVOKABLE void setWallet(neroshop::WalletController * wallet); // get the actual wallet from the controller then set it as the wallet
+    //Q_INVOKABLE void setWallet(neroshop::WalletManager * wallet); // get the actual wallet from the controller then set it as the wallet
     Q_INVOKABLE void setStockQuantity(const QString& listing_key, int quantity);
     
     Q_INVOKABLE void uploadAvatar(const QString& filename);
@@ -79,7 +79,7 @@ public:
     Q_INVOKABLE void sendMessage(const QString& recipient_id, const QString& content, const QString& recipient_public_key);
     Q_INVOKABLE QVariantMap decryptMessage(const QString& content_encoded, const QString& sender_encoded);
         
-    Q_INVOKABLE QString getId() const;//Q_INVOKABLE neroshop::WalletController * getWallet() const;
+    Q_INVOKABLE QString getId() const;//Q_INVOKABLE neroshop::WalletManager * getWallet() const;
     Q_INVOKABLE int getProductsCount() const;
     Q_INVOKABLE int getReputation() const;
     //Q_INVOKABLE <type> <function_name>() const;
@@ -107,7 +107,7 @@ signals:
     void messagesCountChanged();
 private:
     std::unique_ptr<neroshop::User> _user;
-    //std::unique_ptr<neroshop::WalletController> wallet_controller;
+    //std::unique_ptr<neroshop::WalletManager> wallet_manager;
 };
 
 }

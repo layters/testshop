@@ -1,4 +1,4 @@
-#include "user_controller.hpp"
+#include "user_manager.hpp"
 
 #include <QDateTime>
 
@@ -9,17 +9,17 @@
 #include "../core/tools/logger.hpp"
 #include "enum_wrapper.hpp"
 
-neroshop::UserController::UserController(QObject *parent) : QObject(parent)
+neroshop::UserManager::UserManager(QObject *parent) : QObject(parent)
 {
     // Should user not be initialized until they are logged in or?
     ////user = std::make_unique<neroshop::Seller>();
 }
 
-neroshop::UserController::~UserController() {
+neroshop::UserManager::~UserManager() {
     std::cout << "user controller deleted\n";
 }
 //----------------------------------------------------------------
-QString neroshop::UserController::listProduct(
+QString neroshop::UserManager::listProduct(
     const QString& name, 
     const QString& description,
     const QList<QVariantMap>& attributes, 
@@ -94,14 +94,14 @@ QString neroshop::UserController::listProduct(
         attributesVector.push_back(attribute);
     }
     
-    std::vector<int> subcategoryIdsVector;
+    std::set<int> subcategoryIdsSet;
     for(const int& subcategoryId : subcategoryIds) {
-        subcategoryIdsVector.push_back(subcategoryId);
+        subcategoryIdsSet.insert(subcategoryId);
     }
     
-    std::vector<std::string> tagsVector;
+    std::set<std::string> tagsSet;
     for (const QString& tag : tags) {
-        tagsVector.push_back(tag.toStdString());
+        tagsSet.insert(tag.toStdString());
     }
     
     std::vector<Image> imagesVector;
@@ -190,8 +190,8 @@ QString neroshop::UserController::listProduct(
         attributesVector, 
         productCode.toStdString(),
         categoryId, 
-        subcategoryIdsVector,
-        tagsVector,
+        subcategoryIdsSet,
+        tagsSet,
         imagesVector,
         
         quantity, 
@@ -214,7 +214,7 @@ QString neroshop::UserController::listProduct(
     return QString::fromStdString(listing_key);
 }
 //----------------------------------------------------------------
-void neroshop::UserController::delistProduct(const QString& listing_key) {
+void neroshop::UserManager::delistProduct(const QString& listing_key) {
     if (!_user) throw std::runtime_error("neroshop::User is not initialized");
     auto seller = dynamic_cast<neroshop::Seller *>(_user.get());
     seller->delist_item(listing_key.toStdString());
@@ -222,7 +222,7 @@ void neroshop::UserController::delistProduct(const QString& listing_key) {
     emit inventoryChanged();
 }
 //----------------------------------------------------------------
-void neroshop::UserController::delistProducts(const QStringList& listing_keys) {
+void neroshop::UserManager::delistProducts(const QStringList& listing_keys) {
     if (!_user) throw std::runtime_error("neroshop::User is not initialized");
     auto seller = dynamic_cast<neroshop::Seller *>(_user.get());
     for(const auto& listing_key : listing_keys) {
@@ -233,7 +233,7 @@ void neroshop::UserController::delistProducts(const QStringList& listing_keys) {
 }
 //----------------------------------------------------------------
 //----------------------------------------------------------------
-int neroshop::UserController::addToCart(const QString& listing_key, int quantity) {
+int neroshop::UserManager::addToCart(const QString& listing_key, int quantity) {
     if (!_user) throw std::runtime_error("neroshop::User is not initialized");
     int error = _user->add_to_cart(listing_key.toStdString(), quantity);
     emit cartQuantityChanged(); // TODO: emit this when removing an item from the cart as well
@@ -243,14 +243,14 @@ int neroshop::UserController::addToCart(const QString& listing_key, int quantity
 //void removeFromCart(const QString& listing_key, int quantity) {}
 //----------------------------------------------------------------
 //----------------------------------------------------------------
-Q_INVOKABLE void neroshop::UserController::createOrder(const QString& shipping_address) {
+Q_INVOKABLE void neroshop::UserManager::createOrder(const QString& shipping_address) {
     if (!_user) throw std::runtime_error("neroshop::User is not initialized");
     _user->create_order(shipping_address.toStdString());
     emit cartQuantityChanged();
 }
 //----------------------------------------------------------------
 //----------------------------------------------------------------
-void neroshop::UserController::rateItem(const QString& product_id, int stars, const QString& comments)
+void neroshop::UserManager::rateItem(const QString& product_id, int stars, const QString& comments)
 {
     if (!_user) throw std::runtime_error("neroshop::User is not initialized");
     auto seller = dynamic_cast<neroshop::Seller *>(_user.get());
@@ -261,7 +261,7 @@ void neroshop::UserController::rateItem(const QString& product_id, int stars, co
     _user->rate_item(product_id.toStdString(), stars, comments.toStdString(), signature);//signature.toStdString());
 }
 //----------------------------------------------------------------
-void neroshop::UserController::rateSeller(const QString& seller_id, int score, const QString& comments)
+void neroshop::UserManager::rateSeller(const QString& seller_id, int score, const QString& comments)
 {
     if (!_user) throw std::runtime_error("neroshop::User is not initialized");
     auto seller = dynamic_cast<neroshop::Seller *>(_user.get());
@@ -273,35 +273,35 @@ void neroshop::UserController::rateSeller(const QString& seller_id, int score, c
 }
 //----------------------------------------------------------------
 //----------------------------------------------------------------
-void neroshop::UserController::addToFavorites(const QString& listing_key) {
+void neroshop::UserManager::addToFavorites(const QString& listing_key) {
     if (!_user) throw std::runtime_error("neroshop::User is not initialized");
     _user->add_to_favorites(listing_key.toStdString());
 }
 //----------------------------------------------------------------
-void neroshop::UserController::removeFromFavorites(const QString& listing_key) {
+void neroshop::UserManager::removeFromFavorites(const QString& listing_key) {
     if (!_user) throw std::runtime_error("neroshop::User is not initialized");
     _user->remove_from_favorites(listing_key.toStdString());
 }
 //----------------------------------------------------------------
-bool neroshop::UserController::hasFavorited(const QString& listing_key) {
+bool neroshop::UserManager::hasFavorited(const QString& listing_key) {
     if (!_user) throw std::runtime_error("neroshop::User is not initialized");
     return _user->has_favorited(listing_key.toStdString());
 }
 //----------------------------------------------------------------
 //----------------------------------------------------------------
-void neroshop::UserController::uploadAvatar(const QString& filename) {
+void neroshop::UserManager::uploadAvatar(const QString& filename) {
     if (!_user)
         throw std::runtime_error("neroshop::User is not initialized");
     _user->upload_avatar(filename.toStdString());
 }
 //----------------------------------------------------------------
-void neroshop::UserController::sendMessage(const QString& recipient_id, const QString& content, 
+void neroshop::UserManager::sendMessage(const QString& recipient_id, const QString& content, 
     const QString& public_key) {
     if (!_user) throw std::runtime_error("neroshop::User is not initialized");
     _user->send_message(recipient_id.toStdString(), content.toStdString(), public_key.toStdString());
 }
 //----------------------------------------------------------------
-QVariantMap neroshop::UserController::decryptMessage(const QString& content_encoded, const QString& sender_encoded) {
+QVariantMap neroshop::UserManager::decryptMessage(const QString& content_encoded, const QString& sender_encoded) {
     if (!_user) throw std::runtime_error("neroshop::User is not initialized");
     std::pair<std::string, std::string> message_decrypted = _user->decrypt_message(content_encoded.toStdString(), sender_encoded.toStdString());
     
@@ -312,7 +312,7 @@ QVariantMap neroshop::UserController::decryptMessage(const QString& content_enco
 }
 //----------------------------------------------------------------
 //----------------------------------------------------------------
-void neroshop::UserController::setStockQuantity(const QString& listing_key, int quantity) {
+void neroshop::UserManager::setStockQuantity(const QString& listing_key, int quantity) {
     if (!_user) throw std::runtime_error("neroshop::User is not initialized");
     auto seller = dynamic_cast<neroshop::Seller *>(_user.get());
     seller->set_stock_quantity(listing_key.toStdString(), quantity);
@@ -321,42 +321,42 @@ void neroshop::UserController::setStockQuantity(const QString& listing_key, int 
 }
 //----------------------------------------------------------------
 //----------------------------------------------------------------    
-neroshop::User * neroshop::UserController::getUser() const {
+neroshop::User * neroshop::UserManager::getUser() const {
     return _user.get();
 }
 //----------------------------------------------------------------
-neroshop::Seller * neroshop::UserController::getSeller() const {
+neroshop::Seller * neroshop::UserManager::getSeller() const {
     return static_cast<neroshop::Seller *>(_user.get());
 }
 //----------------------------------------------------------------
-QString neroshop::UserController::getId() const {
+QString neroshop::UserManager::getId() const {
     if (!_user)
         throw std::runtime_error("neroshop::User is not initialized");
     return QString::fromStdString(_user->get_id());
 }
 //----------------------------------------------------------------
-int neroshop::UserController::getProductsCount() const {
+int neroshop::UserManager::getProductsCount() const {
     if (!_user)
         throw std::runtime_error("neroshop::User is not initialized");
     auto seller = dynamic_cast<neroshop::Seller *>(_user.get());
     return seller->get_products_count();
 }
 //----------------------------------------------------------------
-int neroshop::UserController::getReputation() const {
+int neroshop::UserManager::getReputation() const {
     if (!_user) throw std::runtime_error("neroshop::User is not initialized");
     auto seller = dynamic_cast<neroshop::Seller *>(_user.get());
     return seller->get_reputation();
 }
 //----------------------------------------------------------------
 //----------------------------------------------------------------
-int neroshop::UserController::getCartQuantity() const {
+int neroshop::UserManager::getCartQuantity() const {
     if (!_user) throw std::runtime_error("neroshop::User is not initialized");
     return _user->get_cart()->get_quantity();//(_user->get_id());
 }
 //----------------------------------------------------------------
 //----------------------------------------------------------------
 // This code causes the images to not load for some reason unless the app is restarted. Edit: fixed
-QVariantList neroshop::UserController::getInventory(int sorting) const {
+QVariantList neroshop::UserManager::getInventory(int sorting) const {
     if (!_user) throw std::runtime_error("neroshop::User is not initialized");
     
     Client * client = Client::get_main_client();
@@ -624,7 +624,7 @@ QVariantList neroshop::UserController::getInventory(int sorting) const {
 }
 //----------------------------------------------------------------
 //----------------------------------------------------------------
-QVariantList neroshop::UserController::getMessages() const {
+QVariantList neroshop::UserManager::getMessages() const {
     if (!_user) throw std::runtime_error("neroshop::User is not initialized");
     Client * client = Client::get_main_client();
     
@@ -716,7 +716,7 @@ QVariantList neroshop::UserController::getMessages() const {
     return messages_array;
 }
 //----------------------------------------------------------------
-QVariantList neroshop::UserController::getMessages(const QString& sender_id) const {
+QVariantList neroshop::UserManager::getMessages(const QString& sender_id) const {
     QVariantList allMessages = getMessages();
     QVariantList filteredMessages;
 
@@ -731,7 +731,7 @@ QVariantList neroshop::UserController::getMessages(const QString& sender_id) con
     return filteredMessages;
 }
 //----------------------------------------------------------------
-QVariantList neroshop::UserController::getMessages(const QString& sender_id, const QVariantList& messages) const {
+QVariantList neroshop::UserManager::getMessages(const QString& sender_id, const QVariantList& messages) const {
     QVariantList filteredMessages;
 
     // Filter the messages based on the specified sender_id
@@ -745,7 +745,7 @@ QVariantList neroshop::UserController::getMessages(const QString& sender_id, con
     return filteredMessages;
 }
 //----------------------------------------------------------------
-int neroshop::UserController::getMessagesCount() const {
+int neroshop::UserManager::getMessagesCount() const {
     neroshop::db::Sqlite3 * database = neroshop::get_database();
     if(!database) throw std::runtime_error("database is NULL");
     std::string command = "SELECT COUNT(DISTINCT key) FROM mappings WHERE search_term = ?1 AND content = 'message'";
@@ -755,7 +755,7 @@ int neroshop::UserController::getMessagesCount() const {
 }
 //----------------------------------------------------------------
 //----------------------------------------------------------------
-bool neroshop::UserController::isUserLogged() const {
+bool neroshop::UserManager::isUserLogged() const {
     return (_user.get() != nullptr);
 }
 //----------------------------------------------------------------

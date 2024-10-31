@@ -6,7 +6,7 @@ namespace neroshop {
 
 Product::Product() : id(""), name(""), description(""), code(""), category_id(0)/*, subcategory_id(-1)*/ {}
 
-Product::Product(const std::string& id, const std::string& name, const std::string& description, const std::vector<neroshop::ProductAttribute>& attributes, const std::string& code, unsigned int category_id, const std::vector<int>& subcategory_ids, const std::vector<std::string>& tags, const std::vector<Image>& images)
+Product::Product(const std::string& id, const std::string& name, const std::string& description, const std::vector<neroshop::ProductAttribute>& attributes, const std::string& code, unsigned int category_id, const std::set<int>& subcategory_ids, const std::set<std::string>& tags, const std::vector<Image>& images)
     : id(id), name(name), description(description), attributes(attributes), code(code), category_id(category_id), subcategory_ids(subcategory_ids), tags(tags), images(images)
 {}
 
@@ -82,7 +82,7 @@ void Product::add_variant(const ProductAttribute& variant) {
 }
 
 void Product::add_tag(const std::string& tag) {
-    tags.push_back(tag);
+    tags.insert(tag);
 }
 
 void Product::add_image(const Image& image) {
@@ -195,27 +195,29 @@ void Product::set_category(const std::string& category) {
     set_category_id(category_id);
 }
 
-void Product::set_category_id(unsigned int category_id) {
+void Product::set_category_id(int category_id) {
+    if(category_id == -1) { throw std::runtime_error("invalid category id"); }
     this->category_id = category_id;
 }
 
 void Product::set_subcategories(const std::vector<std::string>& subcategories) {
-    std::vector<int> subcategory_id_vector {};
+    std::set<int> subcategory_ids_set {};
     for (const std::string& subcategory : subcategories) {
-        int subcategory_id = get_category_id_by_name(subcategory); // Category name
-        if(subcategory_id == -1) {
-            subcategory_id = get_subcategory_id_by_name(subcategory); // Unique subcategory name
+        int subcategory_id = get_subcategory_id_by_name(subcategory);
+        if(subcategory_id == -1) { 
+            std::cerr << "Warning: invalid subcategory id for '" << subcategory << "'\n"; 
+            continue; // Skip this subcategory
         }
-        subcategory_id_vector.push_back(subcategory_id);
+        subcategory_ids_set.insert(subcategory_id);
     }
-    set_subcategory_ids(subcategory_id_vector);
+    set_subcategory_ids(subcategory_ids_set);
 }
 
-void Product::set_subcategory_ids(const std::vector<int>& subcategory_ids) {
+void Product::set_subcategory_ids(const std::set<int>& subcategory_ids) {
     this->subcategory_ids = subcategory_ids;
 }
 
-void Product::set_tags(const std::vector<std::string>& tags) {
+void Product::set_tags(const std::set<std::string>& tags) {
     this->tags = tags;
 }
 
@@ -268,20 +270,21 @@ std::string Product::get_category_as_string() const {
     return get_category_name_by_id(category_id);
 }
 
-std::vector<int> Product::get_subcategory_ids() const {
+std::set<int> Product::get_subcategory_ids() const {
     return subcategory_ids;
 }
 
-std::vector<std::string> Product::get_subcategories_as_string() const {
-    std::vector<std::string> subcategory_str_vector {};
+std::set<std::string> Product::get_subcategories_as_string() const {
+    // Subcategories with unique ids may have duplicate names so we should use std::set instead
+    std::set<std::string> subcategory_str_set {};
     for (int subcategory_id : this->subcategory_ids) {
         std::string subcategory = get_subcategory_name_by_id(subcategory_id);
-        subcategory_str_vector.push_back(subcategory);
+        subcategory_str_set.insert(subcategory);
     }
-    return subcategory_str_vector;
+    return subcategory_str_set;
 }
 
-std::vector<std::string> Product::get_tags() const {
+std::set<std::string> Product::get_tags() const {
     return tags;
 }
 

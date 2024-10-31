@@ -10,7 +10,6 @@
 #include "protocol/transport/client.hpp"
 #include "rating.hpp"
 #include "crypto/rsa.hpp"
-#include "crypto/sha256.hpp"
 #include "crypto/sha3.hpp"
 #include "tools/base64.hpp"
 #include "tools/timestamp.hpp"
@@ -400,7 +399,7 @@ void User::upload_avatar(const std::string& filename) {
     std::string image_name = filename.substr(filename.find_last_of("\\/") + 1);
     std::string image_name_without_ext = image_name.substr(0, image_name.find_last_of(".")); // remove extension
     std::string image_ext = filename.substr(filename.find_last_of(".") + 1);
-    image.name = neroshop::crypto::sha256(image_name_without_ext) + "." + image_ext;
+    image.name = neroshop::crypto::sha3_256(image_name_without_ext) + "." + image_ext;
     image.size = size;
     image.source = filename;
     

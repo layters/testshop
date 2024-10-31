@@ -8,8 +8,8 @@
 #include <QString>
 #include <QStringList>
 
-#include "wallet_controller.hpp"
-#include "user_controller.hpp"
+#include "wallet_manager.hpp"
+#include "user_manager.hpp"
 
 #include <iostream>
 
@@ -59,11 +59,11 @@ public:
 
     QVariantList validateDisplayName(const QString& display_name) const; // Validates display name based on regex requirements
     
-    Q_INVOKABLE QVariantList registerUser(WalletController* wallet_controller, const QString& display_name, UserController * user_controller, const QVariantMap& avatarMap);
-    Q_INVOKABLE int loginWithWalletFile(WalletController* wallet_controller, const QString& path, const QString& password, UserController * user_controller);
-    Q_INVOKABLE int loginWithMnemonic(WalletController* wallet_controller, const QString& mnemonic, unsigned int restore_height, UserController * user_controller);
-    Q_INVOKABLE int loginWithKeys(WalletController* wallet_controller, UserController * user_controller);
-    Q_INVOKABLE int loginWithHW(WalletController* wallet_controller, UserController * user_controller);
+    Q_INVOKABLE QVariantList registerUser(WalletManager* wallet_manager, const QString& display_name, UserManager * user_manager, const QVariantMap& avatarMap);
+    Q_INVOKABLE int loginWithWalletFile(WalletManager* wallet_manager, const QString& path, const QString& password, UserManager * user_manager);
+    Q_INVOKABLE int loginWithMnemonic(WalletManager* wallet_manager, const QString& mnemonic, unsigned int restore_height, UserManager * user_manager);
+    Q_INVOKABLE int loginWithKeys(WalletManager* wallet_manager, UserManager * user_manager);
+    Q_INVOKABLE int loginWithHW(WalletManager* wallet_manager, UserManager * user_manager);
     
     Q_INVOKABLE QVariantList getListings(int sorting = 0, bool hide_illicit_items = true); // Products listed by sellers
     Q_INVOKABLE QVariantList getListingsByCategory(int category_id, bool hide_illicit_items = true);
@@ -111,7 +111,7 @@ public:
     // Inventory model
     Q_INVOKABLE QVariantList getInventory(const QString& user_id, bool hide_illicit_items = true);
     
-    Q_INVOKABLE void createOrder(UserController * user_controller, const QString& shipping_address);
+    Q_INVOKABLE void createOrder(UserManager * user_manager, const QString& shipping_address);
 
     bool isIllicitItem(const QVariantMap& listing_obj);
     

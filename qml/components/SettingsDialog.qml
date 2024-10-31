@@ -50,9 +50,9 @@ Popup {
     property string moneroDaemonPassword: moneroDaemonRpcLoginPwd.text
     property bool moneroDaemonAutoSync: (nodeTypeStackLayout.currentIndex == remoteNodeButton.stackLayoutIndex) ? autoNodeSyncSwitch.checked : autoDaemonSyncSwitch.checked
     property Button moneroDaemonConnectButton: (nodeTypeStackLayout.currentIndex == remoteNodeButton.stackLayoutIndex) ? remoteNodeConnectButton : localNodeConnectButton
-    property string lastSelectedNode: Script.getJsonRootObject()["monero"]["daemon"]["last_selected_node"]
-    property bool rememberWallet: Script.getJsonRootObject()["remember_wallet"]
-    property string lastOpenedWallet: Script.getJsonRootObject()["last_opened_wallet"]
+    property string lastSelectedNode: Settings.getJsonRootObject()["monero"]["daemon"]["last_selected_node"]
+    property bool rememberWallet: Settings.getJsonRootObject()["remember_wallet"]
+    property string lastOpenedWallet: Settings.getJsonRootObject()["last_opened_wallet"]
     // Listing properties
     property int lastUsedListingSorting: 0
     
@@ -72,9 +72,9 @@ Popup {
             hide_wallet_sync_bar_on_full: walletSyncBarSwitch.checked,
             remember_wallet: rememberWallet,
             last_opened_wallet: lastOpenedWallet,
-            /*window_width: Script.getJsonRootObject()["window_width"],
-            window_height: Script.getJsonRootObject()["window_height"],
-            window_mode: Script.getJsonRootObject()["window_mode"],*/
+            /*window_width: Settings.getJsonRootObject()["window_width"],
+            window_height: Settings.getJsonRootObject()["window_height"],
+            window_mode: Settings.getJsonRootObject()["window_mode"],*/
             // catalog
             catalog: {
                 price_display: priceDisplayBox.currentText,//currentIndex,
@@ -114,13 +114,13 @@ Popup {
                 message: messageExpBox.currentText,
             },
             // paths
-            wallet_directory: (Script.getJsonRootObject()["wallet_directory"].length > 0) ? Script.getJsonRootObject()["wallet_directory"] : neroshopDefaultWalletDirPath,
+            wallet_directory: (Settings.getJsonRootObject()["wallet_directory"].length > 0) ? Settings.getJsonRootObject()["wallet_directory"] : neroshopDefaultWalletDirPath,
         };
         
         const settings_json = JSON.stringify(settings_obj);
         //console.log("Settings changed: ")
         //console.log("Saving to ", neroshopDataDirPath + "/settings.json")
-        Script.saveJson(settings_json)
+        Settings.saveJson(settings_json)
     }
     
     background: Rectangle {
@@ -364,7 +364,7 @@ Popup {
                             id: currencyBox
                             anchors.right: parent.right//Layout.alignment: Qt.AlignRight; Layout.rightMargin: 0
                             width: settingsStack.comboBoxWidth
-                            currentIndex: model.indexOf(Script.getJsonRootObject()["preferred_currency"].toUpperCase())
+                            currentIndex: model.indexOf(Settings.getJsonRootObject()["preferred_currency"].toUpperCase())
                             displayText: currentText
                             //editable: true; selectTextByMouse: true
                             model: Backend.getCurrencyList()
@@ -394,7 +394,7 @@ Popup {
                             anchors.right: parent.right
                             width: settingsStack.comboBoxWidth; indicatorWidth: settingsStack.comboBoxButtonWidth
                             //model: ["CoinGecko", "CoinMarketCap"]
-                            currentIndex: model.indexOf(Script.getJsonRootObject()["price_api"])//Component.onCompleted: currentIndex = find("CoinGecko")
+                            currentIndex: model.indexOf(Settings.getJsonRootObject()["price_api"])//Component.onCompleted: currentIndex = find("CoinGecko")
                             onCurrentTextChanged: settingsDialog.save()
                             indicatorDoNotPassBorder: settingsStack.comboBoxNestedButton
                             color: "#f2f2f2"
@@ -441,10 +441,10 @@ Popup {
                             id: themeBox
                             anchors.right: parent.right//Layout.alignment: Qt.AlignRight; Layout.rightMargin: 0
                             width: settingsStack.comboBoxWidth
-                            currentIndex: model.indexOf(Script.getJsonRootObject()["theme"])//Component.onCompleted: currentIndex = model.indexOf(NeroshopComponents.Style.themeName) // Set the initial currentIndex to the index in the array containing themeName string
+                            currentIndex: model.indexOf(Settings.getJsonRootObject()["theme"])//Component.onCompleted: currentIndex = model.indexOf(NeroshopComponents.Style.themeName) // Set the initial currentIndex to the index in the array containing themeName string
                             displayText: currentText
-                            property string lastUsedDarkTheme: (Script.getJsonRootObject()["dark_theme"]) ? Script.getJsonRootObject()["theme"] : "DefaultDark"
-                            property string lastUsedLightTheme: (!Script.getJsonRootObject()["dark_theme"]) ? Script.getJsonRootObject()["theme"] : "DefaultLight"
+                            property string lastUsedDarkTheme: (Settings.getJsonRootObject()["dark_theme"]) ? Settings.getJsonRootObject()["theme"] : "DefaultDark"
+                            property string lastUsedLightTheme: (!Settings.getJsonRootObject()["dark_theme"]) ? Settings.getJsonRootObject()["theme"] : "DefaultLight"
                             model: ["DefaultDark", "DefaultLight", "PurpleDust"]
                             onActivated: {
                                 if(currentText == "PurpleDust") {
@@ -485,7 +485,7 @@ Popup {
                             id: hideHomepageButtonSwitch
                             anchors.right: parent.right; anchors.rightMargin: 5
                             //width: settingsStack.comboBoxWidth
-                            checked: Script.getJsonRootObject()["hide_homepage_button"]//true
+                            checked: Settings.getJsonRootObject()["hide_homepage_button"]//true
                             radius: 13
                             backgroundCheckedColor: "#605185"
                             onToggled: settingsDialog.save()
@@ -505,7 +505,7 @@ Popup {
                             id: priceDisplaySwitch
                             anchors.right: parent.right; anchors.rightMargin: 5
                             //width: settingsStack.comboBoxWidth
-                            checked: Script.getJsonRootObject()["hide_price_display"]//false
+                            checked: Settings.getJsonRootObject()["hide_price_display"]//false
                             radius: 13
                             backgroundCheckedColor: "#605185"
                             onToggled: settingsDialog.save()
@@ -525,7 +525,7 @@ Popup {
                             id: walletSyncBarSwitch
                             anchors.right: parent.right; anchors.rightMargin: 5
                             //width: settingsStack.comboBoxWidth
-                            checked: Script.getJsonRootObject()["hide_wallet_sync_bar_on_full"]//false
+                            checked: Settings.getJsonRootObject()["hide_wallet_sync_bar_on_full"]//false
                             radius: 13
                             backgroundCheckedColor: "#605185"
                             onToggled: settingsDialog.save()
@@ -571,7 +571,7 @@ Popup {
                     id: languageBox
                     anchors.right: parent.right//Layout.alignment: Qt.AlignRight; Layout.rightMargin: 0
                     width: settingsStack.comboBoxWidth
-                    currentIndex: model.indexOf(Script.getJsonRootObject()["language"])
+                    currentIndex: model.indexOf(Settings.getJsonRootObject()["language"])
                     model: Wallet.getSeedLanguages()
                     onCurrentTextChanged: settingsDialog.save()
                     indicatorWidth: settingsStack.comboBoxButtonWidth
@@ -621,7 +621,7 @@ Popup {
                             anchors.right: parent.right//; anchors.rightMargin: 0
                             width: settingsStack.comboBoxWidth; indicatorWidth: settingsStack.comboBoxButtonWidth
                             model: ["All balances", "Locked balance only", "Unlocked balance only"]
-                            currentIndex: model.indexOf(Script.getJsonRootObject()["monero"]["wallet"]["balance_display"])
+                            currentIndex: model.indexOf(Settings.getJsonRootObject()["monero"]["wallet"]["balance_display"])
                             onCurrentTextChanged: settingsDialog.save()
                             color: "#f2f2f2"
                             indicatorDoNotPassBorder: settingsStack.comboBoxNestedButton
@@ -642,7 +642,7 @@ Popup {
                             anchors.right: parent.right
                             width: settingsStack.comboBoxWidth; indicatorWidth: settingsStack.comboBoxButtonWidth
                             model: [3, 6, 9, 12]
-                            currentIndex: model.indexOf(Script.getJsonRootObject()["monero"]["wallet"]["balance_amount_precision"])
+                            currentIndex: model.indexOf(Settings.getJsonRootObject()["monero"]["wallet"]["balance_amount_precision"])
                             onCurrentTextChanged: settingsDialog.save()
                             color: "#f2f2f2"
                             indicatorDoNotPassBorder: settingsStack.comboBoxNestedButton
@@ -662,7 +662,7 @@ Popup {
                             id: showCurrencySignSwitch
                             anchors.right: parent.right; anchors.rightMargin: 5
                             //width: settingsStack.comboBoxWidth
-                            checked: Script.getJsonRootObject()["monero"]["wallet"]["show_currency_sign"]//false
+                            checked: Settings.getJsonRootObject()["monero"]["wallet"]["show_currency_sign"]//false
                             radius: 13
                             backgroundCheckedColor: "#605185"
                             onToggled: settingsDialog.save()
@@ -683,7 +683,7 @@ Popup {
                             anchors.right: parent.right
                             width: settingsStack.comboBoxWidth; indicatorWidth: settingsStack.comboBoxButtonWidth
                             model: ["xmrchain.net", "monerohash.com/explorer", "localmonero.co/blocks"]
-                            currentIndex: model.indexOf(Script.getJsonRootObject()["monero"]["wallet"]["block_explorer"])
+                            currentIndex: model.indexOf(Settings.getJsonRootObject()["monero"]["wallet"]["block_explorer"])
                             onCurrentTextChanged: settingsDialog.save()
                             color: "#f2f2f2"
                             indicatorDoNotPassBorder: settingsStack.comboBoxNestedButton
@@ -756,7 +756,7 @@ Popup {
                             anchors.right: parent.right
                             width: settingsStack.comboBoxWidth; indicatorWidth: settingsStack.comboBoxButtonWidth
                             model: ["Grid view", "List view"]
-                            currentIndex: model.indexOf(Script.getJsonRootObject()["catalog"]["catalog_view"])
+                            currentIndex: model.indexOf(Settings.getJsonRootObject()["catalog"]["catalog_view"])
                             onCurrentTextChanged: settingsDialog.save()
                             color: "#f2f2f2"
                             indicatorDoNotPassBorder: settingsStack.comboBoxNestedButton
@@ -776,7 +776,7 @@ Popup {
                             id: hideProductDetailsSwitch
                             anchors.right: parent.right; anchors.rightMargin: 5
                             //width: settingsStack.comboBoxWidth
-                            checked: Script.getJsonRootObject()["catalog"]["hide_product_details"]//false
+                            checked: Settings.getJsonRootObject()["catalog"]["hide_product_details"]//false
                             radius: 13
                             backgroundCheckedColor: "#605185"
                             onToggled: settingsDialog.save()
@@ -797,7 +797,7 @@ Popup {
                             anchors.right: parent.right
                             width: settingsStack.comboBoxWidth; indicatorWidth: settingsStack.comboBoxButtonWidth
                             model: ["All prices", "Fiat price only", "Monero price only"]
-                            currentIndex: model.indexOf(Script.getJsonRootObject()["catalog"]["price_display"])
+                            currentIndex: model.indexOf(Settings.getJsonRootObject()["catalog"]["price_display"])
                             onCurrentTextChanged: settingsDialog.save()
                             color: "#f2f2f2"
                             indicatorDoNotPassBorder: settingsStack.comboBoxNestedButton
@@ -818,7 +818,7 @@ Popup {
                             id: gridDetailsAlignCenterSwitch
                             anchors.right: parent.right; anchors.rightMargin: 5
                             //width: settingsStack.comboBoxWidth
-                            checked: Script.getJsonRootObject()["catalog"]["grid_details_align_center"]//false
+                            checked: Settings.getJsonRootObject()["catalog"]["grid_details_align_center"]//false
                             radius: 13
                             backgroundCheckedColor: "#605185"
                             onToggled: settingsDialog.save()
@@ -839,7 +839,7 @@ Popup {
                             id: hideIllicitProductsSwitch
                             anchors.right: parent.right; anchors.rightMargin: 5
                             //width: settingsStack.comboBoxWidth
-                            checked: Script.getJsonRootObject()["catalog"]["hide_illegal_products"]//true // ALWAYS hide illicit products by default!!
+                            checked: Settings.getJsonRootObject()["catalog"]["hide_illegal_products"]//true // ALWAYS hide illicit products by default!!
                             radius: 13
                             backgroundCheckedColor: "#605185"
                             onToggled: settingsDialog.save()
@@ -896,7 +896,7 @@ Popup {
                             id: remoteNodeButton
                             anchors.horizontalCenter: parent.horizontalCenter
                             anchors.verticalCenter: parent.verticalCenter
-                            checked: (Script.getJsonRootObject()["monero"]["daemon"]["node_type"] == remoteNodeButton.stackLayoutIndex)//true
+                            checked: (Settings.getJsonRootObject()["monero"]["daemon"]["node_type"] == remoteNodeButton.stackLayoutIndex)//true
                             ButtonGroup.group: nodeTypeGroup
                             text: qsTr("Remote node")//FontAwesome.cloud
                             color: checked ? parent.parent.checkedColor : "#d9dada"
@@ -933,7 +933,7 @@ Popup {
                             id: localNodeButton
                             anchors.horizontalCenter: parent.horizontalCenter
                             anchors.verticalCenter: parent.verticalCenter
-                            checked: (Script.getJsonRootObject()["monero"]["daemon"]["node_type"] == localNodeButton.stackLayoutIndex)//false
+                            checked: (Settings.getJsonRootObject()["monero"]["daemon"]["node_type"] == localNodeButton.stackLayoutIndex)//false
                             ButtonGroup.group: nodeTypeGroup
                             text: qsTr("Local node")//FontAwesome.house
                             color: checked ? parent.parent.checkedColor : "#d9dada"
@@ -952,7 +952,7 @@ Popup {
                     //Layout.row: 1
                     Layout.fillWidth: true
                     Layout.fillHeight: true
-                    currentIndex: Script.getJsonRootObject()["monero"]["daemon"]["node_type"]
+                    currentIndex: Settings.getJsonRootObject()["monero"]["daemon"]["node_type"]
                     
 Item {
     Layout.preferredWidth: remoteNodeColumn.childrenRect.width
@@ -1135,7 +1135,7 @@ Item {
                         id: autoNodeSyncSwitch
                         Layout.alignment: Qt.AlignRight
                         Layout.rightMargin: 5
-                        checked: Script.getJsonRootObject()["monero"]["daemon"]["auto_sync"]//true
+                        checked: Settings.getJsonRootObject()["monero"]["daemon"]["auto_sync"]//true
                         radius: 13
                         backgroundCheckedColor: NeroshopComponents.Style.moneroOrangeColor
                         onToggled: settingsDialog.save()
@@ -1160,7 +1160,7 @@ Item {
                     placeholderText: qsTr((isWindows) ? "monerod.exe" : "monerod"); placeholderTextColor: (NeroshopComponents.Style.darkTheme) ? "#a9a9a9" : "#696969"
                     color: (NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000"
                     selectByMouse: true
-                    text: Script.getJsonRootObject()["monero"]["daemon"]["executable"]////moneroDaemonFileDialog.file
+                    text: Settings.getJsonRootObject()["monero"]["daemon"]["executable"]////moneroDaemonFileDialog.file
                 
                     background: Rectangle { 
                         color: (NeroshopComponents.Style.darkTheme) ? (NeroshopComponents.Style.themeName == "PurpleDust" ? "#4b4751" : "#4c4c4c") : "#ffffff"
@@ -1204,7 +1204,7 @@ Item {
                     color: (NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000"
                     selectByMouse: true
                     readOnly: true
-                    text: Script.getJsonRootObject()["monero"]["daemon"]["data_dir"]
+                    text: Settings.getJsonRootObject()["monero"]["daemon"]["data_dir"]
                     
                     background: Rectangle { 
                         color: (NeroshopComponents.Style.darkTheme) ? (NeroshopComponents.Style.themeName == "PurpleDust" ? "#4b4751" : "#4c4c4c") : "#ffffff"
@@ -1342,7 +1342,7 @@ Item {
                         id: confirmExternalBindSwitch
                         Layout.alignment: Qt.AlignRight
                         Layout.rightMargin: 5
-                        checked: Script.getJsonRootObject()["monero"]["daemon"]["confirm_external_bind"];//false
+                        checked: Settings.getJsonRootObject()["monero"]["daemon"]["confirm_external_bind"];//false
                         radius: 13
                         backgroundCheckedColor: NeroshopComponents.Style.moneroOrangeColor
                         onToggled: settingsDialog.save()
@@ -1365,7 +1365,7 @@ Item {
                         id: restrictedRpcSwitch
                         Layout.alignment: Qt.AlignRight
                         Layout.rightMargin: 5
-                        checked: Script.getJsonRootObject()["monero"]["daemon"]["restricted_rpc"];//true
+                        checked: Settings.getJsonRootObject()["monero"]["daemon"]["restricted_rpc"];//true
                         radius: 13
                         backgroundCheckedColor: NeroshopComponents.Style.moneroOrangeColor
                         onToggled: settingsDialog.save()
@@ -1457,7 +1457,7 @@ Item {
                         id: autoDaemonSyncSwitch
                         Layout.alignment: Qt.AlignRight
                         Layout.rightMargin: 5
-                        checked: Script.getJsonRootObject()["monero"]["daemon"]["auto_sync"]//true
+                        checked: Settings.getJsonRootObject()["monero"]["daemon"]["auto_sync"]//true
                         radius: 13
                         backgroundCheckedColor: NeroshopComponents.Style.moneroOrangeColor
                         onToggled: settingsDialog.save()
@@ -1642,7 +1642,7 @@ Item {
                                 anchors.right: parent.right
                                 width: settingsStack.comboBoxWidth; indicatorWidth: settingsStack.comboBoxButtonWidth
                                 model: ["None", "Tor", "i2p"]
-                                currentIndex: (ProxyManager.hasTor() || ProxyManager.isTorRunning()) ? model.indexOf("Tor") : model.indexOf("None")//model.indexOf(Script.getJsonRootObject()["proxy"]["type"])
+                                currentIndex: (ProxyManager.hasTor() || ProxyManager.isTorRunning()) ? model.indexOf("Tor") : model.indexOf("None")//model.indexOf(Settings.getJsonRootObject()["proxy"]["type"])
                                 Component.onCompleted: {
                                     if(ProxyManager.hasTor()) {
                                         ProxyManager.startTorDaemon()
@@ -1764,7 +1764,7 @@ Item {
                                 width: settingsStack.comboBoxWidth; indicatorWidth: settingsStack.comboBoxButtonWidth
                                 model: ["Never", "30 days", "3 months", "6 months", 
                                     "1 year", "2 years", "3 years", "4 years", "5 years"]
-                                currentIndex: model.indexOf(Script.getJsonRootObject()["data_expiration"]["listing"])
+                                currentIndex: model.indexOf(Settings.getJsonRootObject()["data_expiration"]["listing"])
                                 onCurrentTextChanged: settingsDialog.save()
                                 color: "#f2f2f2"
                                 indicatorDoNotPassBorder: settingsStack.comboBoxNestedButton
@@ -1785,7 +1785,7 @@ Item {
                                 anchors.right: parent.right
                                 width: settingsStack.comboBoxWidth; indicatorWidth: settingsStack.comboBoxButtonWidth
                                 model: ["Never", "2 years", "3 years", "4 years", "5 years"]
-                                currentIndex: model.indexOf(Script.getJsonRootObject()["data_expiration"]["product_rating"])
+                                currentIndex: model.indexOf(Settings.getJsonRootObject()["data_expiration"]["product_rating"])
                                 onCurrentTextChanged: settingsDialog.save()
                                 color: "#f2f2f2"
                                 indicatorDoNotPassBorder: settingsStack.comboBoxNestedButton
@@ -1807,7 +1807,7 @@ Item {
                                 anchors.right: parent.right
                                 width: settingsStack.comboBoxWidth; indicatorWidth: settingsStack.comboBoxButtonWidth
                                 model: ["Never"]
-                                currentIndex: model.indexOf(Script.getJsonRootObject()["data_expiration"]["seller_rating"])
+                                currentIndex: model.indexOf(Settings.getJsonRootObject()["data_expiration"]["seller_rating"])
                                 onCurrentTextChanged: settingsDialog.save()
                                 color: "#f2f2f2"
                                 indicatorDoNotPassBorder: settingsStack.comboBoxNestedButton
@@ -1829,7 +1829,7 @@ Item {
                                 width: settingsStack.comboBoxWidth; indicatorWidth: settingsStack.comboBoxButtonWidth
                                 model: ["2 years", "3 years", "4 years", "5 years"]
                                     //"Until Transaction Completion", "Until Dispute Resolution"]
-                                currentIndex: model.indexOf(Script.getJsonRootObject()["data_expiration"]["order"])
+                                currentIndex: model.indexOf(Settings.getJsonRootObject()["data_expiration"]["order"])
                                 onCurrentTextChanged: settingsDialog.save()
                                 color: "#f2f2f2"
                                 indicatorDoNotPassBorder: settingsStack.comboBoxNestedButton
@@ -1850,7 +1850,7 @@ Item {
                                 anchors.right: parent.right
                                 width: settingsStack.comboBoxWidth; indicatorWidth: settingsStack.comboBoxButtonWidth
                                 model: ["30 days", "3 months", "6 months", "1 year"]
-                                currentIndex: model.indexOf(Script.getJsonRootObject()["data_expiration"]["message"])
+                                currentIndex: model.indexOf(Settings.getJsonRootObject()["data_expiration"]["message"])
                                 onCurrentTextChanged: settingsDialog.save()
                                 color: "#f2f2f2"
                                 indicatorDoNotPassBorder: settingsStack.comboBoxNestedButton
