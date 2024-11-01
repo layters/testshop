@@ -31,9 +31,9 @@ void neroshop::DaemonManager::startDaemonProcess()
         return;
 
     #ifdef Q_OS_WIN
-    QString program = "neromon.exe";
+    QString program = "neroshopd.exe";
     #else
-    QString program = "./neromon";
+    QString program = "./neroshopd";
     #endif
     QStringList arguments;  // Optional command-line arguments for the daemon
 
@@ -59,13 +59,13 @@ void neroshop::DaemonManager::startDaemonProcessDetached() {
         return;
 
     #ifdef Q_OS_WIN
-    QString program = "neromon.exe";
+    QString program = "neroshopd.exe";
     #else
     QString program;
-    if (QFile::exists("neromon.AppImage")) {
-        program = "./neromon.AppImage";
+    if (QFile::exists("neroshopd.AppImage")) {
+        program = "./neroshopd.AppImage";
     } else {
-        program = "./neromon";
+        program = "./neroshopd";
     }
     #endif
 
@@ -94,7 +94,7 @@ void neroshop::DaemonManager::startDaemonProcessDetached() {
     if(!success) { 
         throw std::runtime_error("neroshop daemon process could not be started");
     }
-    std::cout << "\033[35;1mneromon started (pid: " << pid << ")\033[0m\n";
+    std::cout << "\033[35;1mneroshopd started (pid: " << pid << ")\033[0m\n";
     setDaemonRunning(true);
     
     std::thread connectionThread([this]() {
@@ -112,9 +112,9 @@ void neroshop::DaemonManager::startDaemonProcessDetached() {
 
 void neroshop::DaemonManager::terminateDaemonProcess() {
     #ifdef Q_OS_WIN
-    QString program = "neromon.exe";
+    QString program = "neroshopd.exe";
     #else
-    QString program = "neromon";
+    QString program = "neroshopd";
     #endif
     
     // Create a QProcess object
@@ -143,12 +143,12 @@ void neroshop::DaemonManager::connect() {
 }
 
 void neroshop::DaemonManager::onConnectionSuccess() {
-    std::cout << "\033[32;1mconnected to neromon\033[0m\n";
+    std::cout << "\033[32;1mconnected to neroshopd\033[0m\n";
     setDaemonConnected(true);
 }
 
 void neroshop::DaemonManager::onConnectionFailure() {
-    std::cout << "Failed to connect to neromon. Retrying...\n";
+    std::cout << "Failed to connect to neroshopd. Retrying...\n";
 
     std::this_thread::sleep_until(std::chrono::steady_clock::now() + std::chrono::seconds(5));
     Client* client = Client::get_main_client();
@@ -161,7 +161,7 @@ void neroshop::DaemonManager::disconnect() {
         client->disconnect();
         setDaemonConnected(false);
         setDaemonRunning(false);
-        std::cout << "\033[91;1mdisconnected from neromon\033[0m\n";
+        std::cout << "\033[91;1mdisconnected from neroshopd\033[0m\n";
     }
 }
 
@@ -205,9 +205,9 @@ bool neroshop::DaemonManager::isDaemonRunning() const
 bool neroshop::DaemonManager::isDaemonRunningAlready()
 {
     #ifdef Q_OS_WIN
-    QString program = "neromon.exe";
+    QString program = "neroshopd.exe";
     #else
-    QString program = "neromon"; // will work with AppImage as well
+    QString program = "neroshopd"; // will work with AppImage as well
     #endif
     
     QProcess process;

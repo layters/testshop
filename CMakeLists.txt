@@ -482,8 +482,8 @@ if(NEROSHOP_BUILD_TESTS) # -DNEROSHOP_BUILD_TESTS=1
 endif()
 
 ######################################
-# neromon
-set(neroshop_daemon "neromon")
+# neroshopd
+set(neroshop_daemon "neroshopd")
 set(neroshop_daemon_src ${neroshop_crypto_src} ${neroshop_database_src} ${neroshop_network_src} ${NEROSHOP_CORE_SRC_DIR}/protocol/messages/msgpack.cpp ${NEROSHOP_CORE_SRC_DIR}/protocol/p2p/file_piece_hasher.cpp ${NEROSHOP_CORE_SRC_DIR}/protocol/p2p/key_mapper.cpp ${NEROSHOP_CORE_SRC_DIR}/protocol/p2p/node.cpp ${NEROSHOP_CORE_SRC_DIR}/protocol/p2p/routing_table.cpp ${NEROSHOP_CORE_SRC_DIR}/protocol/rpc/json_rpc.cpp ${NEROSHOP_CORE_SRC_DIR}/protocol/transport/client.cpp ${NEROSHOP_CORE_SRC_DIR}/protocol/transport/ip_address.cpp ${NEROSHOP_CORE_SRC_DIR}/protocol/transport/server.cpp ${NEROSHOP_CORE_SRC_DIR}/tools/base64.cpp ${NEROSHOP_CORE_SRC_DIR}/tools/logger.cpp ${NEROSHOP_CORE_SRC_DIR}/tools/timestamp.cpp)
 add_executable(${neroshop_daemon} src/daemon/main.cpp ${neroshop_daemon_src})
 install(TARGETS ${neroshop_daemon} DESTINATION bin)

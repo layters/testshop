@@ -21,7 +21,7 @@
 
 #include <Daemon.h>
 
-#define NEROMON_TAG "\033[1;95m[neromon]:\033[0m "
+#define NEROMON_TAG "\033[1;95m[neroshopd]:\033[0m "
 
 using namespace neroshop;
 
@@ -182,7 +182,7 @@ void dht_server(Node& node) {
 
 int main(int argc, char** argv)
 {
-    std::string daemon { "neromon" };
+    std::string daemon { "neroshopd" };
     std::string daemon_version { daemon + " v" + std::string(NEROSHOP_DAEMON_VERSION) };
     cxxopts::Options options(daemon, std::string(daemon_version));
 

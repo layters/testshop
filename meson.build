@@ -367,7 +367,7 @@ if get_option('NEROSHOP_BUILD_TESTS')
     #subdir('tests')
 endif
 
-neroshop_daemon = 'neromon'
+neroshop_daemon = 'neroshopd'
 neroshop_daemon_srcs = [
     neroshop_daemon_src_dir + '/main.cpp',
     neroshop_crypto_srcs,
