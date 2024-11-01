@@ -36,7 +36,7 @@ int main(int argc, char** argv) {
 	int port = NEROSHOP_IPC_DEFAULT_PORT;
 	std::string addr = "localhost"; // 0.0.0.0 means anyone can connect to your server
 	if(!client->connect(port, addr)) {
-	    std::cout << "Please launch neromon first\n";
+	    std::cout << "Please launch neroshopd first\n";
 	    exit(0);
 	}
     //-------------------------------------------------------
