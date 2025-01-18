@@ -634,7 +634,7 @@ Page {
                 	                messageBox.text = qsTr("Bad wallet type")
                 	                messageBox.open()
                 	            } else if(loginError == Enum.LoginError.DaemonIsNotConnected) {
-                	                messageBox.text = qsTr("Daemon (neromon) is not connected")
+                	                messageBox.text = qsTr("Daemon (neroshopd) is not connected")
                 	                messageBox.open()
                 	            } else if(loginError == Enum.LoginError.UserNotFound) {
                 	                messageBox.text = qsTr("User not found. Please try again or register")
@@ -676,7 +676,7 @@ Page {
                 	                messageBox.text = qsTr("Bad wallet type")
                 	                messageBox.open()
                 	            } else if(loginError == Enum.LoginError.DaemonIsNotConnected) {
-                	                messageBox.text = qsTr("Daemon (neromon) is not connected")
+                	                messageBox.text = qsTr("Daemon (neroshopd) is not connected")
                 	                messageBox.open()
                 	            } else if(loginError == Enum.LoginError.UserNotFound) {
                 	                messageBox.text = qsTr("User not found. Please try again or register")
