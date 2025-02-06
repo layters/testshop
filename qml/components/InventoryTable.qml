@@ -279,8 +279,8 @@ Item {
                                 if(Number(text) >= 999999999) {
                                     text = 999999999
                                 }
-                                if(Number(this.text) <= 1) {
-                                    text = 1
+                                if(Number(this.text) <= 0) {
+                                    text = 0
                                 }
                             }
                             Component.onCompleted: {
