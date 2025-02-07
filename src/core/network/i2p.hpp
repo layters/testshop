@@ -7,7 +7,7 @@
 #include <Base.h>
 #include <Blinding.h>
 #include <Config.h>
-#include <CPU.h>
+#include <CPU.h> // NOTE: libi2pd/CPU.cpp was deleted in v2.55.0
 #include <Crypto.h>
 #include <CryptoKey.h>
 #include <Datagram.h>
@@ -39,6 +39,7 @@
 #include <Signature.h>
 //#include <Siphash.h>
 #include <SSU2.h>
+#include <SSU2OutOfSession.h>
 #include <SSU2Session.h>
 #include <Streaming.h>
 //#include <Tag.h>
