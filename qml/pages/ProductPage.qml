@@ -238,8 +238,9 @@ Page {
                     // Stock status
                     Text {
                         id: stockStatusText
-                        property bool status: (stock_available > 0)
-                        property int stock_available: productPage.model.quantity
+                        property bool status: (stockAvailable > 0)
+                        property int stockAvailable: productPage.model.quantity
+                        property int quantityPerOrder: productPage.model.hasOwnProperty("quantity_per_order") ? productPage.model.quantity_per_order : stockAvailable
                         text: qsTr(status ? "In stock" : "Out of stock")
                         color: status ? "#31652c" : "#d61f1f"
                         font.bold: true
@@ -322,7 +323,7 @@ Page {
                         SpinBox {
                             id: quantityBox
                             anchors.horizontalCenter: parent.horizontalCenter//Layout.alignment: Qt.AlignHCenter//anchors.horizontalCenter: parent.horizontalCenter
-                            from: 1; to: Math.max(1, stockStatusText.stock_available)//10////(Backend.getCartMaximumQuantity() - User.cartQuantity)
+                            from: 1; to: Math.max(1, stockStatusText.quantityPerOrder)
                         }
                         // Buttons row?
                         Column {
@@ -363,12 +364,12 @@ Page {
                                         return;
                                     }
                                     if(cartError == Enum.CartError.ItemOutOfStock) {
-                                        messageBox.text = "%1 is out of stock"
+                                        messageBox.text = "%1 is out of stock".arg(productNameText.text)
                                         messageBox.open()
                                         return;
                                     }
                                     if(cartError == Enum.CartError.ItemQuantitySurpassed) {
-                                        messageBox.text = "Only %1 %2 left in stock".arg(stockStatusText.stock_available).arg(productNameText.text)
+                                        messageBox.text = "Only %1 %2 left in stock".arg(stockStatusText.stockAvailable).arg(productNameText.text)
                                         messageBox.open()
                                         return;
                                     }

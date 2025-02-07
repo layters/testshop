@@ -45,7 +45,7 @@
 #include "../core/crypto/rsa.hpp"
 #include "enum_wrapper.hpp"
 #include "../core/protocol/p2p/file_piece_hasher.hpp"
-
+#include "../core/location.hpp"
 
 #include <future>
 #include <thread>
@@ -146,6 +146,41 @@ QString neroshop::Backend::getCurrencySign(const QString& currency) const {
 //----------------------------------------------------------------
 bool neroshop::Backend::isSupportedCurrency(const QString& currency) const {
     return neroshop::Converter::is_supported_currency(currency.toStdString());
+}
+//----------------------------------------------------------------
+//----------------------------------------------------------------
+QStringList neroshop::Backend::getCountriesList() const {
+    QStringList countries;
+    for (const auto& country : locations) {
+        countries.append(QString::fromStdString(country.first));
+    }
+    return countries;
+}
+//----------------------------------------------------------------
+QStringList neroshop::Backend::getRegionsList(const QString& country) const {
+    QStringList regions;
+    auto country_it = locations.find(country.toStdString());
+    if (country_it != locations.end()) {
+        for (const auto& region : country_it->second) {
+            regions.append(QString::fromStdString(region.first));
+        }
+    }
+    return regions;
+}
+//----------------------------------------------------------------
+QStringList neroshop::Backend::getCitiesList(const QString& country, const QString& region) const {
+    QStringList cities;
+    auto country_it = locations.find(country.toStdString());
+    if (country_it != locations.end()) {
+        auto region_it = country_it->second.find(region.toStdString());
+        if (region_it != country_it->second.end()) {
+            // Add cities in the specified region to the QStringList
+            for (const auto& city : region_it->second) {
+                cities.append(QString::fromStdString(city));
+            }
+        }
+    }
+    return cities;
 }
 //----------------------------------------------------------------
 //----------------------------------------------------------------

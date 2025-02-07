@@ -203,6 +203,13 @@ void Product::set_category_id(int category_id) {
 void Product::set_subcategories(const std::vector<std::string>& subcategories) {
     std::set<int> subcategory_ids_set {};
     for (const std::string& subcategory : subcategories) {
+        int category_id = get_category_id_by_name(subcategory);
+        if (category_id != -1) {
+            // If the name is a category, treat it as a valid subcategory
+            subcategory_ids_set.insert(category_id);
+            continue;
+        }
+    
         int subcategory_id = get_subcategory_id_by_name(subcategory);
         if(subcategory_id == -1) { 
             std::cerr << "Warning: invalid subcategory id for '" << subcategory << "'\n"; 
