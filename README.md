@@ -144,15 +144,15 @@ cd ../
 ```
 
 ```bash
-wget https://www.nlnetlabs.nl/downloads/unbound/unbound-1.19.0.tar.gz
-tar xzf unbound-1.19.0.tar.gz
+wget https://www.nlnetlabs.nl/downloads/unbound/unbound-1.22.0.tar.gz
+tar xzf unbound-1.22.0.tar.gz
 sudo apt update
 sudo apt install -y build-essential
 sudo apt install -y libssl-dev
 sudo apt install -y libexpat1-dev
 sudo apt-get install -y bison
 sudo apt-get install -y flex
-cd unbound-1.19.0
+cd unbound-1.22.0
 ./configure --with-libexpat=/usr --with-ssl=/usr --enable-static-exe
 make
 sudo make install
