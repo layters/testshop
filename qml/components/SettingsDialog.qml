@@ -1641,7 +1641,7 @@ Item {
                                 id: proxyBox
                                 anchors.right: parent.right
                                 width: settingsStack.comboBoxWidth; indicatorWidth: settingsStack.comboBoxButtonWidth
-                                model: ["None", "Tor", "i2p"]
+                                model: ["None", "Tor"/*, "i2p"*/]
                                 currentIndex: (ProxyManager.hasTor() || ProxyManager.isTorRunning()) ? model.indexOf("Tor") : model.indexOf("None")//model.indexOf(Settings.getJsonRootObject()["proxy"]["type"])
                                 Component.onCompleted: {
                                     if(ProxyManager.hasTor()) {
