@@ -118,16 +118,6 @@ project "i2pddaemon"
     filter { "system:windows" }
         files { "i2pd/Win32/DaemonWin32.cpp", "i2pd/Win32/Win32App.cpp", "i2pd/Win32/Win32Service.cpp", "i2pd/Win32/Win32NetState.cpp" }
         defines { "WIN32_APP", "WIN32_LEAN_AND_MEAN", "NOMINMAX" }
-        
-project "i2psam"
-    kind "StaticLib"
-    language "C++"
-    files { 
-        "i2psam/i2psam.cpp"
-    }
-    includedirs { 
-        "i2psam/"
-    }
 
     location "../build" -- specifies location of binaries
     filter { "configurations:Debug" }

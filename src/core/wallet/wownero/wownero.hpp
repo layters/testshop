@@ -7,7 +7,7 @@
 
 namespace neroshop {
 
-class WowneroWallet : public Wallet/*, public wownero_wallet_listener*/ {
+class WowneroWallet final : public Wallet/*, public wownero_wallet_listener*/ {
 public:
     WowneroWallet();
     ~WowneroWallet();

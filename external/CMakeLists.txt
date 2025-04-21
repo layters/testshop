@@ -86,10 +86,5 @@ endif()
 add_library(${i2pd_daemon_target} STATIC ${i2pd_daemon_srcs})
 target_include_directories(${i2pd_daemon_target} PUBLIC i2pd/daemon/ i2pd/i18n/ i2pd/libi2pd/ i2pd/libi2pd_client/)
 
-set(i2psam_target "i2psam")
-set(i2psam_srcs i2psam/i2psam.cpp)
-add_library(${i2psam_target} STATIC ${i2psam_srcs})
-target_include_directories(${i2psam_target} PUBLIC i2psam/)
-
 # cmake .
 # make -j$(nproc)

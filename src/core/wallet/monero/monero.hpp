@@ -7,7 +7,7 @@
 
 namespace neroshop {
 
-class MoneroWallet : public Wallet/*, public monero_wallet_listener*/ {
+class MoneroWallet final : public Wallet/*, public monero_wallet_listener*/ {
 public:
     MoneroWallet();
     ~MoneroWallet();

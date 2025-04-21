@@ -74,7 +74,6 @@ NeroShop is a decentralized peer-to-peer marketplace for trading goods and servi
 | [lua](https://www.lua.org/)                                        | 5.1.5              | configuration script                                                   | :heavy_check_mark: :package:                       |
 | [cxxopts](https://github.com/jarro2783/cxxopts)                    | ?                  | command line option parser                                             | :heavy_check_mark: :package:                       |
 | [libi2pd](https://github.com/PurpleI2P/i2pd)                       | latest             | network proxy                                                          | :heavy_check_mark: :package:                       |
-| [i2psam](https://github.com/i2p/i2psam)                            | ?                  | network proxy                                                          | :grey_question: :package:                          |
 
 ### Compiling neroshop from source
 **0. Install prerequisites**
