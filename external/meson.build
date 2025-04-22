@@ -78,12 +78,6 @@ i2pd_daemon_lib = static_library(i2pd_daemon, i2pd_daemon_srcs,
     cpp_args: i2pd_daemon_cpp_args + ['-DOPENSSL_SUPPRESS_DEPRECATED']
 )
 
-i2psam = 'i2psam'
-i2psam_srcs = 'i2psam/i2psam.cpp'
-i2psam_lib = static_library(i2psam, i2psam_srcs,
-    include_directories: 'i2psam/'
-)
-
 # meson setup --reconfigure ../build
 # cd ../build
 # meson compile

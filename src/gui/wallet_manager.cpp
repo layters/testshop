@@ -9,7 +9,7 @@ neroshop::WalletManager::WalletManager(QObject *parent) : QObject(parent)
 
 neroshop::WalletManager::~WalletManager() {
     #ifdef NEROSHOP_DEBUG
-    std::cout << "wallet controller deleted\n";
+    std::cout << "wallet manager deleted\n";
     #endif
 }
 

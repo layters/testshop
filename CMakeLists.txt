@@ -389,11 +389,6 @@ set(i2pd_src ${CMAKE_CURRENT_SOURCE_DIR}/build/libi2pdclient.a ${CMAKE_CURRENT_S
 set(i2pd_daemon_src ${CMAKE_CURRENT_SOURCE_DIR}/build/libi2pddaemon.a)
 
 ######################################
-# i2psam
-set(i2psam_include_dir ${CMAKE_CURRENT_SOURCE_DIR}/external/i2psam/)
-set(i2psam_src ${CMAKE_CURRENT_SOURCE_DIR}/build/libi2psam.a)
-
-######################################
 # neroshop link directories
 link_directories(${CMAKE_CURRENT_SOURCE_DIR}/build) # target_link_directories only available in CMake version 3.13 :(
 

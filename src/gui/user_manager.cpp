@@ -16,7 +16,7 @@ neroshop::UserManager::UserManager(QObject *parent) : QObject(parent)
 }
 
 neroshop::UserManager::~UserManager() {
-    std::cout << "user controller deleted\n";
+    std::cout << "user manager deleted\n";
 }
 //----------------------------------------------------------------
 QString neroshop::UserManager::listProduct(
