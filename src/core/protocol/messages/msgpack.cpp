@@ -80,7 +80,7 @@ std::vector<uint8_t> process(const std::vector<uint8_t>& request, Node& node, bo
             std::vector<nlohmann::json> nodes_array;
             for (const auto& n : nodes) {
                 nlohmann::json node_object = {
-                    {"ip_address", n->get_ip_address()},
+                    {"i2p_address", n->get_i2p_address()},
                     {"port", n->get_port()}
                 };
                 nodes_array.push_back(node_object);
@@ -98,7 +98,7 @@ std::vector<uint8_t> process(const std::vector<uint8_t>& request, Node& node, bo
         response_object["version"] = std::string(NEROSHOP_DHT_VERSION);
         response_object["response"]["id"] = node.get_id();
         auto peers = node.get_providers(key);
-        if(node.has_key(key) || node.has_key_cached(key)) { peers.push_front(Peer{ node.public_ip_address, node.get_port() }); }
+        if(node.has_key(key) || node.has_key_cached(key)) { peers.push_front(Peer{ node.get_i2p_address(), node.get_port() }); }
         if(peers.empty()) {
             response_object["response"]["values"] = nlohmann::json::array();
         } else {
@@ -157,7 +157,7 @@ std::vector<uint8_t> process(const std::vector<uint8_t>& request, Node& node, bo
             response_object["response"]["idle_peers"] = node.get_idle_peer_count();
             response_object["response"]["data_count"] = node.get_data_count();
             response_object["response"]["data_ram_usage"] = node.get_data_ram_usage();
-            response_object["response"]["host"] = node.public_ip_address + ":" + std::to_string(node.get_port());
+            response_object["response"]["host"] = node.get_i2p_address();
             auto peers_list = node.get_peers();
             if(!peers_list.empty()) {
                 std::vector<nlohmann::json> peers_array;

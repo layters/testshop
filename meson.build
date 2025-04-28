@@ -324,7 +324,7 @@ neroshop_protocol_srcs = [
     neroshop_core_src_dir + '/protocol/p2p/serializer.cpp',
     neroshop_core_src_dir + '/protocol/rpc/json_rpc.cpp',
     neroshop_core_src_dir + '/protocol/transport/client.cpp',
-    neroshop_core_src_dir + '/protocol/transport/ip_address.cpp',
+    neroshop_core_src_dir + '/protocol/transport/sam_client.cpp',
     neroshop_core_src_dir + '/protocol/transport/server.cpp'
 ]
 
@@ -380,7 +380,7 @@ neroshop_daemon_srcs = [
     neroshop_core_src_dir + '/protocol/p2p/routing_table.cpp',
     neroshop_core_src_dir + '/protocol/rpc/json_rpc.cpp',
     neroshop_core_src_dir + '/protocol/transport/client.cpp',
-    neroshop_core_src_dir + '/protocol/transport/ip_address.cpp',
+    neroshop_core_src_dir + '/protocol/transport/sam_client.cpp',
     neroshop_core_src_dir + '/protocol/transport/server.cpp',
     neroshop_core_src_dir + '/tools/base64.cpp',
     neroshop_core_src_dir + '/tools/logger.cpp',

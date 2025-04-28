@@ -1499,7 +1499,7 @@ Item {
                         width: parent.width
                         spacing: 2
                         Text {
-                            text: qsTr("My IP address")
+                            text: qsTr("My I2P address")
                             color: (NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000"
                             font.bold: true
                         }

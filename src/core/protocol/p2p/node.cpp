@@ -1,18 +1,17 @@
 #include "node.hpp"
 
-#include "dht_rescode.hpp"
-#include "../../crypto/sha3.hpp"
-#include "../../crypto/rsa.hpp"
-#include "routing_table.hpp"
-#include "../transport/ip_address.hpp"
-#include "../messages/msgpack.hpp"
+#include "../transport/sam_client.hpp"
 #include "../../version.hpp"
-#include "../../tools/base64.hpp"
+#include "routing_table.hpp"
 #include "key_mapper.hpp"
-#include "../../tools/string.hpp"
-#include "../../tools/timestamp.hpp"
+#include "../../crypto/sha3.hpp"
+#include "../messages/msgpack.hpp"
 #include "../../database/database.hpp"
-//#include "../../network/i2p.hpp"
+/*//#include "dht_rescode.hpp"
+#include "../../tools/base64.hpp"
+#include "../../tools/string.hpp"*/
+#include "../../tools/timestamp.hpp"
+#include "../../tools/thread_pool.hpp"
 
 #include <nlohmann/json.hpp>
 
@@ -27,136 +26,39 @@
 #include <unordered_set>
 #include <set>
 
-namespace neroshop_crypto = neroshop::crypto;
-namespace neroshop_timestamp = neroshop::timestamp;
-namespace neroshop_string = neroshop::string;
-
 namespace neroshop {
 
-Node::Node(const std::string& address, int port, bool local) : sockfd(-1), bootstrap(false), check_counter(0) { 
-    // Convert URL to IP (in case it happens to be a url)
-    std::string ip_address = neroshop::ip::resolve(address);
-    // Generate a random node ID - use public ip address for uniqueness
-    public_ip_address = (local) ? get_public_ip_address() : ip_address;
-    id = generate_node_id(public_ip_address, port);
-    //---------------------------------------------------------------------------
-    memset(&storage, 0, sizeof(storage));
-    if(is_ipv4(ip_address)) storage.ss_family = AF_INET;
-    if(is_ipv6(ip_address)) storage.ss_family = AF_INET6;
-    //---------------------------------------------------------------------------
-    // If this node is a local node that you own
-    if(local == true) {
-        // Create a UDP socket
-        sockfd = socket(storage.ss_family, SOCK_DGRAM, 0);
-        if(sockfd < 0) {
-            perror("socket");
-            throw std::runtime_error("::socket failed");
-        }
-
-        // set a timeout of TIMEOUT_VALUE seconds for recvfrom
-        struct timeval tv;
-        tv.tv_sec = NEROSHOP_DHT_RECV_TIMEOUT;  // timeout in seconds
-        tv.tv_usec = 0; // timeout in microseconds
-        if (setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO, (const char*)&tv, sizeof(tv)) < 0) {
-            std::cerr << "Error setting socket options" << std::endl;
-            close(sockfd);
-            exit(0);
-        }
-        
-        // Make sockfd non-blocking
-        int flags = fcntl(sockfd, F_GETFL, 0);
-        if(flags == -1) {
-            perror("fcntl");
-        }
-        if(fcntl(sockfd, F_SETFL, flags | O_NONBLOCK) == -1) {
-            perror("fcntl");
-        }
-
-        // To avoid "bind" error and allow multiple nodes to run on the same IP address, we can use different port numbers for each local node we create
-        // Bind to port
-        int port_dynamic = port; // initial port number
-        const int MAX_PORT_NUM = 65535; // port cannot go past this number
-        bool use_ephemeral_port = false;
-
-        while(true) {        
-            if(storage.ss_family == AF_INET) {
-                sockin = {0};//memset(&sockin, 0, sizeof(sockin)); // both approaches are valid, but memset is more reliable and portable
-                sockin.sin_family = storage.ss_family;
-                sockin.sin_port = htons(port_dynamic);//htons(std::stoi(std::to_string(port_dynamic))); // the second approach may be useful in cases where the port number is being manipulated as a string or integer elsewhere in the code
-                if(inet_pton(storage.ss_family, ip_address.c_str(), &sockin.sin_addr) <= 0) { //sockin.sin_addr.s_addr = htonl(INADDR_ANY) - binds to any available network interface // inet_addr(ip_address.c_str()) - binds to a specific ip // recommended to use inet_pton() over inet_addr() when working with networking in modern systems.
-                    perror("inet_pton");
-                }
-            }
-            if(storage.ss_family == AF_INET6) {
-                memset(&sockin6, 0, sizeof(sockin6));
-                sockin6.sin6_family = storage.ss_family;
-                sockin6.sin6_port = htons(port_dynamic);
-                if(inet_pton(storage.ss_family, ip_address.c_str(), &sockin6.sin6_addr) <= 0) { 
-                    perror("inet_pton");
-                }
-            }
-            
-            if(bind(sockfd, (storage.ss_family == AF_INET6) ? (struct sockaddr *)&sockin6 : (struct sockaddr *)&sockin, (storage.ss_family == AF_INET6) ? sizeof(sockin6) : sizeof(sockin)) == 0) {
-                // Update node ID in case the port ever changes
-                id = generate_node_id(public_ip_address, port_dynamic);
-                std::cout << "DHT node bound to port " << port_dynamic << std::endl;
-                break;
-            }
-            std::cout << "Port " << port_dynamic << " already in use." << std::endl;
-
-            use_ephemeral_port = true;
-            if(use_ephemeral_port) {
-                // Bind to the ephemeral port number
-                sockin.sin_port = htons(0);
-                if(bind(sockfd, (storage.ss_family == AF_INET6) ? (struct sockaddr *)&sockin6 : (struct sockaddr *)&sockin, (storage.ss_family == AF_INET6) ? sizeof(sockin6) : sizeof(sockin)) == 0) {
-                    // Get the actual port number used by the socket
-                    struct sockaddr_in local_addr;
-                    socklen_t local_addr_len = sizeof(local_addr);
-                    getsockname(sockfd, (struct sockaddr*)&local_addr, &local_addr_len);
-                    port_dynamic = ntohs(local_addr.sin_port);
-                    // Generate new node ID with the ephemeral port number
-                    id = generate_node_id(public_ip_address, port_dynamic);
-                    std::cout << "DHT node bound to ephemeral port " << port_dynamic << std::endl;
-                    break;
-                }
-            }
-            // Use the next available port number
-            port_dynamic++;
-            if (port_dynamic > MAX_PORT_NUM) {
-                throw std::runtime_error("Unable to bind to any available port.");
-            }
-        }
-
-        // Node is now bound to a unique port number
-    }
-    //---------------------------------------------------------------------------
-    // If this is an external node that you do not own
+Node::Node(bool local, const std::string& i2p_address) : bootstrap(false), check_counter(0) { 
+    // If this is an external node that you do not own, set its destination/i2p address and exit function
+    // We only need the i2p address and node ID of an outside node!
     if(local == false) {
-        sockfd = socket(storage.ss_family, SOCK_DGRAM, 0);
-        if (sockfd < 0) {
-            perror("socket");
-        }
-        // This socket is not meant to be bound to any port. It will only be used to retrieve the IP address and port number
+        this->i2p_address = i2p_address;
+        this->id = generate_node_id(i2p_address);
+        this->port_udp = SAM_DEFAULT_CLIENT_UDP;
+    } else {
+
+        // Initialiize SAM client, connecting to the SAM Bridge via TCP port (7656)
+        sam_client = std::make_unique<SamClient>(SamSessionStyle::Datagram);
     
-        if(storage.ss_family == AF_INET) {
-            memset(&sockin, 0, sizeof(sockin));
-            sockin.sin_family = storage.ss_family;
-            sockin.sin_port = htons(port);
-            if(inet_pton(storage.ss_family, ip_address.c_str(), &sockin.sin_addr) <= 0) { 
-                perror("inet_pton");
-            }
-        }
-        if(storage.ss_family == AF_INET6) {
-            memset(&sockin6, 0, sizeof(sockin6));
-            sockin6.sin6_family = storage.ss_family;
-            sockin6.sin6_port = htons(port);
-            if(inet_pton(storage.ss_family, ip_address.c_str(), &sockin6.sin6_addr) <= 0) { 
-                perror("inet_pton");
-            }
-        }
-        // Set socket options, such as timeout or buffer size, if needed
+        // Operate a handshake with the SAM Bridge
+        sam_client->hello(sam_client->get_session_socket());
+    
+        // Restore or generate public and private keys then convert base64 pubkey to b32.i2p
+        sam_client->session_prepare();
+    
+        auto start = std::chrono::high_resolution_clock::now();
+        sam_client->session_create(); // takes a while...
+        auto end = std::chrono::high_resolution_clock::now();
+        auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
+    
+        // Save i2p address
+        this->i2p_address = sam_client->get_i2p_address();
+        // Generate node ID from b32.i2p
+        this->id = generate_node_id(this->i2p_address);
+        // Set UDP port
+        this->port_udp = sam_client->get_port();
     }
-    
+        
     // Create the routing table with an empty vector of nodes
     if(!routing_table.get()) {
         routing_table = std::make_unique<RoutingTable>(std::vector<Node*>{});
@@ -174,67 +76,52 @@ Node::Node(Node&& other) noexcept
       version(std::move(other.version)),
       data(std::move(other.data)),
       providers(std::move(other.providers)),
-      //server(std::move(other.server)),
-      sockfd(other.sockfd),
-      sockin(std::move(other.sockin)),
-      sockin6(std::move(other.sockin6)),
-      storage(std::move(other.storage)),
       routing_table(std::move(other.routing_table)),
-      public_ip_address(std::move(other.public_ip_address)),
+      i2p_address(std::move(other.i2p_address)),
       bootstrap(other.bootstrap),
       check_counter(other.check_counter)
 {
     // Reset the moved-from object's members to a valid state
-    other.sockfd = -1;
+    ////sam_client->client_socket = -1;
     // ... reset other members ...
 }
 
 Node::~Node() {
-    if(sockfd > 0) {
-        close(sockfd);
-        sockfd = -1;
-    }
+    ////sam_client->session_close();
 }
 
 //-----------------------------------------------------------------------------
 
-std::string Node::generate_node_id(const std::string& address, int port) {
-    std::string node_info = address + ":" + std::to_string(port);
-    std::string hash = neroshop_crypto::sha3_256(node_info);
+std::string Node::generate_node_id(const std::string& i2p_address) {
+    std::string hash = neroshop::crypto::sha3_256(i2p_address);
+    const int NUM_BITS = 256;
     return hash.substr(0, NUM_BITS / 4);
 }
 
 //-----------------------------------------------------------------------------
 
 void Node::join() {
-    if(sockfd < 0) throw std::runtime_error("socket is dead");
-
-    // Bootstrap the DHT node with a set of known nodes
-    for (const auto& bootstrap_node : BOOTSTRAP_NODES) {
-        std::cout << "\033[35;1mJoining bootstrap node - " << bootstrap_node.first << ":" << bootstrap_node.second << "\033[0m\n";
+    if(!sam_client.get()) throw std::runtime_error("sam client is not connected");
+    
+    for (const std::string& bootstrap_node : BOOTSTRAP_I2P_NODES) {
+        std::cout << "\033[1;37m[INFO]\033[0m \033[35;1mJoining bootstrap node - " << bootstrap_node << "\033[0m\n";
 
         // Ping each known node to confirm that it is online - the main bootstrapping primitive. If a node replies, and if there is space in the routing table, it will be inserted.
-        if(!ping(bootstrap_node.first, bootstrap_node.second)) {
-            std::cerr << "ping: failed to ping bootstrap node\n"; continue;
+        if(!ping(bootstrap_node)) {
+            std::cerr << "\033[1;91m[ERROR]\033[0m ping: failed to ping bootstrap node\n"; continue;
         }
         
-        // Add the bootstrap node to routing table (optional)
-        auto seed_node = std::make_unique<Node>((bootstrap_node.first == "127.0.0.1") ? this->public_ip_address : bootstrap_node.first, bootstrap_node.second, false);
-        seed_node->set_bootstrap(true);
-        Node& seed_node_ref = *seed_node; // take a reference to the Node object (to avoid segfault)
-        //routing_table->add_node(std::move(seed_node)); // seed_node becomes invalid after we move ownership to routing table so it cannot be used
-        
         // Send a "find_node" message to the bootstrap node and wait for a response message
-        auto nodes = send_find_node(this->id, (bootstrap_node.first == "127.0.0.1") ? "127.0.0.1" : seed_node_ref.get_ip_address(), seed_node_ref.get_port());//std::cout << "Sending find_node message to " << seed_node_ref.get_ip_address() << ":" << seed_node_ref.get_port() << "\n";
+        auto nodes = send_find_node(this->id, bootstrap_node);
         if(nodes.empty()) {
-            std::cerr << "find_node: No nodes found\n"; continue;
+            std::cerr << "\033[1;91m[ERROR]\033[0m find_node: No nodes found\n"; continue;
         }
         
         // Then add nodes to the routing table
         for (auto& node : nodes) {
             // Ping the received nodes first
-            std::string node_ip = (node->get_ip_address() == this->public_ip_address) ? "127.0.0.1" : node->get_ip_address();
-            if(!ping(node_ip, node->get_port())) {
+            std::string node_dest = node->get_i2p_address();
+            if(!ping(node_dest)) {
                 continue; // Skip the node and continue with the next iteration
             }
             // Process the response and update the routing table if necessary
@@ -248,9 +135,13 @@ void Node::join() {
 
 // TODO: create a version of the ping-based join() called join_insert() function for storing pre-existing nodes from local database
 
-bool Node::ping(const std::string& address, int port) {
-    return send_ping(address, port);
+//-----------------------------------------------------------------------------
+
+bool Node::ping(const std::string& destination) {
+    return send_ping(destination);
 }
+
+//-----------------------------------------------------------------------------
 
 std::vector<Node*> Node::find_node(const std::string& target, int count) const { 
     if(!routing_table.get()) {
@@ -260,6 +151,8 @@ std::vector<Node*> Node::find_node(const std::string& target, int count) const {
     std::vector<Node*> closest_nodes = routing_table->find_closest_nodes(target, count);
     return closest_nodes;
 }
+
+//-----------------------------------------------------------------------------
 
 int Node::put(const std::string& key, const std::string& value) {
     // If data is a duplicate, skip it and return success (true)
@@ -283,9 +176,13 @@ int Node::put(const std::string& key, const std::string& value) {
     return has_key(key); // boolean
 }
 
+//-----------------------------------------------------------------------------
+
 int Node::store(const std::string& key, const std::string& value) {    
     return put(key, value);
 }
+
+//-----------------------------------------------------------------------------
 
 std::string Node::get(const std::string& key) const { 
     //std::shared_lock<std::shared_mutex> lock(data_mutex);
@@ -296,9 +193,13 @@ std::string Node::get(const std::string& key) const {
     return "";
 }
 
+//-----------------------------------------------------------------------------
+
 std::string Node::find_value(const std::string& key) const {
     return get(key);
 }
+
+//-----------------------------------------------------------------------------
 
 int Node::remove(const std::string& key) {
     //std::unique_lock<std::shared_mutex> lock(data_mutex);
@@ -306,14 +207,20 @@ int Node::remove(const std::string& key) {
     return (data.count(key) == 0); // boolean
 }
 
+//-----------------------------------------------------------------------------
+
 int Node::remove_all() {
     data.clear();
     return data.empty();
 }
 
+//-----------------------------------------------------------------------------
+
 void Node::map(const std::string& key, const std::string& value) {
     key_mapper->add(key, value);
 }
+
+//-----------------------------------------------------------------------------
 
 int Node::set(const std::string& key, const std::string& value) {
     nlohmann::json json = nlohmann::json::parse(value); // Already validated in put() so we just need to parse it without checking for errors
@@ -364,7 +271,7 @@ int Node::set(const std::string& key, const std::string& value) {
             std::string current_last_updated = current_json["last_updated"].get<std::string>();
             // Compare the new json's last_updated timestamp with the current json's own
             // And choose whichever has the most recent timestamp then exit the function
-            std::string most_recent_timestamp = neroshop_timestamp::get_most_recent_timestamp(last_updated, current_last_updated);
+            std::string most_recent_timestamp = neroshop::timestamp::get_most_recent_timestamp(last_updated, current_last_updated);
             // If this node has the up-to-date value, return true as there is no need to update
             if(most_recent_timestamp == current_last_updated) {
                 std::cout << "Value for key (" << key << ") is already up to date" << std::endl;
@@ -379,6 +286,8 @@ int Node::set(const std::string& key, const std::string& value) {
     data[key] = value;
     return has_key(key); // boolean
 }
+
+//-----------------------------------------------------------------------------
 
 void Node::add_provider(const std::string& data_hash, const Peer& peer) {
     // Check if the data_hash is already in the providers map
@@ -448,7 +357,7 @@ std::deque<Peer> Node::get_providers(const std::string& data_hash) const {
 
 //-------------------------------------------------------------------------------------
 
-void Node::persist_routing_table(const std::string& address, int port) {
+void Node::persist_routing_table(const std::string& destination) {
     if(!is_hardcoded()) return; // Regular nodes cannot run this function
     
     db::Sqlite3 * database = neroshop::get_database();
@@ -456,10 +365,10 @@ void Node::persist_routing_table(const std::string& address, int port) {
     
     if(!database->table_exists("routing_table")) { 
         database->execute("CREATE TABLE routing_table("
-        "ip_address TEXT, port INTEGER, UNIQUE(ip_address, port));");
+        "i2p_address TEXT, UNIQUE(i2p_address));");
     }
     
-    database->execute_params("INSERT INTO routing_table (ip_address, port) VALUES (?1, ?2);", { address, std::to_string(port) });
+    database->execute_params("INSERT INTO routing_table (i2p_address) VALUES (?1);", { destination });
 }
 
 void Node::rebuild_routing_table() {
@@ -471,7 +380,7 @@ void Node::rebuild_routing_table() {
         return; // Table does not exist, exit function
     }
     // Prepare statement
-    std::string command = "SELECT ip_address, port FROM routing_table;";
+    std::string command = "SELECT i2p_address FROM routing_table;";
     sqlite3_stmt * stmt = nullptr;
     if(sqlite3_prepare_v2(database->get_handle(), command.c_str(), -1, &stmt, nullptr) != SQLITE_OK) {
         std::cout << "\033[91msqlite3_prepare_v2: " + std::string(sqlite3_errmsg(database->get_handle())) << "\033[0m" << std::endl;
@@ -479,26 +388,24 @@ void Node::rebuild_routing_table() {
     }
     // Check if there is any data returned by the statement
     if(sqlite3_column_count(stmt) > 0) {
-        std::cout << "\033[35;1mRebuilding routing table from backup ...\033[0m" << std::endl;
+        std::cout << "\033[1;37m[INFO]\033[0m \033[35;1mRebuilding routing table from backup ...\033[0m" << std::endl;
     }
     // Get all table values row by row
     while(sqlite3_step(stmt) == SQLITE_ROW) {
-        std::string ip_address; int port = 0;
+        std::string i2p_address;
         for(int i = 0; i < sqlite3_column_count(stmt); i++) {
             std::string column_value = (sqlite3_column_text(stmt, i) == nullptr) ? "NULL" : reinterpret_cast<const char *>(sqlite3_column_text(stmt, i));
             if(column_value == "NULL") continue;
-            if(i == 0) ip_address = column_value;
-            if(i == 1) port = sqlite3_column_int(stmt, i);//std::stoi(column_value);
-            if(port == 0) continue;
+            if(i == 0) i2p_address = column_value;
             
-            if(!ping((ip_address == this->public_ip_address) ? "127.0.0.1" : ip_address, port)) {
-                std::cerr << "ping: failed to ping node\n"; 
+            if(!ping(i2p_address)) {
+                std::cerr << "\033[1;91m[ERROR]\033[0m ping: failed to ping node\n"; 
                 // Remove unresponsive nodes from database
-                database->execute_params("DELETE FROM routing_table WHERE ip_address = ?1 AND port = ?2", { ip_address, std::to_string(port) });
+                database->execute_params("DELETE FROM routing_table WHERE i2p_address = ?1", { i2p_address });
                 continue;
             }
             
-            auto node = std::make_unique<Node>(ip_address, port, false);
+            auto node = std::make_unique<Node>(false, i2p_address);
             if(!node->is_hardcoded()) {
                 routing_table->add_node(std::move(node));
             }
@@ -510,160 +417,136 @@ void Node::rebuild_routing_table() {
 
 //-------------------------------------------------------------------------------------
 
-std::vector<uint8_t> Node::send_query(const std::string& address, uint16_t port, const std::vector<uint8_t>& message, int recv_timeout) {
-    // Step 2: Resolve the hostname and construct a destination address
-    struct addrinfo hints, *res;
-    memset(&hints, 0, sizeof(hints));
-    hints.ai_family = AF_INET; // use IPv4
-    hints.ai_socktype = SOCK_DGRAM; // use UDP //SOCK_STREAM; // use TCP
-    if (getaddrinfo(address.c_str(), std::to_string(port ? port : NEROSHOP_P2P_DEFAULT_PORT).c_str(), &hints, &res) != 0) {
-        std::cerr << "Error resolving hostname" << std::endl; // probably the wrong family
-        return {};
+void Node::send_query(const std::string& destination, const std::vector<uint8_t>& payload) {
+    if(!sam_client.get()) throw std::runtime_error("sam client is not connected");
+    if(sam_client->get_socket() < 0) throw std::runtime_error("sam client socket is closed");
+    
+    std::cout << "\033[1;94m[DEBUG]\033[0m Sending datagram to: " << destination << "\n";
+    // Construct SAM header line for datagram
+    std::string header = "3.0 " + sam_client->get_nickname() + " " + destination + "\n";
+    
+    // Compose datagram: header + payload
+    std::vector<uint8_t> datagram;
+    datagram.reserve(header.size() + payload.size()); // optional: improves performance
+    datagram.insert(datagram.end(), header.begin(), header.end());
+    datagram.insert(datagram.end(), payload.begin(), payload.end());
+    
+    // Send datagram to SAM UDP bridge (port 7655)
+    ssize_t sent_bytes = ::sendto(sam_client->get_socket()/*socket_fd*/, datagram.data(), datagram.size(), 0,
+                                  (sockaddr*)&sam_client->server_addr, sizeof(sam_client->server_addr));
+    if (sent_bytes < 0) {
+        throw std::runtime_error("Failed to send datagram to SAM bridge");
     }
-
-    if (res == NULL) {
-        std::cerr << "Error resolving hostname" << std::endl;
-        return {};
-    }
-
-    struct sockaddr_in dest_addr;
-    memset(&dest_addr, 0, sizeof(dest_addr));
-    dest_addr.sin_family = hints.ai_family;
-    memcpy(&dest_addr, res->ai_addr, res->ai_addrlen);
-    freeaddrinfo(res);
-    //--------------------------------------------
-    // Step 3: Create a new socket descriptor and send the ping message to the server
-    // Note: This is a separate socket used for actively sending/receiving queries while the main socket, which is non-blocking is used for listening/responding to messages
-    int socket_fd = socket(AF_INET, SOCK_DGRAM, 0);
-    if (socket_fd < 0) {
-        perror("socket");
-        return {};
-    }
-
-    if (sendto(socket_fd/*sockfd*/, message.data(), message.size(), 0, (struct sockaddr*)&dest_addr, sizeof(dest_addr)) < 0) {
-        perror("sendto");
-        close(socket_fd);
-        return {};
-    }
-    //--------------------------------------------
-    // Set a timeout for the receive operation
-    // Note: Setting a timeout is better than setting the socket to non-blocking because if the socket is non-blocking then it will never receive the pong because it does not wait for the pong message so it fails immediately (returns immediately, regardless of whether data is available or not).
-    struct timeval timeout;
-    timeout.tv_sec = recv_timeout; // Timeout in seconds
-    timeout.tv_usec = 0;
-    if (setsockopt(socket_fd, SOL_SOCKET, SO_RCVTIMEO, (char*)&timeout, sizeof(timeout)) < 0) {
-        perror("setsockopt");
-        close(socket_fd);
-        return {};
-    }
-    //--------------------------------------------
-    // Step 4: Receive the pong message from the server
-    std::vector<uint8_t> receive_buffer(NEROSHOP_RECV_BUFFER_SIZE);
-    socklen_t fromlen = sizeof(struct sockaddr_in);
-    int bytes_received = recvfrom(socket_fd/*sockfd*/, receive_buffer.data(), receive_buffer.size(), 0,
-                                  (struct sockaddr*)&dest_addr, &fromlen);
-    if (bytes_received < 0) {
-        if (errno != EWOULDBLOCK && errno != EAGAIN) {
-            perror("recvfrom");
-            close(socket_fd);
-            return {};
-        }
-        
-        // No data available at the moment, you can handle it based on your needs
-        // For example, you can retry receiving or return an empty vector
-        
-        close(socket_fd);
-        return {};
-    }
-    receive_buffer.resize(bytes_received);
-    close(socket_fd);
-
-    return receive_buffer;
 }
 
 //-----------------------------------------------------------------------------
 
-bool Node::send_ping(const std::string& address, int port) {
+bool Node::send_ping(const std::string& destination) {
     // Create the ping message
-    std::string transaction_id = msgpack::generate_transaction_id();
     nlohmann::json query_object;
+    std::string transaction_id = msgpack::generate_transaction_id();
     query_object["tid"] = transaction_id;
     query_object["query"] = "ping";
     query_object["args"]["id"] = this->id;
-    int our_port = get_port();
-    if(our_port != NEROSHOP_P2P_DEFAULT_PORT) {
-        query_object["args"]["port"] = our_port; // for testing on local network. This cannot be removed since the two primary sockets used in the protocol have different ports with the "port" being the actual port
-    }
+    query_object["args"]["port"] = sam_client->get_port();
     query_object["version"] = std::string(NEROSHOP_DHT_VERSION);
+    auto ping_message = nlohmann::json::to_msgpack(query_object);//std::string my_query = query_object.dump();
     
-    auto ping_message = nlohmann::json::to_msgpack(query_object);
-    //--------------------------------------------
-    auto receive_buffer = send_query(address, port, ping_message, NEROSHOP_DHT_PING_TIMEOUT);
-    //--------------------------------------------
-    // Parse the pong message and extract the transaction ID and response fields
-    nlohmann::json pong_message;
+    // ALL send_query functions should ONLY send and NEVER read - that job is for the run() function 
+    // which runs the main loop for listening and replying to query requests
+    
+    // Setup promise/future
+    std::promise<nlohmann::json> promise;
+    std::future<nlohmann::json> future = promise.get_future();
+
+    {
+        std::lock_guard<std::mutex> lock(pending_mutex);
+        pending_requests[transaction_id] = std::move(promise);
+    }
+    
+    
+    // Send the query
     try {
-        pong_message = nlohmann::json::from_msgpack(receive_buffer);
-    } catch (const std::exception& e) {
-        std::cerr << "\033[91mNode " << address << ":" << port << " did not respond\033[0m" << std::endl;
+        send_query(destination, ping_message);
+    } catch(const std::exception& e) {
+        std::cerr << "\033[1;91m[ERROR]\033[0m send_query: " << e.what() << "\n";
+        std::lock_guard<std::mutex> lock(pending_mutex);
+        pending_requests.erase(transaction_id);
         return false;
     }
-    if (!pong_message.contains("response") || pong_message.contains("error")) {
-        std::cerr << "Received invalid pong message" << std::endl;
-        return false;
-    }
-    std::cout << "\033[32m" << pong_message.dump() << "\033[0m\n";
-    std::string received_transaction_id = pong_message["tid"].get<std::string>();
-    auto response_object = pong_message["response"];
-    std::string node_id = response_object["id"].get<std::string>();
     
-    // Check that the pong message corresponds to the ping message
-    if (received_transaction_id != transaction_id) {
-        std::cerr << "Received pong message with incorrect transaction ID" << std::endl;
+    // Wait for a response
+    if (future.wait_for(std::chrono::seconds(NEROSHOP_DHT_PING_TIMEOUT)) != std::future_status::ready) {
+        std::cerr << "[TIMEOUT] No response for TID: " << transaction_id << "\n";
+        std::lock_guard<std::mutex> lock(pending_mutex);
+        pending_requests.erase(transaction_id);
         return false;
     }
 
+    // Get the result
+    nlohmann::json pong_message = future.get();
+    std::cout << "\033[32m" << pong_message.dump() << "\033[0m\n";
+    
     return true;
 }
 
-std::vector<std::unique_ptr<Node>> Node::send_find_node(const std::string& target, const std::string& address, uint16_t port) {
-    std::string transaction_id = msgpack::generate_transaction_id();
-
+std::vector<std::unique_ptr<Node>> Node::send_find_node(const std::string& target, const std::string& destination) {
     nlohmann::json query_object;
+    std::string transaction_id = msgpack::generate_transaction_id();
     query_object["tid"] = transaction_id;
     query_object["query"] = "find_node";
     query_object["args"]["id"] = this->id;
     query_object["args"]["target"] = target;
     query_object["version"] = std::string(NEROSHOP_DHT_VERSION);
-    
     auto find_node_message = nlohmann::json::to_msgpack(query_object);
-    //---------------------------------------------------------
-    auto receive_buffer = send_query(address, port, find_node_message);
-    //---------------------------------------------------------
-    // Parse nodes message
-    nlohmann::json nodes_message;
-    try {
-        nodes_message = nlohmann::json::from_msgpack(receive_buffer);
-    } catch (const std::exception& e) {
-        std::cerr << "Node \033[91m" << address << ":" << port << "\033[0m did not respond" << std::endl;
-        return {};
+    
+    // Create a promise/future to handle the result of the query
+    std::promise<nlohmann::json> promise;
+    std::future<nlohmann::json> future = promise.get_future();
+
+    // Store the promise in the pending requests map
+    {
+        std::lock_guard<std::mutex> lock(pending_mutex);
+        pending_requests[transaction_id] = std::move(promise);
     }
+    
+    // Send the query
+    try {
+        send_query(destination, find_node_message);
+    } catch (const std::exception& e) {
+        std::cerr << "\033[1;91m[ERROR]\033[0m send_query: " << e.what() << "\n";
+        std::lock_guard<std::mutex> lock(pending_mutex);
+        pending_requests.erase(transaction_id);
+        return {}; // Return an empty vector on failure
+    }
+    
+    // Wait for the response
+    if (future.wait_for(std::chrono::seconds(NEROSHOP_DHT_RECV_TIMEOUT)) != std::future_status::ready) {
+        std::cerr << "[TIMEOUT] No response for TID: " << transaction_id << "\n";
+        std::lock_guard<std::mutex> lock(pending_mutex);
+        pending_requests.erase(transaction_id);
+        return {}; // Return an empty vector if there was a timeout
+    }
+    
+    // Get the result (the response message)
+    nlohmann::json nodes_message = future.get();
     std::cout << "\033[32m" << nodes_message.dump() << "\033[0m\n";
-    // Create node vector and store nodes from the message inside the vector
+    
+    // Process the nodes from the response
     std::vector<std::unique_ptr<Node>> nodes;
     if (nodes_message.contains("response") && nodes_message["response"].contains("nodes")) {
         for (auto& node_json : nodes_message["response"]["nodes"]) {
-            if (node_json.contains("ip_address") && node_json.contains("port")) {
-                std::string ip_address = node_json["ip_address"];
-                uint16_t port = node_json["port"];
-                auto node = std::make_unique<Node>(ip_address, port, false);
+            if (node_json.contains("i2p_address")) {
+                std::string i2p_address = node_json["i2p_address"];
+                auto node = std::make_unique<Node>(false, i2p_address);
                 if (node->id != this->id && !routing_table->has_node(node->id)) { // add node to vector only if it's not the current node
                     nodes.push_back(std::move(node));
                 }
             }
         }
     }
-    return nodes;
+    
+    return nodes; // Return the vector of nodes
 }
 
 int Node::send_put(const std::string& key, const std::string& value) {
@@ -695,27 +578,45 @@ int Node::send_put(const std::string& key, const std::string& value) {
         query_object["tid"] = transaction_id; // tid should be unique for each put message
         std::vector<uint8_t> query_put = nlohmann::json::to_msgpack(query_object);
     
-        std::string node_ip = (node->get_ip_address() == this->public_ip_address) ? "127.0.0.1" : node->get_ip_address();
+        // Promise/Future Setup
+        std::promise<nlohmann::json> promise;
+        std::future<nlohmann::json> future = promise.get_future();
+        {
+            std::lock_guard<std::mutex> lock(pending_mutex);
+            pending_requests[transaction_id] = std::move(promise);
+        }
+    
+        std::string node_dest = (node->get_i2p_address() == this->i2p_address) ? "127.0.0.1" : node->get_i2p_address();
         uint16_t node_port = node->get_port();
-        std::cout << "Sending put request to \033[36m" << node_ip << ":" << node_port << "\033[0m\n";
-        auto receive_buffer = send_query(node_ip, node_port, query_put);
-        // Process the response here
-        nlohmann::json response_put;
+        std::cout << "Sending put request to \033[36m" << node_dest << ":" << node_port << "\033[0m\n";
+        
         try {
-            response_put = nlohmann::json::from_msgpack(receive_buffer);
+            send_query(node_dest, query_put);
         } catch (const std::exception& e) {
-            std::cerr << "Node \033[91m" << node_ip << ":" << node_port << "\033[0m did not respond" << std::endl;
-            node->check_counter += 1;
+            std::cerr << "\033[91m[ERROR]\033[0m send_query: " << e.what() << "\n";
+            std::lock_guard<std::mutex> lock(pending_mutex);
+            pending_requests.erase(transaction_id);
+            failed_nodes.insert(node);
+            continue;
+        }
+        
+        if (future.wait_for(std::chrono::seconds(NEROSHOP_DHT_RECV_TIMEOUT)) != std::future_status::ready) {
+            std::cerr << "[TIMEOUT] No response for TID: " << transaction_id << "\n";
+            std::lock_guard<std::mutex> lock(pending_mutex);
+            pending_requests.erase(transaction_id);
             failed_nodes.insert(node);
             continue; // Continue with the next closest node if this one fails
-        }   
-        // Add the node to the sent_nodes set
-        sent_nodes.insert(node);
-        // Show response and increase count
-        std::cout << ((response_put.contains("error")) ? ("\033[91m") : ("\033[32m")) << response_put.dump() << "\033[0m\n";
-        if(response_put.contains("response")) {
-            add_provider(key, { node->get_ip_address(), node_port });
         }
+        
+        // Process the result
+        nlohmann::json response_put = future.get();
+        std::cout << ((response_put.contains("error")) ? ("\033[91m") : ("\033[32m")) << response_put.dump() << "\033[0m\n";
+
+        if (response_put.contains("response")) {
+            add_provider(key, { node->get_i2p_address(), node_port });
+        }
+
+        sent_nodes.insert(node);
         nodes_sent_count++;
     }
     //-----------------------------------------------
@@ -753,24 +654,45 @@ int Node::send_put(const std::string& key, const std::string& value) {
                 query_object["tid"] = transaction_id;
                 std::vector<uint8_t> query_put = nlohmann::json::to_msgpack(query_object);
 
-                std::string node_ip = (replacement_node->get_ip_address() == this->public_ip_address) ? "127.0.0.1" : replacement_node->get_ip_address();
+                // Promise/Future Setup
+                std::promise<nlohmann::json> promise;
+                std::future<nlohmann::json> future = promise.get_future();
+                {
+                    std::lock_guard<std::mutex> lock(pending_mutex);
+                    pending_requests[transaction_id] = std::move(promise);
+                }
+
+                std::string node_dest = (replacement_node->get_i2p_address() == this->i2p_address) ? "127.0.0.1" : replacement_node->get_i2p_address();
                 uint16_t node_port = replacement_node->get_port();
-                std::cout << "Sending put request to \033[36m" << node_ip << ":" << node_port << "\033[0m\n";
-                auto receive_buffer = send_query(node_ip, node_port, query_put);
-                // Process the response and update the nodes_sent_count and sent_nodes accordingly
-                nlohmann::json response_put;
+                std::cout << "Sending put request to \033[36m" << node_dest << ":" << node_port << "\033[0m\n";
+                
                 try {
-                    response_put = nlohmann::json::from_msgpack(receive_buffer);
+                    send_query(node_dest, query_put);
                 } catch (const std::exception& e) {
-                    std::cerr << "Node \033[91m" << node_ip << ":" << node_port << "\033[0m did not respond" << std::endl;
+                    std::cerr << "\033[91m[ERROR]\033[0m send_query: " << e.what() << "\n";
+                    std::lock_guard<std::mutex> lock(pending_mutex);
+                    pending_requests.erase(transaction_id);
+                    replacement_node->check_counter += 1;
+                    continue;
+                }
+                
+                if (future.wait_for(std::chrono::seconds(NEROSHOP_DHT_RECV_TIMEOUT)) != std::future_status::ready) {
+                    std::cerr << "[TIMEOUT] No response for TID: " << transaction_id << "\n";
+                    std::lock_guard<std::mutex> lock(pending_mutex);
+                    pending_requests.erase(transaction_id);
                     replacement_node->check_counter += 1;
                     continue; // Continue with the next replacement node if this one fails
-                }   
-                // Show response and increase count
-                std::cout << ((response_put.contains("error")) ? ("\033[91m") : ("\033[32m")) << response_put.dump() << "\033[0m\n";
-                if(response_put.contains("response")) {
-                    add_provider(key, { replacement_node->get_ip_address(), node_port });
                 }
+                
+                // Process the response and update the nodes_sent_count and sent_nodes accordingly
+                nlohmann::json response_put = future.get();
+                std::cout << ((response_put.contains("error")) ? ("\033[91m") : ("\033[32m")) << response_put.dump() << "\033[0m\n";
+
+                // Show response and increase count
+                if(response_put.contains("response")) {
+                    add_provider(key, { replacement_node->get_i2p_address(), node_port });
+                }
+                
                 nodes_sent_count++;
             }
         }
@@ -809,20 +731,43 @@ std::string Node::send_get(const std::string& key) {
             query_object["tid"] = transaction_id;
             std::vector<uint8_t> query_get = nlohmann::json::to_msgpack(query_object);
             
+            // Promise/Future Setup
+            std::promise<nlohmann::json> promise;
+            std::future<nlohmann::json> future = promise.get_future();
+            {
+                std::lock_guard<std::mutex> lock(pending_mutex);
+                pending_requests[transaction_id] = std::move(promise);
+            }
+            
             // Send a get request to provider
-            std::string peer_addr = (peer.address == this->public_ip_address) ? "127.0.0.1" : peer.address;
-            std::cout << "Sending get request to \033[36m" << peer_addr << ":" << peer.port << "\033[0m\n";
-            auto receive_buffer = send_query(peer_addr, peer.port, query_get, 2);
+            std::string peer_addr = peer.address;
+            std::cout << "Sending get request to \033[36m" << peer_addr << "\033[0m\n";
+            try {
+                send_query(peer_addr, query_get);
+            } catch (const std::exception& e) {
+                std::cerr << "\033[91m[ERROR]\033[0m send_query: " << e.what() << "\n";
+                std::lock_guard<std::mutex> lock(pending_mutex);
+                pending_requests.erase(transaction_id);
+                continue;
+            }
+            
+            if (future.wait_for(std::chrono::seconds(2/*NEROSHOP_DHT_RECV_TIMEOUT*/)) != std::future_status::ready) {
+                std::cerr << "[TIMEOUT] No response for TID: " << transaction_id << "\n";
+                std::lock_guard<std::mutex> lock(pending_mutex);
+                pending_requests.erase(transaction_id);
+                std::cerr << "Provider \033[91m" << peer_addr << "\033[0m did not respond" << std::endl;
+                remove_provider(key, peer.address, peer.port); // Remove this peer from providers
+                continue; // Skip to next provider if this one is unresponsive
+            }
             
             // Process the response
             nlohmann::json response_get;
             try {
-                response_get = nlohmann::json::from_msgpack(receive_buffer);
+                response_get = future.get();
             } catch (const std::exception& e) {
-                std::cerr << "Provider \033[91m" << peer_addr << ":" << peer.port << "\033[0m did not respond" << std::endl;
-                remove_provider(key, peer.address, peer.port); // Remove this peer from providers
-                continue; // Skip to next provider if this one is unresponsive
-            }   
+                std::cerr << "[ERROR] Failed to parse future result for node: " << peer_addr << "\n";
+                continue;
+            }
             
             // Handle the response
             std::cout << ((response_get.contains("error")) ? ("\033[91m") : ("\033[32m")) << response_get.dump() << "\033[0m\n";
@@ -850,20 +795,43 @@ std::string Node::send_get(const std::string& key) {
             query_object["tid"] = transaction_id;
             std::vector<uint8_t> query_get = nlohmann::json::to_msgpack(query_object);
             
+            // Promise/Future Setup
+            std::promise<nlohmann::json> promise;
+            std::future<nlohmann::json> future = promise.get_future();
+            {
+                std::lock_guard<std::mutex> lock(pending_mutex);
+                pending_requests[transaction_id] = std::move(promise);
+            }
+            
             // Send a get request to provider
-            std::string peer_addr = (peer.address == this->public_ip_address) ? "127.0.0.1" : peer.address;
-            std::cout << "Sending get request to \033[36m" << peer_addr << ":" << peer.port << "\033[0m\n";
-            auto receive_buffer = send_query(peer_addr, peer.port, query_get, 2);
+            std::string peer_addr = peer.address;
+            std::cout << "Sending get request to \033[36m" << peer_addr << "\033[0m\n";
+            try {
+                send_query(peer_addr, query_get);
+            } catch (const std::exception& e) {
+                std::cerr << "\033[91m[ERROR]\033[0m send_query: " << e.what() << "\n";
+                std::lock_guard<std::mutex> lock(pending_mutex);
+                pending_requests.erase(transaction_id);
+                continue;
+            }
+            
+            if (future.wait_for(std::chrono::seconds(2/*NEROSHOP_DHT_RECV_TIMEOUT*/)) != std::future_status::ready) {
+                std::cerr << "[TIMEOUT] No response for TID: " << transaction_id << "\n";
+                std::lock_guard<std::mutex> lock(pending_mutex);
+                pending_requests.erase(transaction_id);
+                std::cerr << "Provider \033[91m" << peer_addr << "\033[0m did not respond" << std::endl;
+                remove_provider(key, peer.address, peer.port); // Remove this peer from providers
+                continue; // Skip to next provider if this one is unresponsive
+            }
             
             // Process the response
             nlohmann::json response_get;
             try {
-                response_get = nlohmann::json::from_msgpack(receive_buffer);
+                response_get = future.get();
             } catch (const std::exception& e) {
-                std::cerr << "Provider \033[91m" << peer_addr << ":" << peer.port << "\033[0m did not respond" << std::endl;
-                remove_provider(key, peer.address, peer.port); // Remove this peer from providers
-                continue; // Skip to next provider if this one is unresponsive
-            }   
+                std::cerr << "[ERROR] Failed to parse future result for node: " << peer_addr << "\n";
+                continue;
+            }
             
             // Handle the response
             std::cout << ((response_get.contains("error")) ? ("\033[91m") : ("\033[32m")) << response_get.dump() << "\033[0m\n";
@@ -906,27 +874,53 @@ void Node::send_remove(const std::string& key) {
         std::string transaction_id = msgpack::generate_transaction_id();
         query_object["tid"] = transaction_id; // tid should be unique for each query
         std::vector<uint8_t> remove_query = nlohmann::json::to_msgpack(query_object);
+        
+        // Setup promise/future
+        std::promise<nlohmann::json> promise;
+        std::future<nlohmann::json> future = promise.get_future();
+
+        {
+            std::lock_guard<std::mutex> lock(pending_mutex);
+            pending_requests[transaction_id] = std::move(promise);
+        }
+        
         // Send remove query message
-        std::string node_ip = (node->get_ip_address() == this->public_ip_address) ? "127.0.0.1" : node->get_ip_address();
+        std::string node_dest = node->get_i2p_address();
         int node_port = node->get_port();
-        std::cout << "Sending remove request to \033[36m" << node_ip << ":" << node_port << "\033[0m\n";
-        auto receive_buffer = send_query(node_ip, node_port, remove_query);
+        std::cout << "Sending remove request to \033[36m" << node_dest << "\033[0m\n";
+        try {
+            send_query(node_dest, remove_query);
+        } catch (const std::exception& e) {
+            std::cerr << "\033[91m[ERROR]\033[0m send_query: " << e.what() << "\n";
+            std::lock_guard<std::mutex> lock(pending_mutex);
+            pending_requests.erase(transaction_id);
+            continue;
+        }
+        
+        if (future.wait_for(std::chrono::seconds(NEROSHOP_DHT_RECV_TIMEOUT)) != std::future_status::ready) {
+            std::cerr << "[TIMEOUT] No response for TID: " << transaction_id << "\n";
+            std::lock_guard<std::mutex> lock(pending_mutex);
+            pending_requests.erase(transaction_id);
+            std::cerr << "Node \033[91m" << node_dest << "\033[0m did not respond" << std::endl;
+            node->check_counter += 1;
+            continue; // Continue with the next closest node if this one fails
+        }
+            
         // Process the response here
         nlohmann::json remove_response;
         try {
-            remove_response = nlohmann::json::from_msgpack(receive_buffer);
+            remove_response = future.get();
         } catch (const std::exception& e) {
-            std::cerr << "Node \033[91m" << node_ip << ":" << node_port << "\033[0m did not respond" << std::endl;
-            node->check_counter += 1;
-            continue; // Continue with the next closest node if this one fails
+            std::cerr << "[ERROR] Failed to parse future result for node: " << node_dest << "\n";
         }   
+        
         // Show response
         std::cout << ((remove_response.contains("error")) ? ("\033[91m") : ("\033[32m")) << remove_response.dump() << "\033[0m\n";
     }
     //-----------------------------------------------
 }
 
-void Node::send_map(const std::string& address, int port) {
+void Node::send_map(const std::string& destination) {
     nlohmann::json query_object;
     query_object["query"] = "map";
     query_object["args"]["id"] = this->id;
@@ -944,23 +938,49 @@ void Node::send_map(const std::string& address, int port) {
         query_object["tid"] = transaction_id; // tid should be unique for each map message
         std::vector<uint8_t> map_message = nlohmann::json::to_msgpack(query_object);
 
-        auto receive_buffer = send_query(address, port, map_message);
+        // Setup promise/future
+        std::promise<nlohmann::json> promise;
+        std::future<nlohmann::json> future = promise.get_future();
+
+        {
+            std::lock_guard<std::mutex> lock(pending_mutex);
+            pending_requests[transaction_id] = std::move(promise);
+        }
+        
+        try {
+            send_query(destination, map_message);
+        } catch (const std::exception& e) {
+            std::cerr << "\033[91m[ERROR]\033[0m send_query: " << e.what() << "\n";
+            std::lock_guard<std::mutex> lock(pending_mutex);
+            pending_requests.erase(transaction_id);
+            continue;
+        }
+        
+        if (future.wait_for(std::chrono::seconds(NEROSHOP_DHT_RECV_TIMEOUT)) != std::future_status::ready) {
+            std::cerr << "[TIMEOUT] No response for TID: " << transaction_id << "\n";
+            std::lock_guard<std::mutex> lock(pending_mutex);
+            pending_requests.erase(transaction_id);
+            std::cerr << "\033[91mNode " << destination << " did not respond to send_map\033[0m" << std::endl;
+            continue;
+        }
+        
         // Process the response here
         nlohmann::json map_response_message;
         try {
-            map_response_message = nlohmann::json::from_msgpack(receive_buffer);
+            map_response_message = future.get();
             map_sent = true;
         } catch (const std::exception& e) {
-            std::cerr << "Node \033[91m" << address << ":" << port << "\033[0m did not respond to send_map" << std::endl;
+            std::cerr << "[ERROR] Failed to parse future result for node: " << destination << "\n";
         }
+        
         // Show response
         std::cout << ((map_response_message.contains("error")) ? ("\033[91m") : ("\033[92m")) << map_response_message.dump() << "\033[0m\n";
     }
     
-    if(map_sent && !data.empty()) { std::cout << "Sent map request to \033[36m" << address << ":" << port << "\033[0m\n"; }
+    if(map_sent && !data.empty()) { std::cout << "Sent map request to \033[36m" << destination << "\033[0m\n"; }
 }
 
-void Node::send_map_v2(const std::string& address, int port) {
+void Node::send_map_v2(const std::string& destination) {
     if(is_hardcoded()) return; // Hardcoded nodes cannot run this function
     
     db::Sqlite3 * database = neroshop::get_database();
@@ -1012,15 +1032,40 @@ void Node::send_map_v2(const std::string& address, int port) {
         query_object["tid"] = transaction_id;
         std::vector<uint8_t> map_request = nlohmann::json::to_msgpack(query_object);
 
-        auto receive_buffer = send_query(address, port, map_request);
+        // Setup promise/future
+        std::promise<nlohmann::json> promise;
+        std::future<nlohmann::json> future = promise.get_future();
+
+        {
+            std::lock_guard<std::mutex> lock(pending_mutex);
+            pending_requests[transaction_id] = std::move(promise);
+        }
+        
+        try {
+            send_query(destination, map_request);
+        } catch (const std::exception& e) {
+            std::cerr << "\033[91m[ERROR]\033[0m send_query: " << e.what() << "\n";
+            std::lock_guard<std::mutex> lock(pending_mutex);
+            pending_requests.erase(transaction_id);
+            continue;
+        }
+        
+        if (future.wait_for(std::chrono::seconds(NEROSHOP_DHT_RECV_TIMEOUT)) != std::future_status::ready) {
+            std::cerr << "[TIMEOUT] No response for TID: " << transaction_id << "\n";
+            std::lock_guard<std::mutex> lock(pending_mutex);
+            pending_requests.erase(transaction_id);
+            std::cerr << "\033[91mNode " << destination << " did not respond to send_map\033[0m" << std::endl;
+            continue;
+        }
         
         nlohmann::json map_response;
         try {
-            map_response = nlohmann::json::from_msgpack(receive_buffer);
-            std::cout << ((map_response.contains("error")) ? ("\033[91m") : ("\033[92m")) << map_response.dump() << "\033[0m\n";
+            map_response = future.get();
         } catch (const std::exception& e) {
-            std::cerr << "\033[91mNode " << address << ":" << port << " did not respond to send_map\033[0m" << std::endl;
+            std::cerr << "[ERROR] Failed to parse future result for node: " << destination << "\n";
         }
+        
+        std::cout << ((map_response.contains("error")) ? ("\033[91m") : ("\033[92m")) << map_response.dump() << "\033[0m\n";
     }
 }
 
@@ -1047,19 +1092,44 @@ std::deque<Peer> Node::send_get_providers(const std::string& key) {
         std::string transaction_id = msgpack::generate_transaction_id();
         query_object["tid"] = transaction_id;
         auto get_providers_query = nlohmann::json::to_msgpack(query_object);
+        
+        // Setup promise/future
+        std::promise<nlohmann::json> promise;
+        std::future<nlohmann::json> future = promise.get_future();
+
+        {
+            std::lock_guard<std::mutex> lock(pending_mutex);
+            pending_requests[transaction_id] = std::move(promise);
+        }
+        
         // Send get_providers query message to each node
-        std::string node_ip = (node->get_ip_address() == this->public_ip_address) ? "127.0.0.1" : node->get_ip_address();
+        std::string node_dest = node->get_i2p_address();
         int node_port = node->get_port();
-        std::cout << "Sending get_providers request to \033[36m" << node_ip << ":" << node_port << "\033[0m\n";
-        auto receive_buffer = send_query(node_ip, node_port, get_providers_query);
+        std::cout << "Sending get_providers request to \033[36m" << node_dest << "\033[0m\n";
+        try {
+            send_query(node_dest, get_providers_query);
+         } catch (const std::exception& e) {
+            std::cerr << "\033[91m[ERROR]\033[0m send_query: " << e.what() << "\n";
+            std::lock_guard<std::mutex> lock(pending_mutex);
+            pending_requests.erase(transaction_id);
+            continue;
+        }
+        
+        if (future.wait_for(std::chrono::seconds(NEROSHOP_DHT_RECV_TIMEOUT)) != std::future_status::ready) {
+            std::cerr << "[TIMEOUT] No response for TID: " << transaction_id << "\n";
+            std::lock_guard<std::mutex> lock(pending_mutex);
+            pending_requests.erase(transaction_id);
+            std::cerr << "Node \033[91m" << node_dest << "\033[0m did not respond" << std::endl;
+            node->check_counter += 1;
+            continue; // Continue with the next node if this one fails
+        }
+        
         // Process the response here
         nlohmann::json get_providers_response;
         try {
-            get_providers_response = nlohmann::json::from_msgpack(receive_buffer);
+            get_providers_response = future.get();
         } catch (const std::exception& e) {
-            std::cerr << "Node \033[91m" << node_ip << ":" << node_port << "\033[0m did not respond" << std::endl;
-            node->check_counter += 1;
-            continue; // Continue with the next node if this one fails
+            std::cerr << "[ERROR] Failed to parse future result for node: " << node_dest << "\n";
         }
         // Show response and handle the retrieved value
         std::cout << ((get_providers_response.contains("error")) ? ("\033[91m") : ("\033[32m")) << get_providers_response.dump() << "\033[0m\n";
@@ -1068,18 +1138,18 @@ std::deque<Peer> Node::send_get_providers(const std::string& key) {
         }
         if (get_providers_response.contains("response") && get_providers_response["response"].contains("values")) {
             for (auto& values_json : get_providers_response["response"]["values"]) {
-                if (values_json.contains("ip_address") && values_json.contains("port")) {
-                    std::string ip_address = values_json["ip_address"];
+                if (values_json.contains("i2p_address") && values_json.contains("port")) {
+                    std::string i2p_address = values_json["i2p_address"];
                     uint16_t port = values_json["port"];
                     // Check if the IP-port pair is already added
-                    if (unique_peers.insert({ip_address, port}).second) {
-                        Peer provider = Peer{ip_address, port};
+                    if (unique_peers.insert({i2p_address, port}).second) {
+                        Peer provider = Peer{i2p_address, port};
                         peers.push_back(provider);
                     }
                 }
             }
         }
-    }    
+    }
     //-----------------------------------------------
     return peers;
 }
@@ -1090,8 +1160,8 @@ void Node::refresh() {
     std::vector<Node *> closest_nodes = find_node(this->id, NEROSHOP_DHT_MAX_CLOSEST_NODES);
     
     for(const auto& neighbor : closest_nodes) {
-        std::cout << "Sending find_node request to " << neighbor->get_ip_address() << ":" << neighbor->get_port() << "\n";
-        auto nodes = send_find_node(this->id, (neighbor->get_ip_address() == this->public_ip_address) ? "127.0.0.1" : neighbor->get_ip_address(), neighbor->get_port());
+        std::cout << "Sending find_node request to " << neighbor->get_i2p_address() << ":" << neighbor->get_port() << "\n";
+        auto nodes = send_find_node(this->id, neighbor->get_i2p_address());
         if(nodes.empty()) {
             std::cerr << "find_node: No unique nodes found\n"; continue;
         }
@@ -1099,8 +1169,8 @@ void Node::refresh() {
         // Then add received nodes to the routing table
         for (auto& node : nodes) {
             // Ping the received nodes first
-            std::string node_addr = (node->get_ip_address() == this->public_ip_address) ? "127.0.0.1" : node->get_ip_address();
-            if(!ping(node_addr, node->get_port())) {
+            std::string node_addr = node->get_i2p_address();
+            if(!ping(node_addr)) {
                 continue; // Skip the node and continue with the next iteration
             }
             // Update the routing table with the received node
@@ -1305,7 +1375,7 @@ void Node::expire(const std::string& key, const std::string& value) {
             return; // Invalid expiration_date, exit function
         }
         std::string expiration_date = json["expiration_date"].get<std::string>();
-        if(neroshop_timestamp::is_expired(expiration_date)) {
+        if(neroshop::timestamp::is_expired(expiration_date)) {
             // Remove the data from hash table if it was previously stored
             if(has_key(key)) {
                 std::cout << "Data with key (" << key << ") has expired. Removing from hash table ...\n";
@@ -1420,16 +1490,16 @@ void Node::periodic_check() {
         for (auto& bucket : routing_table->buckets) {
             for (auto& node : bucket.second) {
                 if (node.get() == nullptr) continue; // It's possible that the invalid node object is being accessed or modified by another thread concurrently, even though its already been removed from the routing_table
-                std::string node_ip = (node->get_ip_address() == this->public_ip_address) ? "127.0.0.1" : node->get_ip_address();
+                std::string node_dest = node->get_i2p_address();
                 uint16_t node_port = node->get_port();
                 
                 // Skip the bootstrap nodes from the periodic checks
                 if (node->is_hardcoded()) continue;
                 
-                std::cout << "Performing periodic node health check on \033[34m" << node_ip << ":" << node_port << "\033[0m\n";
+                std::cout << "Performing periodic node health check on \033[34m" << node_dest << ":" << node_port << "\033[0m\n";
                 
                 // Perform the liveness check on the current node
-                bool pinged = ping(node_ip, node_port);
+                bool pinged = ping(node_dest);
                 
                 // Update the liveness status of the node in the routing table
                 node->check_counter = pinged ? 0 : (node->check_counter + 1);
@@ -1437,10 +1507,10 @@ void Node::periodic_check() {
                 
                 // If node is dead, remove it from the routing table
                 if(node->is_dead()) {
-                    std::cout << "\033[0;91m" << node->public_ip_address << ":" << node_port << "\033[0m marked as dead\n";
-                    if(routing_table->has_node(node->public_ip_address, node_port)) {
+                    std::cout << "\033[0;91m" << node->i2p_address << ":" << node_port << "\033[0m marked as dead\n";
+                    if(routing_table->has_node(node->i2p_address, node_port)) {
                         ////dead_node_ids.push_back(node->get_id());
-                        routing_table->remove_node(node->public_ip_address, node_port); // Already has internal write_lock
+                        routing_table->remove_node(node->i2p_address, node_port); // Already has internal write_lock
                     }
                 }
             }
@@ -1498,27 +1568,29 @@ void Node::periodic_check() {
 
 //-----------------------------------------------------------------------------
 
-void Node::on_ping(const std::vector<uint8_t>& buffer, const struct sockaddr_in& client_addr) {
+void Node::on_ping(const std::vector<uint8_t>& buffer, const std::string& sender_dest) {
     if (buffer.size() > 0) {
         nlohmann::json message = nlohmann::json::from_msgpack(buffer);
         if (message.contains("query") && message["query"] == "ping") {
+            assert(!sender_dest.empty() && "sender destination is empty!");
+            std::string sender_i2p = SamClient::to_i2p_address(sender_dest);
+            
             std::string sender_id = message["args"]["id"].get<std::string>();
-            std::string sender_ip = inet_ntoa(client_addr.sin_addr);
-            uint16_t sender_port = (message["args"].contains("port")) ? (uint16_t)message["args"]["port"] : NEROSHOP_P2P_DEFAULT_PORT;
+            uint16_t sender_port = (message["args"].contains("port")) ? static_cast<uint16_t>(message["args"]["port"]) : NEROSHOP_P2P_DEFAULT_PORT;
             
             // Validate node id
-            std::string calculated_node_id = generate_node_id((sender_ip == "127.0.0.1") ? this->public_ip_address : sender_ip, sender_port);
+            std::string calculated_node_id = generate_node_id(sender_i2p);
             if(sender_id == calculated_node_id) {
-                bool has_node = routing_table->has_node((sender_ip == "127.0.0.1") ? this->public_ip_address : sender_ip, sender_port);
+                bool has_node = routing_table->has_node(sender_i2p, sender_port);
                 if (!has_node) {
-                    auto node_that_pinged = std::make_unique<Node>((sender_ip == "127.0.0.1") ? this->public_ip_address : sender_ip, sender_port, false);
+                    auto node_that_pinged = std::make_unique<Node>(false, sender_i2p);
                     if(!node_that_pinged->is_hardcoded()) { // To prevent the seed node from being stored in the routing table
                         routing_table->add_node(std::move(node_that_pinged)); // Already has internal write_lock
-                        persist_routing_table((sender_ip == "127.0.0.1") ? this->public_ip_address : sender_ip, sender_port);
+                        persist_routing_table(sender_i2p);
                         routing_table->print_table();
                     
                         // Announce your node as a data provider to the new node that recently joined the network to make product/service listings more easily discoverable by the new node
-                        send_map_v2((sender_ip == this->public_ip_address) ? "127.0.0.1" : sender_ip, sender_port);
+                        send_map_v2(sender_i2p);
                     }
                 }
             }
@@ -1528,20 +1600,22 @@ void Node::on_ping(const std::vector<uint8_t>& buffer, const struct sockaddr_in&
 
 //-----------------------------------------------------------------------------
 
-void Node::on_map(const std::vector<uint8_t>& buffer, const struct sockaddr_in& client_addr) {
+void Node::on_map(const std::vector<uint8_t>& buffer, const std::string& sender_dest) {
     if (buffer.size() > 0) {
         nlohmann::json message = nlohmann::json::from_msgpack(buffer);
         if (message.contains("query") && message["query"] == "map") {
+            assert(!sender_dest.empty() && "sender destination is empty!");
+            std::string sender_i2p = SamClient::to_i2p_address(sender_dest);
+        
             std::string sender_id = message["args"]["id"].get<std::string>();
-            std::string sender_ip = inet_ntoa(client_addr.sin_addr);
-            uint16_t sender_port = (message["args"].contains("port")) ? (uint16_t)message["args"]["port"] : NEROSHOP_P2P_DEFAULT_PORT;
+            uint16_t sender_port = (message["args"].contains("port")) ? static_cast<uint16_t>(message["args"]["port"]) : NEROSHOP_P2P_DEFAULT_PORT;
             std::string key = message["args"]["key"].get<std::string>();
             
             // Validate node id
-            std::string calculated_node_id = generate_node_id((sender_ip == "127.0.0.1") ? this->public_ip_address : sender_ip, sender_port);
+            std::string calculated_node_id = generate_node_id(sender_i2p);
             if(sender_id == calculated_node_id) {
                 // Save this peer as the provider of this key
-                add_provider(key, Peer{ (sender_ip == "127.0.0.1") ? this->public_ip_address : sender_ip, sender_port });
+                add_provider(key, Peer{ sender_i2p, sender_port });
             }
         }
     }
@@ -1550,147 +1624,133 @@ void Node::on_map(const std::vector<uint8_t>& buffer, const struct sockaddr_in& 
 //-----------------------------------------------------------------------------
 
 void Node::run() {
-    
-    run_optimized();
+    run_simple();
     return;
-    
-    // Start a separate thread for periodic checks and republishing
-    std::thread periodic_check_thread([this]() { periodic_check(); });
-    std::thread periodic_republish_thread([this]() { periodic_republish(); });
-    std::thread periodic_purge_thread([this]() { periodic_purge(); });
-    std::thread periodic_refresh_thread([this]() { periodic_refresh(); });
-    
-    while (true) {
-        std::vector<uint8_t> buffer(NEROSHOP_RECV_BUFFER_SIZE);
-        struct sockaddr_in client_addr;
-        socklen_t client_addr_len = sizeof(client_addr);
-        int bytes_received = recvfrom(sockfd, buffer.data(), buffer.size(), 0,
-                                      (struct sockaddr*)&client_addr, &client_addr_len);
-        if (bytes_received == -1 && errno == EAGAIN) {
-            // No data available, continue loop
-            continue;
-        }
-        else if (bytes_received < 0) {
-            perror("recvfrom");
-        }
-
-        // Resize the buffer to the actual number of received bytes
-        buffer.resize(bytes_received);
-
-        if (buffer.size() > 0) std::cout << "Received request from \033[0;36m" << inet_ntoa(client_addr.sin_addr) << "\033[0m\n";
-        
-        // Create a lambda function to handle the request
-        auto handle_request_fn = [=]() {
-            // Acquire the lock before accessing the routing table
-            std::shared_lock<std::shared_mutex> read_lock(node_read_mutex);
-            // Process the message
-            std::vector<uint8_t> response = neroshop::msgpack::process(buffer, *this, false);
-
-            // Send the response
-            int bytes_sent = sendto(sockfd, response.data(), response.size(), 0,
-                                (struct sockaddr*)&client_addr, client_addr_len);
-            if (bytes_sent < 0) {
-                perror("sendto");
-            }
-        
-            // Add the node that pinged this node to the routing table
-            on_ping(buffer, client_addr);
-            
-            // Add provider
-            on_map(buffer, client_addr);
-        };
-        
-        // Create a detached thread to handle the request
-        std::thread request_thread(handle_request_fn);
-        request_thread.detach();
-    }
-    // Wait for the periodic threads to finish
-    periodic_check_thread.join();
-    periodic_republish_thread.join();
-    periodic_purge_thread.join();
-    periodic_refresh_thread.join();
 }
 
-// This uses less CPU
-void Node::run_optimized() {
-    // Start a separate thread for periodic checks and republishing
-    std::thread periodic_check_thread([this]() { periodic_check(); });
-    std::thread periodic_republish_thread([this]() { periodic_republish(); });
-    std::thread periodic_purge_thread([this]() { periodic_purge(); });
-    std::thread periodic_refresh_thread([this]() { periodic_refresh(); });
+//-----------------------------------------------------------------------------
 
+void Node::run_simple() {
+    std::cout << "\033[1;37m[INFO]\033[0m Listening for I2P datagrams..." << std::endl;
+    
+    unsigned int threads = std::thread::hardware_concurrency();
+    ThreadPool pool(threads);
+    
     while (true) {
-        fd_set read_set;
-        FD_ZERO(&read_set);
-        FD_SET(sockfd, &read_set);
+        char buffer[SAM_BUFSIZE] = {0};
+        sockaddr_in from_addr = {};
+        socklen_t addr_len = sizeof(from_addr);
+        ssize_t received_bytes = ::recvfrom(sam_client->client_socket, buffer, SAM_BUFSIZE - 1, 0, (sockaddr*)&from_addr, &addr_len);
 
-        struct timeval timeout;
-        timeout.tv_sec = 0;
-        timeout.tv_usec = 100000;  // Timeout of 100ms
-
-        int ready = select(sockfd + 1, &read_set, nullptr, nullptr, &timeout);
-        if (ready == -1) {
-            perror("select");
-            // Handle the error
-            // ...
-            break;
-        } else if (ready == 0) {
-            // No data available within the timeout period, continue the loop
+        if (received_bytes < 0) {
+            if (errno == EAGAIN || errno == EWOULDBLOCK) {
+                // No data available right now — not an error
+                ////std::cout << "\033[1;94m[DEBUG]\033[0m No message received (timeout)" << std::endl;
+                continue; // timeout or non-blocking, ignore
+            } else {
+                perror("recvfrom");
+                // Handle actual error
+                ////continue; // or break (depending on your use case)
+            }
+        }
+        if (received_bytes == 0) {
+            std::cout << "\033[1;94m[DEBUG]\033[0m Received 0 bytes, ignoring\n";
             continue;
         }
+        if(sam_client->client_socket < 0 && errno == ENOTCONN) {
+            std::cerr << "\033[1;91m[ERROR]\033[0m Socket is closed.\n";
+            break; // Exit the loop as the socket is no longer valid
+        }
+        
+        // Convert buffer to string (safely)
+        std::string message(buffer, received_bytes);
+        std::string sender_ip = inet_ntoa(from_addr.sin_addr);
+        int sender_port = ntohs(from_addr.sin_port);
+        
+        pool.enqueue([message, sender_ip, sender_port, this, from_addr, addr_len] { // Capture by reference (&) modifies the original variable (use 'mutable' to modify variables captured by value)
+            std::cout << "\n[RECEIVED] From " << sender_ip
+                      << ":" << sender_port
+                      << " (" << message.size()/*received_bytes*/ << " bytes):\n";
+            std::cout << message << std::endl;
 
-        if (FD_ISSET(sockfd, &read_set)) {
-            std::vector<uint8_t> buffer(NEROSHOP_RECV_BUFFER_SIZE);
-            struct sockaddr_in client_addr;
-            socklen_t client_addr_len = sizeof(client_addr);
-            int bytes_received = recvfrom(sockfd, buffer.data(), buffer.size(), MSG_DONTWAIT,
-                                          (struct sockaddr*)&client_addr, &client_addr_len);
-            if (bytes_received == -1 && errno == EAGAIN) {
-                // No data available, continue loop
-                continue;
-            }
-            else if (bytes_received < 0) {
-                perror("recvfrom");
+            // Parse SAM message format and extract destination and payload
+            std::string payload, dest_b64;
+            auto header_end = message.find('\n');
+            if (header_end != std::string::npos) {
+                std::string sam_header = message.substr(0, header_end);
+                payload = message.substr(header_end + 1);
+
+                ////std::cout << "\033[1;94m[DEBUG]\033[0m Payload (" << payload.size() << " bytes):\n" << payload << "\n";
+
+                // Get the base64 destination
+                auto from_pos = sam_header.find(" FROM_PORT=");
+                dest_b64 = sam_header.substr(0, from_pos);
+
+                ////std::cout << "\033[1;94m[DEBUG]\033[0m Base64 Destination:\n" << dest_b64 << "\n";
+                std::cout << "\033[1;94m[DEBUG]\033[0m Sender:\n\033[0;36m" << SamClient::to_i2p_address(dest_b64) << "\033[0m\n";
+
+            } else {
+                std::cerr << "\033[1;33m[WARN]\033[0m Could not find SAM header line break (\\n)\n";
             }
             
-            if (bytes_received > 0) {
-                // Resize the buffer to the actual number of received bytes
-                buffer.resize(bytes_received);
-
-                if (buffer.size() > 0) std::cout << "Received request from \033[0;36m" << inet_ntoa(client_addr.sin_addr) << "\033[0m\n";
-                
-                // Create a lambda function to handle the request
-                auto handle_request_fn = [=]() {
-                    // Acquire the lock before accessing the routing table
-                    std::shared_lock<std::shared_mutex> read_lock(node_read_mutex);
-                    // Process the message
-                    std::vector<uint8_t> response = neroshop::msgpack::process(buffer, *this, false);
-
-                    // Send the response
-                    int bytes_sent = sendto(sockfd, response.data(), response.size(), 0,
-                                    (struct sockaddr*)&client_addr, client_addr_len);
-                    if (bytes_sent < 0) {
-                        perror("sendto");
-                    }
-                
-                    // Add the node that pinged this node to the routing table
-                    on_ping(buffer, client_addr);
-                    
-                    // Add provider
-                    on_map(buffer, client_addr);
-                };
-                
-                // Create a detached thread to handle the request
-                std::thread request_thread(handle_request_fn);
-                request_thread.detach();
+            std::vector<uint8_t> payload_bytes(payload.begin(), payload.end());
+            // Test to see if payload is valid JSON
+            nlohmann::json json_payload;
+            try {
+                json_payload = nlohmann::json::from_msgpack(payload_bytes);
+            } catch (const std::exception& e) {
+                std::cerr << "\033[91m" << e.what() << " \033[0m\n";
             }
-        }
-    }         
-    // Wait for the periodic threads to finish
-    periodic_check_thread.join();    
-    periodic_republish_thread.join();
-    periodic_purge_thread.join();
-    periodic_refresh_thread.join();
+            // ONLY queries can be replied to in this loop, NOT responses!!!
+            if (json_payload.contains("query")) {
+                std::cout << "\033[1;37m[INFO]\033[0m Received a request (query) — replying\n";
+                // Process the payload (which should be in msgpack form)
+                std::vector<uint8_t> response = neroshop::msgpack::process(payload_bytes, *this, false);
+            
+                // Now we need to construct a new SAM message for the SAM UDP bridge (port 7655)
+                // Construct SAM header
+                std::string header = "3.0 " + sam_client->get_nickname() + " " + dest_b64 + "\n";
+
+                // Compose datagram: header + response
+                std::vector<uint8_t> datagram;
+                datagram.reserve(header.size() + response.size()); // optional: improves performance
+                datagram.insert(datagram.end(), header.begin(), header.end());
+                datagram.insert(datagram.end(), response.begin(), response.end());
+                    
+                // Send back a response to the same from_addr we recvfrom (SAM UDP bridge at port 7655)
+                int bytes_sent = ::sendto(sam_client->client_socket, datagram.data(), datagram.size(), 0,
+                                (sockaddr*)&from_addr, addr_len);
+                if (bytes_sent < 0) {
+                    perror("sendto");
+                }
+                
+                // Run callbacks — 
+                on_ping(payload_bytes, dest_b64);
+                on_map(payload_bytes, dest_b64);
+                ////if(json_payload["query"] == "ping") {} // on_ping
+            } else if (json_payload.contains("response")) {
+                  std::cout << "\033[1;37m[INFO]\033[0m Received a response — processing\n";
+                  // Match this response to a pending TID/request, if you're tracking queries
+                  std::string tid = json_payload["tid"].get<std::string>();
+                  std::string version = json_payload["version"].get<std::string>();
+                  std::string node_id = json_payload["response"]["id"].get<std::string>();
+                  
+                  // This triggers future.get() in send_*() to return immediately.
+                  if (tid.empty()) return;
+                  std::lock_guard<std::mutex> lock(pending_mutex);
+                  auto it = pending_requests.find(tid);
+                  if (it != pending_requests.end()) {
+                      it->second.set_value(json_payload); // fulfill the promise
+                      pending_requests.erase(it);
+                      return; // Done, don't double-handle it
+                  }
+            } else {
+                  std::cerr << "\033[1;33m[WARN]\033[0m Unknown message type — skipping\n";
+            }
+        });
+    }
+
+    std::cout << "\n\033[1;37m[INFO]\033[0m Stopped listening for datagrams." << std::endl;
 }
 
 //-----------------------------------------------------------------------------
@@ -1699,56 +1759,34 @@ std::string Node::get_id() const {
     return id;
 }
 
-std::string Node::get_ip_address() const {
-    const int ADDRSTRLEN = (storage.ss_family == AF_INET6) ? INET6_ADDRSTRLEN : INET_ADDRSTRLEN;
-    char ip_address[ADDRSTRLEN] = {0};
+//-----------------------------------------------------------------------------
 
-    if(storage.ss_family == AF_INET) {
-        strcpy(ip_address, inet_ntoa(sockin.sin_addr));//std::string ip_address = inet_ntoa(sockin.sin_addr);
-    } 
-    if(storage.ss_family == AF_INET6) {
-        inet_ntop(storage.ss_family, &(sockin6.sin6_addr), ip_address, ADDRSTRLEN);
-    }
-
-    return std::string(ip_address);
+std::string Node::get_sam_version() const {
+    if(!sam_client.get()) throw std::runtime_error("sam client is not connected");
+    
+    return sam_client->get_sam_version();
 }
 
-std::string Node::get_local_ip_address() const {
-    return get_ip_address();
+SamClient * Node::get_sam_client() const {
+    return sam_client.get();
 }
 
-std::string Node::get_device_ip_address() const {
-    std::future<std::string> result = std::async(std::launch::async, neroshop::get_device_ip_address);
-    return result.get();
-}
-
-std::string Node::get_public_ip_address() const {
-    std::future<std::string> result = std::async(std::launch::async, neroshop::get_public_ip_address);
-    return result.get();
+std::string Node::get_i2p_address() const {
+    /*if(!sam_client.get()) throw std::runtime_error("sam client is not connected");
+    
+    return sam_client->get_i2p_address();*/
+    return i2p_address;
 }
 
 uint16_t Node::get_port() const {
-    uint16_t port = 0;
+    /*if(!sam_client.get()) throw std::runtime_error("sam client is not connected");
     
-    if(storage.ss_family == AF_INET) {
-        port = ntohs(sockin.sin_port);
-    } 
-    if(storage.ss_family == AF_INET6) {
-        port = ntohs(sockin6.sin6_port);
-    }
-    if(port == 0) {
-        // Get the actual port number used by the socket
-        struct sockaddr_in local_addr;
-        socklen_t local_addr_len = sizeof(local_addr);
-        getsockname(sockfd, (struct sockaddr*)&local_addr, &local_addr_len);
-        port = ntohs(local_addr.sin_port);
-    }    
-    return port;
+    return sam_client->get_port(); // client UDP port*/
+    return port_udp;
 }
 
-/*Server * Node::get_server() const {
-    return server.get();
-}*/
+//-----------------------------------------------------------------------------
+
 
 RoutingTable * Node::get_routing_table() const {
     return routing_table.get();
@@ -1760,7 +1798,7 @@ std::vector<Peer> Node::get_peers() const {
         for (auto& node : bucket.second) {
             if (node.get() == nullptr) continue;
             Peer peer;
-            peer.address = node->get_ip_address();
+            peer.address = node->get_i2p_address();
             peer.port = node->get_port();
             peer.id = node->get_id();
             peer.status = node->get_status();
@@ -1814,6 +1852,8 @@ std::string Node::get_status_as_string() const {
     if(check_counter >= NEROSHOP_DHT_MAX_HEALTH_CHECKS) return "Dead";
     return "Unknown";
 }
+
+//-----------------------------------------------------------------------------
 
 std::vector<std::string> Node::get_keys() const {
     std::vector<std::string> keys;
@@ -1870,6 +1910,8 @@ bool Node::has_key(const std::string& key) const {
     return (data.count(key) > 0);
 }
 
+//-----------------------------------------------------------------------------
+
 bool Node::has_key_cached(const std::string& key) const {
     db::Sqlite3 * database = neroshop::get_database();
     if(!database) { throw std::runtime_error("database is not opened"); }
@@ -1877,6 +1919,8 @@ bool Node::has_key_cached(const std::string& key) const {
     
     return database->get_integer_params("SELECT EXISTS(SELECT key FROM hash_table WHERE key = ?1)", { key });
 }
+
+//-----------------------------------------------------------------------------
 
 bool Node::has_value(const std::string& value) const {
     for (const auto& pair : data) {
@@ -1886,32 +1930,20 @@ bool Node::has_value(const std::string& value) const {
     }
     return false;
 }
-
-bool Node::is_hardcoded(const std::string& address, uint16_t port) {
-    for (const auto& bootstrap_node : BOOTSTRAP_NODES) {
-        if (neroshop::ip::resolve(bootstrap_node.first) == address && bootstrap_node.second == port) {
-            return true;
-        }
-    }
-    return false;
-}
+//-----------------------------------------------------------------------------
 
 bool Node::is_hardcoded() const {
-    for (const auto& bootstrap_node : BOOTSTRAP_NODES) {
-        auto bootstrap_node_ip = neroshop::ip::resolve(bootstrap_node.first);
-        if (bootstrap_node_ip == this->public_ip_address
-        && bootstrap_node.second == this->get_port()) {
-            return true;
-        }
-        
-        if((bootstrap_node_ip == "127.0.0.1" || bootstrap_node_ip == "0.0.0.0")
-        && bootstrap_node.second == NEROSHOP_P2P_DEFAULT_PORT
-        && bootstrap_node.second == this->get_port()) { // For testing on localhost. Remove this soon!!
-            return true;
-        }
+    return std::find(BOOTSTRAP_I2P_NODES.begin(), BOOTSTRAP_I2P_NODES.end(), this->i2p_address) != BOOTSTRAP_I2P_NODES.end();
+}
+
+bool Node::is_hardcoded(const std::string& i2p_address) {
+    for (const std::string& node_addr : BOOTSTRAP_I2P_NODES) {
+        if (node_addr == i2p_address) { return true; }
     }
     return false;
 }
+
+//-----------------------------------------------------------------------------
 
 bool Node::is_bootstrap_node() const {
     return (bootstrap == true) || is_hardcoded();

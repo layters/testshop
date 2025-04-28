@@ -267,7 +267,7 @@ ApplicationWindow {
                     NeroshopComponents.Hint {
                         visible: parent.hovered
                         x: parent.x + (parent.width - this.width) / 2 // Popups don't have anchors :(
-                        height: contentHeight + 20; width: (contentWidth > parent.width) ? 300 : parent.width
+                        height: contentHeight + 20; width: (contentWidth > parent.width) ? 500 : parent.width
                         bottomMargin : footer.height + 5
                         text: qsTr("%1\n%2 %3").arg((parent.value == 1.0) ? ((networkMonitor.networkStatus == null) ? "neroshopd" : (networkMonitor.networkStatus.hasOwnProperty("host") ? networkMonitor.networkStatus.host : "neroshopd")) : "neroshopd").arg(DaemonManager.daemonStatusText).arg((parent.value > 0.0 && parent.value < 1.0) ? ("(" + (parent.value * 100).toString() + "%)") : "")
                         pointer.visible: false

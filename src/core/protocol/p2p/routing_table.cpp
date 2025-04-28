@@ -37,7 +37,7 @@ RoutingTable::RoutingTable(const std::vector<Node *>& nodes) : nodes(nodes) {
 // Add a new node to the routing table
 bool RoutingTable::add_node(std::unique_ptr<Node> node) {//(const Node& node) {
     if (!node.get()) {
-        std::cerr << "Error: cannot add a null node to the routing table.\n";
+        std::cerr << "\033[1;91m[ERROR]\033[0m cannot add a null node to the routing table.\n";
         return false;
     }
         
@@ -47,7 +47,7 @@ bool RoutingTable::add_node(std::unique_ptr<Node> node) {//(const Node& node) {
         
     // Add the node to the appropriate bucket
     if (bucket_index < 0 || bucket_index >= NEROSHOP_DHT_ROUTING_TABLE_BUCKETS) {
-        std::cerr << "Error: invalid bucket index " << bucket_index << " for node with ID " << node_id << ".\n";
+        std::cerr << "\033[1;91m[ERROR]\033[0m invalid bucket index " << bucket_index << " for node with ID " << node_id << ".\n";
         return false;
     }
 
@@ -55,7 +55,7 @@ bool RoutingTable::add_node(std::unique_ptr<Node> node) {//(const Node& node) {
     auto& bucket = buckets.at(bucket_index);
     for (const auto& n : bucket) {
         if (n->get_id() == node_id) {
-            std::cout << "\033[0;33m" << (node->get_ip_address() + ":" + std::to_string(node->get_port())) << "\033[0m already exists in routing table\n";
+            std::cout << "\033[0;93m[WARN]\033[0m " << node->get_i2p_address() << " already exists in routing table\n";
             return true;
         }
     }
@@ -65,7 +65,7 @@ bool RoutingTable::add_node(std::unique_ptr<Node> node) {//(const Node& node) {
     
     // Add the node to the bucket
     bucket.push_back(std::move(node));
-    std::cout << "\033[0;36m" << (bucket.back().get()->get_ip_address() + ":" + std::to_string(bucket.back().get()->get_port())) << "\033[0m added to routing table\n";
+    std::cout << "\033[1;37m[INFO]\033[0m \033[1;35m" << bucket.back().get()->get_i2p_address() << " added to routing table\033[0m\n";
 
     // Check if bucket splitting is required and perform the split
     // EDIT: The splitting is totally wrong and doesn't work. Thanks a lot ChatGPT ... NOT!
@@ -89,8 +89,8 @@ bool RoutingTable::remove_node(const std::string& node_addr, uint16_t node_port)
         std::vector<std::unique_ptr<Node>>& nodes = bucket.second;
         std::unique_lock<std::shared_mutex> write_lock(routing_table_mutex);  // Acquire an exclusive lock
         for (auto it = nodes.begin(); it != nodes.end(); /* no increment here */) {
-            if ((*it)->get_ip_address() == node_addr && (*it)->get_port() == node_port) {
-                std::cout << "\033[0;91m" << node_addr << ":" << node_port << "\033[0m removed from routing table\n";
+            if ((*it)->get_i2p_address() == node_addr/* && (*it)->get_port() == node_port*/) {
+                std::cout << "[INFO] \033[0;91m" << node_addr/* << ":" << node_port*/ << " removed from routing table\033[0m\n";
                 it = nodes.erase(it);  // erase returns the iterator to the next valid element
                 return true;
             } else {
@@ -109,7 +109,7 @@ bool RoutingTable::remove_node(const std::string& node_id) {
         std::unique_lock<std::shared_mutex> write_lock(routing_table_mutex);  // Acquire an exclusive lock
         for (auto it = nodes.begin(); it != nodes.end(); /* no increment here */) {
             if ((*it)->get_id() == node_id) {
-                std::cout << "\033[0;91m" << node_id << "\033[0m removed from routing table\n";
+                std::cout << "\033[0;91m[INFO]\033[0m " << node_id << " removed from routing table\n";
                 it = nodes.erase(it);  // erase returns the iterator to the next valid element
                 return true;
             } else {
@@ -335,16 +335,16 @@ bool RoutingTable::are_buckets_full() const {
     return true;
 }
 
-bool RoutingTable::has_node(const std::string& ip_address, uint16_t port) {
-    assert(ip_address != "127.0.0.1" && "Routing table only stores public IP addresses");
-    assert(ip_address != "0.0.0.0" && "Routing table only stores public IP addresses");
+bool RoutingTable::has_node(const std::string& i2p_address, uint16_t port) {
+    assert(i2p_address != "127.0.0.1" && "Routing table only stores public IP addresses");
+    assert(i2p_address != "0.0.0.0" && "Routing table only stores public IP addresses");
     // Iterate over the buckets
     for (const auto& bucket : buckets) {
         // Iterate over the nodes in the bucket
         for (const auto& node : bucket.second) {
             if(node.get() == nullptr) { continue; }
             // Check if the node's IP address and port match
-            if (node->get_ip_address() == ip_address && node->get_port() == port) {
+            if (node->get_i2p_address() == i2p_address/* && node->get_port() == port*/) {
                 return true;
             }
         }
@@ -377,7 +377,7 @@ void RoutingTable::print_table() const {
             std::cout << "Bucket " << bucket_index << ": ";
             for (auto& node : bucket_nodes) {
                 if(node.get() == nullptr) { continue; }
-                std::cout << node->get_ip_address() << ":" << node->get_port() << " ";
+                std::cout << node->get_i2p_address()/* << ":" << node->get_port()*/ << " ";
                 //std::cout << "[" << calculate_distance(node->get_id(), my_node_id) << "] ";
             }
             std::cout << std::endl;
