@@ -7,7 +7,7 @@
 #include "../core/crypto/sha3.hpp"
 #include "../core/protocol/p2p/node.hpp"
 #include "../core/protocol/p2p/routing_table.hpp"
-#include "../core/protocol/transport/ip_address.hpp"
+#include "../core/protocol/transport/sam_client.hpp"
 #include "../core/protocol/transport/server.hpp"
 #include "../core/protocol/rpc/json_rpc.hpp"
 #include "../core/protocol/messages/msgpack.hpp"
@@ -155,8 +155,9 @@ void ipc_server(Node& node) {
 
 void dht_server(Node& node) {
     std::cout << "******************************************************\n";
+    std::cout << "SAM Session ID: " << node.get_sam_client()->get_nickname() << "\n";
     std::cout << "Node ID: " << node.get_id() << "\n";
-    std::cout << "IP address: " << node.get_ip_address() << /*" (" << node.get_public_ip_address() << ")*/"\n";
+    std::cout << "I2P address: " << node.get_i2p_address() << /*" (" << node.get_public_ip_address() << ")*/"\n";
     std::cout << "Port number: " << node.get_port() << "\n\n";
     std::cout << "******************************************************\n";
     // Start the DHT node's main loop in a separate thread
@@ -229,7 +230,7 @@ int main(int argc, char** argv)
         database->execute("CREATE VIRTUAL TABLE mappings USING fts5(search_term, key, content, tokenize='porter unicode61');");
     }
     //-------------------------------------------------------
-    std::thread i2pd_thread([&]() { 
+    /*std::thread i2pd_thread([&]() { 
         if (Daemon.init(argc, argv))
 	    {
 		    if (Daemon.start())
@@ -244,16 +245,16 @@ int main(int argc, char** argv)
 		    }
 		    Daemon.stop();
 	    }
-	});
+	});*/
     //-------------------------------------------------------
-    neroshop::Node node("0.0.0.0"/*ip_address*/, NEROSHOP_P2P_DEFAULT_PORT, true);
+    neroshop::Node node(true);
     
-    if(result.count("bootstrap")) {   
+    /*if(result.count("bootstrap")) {   
         std::cout << "Switching to bootstrap mode ...\n";
         node.set_bootstrap(true);
         assert(node.get_ip_address() == NEROSHOP_ANY_ADDRESS && "Bootstrap node is not public");
         // ALWAYS use address "0.0.0.0" for bootstrap nodes so that it is reachable by all nodes in the network, regardless of their location.
-    }
+    }*/
     //-------------------------------------------------------
     std::thread ipc_thread([&node]() { ipc_server(node); }); // For IPC communication between the local GUI client and the local daemon server
     std::thread dht_thread([&node]() { dht_server(node); }); // DHT communication for peer discovery and data storage
@@ -270,7 +271,7 @@ int main(int argc, char** argv)
     }
     ipc_thread.join();
     dht_thread.join();
-    i2pd_thread.join();
+    ////i2pd_thread.join();
     
     return 0;
 }

@@ -16,6 +16,7 @@ NeroShop is a decentralized peer-to-peer marketplace for trading goods and servi
 - [Building neroshop](#building-neroshop)
   - [Dependencies](#dependencies)
   - [Compiling neroshop from source](#compiling-neroshop-from-source)
+  - [Setting up i2p](#setting-up-i2p)
 - [Contributing](#contributing) <!-- - [Bug Bounty Program]-->
 - [License](#license)
 - [Donations](#donations)
@@ -194,6 +195,16 @@ make -j$(nproc)
 ./neroshop
 ```
 > Other supported build systems: [`Meson`](https://mesonbuild.com/)
+
+### Setting up i2p
+1. Download the Java I2P from the [official website](https://geti2p.net/en/download)
+2. After installation, open the terminal and start I2P with the following command: 
+```bash
+   /home/<user>/i2p/i2prouter start
+```
+3. In your browser, visit http://127.0.0.1:7657/configclients. Scroll down to enable the **SAM application bridge** and then apply the changes
+   
+   SAM should now be enabled and you may proceed to start neroshop
 
 
 ## Contributing
