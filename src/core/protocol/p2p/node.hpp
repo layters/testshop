@@ -1,7 +1,5 @@
 #pragma once
 
-#include "../transport/server.hpp" // TCP, UDP. IP-related headers here
-
 #include <iostream>
 #include <string>
 #include <unordered_map>
@@ -80,7 +78,7 @@ public:
     void map(const std::string& key, const std::string& value); // Maps search terms to keys
     void add_provider(const std::string& data_hash, const Peer& peer);
     void remove_providers(const std::string& data_hash);
-    void remove_provider(const std::string& data_hash, const std::string& address, int port);
+    void remove_provider(const std::string& data_hash, const std::string& i2p_address);
     std::deque<Peer> get_providers(const std::string& data_hash) const; // A query to get a list of peers for a specific torrent or infohash.
     
     // Callbacks
@@ -115,7 +113,6 @@ public:
     std::vector<std::pair<std::string, std::string>> get_data() const;
     int get_data_count() const; // Returns the total number of in-memory hash table data
     int get_data_ram_usage() const;
-    ////Server * get_server() const;
     std::string get_cached(const std::string& key);
     
     void set_bootstrap(bool bootstrap);
@@ -142,22 +139,19 @@ private:
     void expire(const std::string& key, const std::string& value); // Removes any expired data from hash table
     bool validate_fields(const std::string& value);
     
-    std::string id;
-    std::string version;
-    std::string i2p_address;
-    int16_t port_udp;
+    std::string id; // immutable-after-construction (no mutex needed)
+    std::string i2p_address; // immutable-after-construction (no mutex needed)
+    int16_t port_udp; // immutable-after-construction (no mutex needed)
     std::unordered_map<std::string, std::string> data; // internal hash table that stores key-value pairs 
     std::unordered_map<std::string, std::deque<Peer>> providers; // maps a data's hash (key) to a vector of Peers who have the data
     std::unique_ptr<SamClient> sam_client;
     std::unique_ptr<RoutingTable> routing_table; // Pointer to the node's routing table
     std::unique_ptr<KeyMapper> key_mapper;
-    bool bootstrap;
-    int check_counter; // Counter to track the number of consecutive failed checks
-    std::string last_ping_tid;
+    std::atomic<bool> bootstrap;
+    std::atomic<int> check_counter; // Counter to track the number of consecutive failed checks
+    // Mutexes
     mutable std::shared_mutex data_mutex;
-    // Declare a mutex to protect access to the routing table
-    std::shared_mutex node_read_mutex; // Shared mutex for routing table access
-    std::shared_mutex node_write_mutex; // Shared mutex for routing table access
+    mutable std::shared_mutex providers_mutex;
     // Shared between sender and listener
     std::unordered_map<std::string, std::promise<nlohmann::json>> pending_requests;
     std::mutex pending_mutex;

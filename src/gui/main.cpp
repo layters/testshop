@@ -13,7 +13,6 @@
 #include "../neroshop_config.hpp"
 #include "../neroshop.hpp"
 using namespace neroshop;
-namespace neroshop_tools = neroshop::tools;
 
 static const QString WALLET_QR_PROVIDER {"wallet_qr"};
 static const QString AVATAR_IMAGE_PROVIDER {"avatar"};
@@ -75,7 +74,7 @@ int main(int argc, char *argv[])
     // create "datastore" folder within "~/.config/neroshop/" path
     std::string data_dir = NEROSHOP_DEFAULT_DATABASE_PATH;
     if(!neroshop::filesystem::is_directory(data_dir)) {
-        neroshop::print(std::string("Creating directory \"") + data_dir + "\"", 3);
+        neroshop::log_info(std::string("Creating directory \"") + data_dir + "\"");
         if(!neroshop::filesystem::make_directory(data_dir)) {
             throw std::runtime_error("Failed to create neroshop data dir");
             return 1;
@@ -84,7 +83,7 @@ int main(int argc, char *argv[])
     // create "keys" folder within "~/.config/neroshop/" path
     std::string keys_dir = NEROSHOP_DEFAULT_KEYS_PATH;
     if(!neroshop::filesystem::is_directory(keys_dir)) {
-        neroshop::print(std::string("Creating directory \"") + keys_dir + "\"", 3);
+        neroshop::log_info(std::string("Creating directory \"") + keys_dir + "\"");
         if(!neroshop::filesystem::make_directory(keys_dir)) {
             throw std::runtime_error("Failed to create neroshop keys dir");
             return 1;
@@ -109,7 +108,7 @@ int main(int argc, char *argv[])
     engine.rootContext()->setContextProperty("neroshopDefaultWalletDirPath", QString::fromStdString(NEROSHOP_DEFAULT_WALLET_DIRECTORY_PATH));
     // create neroshop wallet directory
     if(!neroshop::filesystem::is_directory(NEROSHOP_DEFAULT_WALLET_DIRECTORY_PATH)) {
-        neroshop::print(std::string("Creating directory \"") + NEROSHOP_DEFAULT_WALLET_DIRECTORY_PATH + "\"", 3);
+        neroshop::log_info(std::string("Creating directory \"") + NEROSHOP_DEFAULT_WALLET_DIRECTORY_PATH + "\"");
         if(!neroshop::filesystem::make_directory(NEROSHOP_DEFAULT_WALLET_DIRECTORY_PATH)) {
             throw std::runtime_error("Failed to create neroshop wallet dir");
             return 1;

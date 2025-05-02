@@ -89,7 +89,7 @@ bool load_lua() {
             return false;
         }
         #ifdef NEROSHOP_DEBUG0
-        neroshop::print("\033[1;94mloaded script \"" + script.get_file() + "\"");
+        neroshop::log_debug("\033[1;94mloaded script \"" + script.get_file() + "\"");
         #endif
         return true;
 	}
@@ -106,16 +106,16 @@ bool export_lua() {
         if(std::filesystem::is_regular_file(neroshop_config_name)) return false; // false because it will not be created // if true then it will cause "PANIC: unprotected error in call to Lua API (attempt to index a nil value)" error
         // check if script works before saving
         if(luaL_dostring(lua_state, text.c_str()) != 0) {
-		    neroshop::print(LUA_TAG "\033[0;91minvalid Lua code");
+		    neroshop::log_error(LUA_TAG "\033[0;91minvalid Lua code");
 		    lua_error(lua_state);
 		    return false; // exit function so it does not save text
 	    }
         // if path does not exist
         if(!std::filesystem::is_directory(configuration_path)) 
         {   // create the path
-            neroshop::print("directory \"" + configuration_path + "\" does not exist, but I will create it for you (^_^)", 2);
-            if(!std::filesystem::create_directories(configuration_path)) { neroshop::print("export_lua error: failed to make the path. Sorry (ᵕ人ᵕ)! ...", 1); return false; }
-            neroshop::print("\033[1;97;49mcreated path \"" + configuration_path + "\"");
+            neroshop::log_debug("directory \"" + configuration_path + "\" does not exist, but I will create it for you (^_^)");
+            if(!std::filesystem::create_directories(configuration_path)) { neroshop::log_error("export_lua error: failed to make the path. Sorry (ᵕ人ᵕ)! ..."); return false; }
+            neroshop::log_info("\033[1;97;49mcreated path \"" + configuration_path + "\"");
         }
         // if path exists, but the file is missing or deleted
         if(!std::filesystem::is_regular_file(neroshop_config_name)) {
@@ -125,7 +125,7 @@ bool export_lua() {
             cfg << text << "\n"; // write to file
             cfg.close();
             #ifdef NEROSHOP_DEBUG0
-            neroshop::print("\033[1;97;49mcreated file \"" + neroshop_config_name + "\"\033[0m");  
+            neroshop::log_info("\033[1;97;49mcreated file \"" + neroshop_config_name + "\"\033[0m");  
             #endif
         }
         return true;		
@@ -134,7 +134,7 @@ bool export_lua() {
 extern bool open_lua() {
     if(!neroshop::export_lua()) { 
         if(!neroshop::load_lua()) {
-            neroshop::print("Failed to load configuration file", 1);
+            neroshop::log_error("Failed to load configuration file");
             return false;
         }
     }
@@ -176,21 +176,21 @@ bool create_json() {
     #if defined(NEROSHOP_USE_QT)
     // Exit function if file already exists
     if(QFileInfo::exists(QString::fromStdString(config_file)) && QFileInfo(QString::fromStdString(config_file)).isFile()) {
-        ////neroshop::print(config_file + " already exists", 2);
+        ////neroshop::log(LogLevel::Warn, config_file + " already exists");
         return false;
     }
     // If path does not exist, create it
     if(!QDir(QString::fromStdString(config_path)).exists()) {
-        neroshop::print("directory \"" + config_path + "\" does not exist, but I will create it for you (^_^)", 2);
-        if(!QDir().mkdir(QString::fromStdString(config_path))) { neroshop::print("create_json error: failed to make the path. Sorry (ᵕ人ᵕ)! ...", 1); return false; }
-        neroshop::print("\033[1;97;49mcreated path \"" + config_path + "\"");    
+        neroshop::log_debug("directory \"" + config_path + "\" does not exist, but I will create it for you (^_^)");
+        if(!QDir().mkdir(QString::fromStdString(config_path))) { neroshop::log_error("create_json error: failed to make the path. Sorry (ᵕ人ᵕ)! ..."); return false; }
+        neroshop::log_info("\033[1;97;49mcreated path \"" + config_path + "\"");    
     }
     // if path exists, but the file is missing or deleted
     if(!QFileInfo::exists(QString::fromStdString(config_file)) && !QFileInfo(QString::fromStdString(config_file)).isFile()) {
         // Open settings file for writing
         QFile settings_file(QString::fromStdString(config_file));
         if (!settings_file.open(QIODevice::WriteOnly | QIODevice::Text)) {
-            neroshop::print("Error writing to " + settings_filename, 1); return false;
+            neroshop::log_error("Error writing to " + settings_filename); return false;
         }
         // Create JSON
         QJsonObject root_obj;
@@ -283,15 +283,15 @@ bool create_json() {
     #else
     // Exit function if file already exists
     if(std::filesystem::is_regular_file(config_file)) {
-        ////neroshop::print(config_file + " already exists", 2);
+        ////neroshop::log(LogLevel::Warn, config_file + " already exists");
         return false;
     } 
     // if path does not exist
     if(!std::filesystem::is_directory(config_path)) 
     {   // create the path
-        neroshop::print("directory \"" + config_path + "\" does not exist, but I will create it for you (^_^)", 2);
-        if(!std::filesystem::create_directories(config_path)) { neroshop::print("create_config error: failed to make the path. Sorry (ᵕ人ᵕ)! ...", 1); return false; }
-        neroshop::print("\033[1;97;49mcreated path \"" + config_path + "\"");
+        neroshop::log_debug("directory \"" + config_path + "\" does not exist, but I will create it for you (^_^)");
+        if(!std::filesystem::create_directories(config_path)) { neroshop::log_error("create_config error: failed to make the path. Sorry (ᵕ人ᵕ)! ..."); return false; }
+        neroshop::log_info("\033[1;97;49mcreated path \"" + config_path + "\"");
     }
     // if path exists, but the file is missing or deleted
     if(!std::filesystem::is_regular_file(config_file)) {
@@ -358,7 +358,7 @@ bool create_json() {
         settings_file << settings_json.dump(4);
         settings_file.close();
         #ifdef NEROSHOP_DEBUG0
-        neroshop::print("\033[1;97;49mcreated file \"" + config_file + "\"\033[0m");        
+        neroshop::log_info("\033[1;97;49mcreated file \"" + config_file + "\"\033[0m");        
         std::cout << settings_json.dump(4) << "\n";
         #endif
     }
@@ -374,7 +374,7 @@ std::string load_json() {
     // Open settings file for reading
     QFile settings_file(QString::fromStdString(config_file));
     if (!settings_file.open(QIODevice::ReadOnly | QIODevice::Text)) {
-        neroshop::print("Error reading from " + settings_filename, 1);
+        neroshop::log_error("Error reading from " + settings_filename);
         // The file most likely does not exist so we must create it
         return "";
     }
@@ -382,7 +382,7 @@ std::string load_json() {
     QJsonParseError json_error;
     const auto json_doc = QJsonDocument::fromJson(settings_file.readAll(), &json_error);
     if (json_error.error != QJsonParseError::NoError) {
-        neroshop::print("Error parsing " + settings_filename, 1);
+        neroshop::log_error("Error parsing " + settings_filename);
         settings_file.close();
         return "";
     }    
@@ -392,11 +392,11 @@ std::string load_json() {
     #else
     std::ifstream file(config_file);
     if(!file.is_open()) {
-        neroshop::print("Error reading from " + settings_filename, 1); return "";
+        neroshop::log_error("Error reading from " + settings_filename); return "";
     }
     nlohmann::json j = nlohmann::json::parse(file);
     if (j.is_discarded()) {
-        neroshop::print("Error parsing " + settings_filename, 1);
+        neroshop::log_error("Error parsing " + settings_filename);
         file.close();
         return "";
     }
@@ -410,7 +410,7 @@ bool open_json(std::string& out) {
     if(!create_json()) {
         std::string out = load_json();
         if(out.empty()) {
-            neroshop::print("Failed to load settings.json", 1);
+            neroshop::log_error("Failed to load settings.json");
             return false;
         }
     }
@@ -426,14 +426,14 @@ void modify_json(const std::string& settings) { // saves settings
     QJsonParseError json_error;
     const auto json_doc = QJsonDocument::fromJson(QString::fromStdString(settings).toUtf8(), &json_error);
     if(json_error.error != QJsonParseError::NoError) {
-        neroshop::print("Error parsing " + settings_filename, 1); return;
+        neroshop::log_error("Error parsing " + settings_filename); return;
     }
     // Format the JSON
     QString settings_json = json_doc.toJson(QJsonDocument::Indented);
     // Open settings file for writing
     QFile settings_file(QString::fromStdString(config_file));
     if (!settings_file.open(QIODevice::WriteOnly | QIODevice::Text)) {
-        neroshop::print("Error writing to " + settings_filename, 1); return;
+        neroshop::log_error("Error writing to " + settings_filename); return;
     }
     // Write to settings file
     QTextStream out(&settings_file);
@@ -442,13 +442,13 @@ void modify_json(const std::string& settings) { // saves settings
     #else
     nlohmann::json j = nlohmann::json::parse(settings, nullptr, false);
     if (j.is_discarded()) {
-        neroshop::print("Error parsing " + settings_filename, 1); return;
+        neroshop::log_error("Error parsing " + settings_filename); return;
     }
     std::string settings_json = j.dump(4);
     // Open file for writing
     std::ofstream file(config_file);
     if(!file.is_open()) {
-        neroshop::print("Error reading from " + settings_filename, 1); return;
+        neroshop::log_error("Error reading from " + settings_filename); return;
     }    
     file << settings_json;
     file.close();

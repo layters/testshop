@@ -75,6 +75,7 @@ NeroShop is a decentralized peer-to-peer marketplace for trading goods and servi
 | [lua](https://www.lua.org/)                                        | 5.1.5              | configuration script                                                   | :heavy_check_mark: :package:                       |
 | [cxxopts](https://github.com/jarro2783/cxxopts)                    | ?                  | command line option parser                                             | :heavy_check_mark: :package:                       |
 | [libi2pd](https://github.com/PurpleI2P/i2pd)                       | latest             | network proxy                                                          | :heavy_check_mark: :package:                       |
+| [fmt](https://github.com/fmtlib/fmt)                               | ?                  | log formatting                                                         | :heavy_check_mark: :package:                       |
 
 ### Compiling neroshop from source
 **0. Install prerequisites**
@@ -200,7 +201,7 @@ make -j$(nproc)
 1. Download the Java I2P from the [official website](https://geti2p.net/en/download)
 2. After installation, open the terminal and start I2P with the following command: 
 ```bash
-   /home/<user>/i2p/i2prouter start
+   /home/$USER/i2p/i2prouter start
 ```
 3. In your browser, visit http://127.0.0.1:7657/configclients. Scroll down to enable the **SAM application bridge** and then apply the changes
    
@@ -237,7 +238,7 @@ WW2pQTQWHpyJf2CHrCmZG7Tn3zBnYRZTH8g4U3pSZf5s6xsTXrZc9odDWmrWzjRc9MMQWrKXxjHsRdzH
 
 
 ## Resources
-- Website: [neroshop.org](https://neroshop.org/) (will be shutting down soon)
+- Website: [neroshop.org](https://neroshop.org/) (out of service)
 - DHT Specification: [specs](https://github.com/layters/specs)
 - Git Mirrors: 
     - [Codeberg](https://codeberg.org/layter/neroshop)
@@ -257,6 +258,6 @@ WW2pQTQWHpyJf2CHrCmZG7Tn3zBnYRZTH8g4U3pSZf5s6xsTXrZc9odDWmrWzjRc9MMQWrKXxjHsRdzH
 [//]: # (git checkout -b main)
 [//]: # (git add .gitignore .gitmodules assets/ cmake/ CMakeLists.txt external/ LICENSE meson.build meson.options qml/ qml.qrc README.md src/ tests/)
 [//]: # (git commit -m"..."    or    git commit -a --allow-empty-message -m "")
-[//]: # (git push -u origin backup --force)
+[//]: # (sudo git push -u origin backup --force)
 [//]: # (https://git.wownero.com/layter/neroshop/settings => Mirror Settings => Synchronize Now)
 [//]: # (removing an external lib from submodules index: git rm --cached path/to/submodule)

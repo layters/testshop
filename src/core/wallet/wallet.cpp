@@ -47,12 +47,12 @@ Wallet::~Wallet()
 // Reminder: path is the path and name of the wallet without the .keys extension
 int Wallet::create_random(const std::string& password, const std::string& confirm_pwd, const std::string& path) {
     if(confirm_pwd != password) {
-        neroshop::print("Wallet passwords do not match", 1);
+        neroshop::log_error("Wallet passwords do not match");
         return static_cast<int>(WalletError::PasswordsDoNotMatch);
     }
     
     if(monero::monero_wallet_full::wallet_exists(path + ".keys")) {//if(std::filesystem::is_regular_file(path + ".keys")) {
-        neroshop::print("Wallet file with the same name already exists", 1);
+        neroshop::log_error("Wallet file with the same name already exists");
         return static_cast<int>(WalletError::AlreadyExists);
     }
     
@@ -78,12 +78,12 @@ int Wallet::create_random(const std::string& password, const std::string& confir
 //-------------------------------------------------------
 int Wallet::create_from_seed(const std::string& seed, const std::string& password, const std::string& confirm_pwd, const std::string& path) {
     if(confirm_pwd != password) {
-        neroshop::print("Wallet passwords do not match", 1);
+        neroshop::log_error("Wallet passwords do not match");
         return static_cast<int>(WalletError::PasswordsDoNotMatch);
     }    
 
     if(monero::monero_wallet_full::wallet_exists(path + ".keys")) {
-        neroshop::print("Wallet file with the same name already exists", 1);
+        neroshop::log_error("Wallet file with the same name already exists");
         return static_cast<int>(WalletError::AlreadyExists);
     }
     
@@ -106,12 +106,12 @@ int Wallet::create_from_seed(const std::string& seed, const std::string& passwor
 // To restore a view-only wallet, leave the spend key blank
 int Wallet::create_from_keys(const std::string& primary_address, const std::string& view_key, const std::string& spend_key, const std::string& password, const std::string &confirm_pwd, const std::string& path) {
     if(confirm_pwd != password) {
-        neroshop::print("Wallet passwords do not match", 1);
+        neroshop::log_error("Wallet passwords do not match");
         return static_cast<int>(WalletError::PasswordsDoNotMatch);
     }  
     
     if(monero::monero_wallet_full::wallet_exists(path + ".keys")) {
-        neroshop::print("Wallet file with the same name already exists", 1);
+        neroshop::log_error("Wallet file with the same name already exists");
         return static_cast<int>(WalletError::AlreadyExists);
     }
     
@@ -241,7 +241,7 @@ std::string Wallet::upload(bool open, std::string password) { // opens the walle
 #endif
     std::string filename(file); // "wallet.keys" file
     filename = filename.substr(0, filename.find(".")); // remove ".keys" extension
-    if(!monero::monero_wallet_full::wallet_exists(filename + ".keys")) { neroshop::print("wallet not found", 1); return ""; } // check if wallet file is valid (or exists)
+    if(!monero::monero_wallet_full::wallet_exists(filename + ".keys")) { neroshop::log_error("wallet not found"); return ""; } // check if wallet file is valid (or exists)
     if(open == true) Wallet::open(filename, password);// will apply ".keys" ext to the wallet file
     return std::string(filename + ".keys");
 }
@@ -277,20 +277,20 @@ void Wallet::transfer(const std::string& address, double amount) {
     std::packaged_task<void(void)> transfer_task([this, address, amount]() -> void {
     // Check if address is valid
     if(!monero_utils::is_valid_address(address, monero_wallet_obj->get_network_type())) {
-        neroshop::print("Monero address is invalid", 1); return;
+        neroshop::log_error("Monero address is invalid"); return;
     }
     // Convert monero to piconero
     uint64_t monero_to_piconero = amount / PICONERO; //std::cout << neroshop::string::precision(amount, 12) << " xmr to piconero: " << monero_to_piconero << "\n";
     // TODO: for the 2-of-3 escrow system, take 0.5% of order total in piconeros
     // Check if amount is zero or too low
     if((amount < PICONERO) || (monero_to_piconero == 0)) {
-        neroshop::print("Nothing to send (amount is zero)", 1); return;
+        neroshop::log_error("Nothing to send (amount is zero)"); return;
     }
     // Check if balance is sufficient
     std::cout << "Wallet balance (spendable): " << monero_wallet_obj->get_unlocked_balance() << " (picos)\n";
     std::cout << "Amount to send: " << monero_to_piconero << " (picos)\n";
     if(monero_wallet_obj->get_unlocked_balance() < monero_to_piconero) {
-        neroshop::print("Wallet balance is insufficient", 1); return;
+        neroshop::log_error("Wallet balance is insufficient"); return;
     }
     // Send funds from this wallet to the specified address
     monero_tx_config config; // Configures a transaction to send, sweep, or create a payment URI.
@@ -300,7 +300,7 @@ void Wallet::transfer(const std::string& address, double amount) {
     config.m_relay = true;
     // Sweep unlocked balance?
     if(monero_wallet_obj->get_unlocked_balance() == monero_to_piconero) {
-        neroshop::print("Sweeping unlocked balance ...");
+        neroshop::log_error("Sweeping unlocked balance ...");
         config.m_amount = boost::none;
         monero_wallet_obj->sweep_unlocked(config);return;
     }    
@@ -341,14 +341,14 @@ void Wallet::transfer(const std::vector<std::pair<std::string, double>>& payment
     std::cout << "Wallet balance (spendable): " << monero_wallet_obj->get_unlocked_balance() << " (picos)\n";
     std::cout << "Amount to send: " << total_to_piconero << " (picos)\n";
     if(monero_wallet_obj->get_unlocked_balance() < total_to_piconero) {
-        neroshop::print("Wallet balance is insufficient", 1); return;
+        neroshop::log_error("Wallet balance is insufficient"); return;
     }
     // Add each destination
     std::vector<std::shared_ptr<monero_destination>> destinations; // specify the recipients and their amounts
     for(const auto& recipient : payment_addresses) {
         // Check if address is valid
         if(!monero_utils::is_valid_address(recipient.first, monero_wallet_obj->get_network_type())) {
-            neroshop::print(recipient.first + " is not a valid Monero address", 1);
+            neroshop::log_error(recipient.first + " is not a valid Monero address");
             continue; // skip to the next address
         }
         // Convert monero to piconero

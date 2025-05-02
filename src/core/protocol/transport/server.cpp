@@ -156,7 +156,7 @@ std::string Server::read() // receive data
         shutdown();
         close();
     } else if (read_result == 0) {
-        std::cerr << NEROSHOP_TAG "\033[0mClient orderly shut down the connection." << std::endl;
+        std::cerr << "\033[0mClient orderly shut down the connection." << std::endl;
         //client.pop_back();
     } else {
         std::string result(buffer.data(), read_result);

@@ -89,7 +89,7 @@ double Converter::convert_to_xmr(double amount, const std::string& currency) {
         double rate = Converter::get_price(neroshop::Currency::XMR, from_currency); // 1 xmr = ? currency//std::cout << amount << " " << map_key << " is equal to " << neroshop::string::precision((amount / rate), 12) << " XMR\n";
         return (amount / rate);
     }
-    neroshop::print(neroshop::string::upper(currency) + " is not supported", 1);
+    neroshop::log_error(neroshop::string::upper(currency) + " is not supported");
     return 0.0;
 }
 //-------------------------------------------------------
@@ -120,7 +120,7 @@ double Converter::get_xmr_price(const std::string& currency) {
         neroshop::Currency preferred_currency = std::get<0>(map_value);
         return Converter::get_price(neroshop::Currency::XMR, preferred_currency);
     }
-    neroshop::print(neroshop::string::upper(currency) + " is not supported", 1);
+    neroshop::log_error(neroshop::string::upper(currency) + " is not supported");
     return 0.0;
 }
 //-------------------------------------------------------

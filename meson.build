@@ -234,11 +234,11 @@ i2pd_daemon_dep = declare_dependency(
 )
 
 ######################################
-# i2psam
-i2psam_inc = include_directories('external/i2psam')#meson.current_source_dir() + '/external/i2psam'
-i2psam_dep = declare_dependency(
-    include_directories: i2psam_inc,
-    link_args: ['-li2psam']
+# fmt
+fmt_inc = include_directories('external/fmt/include')#meson.current_source_dir() + '/external/fmt/include'
+fmt_dep = declare_dependency(
+    include_directories: fmt_inc,
+    link_args: ['-lfmt']
 )
 
 ######################################
@@ -316,13 +316,13 @@ neroshop_price_srcs = [
 ]
 
 neroshop_protocol_srcs = [
-    neroshop_core_src_dir + '/protocol/messages/msgpack.cpp',
     neroshop_core_src_dir + '/protocol/p2p/file_piece_hasher.cpp',
     neroshop_core_src_dir + '/protocol/p2p/key_mapper.cpp',
     neroshop_core_src_dir + '/protocol/p2p/node.cpp',
     neroshop_core_src_dir + '/protocol/p2p/routing_table.cpp',
     neroshop_core_src_dir + '/protocol/p2p/serializer.cpp',
     neroshop_core_src_dir + '/protocol/rpc/json_rpc.cpp',
+    neroshop_core_src_dir + '/protocol/rpc/msgpack.cpp',
     neroshop_core_src_dir + '/protocol/transport/client.cpp',
     neroshop_core_src_dir + '/protocol/transport/sam_client.cpp',
     neroshop_core_src_dir + '/protocol/transport/server.cpp'
@@ -330,11 +330,9 @@ neroshop_protocol_srcs = [
 
 neroshop_tools_srcs = [
     neroshop_core_src_dir + '/tools/base64.cpp',
-    neroshop_core_src_dir + '/tools/logger.cpp',
     neroshop_core_src_dir + '/tools/process.cpp',
     neroshop_core_src_dir + '/tools/script.cpp',
     neroshop_core_src_dir + '/tools/timestamp.cpp',
-    neroshop_core_src_dir + '/tools/updater.cpp'
 ]
 
 neroshop_wallet_srcs = [
@@ -373,34 +371,33 @@ neroshop_daemon_srcs = [
     neroshop_crypto_srcs,
     neroshop_database_srcs,
     neroshop_network_srcs,
-    neroshop_core_src_dir + '/protocol/messages/msgpack.cpp',
     neroshop_core_src_dir + '/protocol/p2p/file_piece_hasher.cpp',
     neroshop_core_src_dir + '/protocol/p2p/key_mapper.cpp',
     neroshop_core_src_dir + '/protocol/p2p/node.cpp',
     neroshop_core_src_dir + '/protocol/p2p/routing_table.cpp',
     neroshop_core_src_dir + '/protocol/rpc/json_rpc.cpp',
+    neroshop_core_src_dir + '/protocol/rpc/msgpack.cpp',
     neroshop_core_src_dir + '/protocol/transport/client.cpp',
     neroshop_core_src_dir + '/protocol/transport/sam_client.cpp',
     neroshop_core_src_dir + '/protocol/transport/server.cpp',
     neroshop_core_src_dir + '/tools/base64.cpp',
-    neroshop_core_src_dir + '/tools/logger.cpp',
     neroshop_core_src_dir + '/tools/timestamp.cpp'
 ]
 executable(neroshop_daemon, neroshop_daemon_srcs,
-    include_directories: [monero_inc, monero_cpp_inc, sqlite3_inc, json_inc, zlib_inc, i2pd_inc, cxxopts_inc],
+    include_directories: [monero_inc, monero_cpp_inc, sqlite3_inc, json_inc, zlib_inc, i2pd_inc, fmt_inc, cxxopts_inc],
     cpp_args: ['-DNEROSHOP_DEBUG', '-DNEROSHOP_USE_SYSTEM_SOCKETS'],
     link_args: cxx_flags,
-    dependencies: [i2pd_dep, i2pd_daemon_dep, monero_cpp_dep, sqlite3_dep, monero_dep, zlib_dep, pthread_dep, dl_dep, m_dep]
+    dependencies: [i2pd_dep, i2pd_daemon_dep, monero_cpp_dep, sqlite3_dep, monero_dep, zlib_dep, fmt_dep, pthread_dep, dl_dep, m_dep]
 )
 
 if get_option('NEROSHOP_BUILD_CLI')
     neroshop_cli = 'neroshop-console'
     neroshop_cli_srcs = [neroshop_console_src_dir + '/main.cpp'] + neroshop_client_srcs
     executable(neroshop_cli, neroshop_cli_srcs,
-        include_directories: [monero_inc, monero_cpp_inc, sqlite3_inc, json_inc, zlib_inc, i2pd_inc, lua_inc, curl_inc, stduuid_inc, linenoise_inc],
+        include_directories: [monero_inc, monero_cpp_inc, sqlite3_inc, json_inc, zlib_inc, i2pd_inc, fmt_inc, lua_inc, curl_inc, stduuid_inc, linenoise_inc],
         cpp_args: ['-DNEROSHOP_DEBUG', '-DNEROSHOP_USE_SYSTEM_SOCKETS', '-DNEROSHOP_BUILD_CLI'],
         link_args: cxx_flags,
-        dependencies: [i2pd_dep, monero_cpp_dep, sqlite3_dep, curl_dep, monero_dep, zlib_dep, lua_dep, linenoise_dep, pthread_dep, dl_dep, m_dep]
+        dependencies: [i2pd_dep, monero_cpp_dep, sqlite3_dep, curl_dep, monero_dep, zlib_dep, fmt_dep, lua_dep, linenoise_dep, pthread_dep, dl_dep, m_dep]
     )
 endif
 
@@ -408,10 +405,10 @@ if get_option('NEROSHOP_BUILD_GUI')
     neroshop_gui = 'neroshop'
     neroshop_gui_srcs = qt5_resources + moc_output + [neroshop_gui_src_dir + '/main.cpp', 'src/gui/settings_manager.cpp', 'src/gui/wallet_manager.cpp', 'src/gui/user_manager.cpp', 'src/gui/image_loader.cpp', 'src/gui/image_provider.cpp', 'src/gui/wallet_qr_provider.cpp', 'src/gui/currency_rate_provider.cpp', 'src/gui/daemon_manager.cpp', 'src/gui/enum_wrapper.cpp', 'src/gui/proxy_manager.cpp', 'src/gui/backend.cpp'] + neroshop_client_srcs
     executable(neroshop_gui, neroshop_gui_srcs,
-        include_directories: [monero_inc, monero_cpp_inc, sqlite3_inc, json_inc, zlib_inc, i2pd_inc, lua_inc, qrcodegen_inc],
+        include_directories: [monero_inc, monero_cpp_inc, sqlite3_inc, json_inc, zlib_inc, i2pd_inc, fmt_inc, lua_inc, qrcodegen_inc],
         cpp_args: ['-DNEROSHOP_DEBUG', '-DNEROSHOP_USE_SYSTEM_SOCKETS', '-DNEROSHOP_BUILD_GUI', '-DNEROSHOP_USE_QT'] + qt5_widgets_arg,
         link_args: cxx_flags,
-        dependencies: [i2pd_dep, monero_cpp_dep, sqlite3_dep, qrcodegen_dep, monero_dep, zlib_dep, lua_dep, qt5_dep, pthread_dep, dl_dep, m_dep]
+        dependencies: [i2pd_dep, monero_cpp_dep, sqlite3_dep, qrcodegen_dep, monero_dep, zlib_dep, fmt_dep, lua_dep, qt5_dep, pthread_dep, dl_dep, m_dep]
     )
 endif
 

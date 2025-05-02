@@ -5,18 +5,17 @@
 #include "routing_table.hpp"
 #include "key_mapper.hpp"
 #include "../../crypto/sha3.hpp"
-#include "../messages/msgpack.hpp"
+#include "../rpc/msgpack.hpp"
 #include "../../database/database.hpp"
-/*//#include "dht_rescode.hpp"
-#include "../../tools/base64.hpp"
-#include "../../tools/string.hpp"*/
+#include "../../tools/logger.hpp"
 #include "../../tools/timestamp.hpp"
 #include "../../tools/thread_pool.hpp"
 
-#include <nlohmann/json.hpp>
-
 #include <utils/monero_utils.h>
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
 #include <wallet/monero_wallet_full.h>
+#pragma GCC diagnostic pop
 
 #include <cstring> // memset
 #include <future>
@@ -73,13 +72,12 @@ Node::Node(bool local, const std::string& i2p_address) : bootstrap(false), check
 
 Node::Node(Node&& other) noexcept
     : id(std::move(other.id)),
-      version(std::move(other.version)),
       data(std::move(other.data)),
       providers(std::move(other.providers)),
       routing_table(std::move(other.routing_table)),
       i2p_address(std::move(other.i2p_address)),
-      bootstrap(other.bootstrap),
-      check_counter(other.check_counter)
+      bootstrap(other.bootstrap.load(std::memory_order_relaxed)),
+      check_counter(other.check_counter.load(std::memory_order_relaxed))
 {
     // Reset the moved-from object's members to a valid state
     ////sam_client->client_socket = -1;
@@ -104,17 +102,19 @@ void Node::join() {
     if(!sam_client.get()) throw std::runtime_error("sam client is not connected");
     
     for (const std::string& bootstrap_node : BOOTSTRAP_I2P_NODES) {
-        std::cout << "\033[1;37m[INFO]\033[0m \033[35;1mJoining bootstrap node - " << bootstrap_node << "\033[0m\n";
+        log_info("{}Joining bootstrap node - {}{}", color_magenta, bootstrap_node, color_reset);
 
         // Ping each known node to confirm that it is online - the main bootstrapping primitive. If a node replies, and if there is space in the routing table, it will be inserted.
         if(!ping(bootstrap_node)) {
-            std::cerr << "\033[1;91m[ERROR]\033[0m ping: failed to ping bootstrap node\n"; continue;
+            log_error("ping: failed to ping bootstrap node"); 
+            continue;
         }
         
         // Send a "find_node" message to the bootstrap node and wait for a response message
         auto nodes = send_find_node(this->id, bootstrap_node);
         if(nodes.empty()) {
-            std::cerr << "\033[1;91m[ERROR]\033[0m find_node: No nodes found\n"; continue;
+            log_error("find_node: No nodes found");
+            continue;
         }
         
         // Then add nodes to the routing table
@@ -156,9 +156,12 @@ std::vector<Node*> Node::find_node(const std::string& target, int count) const {
 
 int Node::put(const std::string& key, const std::string& value) {
     // If data is a duplicate, skip it and return success (true)
-    if (has_key(key) && get(key) == value) {
-        std::cout << "Data already exists. Skipping ...\n";
-        return true;
+    {
+        std::shared_lock<std::shared_mutex> read_lock(data_mutex);
+        if (has_key(key) && get(key) == value) {
+            std::cout << "Data already exists. Skipping ...\n";
+            return true;
+        }
     }
     
     if(!validate(key, value)) {
@@ -166,14 +169,16 @@ int Node::put(const std::string& key, const std::string& value) {
     }
     
     // If node has the key but the value has been altered, compare both old and new values before updating the value
-    if (has_key(key) && get(key) != value) {
-        std::cout << "Updating value for key (" << key << ") ...\n";
-        return set(key, value);
-    }
+    {
+        std::unique_lock<std::shared_mutex> write_lock(data_mutex);
+        if (has_key(key) && get(key) != value) {
+            std::cout << "Updating value for key (" << key << ") ...\n";
+            return set(key, value);
+        }
     
-    //std::unique_lock<std::shared_mutex> lock(data_mutex);
-    data[key] = value;
-    return has_key(key); // boolean
+        data[key] = value;
+        return has_key(key); // boolean
+    }
 }
 
 //-----------------------------------------------------------------------------
@@ -185,7 +190,7 @@ int Node::store(const std::string& key, const std::string& value) {
 //-----------------------------------------------------------------------------
 
 std::string Node::get(const std::string& key) const { 
-    //std::shared_lock<std::shared_mutex> lock(data_mutex);
+    ////std::shared_lock<std::shared_mutex> lock(data_mutex);
     auto it = data.find(key);
     if (it != data.end()) {
         return it->second;
@@ -202,7 +207,7 @@ std::string Node::find_value(const std::string& key) const {
 //-----------------------------------------------------------------------------
 
 int Node::remove(const std::string& key) {
-    //std::unique_lock<std::shared_mutex> lock(data_mutex);
+    std::unique_lock<std::shared_mutex> lock(data_mutex);
     data.erase(key); // causes Segfault when called in thread :(
     return (data.count(key) == 0); // boolean
 }
@@ -210,6 +215,7 @@ int Node::remove(const std::string& key) {
 //-----------------------------------------------------------------------------
 
 int Node::remove_all() {
+    std::unique_lock<std::shared_mutex> lock(data_mutex);
     data.clear();
     return data.empty();
 }
@@ -223,6 +229,7 @@ void Node::map(const std::string& key, const std::string& value) {
 //-----------------------------------------------------------------------------
 
 int Node::set(const std::string& key, const std::string& value) {
+    std::unique_lock<std::shared_mutex> lock(data_mutex); // exclusive lock for both read & write
     nlohmann::json json = nlohmann::json::parse(value); // Already validated in put() so we just need to parse it without checking for errors
     
     std::string current_value = get(key);
@@ -290,14 +297,16 @@ int Node::set(const std::string& key, const std::string& value) {
 //-----------------------------------------------------------------------------
 
 void Node::add_provider(const std::string& data_hash, const Peer& peer) {
+    std::unique_lock<std::shared_mutex> lock(providers_mutex);
+
     // Check if the data_hash is already in the providers map
     auto it = providers.find(data_hash);
     if (it != providers.end()) {
         // If the data_hash is already in the map, check for duplicates
         for (const auto& existing_peer : it->second) {
-            if (existing_peer.address == peer.address && existing_peer.port == peer.port) {
+            if (existing_peer.address == peer.address) {
                 // Peer with the same address and port already exists, so don't add it again
-                std::cout << "Provider (\033[36m" << peer.address + ":" + std::to_string(peer.port) << "\033[0m) for hash (" << data_hash << ") already exists" << std::endl;
+                std::cout << "Provider (\033[36m" << peer.address << "\033[0m) for hash (" << data_hash << ") already exists" << std::endl;
                 return;
             }
         }
@@ -312,6 +321,8 @@ void Node::add_provider(const std::string& data_hash, const Peer& peer) {
 }
 
 void Node::remove_providers(const std::string& data_hash) {
+    std::unique_lock<std::shared_mutex> lock(providers_mutex);
+
     // Find the data_hash entry in the providers map
     auto it = providers.find(data_hash);
     if (it != providers.end()) {
@@ -320,15 +331,17 @@ void Node::remove_providers(const std::string& data_hash) {
     }
 }
 
-void Node::remove_provider(const std::string& data_hash, const std::string& address, int port) {
+void Node::remove_provider(const std::string& data_hash, const std::string& i2p_address) {
+    std::unique_lock<std::shared_mutex> lock(providers_mutex);
+
     // Find the data_hash entry in the providers map
     auto it = providers.find(data_hash);
     if (it != providers.end()) {
         // Iterate through the vector of providers for the data_hash
         auto& peers = it->second;
         for (auto peer_it = peers.begin(); peer_it != peers.end(); ) {
-            if (peer_it->address == address && peer_it->port == port) {
-                // If the address and port match, remove the provider from the vector
+            if (peer_it->address == i2p_address) {
+                // If the address match, remove the provider from the vector
                 peer_it = peers.erase(peer_it);
             } else {
                 ++peer_it;
@@ -343,8 +356,9 @@ void Node::remove_provider(const std::string& data_hash, const std::string& addr
 }
 
 std::deque<Peer> Node::get_providers(const std::string& data_hash) const {
-    std::deque<Peer> peers = {};
+    std::shared_lock<std::shared_mutex> lock(providers_mutex);
 
+    std::deque<Peer> peers = {};
     // Check if data_hash is in providers
     auto data_hash_it = providers.find(data_hash);
     if (data_hash_it != providers.end()) {
@@ -357,7 +371,7 @@ std::deque<Peer> Node::get_providers(const std::string& data_hash) const {
 
 //-------------------------------------------------------------------------------------
 
-void Node::persist_routing_table(const std::string& destination) {
+void Node::persist_routing_table(const std::string& i2p_address) {
     if(!is_hardcoded()) return; // Regular nodes cannot run this function
     
     db::Sqlite3 * database = neroshop::get_database();
@@ -368,7 +382,7 @@ void Node::persist_routing_table(const std::string& destination) {
         "i2p_address TEXT, UNIQUE(i2p_address));");
     }
     
-    database->execute_params("INSERT INTO routing_table (i2p_address) VALUES (?1);", { destination });
+    database->execute_params("INSERT INTO routing_table (i2p_address) VALUES (?1);", { i2p_address });
 }
 
 void Node::rebuild_routing_table() {
@@ -421,7 +435,7 @@ void Node::send_query(const std::string& destination, const std::vector<uint8_t>
     if(!sam_client.get()) throw std::runtime_error("sam client is not connected");
     if(sam_client->get_socket() < 0) throw std::runtime_error("sam client socket is closed");
     
-    std::cout << "\033[1;94m[DEBUG]\033[0m Sending datagram to: " << destination << "\n";
+    std::cout << "\033[1;34m[DEBUG]\033[0m Sending datagram to: " << destination << "\n";
     // Construct SAM header line for datagram
     std::string header = "3.0 " + sam_client->get_nickname() + " " + destination + "\n";
     
@@ -432,7 +446,7 @@ void Node::send_query(const std::string& destination, const std::vector<uint8_t>
     datagram.insert(datagram.end(), payload.begin(), payload.end());
     
     // Send datagram to SAM UDP bridge (port 7655)
-    ssize_t sent_bytes = ::sendto(sam_client->get_socket()/*socket_fd*/, datagram.data(), datagram.size(), 0,
+    ssize_t sent_bytes = ::sendto(sam_client->get_socket(), datagram.data(), datagram.size(), 0,
                                   (sockaddr*)&sam_client->server_addr, sizeof(sam_client->server_addr));
     if (sent_bytes < 0) {
         throw std::runtime_error("Failed to send datagram to SAM bridge");
@@ -756,7 +770,7 @@ std::string Node::send_get(const std::string& key) {
                 std::lock_guard<std::mutex> lock(pending_mutex);
                 pending_requests.erase(transaction_id);
                 std::cerr << "Provider \033[91m" << peer_addr << "\033[0m did not respond" << std::endl;
-                remove_provider(key, peer.address, peer.port); // Remove this peer from providers
+                remove_provider(key, peer.address); // Remove this peer from providers
                 continue; // Skip to next provider if this one is unresponsive
             }
             
@@ -772,7 +786,7 @@ std::string Node::send_get(const std::string& key) {
             // Handle the response
             std::cout << ((response_get.contains("error")) ? ("\033[91m") : ("\033[32m")) << response_get.dump() << "\033[0m\n";
             if(response_get.contains("error")) { // "Key not found"
-                remove_provider(key, peer.address, peer.port); // Data is lost, remove peer from providers
+                remove_provider(key, peer.address); // Data is lost, remove peer from providers
                 continue; 
             }
             if(response_get.contains("response") && response_get["response"].contains("value")) {
@@ -820,7 +834,7 @@ std::string Node::send_get(const std::string& key) {
                 std::lock_guard<std::mutex> lock(pending_mutex);
                 pending_requests.erase(transaction_id);
                 std::cerr << "Provider \033[91m" << peer_addr << "\033[0m did not respond" << std::endl;
-                remove_provider(key, peer.address, peer.port); // Remove this peer from providers
+                remove_provider(key, peer.address); // Remove this peer from providers
                 continue; // Skip to next provider if this one is unresponsive
             }
             
@@ -836,7 +850,7 @@ std::string Node::send_get(const std::string& key) {
             // Handle the response
             std::cout << ((response_get.contains("error")) ? ("\033[91m") : ("\033[32m")) << response_get.dump() << "\033[0m\n";
             if(response_get.contains("error")) { // "Key not found"
-                remove_provider(key, peer.address, peer.port); // Data is lost, remove peer from providers
+                remove_provider(key, peer.address); // Data is lost, remove peer from providers
                 continue; 
             }
             if(response_get.contains("response") && response_get["response"].contains("value")) {
@@ -1419,7 +1433,7 @@ void Node::periodic_purge() {
     while (true) {
         {
             // Acquire the lock before accessing the data
-            std::shared_lock<std::shared_mutex> read_lock(node_read_mutex);
+            ////std::shared_lock<std::shared_mutex> read_lock(node_read_mutex);
     
             if(!data.empty()) { std::cout << "\033[34;1mPerforming periodic data removal\033[0m\n"; }
             
@@ -1440,7 +1454,7 @@ void Node::periodic_refresh() {
     while (true) {
         {
             // Acquire the lock before accessing the data
-            std::shared_lock<std::shared_mutex> read_lock(node_read_mutex);
+            ////std::shared_lock<std::shared_mutex> read_lock(node_read_mutex);
             
             
             if(routing_table->get_node_count() > 0) { std::cout << "\033[34;1mPerforming periodic bucket refresh\033[0m\n"; }
@@ -1461,7 +1475,7 @@ void Node::periodic_republish() {
     while (true) {
         {
             // Acquire the lock before accessing the data
-            std::shared_lock<std::shared_mutex> read_lock(node_read_mutex);
+            ////std::shared_lock<std::shared_mutex> read_lock(node_read_mutex);
             
             // Perform periodic republishing here
             // This code will run concurrently with the listen/receive loop
@@ -1483,8 +1497,6 @@ void Node::periodic_check() {
     ////std::vector<std::string> dead_node_ids {};
     while(true) {
         {
-        // Acquire the lock before accessing the routing table
-        std::shared_lock<std::shared_mutex> read_lock(node_read_mutex);
         // Perform periodic checks here
         // This code will run concurrently with the listen/receive loop
         for (auto& bucket : routing_table->buckets) {
@@ -1496,7 +1508,7 @@ void Node::periodic_check() {
                 // Skip the bootstrap nodes from the periodic checks
                 if (node->is_hardcoded()) continue;
                 
-                std::cout << "Performing periodic node health check on \033[34m" << node_dest << ":" << node_port << "\033[0m\n";
+                std::cout << "Performing periodic node health check on \033[34m" << node_dest << "\033[0m\n";
                 
                 // Perform the liveness check on the current node
                 bool pinged = ping(node_dest);
@@ -1507,7 +1519,7 @@ void Node::periodic_check() {
                 
                 // If node is dead, remove it from the routing table
                 if(node->is_dead()) {
-                    std::cout << "\033[0;91m" << node->i2p_address << ":" << node_port << "\033[0m marked as dead\n";
+                    std::cout << "\033[0;91m" << node->i2p_address << "\033[0m marked as dead\n";
                     if(routing_table->has_node(node->i2p_address, node_port)) {
                         ////dead_node_ids.push_back(node->get_id());
                         routing_table->remove_node(node->i2p_address, node_port); // Already has internal write_lock
@@ -1636,6 +1648,8 @@ void Node::run_simple() {
     unsigned int threads = std::thread::hardware_concurrency();
     ThreadPool pool(threads);
     
+    std::thread(&Node::periodic_check, this).detach();
+    
     while (true) {
         char buffer[SAM_BUFSIZE] = {0};
         sockaddr_in from_addr = {};
@@ -1645,7 +1659,7 @@ void Node::run_simple() {
         if (received_bytes < 0) {
             if (errno == EAGAIN || errno == EWOULDBLOCK) {
                 // No data available right now — not an error
-                ////std::cout << "\033[1;94m[DEBUG]\033[0m No message received (timeout)" << std::endl;
+                ////std::cout << "\033[1;34m[DEBUG]\033[0m No message received (timeout)" << std::endl;
                 continue; // timeout or non-blocking, ignore
             } else {
                 perror("recvfrom");
@@ -1654,7 +1668,7 @@ void Node::run_simple() {
             }
         }
         if (received_bytes == 0) {
-            std::cout << "\033[1;94m[DEBUG]\033[0m Received 0 bytes, ignoring\n";
+            std::cout << "\033[1;34m[DEBUG]\033[0m Received 0 bytes, ignoring\n";
             continue;
         }
         if(sam_client->client_socket < 0 && errno == ENOTCONN) {
@@ -1680,14 +1694,14 @@ void Node::run_simple() {
                 std::string sam_header = message.substr(0, header_end);
                 payload = message.substr(header_end + 1);
 
-                ////std::cout << "\033[1;94m[DEBUG]\033[0m Payload (" << payload.size() << " bytes):\n" << payload << "\n";
+                ////std::cout << "\033[1;34m[DEBUG]\033[0m Payload (" << payload.size() << " bytes):\n" << payload << "\n";
 
                 // Get the base64 destination
                 auto from_pos = sam_header.find(" FROM_PORT=");
                 dest_b64 = sam_header.substr(0, from_pos);
 
-                ////std::cout << "\033[1;94m[DEBUG]\033[0m Base64 Destination:\n" << dest_b64 << "\n";
-                std::cout << "\033[1;94m[DEBUG]\033[0m Sender:\n\033[0;36m" << SamClient::to_i2p_address(dest_b64) << "\033[0m\n";
+                ////std::cout << "\033[1;34m[DEBUG]\033[0m Base64 Destination:\n" << dest_b64 << "\n";
+                std::cout << "\033[1;34m[DEBUG]\033[0m Sender:\n\033[0;36m" << SamClient::to_i2p_address(dest_b64) << "\033[0m\n";
 
             } else {
                 std::cerr << "\033[1;33m[WARN]\033[0m Could not find SAM header line break (\\n)\n";
@@ -1856,8 +1870,8 @@ std::string Node::get_status_as_string() const {
 //-----------------------------------------------------------------------------
 
 std::vector<std::string> Node::get_keys() const {
+    std::shared_lock<std::shared_mutex> lock(data_mutex);
     std::vector<std::string> keys;
-
     for (const auto& pair : data) {
         keys.push_back(pair.first);
     }
@@ -1866,8 +1880,8 @@ std::vector<std::string> Node::get_keys() const {
 }
 
 std::vector<std::pair<std::string, std::string>> Node::get_data() const {
+    std::shared_lock<std::shared_mutex> lock(data_mutex);
     std::vector<std::pair<std::string, std::string>> data_vector;
-
     for (const auto& pair : data) {
         data_vector.push_back(pair);
     }
@@ -1880,6 +1894,7 @@ std::vector<std::pair<std::string, std::string>> Node::get_data() const {
 }*/
 
 int Node::get_data_count() const {
+    std::shared_lock<std::shared_mutex> lock(data_mutex);
     return data.size();
 }
 
@@ -1907,6 +1922,7 @@ std::string Node::get_cached(const std::string& key) {
 //-----------------------------------------------------------------------------
 
 bool Node::has_key(const std::string& key) const {
+    ////std::shared_lock<std::shared_mutex> lock(data_mutex);
     return (data.count(key) > 0);
 }
 
@@ -1923,6 +1939,7 @@ bool Node::has_key_cached(const std::string& key) const {
 //-----------------------------------------------------------------------------
 
 bool Node::has_value(const std::string& value) const {
+    std::shared_lock<std::shared_mutex> lock(data_mutex);
     for (const auto& pair : data) {
         if (pair.second == value) {
             return true;

@@ -323,10 +323,10 @@ bool neroshop::Backend::saveAvatarImage(const QString& fileName, const QString& 
     std::string key_folder = avatars_folder + "/" + userAccountKey.toStdString();
     if (!neroshop_filesystem::is_directory(key_folder)) {
         if (!neroshop_filesystem::make_directory(key_folder)) {
-            neroshop::print("Failed to create folder \"" + key_folder + "\" (ᵕ人ᵕ)!", 1);
+            neroshop::log_error("Failed to create folder \"" + key_folder + "\" (ᵕ人ᵕ)!");
             return false;
         }
-        neroshop::print("\033[1;97;49mcreated path \"" + key_folder + "\"");
+        neroshop::log_info("\033[1;97;49mcreated path \"" + key_folder + "\"");
     }
     //----------------------------------------
     // Generate the final destination path
@@ -340,7 +340,7 @@ bool neroshop::Backend::saveAvatarImage(const QString& fileName, const QString& 
         if(isSupportedImageDimension(imageSize.width(), imageSize.height())) {
             QFile sourceFile(fileName);
             if(sourceFile.copy(QString::fromStdString(destinationPath))) {
-                neroshop::print("copied \"" + fileName.toStdString() + "\" to \"" + key_folder + "\"", 3);
+                neroshop::log_info("copied \"" + fileName.toStdString() + "\" to \"" + key_folder + "\"");
                 sourceFile.close();
                 return true;
             }
@@ -361,10 +361,10 @@ bool neroshop::Backend::saveProductThumbnail(const QString& fileName, const QStr
     std::string key_folder = listings_folder + "/" + listingKey.toStdString();
     if (!neroshop_filesystem::is_directory(key_folder)) {
         if (!neroshop_filesystem::make_directory(key_folder)) {
-            neroshop::print("Failed to create folder \"" + key_folder + "\" (ᵕ人ᵕ)!", 1);
+            neroshop::log_error("Failed to create folder \"" + key_folder + "\" (ᵕ人ᵕ)!");
             return false;
         }
-        neroshop::print("\033[1;97;49mcreated path \"" + key_folder + "\"");
+        neroshop::log_info("\033[1;97;49mcreated path \"" + key_folder + "\"");
     }
     //----------------------------------------
     // Generate the final destination path
@@ -409,7 +409,7 @@ bool neroshop::Backend::saveProductThumbnail(const QString& fileName, const QStr
         resizedPixmap.save(QString::fromStdString(destinationPath), "JPEG");
     }
     
-    neroshop::print("exported \"" + thumbnail_image + "\" to \"" + key_folder + "\"", 3);
+    neroshop::log_info("exported \"" + thumbnail_image + "\" to \"" + key_folder + "\"");
     return true;
 }
 //----------------------------------------------------------------
@@ -428,10 +428,10 @@ bool neroshop::Backend::saveProductImage(const QString& fileName, const QString&
     std::string key_folder = listings_folder + "/" + listingKey.toStdString();
     if (!neroshop_filesystem::is_directory(key_folder)) {
         if (!neroshop_filesystem::make_directory(key_folder)) {
-            neroshop::print("Failed to create folder \"" + key_folder + "\" (ᵕ人ᵕ)!", 1);
+            neroshop::log_error("Failed to create folder \"" + key_folder + "\" (ᵕ人ᵕ)!");
             return false;
         }
-        neroshop::print("\033[1;97;49mcreated path \"" + key_folder + "\"");
+        neroshop::log_info("\033[1;97;49mcreated path \"" + key_folder + "\"");
     }
     //----------------------------------------
     // Generate the final destination path
@@ -445,7 +445,7 @@ bool neroshop::Backend::saveProductImage(const QString& fileName, const QString&
         if(isSupportedImageDimension(imageSize.width(), imageSize.height())) {
             QFile sourceFile(fileName);
             if(sourceFile.copy(QString::fromStdString(destinationPath))) {
-                neroshop::print("copied \"" + fileName.toStdString() + "\" to \"" + key_folder + "\"", 3);
+                neroshop::log_info("copied \"" + fileName.toStdString() + "\" to \"" + key_folder + "\"");
                 sourceFile.close();
                 return true;
             }
@@ -588,13 +588,13 @@ QVariantList neroshop::Backend::getProductRatings(const QString& product_id) {
     sqlite3_stmt * stmt = nullptr;
     // Prepare (compile) statement
     if(sqlite3_prepare_v2(database->get_handle(), command.c_str(), -1, &stmt, nullptr) != SQLITE_OK) {
-        neroshop::print("sqlite3_prepare_v2: " + std::string(sqlite3_errmsg(database->get_handle())), 1);
+        neroshop::log_error("sqlite3_prepare_v2: " + std::string(sqlite3_errmsg(database->get_handle())));
         return {};
     }
     // Bind value to parameter arguments
     QByteArray productIdByteArray = product_id.toUtf8();
     if(sqlite3_bind_text(stmt, 1, productIdByteArray.constData(), productIdByteArray.length(), SQLITE_STATIC) != SQLITE_OK) {
-        neroshop::print("sqlite3_bind_text: " + std::string(sqlite3_errmsg(database->get_handle())), 1);
+        neroshop::log_error("sqlite3_bind_text: " + std::string(sqlite3_errmsg(database->get_handle())));
         sqlite3_finalize(stmt);
         return {};
     }
@@ -727,13 +727,13 @@ QVariantList neroshop::Backend::getSellerRatings(const QString& user_id) {
     sqlite3_stmt * stmt = nullptr;
     // Prepare (compile) statement
     if(sqlite3_prepare_v2(database->get_handle(), command.c_str(), -1, &stmt, nullptr) != SQLITE_OK) {
-        neroshop::print("sqlite3_prepare_v2: " + std::string(sqlite3_errmsg(database->get_handle())), 1);
+        neroshop::log_error("sqlite3_prepare_v2: " + std::string(sqlite3_errmsg(database->get_handle())));
         return {};
     }
     // Bind value to parameter arguments
     QByteArray userIdByteArray = user_id.toUtf8();
     if(sqlite3_bind_text(stmt, 1, userIdByteArray.constData(), userIdByteArray.length(), SQLITE_STATIC) != SQLITE_OK) {
-        neroshop::print("sqlite3_bind_text: " + std::string(sqlite3_errmsg(database->get_handle())), 1);
+        neroshop::log_error("sqlite3_bind_text: " + std::string(sqlite3_errmsg(database->get_handle())));
         sqlite3_finalize(stmt);
         return {};
     }
@@ -973,19 +973,19 @@ QVariantList neroshop::Backend::getInventory(const QString& user_id, bool hide_i
     sqlite3_stmt * stmt = nullptr;
     // Prepare (compile) statement
     if(sqlite3_prepare_v2(database->get_handle(), command.c_str(), -1, &stmt, nullptr) != SQLITE_OK) {
-        neroshop::print("sqlite3_prepare_v2: " + std::string(sqlite3_errmsg(database->get_handle())), 1);
+        neroshop::log_error("sqlite3_prepare_v2: " + std::string(sqlite3_errmsg(database->get_handle())));
         return {};
     }
     // Bind user_id to TEXT
     QByteArray userIdByteArray = user_id.toUtf8();
     if(sqlite3_bind_text(stmt, 1, userIdByteArray.constData(), userIdByteArray.length(), SQLITE_STATIC) != SQLITE_OK) {
-        neroshop::print("sqlite3_bind_text (arg: 1): " + std::string(sqlite3_errmsg(database->get_handle())), 1);
+        neroshop::log_error("sqlite3_bind_text (arg: 1): " + std::string(sqlite3_errmsg(database->get_handle())));
         sqlite3_finalize(stmt);
         return {};
     }    
     // Check whether the prepared statement returns no data (for example an UPDATE)
     if(sqlite3_column_count(stmt) == 0) {
-        neroshop::print("No data found. Be sure to use an appropriate SELECT statement", 1);
+        neroshop::log_error("No data found. Be sure to use an appropriate SELECT statement");
         return {};
     }
     
@@ -1152,27 +1152,27 @@ QVariantList neroshop::Backend::getListingsBySearchTerm(const QString& searchTer
     sqlite3_stmt * stmt = nullptr;
     // Prepare (compile) statement
     if(sqlite3_prepare_v2(database->get_handle(), command.c_str(), -1, &stmt, nullptr) != SQLITE_OK) {
-        neroshop::print("sqlite3_prepare_v2: " + std::string(sqlite3_errmsg(database->get_handle())), 1);
+        neroshop::log_error("sqlite3_prepare_v2: " + std::string(sqlite3_errmsg(database->get_handle())));
         return {};
     }
     //-------------------------------------------------------
     // Bind value to parameter arguments
     QByteArray searchTermByteArray = searchTerm.toUtf8(); // Convert QString to std::string equivalent
     if(sqlite3_bind_text(stmt, 1, searchTermByteArray.constData(), searchTermByteArray.length(), SQLITE_STATIC) != SQLITE_OK) {
-        neroshop::print("sqlite3_bind_text: " + std::string(sqlite3_errmsg(database->get_handle())), 1);
+        neroshop::log_error("sqlite3_bind_text: " + std::string(sqlite3_errmsg(database->get_handle())));
         sqlite3_finalize(stmt);
         return {};//database->execute("ROLLBACK;"); return {};
     }        
     
     if(sqlite3_bind_int(stmt, 2, NEROSHOP_MAX_SEARCH_RESULTS) != SQLITE_OK) {
-        neroshop::print("sqlite3_bind_int: " + std::string(sqlite3_errmsg(database->get_handle())), 1);
+        neroshop::log_error("sqlite3_bind_int: " + std::string(sqlite3_errmsg(database->get_handle())));
         sqlite3_finalize(stmt);
         return {};//database->execute("ROLLBACK;"); return {};
     }            
     //-------------------------------------------------------
     // Check whether the prepared statement returns no data (for example an UPDATE)
     if(sqlite3_column_count(stmt) == 0) {
-        neroshop::print("No data found. Be sure to use an appropriate SELECT statement", 1);
+        neroshop::log_error("No data found. Be sure to use an appropriate SELECT statement");
         return {};
     }
     
@@ -1337,12 +1337,12 @@ QVariantList neroshop::Backend::getListings(int sorting, bool hide_illicit_items
     sqlite3_stmt * stmt = nullptr;
     // Prepare (compile) statement
     if(sqlite3_prepare_v2(database->get_handle(), command.c_str(), -1, &stmt, nullptr) != SQLITE_OK) {
-        neroshop::print("sqlite3_prepare_v2: " + std::string(sqlite3_errmsg(database->get_handle())), 1);
+        neroshop::log_error("sqlite3_prepare_v2: " + std::string(sqlite3_errmsg(database->get_handle())));
         return {};
     }
     // Check whether the prepared statement returns no data (for example an UPDATE)
     if(sqlite3_column_count(stmt) == 0) {
-        neroshop::print("No data found. Be sure to use an appropriate SELECT statement", 1);
+        neroshop::log_error("No data found. Be sure to use an appropriate SELECT statement");
         return {};
     }
     
@@ -1595,21 +1595,21 @@ QVariantList neroshop::Backend::getListingsByCategory(int category_id, bool hide
     sqlite3_stmt * stmt = nullptr;
     // Prepare (compile) statement
     if(sqlite3_prepare_v2(database->get_handle(), command.c_str(), -1, &stmt, nullptr) != SQLITE_OK) {
-        neroshop::print("sqlite3_prepare_v2: " + std::string(sqlite3_errmsg(database->get_handle())), 1);
+        neroshop::log_error("sqlite3_prepare_v2: " + std::string(sqlite3_errmsg(database->get_handle())));
         return {};
     }
     //-------------------------------------------------------
     std::string category = get_category_name_by_id(category_id);
     // Bind value to parameter arguments
     if(sqlite3_bind_text(stmt, 1, category.c_str(), category.length(), SQLITE_STATIC) != SQLITE_OK) {
-        neroshop::print("sqlite3_bind_text: " + std::string(sqlite3_errmsg(database->get_handle())), 1);
+        neroshop::log_error("sqlite3_bind_text: " + std::string(sqlite3_errmsg(database->get_handle())));
         sqlite3_finalize(stmt);
         return {};//database->execute("ROLLBACK;"); return {};
     }        
     //-------------------------------------------------------
     // Check whether the prepared statement returns no data (for example an UPDATE)
     if(sqlite3_column_count(stmt) == 0) {
-        neroshop::print("No data found. Be sure to use an appropriate SELECT statement", 1);
+        neroshop::log_error("No data found. Be sure to use an appropriate SELECT statement");
         return {};
     }
     
@@ -1931,7 +1931,7 @@ QVariantList neroshop::Backend::getNodeList(const QString& coin) const {
     const auto json_doc = QJsonDocument::fromJson(reply->readAll(), &error);
     // Use fallback monero node list if we fail to get the nodes from the url
     if (error.error != QJsonParseError::NoError) {
-        neroshop::print("Error reading json from " + url.toString().toStdString() + "\nUsing default nodes as fallback", 1);
+        neroshop::log_error("Error reading json from " + url.toString().toStdString() + "\nUsing default nodes as fallback");
         return getNodeListDefault(coin_lower);
     }
     // Get monero nodes from the JSON
@@ -1987,7 +1987,7 @@ QVariantList neroshop::Backend::validateDisplayName(const QString& display_name)
 
     if(!neroshop::string_tools::is_valid_username(username)) {
         std::string default_message = "Invalid username: " + username;
-        neroshop::print(default_message, 1);
+        neroshop::log_error(default_message);
         if (username.length() < NEROSHOP_MIN_USERNAME_LENGTH) {
             std::string message = std::string("Display name must be at least " + std::to_string(NEROSHOP_MIN_USERNAME_LENGTH) + " characters in length");
             return { false, QString::fromStdString(message) };
@@ -2038,7 +2038,7 @@ QVariantList neroshop::Backend::registerUser(WalletManager* wallet_manager, cons
     }
     //---------------------------------------------
     // Get wallet primary address and check its validity
-    std::string primary_address = wallet_manager->getPrimaryAddress().toStdString();//neroshop::print("Primary address: \033[1;33m" + primary_address + "\033[1;37m\n");
+    std::string primary_address = wallet_manager->getPrimaryAddress().toStdString();//neroshop::log_info("Primary address: \033[1;33m" + primary_address + "\033[1;37m\n");
     if(!wallet_manager->getWallet()->is_valid_address(primary_address)) {
         return { false, "Invalid monero address" };
     }
@@ -2124,7 +2124,7 @@ QVariantList neroshop::Backend::registerUser(WalletManager* wallet_manager, cons
     emit user_manager->userChanged();
     emit user_manager->userLogged();
     // Display registration message
-    neroshop::print(((!display_name.isEmpty()) ? "Welcome to neroshop, " : "Welcome to neroshop") + display_name.toStdString(), 4);
+    neroshop::log_debug(((!display_name.isEmpty()) ? "Welcome to neroshop, " : "Welcome to neroshop") + display_name.toStdString());
     return { true, QString::fromStdString(key) };
 }
 //----------------------------------------------------------------
@@ -2134,7 +2134,7 @@ int neroshop::Backend::loginWithWalletFile(WalletManager* wallet_manager, const 
     
     // Make sure daemon is connected first
     if(!DaemonManager::isDaemonServerBound()) {
-        neroshop::print("Please wait for the local daemon IPC server to connect first", 1);
+        neroshop::log_error("Please wait for the local daemon IPC server to connect first");
         return static_cast<int>(EnumWrapper::LoginError::DaemonIsNotConnected);
     }    
     // Open wallet file
@@ -2170,7 +2170,7 @@ int neroshop::Backend::loginWithWalletFile(WalletManager* wallet_manager, const 
     // If user key is not found in the database, then create one. This is like registering for an account
     if(!user_found) {
         // In reality, this function will return false if user key is not registered in the database
-        neroshop::print("Account not found in database. Please try again or register", 1);
+        neroshop::log_error("Account not found in database. Please try again or register");
         wallet_manager->close();
         return static_cast<int>(EnumWrapper::LoginError::UserNotFound);
     }
@@ -2211,7 +2211,7 @@ int neroshop::Backend::loginWithWalletFile(WalletManager* wallet_manager, const 
     emit user_manager->userChanged();
     emit user_manager->userLogged();
     // Display message
-    neroshop::print("Welcome back, user " + ((!display_name.empty()) ? (display_name + " (id: " + primary_address + ")") : primary_address), 4);
+    neroshop::log_debug("Welcome back, user " + ((!display_name.empty()) ? (display_name + " (id: " + primary_address + ")") : primary_address));
     return static_cast<int>(EnumWrapper::LoginError::Ok);
 }
 //----------------------------------------------------------------
@@ -2221,7 +2221,7 @@ int neroshop::Backend::loginWithMnemonic(WalletManager* wallet_manager, const QS
     
     // Make sure daemon is connected first
     if(!DaemonManager::isDaemonServerBound()) {
-        neroshop::print("Please wait for the local daemon IPC server to connect first", 1);
+        neroshop::log_error("Please wait for the local daemon IPC server to connect first");
         return static_cast<int>(EnumWrapper::LoginError::DaemonIsNotConnected);
     }
     // Initialize monero wallet with existing wallet mnemonic
@@ -2255,7 +2255,7 @@ int neroshop::Backend::loginWithMnemonic(WalletManager* wallet_manager, const QS
     // If user key is not found in the database, then create one. This is like registering for an account
     if(!user_found) {
         // In reality, this function will return false if user key is not registered in the database
-        neroshop::print("user key not found in database. Please try again or register", 1);
+        neroshop::log_error("user key not found in database. Please try again or register");
         wallet_manager->close();
         return static_cast<int>(EnumWrapper::LoginError::UserNotFound);
     }
@@ -2298,7 +2298,7 @@ int neroshop::Backend::loginWithMnemonic(WalletManager* wallet_manager, const QS
     emit user_manager->userLogged();
 
     // Display message
-    neroshop::print("Welcome back, user " + ((!display_name.empty()) ? (display_name + " (id: " + primary_address + ")") : primary_address), 4);
+    neroshop::log_debug("Welcome back, user " + ((!display_name.empty()) ? (display_name + " (id: " + primary_address + ")") : primary_address));
     return static_cast<int>(EnumWrapper::LoginError::Ok);
 }
 //----------------------------------------------------------------
@@ -2323,14 +2323,14 @@ int neroshop::Backend::loginWithKeys(WalletManager* wallet_manager, UserManager 
     // Get the hash of the primary address
     std::string user_auth_key;// = neroshop::algo::sha256(primary_address);
     ////Validator::generate_sha256_hash(primary_address, user_auth_key); // temp
-    neroshop::print("Primary address: \033[1;33m" + primary_address + "\033[1;37m\nSHA256 hash: " + user_auth_key);
+    neroshop::log_info("Primary address: \033[1;33m" + primary_address + "\033[1;37m\nSHA256 hash: " + user_auth_key);
     //$ echo -n "528qdm2pXnYYesCy5VdmBneWeaSZutEijFVAKjpVHeVd4unsCSM55CjgViQsK9WFNHK1eZgcCuZ3fRqYpzKDokqSKp4yp38" | sha256sum
     // Check database to see if user key (hash of primary address) exists
     bool user_key_found = database->get_integer_params("SELECT EXISTS(SELECT * FROM users WHERE key = $1)", { user_auth_key });
     // If user key is not found in the database, then create one. This is like registering for an account
     if(!user_key_found) {
         // In reality, this function will return false if user key is not registered in the database
-        neroshop::print("user key not found in database. Please try again or register", 1);
+        neroshop::log_error("user key not found in database. Please try again or register");
         wallet_manager->close();
         return false;
     }
@@ -2338,7 +2338,7 @@ int neroshop::Backend::loginWithKeys(WalletManager* wallet_manager, UserManager 
     int user_id = database->get_integer_params("SELECT id FROM users WHERE key = $1", { user_auth_key });
     // Display message
     std::string display_name = database->get_text_params("SELECT name FROM users WHERE monero_address = $1", { primary_address });
-    neroshop::print("Welcome back, user " + ((!display_name.empty()) ? (display_name + " (id: " + primary_address + ")") : primary_address), 4);
+    neroshop::log_debug("Welcome back, user " + ((!display_name.empty()) ? (display_name + " (id: " + primary_address + ")") : primary_address));
     return true;
 */
     return false;

@@ -61,6 +61,7 @@
 #include <iostream>
 #include <string>
 #include <vector>
+#include <map>
 
 namespace neroshop {
 
@@ -97,7 +98,7 @@ public:
     SamClient(SamSessionStyle style, const std::string& nickname = generate_nickname());
     ~SamClient();
 
-    SamResultType hello(int sockfd); // handshake
+    SamReply hello(int sockfd); // handshake
     void session_prepare(); // restores or generates pubkey and privkey
     void session_create();
     void session_close();
@@ -139,9 +140,10 @@ public:
     static std::string to_i2p_address(const std::string& public_key);
     // Friends
     friend class Node;
-    friend class I2PNode;
 private:
-    SamReply send_sam_command(const std::string& command, int sockfd) const;
+    static SamReply send_sam_command(const std::string& command, int sockfd);
+    static std::string read_sam_reply(int sockfd);
+    static std::map<std::string, std::string> parse_sam_reply(const std::string& reply);
     static std::string generate_session_id();
     static std::string generate_nickname();
     void send_raw_datagram(const std::string& destination, const uint8_t* data, size_t size);

@@ -11,7 +11,7 @@ Script::Script(void) {}
 Script::Script(lua_State *L, const std::string& file_name) : Script()
 {
 	if(load(L, file_name) == 0) {
-		neroshop::print("Could not load from file: " + file_name);
+		neroshop::log_error("Could not load from file: " + file_name);
 	}
 }
 //////////
@@ -30,7 +30,7 @@ bool Script::load(lua_State * L, const std::string& file_name)
 	}
 	if(is_script(file_name)) // checks if script object is already attached to a file (one file per script_ptr)
 	{
-	    //neroshop::print(file_name + " has already been loaded");
+	    //neroshop::log_error(file_name + " has already been loaded");
 		return true;
 	}
     if(luaL_dofile(L, file_name.c_str()) != 0)
@@ -178,13 +178,13 @@ void Script::write(std::string code)
 {
 	if(!is_script()) // not loaded?
 	{
-		neroshop::print("Could not write to script");
+		neroshop::log_error("Could not write to script");
 		return;
 	}
 	std::ofstream file(get_file(), std::ios::app);
 	if(!file.is_open())
 	{
-		neroshop::print("Could not write to " + get_file());
+		neroshop::log_error("Could not write to " + get_file());
 		return;
 	}
 	file << " " << code << std::endl;
@@ -374,7 +374,7 @@ void Script::save_cache()
     // open file for writing
     std::ofstream cfile;
     cfile.open ("script_cache.txt", std::ios::out | std::ios::app); // std::ios::out is default mode for ofstream (writing to file)
-    if(!cfile.is_open()) {neroshop::print(std::string("Script::save_cache : Could not open file: ") + "script_cache.txt");return;}
+    if(!cfile.is_open()) {neroshop::log_error(std::string("Script::save_cache : Could not open file: ") + "script_cache.txt");return;}
     for(int i = 0; i < cache.size(); i++)
     {
         if(!cache[i].empty()) cfile << cache[i] << std::endl;

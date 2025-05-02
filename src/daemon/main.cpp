@@ -10,7 +10,7 @@
 #include "../core/protocol/transport/sam_client.hpp"
 #include "../core/protocol/transport/server.hpp"
 #include "../core/protocol/rpc/json_rpc.hpp"
-#include "../core/protocol/messages/msgpack.hpp"
+#include "../core/protocol/rpc/msgpack.hpp"
 #include "../core/database/database.hpp"
 #include "../core/tools/logger.hpp"
 #include "../core/version.hpp"
@@ -20,8 +20,6 @@
 #include <cxxopts.hpp>
 
 #include <Daemon.h>
-
-#define NEROMON_TAG "\033[1;95m[neroshopd]:\033[0m "
 
 using namespace neroshop;
 

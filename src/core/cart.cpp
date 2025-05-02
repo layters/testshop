@@ -62,17 +62,17 @@ void Cart::load(const std::string& user_id) {
     std::string command = "SELECT listing_key, quantity, seller_id FROM cart_item WHERE cart_id = $1";
     sqlite3_stmt * stmt = nullptr;
     if(sqlite3_prepare_v2(database->get_handle(), command.c_str(), -1, &stmt, nullptr) != SQLITE_OK) {
-        neroshop::print("sqlite3_prepare_v2: " + std::string(sqlite3_errmsg(database->get_handle())), 1);
+        neroshop::log_error("sqlite3_prepare_v2: " + std::string(sqlite3_errmsg(database->get_handle())));
         return;
     }
     // Check whether the prepared statement returns no data (for example an UPDATE)
     if(sqlite3_column_count(stmt) == 0) {
-        neroshop::print("Cart::load(): You have no items your cart", 2);
+        neroshop::log_debug("Cart::load(): You have no items your cart");
         return;
     }
     // Bind cart_id to first argument
     if(sqlite3_bind_text(stmt, 1, this->id.c_str(), this->id.length(), SQLITE_STATIC) != SQLITE_OK) {
-        neroshop::print("sqlite3_bind_text (arg: 1): " + std::string(sqlite3_errmsg(database->get_handle())), 1);
+        neroshop::log_error("sqlite3_bind_text (arg: 1): " + std::string(sqlite3_errmsg(database->get_handle())));
         sqlite3_finalize(stmt);
         return;////database->execute("ROLLBACK;"); return;
     }
@@ -87,7 +87,7 @@ void Cart::load(const std::string& user_id) {
             if(i == 2) cart_item.seller_id = column_value; // seller id
         }
         contents.push_back(cart_item);
-        ////neroshop::print("loaded cart item (id: " + cart_item.key + ", qty: " + std::to_string(cart_item.quantity) + ")", 3);
+        ////neroshop::log_info("loaded cart item (id: " + cart_item.key + ", qty: " + std::to_string(cart_item.quantity) + ")");
     }
     // Finalize statement
     sqlite3_finalize(stmt);
@@ -105,12 +105,12 @@ void Cart::load(const std::string& user_id) {
         }
         int stock_available = (!listing_obj.contains("quantity")) ? 0 : listing_obj["quantity"].get<int>();////database->get_integer_params("SELECT quantity FROM listings WHERE listing_key = $1 AND quantity > 0", { listing_key });
         if(stock_available == 0) {
-            neroshop::print(item_name + " is out of stock", 1);
+            neroshop::log_error(item_name + " is out of stock");
             // Set item quantity to zero
             database->execute_params("UPDATE cart_item SET quantity = $1 WHERE cart_id = $2 AND listing_key = $3", { std::to_string(0), this->id, listing_key });
             // Remove the item from the user's cart
             database->execute_params("DELETE FROM cart_item WHERE cart_id = $1 AND listing_key = $2", { this->id, listing_key });
-            neroshop::print(item_name + " (x" + std::to_string(quantity) + ") removed from cart", 1);
+            neroshop::log_info(item_name + " (x" + std::to_string(quantity) + ") removed from cart");
             // Remove the item from std::map
             contents.erase(std::remove_if(contents.begin(), contents.end(), [&](const CartItem& item){ return item.key == listing_key; }), contents.end());
             continue; // skip this item since it is no longer in stock, and so we do not store it in the cart            
@@ -121,7 +121,7 @@ void Cart::load(const std::string& user_id) {
         database->execute_params("UPDATE cart_item SET quantity = $1 WHERE cart_id = $2 AND listing_key = $3", { std::to_string(quantity), this->id, listing_key });        
         // Update item quantity in memory
         cart_item.quantity = quantity;
-        neroshop::print("loaded cart item (id: " + listing_key + ", qty: " + std::to_string(quantity) + ")", 3);
+        neroshop::log_info("loaded cart item (id: " + listing_key + ", qty: " + std::to_string(quantity) + ")");
     }
     //print_cart();
 }
@@ -142,7 +142,7 @@ neroshop::CartError Cart::add(const std::string& user_id, const std::string& lis
     if(listing_obj.contains("seller_id")) {
         seller_id = listing_obj["seller_id"].get<std::string>();
         if(seller_id == user_id) {
-            neroshop::print("You can't add your own listings to your cart lol", 1); 
+            neroshop::log_error("You can't add your own listings to your cart lol"); 
             return CartError::SellerAddOwnItem;
         }
     }
@@ -150,14 +150,14 @@ neroshop::CartError Cart::add(const std::string& user_id, const std::string& lis
     std::string cart_id = database->get_text_params("SELECT uuid FROM cart WHERE user_id = $1", { user_id });//std::cout << "cart_uuid: " << cart_id << std::endl;
     // Cart is full - exit function
     if(is_full()) { 
-        neroshop::print("Cart is full", 1); 
+        neroshop::log_error("Cart is full"); 
         return CartError::Full;
     }
     // Out of stock - exit function
     // TODO: get listing quantity from DHT
     int stock_available = (!listing_obj.contains("quantity")) ? 0 : listing_obj["quantity"].get<int>();////database->get_integer_params("SELECT quantity FROM listings WHERE listing_key = $1 AND quantity > 0", { listing_key });
     if(stock_available == 0) {
-        neroshop::print(item_name + " is out of stock", 1); 
+        neroshop::log_error(item_name + " is out of stock"); 
         return CartError::ItemOutOfStock;
     }
     //-------------------------------
@@ -168,12 +168,12 @@ neroshop::CartError Cart::add(const std::string& user_id, const std::string& lis
     int item_qty = database->get_integer_params("SELECT quantity FROM cart_item WHERE cart_id = $1 AND listing_key = $2", { cart_id, listing_key });
     // If item quantity surpasses the amount in stock, set item quantity to the amount in stock
     if((item_qty + quantity) > stock_available) {
-        neroshop::print("Only " + std::to_string(stock_available) + " " + item_name + "s left in stock", 1);
+        neroshop::log_error("Only " + std::to_string(stock_available) + " " + item_name + "s left in stock");
         int remainder = (stock_available - item_qty);
         if(remainder == 0) return CartError::ItemQuantitySurpassed; // If zero then there's no more that you can add to the cart
         quantity = item_qty + remainder; // Increase item quantity by whatever is left of the stock available
         database->execute_params("UPDATE cart_item SET quantity = $1 WHERE cart_id = $2 AND listing_key = $3", { std::to_string(quantity), cart_id, listing_key });
-        neroshop::print(std::string("Already in cart: ") + item_name + " +" + std::to_string(remainder) + " (" + std::to_string(quantity) + ")", 3);
+        neroshop::log_info(std::string("Already in cart: ") + item_name + " +" + std::to_string(remainder) + " (" + std::to_string(quantity) + ")");
         contents[listing_index].quantity = quantity; print_cart(); 
         return CartError::Ok; // exit function since item_qty has surpassed the amount in stock
     }
@@ -182,12 +182,12 @@ neroshop::CartError Cart::add(const std::string& user_id, const std::string& lis
     // Adjust the quantity so it can fit into the cart
     // Example: 100-10=90 (max_quantity-cart_qty=quantity)(you need at least a quantity of 90 to fit everything into the cart)
     int cart_qty = database->get_integer_params("SELECT SUM(quantity) FROM cart_item WHERE cart_id = $1", { cart_id });
-    if((cart_qty + quantity) > max_quantity) quantity = max_quantity - cart_qty;////neroshop::print(std::string("\033[0;33m") + std::string("Cart is full (max_quantity (") + std::to_string(max_quantity) + ") has been reached)\033[0m"); }
+    if((cart_qty + quantity) > max_quantity) quantity = max_quantity - cart_qty;////neroshop::log_error(std::string("\033[0;33m") + std::string("Cart is full (max_quantity (") + std::to_string(max_quantity) + ") has been reached)\033[0m"); }
     // If item is already in the cart, just update the quantity and exit the function
     if(in_cart(listing_key) && quantity > 0) {
         int new_quantity = item_qty + quantity;
         database->execute_params("UPDATE cart_item SET quantity = $1 WHERE cart_id = $2 AND listing_key = $3", { std::to_string(new_quantity), cart_id, listing_key });
-        neroshop::print(std::string("Already in cart: ") + item_name + " +" + std::to_string(quantity) + " (" + std::to_string(new_quantity) + ")", 3);
+        neroshop::log_info(std::string("Already in cart: ") + item_name + " +" + std::to_string(quantity) + " (" + std::to_string(new_quantity) + ")");
         contents[listing_index].quantity = new_quantity; print_cart(); 
         return CartError::Ok;
     }
@@ -196,7 +196,7 @@ neroshop::CartError Cart::add(const std::string& user_id, const std::string& lis
                              "VALUES ($1, $2, $3, $4)", 
     { cart_id, listing_key, std::to_string(quantity), seller_id });
     contents.emplace_back(CartItem{listing_key, static_cast<unsigned int>(quantity), seller_id}); // Save in memory as well
-    neroshop::print(item_name + " (" + std::to_string(quantity) + ") added to cart", 3);
+    neroshop::log_info(item_name + " (" + std::to_string(quantity) + ") added to cart");
     print_cart();
     return CartError::Ok;
 }
@@ -208,7 +208,7 @@ void Cart::remove(const std::string& user_id, const std::string& listing_key, in
 }
 ////////////////////
 void Cart::empty() {
-    if(id.empty()) { neroshop::print("No cart found", 1); return; }
+    if(id.empty()) { neroshop::log_error("No cart found"); return; }
     neroshop::db::Sqlite3 * database = neroshop::get_user_database();
     if(!database) throw std::runtime_error("database is NULL");
     database->execute_params("DELETE FROM cart_item WHERE cart_id = $1;", { this->id });

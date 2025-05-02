@@ -86,5 +86,10 @@ endif()
 add_library(${i2pd_daemon_target} STATIC ${i2pd_daemon_srcs})
 target_include_directories(${i2pd_daemon_target} PUBLIC i2pd/daemon/ i2pd/i18n/ i2pd/libi2pd/ i2pd/libi2pd_client/)
 
+set(fmt_target "fmt")
+set(fmt_srcs fmt/src/format.cc fmt/src/os.cc)
+add_library(${fmt_target} STATIC ${fmt_srcs})
+target_include_directories(${fmt_target} PUBLIC fmt/include/)
+
 # cmake .
 # make -j$(nproc)

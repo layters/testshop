@@ -16,3 +16,6 @@
 [submodule "external/i2pd"]
 	path = external/i2pd
 	url = https://github.com/PurpleI2P/i2pd.git
+[submodule "external/fmt"]
+	path = external/fmt
+	url = https://github.com/fmtlib/fmt.git
