@@ -122,7 +122,7 @@ void Seller::delist_item(const std::string& listing_key) {
     // Parse the response
     nlohmann::json json = nlohmann::json::parse(response);
     if(json.contains("error")) {
-        neroshop::print("delist_item: key is lost or missing from DHT", 1);
+        neroshop::log_error("delist_item: key is lost or missing from DHT");
         return; // Key is lost or missing from DHT, return
     }    
     
@@ -137,14 +137,14 @@ void Seller::delist_item(const std::string& listing_key) {
         // Verify ownership
         std::string seller_id = value_obj["seller_id"].get<std::string>();
         if(seller_id != wallet->get_primary_address()) {
-            neroshop::print("delist_item: you cannot delist this since you are not the listing's creator", 1);
+            neroshop::log_error("delist_item: you cannot delist this since you are not the listing's creator");
             return;
         }
         // Verify with the signature
         std::string listing_id = value_obj["id"].get<std::string>();
         std::string old_signature = value_obj["signature"].get<std::string>();
         bool self_verified = wallet->verify_message(listing_id, old_signature);
-        if(!self_verified) { neroshop::print("Data verification failed.", 1); return; }
+        if(!self_verified) { neroshop::log_error("Data verification failed."); return; }
         // Remove listing from database
         client->remove(listing_key, response);
         std::cout << "Received response (remove): " << response << "\n";
@@ -167,7 +167,7 @@ void Seller::load_customer_orders() {
     // get all order_items
     int customer_order_item_count = db.get_column_integer("order_item", "COUNT(*)", "seller_id = " + get_id());
     //std::cout << "number of items that customers have ordered from you: " << customer_order_item_count << std::endl;
-    if(customer_order_item_count < 1) neroshop::print("No buyer has ordered an item from you yet");
+    if(customer_order_item_count < 1) neroshop::log_error("No buyer has ordered an item from you yet");
     if(customer_order_item_count > 0) {
         for(unsigned int i = 1; i <= last_order_item; i++) {
             //if order_item's order_id is duplicated, then it means there are multiple unique items in the order
@@ -178,7 +178,7 @@ void Seller::load_customer_orders() {
             // store order_ids if not already stored
             if(std::find(customer_order_list.begin(), customer_order_list.end(), order_id) == customer_order_list.end()) {
                 customer_order_list.push_back(order_id); //Order * order = new Order(order_id);//customer_order_list.push_back(order);
-                neroshop::print("Customer order (id: " + std::to_string(order_id) + ") has been loaded");
+                neroshop::log_error("Customer order (id: " + std::to_string(order_id) + ") has been loaded");
             }
             // get items in the order_item table
             const std::string& product_id = db.get_column_integer("order_item", "product_id", "id = " + std::to_string(i) + " AND seller_id = " + get_id());
@@ -198,13 +198,13 @@ void Seller::load_customer_orders() {
     ////////////////////////////////
     // get number of order_items to be purchased by customers from this particular seller
     int seller_customer_order_item_count = database->get_integer_params("SELECT COUNT(*) FROM order_item WHERE seller_id = $1", { get_id() });
-    if(seller_customer_order_item_count < 1) {neroshop::print("No buyer has ordered an item from you yet"); return;}    
+    if(seller_customer_order_item_count < 1) {neroshop::log_error("No buyer has ordered an item from you yet"); return;}    
     // load customer orders
     std::string command = "SELECT order_id FROM order_item WHERE seller_id = $1 ORDER BY order_id";
     std::vector<const char *> param_values = { get_id().c_str() };
     PGresult * result = PQexecParams(database->get_handle(), command.c_str(), 1, nullptr, param_values.data(), nullptr, nullptr, 0);
     if (PQresultStatus(result) != PGRES_TUPLES_OK) {
-        neroshop::print("Seller::load_customer_orders(): No customer orders found", 2);        
+        neroshop::log_debug("Seller::load_customer_orders(): No customer orders found");        
         PQclear(result);
         //exit(1);
         return; // exit so we don't double free "result"
@@ -215,7 +215,7 @@ void Seller::load_customer_orders() {
         // store order_ids if not already stored
         if(std::find(customer_order_list.begin(), customer_order_list.end(), order_id) == customer_order_list.end()) {
             customer_order_list.push_back(order_id); //Order * order = new Order(order_id);//customer_order_list.push_back(order);
-            neroshop::print("Customer order (id: " + std::to_string(order_id) + ") has been loaded");
+            neroshop::log_info("Customer order (id: " + std::to_string(order_id) + ") has been loaded");
         }       
         /*#ifdef NEROSHOP_DEBUG0
             // get items in the order_item table
@@ -242,7 +242,7 @@ void Seller::update_customer_orders() { // this function is faster (I think) tha
     std::vector<const char *> param_values = { get_id().c_str() };
     PGresult * result = PQexecParams(database->get_handle(), command.c_str(), 1, nullptr, param_values.data(), nullptr, nullptr, 0);
     if (PQresultStatus(result) != PGRES_TUPLES_OK) {
-        neroshop::print("Seller::update_customer_orders(): No customer orders found", 2);        
+        neroshop::log_debug("Seller::update_customer_orders(): No customer orders found");        
         PQclear(result);
         //exit(1);
         return; // exit so we don't double free "result" or double close the database
@@ -284,14 +284,14 @@ void Seller::update_customer_orders() { // this function is faster (I think) tha
                 //[supply address] [generate]
                 // if no, then seller must supply a unique subaddress
                 ////if(!monero_utils::is_valid_address(random_subaddress, monero_network_type::STAGENET)) {
-                //    neroshop::print(random_subaddress + " is not a valid address", 1);
+                //    neroshop::log_error(random_subaddress + " is not a valid address");
                 //}             
                 // if yes then a unique subaddress will be generated from your wallet for receiving funds from the customer
                 // if user chooses to generate a unique subaddress:
                 if(has_wallet_synced()) {
                     std::string subaddress;
                     on_order_received(subaddress);
-                    neroshop::print("generated unique subaddress: " + subaddress);
+                    neroshop::log_info("generated unique subaddress: " + subaddress);
                     // add the address to the seller's address book so they know which order the address belongs
                     ////wallet->address_book_add(subaddress, "For customer order with id: " + std::to_string(customer_order_id));
                 }
@@ -326,7 +326,7 @@ void Seller::set_stock_quantity(const std::string& listing_key, int quantity) {
     // Parse the response
     nlohmann::json json = nlohmann::json::parse(response);
     if(json.contains("error")) {
-        neroshop::print("set_stock_quantity: key is lost or missing from DHT", 1);
+        neroshop::log_error("set_stock_quantity: key is lost or missing from DHT");
         return; // Key is lost or missing from DHT, return 
     }    
     
@@ -341,14 +341,14 @@ void Seller::set_stock_quantity(const std::string& listing_key, int quantity) {
         // Verify ownership of the data (listing)
         std::string seller_id = value_obj["seller_id"].get<std::string>();
         if(seller_id != wallet->get_primary_address()) {
-            neroshop::print("set_stock_quantity: you cannot modify this listing since you are not the listing's creator", 1);
+            neroshop::log_error("set_stock_quantity: you cannot modify this listing since you are not the listing's creator");
             return;
         }
         // Verify the signature
         std::string listing_id = value_obj["id"].get<std::string>();
         std::string old_signature = value_obj["signature"].get<std::string>();
         bool self_verified = wallet->verify_message(listing_id, old_signature);
-        if(!self_verified) { neroshop::print("Data verification failed.", 1); return; }
+        if(!self_verified) { neroshop::log_error("Data verification failed."); return; }
         // Finally, modify the quantity
         value_obj["quantity"] = quantity;
         // Re-sign to reflect the modification
@@ -467,7 +467,7 @@ std::vector<unsigned int> Seller::get_top_rated_sellers(unsigned int limit) {
     std::vector<const char *> param_values = { std::to_string(limit).c_str() };
     PGresult * result = PQexecParams(database->get_handle(), command.c_str(), 1, nullptr, param_values.data(), nullptr, nullptr, 0);
     if (PQresultStatus(result) != PGRES_TUPLES_OK) {
-        neroshop::print("Seller::get_top_rated_sellers(): No sellers found", 2);        
+        neroshop::log_debug("Seller::get_top_rated_sellers(): No sellers found");        
         PQclear(result);
         return {}; // exit so that we don't double free "result"
     }
@@ -597,7 +597,7 @@ unsigned int Seller::get_units_sold(const neroshop::Product& item) const {
 ////////////////////
 double Seller::get_sales_profit() const {
 #if defined(NEROSHOP_USE_POSTGRESQL)
-    double profit_from_sales = database->get_real_params("SELECT SUM(item_price * item_qty) FROM order_item WHERE seller_id = $1;", { get_id() });//neroshop::print("The overall profit made from all sales combined is: $" + std::to_string(profit_from_sales), 3);
+    double profit_from_sales = database->get_real_params("SELECT SUM(item_price * item_qty) FROM order_item WHERE seller_id = $1;", { get_id() });//neroshop::log_info("The overall profit made from all sales combined is: $" + std::to_string(profit_from_sales));
     return profit_from_sales;
 #endif    
     return 0.0;
@@ -605,7 +605,7 @@ double Seller::get_sales_profit() const {
 ////////////////////
 double Seller::get_profits_made(const std::string& product_id) const {
 #if defined(NEROSHOP_USE_POSTGRESQL)
-    double item_profits = database->get_real_params("SELECT SUM(item_price * item_qty) FROM order_item WHERE product_id = $1 AND seller_id = $2;", { product_id, get_id() });//std::string item_name = database->get_text_params("SELECT name FROM item WHERE id = $1", { product_id });neroshop::print("The overall profit made from \"" + item_name + "\" is: $" + std::to_string(item_profits), 3);
+    double item_profits = database->get_real_params("SELECT SUM(item_price * item_qty) FROM order_item WHERE product_id = $1 AND seller_id = $2;", { product_id, get_id() });//std::string item_name = database->get_text_params("SELECT name FROM item WHERE id = $1", { product_id });neroshop::log_info("The overall profit made from \"" + item_name + "\" is: $" + std::to_string(item_profits));
     return item_profits;
 #endif    
     return 0.0;
@@ -621,7 +621,7 @@ unsigned int Seller::get_product_id_with_most_sales() const { // this function i
     int item_with_biggest_qty = database->get_integer_params("SELECT product_id FROM order_item WHERE seller_id = $1 GROUP BY product_id ORDER BY SUM(item_qty) DESC LIMIT 1;", { get_id() }); // from the biggest to smallest sum of item_qty
 #ifdef NEROSHOP_DEBUG
     std::string item_name = database->get_text_params("SELECT name FROM item WHERE id = $1", { std::to_string(item_with_biggest_qty) });
-    neroshop::print("\"" + item_name + "\" is your best-selling item with a sale of " + std::to_string(get_units_sold(item_with_biggest_qty)) + " units", 3);
+    neroshop::log_info("\"" + item_name + "\" is your best-selling item with a sale of " + std::to_string(get_units_sold(item_with_biggest_qty)) + " units");
 #endif    
     return item_with_biggest_qty;
 #endif
@@ -635,7 +635,7 @@ unsigned int Seller::get_product_id_with_most_orders() const {
 #ifdef NEROSHOP_DEBUG
     std::string item_name = database->get_text_params("SELECT name FROM item WHERE id = $1", { std::to_string(item_with_most_occurrences) });
     int times_occured = database->get_integer_params("SELECT COUNT(*) FROM order_item WHERE product_id = $1 AND seller_id = $2;", { std::to_string(item_with_most_occurrences), get_id() });
-    neroshop::print("\"" + item_name + "\" is your most ordered item occuring a total of " + std::to_string(times_occured) + " times in all orders", 2);
+    neroshop::log_info("\"" + item_name + "\" is your most ordered item occuring a total of " + std::to_string(times_occured) + " times in all orders");
 #endif    
     return item_with_most_occurrences;
 #endif
@@ -680,7 +680,7 @@ bool Seller::has_stock(const neroshop::Product& item) const {
 neroshop::User * Seller::on_login(const neroshop::Wallet& wallet) { // assumes user data already exists in database
     std::string monero_primary_address = wallet.get_primary_address();
     if(!wallet.is_valid_address(monero_primary_address)) {
-        neroshop::print("Invalid monero address");
+        neroshop::log_error("Invalid monero address");
         return nullptr;
     }
     // create a new user (seller)

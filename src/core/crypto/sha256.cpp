@@ -14,17 +14,17 @@ namespace crypto {
 std::string sha256(const std::string& plain_text) {
     // EVP (recommended over legacy "SHA256_" functions which are deprecated in OpenSSL 3.0)
     EVP_MD_CTX * context = EVP_MD_CTX_new();
-    if(context == nullptr) { neroshop::print("EVP_MD_CTX_new failed", 1); return ""; }
+    if(context == nullptr) { neroshop::log_error("EVP_MD_CTX_new failed"); return ""; }
     
     if(EVP_DigestInit_ex(context, EVP_sha256(), nullptr) != 1) {
         EVP_MD_CTX_free(context);
-        neroshop::print(ERR_error_string(ERR_get_error(), nullptr), 1);
+        neroshop::log_error(ERR_error_string(ERR_get_error(), nullptr));
         return "";
     }
     
     if(EVP_DigestUpdate(context, plain_text.c_str(), plain_text.length()) != 1) {
         EVP_MD_CTX_free(context);
-        neroshop::print(ERR_error_string(ERR_get_error(), nullptr), 1);
+        neroshop::log_error(ERR_error_string(ERR_get_error(), nullptr));
         return "";
     }
     
@@ -32,7 +32,7 @@ std::string sha256(const std::string& plain_text) {
     unsigned int length = 0;
     if(EVP_DigestFinal_ex(context, digest, &length) != 1) {
         EVP_MD_CTX_free(context);
-        neroshop::print(ERR_error_string(ERR_get_error(), nullptr), 1);
+        neroshop::log_error(ERR_error_string(ERR_get_error(), nullptr));
         return "";
     }
     

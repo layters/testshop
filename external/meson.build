@@ -78,6 +78,12 @@ i2pd_daemon_lib = static_library(i2pd_daemon, i2pd_daemon_srcs,
     cpp_args: i2pd_daemon_cpp_args + ['-DOPENSSL_SUPPRESS_DEPRECATED']
 )
 
+fmt = 'fmt'
+fmt_srcs = ['fmt/src/format.cc', 'fmt/src/os.cc']
+fmt_lib = static_library(fmt, fmt_srcs,
+    include_directories: 'fmt/include/'
+)
+
 # meson setup --reconfigure ../build
 # cd ../build
 # meson compile

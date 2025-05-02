@@ -68,7 +68,7 @@ static nlohmann::json get_listing_object(const std::string& listing_key) {
 void Order::create_order(const neroshop::Cart& cart, const std::string& shipping_address) {
     // Transition from Sqlite to DHT:
     if(cart.is_empty()) {
-        neroshop::print("You are unable to place an order because your cart is empty", 1);
+        neroshop::log_error("You are unable to place an order because your cart is empty");
         return;
     }
     //----------------------------------------------------------------------------
@@ -83,20 +83,20 @@ void Order::create_order(const neroshop::Cart& cart, const std::string& shipping
         if(listing_obj.contains("metadata")) {
             if(!listing_obj.contains("metadata")) { std::cout << "No metadata found"; return; }
             std::string metadata = listing_obj["metadata"].get<std::string>();
-            if(metadata != "listing") { neroshop::print("Invalid metadata\n", 1); return; }
+            if(metadata != "listing") { neroshop::log_error("Invalid metadata\n"); return; }
             listing_cache.insert({listing_key, listing_obj});
             std::string product_name = listing_obj["product"]["name"].get<std::string>();
         
             // Make sure there is a seller for the item
             if(seller_id.empty()) {
-                neroshop::print("No seller found for the following item: " + product_name, 1);
+                neroshop::log_error("No seller found for the following item: " + product_name);
                 // TODO: Remove this item from cart
                 return;
             }
             
             // Prevent customer from purchasing their own products
             if(cart.owner_id == seller_id) {
-                neroshop::print("You cannot order from yourself", 1);
+                neroshop::log_error("You cannot order from yourself");
                 return;
             }
             
@@ -106,7 +106,7 @@ void Order::create_order(const neroshop::Cart& cart, const std::string& shipping
             }
             // Compare the seller ID with the seller ID of the first item
             if (seller_id != first_seller_id) {
-                ////neroshop::print("You cannot order items from different sellers in a single order", 1);
+                ////neroshop::log_error("You cannot order items from different sellers in a single order");
                 // TODO: Switch to batch mode (create order in batches)
                 std::cout << "Order contains items from different sellers.\n\033[1;35mSwitching to batch mode\033[0m\n";
                 create_order_batch(cart, shipping_address);
@@ -126,11 +126,11 @@ void Order::create_order(const neroshop::Cart& cart, const std::string& shipping
             // Check again to see if item is still in stock
             int quantity = listing_obj["quantity"].get<int>();
             if(quantity < listing_qty) {
-                neroshop::print("Order request failed (Reason: Quantity has surpassed the stock available for the following item: " + product_name + ")");
+                neroshop::log_error("Order request failed (Reason: Quantity has surpassed the stock available for the following item: " + product_name + ")");
                 return;
             }
             if(quantity <= 0) {
-                neroshop::print("Order request failed (Reason: The following item is out of stock: " + listing_obj["product"]["name"].get<std::string>() + ")");
+                neroshop::log_error("Order request failed (Reason: The following item is out of stock: " + listing_obj["product"]["name"].get<std::string>() + ")");
                 return;
             }
             
@@ -191,8 +191,8 @@ void Order::create_order(const neroshop::Cart& cart, const std::string& shipping
     std::cout << "Received response: " << response << "\n";
     //----------------------------------------------------------------------------
     // Print order message
-    neroshop::print("Thank you for using neroshop.");
-    neroshop::io_write("You have ordered: ");
+    neroshop::log_info("Thank you for using neroshop.");
+    neroshop::log_info("You have ordered: ");
     for (const auto& [listing_key, listing_qty, seller_id] : cart.contents) {
         nlohmann::json listing_obj = listing_cache.at(listing_key);
         std::string product_name = listing_obj["product"]["name"].get<std::string>();
@@ -202,7 +202,7 @@ void Order::create_order(const neroshop::Cart& cart, const std::string& shipping
     nlohmann::json json = nlohmann::json::parse(neroshop::load_json(), nullptr, false); // allow_exceptions set to false
     std::string your_currency = (json.is_discarded()) ? "USD" : json["preferred_currency"].get<std::string>();
     if(your_currency.empty() || !neroshop::Converter::is_supported_currency(your_currency)) your_currency = "USD"; // default //neroshop::Converter::from_xmr(neroshop::Converter::to_xmr(, currency), your_currency);
-    neroshop::print("Sit tight as we notify the seller(s) about your order.");
+    neroshop::log_info("Sit tight as we notify the seller(s) about your order.");
     auto from = Converter::get_currency_enum(currency);
     auto to = Converter::get_currency_enum(your_currency);
     std::cout << "Subtotal: " << std::fixed << std::setprecision(12) << subtotal_monero << " xmr" << std::fixed << std::setprecision(2) << " (" << neroshop::Converter::get_currency_sign(your_currency) << (neroshop::Converter::get_price(from, to) * subtotal) << " " << neroshop::string::upper(your_currency) << ")" <<  std::endl; // (() ? : "")
@@ -217,7 +217,7 @@ void Order::create_order(const neroshop::Cart& cart, const std::string& shipping
 ////////////////////
 void Order::create_order_batch(const neroshop::Cart& cart, const std::string& shipping_address) {
     if(cart.is_empty()) {
-        neroshop::print("You are unable to place an order because your cart is empty", 1);
+        neroshop::log_error("You are unable to place an order because your cart is empty");
         return;
     }
     //----------------------------------------------------------------------------
@@ -254,7 +254,7 @@ void Order::create_order_batch(const neroshop::Cart& cart, const std::string& sh
             nlohmann::json listing_obj = get_listing_object(listing_key);
             if(!listing_obj.contains("metadata")) { std::cout << "No metadata found"; return; }
             std::string metadata = listing_obj["metadata"].get<std::string>();
-            if(metadata != "listing") { neroshop::print("Invalid metadata\n", 1); return; }
+            if(metadata != "listing") { neroshop::log_error("Invalid metadata\n"); return; }
             listing_cache.insert({listing_key, listing_obj});
             // Get product name
             std::string product_name = listing_obj["product"]["name"].get<std::string>();
@@ -272,11 +272,11 @@ void Order::create_order_batch(const neroshop::Cart& cart, const std::string& sh
             // Check again to see if item is still in stock
             int quantity = listing_obj["quantity"].get<int>();
             if(quantity < listing_qty) {
-                neroshop::print("Order request failed (Reason: Quantity has surpassed the stock available for the following item: " + product_name + ")");
+                neroshop::log_error("Order request failed (Reason: Quantity has surpassed the stock available for the following item: " + product_name + ")");
                 return;
             }
             if(quantity <= 0) {
-                neroshop::print("Order request failed (Reason: The following item is out of stock: " + listing_obj["product"]["name"].get<std::string>() + ")");
+                neroshop::log_error("Order request failed (Reason: The following item is out of stock: " + listing_obj["product"]["name"].get<std::string>() + ")");
                 return;
             }
             
@@ -340,8 +340,8 @@ void Order::create_order_batch(const neroshop::Cart& cart, const std::string& sh
         std::cout << "Received response: " << response << "\n";
         //----------------------------------------------------------------------------
         // Print order message
-        neroshop::print("Thank you for using neroshop.");
-        neroshop::io_write("You have ordered: ");
+        neroshop::log_info("Thank you for using neroshop.");
+        neroshop::log_info("You have ordered: ");
         for (const auto& [listing_key, listing_qty, seller_id] : cart.contents) {
             nlohmann::json listing_obj = listing_cache.at(listing_key);
             std::string product_name = listing_obj["product"]["name"].get<std::string>();
@@ -351,7 +351,7 @@ void Order::create_order_batch(const neroshop::Cart& cart, const std::string& sh
         nlohmann::json json = nlohmann::json::parse(neroshop::load_json(), nullptr, false); // allow_exceptions set to false
         std::string your_currency = (json.is_discarded()) ? "USD" : json["preferred_currency"].get<std::string>();
         if(your_currency.empty() || !neroshop::Converter::is_supported_currency(your_currency)) your_currency = "USD"; // default //neroshop::Converter::from_xmr(neroshop::Converter::to_xmr(, currency), your_currency);
-        neroshop::print("Sit tight as we notify the seller(s) about your order.");
+        neroshop::log_info("Sit tight as we notify the seller(s) about your order.");
         auto from = Converter::get_currency_enum(currency);
         auto to = Converter::get_currency_enum(your_currency);
         std::cout << "Subtotal: " << std::fixed << std::setprecision(12) << subtotal_monero << " xmr" << std::fixed << std::setprecision(2) << " (" << neroshop::Converter::get_currency_sign(your_currency) << (neroshop::Converter::get_price(from, to) * order.subtotal) << " " << neroshop::string::upper(your_currency) << ")" <<  std::endl; // (() ? : "")

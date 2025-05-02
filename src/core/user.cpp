@@ -66,12 +66,12 @@ void User::rate_seller(const std::string& seller_id, int score, const std::strin
     sqlite3_stmt * stmt = nullptr;
 
     if(sqlite3_prepare_v2(database->get_handle(), command.c_str(), -1, &stmt, nullptr) != SQLITE_OK) {
-        neroshop::print("sqlite3_prepare_v2: " + std::string(sqlite3_errmsg(database->get_handle())), 1);
+        neroshop::log_error("sqlite3_prepare_v2: " + std::string(sqlite3_errmsg(database->get_handle())));
         return;
     }
     
     if(sqlite3_bind_text(stmt, 1, seller_id.c_str(), seller_id.length(), SQLITE_STATIC) != SQLITE_OK) {
-        neroshop::print("sqlite3_bind_text: " + std::string(sqlite3_errmsg(database->get_handle())), 1);
+        neroshop::log_error("sqlite3_bind_text: " + std::string(sqlite3_errmsg(database->get_handle())));
         sqlite3_finalize(stmt);
         return;
     }
@@ -111,7 +111,7 @@ void User::rate_seller(const std::string& seller_id, int score, const std::strin
                     std::string old_comments = value_obj["comments"].get<std::string>();
                     std::string old_signature = value_obj["signature"].get<std::string>();
                     bool self_verified = wallet->verify_message(old_comments, old_signature);
-                    if(!self_verified) { neroshop::print("Data verification failed.", 1); return; }
+                    if(!self_verified) { neroshop::log_error("Data verification failed."); return; }
                     // Modify/Update the seller rating and re-signed to reflect the modification
                     value_obj["comments"] = comments;
                     value_obj["score"] = score;
@@ -161,12 +161,12 @@ void User::rate_item(const std::string& product_id, int stars, const std::string
     sqlite3_stmt * stmt = nullptr;
 
     if(sqlite3_prepare_v2(database->get_handle(), command.c_str(), -1, &stmt, nullptr) != SQLITE_OK) {
-        neroshop::print("sqlite3_prepare_v2: " + std::string(sqlite3_errmsg(database->get_handle())), 1);
+        neroshop::log_error("sqlite3_prepare_v2: " + std::string(sqlite3_errmsg(database->get_handle())));
         return;
     }
     
     if(sqlite3_bind_text(stmt, 1, product_id.c_str(), product_id.length(), SQLITE_STATIC) != SQLITE_OK) {
-        neroshop::print("sqlite3_bind_text: " + std::string(sqlite3_errmsg(database->get_handle())), 1);
+        neroshop::log_error("sqlite3_bind_text: " + std::string(sqlite3_errmsg(database->get_handle())));
         sqlite3_finalize(stmt);
         return;
     }
@@ -206,7 +206,7 @@ void User::rate_item(const std::string& product_id, int stars, const std::string
                     std::string old_comments = value_obj["comments"].get<std::string>();
                     std::string old_signature = value_obj["signature"].get<std::string>();
                     bool self_verified = wallet->verify_message(old_comments, old_signature);
-                    if(!self_verified) { neroshop::print("Data verification failed.", 1); return; }
+                    if(!self_verified) { neroshop::log_error("Data verification failed."); return; }
                     // Modify/Update the product rating and re-signed to reflect the modification
                     value_obj["comments"] = comments;
                     value_obj["stars"] = stars;
@@ -292,17 +292,17 @@ void User::add_to_favorites(const std::string& listing_key) {
 
     // check if item is already in favorites so that we do not add the same item more than once
     bool favorited = database->get_integer_params("SELECT EXISTS(SELECT listing_key FROM favorites WHERE listing_key = ?1 AND user_id = ?2)", { listing_key, this->id });
-    if(favorited) { neroshop::print("\"" + listing_key + "\" is already in your favorites", 2); return; }
+    if(favorited) { neroshop::log_warn("\"" + listing_key + "\" is already in your favorites"); return; }
     // add item to favorites
     int rescode = database->execute_params("INSERT INTO favorites (user_id, listing_key) VALUES (?1, ?2);", { this->id, listing_key });
     if(rescode != SQLITE_OK) {
-        neroshop::print("failed to add item to favorites", 1);
+        neroshop::log_error("failed to add item to favorites");
         return;
     }
     // store in memory as well
     favorites.push_back(listing_key);
     if(std::find(favorites.begin(), favorites.end(), listing_key) != favorites.end()) {
-        neroshop::print("\"" + listing_key + "\" has been added to your favorites", 3);
+        neroshop::log_info("\"" + listing_key + "\" has been added to your favorites");
     }
 }
 ////////////////////
@@ -314,20 +314,20 @@ void User::remove_from_favorites(const std::string& listing_key) {
     if(!favorited) {
         auto it = std::find(favorites.begin(), favorites.end(), listing_key);
         if (it != favorites.end()) { favorites.erase(it); } // remove from vector if found in-memory, but not found in database
-        neroshop::print("\"" + listing_key + "\" is not in your favorites", 2);
+        neroshop::log_warn("\"" + listing_key + "\" is not in your favorites");
         return;
     }
     // remove item from favorites (database)
     int rescode = database->execute_params("DELETE FROM favorites WHERE listing_key = ?1 AND user_id = ?2;", { listing_key, this->id });
     if (rescode != SQLITE_OK) {
-        neroshop::print("failed to remove item from favorites", 1);
+        neroshop::log_error("failed to remove item from favorites");
         return;
     }
     // remove from vector as well
     auto it = std::find(favorites.begin(), favorites.end(), listing_key);
     if (it != favorites.end()) {
         favorites.erase(it);
-        if(std::find(favorites.begin(), favorites.end(), listing_key) == favorites.end()) neroshop::print("\"" + listing_key + "\" has been removed from your favorites", 1); // confirm that item has been removed from favorites
+        if(std::find(favorites.begin(), favorites.end(), listing_key) == favorites.end()) neroshop::log_info("\"" + listing_key + "\" has been removed from your favorites"); // confirm that item has been removed from favorites
     }
 }
 ////////////////////
@@ -340,12 +340,12 @@ void User::clear_favorites() {
     // clear all items from favorites
     int rescode = database->execute_params("DELETE FROM favorites WHERE user_id = ?1", { this->id });
     if (rescode != SQLITE_OK) {
-        neroshop::print("failed to clear favorites", 1);
+        neroshop::log_error("failed to clear favorites");
         return;
     }
     // clear favorites from vector as well
     favorites.clear();
-    if(favorites.empty()) neroshop::print("your favorites have been cleared"); // confirm that favorites has been cleared
+    if(favorites.empty()) neroshop::log_info("your favorites have been cleared"); // confirm that favorites has been cleared
 }
 ////////////////////
 void User::load_favorites() {
@@ -355,12 +355,12 @@ void User::load_favorites() {
     sqlite3_stmt * stmt = nullptr;
     // Prepare (compile) statement
     if(sqlite3_prepare_v2(database->get_handle(), command.c_str(), -1, &stmt, nullptr) != SQLITE_OK) {
-        neroshop::print("sqlite3_prepare_v2: " + std::string(sqlite3_errmsg(database->get_handle())), 1);
+        neroshop::log_error("sqlite3_prepare_v2: " + std::string(sqlite3_errmsg(database->get_handle())));
         return;
     }
     // Bind this->id to first argument
     if(sqlite3_bind_text(stmt, 1, this->id.c_str(), this->id.length(), SQLITE_STATIC) != SQLITE_OK) {
-        neroshop::print("sqlite3_bind_text (arg: 1): " + std::string(sqlite3_errmsg(database->get_handle())), 1);
+        neroshop::log_error("sqlite3_bind_text (arg: 1): " + std::string(sqlite3_errmsg(database->get_handle())));
         sqlite3_finalize(stmt);
         return;
     }    
@@ -371,7 +371,7 @@ void User::load_favorites() {
             if(listing_key == "NULL") continue; // Skip invalid columns            
             favorites.push_back(listing_key); // store favorited listings for later use
             if(std::find(favorites.begin(), favorites.end(), listing_key) != favorites.end()) {
-                neroshop::print("Favorited item (" + listing_key + ") has been loaded");
+                neroshop::log_debug("Favorited item (" + listing_key + ") has been loaded");
             }
         }
     }
@@ -413,7 +413,7 @@ void User::delete_avatar() {
 ////////////////////
 void User::send_message(const std::string& recipient_id, const std::string& content, const std::string& public_key) {
     if(recipient_id == this->id) {
-        neroshop::print("You cannot message yourself", 1);
+        neroshop::log_error("You cannot message yourself");
         return;
     }
     
@@ -438,7 +438,7 @@ void User::send_message(const std::string& recipient_id, const std::string& cont
     // Encrypt message
     std::string message_encrypted = neroshop::crypto::rsa_public_encrypt(public_key, content);//std::cout << "message (encrypted): " << message_encrypted << std::endl;
     if(message_encrypted.empty()) {
-        neroshop::print("Error encrypting message", 1);
+        neroshop::log_error("Error encrypting message");
         return;
     }
     
@@ -737,7 +737,7 @@ bool User::has_avatar() const {
 }
 ////////////////////
 ////////////////////
-bool User::has_purchased(const std::string& product_id) { // for registered users only//if(!is_logged()) { neroshop::print("You are not logged in", 2); return false; }
+bool User::has_purchased(const std::string& product_id) { // for registered users only//if(!is_logged()) { neroshop::log_warn("You are not logged in"); return false; }
     return false;
 }
 ////////////////////
@@ -782,7 +782,7 @@ void User::logout() {
     if(this) delete this;//this = nullptr;//fails
     // disconnect from server
     // print message    
-    neroshop::print("You have logged out");
+    neroshop::log_info("You have logged out");
 }
 ////////////////////
 ////////////////////

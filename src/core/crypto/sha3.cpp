@@ -16,22 +16,22 @@ namespace crypto {
 std::string sha3_256(const std::string& plain_text) {
     // EVP (recommended over legacy "SHA256_" functions which are deprecated in OpenSSL 3.0)
     std::unique_ptr<EVP_MD_CTX, decltype(&EVP_MD_CTX_free)> context(EVP_MD_CTX_new(), &EVP_MD_CTX_free);
-    if(context == nullptr) { neroshop::print("EVP_MD_CTX_new failed", 1); return ""; }
+    if(context == nullptr) { neroshop::log_error("EVP_MD_CTX_new failed"); return ""; }
     
     if(EVP_DigestInit_ex(context.get(), EVP_sha3_256(), nullptr) != 1) {
-        neroshop::print(ERR_error_string(ERR_get_error(), nullptr), 1);
+        neroshop::log_error(ERR_error_string(ERR_get_error(), nullptr));
         return "";
     }
     
     if(EVP_DigestUpdate(context.get(), plain_text.c_str(), plain_text.length()) != 1) {
-        neroshop::print(ERR_error_string(ERR_get_error(), nullptr), 1);
+        neroshop::log_error(ERR_error_string(ERR_get_error(), nullptr));
         return "";
     }
     
     std::vector<unsigned char> digest(EVP_MAX_MD_SIZE);
     unsigned int length = 0;
     if(EVP_DigestFinal_ex(context.get(), &digest[0], &length) != 1) {
-        neroshop::print(ERR_error_string(ERR_get_error(), nullptr), 1);
+        neroshop::log_error(ERR_error_string(ERR_get_error(), nullptr));
         return "";
     }
     
@@ -46,22 +46,22 @@ std::string sha3_256(const std::string& plain_text) {
 std::string sha3_512(const std::string& plain_text) {
     // EVP (recommended over legacy "SHA512_" functions which are deprecated in OpenSSL 3.0)
     std::unique_ptr<EVP_MD_CTX, decltype(&EVP_MD_CTX_free)> context(EVP_MD_CTX_new(), &EVP_MD_CTX_free);
-    if(context == nullptr) { neroshop::print("EVP_MD_CTX_new failed", 1); return ""; }
+    if(context == nullptr) { neroshop::log_error("EVP_MD_CTX_new failed"); return ""; }
     
     if(EVP_DigestInit_ex(context.get(), EVP_sha3_512(), nullptr) != 1) {
-        neroshop::print(ERR_error_string(ERR_get_error(), nullptr), 1);
+        neroshop::log_error(ERR_error_string(ERR_get_error(), nullptr));
         return "";
     }
     
     if(EVP_DigestUpdate(context.get(), plain_text.c_str(), plain_text.length()) != 1) {
-        neroshop::print(ERR_error_string(ERR_get_error(), nullptr), 1);
+        neroshop::log_error(ERR_error_string(ERR_get_error(), nullptr));
         return "";
     }
     
     std::vector<unsigned char> digest(EVP_MAX_MD_SIZE);
     unsigned int length = 0;
     if(EVP_DigestFinal_ex(context.get(), &digest[0], &length) != 1) {
-        neroshop::print(ERR_error_string(ERR_get_error(), nullptr), 1);
+        neroshop::log_error(ERR_error_string(ERR_get_error(), nullptr));
         return "";
     }
     

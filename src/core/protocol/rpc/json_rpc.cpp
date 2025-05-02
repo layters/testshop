@@ -54,7 +54,7 @@ std::string json::translate(const std::string& sql) {
 //----------------------------------------------------------------
 std::string json::translate(const std::string& sql, const std::vector<std::string>& args) {
     std::string request = "";
-    assert((get_query_method(sql) != "SELECT", "SELECT statements with arguments are not supported. Please use the non-query functions (e.g. get_*() functions)")); // This is due to a lack of a callback in execute_params which uses sqlite3_prepare, sqlite3_step functions. On the other hand, execute uses sqlite_exec which does have a callback that returns the result from a SELECT statement
+    assert(get_query_method(sql) != "SELECT" && "SELECT statements with arguments are not supported. Please use the non-query functions (e.g. get_*() functions)"); // This is due to a lack of a callback in execute_params which uses sqlite3_prepare, sqlite3_step functions. On the other hand, execute uses sqlite_exec which does have a callback that returns the result from a SELECT statement
     std::string random_id = generate_random_id();
     #if defined(NEROSHOP_USE_QT)
     QJsonObject request_object; // JSON-RPC Request object
@@ -108,7 +108,7 @@ std::string json::process(const std::string& request) {
     QJsonParseError parse_error;
     const auto json_doc = QJsonDocument::fromJson(QString::fromStdString(request).toUtf8(), &parse_error);
     if (parse_error.error != QJsonParseError::NoError) {
-        neroshop::print("Error parsing client request", 1);
+        neroshop::log_error("Error parsing client request");
         response_object.insert(QString("jsonrpc"), QJsonValue("2.0"));
         // "result" MUST NOT exist if there was an error invoking the method
         QJsonObject error_object; // "error" MUST be an Object as defined in section 5.1
@@ -231,7 +231,7 @@ std::string json::process(const std::string& request) {
                 QJsonParseError parse_row_error;
                 QJsonDocument doc = QJsonDocument::fromJson(QString::fromStdString(result).toUtf8(), &parse_row_error);
                 if (parse_row_error.error != QJsonParseError::NoError) {
-                    neroshop::print("Error parsing SELECT rows", 1); return "";
+                    neroshop::log_error("Error parsing SELECT rows"); return "";
                 }
                 // A JSON Document can either be an array or an object
                 assert(/*doc.isObject() || */doc.isArray()); // Should be an array of rows (objects) as objects cannot be looped through but arrays can
@@ -278,7 +278,7 @@ std::string json::process(const std::string& request) {
         request_object = nlohmann::json::parse(request);
     }
     catch(nlohmann::json::parse_error& exception) {
-        neroshop::print("Error parsing client request", 1);
+        neroshop::log_error("Error parsing client request");
         response_object["jsonrpc"] = "2.0";
         response_object["error"]["code"] = -32700; // "code" MUST be an integer
         response_object["error"]["message"] = "Parse error";
@@ -345,7 +345,7 @@ std::string json::process(const std::string& request) {
                 // Create a JSON document from the result string and check for any errors
                 nlohmann::json rows = nlohmann::json::parse(result);
                 if(!nlohmann::json::accept(result)) {
-                    neroshop::print("Error parsing SELECT rows", 1); return "";
+                    neroshop::log_error("Error parsing SELECT rows"); return "";
                 }
                 auto result_value = rows; // Should be an array of rows (objects) as objects cannot be looped through but arrays can
                 response_object["result"] = result_value;

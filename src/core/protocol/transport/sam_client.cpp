@@ -1,6 +1,5 @@
 #include "sam_client.hpp"
 
-#include <map>
 #include <sstream> // std::istringstream
 #include <random> // std::random_device
 #include <algorithm> // std::replace
@@ -81,7 +80,7 @@ SamClient::~SamClient() {
 
 //-----------------------------------------------------------------------------
 
-static std::string read_sam_reply(int sockfd) {
+std::string SamClient::read_sam_reply(int sockfd) {
     std::string line;
     char ch;
     ssize_t n;
@@ -92,8 +91,10 @@ static std::string read_sam_reply(int sockfd) {
     return line;
 }
 
+//-----------------------------------------------------------------------------
+
 // Parse SAM reply into a map of key=value
-static std::map<std::string, std::string> parse_sam_reply(const std::string& reply) {
+std::map<std::string, std::string> SamClient::parse_sam_reply(const std::string& reply) {
     std::map<std::string, std::string> kv;
     std::istringstream iss(reply);
     std::string token;
@@ -131,6 +132,8 @@ std::string SamClient::generate_nickname() {
 
     return nickname;
 }
+
+//-----------------------------------------------------------------------------
 
 std::string SamClient::generate_session_id() {
     return generate_nickname();
@@ -181,8 +184,10 @@ static std::string base32_i2p_encode(const uint8_t* data, size_t length) {
 }
 
 // Final function: destination -> .b32.i2p
-static std::string to_b32_i2p_address(const std::string& base64_dest) {
-    auto decoded = base64_i2p_decode(base64_dest);
+//-----------------------------------------------------------------------------
+
+std::string SamClient::to_i2p_address(const std::string& pubkey) {
+    auto decoded = base64_i2p_decode(pubkey);
 
     // Hash entire decoded destination with SHA-256
     uint8_t hash[SHA256_DIGEST_LENGTH];
@@ -190,12 +195,6 @@ static std::string to_b32_i2p_address(const std::string& base64_dest) {
 
     std::string b32 = base32_i2p_encode(hash, SHA256_DIGEST_LENGTH);
     return b32 + ".b32.i2p";
-}
-
-//-----------------------------------------------------------------------------
-
-std::string SamClient::to_i2p_address(const std::string& pubkey) {
-    return to_b32_i2p_address(pubkey);
 }
 
 //-----------------------------------------------------------------------------
@@ -252,22 +251,24 @@ std::string load_key(const std::string& filename) {
 
 //-----------------------------------------------------------------------------
 
-SamReply SamClient::send_sam_command(const std::string& command, int sockfd) const {
+SamReply SamClient::send_sam_command(const std::string& command, int sockfd) {
     if (sockfd < 0) { throw std::runtime_error("socket is closed"); }
     ssize_t sent_bytes = -1; // invalid until proven otherwise
     
     sent_bytes = ::send(sockfd, command.data(), command.size(), 0);
     if (sent_bytes < 0) {
         perror("send failed");
+        std::string sockres = get_result_as_string(SamResultType::SocketClosed);
         if (errno == EBADF) {
-            return SamReply{ SamResultType::SocketClosed, "" }; // Socket is invalid (closed)
+            return SamReply{ SamResultType::SocketClosed, sockres }; // Socket is invalid (closed)
         } else if (errno == ENOTCONN) {
-            return SamReply{ SamResultType::SocketClosed, "" }; // Socket is not connected
+            return SamReply{ SamResultType::SocketClosed, sockres }; // Socket is not connected
         }
     } else if (sent_bytes == 0) {
         //return SamReply{ SamResultType::NoDataSent, "" }; // No data sent, but socket is not necessarily closed
     }
     std::cout << "\033[93m" << command << "\033[0m\n";
+    
     std::string reply = read_sam_reply(sockfd);
     std::cout << reply << "\n";
 
@@ -277,30 +278,14 @@ SamReply SamClient::send_sam_command(const std::string& command, int sockfd) con
 
 //-----------------------------------------------------------------------------
 
-SamResultType SamClient::hello(int sockfd) {
-    if (sockfd < 0) { throw std::runtime_error("socket is closed"); }
-    ssize_t sent_bytes = -1;
-    
+SamReply SamClient::hello(int sockfd) {
     std::string command = "HELLO VERSION MIN=3.1 MAX=3.3\n";
-    sent_bytes = ::send(sockfd, command.data(), command.size(), 0);
-    if (sent_bytes < 0) {
-        perror("send");
-        if (errno == EBADF) {
-            return SamResultType::SocketClosed;
-        } else if (errno == ENOTCONN) {
-            return SamResultType::SocketClosed;
-        }
-    } else if (sent_bytes == 0) {
-        //return SamResultType::NoDataSent;
-    }
-    std::cout << "\033[93m" << command << "\033[0m\n";
-    std::string reply = read_sam_reply(sockfd);
-    std::cout << reply << "\n";
+    auto reply = send_sam_command(command, sockfd);
     
-    version = get_value(reply, "VERSION");
+    version = get_value(reply.raw_reply, "VERSION");
     ////std::cout << "Selected SAM version: " << version << "\n";
     
-    return get_result(reply);
+    return reply;
 }
 
 //-----------------------------------------------------------------------------
@@ -342,7 +327,7 @@ void SamClient::session_prepare() {
     }
     
     // Convert public key to b32.i2p address
-    i2p_address = to_b32_i2p_address(public_key);
+    i2p_address = to_i2p_address(public_key);
     ////std::cout << "Your I2P address: " << i2p_address << "\n\n";
 }
 

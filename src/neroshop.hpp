@@ -31,7 +31,6 @@
 // price
 #include "core/price/currency_converter.hpp"
 // protocol
-#include "core/protocol/messages/msgpack.hpp"
 #include "core/protocol/p2p/dht_rescode.hpp"
 #include "core/protocol/p2p/file_piece_hasher.hpp"
 #include "core/protocol/p2p/key_mapper.hpp"
@@ -39,6 +38,7 @@
 #include "core/protocol/p2p/routing_table.hpp"
 #include "core/protocol/p2p/serializer.hpp"
 #include "core/protocol/rpc/json_rpc.hpp"
+#include "core/protocol/rpc/msgpack.hpp"
 #include "core/protocol/transport/client.hpp"
 #include "core/protocol/transport/sam_client.hpp"
 #include "core/protocol/transport/server.hpp"
@@ -52,7 +52,6 @@
 #include "core/tools/string.hpp"
 #include "core/tools/thread_pool.hpp"
 #include "core/tools/timestamp.hpp"
-#include "core/tools/updater.hpp"
 #include "core/tools/uuid.hpp"
 // wallet
 #include "core/wallet/wallet.hpp"
@@ -69,7 +68,6 @@
 #include "gui/image_provider.hpp"
 #include "gui/proxy_manager.hpp"
 #include "gui/settings_manager.hpp"
-//#include "gui/table_model.hpp"
 #include "gui/user_manager.hpp"
 #include "gui/wallet_manager.hpp"
 #include "gui/wallet_qr_provider.hpp"

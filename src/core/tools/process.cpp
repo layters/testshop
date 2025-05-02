@@ -29,15 +29,15 @@ Process::Process()
 Process::Process(const std::string& program, const std::string& arg) : Process()
 {
     if(!create(program, arg)) {
-		neroshop::print("Process creation failed", 1);
+		neroshop::log_error("Process creation failed");
 	}
 }
 ////////////////////
 Process::~Process()
 {
 #ifdef __gnu_linux__
-#ifdef DOKUN_DEBUG0
-    std::cout << DOKUN_UI_TAG "process (" << name << ") has been deallocated" << std::endl;
+#ifdef NEROSHOP_DEBUG0
+    std::cout << "process (" << name << ") has been deallocated" << std::endl;
 #endif	
 #endif
 	terminate(); // kill pid
@@ -133,7 +133,7 @@ bool Process::terminate()
     // this doesn't work either LOL
     //std::system(std::string("kill " + std::to_string(handle)).c_str());    
     handle = -1;// set handle to default value so we know its been properly deleted
-    ////std::cout << DOKUN_UI_TAG "process (" << name << ") terminated\n";
+    ////std::cout << "process (" << name << ") terminated\n";
     return true;
 #endif	
     return false;

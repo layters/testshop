@@ -96,7 +96,7 @@ std::string get_most_recent_timestamp(const std::string& timestamp1, const std::
     }
 }
 
-std::string get_duration_from_now(const std::string& timestamp) {
+std::string get_duration_from_now(const std::string& timestamp) { // WARNING: not accurate!!
     // Parse the ISO 8601 timestamp
     std::tm tm = {};
     std::istringstream ss(timestamp);

@@ -32,7 +32,7 @@ void Client::create() {
     if(sockfd > 0) return; // socket must be -1 before a new one can be created (if socket is not null then it means it was never closed)
 	sockfd = ::socket(AF_INET, (socket_type == SocketType::Socket_UDP) ? SOCK_DGRAM : SOCK_STREAM, 0);
 	if(sockfd < 0) {
-		neroshop::print("::socket: failed to create a socket", 1);
+		neroshop::log_error("::socket: failed to create a socket");
 	}    
 	// Set to non-blocking
 	/*int flags = fcntl(sockfd, F_GETFL, 0);
