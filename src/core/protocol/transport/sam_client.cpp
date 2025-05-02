@@ -258,14 +258,13 @@ SamReply SamClient::send_sam_command(const std::string& command, int sockfd) {
     sent_bytes = ::send(sockfd, command.data(), command.size(), 0);
     if (sent_bytes < 0) {
         perror("send failed");
-        std::string sockres = get_result_as_string(SamResultType::SocketClosed);
         if (errno == EBADF) {
-            return SamReply{ SamResultType::SocketClosed, sockres }; // Socket is invalid (closed)
+            return SamReply{ SamResultType::SocketClosed, "" }; // Socket is invalid (closed)
         } else if (errno == ENOTCONN) {
-            return SamReply{ SamResultType::SocketClosed, sockres }; // Socket is not connected
+            return SamReply{ SamResultType::SocketClosed, "" }; // Socket is not connected
         }
     } else if (sent_bytes == 0) {
-        //return SamReply{ SamResultType::NoDataSent, "" }; // No data sent, but socket is not necessarily closed
+        return SamReply{ SamResultType::NoResult, "" }; // No data sent, but socket is not necessarily closed
     }
     std::cout << "\033[93m" << command << "\033[0m\n";
     
