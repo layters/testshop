@@ -10,9 +10,6 @@
 
 #include <nlohmann/json.hpp>
 
-namespace neroshop_crypto = neroshop::crypto;
-namespace neroshop_string = neroshop::string;
-
 namespace neroshop {
 //-----------------------------------------------------------------------------
 
@@ -29,7 +26,7 @@ void set_expiration(nlohmann::json& json_object, const std::string& metadata) {
         }
     } else {
         std::string expires_in = settings["data_expiration"][metadata].get<std::string>();
-        if(neroshop::string::contains(expires_in, "Never") && 
+        if(neroshop::string_tools::contains(expires_in, "Never") && 
             (metadata == "listing" || metadata == "product_rating")) { 
             return; 
         }
@@ -149,7 +146,7 @@ std::pair<std::string, std::string/*std::vector<uint8_t>*/> Serializer::serializ
             if (!attr.material.empty()) attribute_obj["material"] = attr.material;
             bool dimensions_empty = (std::get<0>(attr.dimensions) == 0.0 && std::get<1>(attr.dimensions) == 0.0 && std::get<2>(attr.dimensions) == 0.0) || (std::get<3>(attr.dimensions).empty()); // make sure either all values in the dimensions tuple contains non-zero values or a non-empty string
             if (!dimensions_empty) {
-                std::string format = neroshop_string::lower(std::get<3>(attr.dimensions));
+                std::string format = neroshop::string_tools::lower(std::get<3>(attr.dimensions));
                 format.erase(std::remove_if(format.begin(), format.end(), [](char c) { return c == 'x' || c == '-' || c == ' '; }), format.end());
                 nlohmann::json dimensions_obj = {};
                 if(format == "dh") {
@@ -326,7 +323,7 @@ std::pair<std::string, std::string/*std::vector<uint8_t>*/> Serializer::serializ
     // Convert the string to a byte string (UTF-8 encoding) in case we ever decide to store values as bytes instead of as json string
     std::vector<uint8_t> value_bytes = nlohmann::json::to_msgpack(json_object);
     // Generate `key` by hashing the value
-    std::string key = neroshop_crypto::sha3_256(value);//std::string key = neroshop_crypto::sha3_256(value_bytes);
+    std::string key = neroshop::crypto::sha3_256(value);//std::string key = neroshop::crypto::sha3_256(value_bytes);
     //-------------------------------------------------------------
     #ifdef NEROSHOP_DEBUG0
     std::cout << json_object.dump(4) << "\n";
@@ -539,7 +536,7 @@ std::pair<std::string, std::string> Serializer::serialize(const User& user) {
     
     // Generate key-value pair
     std::string value = json_object.dump();
-    std::string key = neroshop_crypto::sha3_256(value);
+    std::string key = neroshop::crypto::sha3_256(value);
     
     // Data verification tests
     #ifdef NEROSHOP_DEBUG0

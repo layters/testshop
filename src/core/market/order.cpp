@@ -1,15 +1,15 @@
 #include "order.hpp"
 
 #include "cart.hpp"
-#include "price/currency_converter.hpp" // currency converter, enums.hpp
-#include "settings.hpp" // neroshop::lua_state
-#include "database/database.hpp"
-#include "tools/logger.hpp"
-#include "tools/string.hpp"
-#include "tools/uuid.hpp" // neroshop::uuid::generate()
-#include "protocol/p2p/serializer.hpp"
-#include "protocol/transport/client.hpp"
-#include "tools/timestamp.hpp"
+#include "../price/currency_converter.hpp" // currency converter, enums.hpp
+#include "../settings.hpp" // neroshop::lua_state
+#include "../database/database.hpp"
+#include "../tools/logger.hpp"
+#include "../tools/string.hpp"
+#include "../tools/uuid.hpp" // neroshop::uuid::generate()
+#include "../protocol/p2p/serializer.hpp"
+#include "../protocol/transport/client.hpp"
+#include "../tools/timestamp.hpp"
 
 #include <unordered_set>
 
@@ -205,10 +205,10 @@ void Order::create_order(const neroshop::Cart& cart, const std::string& shipping
     neroshop::log_info("Sit tight as we notify the seller(s) about your order.");
     auto from = Converter::get_currency_enum(currency);
     auto to = Converter::get_currency_enum(your_currency);
-    std::cout << "Subtotal: " << std::fixed << std::setprecision(12) << subtotal_monero << " xmr" << std::fixed << std::setprecision(2) << " (" << neroshop::Converter::get_currency_sign(your_currency) << (neroshop::Converter::get_price(from, to) * subtotal) << " " << neroshop::string::upper(your_currency) << ")" <<  std::endl; // (() ? : "")
-    if(discount > 0) std::cout << "Discount: -" << std::fixed << std::setprecision(12) << discount_monero << " xmr" << std::fixed << std::setprecision(2) << " (-" << neroshop::Converter::get_currency_sign(your_currency) << (neroshop::Converter::get_price(from, to) * discount) << " " << neroshop::string::upper(your_currency) << ")" <<  std::endl;
-    std::cout << "Shipping: " << std::fixed << std::setprecision(12) << shipping_cost_monero << " xmr" << std::fixed << std::setprecision(2) << " (" << neroshop::Converter::get_currency_sign(your_currency) << (neroshop::Converter::get_price(from, to) * shipping_cost) << " " << neroshop::string::upper(your_currency) << ")" <<  std::endl;
-    std::cout << "Order total: " << std::fixed << std::setprecision(12) << total_monero << " xmr" << std::fixed << std::setprecision(2) << " (" << neroshop::Converter::get_currency_sign(your_currency) << (neroshop::Converter::get_price(from, to) * total) << " " << neroshop::string::upper(your_currency) << ")" <<  std::endl;
+    std::cout << "Subtotal: " << std::fixed << std::setprecision(12) << subtotal_monero << " xmr" << std::fixed << std::setprecision(2) << " (" << neroshop::Converter::get_currency_sign(your_currency) << (neroshop::Converter::get_price(from, to) * subtotal) << " " << neroshop::string_tools::upper(your_currency) << ")" <<  std::endl; // (() ? : "")
+    if(discount > 0) std::cout << "Discount: -" << std::fixed << std::setprecision(12) << discount_monero << " xmr" << std::fixed << std::setprecision(2) << " (-" << neroshop::Converter::get_currency_sign(your_currency) << (neroshop::Converter::get_price(from, to) * discount) << " " << neroshop::string_tools::upper(your_currency) << ")" <<  std::endl;
+    std::cout << "Shipping: " << std::fixed << std::setprecision(12) << shipping_cost_monero << " xmr" << std::fixed << std::setprecision(2) << " (" << neroshop::Converter::get_currency_sign(your_currency) << (neroshop::Converter::get_price(from, to) * shipping_cost) << " " << neroshop::string_tools::upper(your_currency) << ")" <<  std::endl;
+    std::cout << "Order total: " << std::fixed << std::setprecision(12) << total_monero << " xmr" << std::fixed << std::setprecision(2) << " (" << neroshop::Converter::get_currency_sign(your_currency) << (neroshop::Converter::get_price(from, to) * total) << " " << neroshop::string_tools::upper(your_currency) << ")" <<  std::endl;
     //std::cout << "Estimated delivery date: " << delivery_date_est << std::endl;    
 
     // Empty cart after completing order
@@ -354,10 +354,10 @@ void Order::create_order_batch(const neroshop::Cart& cart, const std::string& sh
         neroshop::log_info("Sit tight as we notify the seller(s) about your order.");
         auto from = Converter::get_currency_enum(currency);
         auto to = Converter::get_currency_enum(your_currency);
-        std::cout << "Subtotal: " << std::fixed << std::setprecision(12) << subtotal_monero << " xmr" << std::fixed << std::setprecision(2) << " (" << neroshop::Converter::get_currency_sign(your_currency) << (neroshop::Converter::get_price(from, to) * order.subtotal) << " " << neroshop::string::upper(your_currency) << ")" <<  std::endl; // (() ? : "")
-        if(discount > 0) std::cout << "Discount: -" << std::fixed << std::setprecision(12) << discount_monero << " xmr" << std::fixed << std::setprecision(2) << " (-" << neroshop::Converter::get_currency_sign(your_currency) << (neroshop::Converter::get_price(from, to) * order.discount) << " " << neroshop::string::upper(your_currency) << ")" <<  std::endl;
-        std::cout << "Shipping: " << std::fixed << std::setprecision(12) << shipping_cost_monero << " xmr" << std::fixed << std::setprecision(2) << " (" << neroshop::Converter::get_currency_sign(your_currency) << (neroshop::Converter::get_price(from, to) * order.shipping_cost) << " " << neroshop::string::upper(your_currency) << ")" <<  std::endl;
-        std::cout << "Order total: " << std::fixed << std::setprecision(12) << total_monero << " xmr" << std::fixed << std::setprecision(2) << " (" << neroshop::Converter::get_currency_sign(your_currency) << (neroshop::Converter::get_price(from, to) * order.total) << " " << neroshop::string::upper(your_currency) << ")" <<  std::endl;*/
+        std::cout << "Subtotal: " << std::fixed << std::setprecision(12) << subtotal_monero << " xmr" << std::fixed << std::setprecision(2) << " (" << neroshop::Converter::get_currency_sign(your_currency) << (neroshop::Converter::get_price(from, to) * order.subtotal) << " " << neroshop::string_tools::upper(your_currency) << ")" <<  std::endl; // (() ? : "")
+        if(discount > 0) std::cout << "Discount: -" << std::fixed << std::setprecision(12) << discount_monero << " xmr" << std::fixed << std::setprecision(2) << " (-" << neroshop::Converter::get_currency_sign(your_currency) << (neroshop::Converter::get_price(from, to) * order.discount) << " " << neroshop::string_tools::upper(your_currency) << ")" <<  std::endl;
+        std::cout << "Shipping: " << std::fixed << std::setprecision(12) << shipping_cost_monero << " xmr" << std::fixed << std::setprecision(2) << " (" << neroshop::Converter::get_currency_sign(your_currency) << (neroshop::Converter::get_price(from, to) * order.shipping_cost) << " " << neroshop::string_tools::upper(your_currency) << ")" <<  std::endl;
+        std::cout << "Order total: " << std::fixed << std::setprecision(12) << total_monero << " xmr" << std::fixed << std::setprecision(2) << " (" << neroshop::Converter::get_currency_sign(your_currency) << (neroshop::Converter::get_price(from, to) * order.total) << " " << neroshop::string_tools::upper(your_currency) << ")" <<  std::endl;*/
         //std::cout << "Estimated delivery date: " << delivery_date_est << std::endl;
     }
     //----------------------------------------------------------------------------

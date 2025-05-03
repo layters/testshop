@@ -1,8 +1,8 @@
 #include "cart.hpp"
 
-#include "database/database.hpp"
-#include "tools/logger.hpp"
-#include "protocol/transport/client.hpp"
+#include "../database/database.hpp"
+#include "../tools/logger.hpp"
+#include "../protocol/transport/client.hpp"
 
 namespace neroshop {
 ////////////////////

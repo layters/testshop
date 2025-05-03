@@ -112,7 +112,7 @@ int MoneroWallet::restore_from_seed(const std::string& seed, uint64_t restore_he
     } catch (const std::exception& e) {
         std::string error_msg = e.what();
         std::cerr << "\033[1;91m" << error_msg << "\033[0m\n";
-        if(neroshop::string::contains(error_msg, "Invalid mnemonic")) {
+        if(neroshop::string_tools::contains(error_msg, "Invalid mnemonic")) {
             return static_cast<int>(WalletError::InvalidMnemonic);
         }
     }
@@ -160,11 +160,11 @@ int MoneroWallet::open(const std::string& path, const std::string& password) {
     } catch (const std::exception& e) {
         std::string error_msg = e.what();
         std::cerr << "\033[1;91m" << error_msg << "\033[0m\n";//tools::error::invalid_password
-        if(neroshop::string::contains(error_msg, "wallet cannot be opened as")) {
+        if(neroshop::string_tools::contains(error_msg, "wallet cannot be opened as")) {
             return static_cast<int>(WalletError::BadNetworkType);
-        } else if(neroshop::string::contains(error_msg, "invalid password")) {
+        } else if(neroshop::string_tools::contains(error_msg, "invalid password")) {
             return static_cast<int>(WalletError::WrongPassword);
-        } else if(neroshop::string::contains(error_msg, "Invalid decimal point specification")) {
+        } else if(neroshop::string_tools::contains(error_msg, "Invalid decimal point specification")) {
             return static_cast<int>(WalletError::BadWalletType);
         } else {
             return static_cast<int>(WalletError::IsOpenedByAnotherProgram);
@@ -216,7 +216,7 @@ void MoneroWallet::transfer(const std::string& address, double amount) {
         std::cerr << "\033[1;91mMonero address is invalid" << "\033[0m\n"; return;
     }
     // Convert monero to piconero
-    uint64_t monero_to_piconero = amount / PICONERO; //std::cout << neroshop::string::precision(amount, 12) << " xmr to piconero: " << monero_to_piconero << "\n";
+    uint64_t monero_to_piconero = amount / PICONERO; //std::cout << neroshop::string_tools::precision(amount, 12) << " xmr to piconero: " << monero_to_piconero << "\n";
     // TODO: for the 2-of-3 escrow system, take 0.5% of order total in piconeros
     // Check if amount is zero or too low
     if((amount < PICONERO) || (monero_to_piconero == 0)) {
@@ -288,7 +288,7 @@ void MoneroWallet::transfer(const std::vector<std::pair<std::string, double>>& p
             continue; // skip to the next address
         }
         // Convert monero to piconero
-        uint64_t monero_to_piconero = address.second / PICONERO; //std::cout << neroshop::string::precision(address.second, 12) << " xmr to piconero: " << monero_to_piconero << "\n";
+        uint64_t monero_to_piconero = address.second / PICONERO; //std::cout << neroshop::string_tools::precision(address.second, 12) << " xmr to piconero: " << monero_to_piconero << "\n";
         destinations.push_back(std::make_shared<monero_destination>(address.first, monero_to_piconero));
         // Print address and amount
         std::cout << "Address: " << address.first << ", Amount: " << address.second << std::endl;
@@ -326,17 +326,17 @@ std::string MoneroWallet::make_uri(const std::string& payment_address, double am
     if(is_valid_address(payment_address)) {
         monero_uri = monero_uri + payment_address;
     }
-    if(amount > std::stod(neroshop::string::precision("0.000000000000", 12))) {
+    if(amount > std::stod(neroshop::string_tools::precision("0.000000000000", 12))) {
         has_amount = true;
-        monero_uri = monero_uri + "?tx_amount=" + neroshop::string::precision(amount, 12);
+        monero_uri = monero_uri + "?tx_amount=" + neroshop::string_tools::precision(amount, 12);
     }
     if(!recipient.empty()) {
         has_recipient = true;
-        std::string recipient_name = neroshop::string::swap_all(recipient, " ", "%20");
+        std::string recipient_name = neroshop::string_tools::swap_all(recipient, " ", "%20");
         monero_uri = monero_uri + ((has_amount) ? "&recipient_name=" : "?recipient_name=") + recipient_name;
     }
     if(!description.empty()) {
-        std::string tx_description = neroshop::string::swap_all(description, " ", "%20");
+        std::string tx_description = neroshop::string_tools::swap_all(description, " ", "%20");
         monero_uri = monero_uri + ((has_amount || has_recipient) ? "&tx_description=" : "?tx_description=") + tx_description;
     }
     return monero_uri;

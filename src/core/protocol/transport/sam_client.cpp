@@ -14,9 +14,6 @@
 
 namespace neroshop {
 
-SamClient::SamClient() : SamClient(SamSessionStyle::Stream) {
-}
-
 //-----------------------------------------------------------------------------
 
 SamClient::SamClient(SamSessionStyle style, const std::string& nickname) : session_socket(-1), server_addr({}), style(style), nickname(nickname), client_socket(-1), client_port(((style == SamSessionStyle::Datagram) || (style == SamSessionStyle::Raw)) ? SAM_DEFAULT_CLIENT_UDP : SAM_DEFAULT_CLIENT_TCP) {
@@ -47,7 +44,7 @@ SamClient::SamClient(SamSessionStyle style, const std::string& nickname) : sessi
     sockaddr_in client_addr = {};
     memset(&client_addr, 0, sizeof(client_addr));
     client_addr.sin_family = AF_INET;
-    client_addr.sin_port = htons(((style == SamSessionStyle::Datagram) || (style == SamSessionStyle::Raw)) ? SAM_DEFAULT_CLIENT_UDP : SAM_DEFAULT_CLIENT_TCP);
+    client_addr.sin_port = htons(client_port);
     if ((style == SamSessionStyle::Datagram) || (style == SamSessionStyle::Raw)) {
         client_addr.sin_addr.s_addr = INADDR_ANY;
         if (::bind(client_socket, (sockaddr*)&client_addr, sizeof(client_addr)) < 0) {//throw std::runtime_error("Error binding socket to port " + std::to_string(SAM_DEFAULT_CLIENT_UDP));

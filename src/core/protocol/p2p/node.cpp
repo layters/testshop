@@ -1343,7 +1343,7 @@ bool Node::verify(const std::string& value) const {
         std::cerr << "\033[91mInvalid signing address\033[0m\n";
         return false;
     }
-    if(signature.length() != 93 || !neroshop::string::contains_first_of(signature, "Sig")) { 
+    if(signature.length() != 93 || !neroshop::string_tools::contains_first_of(signature, "Sig")) { 
         std::cerr << "\033[91mInvalid signature\033[0m\n";
         return false;
     }

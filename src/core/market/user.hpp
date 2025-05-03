@@ -1,3 +1,5 @@
+#pragma once
+
 #ifndef USER_HPP_NEROSHOP
 #define USER_HPP_NEROSHOP
 

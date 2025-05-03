@@ -18,7 +18,7 @@
 #include <map>
 
 #include "../currency_map.hpp"
-#include "../../../core/tools/string.hpp" // neroshop::string::upper
+#include "../../../core/tools/string.hpp" // neroshop::string_tools::upper
 
 std::optional<double> KrakenApi::price(neroshop::Currency from, neroshop::Currency to) const
 {
@@ -27,12 +27,12 @@ std::optional<double> KrakenApi::price(neroshop::Currency from, neroshop::Curren
     // Fill map with initial currency ids
     std::map<neroshop::Currency, std::string> CURRENCY_TO_ID;
     for (const auto& [key, value] : neroshop::CurrencyMap) {
-        CURRENCY_TO_ID[std::get<0>(value)] = neroshop::string::upper(key);
+        CURRENCY_TO_ID[std::get<0>(value)] = neroshop::string_tools::upper(key);
     }
     // Fill map with initial currency vs and codes
     std::map<neroshop::Currency, std::string> CURRENCY_TO_VS;
     for (const auto& [key, value] : neroshop::CurrencyMap) {
-        CURRENCY_TO_VS[std::get<0>(value)] = neroshop::string::upper(key);
+        CURRENCY_TO_VS[std::get<0>(value)] = neroshop::string_tools::upper(key);
     }    
 
     auto it = CURRENCY_TO_ID.find(from);

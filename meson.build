@@ -339,9 +339,20 @@ neroshop_wallet_srcs = [
     neroshop_core_src_dir + '/wallet/wallet.cpp'
 ]
 
+neroshop_market_srcs = [
+    neroshop_core_src_dir + '/market/cart.cpp',
+    neroshop_core_src_dir + '/market/escrow.cpp',
+    neroshop_core_src_dir + '/market/listing.cpp',
+    neroshop_core_src_dir + '/market/order.cpp',
+    neroshop_core_src_dir + '/market/product.cpp',
+    neroshop_core_src_dir + '/market/seller.cpp',
+    neroshop_core_src_dir + '/market/user.cpp'
+]
+
 neroshop_client_srcs = [
     neroshop_crypto_srcs,
     neroshop_database_srcs,
+    neroshop_market_srcs,
     neroshop_network_srcs,
     neroshop_price_srcs,
     neroshop_core_src_dir + '/protocol/p2p/file_piece_hasher.cpp',
@@ -350,14 +361,7 @@ neroshop_client_srcs = [
     neroshop_core_src_dir + '/protocol/transport/client.cpp',
     neroshop_tools_srcs,
     neroshop_wallet_srcs,
-    neroshop_core_src_dir + '/cart.cpp',
-    neroshop_core_src_dir + '/escrow.cpp',
-    neroshop_core_src_dir + '/listing.cpp',
-    neroshop_core_src_dir + '/order.cpp',
-    neroshop_core_src_dir + '/product.cpp',
-    neroshop_core_src_dir + '/seller.cpp',
     neroshop_core_src_dir + '/settings.cpp',
-    neroshop_core_src_dir + '/user.cpp'
 ]
 
 if get_option('NEROSHOP_BUILD_TESTS')

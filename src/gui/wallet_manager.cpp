@@ -313,7 +313,7 @@ QVariantList neroshop::WalletManager::getTransfers() const {
             //--------------------------------------------------------
             if (doc.HasMember("fee") && doc["fee"].IsInt()) {
                 uint64_t fee = doc["fee"].GetInt();
-                std::string feeStr = neroshop::string::precision((fee * PICONERO), 12);
+                std::string feeStr = neroshop::string_tools::precision((fee * PICONERO), 12);
                 transfer_object.insert("fee", QString::fromStdString(feeStr));
             }
             if (doc.HasMember("hash") && doc["hash"].IsString()) {

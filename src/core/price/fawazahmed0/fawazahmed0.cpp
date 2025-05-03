@@ -18,19 +18,19 @@
 #include <map>
 
 #include "../currency_map.hpp"
-#include "../../../core/tools/string.hpp" // neroshop::string::lower
+#include "../../../core/tools/string.hpp" // neroshop::string_tools::lower
 
 std::optional<double> Fawazahmed0CurrencyApi::price(neroshop::Currency from, neroshop::Currency to) const
 {
     // Fill map with initial currency ids
     std::map<neroshop::Currency, std::string> CURRENCY_TO_ID;
     for (const auto& [key, value] : neroshop::CurrencyMap) {
-        CURRENCY_TO_ID[std::get<0>(value)] = neroshop::string::lower(key);
+        CURRENCY_TO_ID[std::get<0>(value)] = neroshop::string_tools::lower(key);
     }
     // Fill map with initial currency vs and codes
     std::map<neroshop::Currency, std::string> CURRENCY_TO_VS;
     for (const auto& [key, value] : neroshop::CurrencyMap) {
-        CURRENCY_TO_VS[std::get<0>(value)] = neroshop::string::lower(key);
+        CURRENCY_TO_VS[std::get<0>(value)] = neroshop::string_tools::lower(key);
     }    
 
     auto it = CURRENCY_TO_ID.find(from);

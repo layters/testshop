@@ -12,7 +12,7 @@
 
 #include "wallet_manager.hpp"
 
-#include "../core/seller.hpp"////"../core/user.hpp"
+#include "../core/market/seller.hpp"////"../core/market/user.hpp"
 
 namespace neroshop {
 

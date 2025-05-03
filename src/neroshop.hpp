@@ -7,17 +7,7 @@
 
 // These include files constitute the main neroshop API
 // neroshop (core)
-#include "core/cart.hpp"
-#include "core/category.hpp"
-#include "core/escrow.hpp"
-#include "core/image.hpp"
-#include "core/listing.hpp"
-#include "core/order.hpp"
-#include "core/product.hpp"
-#include "core/rating.hpp"
-#include "core/seller.hpp"
 #include "core/settings.hpp"
-#include "core/user.hpp"
 #include "core/version.hpp"
 // crypto
 #include "core/crypto/rsa.hpp"
@@ -26,6 +16,17 @@
 // database
 #include "core/database/database.hpp"
 #include "core/database/sqlite3/sqlite3.hpp"
+// market
+#include "core/market/cart.hpp"
+#include "core/market/category.hpp"
+#include "core/market/escrow.hpp"
+#include "core/market/image.hpp"
+#include "core/market/listing.hpp"
+#include "core/market/order.hpp"
+#include "core/market/product.hpp"
+#include "core/market/rating.hpp"
+#include "core/market/seller.hpp"
+#include "core/market/user.hpp"
 // network
 #include "core/network/i2p.hpp"
 // price

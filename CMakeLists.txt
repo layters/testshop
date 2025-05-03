@@ -451,25 +451,29 @@ set(neroshop_wallet_src
     #[[${NEROSHOP_CORE_SRC_DIR}/wallet/monero/monero.cpp]]
 )
 
+set(neroshop_market_src 
+    ${NEROSHOP_CORE_SRC_DIR}/market/cart.cpp 
+    ${NEROSHOP_CORE_SRC_DIR}/market/escrow.cpp 
+    ${NEROSHOP_CORE_SRC_DIR}/market/listing.cpp 
+    ${NEROSHOP_CORE_SRC_DIR}/market/order.cpp 
+    ${NEROSHOP_CORE_SRC_DIR}/market/product.cpp 
+    ${NEROSHOP_CORE_SRC_DIR}/market/seller.cpp 
+    ${NEROSHOP_CORE_SRC_DIR}/market/user.cpp 
+)
+
 set(neroshop_core_src 
     ${neroshop_crypto_src} 
     ${neroshop_database_src} 
+    ${neroshop_market_src} 
     ${neroshop_network_src}
     ${neroshop_price_src}
     ${neroshop_protocol_src}
     ${neroshop_tools_src}
     ${neroshop_wallet_src}
-    ${NEROSHOP_CORE_SRC_DIR}/cart.cpp 
-    ${NEROSHOP_CORE_SRC_DIR}/escrow.cpp 
-    ${NEROSHOP_CORE_SRC_DIR}/listing.cpp 
-    ${NEROSHOP_CORE_SRC_DIR}/order.cpp 
-    ${NEROSHOP_CORE_SRC_DIR}/product.cpp 
-    ${NEROSHOP_CORE_SRC_DIR}/seller.cpp 
     ${NEROSHOP_CORE_SRC_DIR}/settings.cpp 
-    ${NEROSHOP_CORE_SRC_DIR}/user.cpp 
 )
 
-set(neroshop_client_src ${neroshop_crypto_src} ${neroshop_database_src} ${neroshop_network_src} ${neroshop_price_src} ${NEROSHOP_CORE_SRC_DIR}/protocol/p2p/file_piece_hasher.cpp ${NEROSHOP_CORE_SRC_DIR}/protocol/p2p/serializer.cpp ${NEROSHOP_CORE_SRC_DIR}/protocol/rpc/json_rpc.cpp ${NEROSHOP_CORE_SRC_DIR}/protocol/transport/client.cpp ${neroshop_tools_src} ${neroshop_wallet_src} ${NEROSHOP_CORE_SRC_DIR}/cart.cpp ${NEROSHOP_CORE_SRC_DIR}/escrow.cpp ${NEROSHOP_CORE_SRC_DIR}/listing.cpp ${NEROSHOP_CORE_SRC_DIR}/order.cpp ${NEROSHOP_CORE_SRC_DIR}/product.cpp ${NEROSHOP_CORE_SRC_DIR}/seller.cpp ${NEROSHOP_CORE_SRC_DIR}/settings.cpp ${NEROSHOP_CORE_SRC_DIR}/user.cpp)
+set(neroshop_client_src ${neroshop_crypto_src} ${neroshop_database_src} ${neroshop_network_src} ${neroshop_price_src} ${NEROSHOP_CORE_SRC_DIR}/protocol/p2p/file_piece_hasher.cpp ${NEROSHOP_CORE_SRC_DIR}/protocol/p2p/serializer.cpp ${NEROSHOP_CORE_SRC_DIR}/protocol/rpc/json_rpc.cpp ${NEROSHOP_CORE_SRC_DIR}/protocol/transport/client.cpp ${neroshop_tools_src} ${neroshop_wallet_src} ${neroshop_market_src} ${NEROSHOP_CORE_SRC_DIR}/settings.cpp)
 
 ######################################
 # neroshop tests
