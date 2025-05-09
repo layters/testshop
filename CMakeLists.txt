@@ -415,15 +415,15 @@ set(neroshop_network_src
 )
 
 set(neroshop_price_src 
-    ${NEROSHOP_CORE_SRC_DIR}/price/coincodex/coincodex.cpp 
-    ${NEROSHOP_CORE_SRC_DIR}/price/coingecko/coingecko.cpp 
-    ${NEROSHOP_CORE_SRC_DIR}/price/coinmarketcap/coinmarketcap.cpp 
-    ${NEROSHOP_CORE_SRC_DIR}/price/cointelegraph/cointelegraph.cpp 
-    ${NEROSHOP_CORE_SRC_DIR}/price/cryptorank/cryptorank.cpp 
-    ${NEROSHOP_CORE_SRC_DIR}/price/cryptowatch/cryptowatch.cpp 
-    ${NEROSHOP_CORE_SRC_DIR}/price/fawazahmed0/fawazahmed0.cpp 
-    ${NEROSHOP_CORE_SRC_DIR}/price/kraken/kraken.cpp 
-    ${NEROSHOP_CORE_SRC_DIR}/price/currency_converter.cpp
+    ${NEROSHOP_CORE_SRC_DIR}/price_api/coincodex/coincodex.cpp 
+    ${NEROSHOP_CORE_SRC_DIR}/price_api/coingecko/coingecko.cpp 
+    ${NEROSHOP_CORE_SRC_DIR}/price_api/coinmarketcap/coinmarketcap.cpp 
+    ${NEROSHOP_CORE_SRC_DIR}/price_api/cointelegraph/cointelegraph.cpp 
+    ${NEROSHOP_CORE_SRC_DIR}/price_api/cryptorank/cryptorank.cpp 
+    ${NEROSHOP_CORE_SRC_DIR}/price_api/cryptowatch/cryptowatch.cpp 
+    ${NEROSHOP_CORE_SRC_DIR}/price_api/fawazahmed0/fawazahmed0.cpp 
+    ${NEROSHOP_CORE_SRC_DIR}/price_api/kraken/kraken.cpp 
+    ${NEROSHOP_CORE_SRC_DIR}/price_api/currency_converter.cpp
 )
 
 set(neroshop_protocol_src 

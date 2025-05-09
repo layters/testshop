@@ -1,333 +1,340 @@
 #include "routing_table.hpp"
 
-#include <bitset>
-#include <functional> // std::hash
-#include <regex>
-#include <cassert>
-
-#include <openssl/bn.h> // BIGNUM
-
 #include "node.hpp"
+#include "../../tools/logger.hpp"
+
+#include <cassert>
 
 namespace neroshop {
 
-// Initialize the routing table with a list of nodes
-RoutingTable::RoutingTable(const std::vector<Node *>& nodes) : nodes(nodes) {
-    // A single bucket can store up to NEROSHOP_DHT_NODES_PER_BUCKET nodes
-    for (int i = 0; i < NEROSHOP_DHT_ROUTING_TABLE_BUCKETS; ++i) {
-        buckets.emplace(i, std::vector<std::unique_ptr<Node>>{});
-    }//std::cout << "Buckets size: " << buckets.size() << "\n";
-    // Add nodes to the routing table
-    for (const auto& node_ptr : nodes) {
-        if (node_ptr == nullptr) {
-            continue;
-        }
-        const std::string& node_id = node_ptr->get_id();
-        const std::string& key_hash = calculate_distance(node_id, my_node_id); // Calculate distance from the current node
-        int bucket_index = 0;
-        while (bucket_index < NEROSHOP_DHT_ROUTING_TABLE_BUCKETS && (key_hash[bucket_index] == 0)) {
-            bucket_index++;
-        }
-        std::cout << "Node stored in bucket " << bucket_index << "\n";
-        std::unique_ptr<Node> node_uptr(node_ptr);
-        buckets[bucket_index].push_back(std::move(node_uptr));
-    }
+//-----------------------------------------------------------------------------
+
+uint8_t hex_char_to_byte(char c) {
+    if ('0' <= c && c <= '9') return c - '0';
+    if ('a' <= c && c <= 'f') return 10 + (c - 'a');
+    if ('A' <= c && c <= 'F') return 10 + (c - 'A');
+    throw std::invalid_argument("Invalid hex character");
 }
 
-// Add a new node to the routing table
-bool RoutingTable::add_node(std::unique_ptr<Node> node) {//(const Node& node) {
-    if (!node.get()) {
-        std::cerr << "\033[1;91m[ERROR]\033[0m cannot add a null node to the routing table.\n";
-        return false;
+//-----------------------------------------------------------------------------
+
+xor_id hex_string_to_node_id(const std::string& hex) {
+    if (hex.size() != 64) throw std::invalid_argument("SHA3-256 hex string must be 64 characters");
+
+    xor_id node_id;
+    for (size_t i = 0; i < 32; ++i) {
+        try {
+            node_id[i] = (hex_char_to_byte(hex[2 * i]) << 4) | hex_char_to_byte(hex[2 * i + 1]);
+        } catch (const std::invalid_argument& e) {
+          log_error("Error converting hex string: {}", e.what());
+        }
     }
-        
-    std::string node_id = node->get_id();
-    // Find the bucket that the node belongs in
-    int bucket_index = find_bucket(node_id);
-        
-    // Add the node to the appropriate bucket
-    if (bucket_index < 0 || bucket_index >= NEROSHOP_DHT_ROUTING_TABLE_BUCKETS) {
-        std::cerr << "\033[1;91m[ERROR]\033[0m invalid bucket index " << bucket_index << " for node with ID " << node_id << ".\n";
+    return node_id;
+}
+
+//-----------------------------------------------------------------------------
+
+// Portable MSB Finder for uint8_t (returns the position of the most significant set bit (from left, 0-indexed) in an 8-bit value)
+inline int msb_index_from_left(uint8_t byte) {
+    if (byte == 0) return -1; // No set bit
+
+    for (int i = 0; i < 8; ++i) {
+        if (byte & (1 << (7 - i))) {
+            return i;
+        }
+    }
+
+    return -1; // Should never happen
+}
+
+//-----------------------------------------------------------------------------
+
+inline uint32_t xor_distance_bit_index(const xor_id& a, const xor_id& b) {
+    for (size_t i = 0; i < a.size(); ++i) {
+        uint8_t xor_byte = a[i] ^ b[i];
+        if (xor_byte != 0) {
+            #ifdef NEROSHOP_DEBUG0
+            std::cout << "Differing byte at index i: " << i << std::endl;
+            std::cout << "XOR byte: " << static_cast<int>(xor_byte) << " (Binary: ";
+            for (int bit = 7; bit >= 0; --bit) {
+                std::cout << ((xor_byte >> bit) & 0x1);
+            }
+            std::cout << ")" << std::endl;
+            #endif
+
+            // The index of the MSB from the left (0-indexed) within the 8-bit byte is simply the number of leading zeros within the 8 bits.
+            int j = msb_index_from_left(xor_byte);
+
+            #ifdef NEROSHOP_DEBUG0
+            std::cout << "  Using msb_index_from_left:" << std::endl;
+            std::cout << "    Leading zeros in 8-bit byte: " << j << std::endl;
+            std::cout << "    MSB set bit found at bit index j (from left): " << j << std::endl;
+            #endif
+
+            // Calculate the distance based on the position from the MSB of the entire ID.
+            // The index j from msb_index_from_left is the number of leading zeros in the 8-bit value,
+            // which is also the index of the most significant set bit from the left (0-indexed).
+            uint32_t distance = (i * 8) + j;
+            #ifdef NEROSHOP_DEBUG0
+            std::cout << "  Calculated distance: (i * 8) + j = (" << i << " * 8) + " << j << " = " << distance << std::endl;
+            #endif
+            return distance;
+        }
+    }
+    
+    uint32_t distance = a.size() * 8;
+    #ifdef NEROSHOP_DEBUG
+    if(distance == 256) {
+        log_debug("xor_distance_bit_index: Identical IDs (node queried itself)");
+    }
+    #endif
+    
+    return distance; // 256 = matching node IDs which is invalid. XOR operation can only produce distances in the range 0 to 255
+}
+
+//-----------------------------------------------------------------------------
+
+void print_xor_id(const std::string& node_id_hex) {
+    // Print the node XOR ID in hexadecimal format
+    // Each pair of hexadecimal digits (21, 5c, 27, etc.) corresponds to a byte of the hash.
+    // Each of the 32 bytes can be accessed using: node_id[i]
+    xor_id node_id = hex_string_to_node_id(node_id_hex);
+    for (size_t i = 0; i < node_id.size(); ++i) {
+        std::cout << std::hex << std::setw(2) << std::setfill('0') << static_cast<int>(node_id[i]) << " ";
+    }
+    std::cout << std::endl;
+}
+
+void print_xor_id(const xor_id& node_id) {
+    for (size_t i = 0; i < node_id.size(); ++i) {
+      std::cout << std::hex << std::setw(2) << std::setfill('0') << static_cast<int>(node_id[i]) << " ";
+    }
+    std::cout << std::endl;
+}
+
+//-----------------------------------------------------------------------------
+
+RoutingTable::RoutingTable(const std::string& node_id_hex) : id(hex_string_to_node_id(node_id_hex)) { // node_id_hex is a SHA-3-256 hexidecimal string
+    // Buckets and mutexes are statically sized (std::array), no dynamic allocation needed.
+    
+    ////print_xor_id(this->id);
+    
+    // There are 32 bytes (64 hexadecimal digits) in a SHA-3-256 hash
+    int bytes = node_id_hex.length() / 2;
+    assert(bytes == 32 && "Invalid number of bytes in 64-length hexadecimal string (SHA3-256)");
+    assert(this->id.size() == 32 && "Invalid number of bytes in node XOR ID");
+}
+
+//-----------------------------------------------------------------------------
+
+RoutingTable::RoutingTable(const xor_id&      node_id_xor) : id(node_id_xor) {
+    // Buckets and mutexes are statically sized (std::array), no dynamic allocation needed.
+}
+
+//-----------------------------------------------------------------------------
+
+// Add a new node to the routing table
+bool RoutingTable::add_node(std::shared_ptr<Node> node) {
+    if(!node) return false;
+
+     auto node_id = hex_string_to_node_id(node->get_id());
+     const int bucket_index = xor_distance_bit_index(this->id, node_id);
+
+    if (bucket_index < 0 || bucket_index >= static_cast<int>(buckets.size())) {
         return false;
     }
 
-    // Check if the node already exists in the bucket
-    auto& bucket = buckets.at(bucket_index);
-    for (const auto& n : bucket) {
-        if (n->get_id() == node_id) {
-            std::cout << "\033[0;93m[WARN]\033[0m " << node->get_i2p_address() << " already exists in routing table\n";
+    std::unique_lock lock(bucket_mutexes[bucket_index]);
+    Bucket& bucket = buckets[bucket_index];
+
+    // Check for duplicates
+    for (const auto& existing_node : bucket) {
+        if (existing_node->get_id() == node->get_id()) {
+            log_warn("add_node: {} already exists in the routing table", node->get_i2p_address());
+            return false; // already exists
+        }
+    }
+    
+    // Check if bucket is full
+    if (bucket.size() >= NEROSHOP_DHT_NODES_PER_BUCKET) {
+        // Optional: implement bucket splitting or LRU replacement
+        log_error("add_node: bucket {} is full", bucket_index);
+        return false; // Reject for now
+    }
+
+    // Get the i2p address *before* moving the shared_ptr
+    std::string i2p_address = node->get_i2p_address();
+    bucket.emplace_back(std::move(node));
+    // Confirm node was added and print bucket size
+    log_info("{}{} added to routing table (bucket: {}, size: {}){}", 
+        "\033[1;32m", i2p_address, bucket_index, bucket.size(), color_reset);
+    // After adding, print the use count
+    if(!bucket.empty()) {
+        std::shared_ptr<Node>& added_node = bucket.back();
+        log_trace("add_node: Reference count after adding: {}", added_node.use_count());
+    }
+    return true;
+}
+
+//-----------------------------------------------------------------------------
+
+bool RoutingTable::remove_node(const std::string& node_addr, uint16_t node_port) {
+    for (int i = 0; i < 256; ++i) {
+        std::unique_lock lock(bucket_mutexes[i]);
+        auto& bucket = buckets[i];
+        
+        log_debug("remove_node: Scanning bucket {} (size: {})", i, bucket.size());
+        
+        auto it = std::remove_if(bucket.begin(), bucket.end(),
+            [&](const std::shared_ptr<Node>& node) {
+                if (!node) return false; // safety check
+                const std::string& node_address = node->get_i2p_address();
+                log_trace("remove_node: Comparing: [{}] vs [{}]", node_address, node_addr);
+                return node_address == node_addr;
+            });
+
+        if (it != bucket.end()) {
+            size_t removed = std::distance(it, bucket.end());
+            bucket.erase(it, bucket.end());
+            log_info("{}{} removed from routing table (bucket: {}, removed: {}, remaining: {}){}",
+                "\033[1;91m", node_addr, i, removed, bucket.size(), color_reset);
             return true;
         }
     }
 
-    // Acquire a lock to ensure exclusive access to the routing table
-    std::unique_lock<std::shared_mutex> write_lock(routing_table_mutex);
-    
-    // Add the node to the bucket
-    bucket.push_back(std::move(node));
-    std::cout << "\033[1;37m[INFO]\033[0m \033[1;35m" << bucket.back().get()->get_i2p_address() << " added to routing table\033[0m\n";
-
-    // Check if bucket splitting is required and perform the split
-    // EDIT: The splitting is totally wrong and doesn't work. Thanks a lot ChatGPT ... NOT!
-    // Also, this function sometimes causes a segment fault when adding a node to the routing table
-    /*if (bucket.size() > NEROSHOP_DHT_NODES_PER_BUCKET) { // buckets have a max size of NEROSHOP_DHT_NODES_PER_BUCKET nodes
-        bool split_success = split_bucket(bucket_index);
-        if (!split_success) {
-            std::cerr << "Error: unable to split bucket " << bucket_index << ".\n";
-            return false;
-        }
-        std::cout << "Bucket " << bucket_index << " split into " << bucket_index << " and " << (bucket_index + 1) << ".\n";
-    }*/
-    
-    return true;
-}
-
-bool RoutingTable::remove_node(const std::string& node_addr, uint16_t node_port) {
-    assert(node_addr != "127.0.0.1" && "Routing table only stores public IP addresses");
-    assert(node_addr != "0.0.0.0" && "Routing table only stores public IP addresses");
-    for (auto& bucket : buckets) {
-        std::vector<std::unique_ptr<Node>>& nodes = bucket.second;
-        std::unique_lock<std::shared_mutex> write_lock(routing_table_mutex);  // Acquire an exclusive lock
-        for (auto it = nodes.begin(); it != nodes.end(); /* no increment here */) {
-            if ((*it)->get_i2p_address() == node_addr/* && (*it)->get_port() == node_port*/) {
-                std::cout << "[INFO] \033[0;91m" << node_addr/* << ":" << node_port*/ << " removed from routing table\033[0m\n";
-                it = nodes.erase(it);  // erase returns the iterator to the next valid element
-                return true;
-            } else {
-                ++it;  // increment the iterator only if element not found
-            }
-        }
-    }
-
-    std::cerr << "Error: node with address " << node_addr << " and port " << node_port << " not found in the routing table.\n";
+    log_warn("remove_node: Node {} not found in any bucket", node_addr);
     return false;
 }
 
-bool RoutingTable::remove_node(const std::string& node_id) {
-    for (auto& bucket : buckets) {
-        std::vector<std::unique_ptr<Node>>& nodes = bucket.second;
-        std::unique_lock<std::shared_mutex> write_lock(routing_table_mutex);  // Acquire an exclusive lock
-        for (auto it = nodes.begin(); it != nodes.end(); /* no increment here */) {
-            if ((*it)->get_id() == node_id) {
-                std::cout << "\033[0;91m[INFO]\033[0m " << node_id << " removed from routing table\n";
-                it = nodes.erase(it);  // erase returns the iterator to the next valid element
-                return true;
-            } else {
-                ++it;  // increment the iterator only if element not found
-            }
-        }
-    }
+//-----------------------------------------------------------------------------
 
-    std::cerr << "Error: node with ID " << node_id << " not found in the routing table.\n";
-    return false;
-}
-
-// Find the index of the bucket that a given node identifier belongs to
-int RoutingTable::find_bucket(const std::string& node_id) const {//(int node_id) const {
-    std::string distance = calculate_distance(node_id, my_node_id);
-
-    // Find the index of the non-zero bit from the left in the distance string
-    int bucket_index = NEROSHOP_DHT_ROUTING_TABLE_BUCKETS - 1;
-    while (bucket_index >= 0 && distance[bucket_index] == '0') {
-        bucket_index--;
-    }
-
-    // Return the index of the bucket
-    return bucket_index;
-}
-
-bool RoutingTable::split_bucket(int bucket_index) {
-    // Check if splitting is possible (requires at least one node in the bucket)
-    if (buckets[bucket_index].empty()) {
+bool RoutingTable::remove_node(const std::string& node_id_hex) { // faster since it doesn't loop through all 256 buckets
+    xor_id node_id;
+    try {
+        node_id = hex_string_to_node_id(node_id_hex);
+    } catch (const std::exception& e) {
+        log_error("remove_node: Invalid node ID: {}", e.what());
         return false;
     }
 
-    // Create two new empty buckets
-    std::vector<std::unique_ptr<Node>> new_bucket1;
-    std::vector<std::unique_ptr<Node>> new_bucket2;
+    int bucket_index = xor_distance_bit_index(id, node_id);
 
-    // Find the most significant differing bit position
-    int bit_position = 0;
-    while (bit_position < 256) { // Assuming SHA-3-256, which is 256 bits
-        bool bit_differs = false;
-        for (const auto& node : buckets[bucket_index]) {
-            const std::string& node_id = node->get_id();
-            if (node_id[bit_position] != buckets[bucket_index][0]->get_id()[bit_position]) {
-                bit_differs = true;
-                break;
-            }
-        }
-        if (bit_differs) {
-            break;
-        }
-        bit_position++;
-    }
+    std::unique_lock lock(bucket_mutexes[bucket_index]);
+    auto& bucket = buckets[bucket_index];
 
-    // Move nodes from the original bucket to the new buckets based on the differing bit
-    for (auto& node : buckets[bucket_index]) {
-        const std::string& node_id = node->get_id();
-        if (node_id[bit_position] == '0') {
-            new_bucket1.push_back(std::move(node));
+    for (auto it = bucket.begin(); it != bucket.end(); /* no increment */) {
+        if ((*it)->get_id() == node_id_hex) {
+            auto node_to_remove = *it; // <-- if we ever need to use the node after its deleted via bucket.erase()
+            it = bucket.erase(it); // erase returns the next iterator
+            log_info("{}{} removed from routing table (bucket: {}, size: {}){}", "\033[1;91m", node_to_remove->get_i2p_address(), bucket_index, bucket.size(), color_reset);
+            //log_info("{}Node with ID {} removed from routing table (bucket: {}, size: {}){}", "\033[91m", node_id_hex, bucket_index, bucket.size(), color_reset);
+            return true;
         } else {
-            new_bucket2.push_back(std::move(node));
+            ++it;
         }
     }
 
-    // Update the routing table with the new bucket configuration
-    buckets[bucket_index] = std::move(new_bucket1);
-    auto it = std::next(buckets.begin(), bucket_index + 1);
-    buckets.emplace_hint(it, bucket_index + 1, std::move(new_bucket2));
-
-    return true;
+    log_warn("remove_node: Node with ID {} not found in bucket {}", node_id_hex, bucket_index);
+    return false;
 }
 
+//-----------------------------------------------------------------------------
 
-std::optional<std::reference_wrapper<neroshop::Node>> RoutingTable::get_node(const std::string& node_id) {//const {
-    const std::string& key_hash = calculate_distance(node_id, my_node_id); // Calculate distance from the current node
-    int bucket_index = 0;
-    while (bucket_index < NEROSHOP_DHT_ROUTING_TABLE_BUCKETS && (key_hash[bucket_index] == 0)) {
-        bucket_index++;
-    }
-
-    if (bucket_index >= buckets.size()) {
-        return std::nullopt; // bucket is empty
-    }
-
-    const auto& bucket = buckets[bucket_index];
-    for (const auto& node : bucket) {
-        if(node.get() == nullptr) { continue; }
-        if (node->get_id() == node_id) {
-            return std::ref(*node);
-        }
-    }
-    return std::nullopt; // node not found in bucket
-}
-
-// un-tested
+// TODO: return a std::vector<std::shared_ptr<Node>> instead
 std::vector<neroshop::Node*> RoutingTable::find_closest_nodes(const std::string& key, int count) {
-    std::vector<neroshop::Node*> closest_nodes;
-    std::string key_hash = key;//hash_to_string(key);
-    int bucket_index = 0;
-    while (bucket_index < NEROSHOP_DHT_ROUTING_TABLE_BUCKETS && (key_hash[bucket_index] == 0)) {
-        bucket_index++;
-    }
+    xor_id target_id = hex_string_to_node_id(key); // will trigger "xor_distance_bit_index: Identical IDs" if this node is using itself as the target to find other nodes
 
-    if (bucket_index >= NEROSHOP_DHT_ROUTING_TABLE_BUCKETS) {
-        return closest_nodes; // routing table is empty
-    }
-
-    // Check the bucket containing the key
-    const auto& bucket = buckets[bucket_index];
-    if (!bucket.empty()) {
-        // Find the closest node(s) in the bucket
-        std::map<std::string, neroshop::Node*> closest_nodes_map;
-        for (const auto& node : bucket) {
-            if(node.get() == nullptr) { continue; }
-            std::string node_hash = node->get_id();
-            std::string distance_to_node = calculate_distance(node_hash, key_hash);
-            closest_nodes_map[distance_to_node] = node.get();
+    struct ScoredNode {
+        Node*/*std::shared_ptr<Node>*/ node;
+        uint32_t distance;
+        bool operator<(const ScoredNode& other) const {
+            return distance < other.distance;
         }
-        for (const auto& closest_node_pair : closest_nodes_map) {
-            closest_nodes.push_back(closest_node_pair.second);
-            if (closest_nodes.size() == count) {
-                return closest_nodes;
-            }
+    };
+
+    std::vector<ScoredNode> scored_nodes;
+
+    for (int i = 0; i < 256; ++i) {
+        std::shared_lock lock(bucket_mutexes[i]);
+        for (const auto& node_ptr : buckets[i]) {
+            if (!node_ptr) continue;
+            uint32_t dist = xor_distance_bit_index(target_id, hex_string_to_node_id(node_ptr->get_id()));
+            scored_nodes.push_back({ node_ptr.get()/**/, dist });
         }
     }
 
-    // Check the adjacent buckets for the closest nodes
-    int left_bucket_index = bucket_index - 1;
-    int right_bucket_index = bucket_index + 1;
-    while (closest_nodes.size() < count && (left_bucket_index >= 0 || right_bucket_index < NEROSHOP_DHT_ROUTING_TABLE_BUCKETS)) {
-        if (left_bucket_index >= 0) {
-            const auto& left_bucket = buckets[left_bucket_index];
-            if (!left_bucket.empty()) {
-                std::map<std::string, neroshop::Node*> closest_nodes_map;
-                for (const auto& node : left_bucket) {
-                    if(node.get() == nullptr) { continue; }
-                    std::string node_hash = node->get_id();
-                    std::string distance_to_node = calculate_distance(node_hash, key_hash);
-                    closest_nodes_map[distance_to_node] = node.get();
-                }
-                for (const auto& closest_node_pair : closest_nodes_map) {
-                    closest_nodes.push_back(closest_node_pair.second);
-                    if (closest_nodes.size() == count) {
-                        return closest_nodes;
-                    }
-                }
-            }
-            left_bucket_index--;
-        }
-        if (right_bucket_index < NEROSHOP_DHT_ROUTING_TABLE_BUCKETS) {
-            const auto& right_bucket = buckets[right_bucket_index];
-            if (!right_bucket.empty()) {
-                std::map<std::string, neroshop::Node*> closest_nodes_map;
-                for (const auto& node : right_bucket) {
-                    if(node.get() == nullptr) { continue; }
-                    std::string node_hash = node->get_id();
-                    std::string distance_to_node = calculate_distance(node_hash, key_hash);
-                    closest_nodes_map[distance_to_node] = node.get();
-                }
-                for (const auto& closest_node_pair : closest_nodes_map) {
-                    closest_nodes.push_back(closest_node_pair.second);
-                    if (closest_nodes.size() == count) {
-                        return closest_nodes;
-                    }
-                }
-            }
-            right_bucket_index++;
-        }
+    std::sort(scored_nodes.begin(), scored_nodes.end());
+
+    std::vector<Node*>/*std::vector<std::shared_ptr<Node>>*/ result;
+    for (int i = 0; i < std::min(count, static_cast<int>(scored_nodes.size())); ++i) {
+        result.push_back(scored_nodes[i].node);
     }
 
-    return closest_nodes;
+    return result;
 }
 
+//-----------------------------------------------------------------------------
 
-neroshop::Node* RoutingTable::find_node_by_id(const std::string& node_id) const {
-    for (const auto& [_, bucket] : buckets) {
-        for (const auto& node_ptr : bucket) {
-            const auto& node = *node_ptr;
-            if (node.get_id() == node_id) {
-                return node_ptr.get();
-            }
+// TODO: return a std::shared_ptr<Node> instead
+neroshop::Node* RoutingTable::get_node_by_id(const std::string& node_id_hex) const {
+    xor_id node_id = hex_string_to_node_id(node_id_hex);
+    int bucket_index = xor_distance_bit_index(id, node_id);
+
+    std::shared_lock lock(bucket_mutexes[bucket_index]);
+    for (const auto& node_ptr : buckets[bucket_index]) {
+        if (node_ptr && node_ptr->get_id() == node_id_hex) {
+            return node_ptr.get();
         }
     }
+    
     return nullptr; // Node with the specified ID not found
 }
 
 //-----------------------------------------------------------------------------
 
-int RoutingTable::get_bucket_count() const {
-    return buckets.size();
+int RoutingTable::get_bucket_index(const std::string& node_id_hex) const {
+    xor_id node_id = hex_string_to_node_id(node_id_hex);
+    int bucket_index = xor_distance_bit_index(id, node_id);
+    return bucket_index;
 }
+
+//-----------------------------------------------------------------------------
+
+int RoutingTable::get_bucket_count() const {
+    return static_cast<int>(buckets.size()); // always 256
+}
+
+//-----------------------------------------------------------------------------
 
 int RoutingTable::get_node_count() const {
     int count = 0;
-    for (const auto& [bucket_index, bucket_nodes] : buckets) {
-        count += bucket_nodes.size();
+    for (int i = 0; i < 256; ++i) {
+        std::shared_lock lock(bucket_mutexes[i]);
+        count += buckets[i].size();
     }
     return count;
 }
 
+//-----------------------------------------------------------------------------
+
 int RoutingTable::get_node_count(int bucket_index) const {
-    assert(bucket_index >= 0 && bucket_index < NEROSHOP_DHT_ROUTING_TABLE_BUCKETS);
+    assert(bucket_index >= 0 && bucket_index < 256);
+    std::shared_lock lock(bucket_mutexes[bucket_index]);
     return buckets[bucket_index].size();
 }
 
 //-----------------------------------------------------------------------------
 
 bool RoutingTable::is_bucket_full(int bucket_index) const {
-    if (buckets.find(bucket_index) == buckets.end()) {
-        // Bucket does not exist, it is considered empty
-        return false;
-    }
-
-    const std::vector<std::unique_ptr<Node>>& bucket = buckets[bucket_index];
-    return bucket.size() >= NEROSHOP_DHT_NODES_PER_BUCKET;
+    assert(bucket_index >= 0 && bucket_index < 256);
+    std::shared_lock lock(bucket_mutexes[bucket_index]);
+    return buckets[bucket_index].size() >= NEROSHOP_DHT_NODES_PER_BUCKET;
 }
 
+//-----------------------------------------------------------------------------
+
 bool RoutingTable::are_buckets_full() const {
-    for (int i = 0; i < NEROSHOP_DHT_ROUTING_TABLE_BUCKETS; i++) {
+    for (int i = 0; i < 256; ++i) {
         if (!is_bucket_full(i)) {
             return false;
         }
@@ -335,36 +342,37 @@ bool RoutingTable::are_buckets_full() const {
     return true;
 }
 
+//-----------------------------------------------------------------------------
+
 bool RoutingTable::has_node(const std::string& i2p_address, uint16_t port) {
-    assert(i2p_address != "127.0.0.1" && "Routing table only stores public IP addresses");
-    assert(i2p_address != "0.0.0.0" && "Routing table only stores public IP addresses");
-    // Iterate over the buckets
-    for (const auto& bucket : buckets) {
-        // Iterate over the nodes in the bucket
-        for (const auto& node : bucket.second) {
-            if(node.get() == nullptr) { continue; }
-            // Check if the node's IP address and port match
-            if (node->get_i2p_address() == i2p_address/* && node->get_port() == port*/) {
+    for (int i = 0; i < 256; ++i) {
+        std::shared_lock lock(bucket_mutexes[i]);
+        for (const auto& node : buckets[i]) {
+            if (!node) continue;
+            const std::string& node_address = node->get_i2p_address();
+            if (node_address == i2p_address) {
+                log_debug("has_node: Node {} found in bucket[{}]", i2p_address, i);
                 return true;
             }
         }
     }
-    // Node not found in the routing table
     return false;
 }
 
-bool RoutingTable::has_node(const std::string& node_id) {//const {
-    // Iterate over the buckets
-    for (const auto& bucket : buckets) {
-        // Iterate over the nodes in the bucket
-        for (const auto& node : bucket.second) {
-            if(node.get() == nullptr) { continue; }
-            if (node->get_id() == node_id) {
-                return true;
-            }
+//-----------------------------------------------------------------------------
+
+bool RoutingTable::has_node(const std::string& node_id_hex) {
+    xor_id node_id = hex_string_to_node_id(node_id_hex);
+    int bucket_index = xor_distance_bit_index(id, node_id);
+
+    std::shared_lock lock(bucket_mutexes[bucket_index]);
+    for (const auto& node : buckets[bucket_index]) {
+        if (!node) continue;
+        if (node->get_id() == node_id_hex) {
+            log_debug("has_node: Node with ID {} found in bucket[{}]", node_id_hex, bucket_index);
+            return true;
         }
     }
-
     return false;
 }
 
@@ -372,52 +380,20 @@ bool RoutingTable::has_node(const std::string& node_id) {//const {
 
 // Print the contents of the routing table
 void RoutingTable::print_table() const {
-    for (const auto& [bucket_index, bucket_nodes] : buckets) {
-        if (!bucket_nodes.empty()) { // Check if bucket is not empty
-            std::cout << "Bucket " << bucket_index << ": ";
-            for (auto& node : bucket_nodes) {
-                if(node.get() == nullptr) { continue; }
-                std::cout << node->get_i2p_address()/* << ":" << node->get_port()*/ << " ";
-                //std::cout << "[" << calculate_distance(node->get_id(), my_node_id) << "] ";
+    for (int i = 0; i < 256; ++i) {
+        std::shared_lock lock(bucket_mutexes[i]);
+        if (!buckets[i].empty()) {
+            std::cout << "Bucket " << i << ": ";
+            for (const auto& node : buckets[i]) {
+                if (node) {
+                    std::cout << node->get_i2p_address() << " ";
+                }
             }
-            std::cout << std::endl;
+            std::cout << "\n";
         }
     }
 }
 
 //-----------------------------------------------------------------------------
 
-// Calculate the distance between two hash values
-std::string RoutingTable::calculate_distance(const std::string& hash1, const std::string& hash2) {
-    std::string distance;
-    const size_t numBits = hash1.size() * 8;
-    for (size_t i = 0; i < numBits; i++) {
-        // Get the byte and bit position of the current bit
-        size_t byteIndex = i / 8;
-        size_t bitIndex = i % 8;
-
-        // Extract the corresponding bits from the two hash values
-        char bit1 = (hash1[byteIndex] >> bitIndex) & 1;
-        char bit2 = (hash2[byteIndex] >> bitIndex) & 1;
-
-        // Perform bitwise XOR on the bits
-        char xorValue = bit1 ^ bit2;
-
-        // Convert XOR value to binary string representation and append it to the distance string
-        std::string xorStr = std::bitset<8>(xorValue).to_string();
-        distance += xorStr;
-    }
-    
-    return distance;
-}
-
-
-
-// Determine the bucket index for a hash value
-/*unsigned int getBucketIndex(const std::string& hash) {
-    // Extract the most significant bits (e.g., first 8 bits)
-    char msb = hash[0];
-    unsigned int bucketIndex = static_cast<unsigned int>(msb) % NEROSHOP_DHT_ROUTING_TABLE_BUCKETS;
-    return bucketIndex;
-}*/
-}
+} // namespace neroshop

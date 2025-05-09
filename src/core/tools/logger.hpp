@@ -13,6 +13,8 @@
 #include <mutex>
 #include <memory>
 #include <atomic>
+#include <regex>
+#include <time.h> // localtime_r
 
 #include <fmt/base.h> // fmt::print
 #include <fmt/core.h>  // fmt::format
@@ -21,6 +23,9 @@
 namespace neroshop {
 
 // ANSI color codes
+constexpr const char* color_reset = "\033[0m";
+
+constexpr const char* color_black = "\033[1;30m";
 constexpr const char* color_red = "\033[1;91m";
 constexpr const char* color_green = "\033[1;32m";
 constexpr const char* color_yellow = "\033[1;33m";
@@ -28,11 +33,20 @@ constexpr const char* color_blue = "\033[1;34m";
 constexpr const char* color_magenta = "\033[1;35m";
 constexpr const char* color_cyan = "\033[1;36m";
 constexpr const char* color_white = "\033[1;37m";
-constexpr const char* color_reset = "\033[0m";
-// log.info("This is {}blue{} text.\n", color_blue, color_reset);
-    
-inline std::string colorize(const std::string& color_code, const std::string& text) {
-    return color_code + text + color_reset;
+
+constexpr const char* background_black = "\033[40m";
+constexpr const char* background_red = "\033[41m";
+constexpr const char* background_green = "\033[42m";
+constexpr const char* background_yellow = "\033[43m";
+constexpr const char* background_blue = "\033[44m";
+constexpr const char* background_magenta = "\033[45m";
+constexpr const char* background_cyan = "\033[46m";
+constexpr const char* background_white = "\033[47m";
+
+inline std::string strip_ansi_codes(const std::string& input) {
+    // ANSI escape sequence pattern
+    static const std::regex ansi_regex("\x1B\\[[0-9;]*[A-Za-z]");
+    return std::regex_replace(input, ansi_regex, "");
 }
 
 enum class LogLevel {
@@ -114,31 +128,46 @@ private:
 
     template <typename... Args>
     void log(LogLevel level, fmt::format_string<Args...> fmt_str, Args&&... args) {
-        if (level < level_.load()) return;
+        #ifdef NEROSHOP_DEBUG
+        // In Debug builds, always log everything
+        if (level < LogLevel::Trace) return;
+        #else
+        // In release builds, filter based on current log level
+        if (level < level_.load()) return; // filters out messages below the current logging threshold (default=LogLevel::Info)
+        #endif
 
         auto now = std::chrono::system_clock::now();
         auto in_time_t = std::chrono::system_clock::to_time_t(now); // current time
 	    std::stringstream ss;
-	    ss << std::put_time(std::localtime(&in_time_t), std::string("[%Y-%m-%d %H:%M:%S]").c_str()); // %I = 12h, %p = AM/PM
+	    std::tm tm_info;
+	    // Windows: Use secure, thread-safe version
+	    #if defined(_WIN32)
+	    localtime_s(&tm_info, &in_time_t); // localtime_s is an inline function that evaluates to _localtime64_s (source: https://learn.microsoft.com/en-us/cpp/c-runtime-library/reference/localtime-s-localtime32-s-localtime64-s)
+	    #else
+	    // POSIX: Use localtime_r
+	    localtime_r(&in_time_t, &tm_info);
+	    #endif
+	    // Format the datetime string
+	    ss << std::put_time(&tm_info, "[%Y-%m-%d %H:%M:%S]");  // %I = 12h, %p = AM/PM
         std::string datetime = ss.str();
         
-        const char* color = "";
+        const char* prefix_color = "";
         const char* prefix = "";
         
         switch(level) {
-            case LogLevel::Trace:    color = color_cyan;    prefix = "[TRACE]";    break;
-            case LogLevel::Debug:    color = color_blue;    prefix = "[DEBUG]";    break;
-            case LogLevel::Info:     color = color_green;   prefix = "[INFO]";     break;
-            case LogLevel::Warn:     color = color_yellow;  prefix = "[WARN]";     break;
-            case LogLevel::Error:    color = color_red;     prefix = "[ERROR]";    break;
-            case LogLevel::Critical: color = color_magenta; prefix = "[CRITICAL]"; break;
+            case LogLevel::Trace:    prefix_color = color_cyan;    prefix = "[TRACE]";    break;
+            case LogLevel::Debug:    prefix_color = color_blue;    prefix = "[DEBUG]";    break;
+            case LogLevel::Info:     prefix_color = color_green;   prefix = "[INFO ]";    break;
+            case LogLevel::Warn:     prefix_color = color_yellow;  prefix = "[WARN ]";    break;
+            case LogLevel::Error:    prefix_color = color_red;     prefix = "[ERROR]";    break;
+            case LogLevel::Critical: prefix_color = color_magenta; prefix = "[CRITICAL]"; break;
         }
 
         // --- Console output ---
         // Terminal output (with color)
         {
             std::scoped_lock lock(console_mutex_);
-            fmt::print("{}{}{}{}{} ", color_white, datetime, color, prefix, color_reset);
+            fmt::print("{}{}{}{}{} ", color_white, datetime, prefix_color, prefix, color_reset);
             fmt::print(fmt_str, std::forward<Args>(args)...);
             fmt::print("\n");
         }
@@ -158,7 +187,9 @@ private:
             std::ofstream logfile(path_copy.c_str(), std::ios_base::app);
             if (logfile.is_open()) {
                 logfile << datetime << prefix << " ";
-                logfile << fmt::format(fmt_str, std::forward<Args>(args)...) << std::endl;
+                std::string formatted = fmt::format(fmt_str, std::forward<Args>(args)...);
+                formatted = strip_ansi_codes(formatted); // Strip colors
+                logfile << formatted << std::endl;
             }
         }
     }

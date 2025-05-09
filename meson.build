@@ -304,15 +304,15 @@ neroshop_network_srcs = [
 ]
 
 neroshop_price_srcs = [
-    neroshop_core_src_dir + '/price/coincodex/coincodex.cpp',
-    neroshop_core_src_dir + '/price/coingecko/coingecko.cpp',
-    neroshop_core_src_dir + '/price/coinmarketcap/coinmarketcap.cpp',
-    neroshop_core_src_dir + '/price/cointelegraph/cointelegraph.cpp',
-    neroshop_core_src_dir + '/price/cryptorank/cryptorank.cpp',
-    neroshop_core_src_dir + '/price/cryptowatch/cryptowatch.cpp',
-    neroshop_core_src_dir + '/price/fawazahmed0/fawazahmed0.cpp',
-    neroshop_core_src_dir + '/price/kraken/kraken.cpp',
-    neroshop_core_src_dir + '/price/currency_converter.cpp'
+    neroshop_core_src_dir + '/price_api/coincodex/coincodex.cpp',
+    neroshop_core_src_dir + '/price_api/coingecko/coingecko.cpp',
+    neroshop_core_src_dir + '/price_api/coinmarketcap/coinmarketcap.cpp',
+    neroshop_core_src_dir + '/price_api/cointelegraph/cointelegraph.cpp',
+    neroshop_core_src_dir + '/price_api/cryptorank/cryptorank.cpp',
+    neroshop_core_src_dir + '/price_api/cryptowatch/cryptowatch.cpp',
+    neroshop_core_src_dir + '/price_api/fawazahmed0/fawazahmed0.cpp',
+    neroshop_core_src_dir + '/price_api/kraken/kraken.cpp',
+    neroshop_core_src_dir + '/price_api/currency_converter.cpp'
 ]
 
 neroshop_protocol_srcs = [

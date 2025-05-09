@@ -29,8 +29,8 @@
 #include "core/market/user.hpp"
 // network
 #include "core/network/i2p.hpp"
-// price
-#include "core/price/currency_converter.hpp"
+// price_api
+#include "core/price_api/currency_converter.hpp"
 // protocol
 #include "core/protocol/p2p/dht_rescode.hpp"
 #include "core/protocol/p2p/file_piece_hasher.hpp"

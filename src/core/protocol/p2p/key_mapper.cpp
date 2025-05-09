@@ -6,10 +6,14 @@
 #include "../../database/database.hpp"
 #include "../../crypto/sha3.hpp"
 
+#include <mutex> // std::unique_lock
+
 namespace neroshop {
 //-----------------------------------------------------------------------------
 
 KeyMapper::~KeyMapper() {
+    std::unique_lock lock(data_mutex);
+    
     product_ids.clear();
     product_names.clear();
     product_categories.clear();
@@ -40,6 +44,7 @@ void KeyMapper::add(const std::string& key, const std::string& value) {
     
     std::string metadata = json["metadata"].get<std::string>();
 
+    std::unique_lock lock(data_mutex);
     //-----------------------------------------------
     // Note: As long as we have the user id, we can find the user
     if(metadata == "user") {
@@ -630,6 +635,7 @@ std::pair<std::string, std::string> KeyMapper::serialize() { // no longer in use
 //-----------------------------------------------------------------------------
 
 std::vector<std::string> KeyMapper::search_product_by_name(const std::string& product_name) {
+    std::shared_lock lock(data_mutex);
     std::vector<std::string> matching_keys;
 
     std::string product_name_lower = neroshop::string_tools::lower(product_name);

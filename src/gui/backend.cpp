@@ -28,8 +28,8 @@
 #include "daemon_manager.hpp"
 //#include "../core/market/cart.hpp"
 #include "../core/protocol/transport/client.hpp"
-#include "../core/price/currency_converter.hpp" // neroshop::Converter::is_supported_currency
-#include "../core/price/currency_map.hpp"
+#include "../core/price_api/currency_converter.hpp" // neroshop::Converter::is_supported_currency
+#include "../core/price_api/currency_map.hpp"
 #include "../core/crypto/sha3.hpp"
 #include "../core/crypto/sha256.hpp" // sha256
 #include "../core/database/database.hpp"
