@@ -7,13 +7,13 @@
 #include <variant>
 #include <vector>
 
-#include "../../seller.hpp"
-#include "../../product.hpp"
-#include "../../listing.hpp"
-#include "../../cart.hpp"
-#include "../../order.hpp"
-#include "../../rating.hpp"
-#include "../../message.hpp"
+#include "../../market/seller.hpp"
+#include "../../market/product.hpp"
+#include "../../market/listing.hpp"
+#include "../../market/cart.hpp"
+#include "../../market/order.hpp"
+#include "../../market/rating.hpp"
+#include "../../market/message.hpp"
 
 namespace neroshop {
 

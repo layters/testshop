@@ -27,13 +27,13 @@
 
 namespace neroshop {
 
-Node::Node(bool local, const std::string& i2p_address) : bootstrap(false), check_counter(0) { 
+Node::Node(bool local, const std::string& i2p_address) : bootstrap(false), check_counter(0), stop_period_chk_flag(false) { 
     // If this is an external node that you do not own, set its destination/i2p address and exit function
     // We only need the i2p address and node ID of an outside node!
     if(local == false) {
         this->i2p_address = i2p_address;
         this->id = generate_node_id(i2p_address);
-        this->port_udp = SAM_DEFAULT_CLIENT_UDP;
+        this->port_udp.store(SAM_DEFAULT_CLIENT_UDP); // Atomically store
     } else {
 
         // Initialiize SAM client, connecting to the SAM Bridge via TCP port (7656)
@@ -53,20 +53,19 @@ Node::Node(bool local, const std::string& i2p_address) : bootstrap(false), check
         // Save i2p address
         this->i2p_address = sam_client->get_i2p_address();
         // Generate node ID from b32.i2p
-        this->id = generate_node_id(this->i2p_address);
+        this->id = generate_node_id(this->get_i2p_address());
         // Set UDP port
-        this->port_udp = sam_client->get_port();
-    }
+        this->port_udp.store(sam_client->get_port()); // Atomically store
         
-    // Create the routing table with an empty vector of nodes
-    if(!routing_table.get()) {
-        routing_table = std::make_unique<RoutingTable>(std::vector<Node*>{});
-        routing_table->my_node_id = this->id;
-    } 
+        // Create the routing table with an empty vector of nodes
+        if(!routing_table.get()) {
+            routing_table = std::make_unique<RoutingTable>(this->get_id());
+        } 
        
-    // Initialize key mapper
-    if(!key_mapper.get()) {
-        key_mapper = std::make_unique<KeyMapper>();
+        // Initialize key mapper
+        if(!key_mapper.get()) {
+            key_mapper = std::make_unique<KeyMapper>();
+        }
     }
 }
 
@@ -111,9 +110,9 @@ void Node::join() {
         }
         
         // Send a "find_node" message to the bootstrap node and wait for a response message
-        auto nodes = send_find_node(this->id, bootstrap_node);
+        auto nodes = send_find_node(this->get_id(), bootstrap_node);
         if(nodes.empty()) {
-            log_error("find_node: No nodes found");
+            log_error("send_find_node: No nodes found");
             continue;
         }
         
@@ -157,9 +156,9 @@ std::vector<Node*> Node::find_node(const std::string& target, int count) const {
 int Node::put(const std::string& key, const std::string& value) {
     // If data is a duplicate, skip it and return success (true)
     {
-        std::shared_lock<std::shared_mutex> read_lock(data_mutex);
-        if (has_key(key) && get(key) == value) {
-            std::cout << "Data already exists. Skipping ...\n";
+        std::shared_lock<std::shared_mutex> read_lock(data_mutex); // read only (shared)
+        if ((data.count(key) > 0) && data[key] == value) {
+            log_info("Data already exists. Skipping ...");
             return true;
         }
     }
@@ -170,14 +169,14 @@ int Node::put(const std::string& key, const std::string& value) {
     
     // If node has the key but the value has been altered, compare both old and new values before updating the value
     {
-        std::unique_lock<std::shared_mutex> write_lock(data_mutex);
-        if (has_key(key) && get(key) != value) {
-            std::cout << "Updating value for key (" << key << ") ...\n";
+        std::unique_lock<std::shared_mutex> write_lock(data_mutex); // exclusive lock for both read & write
+        if ((data.count(key) > 0) && data[key] != value) {
+            log_info("Updating value for key {} ...", key);
             return set(key, value);
         }
     
         data[key] = value;
-        return has_key(key); // boolean
+        return (data.count(key) > 0); // boolean
     }
 }
 
@@ -190,12 +189,10 @@ int Node::store(const std::string& key, const std::string& value) {
 //-----------------------------------------------------------------------------
 
 std::string Node::get(const std::string& key) const { 
-    ////std::shared_lock<std::shared_mutex> lock(data_mutex);
+    std::shared_lock<std::shared_mutex> lock(data_mutex); // read only (shared)
+    
     auto it = data.find(key);
-    if (it != data.end()) {
-        return it->second;
-    }
-    return "";
+    return (it != data.end()) ? it->second : "";
 }
 
 //-----------------------------------------------------------------------------
@@ -208,7 +205,8 @@ std::string Node::find_value(const std::string& key) const {
 
 int Node::remove(const std::string& key) {
     std::unique_lock<std::shared_mutex> lock(data_mutex);
-    data.erase(key); // causes Segfault when called in thread :(
+    
+    data.erase(key);
     return (data.count(key) == 0); // boolean
 }
 
@@ -216,8 +214,9 @@ int Node::remove(const std::string& key) {
 
 int Node::remove_all() {
     std::unique_lock<std::shared_mutex> lock(data_mutex);
+    
     data.clear();
-    return data.empty();
+    return data.empty(); // boolean
 }
 
 //-----------------------------------------------------------------------------
@@ -229,10 +228,11 @@ void Node::map(const std::string& key, const std::string& value) {
 //-----------------------------------------------------------------------------
 
 int Node::set(const std::string& key, const std::string& value) {
-    std::unique_lock<std::shared_mutex> lock(data_mutex); // exclusive lock for both read & write
+    // set() is only called/used in put() and put() already has unique_lock 
+    // so no need to add another unique_lock !!!
     nlohmann::json json = nlohmann::json::parse(value); // Already validated in put() so we just need to parse it without checking for errors
     
-    std::string current_value = get(key);
+    std::string current_value = data[key];
     nlohmann::json current_json = nlohmann::json::parse(current_value);
     
     // Verify that no immutable fields have been altered
@@ -291,7 +291,7 @@ int Node::set(const std::string& key, const std::string& value) {
     }
     
     data[key] = value;
-    return has_key(key); // boolean
+    return (data.count(key) > 0); // boolean
 }
 
 //-----------------------------------------------------------------------------
@@ -356,7 +356,7 @@ void Node::remove_provider(const std::string& data_hash, const std::string& i2p_
 }
 
 std::deque<Peer> Node::get_providers(const std::string& data_hash) const {
-    std::shared_lock<std::shared_mutex> lock(providers_mutex);
+    std::shared_lock<std::shared_mutex> lock(providers_mutex); // read only (shared)
 
     std::deque<Peer> peers = {};
     // Check if data_hash is in providers
@@ -413,7 +413,7 @@ void Node::rebuild_routing_table() {
             if(i == 0) i2p_address = column_value;
             
             if(!ping(i2p_address)) {
-                std::cerr << "\033[1;91m[ERROR]\033[0m ping: failed to ping node\n"; 
+                log_error("ping: failed to ping node"); 
                 // Remove unresponsive nodes from database
                 database->execute_params("DELETE FROM routing_table WHERE i2p_address = ?1", { i2p_address });
                 continue;
@@ -435,7 +435,7 @@ void Node::send_query(const std::string& destination, const std::vector<uint8_t>
     if(!sam_client.get()) throw std::runtime_error("sam client is not connected");
     if(sam_client->get_socket() < 0) throw std::runtime_error("sam client socket is closed");
     
-    std::cout << "\033[1;34m[DEBUG]\033[0m Sending datagram to: " << destination << "\n";
+    log_info("Sending datagram to {}", destination);
     // Construct SAM header line for datagram
     std::string header = "3.0 " + sam_client->get_nickname() + " " + destination + "\n";
     
@@ -461,7 +461,7 @@ bool Node::send_ping(const std::string& destination) {
     std::string transaction_id = msgpack::generate_transaction_id();
     query_object["tid"] = transaction_id;
     query_object["query"] = "ping";
-    query_object["args"]["id"] = this->id;
+    query_object["args"]["id"] = this->get_id();
     query_object["args"]["port"] = sam_client->get_port();
     query_object["version"] = std::string(NEROSHOP_DHT_VERSION);
     auto ping_message = nlohmann::json::to_msgpack(query_object);//std::string my_query = query_object.dump();
@@ -474,7 +474,7 @@ bool Node::send_ping(const std::string& destination) {
     std::future<nlohmann::json> future = promise.get_future();
 
     {
-        std::lock_guard<std::mutex> lock(pending_mutex);
+        std::scoped_lock lock(pending_mutex); // equivalent to std::lock_guard<std::mutex> lock(pending_mutex); but is the more modern and recommended approach in C++17
         pending_requests[transaction_id] = std::move(promise);
     }
     
@@ -484,7 +484,7 @@ bool Node::send_ping(const std::string& destination) {
         send_query(destination, ping_message);
     } catch(const std::exception& e) {
         std::cerr << "\033[1;91m[ERROR]\033[0m send_query: " << e.what() << "\n";
-        std::lock_guard<std::mutex> lock(pending_mutex);
+        std::scoped_lock lock(pending_mutex);
         pending_requests.erase(transaction_id);
         return false;
     }
@@ -492,7 +492,7 @@ bool Node::send_ping(const std::string& destination) {
     // Wait for a response
     if (future.wait_for(std::chrono::seconds(NEROSHOP_DHT_PING_TIMEOUT)) != std::future_status::ready) {
         std::cerr << "[TIMEOUT] No response for TID: " << transaction_id << "\n";
-        std::lock_guard<std::mutex> lock(pending_mutex);
+        std::scoped_lock lock(pending_mutex);
         pending_requests.erase(transaction_id);
         return false;
     }
@@ -509,7 +509,7 @@ std::vector<std::unique_ptr<Node>> Node::send_find_node(const std::string& targe
     std::string transaction_id = msgpack::generate_transaction_id();
     query_object["tid"] = transaction_id;
     query_object["query"] = "find_node";
-    query_object["args"]["id"] = this->id;
+    query_object["args"]["id"] = this->get_id();
     query_object["args"]["target"] = target;
     query_object["version"] = std::string(NEROSHOP_DHT_VERSION);
     auto find_node_message = nlohmann::json::to_msgpack(query_object);
@@ -520,7 +520,7 @@ std::vector<std::unique_ptr<Node>> Node::send_find_node(const std::string& targe
 
     // Store the promise in the pending requests map
     {
-        std::lock_guard<std::mutex> lock(pending_mutex);
+        std::scoped_lock lock(pending_mutex);
         pending_requests[transaction_id] = std::move(promise);
     }
     
@@ -529,7 +529,7 @@ std::vector<std::unique_ptr<Node>> Node::send_find_node(const std::string& targe
         send_query(destination, find_node_message);
     } catch (const std::exception& e) {
         std::cerr << "\033[1;91m[ERROR]\033[0m send_query: " << e.what() << "\n";
-        std::lock_guard<std::mutex> lock(pending_mutex);
+        std::scoped_lock lock(pending_mutex);
         pending_requests.erase(transaction_id);
         return {}; // Return an empty vector on failure
     }
@@ -537,7 +537,7 @@ std::vector<std::unique_ptr<Node>> Node::send_find_node(const std::string& targe
     // Wait for the response
     if (future.wait_for(std::chrono::seconds(NEROSHOP_DHT_RECV_TIMEOUT)) != std::future_status::ready) {
         std::cerr << "[TIMEOUT] No response for TID: " << transaction_id << "\n";
-        std::lock_guard<std::mutex> lock(pending_mutex);
+        std::scoped_lock lock(pending_mutex);
         pending_requests.erase(transaction_id);
         return {}; // Return an empty vector if there was a timeout
     }
@@ -553,7 +553,7 @@ std::vector<std::unique_ptr<Node>> Node::send_find_node(const std::string& targe
             if (node_json.contains("i2p_address")) {
                 std::string i2p_address = node_json["i2p_address"];
                 auto node = std::make_unique<Node>(false, i2p_address);
-                if (node->id != this->id && !routing_table->has_node(node->id)) { // add node to vector only if it's not the current node
+                if (node->get_id() != this->get_id() && !routing_table->has_node(node->get_id())) { // add node to vector only if it's not the current node
                     nodes.push_back(std::move(node));
                 }
             }
@@ -568,7 +568,7 @@ int Node::send_put(const std::string& key, const std::string& value) {
     
     nlohmann::json query_object;
     query_object["query"] = "put";
-    query_object["args"]["id"] = this->id;
+    query_object["args"]["id"] = this->get_id();
     query_object["args"]["key"] = key;
     query_object["args"]["value"] = value;
     query_object["version"] = std::string(NEROSHOP_DHT_VERSION);
@@ -596,11 +596,11 @@ int Node::send_put(const std::string& key, const std::string& value) {
         std::promise<nlohmann::json> promise;
         std::future<nlohmann::json> future = promise.get_future();
         {
-            std::lock_guard<std::mutex> lock(pending_mutex);
+            std::scoped_lock lock(pending_mutex);
             pending_requests[transaction_id] = std::move(promise);
         }
     
-        std::string node_dest = (node->get_i2p_address() == this->i2p_address) ? "127.0.0.1" : node->get_i2p_address();
+        std::string node_dest = node->get_i2p_address();
         uint16_t node_port = node->get_port();
         std::cout << "Sending put request to \033[36m" << node_dest << ":" << node_port << "\033[0m\n";
         
@@ -608,7 +608,7 @@ int Node::send_put(const std::string& key, const std::string& value) {
             send_query(node_dest, query_put);
         } catch (const std::exception& e) {
             std::cerr << "\033[91m[ERROR]\033[0m send_query: " << e.what() << "\n";
-            std::lock_guard<std::mutex> lock(pending_mutex);
+            std::scoped_lock lock(pending_mutex);
             pending_requests.erase(transaction_id);
             failed_nodes.insert(node);
             continue;
@@ -616,7 +616,7 @@ int Node::send_put(const std::string& key, const std::string& value) {
         
         if (future.wait_for(std::chrono::seconds(NEROSHOP_DHT_RECV_TIMEOUT)) != std::future_status::ready) {
             std::cerr << "[TIMEOUT] No response for TID: " << transaction_id << "\n";
-            std::lock_guard<std::mutex> lock(pending_mutex);
+            std::scoped_lock lock(pending_mutex);
             pending_requests.erase(transaction_id);
             failed_nodes.insert(node);
             continue; // Continue with the next closest node if this one fails
@@ -672,11 +672,11 @@ int Node::send_put(const std::string& key, const std::string& value) {
                 std::promise<nlohmann::json> promise;
                 std::future<nlohmann::json> future = promise.get_future();
                 {
-                    std::lock_guard<std::mutex> lock(pending_mutex);
+                    std::scoped_lock lock(pending_mutex);
                     pending_requests[transaction_id] = std::move(promise);
                 }
 
-                std::string node_dest = (replacement_node->get_i2p_address() == this->i2p_address) ? "127.0.0.1" : replacement_node->get_i2p_address();
+                std::string node_dest = replacement_node->get_i2p_address();
                 uint16_t node_port = replacement_node->get_port();
                 std::cout << "Sending put request to \033[36m" << node_dest << ":" << node_port << "\033[0m\n";
                 
@@ -684,17 +684,17 @@ int Node::send_put(const std::string& key, const std::string& value) {
                     send_query(node_dest, query_put);
                 } catch (const std::exception& e) {
                     std::cerr << "\033[91m[ERROR]\033[0m send_query: " << e.what() << "\n";
-                    std::lock_guard<std::mutex> lock(pending_mutex);
+                    std::scoped_lock lock(pending_mutex);
                     pending_requests.erase(transaction_id);
-                    replacement_node->check_counter += 1;
+                    replacement_node->check_counter.fetch_add(1); // Equivalent to ++check_counter or check_counter += 1
                     continue;
                 }
                 
                 if (future.wait_for(std::chrono::seconds(NEROSHOP_DHT_RECV_TIMEOUT)) != std::future_status::ready) {
                     std::cerr << "[TIMEOUT] No response for TID: " << transaction_id << "\n";
-                    std::lock_guard<std::mutex> lock(pending_mutex);
+                    std::scoped_lock lock(pending_mutex);
                     pending_requests.erase(transaction_id);
-                    replacement_node->check_counter += 1;
+                    replacement_node->check_counter.fetch_add(1);
                     continue; // Continue with the next replacement node if this one fails
                 }
                 
@@ -722,13 +722,13 @@ int Node::send_store(const std::string& key, const std::string& value) {
 std::string Node::send_get(const std::string& key) {
     nlohmann::json query_object;
     query_object["query"] = "get";
-    query_object["args"]["id"] = this->id;
+    query_object["args"]["id"] = this->get_id();
     query_object["args"]["key"] = key;
     query_object["version"] = std::string(NEROSHOP_DHT_VERSION);
     
     //-----------------------------------------------
     // First, check to see if we have the key before performing any other operations
-    if(has_key(key)) { return get(key); }
+    if((data.count(key) > 0)) { return get(key); }
     
     if(has_key_cached(key)) {
         return get_cached(key); // Validate is slow so don't validate our cached hash table (for now)
@@ -749,7 +749,7 @@ std::string Node::send_get(const std::string& key) {
             std::promise<nlohmann::json> promise;
             std::future<nlohmann::json> future = promise.get_future();
             {
-                std::lock_guard<std::mutex> lock(pending_mutex);
+                std::scoped_lock lock(pending_mutex);
                 pending_requests[transaction_id] = std::move(promise);
             }
             
@@ -760,14 +760,14 @@ std::string Node::send_get(const std::string& key) {
                 send_query(peer_addr, query_get);
             } catch (const std::exception& e) {
                 std::cerr << "\033[91m[ERROR]\033[0m send_query: " << e.what() << "\n";
-                std::lock_guard<std::mutex> lock(pending_mutex);
+                std::scoped_lock lock(pending_mutex);
                 pending_requests.erase(transaction_id);
                 continue;
             }
             
             if (future.wait_for(std::chrono::seconds(2/*NEROSHOP_DHT_RECV_TIMEOUT*/)) != std::future_status::ready) {
                 std::cerr << "[TIMEOUT] No response for TID: " << transaction_id << "\n";
-                std::lock_guard<std::mutex> lock(pending_mutex);
+                std::scoped_lock lock(pending_mutex);
                 pending_requests.erase(transaction_id);
                 std::cerr << "Provider \033[91m" << peer_addr << "\033[0m did not respond" << std::endl;
                 remove_provider(key, peer.address); // Remove this peer from providers
@@ -813,7 +813,7 @@ std::string Node::send_get(const std::string& key) {
             std::promise<nlohmann::json> promise;
             std::future<nlohmann::json> future = promise.get_future();
             {
-                std::lock_guard<std::mutex> lock(pending_mutex);
+                std::scoped_lock lock(pending_mutex);
                 pending_requests[transaction_id] = std::move(promise);
             }
             
@@ -824,14 +824,14 @@ std::string Node::send_get(const std::string& key) {
                 send_query(peer_addr, query_get);
             } catch (const std::exception& e) {
                 std::cerr << "\033[91m[ERROR]\033[0m send_query: " << e.what() << "\n";
-                std::lock_guard<std::mutex> lock(pending_mutex);
+                std::scoped_lock lock(pending_mutex);
                 pending_requests.erase(transaction_id);
                 continue;
             }
             
             if (future.wait_for(std::chrono::seconds(2/*NEROSHOP_DHT_RECV_TIMEOUT*/)) != std::future_status::ready) {
                 std::cerr << "[TIMEOUT] No response for TID: " << transaction_id << "\n";
-                std::lock_guard<std::mutex> lock(pending_mutex);
+                std::scoped_lock lock(pending_mutex);
                 pending_requests.erase(transaction_id);
                 std::cerr << "Provider \033[91m" << peer_addr << "\033[0m did not respond" << std::endl;
                 remove_provider(key, peer.address); // Remove this peer from providers
@@ -894,7 +894,7 @@ void Node::send_remove(const std::string& key) {
         std::future<nlohmann::json> future = promise.get_future();
 
         {
-            std::lock_guard<std::mutex> lock(pending_mutex);
+            std::scoped_lock lock(pending_mutex);
             pending_requests[transaction_id] = std::move(promise);
         }
         
@@ -906,17 +906,17 @@ void Node::send_remove(const std::string& key) {
             send_query(node_dest, remove_query);
         } catch (const std::exception& e) {
             std::cerr << "\033[91m[ERROR]\033[0m send_query: " << e.what() << "\n";
-            std::lock_guard<std::mutex> lock(pending_mutex);
+            std::scoped_lock lock(pending_mutex);
             pending_requests.erase(transaction_id);
             continue;
         }
         
         if (future.wait_for(std::chrono::seconds(NEROSHOP_DHT_RECV_TIMEOUT)) != std::future_status::ready) {
             std::cerr << "[TIMEOUT] No response for TID: " << transaction_id << "\n";
-            std::lock_guard<std::mutex> lock(pending_mutex);
+            std::scoped_lock lock(pending_mutex);
             pending_requests.erase(transaction_id);
             std::cerr << "Node \033[91m" << node_dest << "\033[0m did not respond" << std::endl;
-            node->check_counter += 1;
+            node->check_counter.fetch_add(1);
             continue; // Continue with the next closest node if this one fails
         }
             
@@ -937,7 +937,7 @@ void Node::send_remove(const std::string& key) {
 void Node::send_map(const std::string& destination) {
     nlohmann::json query_object;
     query_object["query"] = "map";
-    query_object["args"]["id"] = this->id;
+    query_object["args"]["id"] = this->get_id();
     query_object["args"]["port"] = get_port(); // the port of the peer that is announcing itself (map will also be used to "announce" the peer or provider)
     query_object["version"] = std::string(NEROSHOP_DHT_VERSION);
     
@@ -957,7 +957,7 @@ void Node::send_map(const std::string& destination) {
         std::future<nlohmann::json> future = promise.get_future();
 
         {
-            std::lock_guard<std::mutex> lock(pending_mutex);
+            std::scoped_lock lock(pending_mutex);
             pending_requests[transaction_id] = std::move(promise);
         }
         
@@ -965,14 +965,14 @@ void Node::send_map(const std::string& destination) {
             send_query(destination, map_message);
         } catch (const std::exception& e) {
             std::cerr << "\033[91m[ERROR]\033[0m send_query: " << e.what() << "\n";
-            std::lock_guard<std::mutex> lock(pending_mutex);
+            std::scoped_lock lock(pending_mutex);
             pending_requests.erase(transaction_id);
             continue;
         }
         
         if (future.wait_for(std::chrono::seconds(NEROSHOP_DHT_RECV_TIMEOUT)) != std::future_status::ready) {
             std::cerr << "[TIMEOUT] No response for TID: " << transaction_id << "\n";
-            std::lock_guard<std::mutex> lock(pending_mutex);
+            std::scoped_lock lock(pending_mutex);
             pending_requests.erase(transaction_id);
             std::cerr << "\033[91mNode " << destination << " did not respond to send_map\033[0m" << std::endl;
             continue;
@@ -1035,7 +1035,7 @@ void Node::send_map_v2(const std::string& destination) {
     //------------------------------------------------------
     nlohmann::json query_object;
     query_object["query"] = "map";
-    query_object["args"]["id"] = this->id;
+    query_object["args"]["id"] = this->get_id();
     query_object["args"]["port"] = get_port();
     query_object["version"] = std::string(NEROSHOP_DHT_VERSION);
     
@@ -1051,7 +1051,7 @@ void Node::send_map_v2(const std::string& destination) {
         std::future<nlohmann::json> future = promise.get_future();
 
         {
-            std::lock_guard<std::mutex> lock(pending_mutex);
+            std::scoped_lock lock(pending_mutex);
             pending_requests[transaction_id] = std::move(promise);
         }
         
@@ -1059,14 +1059,14 @@ void Node::send_map_v2(const std::string& destination) {
             send_query(destination, map_request);
         } catch (const std::exception& e) {
             std::cerr << "\033[91m[ERROR]\033[0m send_query: " << e.what() << "\n";
-            std::lock_guard<std::mutex> lock(pending_mutex);
+            std::scoped_lock lock(pending_mutex);
             pending_requests.erase(transaction_id);
             continue;
         }
         
         if (future.wait_for(std::chrono::seconds(NEROSHOP_DHT_RECV_TIMEOUT)) != std::future_status::ready) {
             std::cerr << "[TIMEOUT] No response for TID: " << transaction_id << "\n";
-            std::lock_guard<std::mutex> lock(pending_mutex);
+            std::scoped_lock lock(pending_mutex);
             pending_requests.erase(transaction_id);
             std::cerr << "\033[91mNode " << destination << " did not respond to send_map\033[0m" << std::endl;
             continue;
@@ -1089,7 +1089,7 @@ std::deque<Peer> Node::send_get_providers(const std::string& key) {
     //-----------------------------------------------
     nlohmann::json query_object;
     query_object["query"] = "get_providers";
-    query_object["args"]["id"] = this->id;
+    query_object["args"]["id"] = this->get_id();
     query_object["args"]["key"] = key;
     query_object["version"] = std::string(NEROSHOP_DHT_VERSION);
     //-----------------------------------------------
@@ -1112,7 +1112,7 @@ std::deque<Peer> Node::send_get_providers(const std::string& key) {
         std::future<nlohmann::json> future = promise.get_future();
 
         {
-            std::lock_guard<std::mutex> lock(pending_mutex);
+            std::scoped_lock lock(pending_mutex);
             pending_requests[transaction_id] = std::move(promise);
         }
         
@@ -1124,17 +1124,17 @@ std::deque<Peer> Node::send_get_providers(const std::string& key) {
             send_query(node_dest, get_providers_query);
          } catch (const std::exception& e) {
             std::cerr << "\033[91m[ERROR]\033[0m send_query: " << e.what() << "\n";
-            std::lock_guard<std::mutex> lock(pending_mutex);
+            std::scoped_lock lock(pending_mutex);
             pending_requests.erase(transaction_id);
             continue;
         }
         
         if (future.wait_for(std::chrono::seconds(NEROSHOP_DHT_RECV_TIMEOUT)) != std::future_status::ready) {
             std::cerr << "[TIMEOUT] No response for TID: " << transaction_id << "\n";
-            std::lock_guard<std::mutex> lock(pending_mutex);
+            std::scoped_lock lock(pending_mutex);
             pending_requests.erase(transaction_id);
             std::cerr << "Node \033[91m" << node_dest << "\033[0m did not respond" << std::endl;
-            node->check_counter += 1;
+            node->check_counter.fetch_add(1);
             continue; // Continue with the next node if this one fails
         }
         
@@ -1171,11 +1171,11 @@ std::deque<Peer> Node::send_get_providers(const std::string& key) {
 //-----------------------------------------------------------------------------
 
 void Node::refresh() {
-    std::vector<Node *> closest_nodes = find_node(this->id, NEROSHOP_DHT_MAX_CLOSEST_NODES);
+    std::vector<Node *> closest_nodes = find_node(this->get_id(), NEROSHOP_DHT_MAX_CLOSEST_NODES);
     
     for(const auto& neighbor : closest_nodes) {
         std::cout << "Sending find_node request to " << neighbor->get_i2p_address() << ":" << neighbor->get_port() << "\n";
-        auto nodes = send_find_node(this->id, neighbor->get_i2p_address());
+        auto nodes = send_find_node(this->get_id(), neighbor->get_i2p_address());
         if(nodes.empty()) {
             std::cerr << "find_node: No unique nodes found\n"; continue;
         }
@@ -1250,8 +1250,11 @@ bool Node::validate(const std::string& key, const std::string& value) {
         std::string expiration_date = json["expiration_date"].get<std::string>();
         if(neroshop::timestamp::is_expired(expiration_date)) {
             std::cerr << "\033[91mData has expired\033[0m\n";
-            if(has_key(key)) {
-                remove(key);
+            {
+                std::unique_lock<std::shared_mutex> lock(data_mutex); // read and write (exclusive)
+                if((data.count(key) > 0)) {
+                    data.erase(key); bool removed = (data.count(key) == 0);
+                }
             }
             if(database->get_integer_params("SELECT EXISTS(SELECT key FROM hash_table WHERE key = ?1)", { key }) == 1) {
                 database->execute_params("DELETE FROM hash_table WHERE key = ?1", { key });
@@ -1343,7 +1346,7 @@ bool Node::verify(const std::string& value) const {
         std::cerr << "\033[91mInvalid signing address\033[0m\n";
         return false;
     }
-    if(signature.length() != 93 || !neroshop::string::contains_first_of(signature, "Sig")) { 
+    if(signature.length() != 93 || !neroshop::string_tools::contains_first_of(signature, "Sig")) { 
         std::cerr << "\033[91mInvalid signature\033[0m\n";
         return false;
     }
@@ -1391,7 +1394,7 @@ void Node::expire(const std::string& key, const std::string& value) {
         std::string expiration_date = json["expiration_date"].get<std::string>();
         if(neroshop::timestamp::is_expired(expiration_date)) {
             // Remove the data from hash table if it was previously stored
-            if(has_key(key)) {
+            if((data.count(key) > 0)) {
                 std::cout << "Data with key (" << key << ") has expired. Removing from hash table ...\n";
                 if(remove(key) == true) {
                     int error = database->execute_params("DELETE FROM mappings WHERE key = ?1", { key });
@@ -1432,9 +1435,6 @@ int Node::cache(const std::string& key, const std::string& value) {
 void Node::periodic_purge() {
     while (true) {
         {
-            // Acquire the lock before accessing the data
-            ////std::shared_lock<std::shared_mutex> read_lock(node_read_mutex);
-    
             if(!data.empty()) { std::cout << "\033[34;1mPerforming periodic data removal\033[0m\n"; }
             
             for (const auto& [key, value] : data) {
@@ -1453,10 +1453,6 @@ void Node::periodic_purge() {
 void Node::periodic_refresh() {
     while (true) {
         {
-            // Acquire the lock before accessing the data
-            ////std::shared_lock<std::shared_mutex> read_lock(node_read_mutex);
-            
-            
             if(routing_table->get_node_count() > 0) { std::cout << "\033[34;1mPerforming periodic bucket refresh\033[0m\n"; }
             
             refresh();
@@ -1474,9 +1470,6 @@ void Node::periodic_refresh() {
 void Node::periodic_republish() {
     while (true) {
         {
-            // Acquire the lock before accessing the data
-            ////std::shared_lock<std::shared_mutex> read_lock(node_read_mutex);
-            
             // Perform periodic republishing here
             // This code will run concurrently with the listen/receive loop
             if(!data.empty()) { std::cout << "\033[34;1mPerforming periodic data propagation\033[0m\n"; }
@@ -1493,48 +1486,61 @@ void Node::periodic_republish() {
 
 //-----------------------------------------------------------------------------
 
+void Node::stop_periodic_check() {
+    std::unique_lock<std::mutex> lock(periodic_chk_mutex);
+    stop_period_chk_flag = true;
+    cv.notify_one(); // Important: Notify the thread to wake up
+}
+
 void Node::periodic_check() {
-    ////std::vector<std::string> dead_node_ids {};
-    while(true) {
+    while (!stop_period_chk_flag) {
         {
+        // CRITICAL SECTION:  Protect access to routing_table
+        std::unique_lock<std::mutex> lock(periodic_chk_mutex);
+        cv.wait_for(lock, std::chrono::seconds(NEROSHOP_DHT_NODE_HEALTH_CHECK_INTERVAL), 
+            [this] { return stop_period_chk_flag; }
+        ); // Wait 5 minutes, or until stop_period_chk_flag is true
+
+        if(stop_period_chk_flag) break; // Exit if stop_period_chk_flag is set during wait
+        
         // Perform periodic checks here
         // This code will run concurrently with the listen/receive loop
-        for (auto& bucket : routing_table->buckets) {
-            for (auto& node : bucket.second) {
-                if (node.get() == nullptr) continue; // It's possible that the invalid node object is being accessed or modified by another thread concurrently, even though its already been removed from the routing_table
+        for (int i = 0; i < 256; ++i) {
+            //-------------------------------------------------------
+            std::vector<std::shared_ptr<Node>> snapshot;
+
+            { // scope for shared lock to take a snapshot (needed due to remove_node()'s internal unique_lock and this shared_lock causing a deadlock or silent failure in removing a node)
+                std::shared_lock lock(routing_table->bucket_mutexes[i]);
+                snapshot = routing_table->buckets[i]; // Copy pointer references
+            }
+
+            for (auto& node : snapshot) {
+                if (!node) continue; // skip null pointers
+                if (node->is_hardcoded()) continue; // Skip the hardcoded nodes
+
                 std::string node_dest = node->get_i2p_address();
                 uint16_t node_port = node->get_port();
-                
-                // Skip the bootstrap nodes from the periodic checks
-                if (node->is_hardcoded()) continue;
-                
-                std::cout << "Performing periodic node health check on \033[34m" << node_dest << "\033[0m\n";
-                
-                // Perform the liveness check on the current node
+
                 bool pinged = ping(node_dest);
-                
-                // Update the liveness status of the node in the routing table
-                node->check_counter = pinged ? 0 : (node->check_counter + 1);
-                std::cout << "Health check failures: " << node->check_counter << (" (" + node->get_status_as_string() + ")") << "\n";
-                
-                // If node is dead, remove it from the routing table
-                if(node->is_dead()) {
-                    std::cout << "\033[0;91m" << node->i2p_address << "\033[0m marked as dead\n";
-                    if(routing_table->has_node(node->i2p_address, node_port)) {
-                        ////dead_node_ids.push_back(node->get_id());
-                        routing_table->remove_node(node->i2p_address, node_port); // Already has internal write_lock
-                    }
+
+                if (pinged) {
+                    node->check_counter.store(0);
+                } else {
+                    node->check_counter.fetch_add(1);
+                }
+
+                log_debug("periodic_check: Health check failures: {} ({})", node->check_counter.load(), node->get_status_as_string());
+
+                if (node->is_dead()) { // scope for unique_lock in remove_node()
+                    routing_table->remove_node(node->get_id()/*node_dest, node_port*/); // Safe: no shared lock held
                 }
             }
-        }
+        } // for loop
             // read_lock is released here
         }
-        
-        /*on_dead_node(dead_node_ids);
-        // Clear the vector for the next iteration
-        dead_node_ids.clear();*/
+
         // Sleep for a specified interval
-        std::this_thread::sleep_for(std::chrono::seconds(NEROSHOP_DHT_NODE_HEALTH_CHECK_INTERVAL));
+        ////std::this_thread::sleep_for(std::chrono::seconds(NEROSHOP_DHT_NODE_HEALTH_CHECK_INTERVAL));
     }
 }
 
@@ -1648,7 +1654,7 @@ void Node::run_simple() {
     unsigned int threads = std::thread::hardware_concurrency();
     ThreadPool pool(threads);
     
-    std::thread(&Node::periodic_check, this).detach();
+    std::thread periodic_thread(&Node::periodic_check, this);//std::thread(&Node::periodic_check, this).detach();
     
     while (true) {
         char buffer[SAM_BUFSIZE] = {0};
@@ -1682,10 +1688,7 @@ void Node::run_simple() {
         int sender_port = ntohs(from_addr.sin_port);
         
         pool.enqueue([message, sender_ip, sender_port, this, from_addr, addr_len] { // Capture by reference (&) modifies the original variable (use 'mutable' to modify variables captured by value)
-            std::cout << "\n[RECEIVED] From " << sender_ip
-                      << ":" << sender_port
-                      << " (" << message.size()/*received_bytes*/ << " bytes):\n";
-            std::cout << message << std::endl;
+            log_info("RECEIVED from {}:{} ({} bytes):\n{}", sender_ip, sender_port, message.size()/*received_bytes*/, message);
 
             // Parse SAM message format and extract destination and payload
             std::string payload, dest_b64;
@@ -1701,7 +1704,7 @@ void Node::run_simple() {
                 dest_b64 = sam_header.substr(0, from_pos);
 
                 ////std::cout << "\033[1;34m[DEBUG]\033[0m Base64 Destination:\n" << dest_b64 << "\n";
-                std::cout << "\033[1;34m[DEBUG]\033[0m Sender:\n\033[0;36m" << SamClient::to_i2p_address(dest_b64) << "\033[0m\n";
+                log_debug("\n{}[{}]:{}", "\033[1;36m", SamClient::to_i2p_address(dest_b64), color_reset);
 
             } else {
                 std::cerr << "\033[1;33m[WARN]\033[0m Could not find SAM header line break (\\n)\n";
@@ -1717,7 +1720,7 @@ void Node::run_simple() {
             }
             // ONLY queries can be replied to in this loop, NOT responses!!!
             if (json_payload.contains("query")) {
-                std::cout << "\033[1;37m[INFO]\033[0m Received a request (query) — replying\n";
+                ////log_info("Received a request (query) — replying");
                 // Process the payload (which should be in msgpack form)
                 std::vector<uint8_t> response = neroshop::msgpack::process(payload_bytes, *this, false);
             
@@ -1743,7 +1746,7 @@ void Node::run_simple() {
                 on_map(payload_bytes, dest_b64);
                 ////if(json_payload["query"] == "ping") {} // on_ping
             } else if (json_payload.contains("response")) {
-                  std::cout << "\033[1;37m[INFO]\033[0m Received a response — processing\n";
+                  ////log_info("Received a response — processing");
                   // Match this response to a pending TID/request, if you're tracking queries
                   std::string tid = json_payload["tid"].get<std::string>();
                   std::string version = json_payload["version"].get<std::string>();
@@ -1751,7 +1754,7 @@ void Node::run_simple() {
                   
                   // This triggers future.get() in send_*() to return immediately.
                   if (tid.empty()) return;
-                  std::lock_guard<std::mutex> lock(pending_mutex);
+                  std::scoped_lock lock(pending_mutex);
                   auto it = pending_requests.find(tid);
                   if (it != pending_requests.end()) {
                       it->second.set_value(json_payload); // fulfill the promise
@@ -1763,6 +1766,11 @@ void Node::run_simple() {
             }
         });
     }
+    
+    // Stop the periodic check
+    stop_periodic_check();
+    
+    periodic_thread.join(); // Important: Join to avoid a leaked thread
 
     std::cout << "\n\033[1;37m[INFO]\033[0m Stopped listening for datagrams." << std::endl;
 }
@@ -1785,6 +1793,8 @@ SamClient * Node::get_sam_client() const {
     return sam_client.get();
 }
 
+//-----------------------------------------------------------------------------
+
 std::string Node::get_i2p_address() const {
     /*if(!sam_client.get()) throw std::runtime_error("sam client is not connected");
     
@@ -1796,27 +1806,29 @@ uint16_t Node::get_port() const {
     /*if(!sam_client.get()) throw std::runtime_error("sam client is not connected");
     
     return sam_client->get_port(); // client UDP port*/
-    return port_udp;
+    return port_udp.load(); // Atomically load
 }
 
 //-----------------------------------------------------------------------------
-
 
 RoutingTable * Node::get_routing_table() const {
     return routing_table.get();
 }
 
+//-----------------------------------------------------------------------------
+
 std::vector<Peer> Node::get_peers() const {
     std::vector<Peer> peers_list;
-    for (auto& bucket : routing_table->buckets) {
-        for (auto& node : bucket.second) {
-            if (node.get() == nullptr) continue;
+    for (int i = 0; i < 256; ++i) {
+        std::shared_lock lock(routing_table->bucket_mutexes[i]); // thread-safe read access
+        for (auto& node : routing_table->buckets[i]) {
+            if (!node) continue;
             Peer peer;
             peer.address = node->get_i2p_address();
             peer.port = node->get_port();
             peer.id = node->get_id();
             peer.status = node->get_status();
-            //peer.distance = node->get_distance(this->id);
+            peer.distance = node->get_distance(this->get_id());
             peers_list.push_back(peer);
         }
     }
@@ -1829,9 +1841,10 @@ int Node::get_peer_count() const {
 
 int Node::get_active_peer_count() const {
     int active_count = 0;
-    for (auto& bucket : routing_table->buckets) {
-        for (auto& node : bucket.second) {
-            if (node.get() == nullptr) continue;
+    for (int i = 0; i < 256; ++i) {
+        std::shared_lock lock(routing_table->bucket_mutexes[i]); // thread-safe read access
+        for (auto& node : routing_table->buckets[i]) {
+            if (!node) continue;
             if (node->get_status() == NodeStatus::Active) {
                 active_count++;
             }
@@ -1842,9 +1855,10 @@ int Node::get_active_peer_count() const {
 
 int Node::get_idle_peer_count() const {
     int idle_count = 0;
-    for (auto& bucket : routing_table->buckets) {
-        for (auto& node : bucket.second) {
-            if (node.get() == nullptr) continue;
+    for (int i = 0; i < 256; ++i) {
+        std::shared_lock lock(routing_table->bucket_mutexes[i]); // thread-safe read access
+        for (auto& node : routing_table->buckets[i]) {
+            if (!node) continue;
             if (node->get_status() == NodeStatus::Inactive) {
                 idle_count++;
             }
@@ -1853,52 +1867,59 @@ int Node::get_idle_peer_count() const {
     return idle_count;
 }
 
+//-----------------------------------------------------------------------------
+
 NodeStatus Node::get_status() const {
-    if(check_counter == 0) return NodeStatus::Active;
-    if(check_counter <= (NEROSHOP_DHT_MAX_HEALTH_CHECKS - 1)) return NodeStatus::Inactive;
-    if(check_counter >= NEROSHOP_DHT_MAX_HEALTH_CHECKS) return NodeStatus::Dead;
+    int value = check_counter.load();
+    if(value == 0) return NodeStatus::Active;
+    if(value <= (NEROSHOP_DHT_MAX_HEALTH_CHECKS - 1)) return NodeStatus::Inactive;
+    if(value >= NEROSHOP_DHT_MAX_HEALTH_CHECKS) return NodeStatus::Dead;
     return NodeStatus::Inactive;
 }
 
 std::string Node::get_status_as_string() const {
-    if(check_counter == 0) return "Active";
-    if(check_counter <= (NEROSHOP_DHT_MAX_HEALTH_CHECKS - 1)) return "Inactive";
-    if(check_counter >= NEROSHOP_DHT_MAX_HEALTH_CHECKS) return "Dead";
+    int value = check_counter.load();
+    if(value == 0) return "Active";
+    if(value <= (NEROSHOP_DHT_MAX_HEALTH_CHECKS - 1)) return "Inactive";
+    if(value >= NEROSHOP_DHT_MAX_HEALTH_CHECKS) return "Dead";
     return "Unknown";
 }
 
 //-----------------------------------------------------------------------------
 
+int Node::get_distance(const std::string& node_id) const {
+    return routing_table->get_bucket_index(node_id);
+}
+
+//-----------------------------------------------------------------------------
+
 std::vector<std::string> Node::get_keys() const {
-    std::shared_lock<std::shared_mutex> lock(data_mutex);
-    std::vector<std::string> keys;
-    for (const auto& pair : data) {
-        keys.push_back(pair.first);
-    }
+    std::shared_lock<std::shared_mutex> lock(data_mutex); // read only (shared)
+    
+    std::vector<std::string> keys(data.size());
+    std::transform(data.begin(), data.end(), keys.begin(),
+        [](const auto& pair) { return pair.first; });
 
     return keys;
 }
 
 std::vector<std::pair<std::string, std::string>> Node::get_data() const {
-    std::shared_lock<std::shared_mutex> lock(data_mutex);
-    std::vector<std::pair<std::string, std::string>> data_vector;
-    for (const auto& pair : data) {
-        data_vector.push_back(pair);
-    }
-
-    return data_vector;
+    std::shared_lock<std::shared_mutex> lock(data_mutex); // read only (shared)
+    
+    return { data.begin(), data.end() }; // constructs vector directly from map
 }
 
-/*const std::unordered_map<std::string, std::string>& Node::get_data() const {
-    return data;
-}*/
+//-----------------------------------------------------------------------------
 
 int Node::get_data_count() const {
-    std::shared_lock<std::shared_mutex> lock(data_mutex);
+    std::shared_lock<std::shared_mutex> lock(data_mutex); // read only (shared)
+    
     return data.size();
 }
 
 int Node::get_data_ram_usage() const {
+    std::shared_lock<std::shared_mutex> lock(data_mutex); // read only (shared)
+    
     size_t total_size = sizeof(data);
     
     for(const auto& [key, value] : data) {
@@ -1911,6 +1932,8 @@ int Node::get_data_ram_usage() const {
     return total_size;
 }
 
+//-----------------------------------------------------------------------------
+
 std::string Node::get_cached(const std::string& key) {
     db::Sqlite3 * database = neroshop::get_database();
     if(!database) { throw std::runtime_error("database is not opened"); }
@@ -1921,8 +1944,15 @@ std::string Node::get_cached(const std::string& key) {
 
 //-----------------------------------------------------------------------------
 
+KeyMapper * Node::get_key_mapper() const {
+    return key_mapper.get();
+}
+
+//-----------------------------------------------------------------------------
+
 bool Node::has_key(const std::string& key) const {
-    ////std::shared_lock<std::shared_mutex> lock(data_mutex);
+    std::shared_lock<std::shared_mutex> lock(data_mutex); // read only (shared)
+    
     return (data.count(key) > 0);
 }
 
@@ -1939,7 +1969,8 @@ bool Node::has_key_cached(const std::string& key) const {
 //-----------------------------------------------------------------------------
 
 bool Node::has_value(const std::string& value) const {
-    std::shared_lock<std::shared_mutex> lock(data_mutex);
+    std::shared_lock<std::shared_mutex> lock(data_mutex); // read only (shared)
+    
     for (const auto& pair : data) {
         if (pair.second == value) {
             return true;
@@ -1950,7 +1981,7 @@ bool Node::has_value(const std::string& value) const {
 //-----------------------------------------------------------------------------
 
 bool Node::is_hardcoded() const {
-    return std::find(BOOTSTRAP_I2P_NODES.begin(), BOOTSTRAP_I2P_NODES.end(), this->i2p_address) != BOOTSTRAP_I2P_NODES.end();
+    return std::find(BOOTSTRAP_I2P_NODES.begin(), BOOTSTRAP_I2P_NODES.end(), this->get_i2p_address()) != BOOTSTRAP_I2P_NODES.end();
 }
 
 bool Node::is_hardcoded(const std::string& i2p_address) {
@@ -1963,11 +1994,11 @@ bool Node::is_hardcoded(const std::string& i2p_address) {
 //-----------------------------------------------------------------------------
 
 bool Node::is_bootstrap_node() const {
-    return (bootstrap == true) || is_hardcoded();
+    return bootstrap.load(std::memory_order_seq_cst) || is_hardcoded();
 }
 
 bool Node::is_dead() const {
-    return (check_counter >= NEROSHOP_DHT_MAX_HEALTH_CHECKS);
+    return (check_counter.load() >= NEROSHOP_DHT_MAX_HEALTH_CHECKS);
 }
 
 bool Node::is_value_publishable(const std::string& value) {
@@ -1989,8 +2020,8 @@ bool Node::is_value_publishable(const std::string& value) {
 
 //-----------------------------------------------------------------------------
 
-void Node::set_bootstrap(bool bootstrap) {
-    this->bootstrap = bootstrap;
+void Node::set_bootstrap(bool enabled) {
+    bootstrap.store(enabled, std::memory_order_seq_cst);
 }
 
 }

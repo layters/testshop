@@ -6,8 +6,8 @@
 #include <QTimer>
 #include <QtConcurrent>
 
-#include "../core/price/currency_map.hpp"
-#include "../core/price/currency_converter.hpp"
+#include "../core/price_api/currency_map.hpp"
+#include "../core/price_api/currency_converter.hpp"
 
 namespace {
 const std::vector<neroshop::PriceSource> SOURCES_TO_USE{

@@ -20,7 +20,7 @@ std::string Converter::json_string ("");
 //-------------------------------------------------------
 //-------------------------------------------------------
 double Converter::to_kg(double amount, const std::string& unit_name) {
-    if(neroshop::string::lower(unit_name) == "lb" || neroshop::string::lower(unit_name) == "lbs" || neroshop::string::lower(unit_name) == "pound") {return lb_to_kg(amount);}
+    if(neroshop::string_tools::lower(unit_name) == "lb" || neroshop::string_tools::lower(unit_name) == "lbs" || neroshop::string_tools::lower(unit_name) == "pound") {return lb_to_kg(amount);}
     return 0.0;
 }
 //-------------------------------------------------------
@@ -81,15 +81,15 @@ double Converter::get_price(neroshop::Currency from, neroshop::Currency to) {
 }
 //-------------------------------------------------------
 double Converter::convert_to_xmr(double amount, const std::string& currency) {
-    std::string map_key = neroshop::string::upper(currency);
+    std::string map_key = neroshop::string_tools::upper(currency);
     
     if(neroshop::CurrencyMap.count(map_key) > 0) {
         auto map_value = neroshop::CurrencyMap[map_key];
         neroshop::Currency from_currency = std::get<0>(map_value);        
-        double rate = Converter::get_price(neroshop::Currency::XMR, from_currency); // 1 xmr = ? currency//std::cout << amount << " " << map_key << " is equal to " << neroshop::string::precision((amount / rate), 12) << " XMR\n";
+        double rate = Converter::get_price(neroshop::Currency::XMR, from_currency); // 1 xmr = ? currency//std::cout << amount << " " << map_key << " is equal to " << neroshop::string_tools::precision((amount / rate), 12) << " XMR\n";
         return (amount / rate);
     }
-    neroshop::log_error(neroshop::string::upper(currency) + " is not supported");
+    neroshop::log_error(neroshop::string_tools::upper(currency) + " is not supported");
     return 0.0;
 }
 //-------------------------------------------------------
@@ -102,7 +102,7 @@ std::vector<std::string> Converter::get_currency_list() {
 }
 //-------------------------------------------------------
 int Converter::get_currency_decimals(const std::string& currency) {
-    auto map_key = neroshop::string::upper(currency);
+    auto map_key = neroshop::string_tools::upper(currency);
     // Check if key exists in std::map
     if(neroshop::CurrencyMap.count(map_key) > 0) {
         auto map_value = neroshop::CurrencyMap[map_key];
@@ -113,19 +113,19 @@ int Converter::get_currency_decimals(const std::string& currency) {
 }
 //-------------------------------------------------------
 double Converter::get_xmr_price(const std::string& currency) {
-    auto map_key = neroshop::string::upper(currency);
+    auto map_key = neroshop::string_tools::upper(currency);
     // Check if key exists in std::map
     if(neroshop::CurrencyMap.count(map_key) > 0) {////if(neroshop::CurrencyMap.find(map_key) != neroshop::CurrencyMap.end()) {
         auto map_value = neroshop::CurrencyMap[map_key];
         neroshop::Currency preferred_currency = std::get<0>(map_value);
         return Converter::get_price(neroshop::Currency::XMR, preferred_currency);
     }
-    neroshop::log_error(neroshop::string::upper(currency) + " is not supported");
+    neroshop::log_error(neroshop::string_tools::upper(currency) + " is not supported");
     return 0.0;
 }
 //-------------------------------------------------------
 std::string Converter::get_currency_sign(const std::string& currency_code) {
-    auto key = neroshop::string::upper(currency_code);
+    auto key = neroshop::string_tools::upper(currency_code);
     // Check if key exists in std::map
     if(neroshop::CurrencyMap.count(key) > 0) {
         auto value = neroshop::CurrencyMap[key];
@@ -136,7 +136,7 @@ std::string Converter::get_currency_sign(const std::string& currency_code) {
 } // https://www.xe.com/symbols.php
 //-------------------------------------------------------
 neroshop::Currency Converter::get_currency_enum(const std::string& currency) {
-    auto map_key = neroshop::string::upper(currency);
+    auto map_key = neroshop::string_tools::upper(currency);
     if(neroshop::CurrencyMap.count(map_key) > 0) {
         auto map_value = neroshop::CurrencyMap[map_key];
         return std::get<0>(map_value);
@@ -147,7 +147,7 @@ neroshop::Currency Converter::get_currency_enum(const std::string& currency) {
 //-------------------------------------------------------
 //-------------------------------------------------------
 bool Converter::is_supported_currency(const std::string& currency_code) {
-    return (neroshop::CurrencyMap.count(neroshop::string::upper(currency_code)) > 0);
+    return (neroshop::CurrencyMap.count(neroshop::string_tools::upper(currency_code)) > 0);
 }
 //-------------------------------------------------------
 //-------------------------------------------------------
@@ -160,7 +160,7 @@ double Converter::convert_xmr(double quantity, std::string currency, bool to) { 
         {"gbp", "2791"}, {"jpy", "2797"}, {"mxn", "2799"}, {"nzd", "2802"}, {"sek", "2807"},  {"btc", "1"}, {"eth", "1027"},
     }; //We can easily add new currencies, it must be added here in the coinmarketcap url that fetch usd prices
 
-    currency = neroshop::string::lower(currency);
+    currency = neroshop::string_tools::lower(currency);
 
     //Definition of variables that will be used later
     std::vector<double> prices;
@@ -177,7 +177,7 @@ double Converter::convert_xmr(double quantity, std::string currency, bool to) { 
         auto currencies = json_response["data"];
 
         for (int i = 0; i<currencies.size(); i++) {
-            std::string name = neroshop::string::lower(currencies[i]["symbol"]);
+            std::string name = neroshop::string_tools::lower(currencies[i]["symbol"]);
             currencies_in_usd[name] = currencies[i]["quotes"][0]["price"];
         }
     }
@@ -223,8 +223,8 @@ double Converter::convert_xmr(double quantity, std::string currency, bool to) { 
         if (request(url)) {
             response = get_json();
             json_response = nlohmann::json::parse(response);
-            if (json_response["data"]["XMR"][neroshop::string::upper(currency)] != nullptr) {
-                price = json_response["data"]["XMR"][neroshop::string::upper(currency)]["price"];
+            if (json_response["data"]["XMR"][neroshop::string_tools::upper(currency)] != nullptr) {
+                price = json_response["data"]["XMR"][neroshop::string_tools::upper(currency)]["price"];
             } else {
                 price = (double)json_response["data"]["XMR"]["USD"]["price"]/currencies_in_usd[currency];
             }

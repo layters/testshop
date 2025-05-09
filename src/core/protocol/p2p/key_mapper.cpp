@@ -6,12 +6,14 @@
 #include "../../database/database.hpp"
 #include "../../crypto/sha3.hpp"
 
-namespace neroshop_string = neroshop::string;
+#include <mutex> // std::unique_lock
 
 namespace neroshop {
 //-----------------------------------------------------------------------------
 
 KeyMapper::~KeyMapper() {
+    std::unique_lock lock(data_mutex);
+    
     product_ids.clear();
     product_names.clear();
     product_categories.clear();
@@ -42,6 +44,7 @@ void KeyMapper::add(const std::string& key, const std::string& value) {
     
     std::string metadata = json["metadata"].get<std::string>();
 
+    std::unique_lock lock(data_mutex);
     //-----------------------------------------------
     // Note: As long as we have the user id, we can find the user
     if(metadata == "user") {
@@ -632,16 +635,17 @@ std::pair<std::string, std::string> KeyMapper::serialize() { // no longer in use
 //-----------------------------------------------------------------------------
 
 std::vector<std::string> KeyMapper::search_product_by_name(const std::string& product_name) {
+    std::shared_lock lock(data_mutex);
     std::vector<std::string> matching_keys;
 
-    std::string product_name_lower = neroshop_string::lower(product_name);
+    std::string product_name_lower = neroshop::string_tools::lower(product_name);
 
     for (const auto& entry : product_names) {
-        std::string entry_lower = neroshop_string::lower(entry.first);
+        std::string entry_lower = neroshop::string_tools::lower(entry.first);
         if (entry_lower.find(product_name_lower, 0) == 0) { // starts with the search term (ex. for Banana, "b", "ba", "ban", "bana", "banan", or "banana" should work)
             matching_keys.insert(matching_keys.end(), entry.second.begin(), entry.second.end());
         } else {
-            if(neroshop_string::contains(entry_lower, product_name_lower)) { // contains a substring that matches in the same order anywhere within the string
+            if(neroshop::string_tools::contains(entry_lower, product_name_lower)) { // contains a substring that matches in the same order anywhere within the string
                 matching_keys.insert(matching_keys.end(), entry.second.begin(), entry.second.end());
             }
         }

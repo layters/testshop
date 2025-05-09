@@ -26,10 +26,10 @@
 #include "../core/version.hpp"
 #include "../core/protocol/p2p/serializer.hpp"
 #include "daemon_manager.hpp"
-//#include "../core/cart.hpp"
+//#include "../core/market/cart.hpp"
 #include "../core/protocol/transport/client.hpp"
-#include "../core/price/currency_converter.hpp" // neroshop::Converter::is_supported_currency
-#include "../core/price/currency_map.hpp"
+#include "../core/price_api/currency_converter.hpp" // neroshop::Converter::is_supported_currency
+#include "../core/price_api/currency_map.hpp"
 #include "../core/crypto/sha3.hpp"
 #include "../core/crypto/sha256.hpp" // sha256
 #include "../core/database/database.hpp"
@@ -39,13 +39,13 @@
 #include "../core/tools/filesystem.hpp"
 #include "../core/tools/logger.hpp"
 #include "../core/tools/process.hpp"
-#include "../core/category.hpp"
+#include "../core/market/category.hpp"
 #include "../core/tools/string.hpp"
 #include "../core/tools/timestamp.hpp"
 #include "../core/crypto/rsa.hpp"
 #include "enum_wrapper.hpp"
 #include "../core/protocol/p2p/file_piece_hasher.hpp"
-#include "../core/location.hpp"
+#include "../core/market/location.hpp"
 
 #include <future>
 #include <thread>

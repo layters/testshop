@@ -48,7 +48,7 @@ namespace device {
         }
         pclose(pipe);
         // save release filenames
-        std::vector<std::string> os_filenames = neroshop::string::split(result, "\n");
+        std::vector<std::string> os_filenames = neroshop::string_tools::split(result, "\n");
         if(os_filenames.empty()) return "linux"; // defaults to linux
         // check for lsb-release and os-release first
         if(std::find(os_filenames.begin(), os_filenames.end(), "/etc/lsb-release") != os_filenames.end()) {}
@@ -57,13 +57,13 @@ namespace device {
             if(!os_file.good()) return "linux"; // defaults to linux
             std::stringstream os_stream;
             os_stream << os_file.rdbuf(); // dump file content into stringstream//std::cout << os_stream.str() << std::endl;
-            std::vector<std::string> os_content = neroshop::string::split(os_stream.str(), "\n"); // split each newline
+            std::vector<std::string> os_content = neroshop::string_tools::split(os_stream.str(), "\n"); // split each newline
             // ID= will give us the current OS name
             // TODO: re-do this function. I keep getting VERSION_ID="22.04" instead of ID=ubuntu as a result -_-
             for(int i = 0; i < os_content.size(); i++) {
                 if(os_content[i].find("ID=") != std::string::npos) {
-                    os_content[i] = neroshop::string::swap_first_of(os_content[i], "ID=", ""); // remove ID=
-                    std::string os_name = os_content[i];//neroshop::string::remove_all(os_content[i], "\"");// remove quotes
+                    os_content[i] = neroshop::string_tools::swap_first_of(os_content[i], "ID=", ""); // remove ID=
+                    std::string os_name = os_content[i];//neroshop::string_tools::remove_all(os_content[i], "\"");// remove quotes
                     return os_name;
                 }            
             }
@@ -87,7 +87,7 @@ namespace device {
         }
         pclose(pipe);
         // save release filenames
-        std::vector<std::string> os_filenames = neroshop::string::split(result, "\n");
+        std::vector<std::string> os_filenames = neroshop::string_tools::split(result, "\n");
         if(os_filenames.empty()) return "linux"; // defaults to linux
     #ifdef NEROSHOP_DEBUG
         std::cout << "os_filenames " << "(" << os_filenames.size() << "): " << std::endl;
@@ -107,7 +107,7 @@ namespace device {
             if(!os_file.good()) return "linux"; // defaults to linux
             std::stringstream os_stream;
             os_stream << os_file.rdbuf(); // dump file content into stringstream//std::cout << os_stream.str() << std::endl;
-            std::vector<std::string> os_content = neroshop::string::split(os_stream.str(), "\n"); // split each newline
+            std::vector<std::string> os_content = neroshop::string_tools::split(os_stream.str(), "\n"); // split each newline
             // ID_LIKE= will give us the OS that the current OS is based on and ID= will give us the current OS
             for(int i = 0; i < os_content.size(); i++) {
                 // Debian and Debian-based distros (e.g Ubuntu)

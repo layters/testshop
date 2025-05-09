@@ -1,20 +1,19 @@
 #include "user.hpp"
 
-#include "../neroshop_config.hpp"
+#include "../../neroshop_config.hpp"
 #include "cart.hpp"
-#include "settings.hpp"
-#include "database/database.hpp"
-#include "tools/logger.hpp"
-
-#include "protocol/p2p/serializer.hpp"
-#include "protocol/transport/client.hpp"
 #include "rating.hpp"
-#include "crypto/rsa.hpp"
-#include "crypto/sha3.hpp"
-#include "tools/base64.hpp"
-#include "tools/timestamp.hpp"
-#include "tools/string.hpp"
-#include "wallet/wallet.hpp"
+#include "../settings.hpp"
+#include "../database/database.hpp"
+#include "../tools/logger.hpp"
+#include "../protocol/p2p/serializer.hpp"
+#include "../protocol/transport/client.hpp"
+#include "../crypto/rsa.hpp"
+#include "../crypto/sha3.hpp"
+#include "../tools/base64.hpp"
+#include "../tools/timestamp.hpp"
+#include "../tools/string.hpp"
+#include "../wallet/wallet.hpp"
 
 #include <fstream>
 #include <regex>

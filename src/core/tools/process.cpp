@@ -99,7 +99,7 @@ bool Process::create(const std::string& program, const std::string& argument)
 		process_list.push_back(std::make_tuple(program, child_pid, (child_pid != -1)));
 	}		
     else {
-	  std::vector<std::string> arg_split = neroshop::string::split(argument, " ");
+	  std::vector<std::string> arg_split = neroshop::string_tools::split(argument, " ");
 	  char * arg_list[arg_split.size()];
 	  for(int i = 0; i < arg_split.size(); i++)
 	  {

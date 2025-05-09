@@ -215,7 +215,7 @@ void Script::copy(std::string file_name)
 	stream << file.rdbuf(); // dump file contents	
 	
 	content = stream.str();
-} // get_content() -> neroshop::string::replace()   you can replace any string from the lua file with anything
+} // get_content() -> neroshop::string_tools::replace()   you can replace any string from the lua file with anything
 //////////
 int Script::copy(lua_State *L)
 {
@@ -357,7 +357,7 @@ void Script::save_cache()
     std::vector<std::string> content_in_file;
     if(rfile.is_open()) {
 	    stream << rfile.rdbuf(); // dump file contents	
-	    content_in_file = neroshop::string::split(stream.str(), "\n"); // split each line
+	    content_in_file = neroshop::string_tools::split(stream.str(), "\n"); // split each line
 	    // cache can ONLY hold 5 filenames
 	    if(content_in_file.size() >=5) content_in_file.clear(); // erase all file contents if the number of filenames reach 5
 	    // look for duplicate names and remove them ...
@@ -365,7 +365,7 @@ void Script::save_cache()
 	    {
 	        for(int j = 0; j < cache.size(); j++) 
 	        {
-	            if(cache[j] == content_in_file[i]) { cache[j].clear(); } // remove duplicate filenames previously saved to cache file: "script_cache.txt" //if(neroshop::string::contains(content_in_file[i], ".lua")) std::cout << "Found recent files: " << content_in_file[i] << std::endl; // if its a lua file, print filename
+	            if(cache[j] == content_in_file[i]) { cache[j].clear(); } // remove duplicate filenames previously saved to cache file: "script_cache.txt" //if(neroshop::string_tools::contains(content_in_file[i], ".lua")) std::cout << "Found recent files: " << content_in_file[i] << std::endl; // if its a lua file, print filename
 	        }
 	    }
     }
@@ -387,7 +387,7 @@ void Script::save_cache()
 //////////
 void Script::get_table(lua_State *L, const std::string& table) // can also get subtables
 {
-	if(!neroshop::string::contains(table, ".")) // no dots
+	if(!neroshop::string_tools::contains(table, ".")) // no dots
 	{
 	    lua_getglobal(L, table.c_str());
 		if(lua_type(L, -1) != LUA_TTABLE) // not a table?   YOU can only get tables with this function
@@ -397,7 +397,7 @@ void Script::get_table(lua_State *L, const std::string& table) // can also get s
 		}
 	}
 	// contains dots
-    std::vector<std::string> list = neroshop::string::split(table, ".");
+    std::vector<std::string> list = neroshop::string_tools::split(table, ".");
 	if(!list.empty())
 	{
 		lua_getglobal(L, list[0].c_str()); // get first table
@@ -416,7 +416,7 @@ void Script::get_table(lua_State *L, const std::string& table) // can also get s
 //////////
 std::string Script::get_string(lua_State * L, const std::string& key)
 {
-    if(!neroshop::string::contains(key, "."))
+    if(!neroshop::string_tools::contains(key, "."))
 	{
 		lua_getglobal(L, key.c_str());
 		if(!lua_tostring(L, -1))
@@ -425,7 +425,7 @@ std::string Script::get_string(lua_State * L, const std::string& key)
 		}
 		return lua_tostring(L, -1);
 	}
-	std::vector<std::string> list = neroshop::string::split(key, ".");
+	std::vector<std::string> list = neroshop::string_tools::split(key, ".");
 	if(!list.empty())
 	{
 		lua_getglobal(L, list[0].c_str());
@@ -447,7 +447,7 @@ std::string Script::get_string(lua_State * L, const std::string& key)
 //////////
 int Script::get_boolean(lua_State * L, const std::string& key)
 {
-    if(!neroshop::string::contains(key, "."))
+    if(!neroshop::string_tools::contains(key, "."))
 	{
 		lua_getglobal(L, key.c_str());
 		if(!lua_isboolean(L, -1)) // not a boolean
@@ -456,7 +456,7 @@ int Script::get_boolean(lua_State * L, const std::string& key)
 		}
 		return lua_toboolean(L, -1);
 	}
-	std::vector<std::string> list = neroshop::string::split(key, ".");
+	std::vector<std::string> list = neroshop::string_tools::split(key, ".");
 	if(!list.empty())
 	{
 		lua_getglobal(L, list[0].c_str());
@@ -474,7 +474,7 @@ int Script::get_boolean(lua_State * L, const std::string& key)
 //////////
 double Script::get_number(lua_State * L, const std::string& key)
 {
-    if(!neroshop::string::contains(key, "."))
+    if(!neroshop::string_tools::contains(key, "."))
 	{
 		lua_getglobal(L, key.c_str());
 		if(!lua_isnumber(L, -1)) // not a boolean
@@ -483,7 +483,7 @@ double Script::get_number(lua_State * L, const std::string& key)
 		}
 		return lua_tonumber(L, -1);
 	}
-	std::vector<std::string> list = neroshop::string::split(key, ".");
+	std::vector<std::string> list = neroshop::string_tools::split(key, ".");
 	if(!list.empty())
 	{
 		lua_getglobal(L, list[0].c_str());
@@ -501,7 +501,7 @@ double Script::get_number(lua_State * L, const std::string& key)
 //////////
 void * Script::get_userdata(lua_State * L, const std::string& key)
 {
-	if(!neroshop::string::contains(key, "."))
+	if(!neroshop::string_tools::contains(key, "."))
 	{
 		lua_getglobal(L, key.c_str());
 		if(!lua_isuserdata(L, -1)) // either full or light userdata
@@ -510,7 +510,7 @@ void * Script::get_userdata(lua_State * L, const std::string& key)
 		}
 		return lua_touserdata(L, -1);
 	}
-	std::vector<std::string> list = neroshop::string::split(key, ".");
+	std::vector<std::string> list = neroshop::string_tools::split(key, ".");
 	if(!list.empty())
 	{
 		lua_getglobal(L, list[0].c_str());
@@ -528,7 +528,7 @@ void * Script::get_userdata(lua_State * L, const std::string& key)
 //////////
 lua_CFunction Script::get_function(lua_State * L, const std::string& key)
 {
-	if(!neroshop::string::contains(key, "."))
+	if(!neroshop::string_tools::contains(key, "."))
 	{
 		lua_getglobal(L, key.c_str());
 		if(!lua_iscfunction(L, -1)) // not a C/C++ function
@@ -537,7 +537,7 @@ lua_CFunction Script::get_function(lua_State * L, const std::string& key)
 		}
 		return lua_tocfunction(L, -1);
 	}	
-    std::vector<std::string> list = neroshop::string::split(key, ".");
+    std::vector<std::string> list = neroshop::string_tools::split(key, ".");
 	if(!list.empty())
 	{
 		lua_getglobal(L, list[0].c_str());
@@ -555,7 +555,7 @@ lua_CFunction Script::get_function(lua_State * L, const std::string& key)
 //////////
 lua_State * Script::get_thread (lua_State * L, const std::string& key)
 {
-    if(!neroshop::string::contains(key, "."))
+    if(!neroshop::string_tools::contains(key, "."))
 	{
 		lua_getglobal(L, key.c_str());
 		if(!lua_isthread(L, -1))
@@ -564,7 +564,7 @@ lua_State * Script::get_thread (lua_State * L, const std::string& key)
 		}
 		return lua_tothread(L, -1);
 	}
-    std::vector<std::string> list = neroshop::string::split(key, ".");
+    std::vector<std::string> list = neroshop::string_tools::split(key, ".");
 	if(!list.empty())
 	{
 		lua_getglobal(L, list[0].c_str());
@@ -582,7 +582,7 @@ lua_State * Script::get_thread (lua_State * L, const std::string& key)
 //////////
 void * Script::get_pointer(lua_State * L, const std::string& key)
 {
-    if(!neroshop::string::contains(key, "."))
+    if(!neroshop::string_tools::contains(key, "."))
 	{
 		lua_getglobal(L, key.c_str());
         if(lua_isuserdata(L, -1) || lua_isthread(L, -1) || lua_isfunction(L, -1)) // must be either a userdata, thread, or a function
@@ -590,7 +590,7 @@ void * Script::get_pointer(lua_State * L, const std::string& key)
 		    return const_cast<void *>(lua_topointer(L, -1));
 		}
 	}
-    std::vector<std::string> list = neroshop::string::split(key, ".");
+    std::vector<std::string> list = neroshop::string_tools::split(key, ".");
 	if(!list.empty())
 	{
 		lua_getglobal(L, list[0].c_str());
@@ -728,7 +728,7 @@ std::vector<const void *> Script::get_table_pointer(lua_State * L, const std::st
 //////////
 bool Script::call(lua_State * L, const std::string& function, int returns)
 {
-	if(!neroshop::string::contains(function, "."))
+	if(!neroshop::string_tools::contains(function, "."))
 	{
 		lua_getglobal(L, function.c_str());
 		if(!lua_isfunction(L, -1)) // not a function
@@ -738,7 +738,7 @@ bool Script::call(lua_State * L, const std::string& function, int returns)
 		lua_call(L, 0, returns);
 		return true;
 	}
-    std::vector<std::string> list = neroshop::string::split(function, ".");
+    std::vector<std::string> list = neroshop::string_tools::split(function, ".");
 	if(!list.empty())
 	{
 		lua_getglobal(L, list[0].c_str());
@@ -758,7 +758,7 @@ bool Script::call(lua_State * L, const std::string& function, int returns)
 std::string Script::get_type(lua_State * L, const std::string& object) // can only handle up to 10 nested tables MAX
 {
     lua_settop (L, 0);// clear stack
-    if(!neroshop::string::contains(object, "."))
+    if(!neroshop::string_tools::contains(object, "."))
 	{
 		lua_getglobal(L, object.c_str());
 		if(lua_type(L, -1) == LUA_TTHREAD)
@@ -802,7 +802,7 @@ std::string Script::get_type(lua_State * L, const std::string& object) // can on
 			return "none";
 		}
 	}
-    std::vector<std::string> list = neroshop::string::split(object, ".");
+    std::vector<std::string> list = neroshop::string_tools::split(object, ".");
 	if(!list.empty())
 	{
 	    lua_getglobal(L, list[0].c_str()); // get first table

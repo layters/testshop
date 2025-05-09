@@ -147,7 +147,7 @@ int Wallet::restore_from_seed(const std::string& seed, uint64_t restore_height)
     } catch (const std::exception& e) {
         std::string error_msg = e.what();
         std::cerr << "\033[1;91m" << error_msg << "\033[0m\n";
-        if(neroshop::string::contains(error_msg, "Invalid mnemonic")) {
+        if(neroshop::string_tools::contains(error_msg, "Invalid mnemonic")) {
             return static_cast<int>(WalletError::InvalidMnemonic);
         }
     }
@@ -194,11 +194,11 @@ int Wallet::open(const std::string& path, const std::string& password) {
     } catch (const std::exception& e) {
         std::string error_msg = e.what();
         std::cerr << "\033[1;91m" << error_msg << "\033[0m\n";//tools::error::invalid_password
-        if(neroshop::string::contains(error_msg, "wallet cannot be opened as")) {
+        if(neroshop::string_tools::contains(error_msg, "wallet cannot be opened as")) {
             return static_cast<int>(WalletError::BadNetworkType);
-        } else if(neroshop::string::contains(error_msg, "invalid password")) {
+        } else if(neroshop::string_tools::contains(error_msg, "invalid password")) {
             return static_cast<int>(WalletError::WrongPassword);
-        } else if(neroshop::string::contains(error_msg, "Invalid decimal point specification")) {
+        } else if(neroshop::string_tools::contains(error_msg, "Invalid decimal point specification")) {
             return static_cast<int>(WalletError::BadWalletType);
         } else {
             return static_cast<int>(WalletError::IsOpenedByAnotherProgram);
@@ -280,7 +280,7 @@ void Wallet::transfer(const std::string& address, double amount) {
         neroshop::log_error("Monero address is invalid"); return;
     }
     // Convert monero to piconero
-    uint64_t monero_to_piconero = amount / PICONERO; //std::cout << neroshop::string::precision(amount, 12) << " xmr to piconero: " << monero_to_piconero << "\n";
+    uint64_t monero_to_piconero = amount / PICONERO; //std::cout << neroshop::string_tools::precision(amount, 12) << " xmr to piconero: " << monero_to_piconero << "\n";
     // TODO: for the 2-of-3 escrow system, take 0.5% of order total in piconeros
     // Check if amount is zero or too low
     if((amount < PICONERO) || (monero_to_piconero == 0)) {
@@ -352,7 +352,7 @@ void Wallet::transfer(const std::vector<std::pair<std::string, double>>& payment
             continue; // skip to the next address
         }
         // Convert monero to piconero
-        uint64_t monero_to_piconero = recipient.second / PICONERO; //std::cout << neroshop::string::precision(recipient.second, 12) << " xmr to piconero: " << monero_to_piconero << "\n";
+        uint64_t monero_to_piconero = recipient.second / PICONERO; //std::cout << neroshop::string_tools::precision(recipient.second, 12) << " xmr to piconero: " << monero_to_piconero << "\n";
         destinations.push_back(std::make_shared<monero_destination>(recipient.first, monero_to_piconero));
         // Print address and amount
         std::cout << "Address: " << recipient.first << ", Amount: " << recipient.second << std::endl;
@@ -387,7 +387,7 @@ void Wallet::transfer(const std::string& uri) {
         std::cerr << "\033[1;91mMonero address is invalid" << "\033[0m\n"; return;
     }
     // Convert monero to piconero
-    uint64_t monero_to_piconero = tx_amount / PICONERO; //std::cout << neroshop::string::precision(amount, 12) << " xmr to piconero: " << monero_to_piconero << "\n";
+    uint64_t monero_to_piconero = tx_amount / PICONERO; //std::cout << neroshop::string_tools::precision(amount, 12) << " xmr to piconero: " << monero_to_piconero << "\n";
     // Check if amount is zero or too low
     if((tx_amount < PICONERO) || (monero_to_piconero == 0)) {
         std::cerr << "\033[1;91mNothing to send (amount is zero)" << "\033[0m\n"; return;
@@ -597,18 +597,18 @@ std::string Wallet::make_uri(const std::string& payment_address, double amount, 
     if(is_valid_address(payment_address)) {
         wallet_tx_uri = wallet_tx_uri + payment_address;
     }
-    if(amount > std::stod(neroshop::string::precision("0.000000000000", 12))) {
-        //std::cout << "amount (" << neroshop::string::precision(amount, 12) << ") is greater than 0.000000000000\n";
+    if(amount > std::stod(neroshop::string_tools::precision("0.000000000000", 12))) {
+        //std::cout << "amount (" << neroshop::string_tools::precision(amount, 12) << ") is greater than 0.000000000000\n";
         has_amount = true;
-        wallet_tx_uri = wallet_tx_uri + "?tx_amount=" + neroshop::string::precision(amount, 12);
+        wallet_tx_uri = wallet_tx_uri + "?tx_amount=" + neroshop::string_tools::precision(amount, 12);
     }
     if(!recipient.empty()) {
         has_recipient = true;
-        std::string recipient_name = neroshop::string::swap_all(recipient, " ", "%20");
+        std::string recipient_name = neroshop::string_tools::swap_all(recipient, " ", "%20");
         wallet_tx_uri = wallet_tx_uri + ((has_amount) ? "&recipient_name=" : "?recipient_name=") + recipient_name;
     }
     if(!description.empty()) {
-        std::string tx_description = neroshop::string::swap_all(description, " ", "%20");
+        std::string tx_description = neroshop::string_tools::swap_all(description, " ", "%20");
         wallet_tx_uri = wallet_tx_uri + ((has_amount || has_recipient) ? "&tx_description=" : "?tx_description=") + tx_description;
     }
     return wallet_tx_uri;
@@ -650,7 +650,7 @@ bool Wallet::parse_uri(const std::string& uri, std::string& payment_address, dou
 
                 // Assign values to variables based on key
                 if (key == "tx_amount") {
-                    amount = std::stod(neroshop::string::precision(value, 12));
+                    amount = std::stod(neroshop::string_tools::precision(value, 12));
                 } else if (key == "recipient_name") {
                     recipient = value;
                 } else if (key == "tx_description") {
@@ -775,7 +775,7 @@ void Wallet::daemon_open(const std::string& daemon_dir, bool confirm_external_bi
     if(confirm_external_bind == true) { args = args + " --confirm-external-bind"; }
     if(confirm_external_bind == true && restricted_rpc == true) { args = args + " --restricted-rpc"; }
     auto network_type_str = get_wallet_network_type_as_string();
-    if(neroshop::string::lower(network_type_str) != "mainnet") args = args + (" --" + neroshop::string::lower(network_type_str));
+    if(neroshop::string_tools::lower(network_type_str) != "mainnet") args = args + (" --" + neroshop::string_tools::lower(network_type_str));
     args = args + (" --detach"); // https://monero.stackexchange.com/questions/12005/what-is-the-difference-between-monerod-detach-and-monerod-non-interactive
     std::cout << "\033[1;95;49m" << "$ " << daemon_dir + args << "\033[0m" << std::endl;
     

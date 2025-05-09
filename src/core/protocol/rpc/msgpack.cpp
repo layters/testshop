@@ -177,7 +177,7 @@ std::vector<uint8_t> process(const std::vector<uint8_t>& request, Node& node, bo
                         {"port", peer.port},
                         {"id", peer.id},
                         {"status", static_cast<int>(peer.status)},
-                        //{"distance", peer.distance},
+                        {"distance", peer.distance},
                     };
                     peers_array.push_back(peer_object);
                 }

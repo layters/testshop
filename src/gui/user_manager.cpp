@@ -2,8 +2,8 @@
 
 #include <QDateTime>
 
-#include "../core/cart.hpp"
-#include "../core/category.hpp"
+#include "../core/market/cart.hpp"
+#include "../core/market/category.hpp"
 #include "../core/database/database.hpp"
 #include "../core/protocol/transport/client.hpp"
 #include "../core/tools/logger.hpp"

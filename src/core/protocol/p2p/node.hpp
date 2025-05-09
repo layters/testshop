@@ -10,6 +10,7 @@
 #include <deque>
 #include <mutex>
 #include <future>
+#include <atomic>
 
 #include <nlohmann/json.hpp>
 
@@ -26,7 +27,7 @@ struct Peer {
     uint16_t port;
     std::string id;
     NodeStatus status;
-    //std::string distance;
+    int distance;
 };
 
 class Node {
@@ -102,18 +103,19 @@ public:
     std::string get_i2p_address() const; // base32 public key
     uint16_t get_port() const;
     RoutingTable * get_routing_table() const;
-    
     std::vector<Peer> get_peers() const; // Returns a list of connected peers
     int get_peer_count() const; // Returns the total number of nodes in routing table
     int get_active_peer_count() const;
     int get_idle_peer_count() const;
     NodeStatus get_status() const;
     std::string get_status_as_string() const;
+    int get_distance(const std::string& node_id) const;
     std::vector<std::string> get_keys() const;
     std::vector<std::pair<std::string, std::string>> get_data() const;
     int get_data_count() const; // Returns the total number of in-memory hash table data
     int get_data_ram_usage() const;
     std::string get_cached(const std::string& key);
+    KeyMapper * get_key_mapper() const;
     
     void set_bootstrap(bool bootstrap);
     
@@ -139,22 +141,25 @@ private:
     void expire(const std::string& key, const std::string& value); // Removes any expired data from hash table
     bool validate_fields(const std::string& value);
     
-    std::string id; // immutable-after-construction (no mutex needed)
-    std::string i2p_address; // immutable-after-construction (no mutex needed)
-    int16_t port_udp; // immutable-after-construction (no mutex needed)
+    std::string id; // immutable and set only once in constructor so a mutex wouldn't make sense
+    std::string i2p_address; // immutable and set only once in constructor so a mutex wouldn't make sense
+    std::atomic<uint16_t> port_udp; // immutable-after-construction. Use atomic
     std::unordered_map<std::string, std::string> data; // internal hash table that stores key-value pairs 
+    mutable std::shared_mutex data_mutex;
     std::unordered_map<std::string, std::deque<Peer>> providers; // maps a data's hash (key) to a vector of Peers who have the data
+    mutable std::shared_mutex providers_mutex;
     std::unique_ptr<SamClient> sam_client;
     std::unique_ptr<RoutingTable> routing_table; // Pointer to the node's routing table
     std::unique_ptr<KeyMapper> key_mapper;
     std::atomic<bool> bootstrap;
     std::atomic<int> check_counter; // Counter to track the number of consecutive failed checks
-    // Mutexes
-    mutable std::shared_mutex data_mutex;
-    mutable std::shared_mutex providers_mutex;
-    // Shared between sender and listener
-    std::unordered_map<std::string, std::promise<nlohmann::json>> pending_requests;
+    std::unordered_map<std::string, std::promise<nlohmann::json>> pending_requests; // Shared between sender and listener
     std::mutex pending_mutex;
+    // For periodic_check() thread
+    void stop_periodic_check();
+    bool stop_period_chk_flag;
+    std::condition_variable cv;
+    std::mutex periodic_chk_mutex;
 };
 
 }

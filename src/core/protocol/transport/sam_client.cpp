@@ -14,9 +14,6 @@
 
 namespace neroshop {
 
-SamClient::SamClient() : SamClient(SamSessionStyle::Stream) {
-}
-
 //-----------------------------------------------------------------------------
 
 SamClient::SamClient(SamSessionStyle style, const std::string& nickname) : session_socket(-1), server_addr({}), style(style), nickname(nickname), client_socket(-1), client_port(((style == SamSessionStyle::Datagram) || (style == SamSessionStyle::Raw)) ? SAM_DEFAULT_CLIENT_UDP : SAM_DEFAULT_CLIENT_TCP) {
@@ -47,7 +44,7 @@ SamClient::SamClient(SamSessionStyle style, const std::string& nickname) : sessi
     sockaddr_in client_addr = {};
     memset(&client_addr, 0, sizeof(client_addr));
     client_addr.sin_family = AF_INET;
-    client_addr.sin_port = htons(((style == SamSessionStyle::Datagram) || (style == SamSessionStyle::Raw)) ? SAM_DEFAULT_CLIENT_UDP : SAM_DEFAULT_CLIENT_TCP);
+    client_addr.sin_port = htons(client_port);
     if ((style == SamSessionStyle::Datagram) || (style == SamSessionStyle::Raw)) {
         client_addr.sin_addr.s_addr = INADDR_ANY;
         if (::bind(client_socket, (sockaddr*)&client_addr, sizeof(client_addr)) < 0) {//throw std::runtime_error("Error binding socket to port " + std::to_string(SAM_DEFAULT_CLIENT_UDP));
@@ -258,14 +255,13 @@ SamReply SamClient::send_sam_command(const std::string& command, int sockfd) {
     sent_bytes = ::send(sockfd, command.data(), command.size(), 0);
     if (sent_bytes < 0) {
         perror("send failed");
-        std::string sockres = get_result_as_string(SamResultType::SocketClosed);
         if (errno == EBADF) {
-            return SamReply{ SamResultType::SocketClosed, sockres }; // Socket is invalid (closed)
+            return SamReply{ SamResultType::SocketClosed, "" }; // Socket is invalid (closed)
         } else if (errno == ENOTCONN) {
-            return SamReply{ SamResultType::SocketClosed, sockres }; // Socket is not connected
+            return SamReply{ SamResultType::SocketClosed, "" }; // Socket is not connected
         }
     } else if (sent_bytes == 0) {
-        //return SamReply{ SamResultType::NoDataSent, "" }; // No data sent, but socket is not necessarily closed
+        return SamReply{ SamResultType::NoResult, "" }; // No data sent, but socket is not necessarily closed
     }
     std::cout << "\033[93m" << command << "\033[0m\n";
     

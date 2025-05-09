@@ -1,4 +1,4 @@
-#include "cryptorank.hpp"
+#include "coincodex.hpp"
 
 #if defined(NEROSHOP_USE_QT)
 #include <QEventLoop>
@@ -18,20 +18,20 @@
 #include <map>
 
 #include "../currency_map.hpp"
-#include "../../../core/tools/string.hpp" // neroshop::string::upper
+#include "../../../core/tools/string.hpp" // neroshop::string_tools::lower
 
-std::optional<double> CryptoRankApi::price(neroshop::Currency from, neroshop::Currency to) const
+std::optional<double> CoinCodexApi::price(neroshop::Currency from, neroshop::Currency to) const
 {
     // Fill map with initial currency ids and codes
     const std::map<neroshop::Currency, std::string> CURRENCY_TO_ID{
-        {neroshop::Currency::BTC, "bitcoin"},
-        {neroshop::Currency::ETH, "ethereum"},
-        {neroshop::Currency::XMR, "monero"},
+        {neroshop::Currency::BTC, "btc"},
+        {neroshop::Currency::ETH, "eth"},
+        {neroshop::Currency::XMR, "xmr"},
     };
 
     std::map<neroshop::Currency, std::string> CURRENCY_TO_VS;
     for (const auto& [key, value] : neroshop::CurrencyMap) {
-        CURRENCY_TO_VS[std::get<0>(value)] = neroshop::string::upper(key);
+        CURRENCY_TO_VS[std::get<0>(value)] = neroshop::string_tools::lower(key);
     }
     
     auto it = CURRENCY_TO_ID.find(from);
@@ -44,10 +44,8 @@ std::optional<double> CryptoRankApi::price(neroshop::Currency from, neroshop::Cu
     if (it == CURRENCY_TO_VS.cend()) {
         return std::nullopt;
     }
-    const auto idTo = it->second;
-
     #if defined(NEROSHOP_USE_QT)
-    const QString BASE_URL{QStringLiteral("https://api.cryptorank.io/v0/coins/%1?locale=en")};
+    const QString BASE_URL{QStringLiteral("https://coincodex.com/api/coincodex/get_coin/%1")};
     QNetworkAccessManager manager;
     QEventLoop loop;
     QObject::connect(&manager, &QNetworkAccessManager::finished, &loop, &QEventLoop::quit);
@@ -61,12 +59,7 @@ std::optional<double> CryptoRankApi::price(neroshop::Currency from, neroshop::Cu
         return std::nullopt;
     }
     const auto root_obj = json_doc.object();
-    const auto data_obj = root_obj.value("data").toObject();
-    const auto price_obj = data_obj.value("price").toObject();
-    if (!price_obj.contains(QString::fromStdString(idTo))) {
-        return std::nullopt;
-    }
-    return price_obj.value(QString::fromStdString(idTo)).toDouble();
+    return root_obj.value("last_price_usd").toDouble();
     #else
     #endif
     

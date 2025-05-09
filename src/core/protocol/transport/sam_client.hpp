@@ -94,7 +94,7 @@ struct SamDatagram {
 
 class SamClient {
 public:
-    SamClient();
+    SamClient() = delete; // Prevent default construction
     SamClient(SamSessionStyle style, const std::string& nickname = generate_nickname());
     ~SamClient();
 

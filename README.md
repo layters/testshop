@@ -234,7 +234,7 @@ WW2pQTQWHpyJf2CHrCmZG7Tn3zBnYRZTH8g4U3pSZf5s6xsTXrZc9odDWmrWzjRc9MMQWrKXxjHsRdzH
 </p>
 
 [**OpenAlias**](https://openalias.org/):
-`donate.neroshop.org` or `donate@neroshop.org`
+~`donate.neroshop.org` or `donate@neroshop.org`~
 
 
 ## Resources
