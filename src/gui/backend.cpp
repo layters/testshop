@@ -2434,7 +2434,9 @@ QVariantMap neroshop::Backend::getNetworkStatus() const {
                         peerObject.insert("status_str", "Active");
                     }
                 }
-                //if(peer.contains("distance") && peer["distance"].is_()) {}
+                if(peer.contains("distance") && peer["distance"].is_number_integer()) {
+                    peerObject.insert("distance", peer["distance"].get<int>());
+                }
                 peersList.append(peerObject);
             }
         }

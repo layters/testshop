@@ -67,6 +67,7 @@ Node::Node(bool local, const std::string& i2p_address) : bootstrap(false), check
             key_mapper = std::make_unique<KeyMapper>();
         }
     }
+    log_debug("Node: {} with ID {} created", get_i2p_address(), get_id());
 }
 
 Node::Node(Node&& other) noexcept
@@ -85,6 +86,7 @@ Node::Node(Node&& other) noexcept
 
 Node::~Node() {
     ////sam_client->session_close();
+    log_debug("~Node: {} destroyed", get_i2p_address());
 }
 
 //-----------------------------------------------------------------------------
@@ -147,8 +149,16 @@ std::vector<Node*> Node::find_node(const std::string& target, int count) const {
         return {};
     }
     // Get the nodes from the routing table that are closest to the target (node id or key)
-    std::vector<Node*> closest_nodes = routing_table->find_closest_nodes(target, count);
-    return closest_nodes;
+    std::vector<std::weak_ptr<Node>> closest_weak_nodes = routing_table->find_closest_nodes(target, count);
+    std::vector<Node*> nodes;
+    
+    for (const auto& weak_node : closest_weak_nodes) {
+        if (auto node = weak_node.lock()) { // Safe: avoids dangling pointers :D
+            nodes.push_back(node.get()); // node.get() returns Node*
+        }
+    }
+
+    return nodes;
 }
 
 //-----------------------------------------------------------------------------
@@ -397,12 +407,12 @@ void Node::rebuild_routing_table() {
     std::string command = "SELECT i2p_address FROM routing_table;";
     sqlite3_stmt * stmt = nullptr;
     if(sqlite3_prepare_v2(database->get_handle(), command.c_str(), -1, &stmt, nullptr) != SQLITE_OK) {
-        std::cout << "\033[91msqlite3_prepare_v2: " + std::string(sqlite3_errmsg(database->get_handle())) << "\033[0m" << std::endl;
+        log_error("sqlite3_prepare_v2: {}", std::string(sqlite3_errmsg(database->get_handle())));
         return;
     }
     // Check if there is any data returned by the statement
     if(sqlite3_column_count(stmt) > 0) {
-        std::cout << "\033[1;37m[INFO]\033[0m \033[35;1mRebuilding routing table from backup ...\033[0m" << std::endl;
+        log_info("{}Rebuilding routing table from backup ...{}", "\033[35;1m", color_reset);
     }
     // Get all table values row by row
     while(sqlite3_step(stmt) == SQLITE_ROW) {
@@ -435,7 +445,6 @@ void Node::send_query(const std::string& destination, const std::vector<uint8_t>
     if(!sam_client.get()) throw std::runtime_error("sam client is not connected");
     if(sam_client->get_socket() < 0) throw std::runtime_error("sam client socket is closed");
     
-    log_info("Sending datagram to {}", destination);
     // Construct SAM header line for datagram
     std::string header = "3.0 " + sam_client->get_nickname() + " " + destination + "\n";
     
@@ -451,6 +460,8 @@ void Node::send_query(const std::string& destination, const std::vector<uint8_t>
     if (sent_bytes < 0) {
         throw std::runtime_error("Failed to send datagram to SAM bridge");
     }
+    
+    log_info("SENT datagram to {}", destination);
 }
 
 //-----------------------------------------------------------------------------
@@ -483,15 +494,15 @@ bool Node::send_ping(const std::string& destination) {
     try {
         send_query(destination, ping_message);
     } catch(const std::exception& e) {
-        std::cerr << "\033[1;91m[ERROR]\033[0m send_query: " << e.what() << "\n";
+        log_error("send_query: {}", e.what());
         std::scoped_lock lock(pending_mutex);
         pending_requests.erase(transaction_id);
         return false;
     }
     
     // Wait for a response
-    if (future.wait_for(std::chrono::seconds(NEROSHOP_DHT_PING_TIMEOUT)) != std::future_status::ready) {
-        std::cerr << "[TIMEOUT] No response for TID: " << transaction_id << "\n";
+    if (future.wait_for(std::chrono::milliseconds(NEROSHOP_DHT_PING_TIMEOUT)) != std::future_status::ready) {
+        log_warn("send_ping: Timeout occurred. No response received for transaction ID: {}", transaction_id);
         std::scoped_lock lock(pending_mutex);
         pending_requests.erase(transaction_id);
         return false;
@@ -499,7 +510,6 @@ bool Node::send_ping(const std::string& destination) {
 
     // Get the result
     nlohmann::json pong_message = future.get();
-    std::cout << "\033[32m" << pong_message.dump() << "\033[0m\n";
     
     return true;
 }
@@ -528,15 +538,15 @@ std::vector<std::unique_ptr<Node>> Node::send_find_node(const std::string& targe
     try {
         send_query(destination, find_node_message);
     } catch (const std::exception& e) {
-        std::cerr << "\033[1;91m[ERROR]\033[0m send_query: " << e.what() << "\n";
+        log_error("send_query: {}", e.what());
         std::scoped_lock lock(pending_mutex);
         pending_requests.erase(transaction_id);
         return {}; // Return an empty vector on failure
     }
     
     // Wait for the response
-    if (future.wait_for(std::chrono::seconds(NEROSHOP_DHT_RECV_TIMEOUT)) != std::future_status::ready) {
-        std::cerr << "[TIMEOUT] No response for TID: " << transaction_id << "\n";
+    if (future.wait_for(std::chrono::milliseconds(NEROSHOP_DHT_RECV_TIMEOUT)) != std::future_status::ready) {
+        log_warn("send_find_node: Timeout occurred. No response received for transaction ID: {}", transaction_id);
         std::scoped_lock lock(pending_mutex);
         pending_requests.erase(transaction_id);
         return {}; // Return an empty vector if there was a timeout
@@ -544,7 +554,6 @@ std::vector<std::unique_ptr<Node>> Node::send_find_node(const std::string& targe
     
     // Get the result (the response message)
     nlohmann::json nodes_message = future.get();
-    std::cout << "\033[32m" << nodes_message.dump() << "\033[0m\n";
     
     // Process the nodes from the response
     std::vector<std::unique_ptr<Node>> nodes;
@@ -602,20 +611,20 @@ int Node::send_put(const std::string& key, const std::string& value) {
     
         std::string node_dest = node->get_i2p_address();
         uint16_t node_port = node->get_port();
-        std::cout << "Sending put request to \033[36m" << node_dest << ":" << node_port << "\033[0m\n";
+        log_debug("send_put: Sending PUT request to {}{}{}", "\033[36m", node_dest, color_reset);
         
         try {
             send_query(node_dest, query_put);
         } catch (const std::exception& e) {
-            std::cerr << "\033[91m[ERROR]\033[0m send_query: " << e.what() << "\n";
+            log_error("send_query: {}", e.what());
             std::scoped_lock lock(pending_mutex);
             pending_requests.erase(transaction_id);
             failed_nodes.insert(node);
             continue;
         }
         
-        if (future.wait_for(std::chrono::seconds(NEROSHOP_DHT_RECV_TIMEOUT)) != std::future_status::ready) {
-            std::cerr << "[TIMEOUT] No response for TID: " << transaction_id << "\n";
+        if (future.wait_for(std::chrono::milliseconds(NEROSHOP_DHT_RECV_TIMEOUT)) != std::future_status::ready) {
+            log_warn("send_put: Timeout occurred. No response received for transaction ID: {}", transaction_id);
             std::scoped_lock lock(pending_mutex);
             pending_requests.erase(transaction_id);
             failed_nodes.insert(node);
@@ -624,7 +633,6 @@ int Node::send_put(const std::string& key, const std::string& value) {
         
         // Process the result
         nlohmann::json response_put = future.get();
-        std::cout << ((response_put.contains("error")) ? ("\033[91m") : ("\033[32m")) << response_put.dump() << "\033[0m\n";
 
         if (response_put.contains("response")) {
             add_provider(key, { node->get_i2p_address(), node_port });
@@ -678,20 +686,20 @@ int Node::send_put(const std::string& key, const std::string& value) {
 
                 std::string node_dest = replacement_node->get_i2p_address();
                 uint16_t node_port = replacement_node->get_port();
-                std::cout << "Sending put request to \033[36m" << node_dest << ":" << node_port << "\033[0m\n";
+                log_debug("send_put: Sending PUT request to {}{}{}", "\033[36m", node_dest, color_reset);
                 
                 try {
                     send_query(node_dest, query_put);
                 } catch (const std::exception& e) {
-                    std::cerr << "\033[91m[ERROR]\033[0m send_query: " << e.what() << "\n";
+                    log_error("send_query: {}", e.what());
                     std::scoped_lock lock(pending_mutex);
                     pending_requests.erase(transaction_id);
                     replacement_node->check_counter.fetch_add(1); // Equivalent to ++check_counter or check_counter += 1
                     continue;
                 }
                 
-                if (future.wait_for(std::chrono::seconds(NEROSHOP_DHT_RECV_TIMEOUT)) != std::future_status::ready) {
-                    std::cerr << "[TIMEOUT] No response for TID: " << transaction_id << "\n";
+                if (future.wait_for(std::chrono::milliseconds(NEROSHOP_DHT_RECV_TIMEOUT)) != std::future_status::ready) {
+                    log_warn("send_put: Timeout occurred. No response received for transaction ID: {}", transaction_id);
                     std::scoped_lock lock(pending_mutex);
                     pending_requests.erase(transaction_id);
                     replacement_node->check_counter.fetch_add(1);
@@ -700,7 +708,6 @@ int Node::send_put(const std::string& key, const std::string& value) {
                 
                 // Process the response and update the nodes_sent_count and sent_nodes accordingly
                 nlohmann::json response_put = future.get();
-                std::cout << ((response_put.contains("error")) ? ("\033[91m") : ("\033[32m")) << response_put.dump() << "\033[0m\n";
 
                 // Show response and increase count
                 if(response_put.contains("response")) {
@@ -755,18 +762,18 @@ std::string Node::send_get(const std::string& key) {
             
             // Send a get request to provider
             std::string peer_addr = peer.address;
-            std::cout << "Sending get request to \033[36m" << peer_addr << "\033[0m\n";
+            log_debug("send_get: Sending GET request to {}{}{}", "\033[36m", peer_addr, color_reset);
             try {
                 send_query(peer_addr, query_get);
             } catch (const std::exception& e) {
-                std::cerr << "\033[91m[ERROR]\033[0m send_query: " << e.what() << "\n";
+                log_error("send_query: {}", e.what());
                 std::scoped_lock lock(pending_mutex);
                 pending_requests.erase(transaction_id);
                 continue;
             }
             
-            if (future.wait_for(std::chrono::seconds(2/*NEROSHOP_DHT_RECV_TIMEOUT*/)) != std::future_status::ready) {
-                std::cerr << "[TIMEOUT] No response for TID: " << transaction_id << "\n";
+            if (future.wait_for(std::chrono::milliseconds(2/*NEROSHOP_DHT_RECV_TIMEOUT*/)) != std::future_status::ready) {
+                log_warn("send_get: Timeout occurred. No response received for transaction ID: {}", transaction_id);
                 std::scoped_lock lock(pending_mutex);
                 pending_requests.erase(transaction_id);
                 std::cerr << "Provider \033[91m" << peer_addr << "\033[0m did not respond" << std::endl;
@@ -784,7 +791,6 @@ std::string Node::send_get(const std::string& key) {
             }
             
             // Handle the response
-            std::cout << ((response_get.contains("error")) ? ("\033[91m") : ("\033[32m")) << response_get.dump() << "\033[0m\n";
             if(response_get.contains("error")) { // "Key not found"
                 remove_provider(key, peer.address); // Data is lost, remove peer from providers
                 continue; 
@@ -819,18 +825,18 @@ std::string Node::send_get(const std::string& key) {
             
             // Send a get request to provider
             std::string peer_addr = peer.address;
-            std::cout << "Sending get request to \033[36m" << peer_addr << "\033[0m\n";
+            log_debug("send_get: Sending GET request to {}{}{}", "\033[36m", peer_addr, color_reset);
             try {
                 send_query(peer_addr, query_get);
             } catch (const std::exception& e) {
-                std::cerr << "\033[91m[ERROR]\033[0m send_query: " << e.what() << "\n";
+                log_error("send_query: {}", e.what());
                 std::scoped_lock lock(pending_mutex);
                 pending_requests.erase(transaction_id);
                 continue;
             }
             
-            if (future.wait_for(std::chrono::seconds(2/*NEROSHOP_DHT_RECV_TIMEOUT*/)) != std::future_status::ready) {
-                std::cerr << "[TIMEOUT] No response for TID: " << transaction_id << "\n";
+            if (future.wait_for(std::chrono::milliseconds(2/*NEROSHOP_DHT_RECV_TIMEOUT*/)) != std::future_status::ready) {
+                log_warn("send_get: Timeout occurred. No response received for transaction ID: {}", transaction_id);
                 std::scoped_lock lock(pending_mutex);
                 pending_requests.erase(transaction_id);
                 std::cerr << "Provider \033[91m" << peer_addr << "\033[0m did not respond" << std::endl;
@@ -848,7 +854,6 @@ std::string Node::send_get(const std::string& key) {
             }
             
             // Handle the response
-            std::cout << ((response_get.contains("error")) ? ("\033[91m") : ("\033[32m")) << response_get.dump() << "\033[0m\n";
             if(response_get.contains("error")) { // "Key not found"
                 remove_provider(key, peer.address); // Data is lost, remove peer from providers
                 continue; 
@@ -901,18 +906,18 @@ void Node::send_remove(const std::string& key) {
         // Send remove query message
         std::string node_dest = node->get_i2p_address();
         int node_port = node->get_port();
-        std::cout << "Sending remove request to \033[36m" << node_dest << "\033[0m\n";
+        log_debug("send_remove: Sending REMOVE request to {}{}{}", "\033[36m", node_dest, color_reset);
         try {
             send_query(node_dest, remove_query);
         } catch (const std::exception& e) {
-            std::cerr << "\033[91m[ERROR]\033[0m send_query: " << e.what() << "\n";
+            log_error("send_query: {}", e.what());
             std::scoped_lock lock(pending_mutex);
             pending_requests.erase(transaction_id);
             continue;
         }
         
-        if (future.wait_for(std::chrono::seconds(NEROSHOP_DHT_RECV_TIMEOUT)) != std::future_status::ready) {
-            std::cerr << "[TIMEOUT] No response for TID: " << transaction_id << "\n";
+        if (future.wait_for(std::chrono::milliseconds(NEROSHOP_DHT_RECV_TIMEOUT)) != std::future_status::ready) {
+            log_warn("send_remove: Timeout occurred. No response received for transaction ID: {}", transaction_id);
             std::scoped_lock lock(pending_mutex);
             pending_requests.erase(transaction_id);
             std::cerr << "Node \033[91m" << node_dest << "\033[0m did not respond" << std::endl;
@@ -926,10 +931,7 @@ void Node::send_remove(const std::string& key) {
             remove_response = future.get();
         } catch (const std::exception& e) {
             std::cerr << "[ERROR] Failed to parse future result for node: " << node_dest << "\n";
-        }   
-        
-        // Show response
-        std::cout << ((remove_response.contains("error")) ? ("\033[91m") : ("\033[32m")) << remove_response.dump() << "\033[0m\n";
+        }
     }
     //-----------------------------------------------
 }
@@ -964,14 +966,14 @@ void Node::send_map(const std::string& destination) {
         try {
             send_query(destination, map_message);
         } catch (const std::exception& e) {
-            std::cerr << "\033[91m[ERROR]\033[0m send_query: " << e.what() << "\n";
+            log_error("send_query: {}", e.what());
             std::scoped_lock lock(pending_mutex);
             pending_requests.erase(transaction_id);
             continue;
         }
         
-        if (future.wait_for(std::chrono::seconds(NEROSHOP_DHT_RECV_TIMEOUT)) != std::future_status::ready) {
-            std::cerr << "[TIMEOUT] No response for TID: " << transaction_id << "\n";
+        if (future.wait_for(std::chrono::milliseconds(NEROSHOP_DHT_RECV_TIMEOUT)) != std::future_status::ready) {
+            log_warn("send_map: Timeout occurred. No response received for transaction ID: {}", transaction_id);
             std::scoped_lock lock(pending_mutex);
             pending_requests.erase(transaction_id);
             std::cerr << "\033[91mNode " << destination << " did not respond to send_map\033[0m" << std::endl;
@@ -986,9 +988,6 @@ void Node::send_map(const std::string& destination) {
         } catch (const std::exception& e) {
             std::cerr << "[ERROR] Failed to parse future result for node: " << destination << "\n";
         }
-        
-        // Show response
-        std::cout << ((map_response_message.contains("error")) ? ("\033[91m") : ("\033[92m")) << map_response_message.dump() << "\033[0m\n";
     }
     
     if(map_sent && !data.empty()) { std::cout << "Sent map request to \033[36m" << destination << "\033[0m\n"; }
@@ -1006,12 +1005,12 @@ void Node::send_map_v2(const std::string& destination) {
     std::string command = "SELECT key, value FROM hash_table;";
     sqlite3_stmt * stmt = nullptr;
     if(sqlite3_prepare_v2(database->get_handle(), command.c_str(), -1, &stmt, nullptr) != SQLITE_OK) {
-        std::cout << "\033[91msqlite3_prepare_v2: " + std::string(sqlite3_errmsg(database->get_handle())) << "\033[0m" << std::endl;
+        log_error("sqlite3_prepare_v2: {}", std::string(sqlite3_errmsg(database->get_handle())));
         return;
     }
     // Check if there is any data returned by the statement
     if(sqlite3_column_count(stmt) > 0) {
-        std::cout << "\033[35;1mSending hash table map from cache ...\033[0m" << std::endl;
+        log_info("{}Sending MAP of hash table from cache ...{}", "\033[35;1m", color_reset);
     }
     // Get all table values row by row
     std::unordered_map<std::string, std::string> hash_table;
@@ -1058,14 +1057,14 @@ void Node::send_map_v2(const std::string& destination) {
         try {
             send_query(destination, map_request);
         } catch (const std::exception& e) {
-            std::cerr << "\033[91m[ERROR]\033[0m send_query: " << e.what() << "\n";
+            log_error("send_query: {}", e.what());
             std::scoped_lock lock(pending_mutex);
             pending_requests.erase(transaction_id);
             continue;
         }
         
-        if (future.wait_for(std::chrono::seconds(NEROSHOP_DHT_RECV_TIMEOUT)) != std::future_status::ready) {
-            std::cerr << "[TIMEOUT] No response for TID: " << transaction_id << "\n";
+        if (future.wait_for(std::chrono::milliseconds(NEROSHOP_DHT_RECV_TIMEOUT)) != std::future_status::ready) {
+            log_warn("send_map_v2: Timeout occurred. No response received for transaction ID: {}", transaction_id);
             std::scoped_lock lock(pending_mutex);
             pending_requests.erase(transaction_id);
             std::cerr << "\033[91mNode " << destination << " did not respond to send_map\033[0m" << std::endl;
@@ -1078,8 +1077,6 @@ void Node::send_map_v2(const std::string& destination) {
         } catch (const std::exception& e) {
             std::cerr << "[ERROR] Failed to parse future result for node: " << destination << "\n";
         }
-        
-        std::cout << ((map_response.contains("error")) ? ("\033[91m") : ("\033[92m")) << map_response.dump() << "\033[0m\n";
     }
 }
 
@@ -1119,18 +1116,18 @@ std::deque<Peer> Node::send_get_providers(const std::string& key) {
         // Send get_providers query message to each node
         std::string node_dest = node->get_i2p_address();
         int node_port = node->get_port();
-        std::cout << "Sending get_providers request to \033[36m" << node_dest << "\033[0m\n";
+        log_debug("send_get_providers: Sending GET_PROVIDERS request to {}{}{}", "\033[36m", node_dest, color_reset);
         try {
             send_query(node_dest, get_providers_query);
          } catch (const std::exception& e) {
-            std::cerr << "\033[91m[ERROR]\033[0m send_query: " << e.what() << "\n";
+            log_error("send_query: {}", e.what());
             std::scoped_lock lock(pending_mutex);
             pending_requests.erase(transaction_id);
             continue;
         }
         
-        if (future.wait_for(std::chrono::seconds(NEROSHOP_DHT_RECV_TIMEOUT)) != std::future_status::ready) {
-            std::cerr << "[TIMEOUT] No response for TID: " << transaction_id << "\n";
+        if (future.wait_for(std::chrono::milliseconds(NEROSHOP_DHT_RECV_TIMEOUT)) != std::future_status::ready) {
+            log_warn("send_get_providers: Timeout occurred. No response received for transaction ID: {}", transaction_id);
             std::scoped_lock lock(pending_mutex);
             pending_requests.erase(transaction_id);
             std::cerr << "Node \033[91m" << node_dest << "\033[0m did not respond" << std::endl;
@@ -1145,8 +1142,7 @@ std::deque<Peer> Node::send_get_providers(const std::string& key) {
         } catch (const std::exception& e) {
             std::cerr << "[ERROR] Failed to parse future result for node: " << node_dest << "\n";
         }
-        // Show response and handle the retrieved value
-        std::cout << ((get_providers_response.contains("error")) ? ("\033[91m") : ("\033[32m")) << get_providers_response.dump() << "\033[0m\n";
+        
         if(get_providers_response.contains("error")) {
             continue; // Skip if error
         }
@@ -1174,7 +1170,7 @@ void Node::refresh() {
     std::vector<Node *> closest_nodes = find_node(this->get_id(), NEROSHOP_DHT_MAX_CLOSEST_NODES);
     
     for(const auto& neighbor : closest_nodes) {
-        std::cout << "Sending find_node request to " << neighbor->get_i2p_address() << ":" << neighbor->get_port() << "\n";
+        log_debug("refresh: Sending FIND_NODE request to {}", neighbor->get_i2p_address());
         auto nodes = send_find_node(this->get_id(), neighbor->get_i2p_address());
         if(nodes.empty()) {
             std::cerr << "find_node: No unique nodes found\n"; continue;
@@ -1492,9 +1488,9 @@ void Node::stop_periodic_check() {
     cv.notify_one(); // Important: Notify the thread to wake up
 }
 
-void Node::periodic_check() {
+void Node::heartbeat() {
+    // This code will run concurrently with the listen/receive loop
     while (!stop_period_chk_flag) {
-        {
         // CRITICAL SECTION:  Protect access to routing_table
         std::unique_lock<std::mutex> lock(periodic_chk_mutex);
         cv.wait_for(lock, std::chrono::seconds(NEROSHOP_DHT_NODE_HEALTH_CHECK_INTERVAL), 
@@ -1502,19 +1498,27 @@ void Node::periodic_check() {
         ); // Wait 5 minutes, or until stop_period_chk_flag is true
 
         if(stop_period_chk_flag) break; // Exit if stop_period_chk_flag is set during wait
+        //------------------------------------------------------------
+        int total_failures = 0;
+        int total_successes = 0;
         
-        // Perform periodic checks here
-        // This code will run concurrently with the listen/receive loop
+        auto start = std::chrono::high_resolution_clock::now();
+        
         for (int i = 0; i < 256; ++i) {
-            //-------------------------------------------------------
-            std::vector<std::shared_ptr<Node>> snapshot;
+            std::vector<std::weak_ptr<Node>> snapshot;
 
             { // scope for shared lock to take a snapshot (needed due to remove_node()'s internal unique_lock and this shared_lock causing a deadlock or silent failure in removing a node)
                 std::shared_lock lock(routing_table->bucket_mutexes[i]);
-                snapshot = routing_table->buckets[i]; // Copy pointer references
+                
+                // Convert shared_ptr to weak_ptr to avoid increasing ref count
+                for (const auto& sptr : routing_table->buckets[i]) {
+                    snapshot.push_back(std::weak_ptr<Node>(sptr));
+                }
             }
-
-            for (auto& node : snapshot) {
+            
+            for (auto& weak_node : snapshot) {
+                auto node = weak_node.lock(); // ref count +1 here // Lock so we can interact with the node (increases ref count by 1 but will decrease it at end of loop iteration or block)
+                
                 if (!node) continue; // skip null pointers
                 if (node->is_hardcoded()) continue; // Skip the hardcoded nodes
 
@@ -1525,20 +1529,33 @@ void Node::periodic_check() {
 
                 if (pinged) {
                     node->check_counter.store(0);
+                    total_successes += 1; // Count this success
                 } else {
                     node->check_counter.fetch_add(1);
+                    total_failures += 1; // Count this failure
                 }
-
-                log_debug("periodic_check: Health check failures: {} ({})", node->check_counter.load(), node->get_status_as_string());
+                
+                log_debug("heartbeat: Checked on {} (failures: {}, status: {})", node_dest, node->check_counter.load(), node->get_status_as_string());
 
                 if (node->is_dead()) { // scope for unique_lock in remove_node()
-                    routing_table->remove_node(node->get_id()/*node_dest, node_port*/); // Safe: no shared lock held
+                    routing_table->remove_node(node->get_id()); // Safe: no shared lock held
                 }
-            }
+            } // <-- ref count -1 here when `node` goes out of scope
         } // for loop
-            // read_lock is released here
+        
+        auto end = std::chrono::high_resolution_clock::now();
+        auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
+        
+        int total_nodes_checked = total_successes + total_failures;
+        if(total_nodes_checked > 0) {
+            log_info("PERIODIC health check completed in {}ms, {} failed, {} succeeded, {} total", duration.count(), total_failures, total_successes, total_nodes_checked);
         }
-
+        // if the "completion time" ms is bigger than 800ms then it means it waited the full ping timeout ms of 800ms but the nodes were likely dead already
+        // If the health check for a single node surpasses the ping timeout (800ms), for example: "completed in 1274ms, 1 failed, 0 succeeded, 1 total", 
+        // Subtract the ping timeout (800ms) from the "completion time": 1274ms - 800ms = 477ms
+        // With this, you'll get the actual (true) ms it took to complete the node liveliness check for a single node
+        // 1277ms, 1034ms, 1338ms, 1274ms, 1106ms, 1206ms --> Subtract 800ms --> 477ms, 234ms, 538ms, 474ms, 306ms, 406ms --> Actual ms (single node)
+        
         // Sleep for a specified interval
         ////std::this_thread::sleep_for(std::chrono::seconds(NEROSHOP_DHT_NODE_HEALTH_CHECK_INTERVAL));
     }
@@ -1599,17 +1616,15 @@ void Node::on_ping(const std::vector<uint8_t>& buffer, const std::string& sender
             // Validate node id
             std::string calculated_node_id = generate_node_id(sender_i2p);
             if(sender_id == calculated_node_id) {
-                bool has_node = routing_table->has_node(sender_i2p, sender_port);
-                if (!has_node) {
+                bool has_node = routing_table->has_node(sender_id);
+                if (!has_node && !is_hardcoded(sender_i2p)) { // To prevent the seed node from being stored in the routing table
                     auto node_that_pinged = std::make_unique<Node>(false, sender_i2p);
-                    if(!node_that_pinged->is_hardcoded()) { // To prevent the seed node from being stored in the routing table
-                        routing_table->add_node(std::move(node_that_pinged)); // Already has internal write_lock
-                        persist_routing_table(sender_i2p);
-                        routing_table->print_table();
+                    routing_table->add_node(std::move(node_that_pinged)); // Already has internal write_lock
+                    persist_routing_table(sender_i2p);
+                    routing_table->print_table();
                     
-                        // Announce your node as a data provider to the new node that recently joined the network to make product/service listings more easily discoverable by the new node
-                        send_map_v2(sender_i2p);
-                    }
+                    // Announce your node as a data provider to the new node that recently joined the network to make product/service listings more easily discoverable by the new node
+                    send_map_v2(sender_i2p);
                 }
             }
         }
@@ -1649,12 +1664,12 @@ void Node::run() {
 //-----------------------------------------------------------------------------
 
 void Node::run_simple() {
-    std::cout << "\033[1;37m[INFO]\033[0m Listening for I2P datagrams..." << std::endl;
+    log_info("Listening for I2P datagrams...");
     
     unsigned int threads = std::thread::hardware_concurrency();
     ThreadPool pool(threads);
     
-    std::thread periodic_thread(&Node::periodic_check, this);//std::thread(&Node::periodic_check, this).detach();
+    std::thread periodic_thread(&Node::heartbeat, this);//std::thread(&Node::heartbeat, this).detach();
     
     while (true) {
         char buffer[SAM_BUFSIZE] = {0};
@@ -1674,11 +1689,11 @@ void Node::run_simple() {
             }
         }
         if (received_bytes == 0) {
-            std::cout << "\033[1;34m[DEBUG]\033[0m Received 0 bytes, ignoring\n";
+            log_debug("run: Received 0 bytes, ignoring");
             continue;
         }
         if(sam_client->client_socket < 0 && errno == ENOTCONN) {
-            std::cerr << "\033[1;91m[ERROR]\033[0m Socket is closed.\n";
+            log_error("run: Socket is closed.");
             break; // Exit the loop as the socket is no longer valid
         }
         
@@ -1691,7 +1706,7 @@ void Node::run_simple() {
             log_info("RECEIVED from {}:{} ({} bytes):\n{}", sender_ip, sender_port, message.size()/*received_bytes*/, message);
 
             // Parse SAM message format and extract destination and payload
-            std::string payload, dest_b64;
+            std::string payload, dest_b64, sender_i2p;
             auto header_end = message.find('\n');
             if (header_end != std::string::npos) {
                 std::string sam_header = message.substr(0, header_end);
@@ -1704,8 +1719,9 @@ void Node::run_simple() {
                 dest_b64 = sam_header.substr(0, from_pos);
 
                 ////std::cout << "\033[1;34m[DEBUG]\033[0m Base64 Destination:\n" << dest_b64 << "\n";
-                log_debug("\n{}[{}]:{}", "\033[1;36m", SamClient::to_i2p_address(dest_b64), color_reset);
-
+                
+                // Convert base64 destination to I2P address
+                sender_i2p = SamClient::to_i2p_address(dest_b64);
             } else {
                 std::cerr << "\033[1;33m[WARN]\033[0m Could not find SAM header line break (\\n)\n";
             }
@@ -1720,7 +1736,9 @@ void Node::run_simple() {
             }
             // ONLY queries can be replied to in this loop, NOT responses!!!
             if (json_payload.contains("query")) {
-                ////log_info("Received a request (query) — replying");
+                // Print out the parsed datagram
+                log_debug("PARSED datagram:\n{}\n{}{}{}", sender_i2p, "\033[33m", json_payload.dump(), color_reset);
+                
                 // Process the payload (which should be in msgpack form)
                 std::vector<uint8_t> response = neroshop::msgpack::process(payload_bytes, *this, false);
             
@@ -1746,7 +1764,9 @@ void Node::run_simple() {
                 on_map(payload_bytes, dest_b64);
                 ////if(json_payload["query"] == "ping") {} // on_ping
             } else if (json_payload.contains("response")) {
-                  ////log_info("Received a response — processing");
+                  // Print out the parsed datagram
+                  log_debug("PARSED datagram:\n{}\n{}{}{}", sender_i2p, "\033[32m", json_payload.dump(), color_reset);
+                  
                   // Match this response to a pending TID/request, if you're tracking queries
                   std::string tid = json_payload["tid"].get<std::string>();
                   std::string version = json_payload["version"].get<std::string>();
@@ -1761,8 +1781,11 @@ void Node::run_simple() {
                       pending_requests.erase(it);
                       return; // Done, don't double-handle it
                   }
+            } else if (json_payload.contains("error")) {
+                // Print out the parsed datagram
+                log_debug("PARSED datagram:\n{}{}{}", "\033[91m", json_payload.dump(), color_reset);
             } else {
-                  std::cerr << "\033[1;33m[WARN]\033[0m Unknown message type — skipping\n";
+                  log_warn("Unknown message type — skipping");
             }
         });
     }
@@ -1772,7 +1795,7 @@ void Node::run_simple() {
     
     periodic_thread.join(); // Important: Join to avoid a leaked thread
 
-    std::cout << "\n\033[1;37m[INFO]\033[0m Stopped listening for datagrams." << std::endl;
+    log_info("Stopped listening for datagrams.");
 }
 
 //-----------------------------------------------------------------------------
@@ -1812,6 +1835,7 @@ uint16_t Node::get_port() const {
 //-----------------------------------------------------------------------------
 
 RoutingTable * Node::get_routing_table() const {
+    if(!routing_table.get()) log_trace("get_routing_table: accessing uninitialized routing table");
     return routing_table.get();
 }
 
@@ -1821,15 +1845,18 @@ std::vector<Peer> Node::get_peers() const {
     std::vector<Peer> peers_list;
     for (int i = 0; i < 256; ++i) {
         std::shared_lock lock(routing_table->bucket_mutexes[i]); // thread-safe read access
-        for (auto& node : routing_table->buckets[i]) {
-            if (!node) continue;
-            Peer peer;
-            peer.address = node->get_i2p_address();
-            peer.port = node->get_port();
-            peer.id = node->get_id();
-            peer.status = node->get_status();
-            peer.distance = node->get_distance(this->get_id());
-            peers_list.push_back(peer);
+        for (const auto& sptr : routing_table->buckets[i]) {
+            std::weak_ptr<Node> weak_node(sptr);
+            if (auto node = weak_node.lock()) {
+                // Ref count increases here temporarily
+                Peer peer;
+                peer.address = node->get_i2p_address();
+                peer.port = node->get_port();
+                peer.id = node->get_id();
+                peer.status = node->get_status();
+                peer.distance = node->get_distance(this->get_id());
+                peers_list.push_back(peer);
+            } // Ref count decreases when `node` goes out of scope
         }
     }
     return peers_list;
@@ -1843,10 +1870,12 @@ int Node::get_active_peer_count() const {
     int active_count = 0;
     for (int i = 0; i < 256; ++i) {
         std::shared_lock lock(routing_table->bucket_mutexes[i]); // thread-safe read access
-        for (auto& node : routing_table->buckets[i]) {
-            if (!node) continue;
-            if (node->get_status() == NodeStatus::Active) {
-                active_count++;
+        for (const auto& sptr : routing_table->buckets[i]) {
+            std::weak_ptr<Node> weak_node(sptr);
+            if (auto node = weak_node.lock()) {
+                if (node->get_status() == NodeStatus::Active) {
+                    active_count++;
+                }
             }
         }
     }
@@ -1857,10 +1886,12 @@ int Node::get_idle_peer_count() const {
     int idle_count = 0;
     for (int i = 0; i < 256; ++i) {
         std::shared_lock lock(routing_table->bucket_mutexes[i]); // thread-safe read access
-        for (auto& node : routing_table->buckets[i]) {
-            if (!node) continue;
-            if (node->get_status() == NodeStatus::Inactive) {
-                idle_count++;
+        for (const auto& sptr : routing_table->buckets[i]) {
+            std::weak_ptr<Node> weak_node(sptr);
+            if (auto node = weak_node.lock()) {
+                if (node->get_status() == NodeStatus::Inactive) {
+                    idle_count++;
+                }
             }
         }
     }
@@ -1888,7 +1919,7 @@ std::string Node::get_status_as_string() const {
 //-----------------------------------------------------------------------------
 
 int Node::get_distance(const std::string& node_id) const {
-    return routing_table->get_bucket_index(node_id);
+    return RoutingTable::get_bucket_index(this->get_id(), node_id);
 }
 
 //-----------------------------------------------------------------------------

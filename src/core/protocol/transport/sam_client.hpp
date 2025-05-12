@@ -89,7 +89,7 @@ struct SamDatagram {
     std::vector<uint8_t> payload; // raw msgpack payload
     std::string destination; // base64 public destination key
     std::string header;  // full SAM header line
-    // TODO: FROM_PORT=, TO_PORT=, and size
+    // TODO: FROM_PORT=, TO_PORT=, and SIZE
 };
 
 class SamClient {
@@ -155,7 +155,7 @@ private:
     std::string public_key; // base64 public destination key
     std::string i2p_address;
     int session_socket; // for SAM commands like SESSION CREATE (control socket)
-    int client_socket; // for data transmission
+    int client_socket; // for data transmission // TODO: split client_socket into two separate sockets for TCP and UDP
     uint16_t client_port; // both client TCP and UDP sockets are able to share the same port without conflict
 };
 

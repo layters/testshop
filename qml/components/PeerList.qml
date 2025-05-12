@@ -125,7 +125,7 @@ Item {
                     Label {
                         id: peerAddressLabel
                         Layout.fillWidth: true
-                        text: (typeof modelData !== "object") ? "" : (modelData.address + ":" + modelData.port.toString())
+                        text: (typeof modelData !== "object") ? "" : modelData.address//(modelData.address + ":" + modelData.port.toString())
                         color: delegateRow.parent.ListView.isCurrentItem ? "#471d00" : ((NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000")
                         font.bold: delegateRow.parent.ListView.isCurrentItem ? true : false
                         elide: Label.ElideRight
@@ -145,7 +145,7 @@ Item {
                         id: peerDistanceLabel
                         Layout.minimumWidth: distanceTitle.width
                         Layout.maximumWidth: distanceTitle.width
-                        text: (typeof modelData !== "object") ? "- -" : "???"//modelData.distance
+                        text: (typeof modelData !== "object") ? "- -" : modelData.distance
                         color: peerAddressLabel.color
                         font.bold: peerAddressLabel.font.bold
                         elide: Label.ElideRight

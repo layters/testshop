@@ -27,9 +27,13 @@ namespace device {
 	    #endif    
 	    #ifdef __gnu_linux__ // works!
 	    uid_t uid = geteuid();
-		struct passwd * pw = getpwuid(uid);
-        if(!pw) return "";
-        return std::string(pw->pw_name);
+		struct passwd pwd;
+        struct passwd* result = nullptr;
+        std::vector<char> buffer(16384); // 16 KB
+        
+        int ret = getpwuid_r(uid, &pwd, buffer.data(), buffer.size(), &result);
+        if(ret != 0 || result == nullptr) return "";
+        return std::string(pwd.pw_name);
 	    #endif    
 	    return "";
 	}
