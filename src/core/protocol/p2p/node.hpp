@@ -82,18 +82,6 @@ public:
     void remove_provider(const std::string& data_hash, const std::string& i2p_address);
     std::deque<Peer> get_providers(const std::string& data_hash) const; // A query to get a list of peers for a specific torrent or infohash.
     
-    // Callbacks
-    void on_ping(const std::vector<uint8_t>& buffer, const std::string& destination);
-    void on_map(const std::vector<uint8_t>& buffer, const std::string& destination);
-    ////void on_dead_node(const std::vector<std::string>& node_ids);
-    ////bool on_keyword_blocked(const std::string& keyword);
-    ////bool on_node_blacklisted(const std::string& address);
-    ////bool on_data_expired();
-    void periodic_check();
-    void periodic_refresh(); // Periodically sends find_node queries
-    void periodic_republish(); // Periodically republishes in-memory hash table data
-    void periodic_purge(); // Periodically removes expired in-memory hash table data
-    
     // Getters
     std::string get_id() const; // get ID of this node
     SamClient * get_sam_client() const;
@@ -132,6 +120,18 @@ public:
     // Friends
     friend class RoutingTable;
 private:
+    // Callbacks
+    void on_ping(const std::vector<uint8_t>& buffer, const std::string& destination);
+    void on_map(const std::vector<uint8_t>& buffer, const std::string& destination);
+    ////void on_dead_node(const std::vector<std::string>& node_ids);
+    ////bool on_keyword_blocked(const std::string& keyword);
+    ////bool on_node_blacklisted(const std::string& address);
+    ////bool on_data_expired();
+    void heartbeat();
+    void periodic_refresh(); // Periodically sends find_node queries
+    void periodic_republish(); // Periodically republishes in-memory hash table data
+    void periodic_purge(); // Periodically removes expired in-memory hash table data
+    
     std::string generate_node_id(const std::string& i2p_address);
     // Determines if node1 is closer to the target_id than node2
     bool is_closer(const std::string& target_id, const std::string& node1_id, const std::string& node2_id);
@@ -155,7 +155,7 @@ private:
     std::atomic<int> check_counter; // Counter to track the number of consecutive failed checks
     std::unordered_map<std::string, std::promise<nlohmann::json>> pending_requests; // Shared between sender and listener
     std::mutex pending_mutex;
-    // For periodic_check() thread
+    // For heartbeat() thread
     void stop_periodic_check();
     bool stop_period_chk_flag;
     std::condition_variable cv;

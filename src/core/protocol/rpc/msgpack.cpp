@@ -35,7 +35,7 @@ std::vector<uint8_t> process(const std::vector<uint8_t>& request, Node& node, bo
     // Process (parse) the request
     try {
         request_object = nlohmann::json::from_msgpack(request);
-        std::cout << "\033[33m" << request_object.dump() << "\033[0m" << std::endl;
+        //std::cout << "\033[33m" << request_object.dump() << "\033[0m" << std::endl;
     }
     catch(nlohmann::json::parse_error& exception) {
         neroshop::log_error("Error parsing client request");

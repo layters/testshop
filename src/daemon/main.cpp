@@ -259,7 +259,7 @@ int main(int argc, char** argv)
     std::thread rpc_thread;  // Declare the thread object // RPC communication for processing requests from outside clients (disabled by default)
     
     if(result.count("rpc")) {
-        std::cout << "RPC enabled\n";
+        log_info("RPC enabled, listening on port {} using JSON-RPC 2.0", NEROSHOP_RPC_DEFAULT_PORT);
         rpc_thread = std::thread(rpc_server, std::cref(ip_address));  // Initialize the thread object 
     }
     

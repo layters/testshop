@@ -26,7 +26,7 @@ xor_id hex_string_to_node_id(const std::string& hex) {
         try {
             node_id[i] = (hex_char_to_byte(hex[2 * i]) << 4) | hex_char_to_byte(hex[2 * i + 1]);
         } catch (const std::invalid_argument& e) {
-          log_error("Error converting hex string: {}", e.what());
+            log_error("hex_string_to_node_id: Error converting hex string: {}", e.what());
         }
     }
     return node_id;
@@ -122,7 +122,7 @@ RoutingTable::RoutingTable(const std::string& node_id_hex) : id(hex_string_to_no
     // There are 32 bytes (64 hexadecimal digits) in a SHA-3-256 hash
     int bytes = node_id_hex.length() / 2;
     assert(bytes == 32 && "Invalid number of bytes in 64-length hexadecimal string (SHA3-256)");
-    assert(this->id.size() == 32 && "Invalid number of bytes in node XOR ID");
+    assert(this->id.size() == bytes && "Invalid number of bytes in node XOR ID");
 }
 
 //-----------------------------------------------------------------------------
@@ -134,11 +134,16 @@ RoutingTable::RoutingTable(const xor_id&      node_id_xor) : id(node_id_xor) {
 //-----------------------------------------------------------------------------
 
 // Add a new node to the routing table
-bool RoutingTable::add_node(std::shared_ptr<Node> node) {
+bool RoutingTable::add_node(std::unique_ptr<Node> node) {
     if(!node) return false;
 
-     auto node_id = hex_string_to_node_id(node->get_id());
-     const int bucket_index = xor_distance_bit_index(this->id, node_id);
+    auto node_id = hex_string_to_node_id(node->get_id());
+    const int bucket_index = xor_distance_bit_index(this->id, node_id);
+     
+    if (node_id == this->id) {
+        log_error("add_node: cannot add own node to routing table");
+        return false;
+    }
 
     if (bucket_index < 0 || bucket_index >= static_cast<int>(buckets.size())) {
         return false;
@@ -202,7 +207,7 @@ bool RoutingTable::remove_node(const std::string& node_addr, uint16_t node_port)
         }
     }
 
-    log_warn("remove_node: Node {} not found in any bucket", node_addr);
+    log_warn("remove_node: {} not found in any bucket", node_addr);
     return false;
 }
 
@@ -224,10 +229,16 @@ bool RoutingTable::remove_node(const std::string& node_id_hex) { // faster since
 
     for (auto it = bucket.begin(); it != bucket.end(); /* no increment */) {
         if ((*it)->get_id() == node_id_hex) {
-            auto node_to_remove = *it; // <-- if we ever need to use the node after its deleted via bucket.erase()
+            std::weak_ptr<Node> weak_node = *it; // no ref count increment
+            ////log_trace("remove_node: Reference count before deletion: {}", weak_node.use_count());
             it = bucket.erase(it); // erase returns the next iterator
-            log_info("{}{} removed from routing table (bucket: {}, size: {}){}", "\033[1;91m", node_to_remove->get_i2p_address(), bucket_index, bucket.size(), color_reset);
-            //log_info("{}Node with ID {} removed from routing table (bucket: {}, size: {}){}", "\033[91m", node_id_hex, bucket_index, bucket.size(), color_reset);
+            std::string i2p_address;
+            if (auto node = weak_node.lock()) {
+                i2p_address = node->get_i2p_address();
+                ////log_trace("remove_node: Reference count after lock: {}", weak_node.use_count());
+            } // shared_ptr `node` is destroyed here — ref count is decremented
+            log_info("{}{} removed from routing table (bucket: {}, removed: 1, remaining: {}){}", "\033[1;91m", i2p_address, bucket_index, bucket.size(), color_reset);//log_info("{}Node with ID {} removed from routing table (bucket: {}, size: {}){}", "\033[91m", node_id_hex, bucket_index, bucket.size(), color_reset);
+            log_trace("remove_node: Reference count after removal: {}", weak_node.use_count());
             return true;
         } else {
             ++it;
@@ -240,12 +251,11 @@ bool RoutingTable::remove_node(const std::string& node_id_hex) { // faster since
 
 //-----------------------------------------------------------------------------
 
-// TODO: return a std::vector<std::shared_ptr<Node>> instead
-std::vector<neroshop::Node*> RoutingTable::find_closest_nodes(const std::string& key, int count) {
+std::vector<std::weak_ptr<Node>> RoutingTable::find_closest_nodes(const std::string& key, int count) {
     xor_id target_id = hex_string_to_node_id(key); // will trigger "xor_distance_bit_index: Identical IDs" if this node is using itself as the target to find other nodes
 
     struct ScoredNode {
-        Node*/*std::shared_ptr<Node>*/ node;
+        std::shared_ptr<Node> node;
         uint32_t distance;
         bool operator<(const ScoredNode& other) const {
             return distance < other.distance;
@@ -259,13 +269,13 @@ std::vector<neroshop::Node*> RoutingTable::find_closest_nodes(const std::string&
         for (const auto& node_ptr : buckets[i]) {
             if (!node_ptr) continue;
             uint32_t dist = xor_distance_bit_index(target_id, hex_string_to_node_id(node_ptr->get_id()));
-            scored_nodes.push_back({ node_ptr.get()/**/, dist });
+            scored_nodes.push_back({ node_ptr, dist });
         }
     }
 
     std::sort(scored_nodes.begin(), scored_nodes.end());
 
-    std::vector<Node*>/*std::vector<std::shared_ptr<Node>>*/ result;
+    std::vector<std::weak_ptr<Node>> result;
     for (int i = 0; i < std::min(count, static_cast<int>(scored_nodes.size())); ++i) {
         result.push_back(scored_nodes[i].node);
     }
@@ -275,19 +285,19 @@ std::vector<neroshop::Node*> RoutingTable::find_closest_nodes(const std::string&
 
 //-----------------------------------------------------------------------------
 
-// TODO: return a std::shared_ptr<Node> instead
-neroshop::Node* RoutingTable::get_node_by_id(const std::string& node_id_hex) const {
+std::weak_ptr<Node> RoutingTable::get_node_by_id(const std::string& node_id_hex) const {
     xor_id node_id = hex_string_to_node_id(node_id_hex);
     int bucket_index = xor_distance_bit_index(id, node_id);
 
     std::shared_lock lock(bucket_mutexes[bucket_index]);
     for (const auto& node_ptr : buckets[bucket_index]) {
         if (node_ptr && node_ptr->get_id() == node_id_hex) {
-            return node_ptr.get();
+            return node_ptr; // implicit conversion to weak_ptr
         }
     }
     
-    return nullptr; // Node with the specified ID not found
+    log_trace("get_node_by_id: Node with ID {} not found", node_id_hex); // <-- just to give the caller a heads up
+    return std::weak_ptr<Node>(); // empty (expired)
 }
 
 //-----------------------------------------------------------------------------
@@ -295,6 +305,15 @@ neroshop::Node* RoutingTable::get_node_by_id(const std::string& node_id_hex) con
 int RoutingTable::get_bucket_index(const std::string& node_id_hex) const {
     xor_id node_id = hex_string_to_node_id(node_id_hex);
     int bucket_index = xor_distance_bit_index(id, node_id);
+    return bucket_index;
+}
+
+//-----------------------------------------------------------------------------
+
+int RoutingTable::get_bucket_index(const std::string& lhs, const std::string& rhs) {
+    xor_id lhs_node_id = hex_string_to_node_id(lhs);
+    xor_id rhs_node_id = hex_string_to_node_id(rhs);
+    int bucket_index = xor_distance_bit_index(lhs_node_id, rhs_node_id);
     return bucket_index;
 }
 
@@ -351,7 +370,7 @@ bool RoutingTable::has_node(const std::string& i2p_address, uint16_t port) {
             if (!node) continue;
             const std::string& node_address = node->get_i2p_address();
             if (node_address == i2p_address) {
-                log_debug("has_node: Node {} found in bucket[{}]", i2p_address, i);
+                ////log_debug("has_node: {} found in bucket[{}]", i2p_address, i);
                 return true;
             }
         }
@@ -361,7 +380,7 @@ bool RoutingTable::has_node(const std::string& i2p_address, uint16_t port) {
 
 //-----------------------------------------------------------------------------
 
-bool RoutingTable::has_node(const std::string& node_id_hex) {
+bool RoutingTable::has_node(const std::string& node_id_hex) { // faster since it doesn't loop through all 256 buckets
     xor_id node_id = hex_string_to_node_id(node_id_hex);
     int bucket_index = xor_distance_bit_index(id, node_id);
 
@@ -369,7 +388,7 @@ bool RoutingTable::has_node(const std::string& node_id_hex) {
     for (const auto& node : buckets[bucket_index]) {
         if (!node) continue;
         if (node->get_id() == node_id_hex) {
-            log_debug("has_node: Node with ID {} found in bucket[{}]", node_id_hex, bucket_index);
+            ////log_debug("has_node: Node with ID {} found in bucket[{}]", node_id_hex, bucket_index);
             return true;
         }
     }
@@ -378,7 +397,6 @@ bool RoutingTable::has_node(const std::string& node_id_hex) {
 
 //-----------------------------------------------------------------------------
 
-// Print the contents of the routing table
 void RoutingTable::print_table() const {
     for (int i = 0; i < 256; ++i) {
         std::shared_lock lock(bucket_mutexes[i]);
