@@ -345,15 +345,15 @@ std::vector<uint8_t> process(const std::vector<uint8_t>& request, Node& node, bo
 
 //-----------------------------------------------------------------------------
 
-std::string generate_secret(int length) {
+/*std::string generate_secret(int length) {
     std::string secret(length, ' ');
     RAND_bytes((unsigned char*)&secret[0], length);
     return secret;
-}
+}*/
 
 //-----------------------------------------------------------------------------
 
-std::string generate_token(const std::string& node_id, const std::string& data_hash, const std::string& secret) {
+/*std::string generate_token(const std::string& node_id, const std::string& data_hash, const std::string& secret) {
     std::string token;
     uint8_t token_data[EVP_MAX_MD_SIZE];
     unsigned int token_length = 0;
@@ -371,8 +371,7 @@ std::string generate_token(const std::string& node_id, const std::string& data_h
 
     token = std::string(reinterpret_cast<char*>(token_data), token_length);
     return token;
-}
-
+}*/
 
 //-----------------------------------------------------------------------------
 std::string generate_transaction_id() {
