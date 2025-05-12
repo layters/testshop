@@ -1198,7 +1198,7 @@ void Node::republish() {
         send_put(key, value);
     }
     
-    if(!data.empty()) { std::cout << "\033[93mData republished\033[0m\n"; }
+    if(!data.empty()) { log_info("{}Data republished{}", "\033[93m", color_reset); }
 }
 
 //-----------------------------------------------------------------------------

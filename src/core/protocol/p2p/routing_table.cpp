@@ -269,6 +269,7 @@ std::vector<std::weak_ptr<Node>> RoutingTable::find_closest_nodes(const std::str
         for (const auto& node_ptr : buckets[i]) {
             if (!node_ptr) continue;
             uint32_t dist = xor_distance_bit_index(target_id, hex_string_to_node_id(node_ptr->get_id()));
+            if (dist == 256) continue; // Skip if distance is 256 (to prevent node from returning itself in the find_node response)
             scored_nodes.push_back({ node_ptr, dist });
         }
     }
