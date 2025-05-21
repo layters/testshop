@@ -12,15 +12,20 @@ namespace neroshop {
 class KeyMapper { // maps search terms to DHT keys
 public:
     KeyMapper() = default;
-    ~KeyMapper();
+    ~KeyMapper() noexcept;
 
     void add(const std::string& key, const std::string& value); // must be JSON value
     void sync(); // syncs mapping data to local database
     std::pair<std::string, std::string> serialize(); // Converts mapping data to JSON format
     
-    std::vector<std::string> search_product_by_name(const std::string& product_name);//std::vector<std::string> search_user_by_id(const std::string& );//std::vector<std::string> search_order_by_id(const std::string& );
+    ////std::vector<std::string> search_product_by_name(const std::string& product_name);//std::vector<std::string> search_user_by_id(const std::string& );//std::vector<std::string> search_order_by_id(const std::string& );
 private:
-    mutable std::shared_mutex data_mutex;
+    mutable std::shared_mutex user_mutex;
+    mutable std::shared_mutex listing_mutex;
+    mutable std::shared_mutex order_mutex;
+    mutable std::shared_mutex product_rating_mutex;
+    mutable std::shared_mutex seller_rating_mutex;
+    mutable std::shared_mutex message_mutex;
         
     std::unordered_map<std::string, std::vector<std::string>> product_ids;
     std::unordered_map<std::string, std::vector<std::string>> product_names; // maps a product name to a list of corresponding listing keys

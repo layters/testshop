@@ -26,7 +26,7 @@ Server::Server(SocketType socket_type) : sockfd(-1), socket_type(socket_type) {
     }
 }
 
-Server::Server(const std::string& address, unsigned int port, SocketType socket_type) : sockfd(-1), socket_type(socket_type) {
+Server::Server(const std::string& address, uint16_t port, SocketType socket_type) : sockfd(-1), socket_type(socket_type) {
     init_socket(address, port);
 }
 ////////////////////
@@ -38,7 +38,7 @@ Server::~Server() {
     }
 }
 ////////////////////
-bool Server::bind(unsigned int port)
+bool Server::bind(uint16_t port)
 {
     memset(&this->addr, 0, sizeof(this->addr));
     this->addr.sin_port = htons(port);
@@ -46,6 +46,11 @@ bool Server::bind(unsigned int port)
     this->addr.sin_addr.s_addr = INADDR_ANY; // sets the IP address in the sockaddr_in structure to the IP address of the current machine, which means that the server will be bound to all available network interfaces.
 
     if (::bind(sockfd, (struct sockaddr *) &this->addr, sizeof(this->addr)) == -1) {
+        if (errno == EADDRINUSE) {
+            std::cerr << "Port " << port << " is already in use!" << std::endl;
+            close();
+            return false;
+        }
         std::cerr << "Cannot bind socket" << std::endl;
         close();
         return false;
@@ -54,7 +59,7 @@ bool Server::bind(unsigned int port)
 	return true;
 }
 ////////////////////
-bool Server::bind(const std::string& address, unsigned int port) {
+bool Server::bind(const std::string& address, uint16_t port) {
     // Configure socket address
     std::memset(&this->addr, 0, sizeof(this->addr));
 
@@ -121,9 +126,13 @@ bool Server::listen(int backlog)
 bool Server::accept() {
     struct sockaddr_in client_addr;
     socklen_t addr_len = sizeof(client_addr);
+    
     int client_fd = ::accept(sockfd, (struct sockaddr*) &client_addr, &addr_len);
-
     if (client_fd == -1) {
+        if (errno == EAGAIN || errno == EWOULDBLOCK) {
+            // No connection is available right now, just return false to indicate no client was accepted
+            return false;
+        }
         perror("accept");
         return false;
     }
@@ -132,7 +141,7 @@ bool Server::accept() {
     auto client = std::make_unique<Client>(client_fd, client_addr);
     clients.emplace_back(std::move(client));
     
-    std::cout << "\033[0;37mReceived connection from " + std::string(inet_ntoa(client_addr.sin_addr)) + ":\033[0;36m" + std::to_string(ntohs(client_addr.sin_port)) + "\033[0m\n";
+    neroshop::log_info("Received connection from {}:{}{}{}", std::string(inet_ntoa(client_addr.sin_addr)), "\033[0;36m", std::to_string(ntohs(client_addr.sin_port)), color_reset);
     return true;
 }
 ////////////////////
@@ -168,6 +177,7 @@ std::string Server::read() // receive data
 ////////////////////
 void Server::send(const std::vector<uint8_t>& message) {
     assert(socket_type == SocketType::Socket_TCP && "Socket is not TCP");
+    if(clients.empty()) return;
 
     if (message.empty()) {
         std::cerr << "Message is empty!" << std::endl;
@@ -213,18 +223,28 @@ void Server::send_to(const std::vector<uint8_t>& message, const struct sockaddr_
 ////////////////////
 ssize_t Server::receive(std::vector<uint8_t>& message) { 
     assert(socket_type == SocketType::Socket_TCP && "Socket is not TCP");
+    if(clients.empty()) {
+        errno = EAGAIN; // No client, signal that the operation would block.
+        return -1;
+    }
 
     const int BUFFER_SIZE = 4096;
-        
     std::vector<uint8_t> buffer(BUFFER_SIZE);
+    
     ssize_t recv_bytes = ::recv(clients.back()->sockfd, buffer.data(), BUFFER_SIZE, 0); // In the case of TCP, the server should receive from the client's sockfd, as this is the socket that is connected to the client and is used to communicate with the client.
     if (recv_bytes == -1) {
+        if (errno == EAGAIN || errno == EWOULDBLOCK) {
+            // No clients connected, return received bytes
+            return recv_bytes;
+        }
         perror("recv");
         return recv_bytes;
     }
+    
     if (recv_bytes > 0) {
         message.assign(buffer.data(), buffer.data() + recv_bytes);
     }
+    
     return recv_bytes;
 }
 
@@ -248,19 +268,23 @@ ssize_t Server::receive_from(std::vector<uint8_t>& message, const struct sockadd
 }
 ////////////////////
 void Server::close() {
-    ::close(sockfd);
-    sockfd = -1;
+    if (sockfd >= 0) {
+        ::close(sockfd);
+        sockfd = -1;
     
-    // Close all connected clients
-    for (auto& client : clients) client->close();
-    clients.clear();
+        // Close all connected clients
+        for (auto& client : clients) client->close();
+        clients.clear();
+    }
 }
 ////////////////////
 void Server::shutdown() {
-    ::shutdown(sockfd, SHUT_RDWR); // SHUT_RD, SHUT_WR, SHUT_RDWR
+    if (sockfd >= 0) {
+        ::shutdown(sockfd, SHUT_RDWR); // SHUT_RD, SHUT_WR, SHUT_RDWR
+    }
 }
 ////////////////////
-void Server::init_socket(const std::string& address, unsigned int port) {
+void Server::init_socket(const std::string& address, uint16_t port) {
 	#if defined(__gnu_linux__) && defined(NEROSHOP_USE_SYSTEM_SOCKETS)
 	sockfd = ::socket(AF_INET, (socket_type == SocketType::Socket_UDP) ? SOCK_DGRAM : SOCK_STREAM, 0);
     if (sockfd < 0) {
@@ -272,20 +296,17 @@ void Server::init_socket(const std::string& address, unsigned int port) {
 The setsockopt() function is used to set the socket option, and the SO_REUSEADDR and SO_REUSEPORT options are used to enable the reuse of local addresses and ports. The one variable is set to 1 to enable the options, and its address and size are passed to the setsockopt() function as arguments.*/
 	// set socket options : SO_REUSEADDR (TCP:restart a closed/killed process on the same address so you can reuse address over and over again)
 	// TO prevent the "Address already in use" error and allow reuse of local addresses and ports
+	#ifdef NEROSHOP_DEBUG
 	int opt = 1; // enable
     if(setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR | SO_REUSEPORT, &opt, sizeof(opt)) < 0) {
         throw std::runtime_error("Failed to set socket option SO_REUSEADDR.");
     }
+    #endif
     
 	if(!bind(address, port)) {
 	    throw std::runtime_error("Failed to bound to port");
 	}
 	////std::cout << ((port == NEROSHOP_RPC_DEFAULT_PORT) ? "RPC server " : ((port == NEROSHOP_P2P_DEFAULT_PORT) ? "P2P server " : "IPC server ")) << "bound to port " << port << "\n";//std::cout << NEROMON_TAG "\033[1;97mServer " + "(TCP)" + " bound to port " + std::to_string(port) + "\033[0m\n";
-	
-	
-	if(!listen()) {
-	    throw std::runtime_error("Failed to listen for connection");
-	}
 	#endif    
 }
 ////////////////////
@@ -311,7 +332,7 @@ int Server::get_client_count() const {
 void Server::set_nonblocking(bool nonblocking) {
     int flags = fcntl(sockfd, F_GETFL, 0);
     if(flags == -1) {
-        perror("fcntl");
+        perror("fcntl F_GETFL");
         throw std::runtime_error("set_nonblocking: Failed to get socket flags.");
         return;
     }
@@ -323,7 +344,7 @@ void Server::set_nonblocking(bool nonblocking) {
     }
 
     if (fcntl(sockfd, F_SETFL, flags) == -1) {
-        perror("fcntl");
+        perror("fcntl F_SETFL");
         throw std::runtime_error("set_nonblocking: Failed to set socket to non-blocking mode.");
     }
 }        

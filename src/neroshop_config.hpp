@@ -18,7 +18,7 @@
 #include "core/tools/device.hpp"
 #endif
 
-#define NEROSHOP_IPC_DEFAULT_PORT 57740
+#define NEROSHOP_IPC_DEFAULT_PORT 50880
 // This port will be used by the daemon to establish connections with p2p network
 #define NEROSHOP_P2P_DEFAULT_PORT 50881 // Use ports between 49152-65535 that are not currently registered with IANA and are rarely used
 // This port will allow outside clients to interact with neroshop daemon RPC server
@@ -37,10 +37,10 @@
 #define NEROSHOP_DHT_NODES_PER_BUCKET        20   // Each bucket should hold up to 20 nodes (same number as k closest nodes)
 #define NEROSHOP_DHT_MAX_ROUTING_TABLE_NODES NEROSHOP_DHT_ROUTING_TABLE_BUCKETS * NEROSHOP_DHT_NODES_PER_BUCKET // = 5120
 #define NEROSHOP_DHT_MAX_HEALTH_CHECKS          3    // Maximum number of consecutive failed checks before marking the node as dead
-#define NEROSHOP_DHT_NODE_HEALTH_CHECK_INTERVAL 300  // Number of seconds between each node health check
+#define NEROSHOP_DHT_NODE_HEARTBEAT_INTERVAL    300  // Number of seconds between each node health check
+#define NEROSHOP_DHT_BUCKET_REFRESH_INTERVAL    900  // Number of seconds between each find_node query to neighboring nodes
 #define NEROSHOP_DHT_DATA_REPUBLISH_INTERVAL    3600 // Number of seconds between each republishing of in-memory hash table data
 #define NEROSHOP_DHT_DATA_REMOVAL_INTERVAL      1800 // Number of seconds between each removal of all expired in-memory hash table data
-#define NEROSHOP_DHT_BUCKET_REFRESH_INTERVAL    3600 // Number of seconds between each find_node query to neighboring nodes
 
 #define NEROSHOP_MAX_SEARCH_RESULTS          1000
 

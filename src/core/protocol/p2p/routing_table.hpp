@@ -16,7 +16,13 @@ class Node; // forward declaration
 constexpr int BUCKET_COUNT = NEROSHOP_DHT_ROUTING_TABLE_BUCKETS; // should be 256
 using xor_id = std::array<uint8_t, BUCKET_COUNT / 8>; // should be equivalent to: std::array<uint8_t, 32>
 
-using Bucket = std::vector<std::shared_ptr<Node>>;
+struct Bucket {
+    std::vector<std::shared_ptr<Node>> nodes;
+    mutable std::shared_mutex mutex;
+    std::chrono::steady_clock::time_point last_changed;
+
+    Bucket() : last_changed(std::chrono::steady_clock::time_point::min()) {}
+};
 
 class RoutingTable {
 public:
@@ -35,9 +41,14 @@ public:
     // Print the contents of the routing table
     void print_table() const;    
     
+    // Get a random ID within a bucket's range
+    xor_id generate_random_node_id(int bucket_index) const;
+    std::string generate_random_hex_string(int bucket_index) const;
+    
     std::vector<std::weak_ptr<Node>> find_closest_nodes(const std::string& key, int count = NEROSHOP_DHT_MAX_CLOSEST_NODES);// const;// K or count is the maximum number of closest nodes to return
-    std::weak_ptr<Node> get_node_by_id(const std::string& node_id) const;
-
+    std::weak_ptr<Node> get_node(const std::string& node_id) const;
+    std::vector<std::weak_ptr<Node>> get_nodes() const;
+    
     // Find the bucket index that a given node belongs in
     int get_bucket_index(const std::string& node_id) const;
     static int get_bucket_index(const std::string& lhs, const std::string& rhs);
@@ -56,7 +67,6 @@ public:
 private:
     xor_id id; // Local node's byte array ID
     std::array<Bucket, BUCKET_COUNT> buckets;
-    mutable std::array<std::shared_mutex, BUCKET_COUNT> bucket_mutexes;
 };
 
 }

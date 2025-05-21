@@ -1,16 +1,17 @@
 #include "msgpack.hpp"
 
-#define JSON_USE_MSGPACK
-#include <nlohmann/json.hpp>
-#include <openssl/evp.h>
-#include <openssl/rand.h>
-
 #include "../../version.hpp"
 #include "../../tools/logger.hpp"
 #include "../p2p/dht_rescode.hpp"
 #include "../p2p/node.hpp"
 #include "../p2p/routing_table.hpp"
 #include "../../database/database.hpp"
+
+#define JSON_USE_MSGPACK
+#include <nlohmann/json.hpp>
+
+#include <openssl/evp.h>
+#include <openssl/rand.h>
 
 #include <random> // std::random_device
 
@@ -115,7 +116,7 @@ std::vector<uint8_t> process(const std::vector<uint8_t>& request, Node& node, bo
             std::vector<nlohmann::json> peers_array;
             for (const auto& p : peers) {
                 nlohmann::json peer_object = {
-                    {"ip_address", p.address},
+                    {"i2p_address", p.address},
                     {"port", p.port}
                 };
                 peers_array.push_back(peer_object);
@@ -254,7 +255,7 @@ std::vector<uint8_t> process(const std::vector<uint8_t>& request, Node& node, bo
         code = (put_messages_sent <= 0) 
                ? static_cast<int>(DhtResultCode::StoreFailed) 
                : static_cast<int>(DhtResultCode::Success);
-        std::cout << "Number of nodes you've sent a put message to: " << put_messages_sent << "\n";
+        log_info("Number of nodes you've sent a PUT message to: {}", put_messages_sent);
         
         if((put_messages_sent < NEROSHOP_DHT_REPLICATION_FACTOR) && (put_messages_sent > 0)) {
             code = static_cast<int>(DhtResultCode::StorePartial);
@@ -344,15 +345,15 @@ std::vector<uint8_t> process(const std::vector<uint8_t>& request, Node& node, bo
 
 //-----------------------------------------------------------------------------
 
-std::string generate_secret(int length) {
+/*std::string generate_secret(int length) {
     std::string secret(length, ' ');
     RAND_bytes((unsigned char*)&secret[0], length);
     return secret;
-}
+}*/
 
 //-----------------------------------------------------------------------------
 
-std::string generate_token(const std::string& node_id, const std::string& data_hash, const std::string& secret) {
+/*std::string generate_token(const std::string& node_id, const std::string& data_hash, const std::string& secret) {
     std::string token;
     uint8_t token_data[EVP_MAX_MD_SIZE];
     unsigned int token_length = 0;
@@ -370,8 +371,7 @@ std::string generate_token(const std::string& node_id, const std::string& data_h
 
     token = std::string(reinterpret_cast<char*>(token_data), token_length);
     return token;
-}
-
+}*/
 
 //-----------------------------------------------------------------------------
 std::string generate_transaction_id() {
@@ -392,54 +392,6 @@ std::string generate_transaction_id() {
     return ss.str().substr(0, 4); // take the first 4 characters only
 }
 //-----------------------------------------------------------------------------
-
-bool send_data(int sockfd, const std::vector<uint8_t>& packed) {
-    if(sockfd < 0) throw std::runtime_error("socket is dead");
-
-    /*nlohmann::json j = {{"foo", "bar"}, {"baz", 1}};
-    std::vector<uint8_t> packed = nlohmann::json::to_msgpack(j);*/
-
-    // Send the packed data using write()
-    ssize_t sent_bytes = ::send(sockfd, packed.data(), packed.size(), 0);//sendto(sockfd, packed.data(), packed.size(), 0, (struct sockaddr*)&dest_addr, sizeof(dest_addr));
-    if (sent_bytes == -1) {
-        perror("write");
-        return false;
-    }    
-
-    return true;
-}
-
-std::string receive_data(int sockfd) {
-    if(sockfd < 0) throw std::runtime_error("socket is dead");
-        
-    const int BUFFER_SIZE = 4096;
-
-    // Receive the packed data using recvfrom()
-    std::vector<uint8_t> buffer(BUFFER_SIZE);
-    std::string json_str;
-    ssize_t total_recv_bytes = 0;
-    ssize_t recv_bytes;
-    do {
-        recv_bytes = ::recv(sockfd, buffer.data() + total_recv_bytes, BUFFER_SIZE - total_recv_bytes, 0);
-        if (recv_bytes == -1) {
-            perror("read");//perror("recv");
-            return "";
-        }
-        total_recv_bytes += recv_bytes;
-    } while (recv_bytes > 0 && total_recv_bytes < BUFFER_SIZE);
-
-    // Convert the packed data to JSON string
-    try {
-        nlohmann::json j = nlohmann::json::from_msgpack(buffer.data(), total_recv_bytes);
-        json_str = j.dump();
-        std::cout << "Request received: " << json_str << std::endl;
-    } catch (const nlohmann::json::parse_error& e) {
-        std::cerr << "Error parsing message: " << e.what() << std::endl;
-    }
-    
-    return json_str;
-
-}
 
 }
 

@@ -67,6 +67,15 @@ SamClient::SamClient(SamSessionStyle style, const std::string& nickname) : sessi
             throw std::runtime_error("Error connecting to " + std::string(SAM_DEFAULT_ADDRESS) + ":" + std::to_string(SAM_DEFAULT_CLIENT_TCP));
         }
     }
+    
+    // Set socket to non-blocking mode (allows for SIGINT)
+    int flags = fcntl(client_socket, F_GETFL, 0);
+    if (flags == -1) {
+        throw std::runtime_error("Failed to get socket flags");
+    }
+    if (fcntl(client_socket, F_SETFL, flags | O_NONBLOCK) == -1) {
+        throw std::runtime_error("Failed to set socket to non-blocking mode");
+    }
 }
 
 //-----------------------------------------------------------------------------
@@ -350,7 +359,7 @@ void SamClient::session_close() {
         ::shutdown(session_socket, SHUT_RDWR); // Tell the peer "we're done" // SHUT_RDWR means disallow sending and receiving
         ::close(session_socket);               // Actually release the socket
         session_socket = -1;
-        std::cout << "session closed\n";
+        std::cout << "SAM session closed\n";
     }
 }
 

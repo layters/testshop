@@ -44,6 +44,7 @@ bool Sqlite3::open(const std::string& filename)
 	    execute("PRAGMA foreign_keys = ON;"); // requires version 3.6.19 (2009-10-14)
 	}
 	opened = true;
+	this->filename = filename;
 	return true;
 }
 ////////////////////
@@ -54,7 +55,7 @@ void Sqlite3::close() {
 	sqlite3_close(handle);
 	handle = nullptr;
     opened = false;
-    neroshop::log_info("database is now closed");
+    neroshop::log_debug("close: {} closed", filename.empty() ? "database" : filename);
     // TODO: dump logs
 }
 ////////////////////
@@ -125,6 +126,10 @@ std::string Sqlite3::get_sqlite_version() {
 ////////////////////
 sqlite3 * Sqlite3::get_handle() const {
     return handle;
+}
+////////////////////
+std::string Sqlite3::get_file() const {
+    return filename;
 }
 ////////////////////
 void * Sqlite3::get_blob(const std::string& command) {

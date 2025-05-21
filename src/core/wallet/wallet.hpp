@@ -11,7 +11,10 @@
 #include <utils/gen_utils.h>
 #include <utils/monero_utils.h>
 #include <wallet/monero_wallet.h>
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
 #include <wallet/monero_wallet_full.h>
+#pragma GCC diagnostic pop
 #include <wallet/monero_wallet_keys.h>
 #include <wallet/monero_wallet_model.h>
 

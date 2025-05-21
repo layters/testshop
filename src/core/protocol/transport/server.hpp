@@ -8,6 +8,7 @@
 #endif
 
 #if defined(__gnu_linux__)
+#include <sys/select.h>  // for select()
 #include <sys/socket.h> // for sockaddr_storage, AF_INET, AF_INET6
 #include <netinet/in.h>
 #include <arpa/inet.h> // for inet_pton
@@ -46,12 +47,12 @@ class Server {
 public:
     Server(); // creates TCP socket but requires user to bind and listen manually.
     Server(SocketType socket_type); // creates socket but requires user to bind and listen manually.
-    Server(const std::string& address, unsigned int port, SocketType socket_type = SocketType::Socket_TCP); // creates socket, binds, then listens
+    Server(const std::string& address, uint16_t port, SocketType socket_type = SocketType::Socket_TCP); // creates socket, binds, then listens
     
 	~Server();
 	
-	bool bind(unsigned int port);
-	bool bind(const std::string& address, unsigned int port);
+	bool bind(uint16_t port);
+	bool bind(const std::string& address, uint16_t port);
 	bool listen(int backlog = DEFAULT_BACKLOG);
 	bool accept();
 	
@@ -77,7 +78,7 @@ public:
 	void set_nonblocking(bool nonblocking); // it is recommended to use non-blocking sockets when implementing DHT (Distributed Hash Table) over UDP.
 
 private:
-    void init_socket(const std::string& address, unsigned int port);
+    void init_socket(const std::string& address, uint16_t port);
 
     int sockfd;
     SocketType socket_type;
