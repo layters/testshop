@@ -11,6 +11,7 @@
 #include <mutex>
 #include <future>
 #include <atomic>
+#include <chrono>
 
 #include <nlohmann/json.hpp>
 
@@ -33,9 +34,6 @@ struct Peer {
 class Node {
 public:
     Node(bool local, const std::string& i2p_address = ""); // Binds a socket to a port and initializes the DHT
-    //Node(const Node& other); // Copy constructor
-    Node(Node&& other) noexcept; // Move constructor
-    //Node(const Peer& peer); // Creates a node/socket from a peer without binding socket or initializing the DHT
     ~Node();
     
     bool operator==(const Node& other) const {
@@ -44,10 +42,8 @@ public:
 
     void join(); // Sends a join message to the bootstrap peer to join the network
     void run(); // Main loop that listens for incoming messages
-    void run_optimized(); // Uses less CPU than run but slower to process requests
     void run_simple();
-    void refresh();
-    void republish();
+    void republish_once();
     bool validate(const std::string& key, const std::string& value); // Validates data before storing it
     int cache(const std::string& key, const std::string& value); // Cache data created by local client
     //---------------------------------------------------
@@ -97,6 +93,8 @@ public:
     int get_idle_peer_count() const;
     NodeStatus get_status() const;
     std::string get_status_as_string() const;
+    std::chrono::seconds get_uptime() const;
+    std::string get_uptime_as_string() const;
     int get_distance(const std::string& node_id) const;
     std::vector<std::string> get_keys() const;
     std::vector<std::pair<std::string, std::string>> get_data() const;
@@ -117,20 +115,19 @@ public:
     bool has_value(const std::string& value) const;
     bool is_dead() const;
     static bool is_value_publishable(const std::string& value);
+    
+    bool is_running() const;
     // Friends
     friend class RoutingTable;
 private:
     // Callbacks
     void on_ping(const std::vector<uint8_t>& buffer, const std::string& destination);
     void on_map(const std::vector<uint8_t>& buffer, const std::string& destination);
-    ////void on_dead_node(const std::vector<std::string>& node_ids);
-    ////bool on_keyword_blocked(const std::string& keyword);
-    ////bool on_node_blacklisted(const std::string& address);
-    ////bool on_data_expired();
+    // Background Threads
     void heartbeat();
-    void periodic_refresh(); // Periodically sends find_node queries
-    void periodic_republish(); // Periodically republishes in-memory hash table data
-    void periodic_purge(); // Periodically removes expired in-memory hash table data
+    void refresh(); // Periodically sends find_node queries
+    void republish(); // Periodically republishes in-memory hash table data
+    void purge(); // Periodically removes expired in-memory hash table data
     
     std::string generate_node_id(const std::string& i2p_address);
     // Determines if node1 is closer to the target_id than node2
@@ -143,23 +140,26 @@ private:
     
     std::string id; // immutable and set only once in constructor so a mutex wouldn't make sense
     std::string i2p_address; // immutable and set only once in constructor so a mutex wouldn't make sense
-    std::atomic<uint16_t> port_udp; // immutable-after-construction. Use atomic
+    uint16_t port_udp; // immutable after construction
     std::unordered_map<std::string, std::string> data; // internal hash table that stores key-value pairs 
     mutable std::shared_mutex data_mutex;
     std::unordered_map<std::string, std::deque<Peer>> providers; // maps a data's hash (key) to a vector of Peers who have the data
     mutable std::shared_mutex providers_mutex;
     std::unique_ptr<SamClient> sam_client;
-    std::unique_ptr<RoutingTable> routing_table; // Pointer to the node's routing table
+    std::unique_ptr<RoutingTable> routing_table;
     std::unique_ptr<KeyMapper> key_mapper;
     std::atomic<bool> bootstrap;
     std::atomic<int> check_counter; // Counter to track the number of consecutive failed checks
     std::unordered_map<std::string, std::promise<nlohmann::json>> pending_requests; // Shared between sender and listener
     std::mutex pending_mutex;
-    // For heartbeat() thread
-    void stop_periodic_check();
-    bool stop_period_chk_flag;
+    std::chrono::steady_clock::time_point start_time;
+    // For all background threads
+    void stop_threads();
+    static void signal_handler(int signum);
+    static Node* instance;
+    std::atomic<bool> running;
+    std::mutex cv_mutex;
     std::condition_variable cv;
-    std::mutex periodic_chk_mutex;
 };
 
 }

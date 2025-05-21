@@ -23,10 +23,19 @@
 
 using namespace neroshop;
 
+//-----------------------------------------------------------------------------
+
 std::mutex server_mutex;
-std::shared_mutex node_mutex; // Define a shared mutex to protect concurrent access to the Node object
+std::condition_variable server_cv;
 
 std::atomic<bool> running(true);
+
+void signal_handler(int signum) {
+    std::cout << "\nSIGINT caught. Exiting...\n";
+    running = false;
+    server_cv.notify_all(); // Notify any threads waiting
+}
+
 //-----------------------------------------------------------------------------
 
 std::string extract_json_payload(const std::string& request) {
@@ -46,10 +55,11 @@ std::string extract_json_payload(const std::string& request) {
 
 void rpc_server(const std::string& address) {
     Server server(address, NEROSHOP_RPC_DEFAULT_PORT);
+    server.listen();
     
     while (running) {
         // Accept incoming connections and handle clients concurrently
-        if(server.accept() != -1) {            
+        if(server.accept()) {            
             std::thread request_thread([&]() {
                 // Lock the server mutex
                 std::lock_guard<std::mutex> lock(server_mutex);
@@ -99,7 +109,7 @@ void rpc_server(const std::string& address) {
         }        
     }
     // Close the server socket before exiting
-    std::cout << "RPC server closed\n";
+    neroshop::log_info("[rpc_server] Closing RPC server");
     server.shutdown();
     server.close();
 }
@@ -110,24 +120,31 @@ void ipc_server(Node& node) {
     // Prevent seed node from being accepted by IPC server 
     // since its only meant to act as an initial contact point for new nodes joining the network
     if (node.is_hardcoded()) {
-        std::cout << "Seed node is not allowed to use the local IPC server. Please start another daemon instance to use the GUI or CLI\n";
+        neroshop::log_info("Seed node is not allowed to use the local IPC server. Please start another daemon instance to interact with the GUI or CLI");
         return;
     }
     
     Server server("127.0.0.1", NEROSHOP_IPC_DEFAULT_PORT);
+    server.listen();
     
-    while (running) {        
-        if(server.accept() != -1) {  // ONLY accepts a single client            
-            while (true) {
+    while (node.is_running()) {
+        if(server.accept()) { // ONLY accepts a single client
+            while (node.is_running()) { // Keep accepting messages from the client until running is false
                 std::vector<uint8_t> request;
                 // wait for incoming message from client
                 int recv_size = server.receive(request);
+                if (recv_size == -1) {
+                    if (errno == EAGAIN || errno == EWOULDBLOCK) {
+                        // No data available right now, continue to the next loop iteration
+                        continue;
+                    }
+                }
                 if (recv_size == 0) {
                     // Republish data before exiting (or in case of client app crashes)
-                    node.republish();
-                    // Set running to false to close the server (TODO: find a way to gracefully close all threads)
-                    ////running = false;
-                    // Connection closed by client, break out of loop
+                    node.republish_once();
+                    // Send signal to stop both DHT and IPC servers
+                    raise(SIGINT);
+                    // Connection closed by client, break out of loop (so we don't process invalid bytes)
                     break;
                 }
                 std::vector<uint8_t> response;
@@ -142,10 +159,10 @@ void ipc_server(Node& node) {
                 // send response to client
                 server.send(response);
             }
-        } 
+        }
     }  
     // Close the server socket before exiting // TODO: implement SIGINT (Ctrl+C)
-    std::cout << "IPC server closed\n";
+    neroshop::log_info("[ipc_server] Closing local IPC server");
     server.close();
 }
 
@@ -175,12 +192,16 @@ void dht_server(Node& node) {
     }
 
     run_thread.join(); // Wait for the run thread to finish
+    
+    neroshop::log_info("[dht_server] Closing DHT server");
 }
 
 //-----------------------------------------------------------------------------
 
 int main(int argc, char** argv)
 {
+    std::signal(SIGINT, signal_handler); // Handles Ctrl+C
+
     std::string daemon { "neroshopd" };
     std::string daemon_version { daemon + " v" + std::string(NEROSHOP_DAEMON_VERSION) };
     cxxopts::Options options(daemon, std::string(daemon_version));
@@ -259,7 +280,7 @@ int main(int argc, char** argv)
     std::thread rpc_thread;  // Declare the thread object // RPC communication for processing requests from outside clients (disabled by default)
     
     if(result.count("rpc")) {
-        log_info("RPC enabled, listening on port {} using JSON-RPC 2.0", NEROSHOP_RPC_DEFAULT_PORT);
+        neroshop::log_info("RPC enabled, listening on port {} using JSON-RPC 2.0", NEROSHOP_RPC_DEFAULT_PORT);
         rpc_thread = std::thread(rpc_server, std::cref(ip_address));  // Initialize the thread object 
     }
     

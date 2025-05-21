@@ -50,7 +50,7 @@ void Client::create() {
     #endif
 }
 ////////////////////
-bool Client::connect(unsigned int port, std::string address) {
+bool Client::connect(uint16_t port, std::string address) {
     // Clear the address structure
     memset(&this->addr, 0, sizeof(this->addr));
     
@@ -317,7 +317,7 @@ void Client::disconnect() { // if only shutdown() is called, the client socket w
 	close();
 }
 ////////////////////
-bool Client::reconnect(unsigned int port, std::string address) { // kill socket first before attempting to re-connect
+bool Client::reconnect(uint16_t port, std::string address) { // kill socket first before attempting to re-connect
     close();
     return connect(port, address);
 }

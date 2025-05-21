@@ -43,10 +43,10 @@ class Client {
 public:
     Client();
     Client(int sockfd, struct sockaddr_in client_addr);
-	Client(std::string address, unsigned int port);
+	Client(std::string address, uint16_t port);
 	~Client();
 	void create(); // creates a new socket
-	bool connect(unsigned int port, std::string address = "0.0.0.0");
+	bool connect(uint16_t port, std::string address = "0.0.0.0");
 	void write(const std::string& text);
 	std::string read();
 	void send(const std::vector<uint8_t>& message); // tcp
@@ -62,7 +62,7 @@ public:
 	void close(); // kills socket
 	void shutdown(); // shuts down connection (disconnects from server)
     void disconnect(); // breaks connection to server then closes the client socket // combination of shutdown() and close()
-    bool reconnect(unsigned int port, std::string address = "0.0.0.0"); // closes socket then connects again
+    bool reconnect(uint16_t port, std::string address = "0.0.0.0"); // closes socket then connects again
     static Client * get_main_client();
     bool is_connected() const;
     

@@ -29,7 +29,7 @@ public:
 	// getters
 	static std::string get_sqlite_version();
     sqlite3 * get_handle() const;
-    static Sqlite3 * get_database();
+    std::string get_file() const;
 	void * get_blob(const std::string& command);
 	void * get_blob_params(const std::string& command, const std::vector<std::string>& args);    
 	std::string get_text(const std::string& command);// const;
@@ -48,6 +48,7 @@ public:
 private:
 	sqlite3 * handle;
 	bool opened;
+	std::string filename;
 	static int callback(void *not_used, int argc, char **argv, char **az_col_name);
 	std::vector<std::pair<int, std::string>> logger; // arg 1 = error code, arg 2 = error message 
     static nlohmann::json json_object;

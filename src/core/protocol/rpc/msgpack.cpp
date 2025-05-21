@@ -255,7 +255,7 @@ std::vector<uint8_t> process(const std::vector<uint8_t>& request, Node& node, bo
         code = (put_messages_sent <= 0) 
                ? static_cast<int>(DhtResultCode::StoreFailed) 
                : static_cast<int>(DhtResultCode::Success);
-        std::cout << "Number of nodes you've sent a put message to: " << put_messages_sent << "\n";
+        log_info("Number of nodes you've sent a PUT message to: {}", put_messages_sent);
         
         if((put_messages_sent < NEROSHOP_DHT_REPLICATION_FACTOR) && (put_messages_sent > 0)) {
             code = static_cast<int>(DhtResultCode::StorePartial);
