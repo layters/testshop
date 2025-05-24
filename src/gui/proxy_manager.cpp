@@ -141,13 +141,13 @@ const std::string tor { tor_archive_url + "/" + tor_browser_version + "/" + tor_
 }
 void neroshop::ProxyManager::downloadTor() {
     if(hasTor()) {
-        std::string torDirPath = NEROSHOP_DEFAULT_CONFIGURATION_PATH + "/tor";
+        std::string torDirPath = neroshop::get_default_config_path() + "/tor";
         std::cout << "Tor found in " << torDirPath << std::endl;
         return;
     }
     
-    std::string save_as { NEROSHOP_DEFAULT_CONFIGURATION_PATH + "/" + tor_expert_bundle };//"tor.tar.gz" };
-    std::cout << "Downloading " << tor << " to " << NEROSHOP_DEFAULT_CONFIGURATION_PATH << "...\n\n";
+    std::string save_as { neroshop::get_default_config_path() + "/" + tor_expert_bundle };//"tor.tar.gz" };
+    std::cout << "Downloading " << tor << " to " << neroshop::get_default_config_path() << "...\n\n";
     
     QNetworkAccessManager * manager = new QNetworkAccessManager(nullptr);
     QNetworkReply * reply = manager->get(QNetworkRequest(QUrl(QString::fromStdString(tor))));
@@ -233,7 +233,7 @@ void neroshop::ProxyManager::extractTar(const QString& fileName) {
 }
 
 void neroshop::ProxyManager::startTorDaemon() {
-    std::string torDirPath = NEROSHOP_DEFAULT_CONFIGURATION_PATH + "/tor";
+    std::string torDirPath = neroshop::get_default_config_path() + "/tor";
     #ifdef Q_OS_WIN
     QString program = QString::fromStdString(torDirPath + "/" + "tor.exe");
     #else
@@ -312,7 +312,7 @@ QNetworkReply * neroshop::ProxyManager::getUrl(const QString& url) {
 }
 
 bool neroshop::ProxyManager::hasTor() {
-    std::string torDirPath = NEROSHOP_DEFAULT_CONFIGURATION_PATH + "/tor";
+    std::string torDirPath = neroshop::get_default_config_path() + "/tor";
     #ifdef Q_OS_WIN
     std::string torExecutable = torDirPath + "/" + "tor.exe";
     #else

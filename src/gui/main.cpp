@@ -72,7 +72,7 @@ int main(int argc, char *argv[])
     neroshop::load_nodes_from_memory();
     
     // create "datastore" folder within "~/.config/neroshop/" path
-    std::string data_dir = NEROSHOP_DEFAULT_DATABASE_PATH;
+    std::string data_dir = neroshop::get_default_database_path();
     if(!neroshop::filesystem::is_directory(data_dir)) {
         neroshop::log_info(std::string("Creating directory \"") + data_dir + "\"");
         if(!neroshop::filesystem::make_directory(data_dir)) {
@@ -81,7 +81,7 @@ int main(int argc, char *argv[])
         }
     }
     // create "keys" folder within "~/.config/neroshop/" path
-    std::string keys_dir = NEROSHOP_DEFAULT_KEYS_PATH;
+    std::string keys_dir = neroshop::get_default_keys_path();
     if(!neroshop::filesystem::is_directory(keys_dir)) {
         neroshop::log_info(std::string("Creating directory \"") + keys_dir + "\"");
         if(!neroshop::filesystem::make_directory(keys_dir)) {
@@ -104,12 +104,12 @@ int main(int argc, char *argv[])
     // custom macros
     engine.rootContext()->setContextProperty("neroshopAppDirPath", QCoreApplication::applicationDirPath());
     engine.rootContext()->setContextProperty("neroshopVersion", NEROSHOP_VERSION);
-    engine.rootContext()->setContextProperty("neroshopDataDirPath", QString::fromStdString(NEROSHOP_DEFAULT_CONFIGURATION_PATH));
-    engine.rootContext()->setContextProperty("neroshopDefaultWalletDirPath", QString::fromStdString(NEROSHOP_DEFAULT_WALLET_DIRECTORY_PATH));
+    engine.rootContext()->setContextProperty("neroshopDataDirPath", QString::fromStdString(neroshop::get_default_config_path()));
+    engine.rootContext()->setContextProperty("neroshopDefaultWalletDirPath", QString::fromStdString(neroshop::get_default_wallet_path()));
     // create neroshop wallet directory
-    if(!neroshop::filesystem::is_directory(NEROSHOP_DEFAULT_WALLET_DIRECTORY_PATH)) {
-        neroshop::log_info(std::string("Creating directory \"") + NEROSHOP_DEFAULT_WALLET_DIRECTORY_PATH + "\"");
-        if(!neroshop::filesystem::make_directory(NEROSHOP_DEFAULT_WALLET_DIRECTORY_PATH)) {
+    if(!neroshop::filesystem::is_directory(neroshop::get_default_wallet_path())) {
+        neroshop::log_info(std::string("Creating directory \"") + neroshop::get_default_wallet_path() + "\"");
+        if(!neroshop::filesystem::make_directory(neroshop::get_default_wallet_path())) {
             throw std::runtime_error("Failed to create neroshop wallet dir");
             return 1;
         }

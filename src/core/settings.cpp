@@ -80,7 +80,7 @@ lua_State * lua_state(luaL_newstate());
 bool load_lua() {
         ////std::string user = neroshop::device::get_user();
         // "/home/<user>/.config/neroshop"
-        std::string configuration_path = NEROSHOP_DEFAULT_CONFIGURATION_PATH;
+        std::string configuration_path = neroshop::get_default_config_path();
         std::string configuration_file = NEROSHOP_NODES_FILENAME;
         // "/home/<user>/.config/neroshop/settings.lua"
         std::string neroshop_config_name = configuration_path + "/" + configuration_file;
@@ -98,7 +98,7 @@ bool export_lua() {
     ////std::string user = neroshop::device::get_user();
     std::string text(lua_string);
         // "/home/<user>/.config/neroshop"
-        std::string configuration_path = NEROSHOP_DEFAULT_CONFIGURATION_PATH;//"/home/" + user + "/.config/neroshop";
+        std::string configuration_path = neroshop::get_default_config_path();//"/home/" + user + "/.config/neroshop";
         std::string configuration_file = NEROSHOP_NODES_FILENAME;
         // "/home/<user>/.config/neroshop/config.lua"
         std::string neroshop_config_name = configuration_path + "/" + configuration_file;
@@ -170,7 +170,7 @@ lua_State * get_lua_state() {
 }
 //----------------------------------------------------------------
 bool create_json() {
-    std::string config_path = NEROSHOP_DEFAULT_CONFIGURATION_PATH;
+    std::string config_path = neroshop::get_default_config_path();
     std::string settings_filename = NEROSHOP_SETTINGS_FILENAME;
     std::string config_file = config_path + "/" + settings_filename;
     #if defined(NEROSHOP_USE_QT)
@@ -367,7 +367,7 @@ bool create_json() {
 }
 //----------------------------------------------------------------
 std::string load_json() {
-    std::string config_path = NEROSHOP_DEFAULT_CONFIGURATION_PATH;
+    std::string config_path = neroshop::get_default_config_path();
     std::string settings_filename = NEROSHOP_SETTINGS_FILENAME;
     std::string config_file = config_path + "/" + settings_filename;
     #if defined(NEROSHOP_USE_QT)
@@ -418,7 +418,7 @@ bool open_json(std::string& out) {
 }
 //----------------------------------------------------------------
 void modify_json(const std::string& settings) { // saves settings
-    std::string config_path = NEROSHOP_DEFAULT_CONFIGURATION_PATH;
+    std::string config_path = neroshop::get_default_config_path();
     std::string settings_filename = NEROSHOP_SETTINGS_FILENAME;
     std::string config_file = config_path + "/" + settings_filename;
     #if defined(NEROSHOP_USE_QT)
