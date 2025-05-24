@@ -123,7 +123,7 @@ private:
     std::mutex file_mutex_;       // For writing to log file
     std::mutex config_mutex_;     // For shared settings like path + file flag
     
-    std::string log_path_ = NEROSHOP_DEFAULT_CONFIGURATION_PATH + "/" + NEROSHOP_LOG_FILENAME; // default path
+    std::string log_path_ = neroshop::get_default_config_path() + "/" + NEROSHOP_LOG_FILENAME; // default path
     bool log_to_file_ = true;               // file logging enabled by default
 
     template <typename... Args>

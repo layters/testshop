@@ -1188,7 +1188,7 @@ std::deque<Peer> Node::send_get_providers(const std::string& key) {
 void Node::refresh() {
     while(running) {
         std::unique_lock<std::mutex> lock(cv_mutex);
-        cv.wait_for(lock, std::chrono::seconds(NEROSHOP_DHT_BUCKET_REFRESH_INTERVAL));
+        cv.wait_for(lock, NEROSHOP_DHT_BUCKET_REFRESH_INTERVAL);
         if (!running) break; // Exit if not running during wait
         //------------------------------------------------------------
         for (int i = 0; i < 256; ++i) {
@@ -1282,7 +1282,7 @@ void Node::republish_once() {
 void Node::republish() {
     while(running) {
         std::unique_lock<std::mutex> lock(cv_mutex);
-        cv.wait_for(lock, std::chrono::seconds(NEROSHOP_DHT_DATA_REPUBLISH_INTERVAL));
+        cv.wait_for(lock, NEROSHOP_DHT_DATA_REPUBLISH_INTERVAL);
         if (!running) break; // Exit if not running during wait
         //------------------------------------------------------------
         if(!data.empty()) { log_info("Performing periodic data propagation"); }
@@ -1523,7 +1523,7 @@ int Node::cache(const std::string& key, const std::string& value) {
 void Node::purge() {
     while (running) {
         std::unique_lock<std::mutex> lock(cv_mutex);
-        cv.wait_for(lock, std::chrono::seconds(NEROSHOP_DHT_DATA_REMOVAL_INTERVAL));
+        cv.wait_for(lock, NEROSHOP_DHT_DATA_REMOVAL_INTERVAL);
         if (!running) break; // Exit if not running during wait
         //------------------------------------------------------------
         if(!data.empty()) { log_info("Performing periodic data removal"); }
@@ -1550,7 +1550,7 @@ void Node::heartbeat() {
     // This code will run concurrently with the listen/receive loop
     while (running) {
         std::unique_lock<std::mutex> lock(cv_mutex);
-        cv.wait_for(lock, std::chrono::seconds(NEROSHOP_DHT_NODE_HEARTBEAT_INTERVAL));
+        cv.wait_for(lock, NEROSHOP_DHT_NODE_HEARTBEAT_INTERVAL);
         if (!running) break; // Exit if not running during wait
         //------------------------------------------------------------
         int total_failures = 0;

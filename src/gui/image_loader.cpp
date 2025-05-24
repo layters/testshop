@@ -105,7 +105,7 @@ QImage ImageLoader::load(const QString &id) const
 }
 
 QString ImageLoader::getProductImagePath(const QString& listing_key, const QString& image_name) const {
-    std::string config_path = NEROSHOP_DEFAULT_CONFIGURATION_PATH;
+    std::string config_path = neroshop::get_default_config_path();
     std::string data_folder = config_path + "/" + NEROSHOP_DATA_FOLDER_NAME;
     std::string listings_folder = data_folder + "/" + NEROSHOP_CATALOG_FOLDER_NAME;
     std::string listing_key_folder = listings_folder + "/" + listing_key.toStdString();
@@ -116,7 +116,7 @@ QString ImageLoader::getProductImagePath(const QString& listing_key, const QStri
 }
 
 QString ImageLoader::getAvatarImagePath(const QString& user_key, const QString& image_name) const {
-    std::string config_path = NEROSHOP_DEFAULT_CONFIGURATION_PATH;
+    std::string config_path = neroshop::get_default_config_path();
     std::string data_folder = config_path + "/" + NEROSHOP_DATA_FOLDER_NAME;
     std::string avatars_folder = data_folder + "/" + NEROSHOP_AVATAR_FOLDER_NAME;
     std::string user_key_folder = avatars_folder + "/" + user_key.toStdString();

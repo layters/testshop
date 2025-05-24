@@ -237,7 +237,7 @@ int main(int argc, char** argv)
     }
     //-------------------------------------------------------
     // create "datastore" folder within "~/.config/neroshop/" path (to prevent sqlite3_open: out of memory error)
-    std::string data_dir = NEROSHOP_DEFAULT_DATABASE_PATH;
+    std::string data_dir = neroshop::get_default_database_path();
     if(!neroshop::filesystem::is_directory(data_dir)) {
         if(!neroshop::filesystem::make_directory(data_dir)) {
             throw std::runtime_error("Failed to create neroshop data dir");

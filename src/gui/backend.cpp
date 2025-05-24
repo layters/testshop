@@ -309,7 +309,7 @@ bool neroshop::Backend::hasSubCategory(int category_id) const {
 //----------------------------------------------------------------
 //----------------------------------------------------------------
 bool neroshop::Backend::saveAvatarImage(const QString& fileName, const QString& userAccountKey) {
-    std::string config_path = NEROSHOP_DEFAULT_CONFIGURATION_PATH;
+    std::string config_path = neroshop::get_default_config_path();
     std::string data_folder = config_path + "/" + NEROSHOP_DATA_FOLDER_NAME;
     std::string avatars_folder = data_folder + "/" + NEROSHOP_AVATAR_FOLDER_NAME;
     //----------------------------------------
@@ -353,7 +353,7 @@ bool neroshop::Backend::saveAvatarImage(const QString& fileName, const QString& 
 //----------------------------------------------------------------
 //----------------------------------------------------------------
 bool neroshop::Backend::saveProductThumbnail(const QString& fileName, const QString& listingKey) {
-    std::string config_path = NEROSHOP_DEFAULT_CONFIGURATION_PATH;
+    std::string config_path = neroshop::get_default_config_path();
     std::string data_folder = config_path + "/" + NEROSHOP_DATA_FOLDER_NAME;
     std::string listings_folder = data_folder + "/" + NEROSHOP_CATALOG_FOLDER_NAME;
     //----------------------------------------
@@ -414,7 +414,7 @@ bool neroshop::Backend::saveProductThumbnail(const QString& fileName, const QStr
 }
 //----------------------------------------------------------------
 bool neroshop::Backend::saveProductImage(const QString& fileName, const QString& listingKey) {
-    std::string config_path = NEROSHOP_DEFAULT_CONFIGURATION_PATH;
+    std::string config_path = neroshop::get_default_config_path();
     std::string data_folder = config_path + "/" + NEROSHOP_DATA_FOLDER_NAME;
     std::string listings_folder = data_folder + "/" + NEROSHOP_CATALOG_FOLDER_NAME;
     //----------------------------------------
@@ -2044,9 +2044,9 @@ QVariantList neroshop::Backend::registerUser(WalletManager* wallet_manager, cons
     }
     //---------------------------------------------
     // Generate RSA key pair (this is for sending/receiving encrypted messages)
-    std::string config_path = NEROSHOP_DEFAULT_KEYS_PATH;
-    std::string public_key_filename = config_path + "/" + primary_address + ".pub";
-    std::string private_key_filename = config_path + "/" + primary_address + ".key";
+    std::string keys_path = neroshop::get_default_keys_path();
+    std::string public_key_filename = keys_path + "/" + primary_address + ".pub";
+    std::string private_key_filename = keys_path + "/" + primary_address + ".key";
     EVP_PKEY * pkey = neroshop::crypto::rsa_generate_keys_get();
     if(pkey == nullptr) {
         return { false, "Failed to generate RSA key pair" };
@@ -2185,9 +2185,9 @@ int neroshop::Backend::loginWithWalletFile(WalletManager* wallet_manager, const 
     }
     //----------------------------------------
     // Load RSA keys from file
-    std::string config_path = NEROSHOP_DEFAULT_KEYS_PATH;
-    std::string public_key_path = config_path + "/" + (primary_address + ".pub");
-    std::string private_key_path = config_path + "/" + (primary_address + ".key");
+    std::string keys_path = neroshop::get_default_keys_path();
+    std::string public_key_path = keys_path + "/" + (primary_address + ".pub");
+    std::string private_key_path = keys_path + "/" + (primary_address + ".key");
     //----------------------------------------
     // Load public_key (optional)
     std::ifstream public_key_file(public_key_path);
@@ -2270,9 +2270,9 @@ int neroshop::Backend::loginWithMnemonic(WalletManager* wallet_manager, const QS
     }
     
     // Load RSA keys from file
-    std::string config_path = NEROSHOP_DEFAULT_KEYS_PATH;
-    std::string public_key_path = config_path + "/" + (primary_address + ".pub");
-    std::string private_key_path = config_path + "/" + (primary_address + ".key");
+    std::string keys_path = neroshop::get_default_keys_path();
+    std::string public_key_path = keys_path + "/" + (primary_address + ".pub");
+    std::string private_key_path = keys_path + "/" + (primary_address + ".key");
     
     // Load public_key (optional)
     std::ifstream public_key_file(public_key_path);
