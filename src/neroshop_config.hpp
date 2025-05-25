@@ -137,7 +137,7 @@ inline std::string get_default_wallet_path() {
     #endif
 }
 
-static const std::initializer_list<std::string> BOOTSTRAP_I2P_NODES = {
+inline const std::initializer_list<const char*> BOOTSTRAP_I2P_NODES = {
     //{"wq344fz2wgevifcrkf5uiplywlp35ufoomhebxk5qh7obv7ephnqb.32.i2p"},
     {"pbdcncqgmgnan67ej72o7obbuvpy3wd3vhyyh4xty2luxbgmmyaq.b32.i2p"}
 };

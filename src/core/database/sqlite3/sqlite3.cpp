@@ -55,7 +55,7 @@ void Sqlite3::close() {
 	sqlite3_close(handle);
 	handle = nullptr;
     opened = false;
-    neroshop::log_debug("close: {} closed", filename.empty() ? "database" : filename);
+    neroshop::log_debug("sqlite3_close: {} closed", filename.empty() ? "database" : filename);
     // TODO: dump logs
 }
 ////////////////////

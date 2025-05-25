@@ -93,7 +93,7 @@ void Node::join() {
     
     log_info("{}Joining neroshop network ...{}", color_magenta, color_reset);
     
-    for (const std::string& bootstrap_node : BOOTSTRAP_I2P_NODES) {
+    for (const char* bootstrap_node : BOOTSTRAP_I2P_NODES) {
         // Ping each known node to confirm that it is online - the main bootstrapping primitive. If a node replies, and if there is space in the routing table, it will be inserted.
         if(!ping(bootstrap_node)) {
             log_error("join: failed to ping bootstrap node"); 
@@ -1271,7 +1271,7 @@ void Node::republish_once() {
     }
     
     if(!data.empty()) { 
-        log_info("{}Republished {} keys: {} succeeded (≥{} reps), {} partial (<{}), {} failed (0 responses), {} total responses{}", 
+        log_info("{}Republished {} keys: {} succeeded (>={} reps), {} partial (<{}), {} failed (0 responses), {} total responses{}", 
             "\033[93m", total_data, successful_puts, NEROSHOP_DHT_REPLICATION_FACTOR,
             partial_puts, NEROSHOP_DHT_REPLICATION_FACTOR, failed_puts, total_responses, color_reset);
     }
@@ -1704,122 +1704,142 @@ void Node::run_simple() {
     std::thread refresh_thread(&Node::refresh, this);
     
     while (running) {
-        char buffer[SAM_BUFSIZE] = {0};
-        sockaddr_in from_addr = {};
-        socklen_t addr_len = sizeof(from_addr);
-        ssize_t received_bytes = ::recvfrom(sam_client->client_socket, buffer, SAM_BUFSIZE - 1, 0, (sockaddr*)&from_addr, &addr_len);
+        fd_set readfds;
+        FD_ZERO(&readfds);
+        FD_SET(sam_client->client_socket, &readfds);
 
-        if (received_bytes < 0) {
-            if (errno == EAGAIN || errno == EWOULDBLOCK) {
-                // No data available right now — not an error
-                ////log_debug("No message received (timeout)");
-                continue; // timeout or non-blocking, ignore
-            } else {
-                perror("recvfrom");
-                // Handle actual error
-                ////continue; // or break (depending on your use case)
-            }
-        }
-        if (received_bytes == 0) {
-            log_debug("run: Received 0 bytes, ignoring");
+        // Set timeout for select (e.g., 1 second)
+        timeval timeout;
+        timeout.tv_sec = 0;
+        timeout.tv_usec = 100000; // 100 milliseconds
+
+        int ready = select(sam_client->client_socket + 1, &readfds, nullptr, nullptr, &timeout);
+        if (ready < 0) {
+            perror("select");
+            break; // or continue, depending on our needs
+        } else if (ready == 0) {
+            // Timeout — no data available right now, loop again
             continue;
         }
-        if(sam_client->client_socket < 0 && errno == ENOTCONN) {
-            log_error("run: Socket is closed.");
-            break; // Exit the loop as the socket is no longer valid
-        }
-        
-        // Convert buffer to string (safely)
-        std::string message(buffer, received_bytes);
-        std::string sender_ip = inet_ntoa(from_addr.sin_addr);
-        int sender_port = ntohs(from_addr.sin_port);
-        
-        pool.enqueue([message, sender_ip, sender_port, this, from_addr, addr_len] { // Capture by reference (&) modifies the original variable (use 'mutable' to modify variables captured by value)
-            log_info("RECEIVED from {}:{} ({} bytes):\n{}", sender_ip, sender_port, message.size()/*received_bytes*/, message);
 
-            // Parse SAM message format and extract destination and payload
-            std::string payload, dest_b64, sender_i2p;
-            auto header_end = message.find('\n');
-            if (header_end != std::string::npos) {
-                std::string sam_header = message.substr(0, header_end);
-                payload = message.substr(header_end + 1);
+        if (FD_ISSET(sam_client->client_socket, &readfds)) {
+            char buffer[SAM_BUFSIZE] = {0};
+            sockaddr_in from_addr = {};
+            socklen_t addr_len = sizeof(from_addr);
+            ssize_t received_bytes = ::recvfrom(sam_client->client_socket, buffer, SAM_BUFSIZE - 1, 0, (sockaddr*)&from_addr, &addr_len);
 
-                ////std::cout << "\033[1;34m[DEBUG]\033[0m Payload (" << payload.size() << " bytes):\n" << payload << "\n";
-
-                // Get the base64 destination
-                auto from_pos = sam_header.find(" FROM_PORT=");
-                dest_b64 = sam_header.substr(0, from_pos);
-
-                ////std::cout << "\033[1;34m[DEBUG]\033[0m Base64 Destination:\n" << dest_b64 << "\n";
-                
-                // Convert base64 destination to I2P address
-                sender_i2p = SamClient::to_i2p_address(dest_b64);
-            } else {
-                std::cerr << "\033[1;33m[WARN]\033[0m Could not find SAM header line break (\\n)\n";
-            }
-            
-            std::vector<uint8_t> payload_bytes(payload.begin(), payload.end());
-            // Test to see if payload is valid JSON
-            nlohmann::json json_payload;
-            try {
-                json_payload = nlohmann::json::from_msgpack(payload_bytes);
-            } catch (const std::exception& e) {
-                std::cerr << "\033[91m" << e.what() << " \033[0m\n";
-            }
-            // ONLY queries can be replied to in this loop, NOT responses!!!
-            if (json_payload.contains("query")) {
-                // Print out the parsed datagram
-                log_debug("run: \n{}\n{}{}{}", sender_i2p, "\033[33m", json_payload.dump(), color_reset);
-                
-                // Process the payload (which should be in msgpack form)
-                std::vector<uint8_t> response = neroshop::msgpack::process(payload_bytes, *this, false);
-            
-                // Now we need to construct a new SAM message for the SAM UDP bridge (port 7655)
-                // Construct SAM header
-                std::string header = "3.0 " + sam_client->get_nickname() + " " + dest_b64 + "\n";
-
-                // Compose datagram: header + response
-                std::vector<uint8_t> datagram;
-                datagram.reserve(header.size() + response.size()); // optional: improves performance
-                datagram.insert(datagram.end(), header.begin(), header.end());
-                datagram.insert(datagram.end(), response.begin(), response.end());
-                    
-                // Send back a response to the same from_addr we recvfrom (SAM UDP bridge at port 7655)
-                int bytes_sent = ::sendto(sam_client->client_socket, datagram.data(), datagram.size(), 0,
-                                (sockaddr*)&from_addr, addr_len);
-                if (bytes_sent < 0) {
-                    perror("sendto");
+            if (received_bytes < 0) {
+                if (errno == EAGAIN || errno == EWOULDBLOCK) {
+                    // No data available right now — not an error
+                    ////log_debug("No message received (timeout)");
+                    continue; // timeout or non-blocking, ignore
+                } else {
+                    perror("recvfrom");
+                    // Handle actual error
+                    ////continue; // or break (depending on your use case)
                 }
-                
-                // Run callbacks — 
-                on_ping(payload_bytes, dest_b64);
-                on_map(payload_bytes, dest_b64);
-                ////if(json_payload["query"] == "ping") {} // on_ping
-            } else if (json_payload.contains("response")) {
-                  // Print out the parsed datagram
-                  log_debug("run: \n{}\n{}{}{}", sender_i2p, "\033[32m", json_payload.dump(), color_reset);
-                  
-                  // Match this response to a pending TID/request, if you're tracking queries
-                  std::string tid = json_payload["tid"].get<std::string>();
-                  std::string version = json_payload["version"].get<std::string>();
-                  std::string node_id = json_payload["response"]["id"].get<std::string>();
-                  
-                  // This triggers future.get() in send_*() to return immediately.
-                  if (tid.empty()) return;
-                  std::scoped_lock lock(pending_mutex);
-                  auto it = pending_requests.find(tid);
-                  if (it != pending_requests.end()) {
-                      it->second.set_value(json_payload); // fulfill the promise
-                      pending_requests.erase(it);
-                      return; // Done, don't double-handle it
-                  }
-            } else if (json_payload.contains("error")) {
-                // Print out the parsed datagram
-                log_debug("run: \n{}{}{}", "\033[91m", json_payload.dump(), color_reset);
-            } else {
-                  log_warn("Unknown message type — skipping");
             }
-        });
+            if (received_bytes == 0) {
+                log_debug("run: Received 0 bytes, ignoring");
+                continue;
+            }
+            if(sam_client->client_socket < 0 && errno == ENOTCONN) {
+                log_error("run: Socket is closed.");
+                break; // Exit the loop as the socket is no longer valid
+            }
+        
+            // Convert buffer to string (safely)
+            std::string message(buffer, received_bytes);
+            std::string sender_ip = inet_ntoa(from_addr.sin_addr);
+            int sender_port = ntohs(from_addr.sin_port);
+        
+            pool.enqueue([message, sender_ip, sender_port, this, from_addr, addr_len] { // Capture by reference (&) modifies the original variable (use 'mutable' to modify variables captured by value)
+                log_info("RECEIVED from {}:{} ({} bytes):\n{}", sender_ip, sender_port, message.size()/*received_bytes*/, message);
+
+                // Parse SAM message format and extract destination and payload
+                std::string payload, dest_b64, sender_i2p;
+                auto header_end = message.find('\n');
+                if (header_end != std::string::npos) {
+                    std::string sam_header = message.substr(0, header_end);
+                    payload = message.substr(header_end + 1);
+
+                    ////std::cout << "\033[1;34m[DEBUG]\033[0m Payload (" << payload.size() << " bytes):\n" << payload << "\n";
+
+                    // Get the base64 destination
+                    auto from_pos = sam_header.find(" FROM_PORT=");
+                    dest_b64 = sam_header.substr(0, from_pos);
+
+                    ////std::cout << "\033[1;34m[DEBUG]\033[0m Base64 Destination:\n" << dest_b64 << "\n";
+                
+                    // Convert base64 destination to I2P address
+                    sender_i2p = SamClient::to_i2p_address(dest_b64);
+                } else {
+                    std::cerr << "\033[1;33m[WARN]\033[0m Could not find SAM header line break (\\n)\n";
+                }
+            
+                std::vector<uint8_t> payload_bytes(payload.begin(), payload.end());
+                // Test to see if payload is valid JSON
+                nlohmann::json json_payload;
+                try {
+                    json_payload = nlohmann::json::from_msgpack(payload_bytes);
+                } catch (const std::exception& e) {
+                    std::cerr << "\033[91m" << e.what() << " \033[0m\n";
+                }
+                // ONLY queries can be replied to in this loop, NOT responses!!!
+                if (json_payload.contains("query")) {
+                    // Print out the parsed datagram
+                    log_debug("run: \n{}\n{}{}{}", sender_i2p, "\033[33m", json_payload.dump(), color_reset);
+                
+                    // Process the payload (which should be in msgpack form)
+                    std::vector<uint8_t> response = neroshop::msgpack::process(payload_bytes, *this, false);
+            
+                    // Now we need to construct a new SAM message for the SAM UDP bridge (port 7655)
+                    // Construct SAM header
+                    std::string header = "3.0 " + sam_client->get_nickname() + " " + dest_b64 + "\n";
+
+                    // Compose datagram: header + response
+                    std::vector<uint8_t> datagram;
+                    datagram.reserve(header.size() + response.size()); // optional: improves performance
+                    datagram.insert(datagram.end(), header.begin(), header.end());
+                    datagram.insert(datagram.end(), response.begin(), response.end());
+                    
+                    // Send back a response to the same from_addr we recvfrom (SAM UDP bridge at port 7655)
+                    int bytes_sent = ::sendto(sam_client->client_socket, datagram.data(), datagram.size(), 0,
+                                    (sockaddr*)&from_addr, addr_len);
+                    if (bytes_sent < 0) {
+                        perror("sendto");
+                    }
+                
+                    // Run callbacks — 
+                    on_ping(payload_bytes, dest_b64);
+                    on_map(payload_bytes, dest_b64);
+                    ////if(json_payload["query"] == "ping") {} // on_ping
+                } else if (json_payload.contains("response")) {
+                      // Print out the parsed datagram
+                      log_debug("run: \n{}\n{}{}{}", sender_i2p, "\033[32m", json_payload.dump(), color_reset);
+                  
+                      // Match this response to a pending TID/request, if you're tracking queries
+                      std::string tid = json_payload["tid"].get<std::string>();
+                      std::string version = json_payload["version"].get<std::string>();
+                      std::string node_id = json_payload["response"]["id"].get<std::string>();
+                  
+                      // This triggers future.get() in send_*() to return immediately.
+                      if (tid.empty()) return;
+                      std::scoped_lock lock(pending_mutex);
+                      auto it = pending_requests.find(tid);
+                      if (it != pending_requests.end()) {
+                          it->second.set_value(json_payload); // fulfill the promise
+                          pending_requests.erase(it);
+                          return; // Done, don't double-handle it
+                      }
+                } else if (json_payload.contains("error")) {
+                    // Print out the parsed datagram
+                    log_debug("run: \n{}{}{}", "\033[91m", json_payload.dump(), color_reset);
+                } else {
+                    log_warn("Unknown message type — skipping");
+                }
+            });
+        } // FD
     }
     
     heartbeat_thread.join();
@@ -2082,8 +2102,8 @@ bool Node::is_hardcoded() const {
 //-----------------------------------------------------------------------------
 
 bool Node::is_hardcoded(const std::string& i2p_address) {
-    for (const std::string& node_addr : BOOTSTRAP_I2P_NODES) {
-        if (node_addr == i2p_address) { return true; }
+    for (const char* node_addr : BOOTSTRAP_I2P_NODES) {
+        if (i2p_address == node_addr) { return true; }
     }
     return false;
 }
