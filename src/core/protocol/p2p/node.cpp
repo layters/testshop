@@ -93,7 +93,7 @@ void Node::join() {
     
     log_info("{}Joining neroshop network ...{}", color_magenta, color_reset);
     
-    for (const std::string& bootstrap_node : BOOTSTRAP_I2P_NODES) {
+    for (const char* bootstrap_node : BOOTSTRAP_I2P_NODES) {
         // Ping each known node to confirm that it is online - the main bootstrapping primitive. If a node replies, and if there is space in the routing table, it will be inserted.
         if(!ping(bootstrap_node)) {
             log_error("join: failed to ping bootstrap node"); 
@@ -1271,7 +1271,7 @@ void Node::republish_once() {
     }
     
     if(!data.empty()) { 
-        log_info("{}Republished {} keys: {} succeeded (≥{} reps), {} partial (<{}), {} failed (0 responses), {} total responses{}", 
+        log_info("{}Republished {} keys: {} succeeded (>={} reps), {} partial (<{}), {} failed (0 responses), {} total responses{}", 
             "\033[93m", total_data, successful_puts, NEROSHOP_DHT_REPLICATION_FACTOR,
             partial_puts, NEROSHOP_DHT_REPLICATION_FACTOR, failed_puts, total_responses, color_reset);
     }
@@ -2082,8 +2082,8 @@ bool Node::is_hardcoded() const {
 //-----------------------------------------------------------------------------
 
 bool Node::is_hardcoded(const std::string& i2p_address) {
-    for (const std::string& node_addr : BOOTSTRAP_I2P_NODES) {
-        if (node_addr == i2p_address) { return true; }
+    for (const char* node_addr : BOOTSTRAP_I2P_NODES) {
+        if (i2p_address == node_addr) { return true; }
     }
     return false;
 }
