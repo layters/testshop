@@ -3,8 +3,8 @@
 #ifndef WALLET_HPP_NEROSHOP
 #define WALLET_HPP_NEROSHOP
 
-#define PICONERO 0.000000000001  // https://github.com/monero-project/monero/blob/master/src/cryptonote_config.h#L65 // https://web.getmonero.org/resources/moneropedia/denominations.html
-#define WOWOSHI  0.00000000001   // https://git.wownero.com/wownero/wownero/src/branch/master/src/cryptonote_config.h#L68
+constexpr double PICONERO = 0.000000000001;  // https://github.com/monero-project/monero/blob/master/src/cryptonote_config.h#L65
+constexpr double WOWOSHI  = 0.00000000001;   // https://codeberg.org/wownero/wownero/src/branch/master/src/cryptonote_config.h#L68
 
 #include <daemon/monero_daemon.h>
 #include <daemon/monero_daemon_model.h>
@@ -76,7 +76,7 @@ public:
     
     virtual void close(bool save = false);
     
-    std::string upload(bool open = true, std::string password = "");
+    ////std::string upload(bool open = true, std::string password = "");
     
     bool verify_password(const std::string& password) const;
     virtual bool change_password(const std::string& old_password, const std::string& new_password);

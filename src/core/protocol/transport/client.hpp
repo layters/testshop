@@ -1,3 +1,5 @@
+#pragma once
+
 #ifndef CLIENT_HPP_NEROSHOP
 #define CLIENT_HPP_NEROSHOP
 

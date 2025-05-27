@@ -133,7 +133,7 @@ int neroshop::Backend::getCurrencyDecimals(const QString& currency) const {
     auto map_key = currency.toUpper().toStdString();
     // Check if key exists in std::map
     if(neroshop::CurrencyMap.count(map_key) > 0) {
-        auto map_value = neroshop::CurrencyMap[map_key];
+        auto map_value = neroshop::CurrencyMap.at(map_key);
         int decimal_places = std::get<2>(map_value);
         return decimal_places;
     }
@@ -612,13 +612,13 @@ QVariantList neroshop::Backend::getProductRatings(const QString& product_id) {
             // Get the value of the corresponding key from the DHT
             std::string response;
             client->get(key.toStdString(), response); // TODO: error handling
-            std::cout << "Received response (get): " << response << "\n";
+            log_trace("Received response (get): {}", response);
             // Parse the response
             nlohmann::json json = nlohmann::json::parse(response);
             if(json.contains("error")) {
                 std::string response2;
                 client->remove(key.toStdString(), response2);
-                std::cout << "Received response (remove): " << response2 << "\n";
+                log_trace("Received response (remove): {}", response2);
                 //emit productRatingsChanged();
                 continue; // Key is lost or missing from DHT, skip to next iteration
             }
@@ -751,13 +751,13 @@ QVariantList neroshop::Backend::getSellerRatings(const QString& user_id) {
             // Get the value of the corresponding key from the DHT
             std::string response;
             client->get(key.toStdString(), response); // TODO: error handling
-            std::cout << "Received response (get): " << response << "\n";
+            log_trace("Received response (get): {}", response);
             // Parse the response
             nlohmann::json json = nlohmann::json::parse(response);
             if(json.contains("error")) {
                 std::string response2;
                 client->remove(key.toStdString(), response2);
-                std::cout << "Received response (remove): " << response2 << "\n";
+                log_trace("Received response (remove): {}", response2);
                 //emit sellerRatingsChanged();
                 continue; // Key is lost or missing from DHT, skip to next iteration
             }
@@ -823,13 +823,13 @@ QVariantMap neroshop::Backend::getUser(const QString& user_id) {
     // Get the value of the corresponding key from the DHT
     std::string response;
     client->get(key, response); // TODO: error handling
-    std::cout << "Received response (get): " << response << "\n";
+    log_trace("Received response (get): {}", response);
     // Parse the response
     nlohmann::json json = nlohmann::json::parse(response);
     if(json.contains("error")) {
         std::string response2;
         client->remove(key, response2);
-        std::cout << "Received response (remove): " << response2 << "\n";
+        log_trace("Received response (remove): {}", response2);
         return {}; // Key is lost or missing from DHT, skip to next iteration
     }
     
@@ -938,13 +938,13 @@ int neroshop::Backend::getStockAvailable(const QString& product_id) {
     // Get the value of the corresponding key from the DHT
     std::string response;
     client->get(key, response); // TODO: error handling
-    std::cout << "Received response (get): " << response << "\n";
+    log_trace("Received response (get): {}", response);
     // Parse the response
     nlohmann::json json = nlohmann::json::parse(response);
     if(json.contains("error")) {
         std::string response2;
         client->remove(key, response2);
-        std::cout << "Received response (remove): " << response2 << "\n";
+        log_trace("Received response (remove): {}", response2);
         return 0; // Key is lost or missing from DHT, return 
     }    
     
@@ -1003,13 +1003,13 @@ QVariantList neroshop::Backend::getInventory(const QString& user_id, bool hide_i
             // Get the value of the corresponding key from the DHT
             std::string response;
             client->get(key.toStdString(), response); // TODO: error handling
-            std::cout << "Received response (get): " << response << "\n";
+            log_trace("Received response (get): {}", response);
             // Parse the response
             nlohmann::json json = nlohmann::json::parse(response);
             if(json.contains("error")) {
                 std::string response2;
                 client->remove(key.toStdString(), response2);
-                std::cout << "Received response (remove): " << response2 << "\n";
+                log_trace("Received response (remove): {}", response2);
                 continue; // Key is lost or missing from DHT, skip to next iteration
             }
             
@@ -1190,13 +1190,13 @@ QVariantList neroshop::Backend::getListingsBySearchTerm(const QString& searchTer
             // Get the value of the corresponding key from the DHT
             std::string response;
             client->get(key.toStdString(), response); // TODO: error handling
-            std::cout << "Received response (get): " << response << "\n";
+            log_trace("Received response (get): {}", response);
             // Parse the response
             nlohmann::json json = nlohmann::json::parse(response);
             if(json.contains("error")) { 
                 std::string response2;
                 client->remove(key.toStdString(), response2);
-                std::cout << "Received response (remove): " << response2 << "\n";
+                log_trace("Received response (remove): {}", response2);
                 //emit categoryProductCountChanged();//(category_id);
                 //emit searchResultsChanged();
                 continue; // Key is lost or missing from DHT, skip to next iteration
@@ -1360,13 +1360,13 @@ QVariantList neroshop::Backend::getListings(int sorting, bool hide_illicit_items
             // Get the value of the corresponding key from the DHT
             std::string response;
             client->get(key.toStdString(), response); // TODO: error handling
-            std::cout << "Received response (get): " << response << "\n";
+            log_trace("Received response (get): {}", response);
             // Parse the response
             nlohmann::json json = nlohmann::json::parse(response);
             if(json.contains("error")) {
                 std::string response2;
                 client->remove(key.toStdString(), response2);
-                std::cout << "Received response (remove): " << response2 << "\n";
+                log_trace("Received response (remove): {}", response2);
                 //emit categoryProductCountChanged();//(category_id);
                 //emit searchResultsChanged();
                 continue; // Key is lost or missing from DHT, skip to next iteration
@@ -1627,13 +1627,13 @@ QVariantList neroshop::Backend::getListingsByCategory(int category_id, bool hide
             // Get the value of the corresponding key from the DHT
             std::string response;
             client->get(key.toStdString(), response); // TODO: error handling
-            std::cout << "Received response (get): " << response << "\n";
+            log_trace("Received response (get): {}", response);
             // Parse the response
             nlohmann::json json = nlohmann::json::parse(response);
             if(json.contains("error")) {
                 std::string response2;
                 client->remove(key.toStdString(), response2);
-                std::cout << "Received response (remove): " << response2 << "\n";
+                log_trace("Received response (remove): {}", response2);
                 //emit categoryProductCountChanged();//(category_id);
                 //emit searchResultsChanged();
                 continue; // Key is lost or missing from DHT, skip to next iteration
@@ -2112,7 +2112,7 @@ QVariantList neroshop::Backend::registerUser(WalletManager* wallet_manager, cons
     // Send put and receive response
     std::string response;
     client->put(key, value, response);
-    std::cout << "Received response (put): " << response << "\n";
+    log_trace("Received response (put): {}", response);
     //---------------------------------------------
     // Create cart for user
     QString cart_uuid = QUuid::createUuid().toString();
@@ -2363,7 +2363,7 @@ QVariantMap neroshop::Backend::getNetworkStatus() const {
     
     Client * client = Client::get_main_client();
     std::string response;
-    client->get("status", response);//std::cout << "Received response (get): " << response << "\n";
+    client->get("status", response);//log_trace("Received response (get): {}", response);
     
     // Parse the response
     nlohmann::json json = nlohmann::json::parse(response);
@@ -2452,7 +2452,7 @@ void neroshop::Backend::clearHashTable() {
     
     Client * client = Client::get_main_client();
     std::string response;
-    client->clear(response);//std::cout << "Received response (clear): " << response << "\n";
+    client->clear(response);//log_trace("Received response (clear): {}", response);
 }
 //----------------------------------------------------------------
 

@@ -3,7 +3,6 @@
 
 #include "../neroshop.hpp"
 using namespace neroshop;
-namespace neroshop_tools = neroshop::tools;
 
 #include <linenoise.h>
 
@@ -46,7 +45,7 @@ int main(int argc, char** argv) {
 
     std::string network_type = Wallet::get_network_type_as_string();
     if (std::find(networks.begin(), networks.end(), network_type) == networks.end()) {
-        neroshop::print("\033[1;91mnetwork_type \"" + network_type + "\" is not valid");
+        log_error("{}network_type \"{}\" is not valid{}", "\033[1;91m", network_type, color_reset);
         return 1;
     }
     std::vector<std::string> monero_nodes = Script::get_table_string(lua_state, "monero.nodes." + network_type);
@@ -73,13 +72,13 @@ int main(int argc, char** argv) {
         else if(command == "version") {
             std::cout << "\033[0;93m" << NEROSHOP_VERSION_FULL << "\033[0m" << std::endl;
         }         
-        else if(neroshop::string::starts_with(command, "query")) {
-            auto arg_count = neroshop::string::split(command, " ").size();
+        else if(neroshop::string_tools::starts_with(command, "query")) {
+            auto arg_count = neroshop::string_tools::split(command, " ").size();
             if(arg_count == 1) std::cout << "\033[91mexpected arguments after 'query'\033[0m\n";
             if(arg_count > 1) { 
                 std::size_t arg_pos = command.find_first_of(" ");
-                std::string sql = neroshop::string::trim_left(command.substr(arg_pos + 1));////trim_left(command.substr(std::string("query").length() + 1)); // <- this works too
-                assert(neroshop::string::starts_with(sql, "SELECT", false) && "Only SELECT queries are allowed"); // since the ability to run sql commands gives too much power to the user to alter the database anyhow, limit queries to select statements only
+                std::string sql = neroshop::string_tools::trim_left(command.substr(arg_pos + 1));////trim_left(command.substr(std::string("query").length() + 1)); // <- this works too
+                assert(neroshop::string_tools::starts_with(sql, "SELECT", false) && "Only SELECT queries are allowed"); // since the ability to run sql commands gives too much power to the user to alter the database anyhow, limit queries to select statements only
                 std::string json = neroshop::rpc::json::translate(sql);
                 // No need to call RPC server to access RPC functions when it can be done directly.
                 std::cout << neroshop::rpc::json::process(json) << "\n";
@@ -106,12 +105,12 @@ int main(int argc, char** argv) {
                 "." + std::to_string(curl_version->version_num & 0xff);
             std::cout << "libcurl version " << curl_version_str << std::endl;
         }
-        else if(neroshop::string::starts_with(command, "get")) {
-            auto arg_count = neroshop::string::split(command, " ").size();
+        else if(neroshop::string_tools::starts_with(command, "get")) {
+            auto arg_count = neroshop::string_tools::split(command, " ").size();
             if(arg_count == 1) std::cout << "\033[91mexpected argument after 'get'\033[0m\n";
             if(arg_count > 1) { 
                 std::size_t arg_pos = command.find_first_of(" ");
-                std::string key = neroshop::string::trim(command.substr(arg_pos + 1));
+                std::string key = neroshop::string_tools::trim(command.substr(arg_pos + 1));
                 
                 if (client->is_connected()) {
                     std::string response;
@@ -186,7 +185,7 @@ int main(int argc, char** argv) {
             if(!wallet_path.empty()) {
                 wallet_path = wallet_path + "/" + wallet_name; // Fails for some reason
             }*/
-            if(wallet_path.empty()) { wallet_path = NEROSHOP_DEFAULT_WALLET_DIRECTORY_PATH + "/" + wallet_name; }
+            if(wallet_path.empty()) { wallet_path = neroshop::get_default_wallet_path() + "/" + wallet_name; }
             
             std::cout << "Enter wallet password: ";
             std::getline(std::cin, password);
@@ -226,8 +225,8 @@ int main(int argc, char** argv) {
             }
             user_id = wallet.get_primary_address();
             
-            std::string public_key_filename = NEROSHOP_DEFAULT_KEYS_PATH + "/" + user_id + ".pub";
-            std::string private_key_filename = NEROSHOP_DEFAULT_KEYS_PATH + "/" + user_id + ".key";
+            std::string public_key_filename = neroshop::get_default_keys_path() + "/" + user_id + ".pub";
+            std::string private_key_filename = neroshop::get_default_keys_path() + "/" + user_id + ".key";
             EVP_PKEY * pkey = neroshop::crypto::rsa_generate_keys_get();
             if(pkey != nullptr) {
                 // Get a copy of the public key

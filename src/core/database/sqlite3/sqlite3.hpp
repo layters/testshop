@@ -3,8 +3,7 @@
 #ifndef SQLITE3_HPP_NEROSHOP
 #define SQLITE3_HPP_NEROSHOP
 
-#define SQLITE3_TAG "\033[1;36m[sqlite3]:\033[0m "
-#define SQLITE3_TAG_ERR "\033[1;36m[sqlite3]:\033[0;91m "
+constexpr const char* SQLITE3_TAG = "\033[1;36m[sqlite3]:\033[0m ";
 
 #include <sqlite3.h>
 #include <nlohmann/json.hpp>

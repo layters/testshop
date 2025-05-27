@@ -106,7 +106,7 @@ bool export_lua() {
         if(std::filesystem::is_regular_file(neroshop_config_name)) return false; // false because it will not be created // if true then it will cause "PANIC: unprotected error in call to Lua API (attempt to index a nil value)" error
         // check if script works before saving
         if(luaL_dostring(lua_state, text.c_str()) != 0) {
-		    neroshop::log_error(LUA_TAG "\033[0;91minvalid Lua code");
+		    neroshop::log_error("{}: {}invalid Lua code{}", LUA_TAG, "\033[0;91m", color_reset);
 		    lua_error(lua_state);
 		    return false; // exit function so it does not save text
 	    }
