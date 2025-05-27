@@ -20,21 +20,12 @@ neroshop::WalletNetworkType Wallet::network_type(WalletNetworkType::Stagenet);
 //-------------------------------------------------------
 Wallet::~Wallet() 
 {
-    if(monero_wallet_obj.get()) {
-        // remove listener
+    if (monero_wallet_obj) {
         monero_wallet_obj->remove_listener (*this);//int listener_count = monero_wallet_obj->get_listeners().size();if(listener_count > 0) { std::cout << NEROSHOP_TAG "still need to delete listeners (" << listener_count << ")" << std::endl; }
-        // close monero wallet
         monero_wallet_obj->close(false);
-        // reset (delete) monero wallet
-        monero_wallet_obj.reset(); // will call monero_wallet_full destructor
-        if(!monero_wallet_obj.get()) std::cout << "monero wallet deleted\n"; // just to confirm that the monero wallet has been set to nullptr after deletion
+        // no reset() here; wallet will be destroyed automatically
     }
-    // destroy process
-    if(process.get()) {
-        process.reset(); // this will call the process destructor which should auto kill the process
-        if(!process.get()) std::cout << "wallet process deleted\n";
-    }
-    // clear password hash
+    // no reset() for process; destroyed automatically
     password_hash.clear();
 #ifdef NEROSHOP_DEBUG    
     std::cout << "wallet deleted\n";
@@ -71,7 +62,7 @@ int Wallet::create_random(const std::string& password, const std::string& confir
     if(monero_wallet_obj.get()) std::cout << "\033[1;35;49m" << "created wallet \"" << path << ".keys\"" << "\033[0m" << std::endl;
     // Sign password to generate a temporary password hash (signature) that will be used to verify password whenever user inactivity is detected or when user attempts to withdraw funds
     password_hash = sign_message(password, monero_message_signature_type::SIGN_WITH_SPEND_KEY);
-    std::cout << "password hash generated: " << password_hash << "\n";
+    log_debug("Password hash generated: {}", password_hash);
     
     return static_cast<int>(WalletError::Ok);
 }
@@ -98,7 +89,7 @@ int Wallet::create_from_seed(const std::string& seed, const std::string& passwor
     std::cout << "\033[1;35;49m" << "created wallet \"" << path << ".keys\" (from seed)" << "\033[0m" << std::endl;
     // Sign password to generate a temporary password hash (signature) that will be used to verify password whenever user inactivity is detected or when user attempts to withdraw funds
     password_hash = sign_message(password, monero_message_signature_type::SIGN_WITH_SPEND_KEY);
-    std::cout << "password hash generated: " << password_hash << "\n";
+    log_debug("Password hash generated: {}", password_hash);
         
     return static_cast<int>(WalletError::Ok);
 }
@@ -128,7 +119,7 @@ int Wallet::create_from_keys(const std::string& primary_address, const std::stri
     std::cout << "\033[1;35;49m" << "created wallet \"" << path << ".keys\" (from keys)" << "\033[0m" << std::endl;
     // Sign password to generate a temporary password hash (signature) that will be used to verify password whenever user inactivity is detected or when user attempts to withdraw funds
     password_hash = sign_message(password, monero_message_signature_type::SIGN_WITH_SPEND_KEY);
-    std::cout << "password hash generated: " << password_hash << "\n";
+    log_debug("Password hash generated: {}", password_hash);
         
     return static_cast<int>(WalletError::Ok);
 }
@@ -210,7 +201,7 @@ int Wallet::open(const std::string& path, const std::string& password) {
     std::cout << "\033[1;35;49m" << "opened wallet \"" << path << "\"\033[0m" << std::endl;
     // Sign password to generate a temporary password hash (signature) that will be used to verify password whenever user inactivity is detected or when user attempts to withdraw funds
     password_hash = sign_message(password, monero_message_signature_type::SIGN_WITH_SPEND_KEY);
-    std::cout << "password hash generated: " << password_hash << "\n";
+    log_debug("Password hash generated: {}", password_hash);
         
     return static_cast<int>(WalletError::Ok);
 }
@@ -229,7 +220,7 @@ void Wallet::close(bool save)
     }
 }
 //-------------------------------------------------------
-std::string Wallet::upload(bool open, std::string password) { // opens the wallet file
+/*std::string Wallet::upload(bool open, std::string password) { // opens the wallet file
     // open file dialog to retrieve walletfile path
     // reminder: use this function for an upload button instead
     //           then call Wallet::open when user presses a "submit" button.
@@ -244,7 +235,7 @@ std::string Wallet::upload(bool open, std::string password) { // opens the walle
     if(!monero::monero_wallet_full::wallet_exists(filename + ".keys")) { neroshop::log_error("wallet not found"); return ""; } // check if wallet file is valid (or exists)
     if(open == true) Wallet::open(filename, password);// will apply ".keys" ext to the wallet file
     return std::string(filename + ".keys");
-}
+}*/
 //-------------------------------------------------------
 bool Wallet::verify_password(const std::string& password) const {
     assert(!password_hash.empty());

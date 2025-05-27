@@ -29,7 +29,7 @@ SamClient::SamClient(SamSessionStyle style, const std::string& nickname) : sessi
     if (::connect(session_socket, (sockaddr*)&server_addr, sizeof(server_addr)) < 0) {
         throw std::runtime_error("Error connecting to SAM bridge");
     }
-    // Re-use server_addr for Sam bridge UDP port
+    // Re-use server_addr for SAM bridge UDP port
     memset(&server_addr, 0, sizeof(server_addr)); // Clear all bytes to 0
     server_addr.sin_family = AF_INET;
     server_addr.sin_port = htons(SAM_DEFAULT_PORT_UDP); // Change to UDP port (7655)

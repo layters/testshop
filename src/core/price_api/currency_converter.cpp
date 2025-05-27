@@ -84,7 +84,7 @@ double Converter::convert_to_xmr(double amount, const std::string& currency) {
     std::string map_key = neroshop::string_tools::upper(currency);
     
     if(neroshop::CurrencyMap.count(map_key) > 0) {
-        auto map_value = neroshop::CurrencyMap[map_key];
+        auto map_value = neroshop::CurrencyMap.at(map_key);
         neroshop::Currency from_currency = std::get<0>(map_value);        
         double rate = Converter::get_price(neroshop::Currency::XMR, from_currency); // 1 xmr = ? currency//std::cout << amount << " " << map_key << " is equal to " << neroshop::string_tools::precision((amount / rate), 12) << " XMR\n";
         return (amount / rate);
@@ -105,7 +105,7 @@ int Converter::get_currency_decimals(const std::string& currency) {
     auto map_key = neroshop::string_tools::upper(currency);
     // Check if key exists in std::map
     if(neroshop::CurrencyMap.count(map_key) > 0) {
-        auto map_value = neroshop::CurrencyMap[map_key];
+        auto map_value = neroshop::CurrencyMap.at(map_key);
         int decimal_places = std::get<2>(map_value);
         return decimal_places;
     }
@@ -116,7 +116,7 @@ double Converter::get_xmr_price(const std::string& currency) {
     auto map_key = neroshop::string_tools::upper(currency);
     // Check if key exists in std::map
     if(neroshop::CurrencyMap.count(map_key) > 0) {////if(neroshop::CurrencyMap.find(map_key) != neroshop::CurrencyMap.end()) {
-        auto map_value = neroshop::CurrencyMap[map_key];
+        auto map_value = neroshop::CurrencyMap.at(map_key);
         neroshop::Currency preferred_currency = std::get<0>(map_value);
         return Converter::get_price(neroshop::Currency::XMR, preferred_currency);
     }
@@ -128,7 +128,7 @@ std::string Converter::get_currency_sign(const std::string& currency_code) {
     auto key = neroshop::string_tools::upper(currency_code);
     // Check if key exists in std::map
     if(neroshop::CurrencyMap.count(key) > 0) {
-        auto value = neroshop::CurrencyMap[key];
+        auto value = neroshop::CurrencyMap.at(key);
         std::string sign = std::get<3>(value);
         return sign;
     }
@@ -138,7 +138,7 @@ std::string Converter::get_currency_sign(const std::string& currency_code) {
 neroshop::Currency Converter::get_currency_enum(const std::string& currency) {
     auto map_key = neroshop::string_tools::upper(currency);
     if(neroshop::CurrencyMap.count(map_key) > 0) {
-        auto map_value = neroshop::CurrencyMap[map_key];
+        auto map_value = neroshop::CurrencyMap.at(map_key);
         return std::get<0>(map_value);
     }
     return neroshop::Currency::USD;

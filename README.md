@@ -201,7 +201,7 @@ make -j$(nproc)
 1. Download the Java I2P from the [official website](https://geti2p.net/en/download)
 2. After installation, open the terminal and start I2P with the following command: 
 ```bash
-   /home/$USER/i2p/i2prouter start
+/home/$USER/i2p/i2prouter start
 ```
 3. In your browser, visit http://127.0.0.1:7657/configclients. Scroll down to enable the **SAM application bridge** and then apply the changes
    

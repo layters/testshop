@@ -5,7 +5,7 @@
 
 #include "tools/script.hpp" // lua_State
 
-#define LUA_TAG "\033[1;34m[lua]:\033[0m "
+constexpr const char* LUA_TAG = "\033[1;34m[lua]:\033[0m ";
 
 namespace neroshop {
 

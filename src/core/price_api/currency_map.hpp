@@ -6,7 +6,7 @@
 
 namespace neroshop {
 
-static std::map<std::string, std::tuple<neroshop::Currency, std::string, int, std::string>> CurrencyMap {// { currency_code, { id, name, decimals, sign } }
+inline const std::map<std::string, std::tuple<neroshop::Currency, std::string, int, std::string>> CurrencyMap {// { currency_code, { id, name, decimals, sign } }
     // Fiat
     //{ "AED", { neroshop::Currency::, "United Arab Emirates Dirham" } },
     //{ "AFN", { neroshop::Currency::, "Afghanistan Afghani" } },

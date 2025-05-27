@@ -1,3 +1,5 @@
+#pragma once
+
 #ifndef SERVER_HPP_NEROSHOP
 #define SERVER_HPP_NEROSHOP
 
@@ -39,7 +41,7 @@
 #include "client.hpp" // Client, SocketType::
 //#include "ip_address.hpp"
 
-#define DEFAULT_BACKLOG 511
+constexpr int DEFAULT_BACKLOG = 511;
 
 namespace neroshop {
 // Reminder: Use TCP for RPC server. UDP for DHT Node server. Maybe TCP for IPC server + client

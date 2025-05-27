@@ -3,42 +3,45 @@
 #ifndef SAM_CLIENT_HPP_NEROSHOP
 #define SAM_CLIENT_HPP_NEROSHOP
 
-#define SAM_BUFSIZE                 8192
-#define SAM_DEFAULT_ADDRESS         "127.0.0.1"
-#define SAM_DEFAULT_PORT_TCP        7656
-#define SAM_DEFAULT_PORT_UDP        7655
-#define SAM_DEFAULT_CLIENT_TCP      7666
-#define SAM_DEFAULT_CLIENT_UDP      7667
-#define SAM_DEFAULT_PRIVKEY_PATH    "i2p.key"
+#include <cstddef> // std::size_t
+#include <cstdint> // uint*_t
 
-#define SAM_NAME_INBOUND_QUANTITY           "inbound.quantity"
-#define SAM_DEFAULT_INBOUND_QUANTITY        3 // Three tunnels is default now
-#define SAM_NAME_INBOUND_LENGTH             "inbound.length"
-#define SAM_DEFAULT_INBOUND_LENGTH          3 // Three jumps is default now
-#define SAM_NAME_INBOUND_LENGTHVARIANCE     "inbound.lengthVariance"
-#define SAM_DEFAULT_INBOUND_LENGTHVARIANCE  0
-#define SAM_NAME_INBOUND_BACKUPQUANTITY     "inbound.backupQuantity"
-#define SAM_DEFAULT_INBOUND_BACKUPQUANTITY  1 // One backup tunnel
-#define SAM_NAME_INBOUND_ALLOWZEROHOP       "inbound.allowZeroHop"
-#define SAM_DEFAULT_INBOUND_ALLOWZEROHOP    true
-#define SAM_NAME_INBOUND_IPRESTRICTION      "inbound.IPRestriction"
-#define SAM_DEFAULT_INBOUND_IPRESTRICTION   2
-#define SAM_NAME_OUTBOUND_QUANTITY          "outbound.quantity"
-#define SAM_DEFAULT_OUTBOUND_QUANTITY       3
-#define SAM_NAME_OUTBOUND_LENGTH            "outbound.length"
-#define SAM_DEFAULT_OUTBOUND_LENGTH         3
-#define SAM_NAME_OUTBOUND_LENGTHVARIANCE    "outbound.lengthVariance"
-#define SAM_DEFAULT_OUTBOUND_LENGTHVARIANCE 0
-#define SAM_NAME_OUTBOUND_BACKUPQUANTITY    "outbound.backupQuantity"
-#define SAM_DEFAULT_OUTBOUND_BACKUPQUANTITY 1
-#define SAM_NAME_OUTBOUND_ALLOWZEROHOP      "outbound.allowZeroHop"
-#define SAM_DEFAULT_OUTBOUND_ALLOWZEROHOP   true
-#define SAM_NAME_OUTBOUND_IPRESTRICTION     "outbound.IPRestriction"
-#define SAM_DEFAULT_OUTBOUND_IPRESTRICTION  2
-#define SAM_NAME_OUTBOUND_PRIORITY          "outbound.priority"
-#define SAM_DEFAULT_OUTBOUND_PRIORITY
-#define SAM_NAME_I2CP_LEASESET_ENC_TYPE     "i2cp.leaseSetEncType"
-#define SAM_DEFAULT_I2CP_LEASESET_ENC_TYPE  "0,4"
+constexpr std::size_t SAM_BUFSIZE              = 8192;
+constexpr const char* SAM_DEFAULT_ADDRESS      = "127.0.0.1";
+constexpr std::uint16_t SAM_DEFAULT_PORT_TCP   = 7656;
+constexpr std::uint16_t SAM_DEFAULT_PORT_UDP   = 7655;
+constexpr std::uint16_t SAM_DEFAULT_CLIENT_TCP = 7666;
+constexpr std::uint16_t SAM_DEFAULT_CLIENT_UDP = 7667;
+constexpr const char* SAM_DEFAULT_PRIVKEY_PATH = "i2p.key";
+
+constexpr const char* SAM_NAME_INBOUND_QUANTITY          = "inbound.quantity";
+constexpr int SAM_DEFAULT_INBOUND_QUANTITY               = 3; // Three tunnels is default now
+constexpr const char* SAM_NAME_INBOUND_LENGTH            = "inbound.length";
+constexpr int SAM_DEFAULT_INBOUND_LENGTH                 = 3; // Three jumps is default now
+constexpr const char* SAM_NAME_INBOUND_LENGTHVARIANCE    = "inbound.lengthVariance";
+constexpr int SAM_DEFAULT_INBOUND_LENGTHVARIANCE         = 0;
+constexpr const char* SAM_NAME_INBOUND_BACKUPQUANTITY    = "inbound.backupQuantity";
+constexpr int SAM_DEFAULT_INBOUND_BACKUPQUANTITY         = 1; // One backup tunnel
+constexpr const char* SAM_NAME_INBOUND_ALLOWZEROHOP      = "inbound.allowZeroHop";
+constexpr bool SAM_DEFAULT_INBOUND_ALLOWZEROHOP          = true;
+constexpr const char* SAM_NAME_INBOUND_IPRESTRICTION     = "inbound.IPRestriction";
+constexpr int SAM_DEFAULT_INBOUND_IPRESTRICTION          = 2;
+constexpr const char* SAM_NAME_OUTBOUND_QUANTITY         = "outbound.quantity";
+constexpr int SAM_DEFAULT_OUTBOUND_QUANTITY              = 3;
+constexpr const char* SAM_NAME_OUTBOUND_LENGTH           = "outbound.length";
+constexpr int SAM_DEFAULT_OUTBOUND_LENGTH                = 3;
+constexpr const char* SAM_NAME_OUTBOUND_LENGTHVARIANCE   = "outbound.lengthVariance";
+constexpr int SAM_DEFAULT_OUTBOUND_LENGTHVARIANCE        = 0;
+constexpr const char* SAM_NAME_OUTBOUND_BACKUPQUANTITY   = "outbound.backupQuantity";
+constexpr int SAM_DEFAULT_OUTBOUND_BACKUPQUANTITY        = 1;
+constexpr const char* SAM_NAME_OUTBOUND_ALLOWZEROHOP     = "outbound.allowZeroHop";
+constexpr bool SAM_DEFAULT_OUTBOUND_ALLOWZEROHOP         = true;
+constexpr const char* SAM_NAME_OUTBOUND_IPRESTRICTION    =  "outbound.IPRestriction";
+constexpr int SAM_DEFAULT_OUTBOUND_IPRESTRICTION         = 2;
+constexpr const char* SAM_NAME_OUTBOUND_PRIORITY         = "outbound.priority";
+////#define SAM_DEFAULT_OUTBOUND_PRIORITY
+constexpr const char* SAM_NAME_I2CP_LEASESET_ENC_TYPE    = "i2cp.leaseSetEncType";
+constexpr const char* SAM_DEFAULT_I2CP_LEASESET_ENC_TYPE = "0,4";
 
 #if defined(_WIN32)
 #include <winsock2.h> // core header for Winsock2
