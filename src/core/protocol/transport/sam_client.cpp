@@ -359,7 +359,9 @@ void SamClient::session_close() {
         ::shutdown(session_socket, SHUT_RDWR); // Tell the peer "we're done" // SHUT_RDWR means disallow sending and receiving
         ::close(session_socket);               // Actually release the socket
         session_socket = -1;
-        std::cout << "SAM session closed\n";
+        #ifdef NEROSHOP_DEBUG
+        std::cout << "SAM session (" << get_nickname() << ") closed\n";
+        #endif
     }
 }
 

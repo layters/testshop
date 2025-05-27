@@ -1,5 +1,5 @@
 install(
-    FILES neromon.desktop
+    FILES neroshopd.desktop
     DESTINATION share/applications/
 )
 

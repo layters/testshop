@@ -2,6 +2,6 @@
 Name=Neroshop Daemon
 Comment=Daemon server for neroshop
 Icon=neroshop
-Exec=neromon
+Exec=neroshopd
 Type=Application
 Categories=Network;
