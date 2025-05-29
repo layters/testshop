@@ -36,6 +36,7 @@ NeroShop is a decentralized peer-to-peer marketplace for trading goods and servi
 ![ProductPage](https://github.com/layters/testshop/blob/main/assets/images/screenshots/ProductPage.png)
 ![SettingsDialog_Network](https://github.com/layters/testshop/blob/main/assets/images/screenshots/SettingsDialog_Monero.png)
 ![SettingsDialog_General](https://github.com/layters/testshop/blob/main/assets/images/screenshots/SettingsDialog_General.png)
+![SettingsDialog_Peers](https://github.com/layters/testshop/blob/main/assets/images/screenshots/SettingsDialog_Peers.png)
 ![HomePage](https://github.com/layters/testshop/blob/main/assets/images/screenshots/HomePage.png)
 ![HomePage_Recent_Listings](https://github.com/layters/testshop/blob/main/assets/images/screenshots/HomePage_Recent_Listings.png)
 ![Dashboard](https://github.com/layters/testshop/blob/main/assets/images/screenshots/Dashboard_Overview.png)
