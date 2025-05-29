@@ -95,7 +95,7 @@ Item {
 
                     Label {
                         id: nodeStatusLabel
-                        text: (typeof modelData === "string") ? qsTr("\uf1ce") : (status ? qsTr("\uf14a") : qsTr("\uf00d"))//"✅" : "❌"
+                        text: (typeof modelData === "string") ? qsTr("\uf1ce") : (status ? qsTr("\uf14a") : qsTr(FontAwesome.squareXmark))//"✅" : "❌"
                         color: (typeof modelData === "string") ? "royalblue" : (status ? "#698b22" : "#dd4b4b")
                         font.bold: true
                         font.family: FontAwesome.fontFamily
@@ -120,6 +120,8 @@ Item {
                         color: nodeAddressLabel.color
                         font.bold: nodeAddressLabel.font.bold
                         elide: Label.ElideRight
+                        horizontalAlignment: Text.AlignHCenter
+                        verticalAlignment: Text.AlignVCenter
                     }
                 }
             }

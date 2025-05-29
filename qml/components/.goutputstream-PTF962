@@ -54,7 +54,6 @@ Item {
 
             Rectangle {
                 id: statusTitle
-                visible: false
                 Layout.minimumWidth: 100
                 Layout.minimumHeight: parent.titleBoxMinHeight
                 color: "#6c6c6f"
@@ -176,7 +175,6 @@ Item {
 
                     Label {
                         id: peerStatusLabel
-                        visible: statusTitle.visible
                         Layout.minimumWidth: statusTitle.width
                         Layout.maximumWidth: statusTitle.width
                         text: (typeof modelData !== "object") ? "- -" : ((modelData.status == 2) ? qsTr("Online") : qsTr("Offline"))//modelData.status_str
