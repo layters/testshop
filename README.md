@@ -252,8 +252,6 @@ WW2pQTQWHpyJf2CHrCmZG7Tn3zBnYRZTH8g4U3pSZf5s6xsTXrZc9odDWmrWzjRc9MMQWrKXxjHsRdzH
 ## Thanks
 * [yuriio147](https://github.com/yuriio147)
 * [u/EchoingCat](https://www.reddit.com/user/EchoingCat/)
-* [woodser](https://github.com/woodser)
-* [lza_menace](https://twitter.com/lza_menace)
 
 [//]: # (git checkout -b main)
 [//]: # (git add .gitignore .gitmodules assets/ cmake/ CMakeLists.txt external/ LICENSE meson.build meson.options qml/ qml.qrc README.md src/ tests/)
