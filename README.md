@@ -76,7 +76,6 @@ NeroShop is a decentralized peer-to-peer marketplace for trading goods and servi
 | [cxxopts](https://github.com/jarro2783/cxxopts)                    | ?                  | command line option parser                                             | :heavy_check_mark: :package:                       |
 | [libi2pd](https://github.com/PurpleI2P/i2pd)                       | latest             | network proxy                                                          | :heavy_check_mark: :package:                       |
 | [fmt](https://github.com/fmtlib/fmt)                               | ?                  | log formatting                                                         | :heavy_check_mark: :package:                       |
-| [libjuice](https://github.com/paullouisageneau/libjuice)           | ?                  | nat traversal                                                          | :heavy_check_mark: :package:                       |
 
 ### Compiling neroshop from source
 **0. Install prerequisites**
@@ -257,4 +256,4 @@ WW2pQTQWHpyJf2CHrCmZG7Tn3zBnYRZTH8g4U3pSZf5s6xsTXrZc9odDWmrWzjRc9MMQWrKXxjHsRdzH
 [//]: # (git commit -m"..."    or    git commit -a --allow-empty-message -m "")
 [//]: # (sudo git push -u origin backup --force)
 [//]: # (adding an external lib to submodules index: git submodule add <url> external/<folder>)
-[//]: # (removing an external lib from submodules index: git rm --cached external/<folder> -f -r)
+[//]: # (removing an external lib from submodules index: git rm -rf --cached external/<folder>)
