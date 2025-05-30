@@ -394,6 +394,15 @@ set(fmt_include_dir ${CMAKE_CURRENT_SOURCE_DIR}/external/fmt/include) # v11.1.4
 set(fmt_src ${CMAKE_CURRENT_SOURCE_DIR}/build/libfmt.a)
 
 ######################################
+# libjuice
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/external/libjuice/include/)
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/build/libjuice.a")
+    option(NEROSHOP_USE_LIBJUICE "Build neroshop with libjuice" ON)
+    message(STATUS "Using libjuice")
+    set(juice_src ${CMAKE_CURRENT_SOURCE_DIR}/build/libjuice.a)
+endif()
+
+######################################
 # neroshop link directories
 link_directories(${CMAKE_CURRENT_SOURCE_DIR}/build) # target_link_directories only available in CMake version 3.13 :(
 
@@ -408,6 +417,16 @@ set(neroshop_crypto_src
 set(neroshop_database_src 
     ${NEROSHOP_CORE_SRC_DIR}/database/database.cpp 
     ${NEROSHOP_CORE_SRC_DIR}/database/sqlite3/sqlite3.cpp
+)
+
+set(neroshop_market_src 
+    ${NEROSHOP_CORE_SRC_DIR}/market/cart.cpp 
+    ${NEROSHOP_CORE_SRC_DIR}/market/escrow.cpp 
+    ${NEROSHOP_CORE_SRC_DIR}/market/listing.cpp 
+    ${NEROSHOP_CORE_SRC_DIR}/market/order.cpp 
+    ${NEROSHOP_CORE_SRC_DIR}/market/product.cpp 
+    ${NEROSHOP_CORE_SRC_DIR}/market/seller.cpp 
+    ${NEROSHOP_CORE_SRC_DIR}/market/user.cpp 
 )
 
 set(neroshop_network_src 
@@ -451,16 +470,6 @@ set(neroshop_wallet_src
     #[[${NEROSHOP_CORE_SRC_DIR}/wallet/monero/monero.cpp]]
 )
 
-set(neroshop_market_src 
-    ${NEROSHOP_CORE_SRC_DIR}/market/cart.cpp 
-    ${NEROSHOP_CORE_SRC_DIR}/market/escrow.cpp 
-    ${NEROSHOP_CORE_SRC_DIR}/market/listing.cpp 
-    ${NEROSHOP_CORE_SRC_DIR}/market/order.cpp 
-    ${NEROSHOP_CORE_SRC_DIR}/market/product.cpp 
-    ${NEROSHOP_CORE_SRC_DIR}/market/seller.cpp 
-    ${NEROSHOP_CORE_SRC_DIR}/market/user.cpp 
-)
-
 set(neroshop_core_src 
     ${neroshop_crypto_src} 
     ${neroshop_database_src} 
@@ -473,7 +482,7 @@ set(neroshop_core_src
     ${NEROSHOP_CORE_SRC_DIR}/settings.cpp 
 )
 
-set(neroshop_client_src ${neroshop_crypto_src} ${neroshop_database_src} ${neroshop_network_src} ${neroshop_price_src} ${NEROSHOP_CORE_SRC_DIR}/protocol/p2p/file_piece_hasher.cpp ${NEROSHOP_CORE_SRC_DIR}/protocol/p2p/serializer.cpp ${NEROSHOP_CORE_SRC_DIR}/protocol/rpc/json_rpc.cpp ${NEROSHOP_CORE_SRC_DIR}/protocol/transport/client.cpp ${neroshop_tools_src} ${neroshop_wallet_src} ${neroshop_market_src} ${NEROSHOP_CORE_SRC_DIR}/settings.cpp)
+set(neroshop_client_src ${neroshop_crypto_src} ${neroshop_database_src} ${neroshop_market_src} ${neroshop_network_src} ${neroshop_price_src} ${NEROSHOP_CORE_SRC_DIR}/protocol/p2p/file_piece_hasher.cpp ${NEROSHOP_CORE_SRC_DIR}/protocol/p2p/serializer.cpp ${NEROSHOP_CORE_SRC_DIR}/protocol/rpc/json_rpc.cpp ${NEROSHOP_CORE_SRC_DIR}/protocol/transport/client.cpp ${neroshop_tools_src} ${neroshop_wallet_src} ${NEROSHOP_CORE_SRC_DIR}/settings.cpp)
 
 ######################################
 # neroshop tests
@@ -492,8 +501,11 @@ install(TARGETS ${neroshop_daemon} DESTINATION bin)
 if(NOT CMAKE_BUILD_TYPE STREQUAL "Release" AND NOT CMAKE_BUILD_TYPE STREQUAL "MinSizeRel")
     target_compile_definitions(${neroshop_daemon} PRIVATE NEROSHOP_DEBUG)
 endif()
+if(NEROSHOP_USE_LIBJUICE)
+    target_compile_definitions(${neroshop_daemon} PRIVATE NEROSHOP_USE_LIBJUICE)
+endif()
 target_include_directories(${neroshop_daemon} PRIVATE #[[${CMAKE_CURRENT_SOURCE_DIR}/src/]] ${monero_include_dirs} ${monero_cpp_include_dir} ${sqlite_include_dir} ${json_include_dir} ${zlib_include_dir} ${i2pd_include_dirs} ${fmt_include_dir} ${cxxopts_include_dir})
-target_link_libraries(${neroshop_daemon} ${i2pd_src} ${i2pd_daemon_src} ${monero_cpp_src} ${sqlite_src} ${monero_src} ${zlib_src} ${fmt_src})#set(CMAKE_CXX_LINK_EXECUTABLE "${CMAKE_CXX_LINK_EXECUTABLE} -ldl") # fixes undefined reference to symbol 'dlsym@@GLIBC_2.2.5' error
+target_link_libraries(${neroshop_daemon} ${i2pd_src} ${i2pd_daemon_src} ${monero_cpp_src} ${sqlite_src} ${monero_src} ${zlib_src} ${fmt_src} ${juice_src})#set(CMAKE_CXX_LINK_EXECUTABLE "${CMAKE_CXX_LINK_EXECUTABLE} -ldl") # fixes undefined reference to symbol 'dlsym@@GLIBC_2.2.5' error
 
 ######################################
 # neroshop-console

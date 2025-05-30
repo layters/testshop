@@ -8,13 +8,9 @@ external/CMakeCache.txt
 external/cmake_install.cmake
 external/Makefile
 
-external/openpgp/CMakeFiles/
-external/openpgp/CMakeCache.txt
-external/openpgp/CMakeCache.txt.tmpfdb34
-external/openpgp/cmake_install.cmake
-external/openpgp/Makefile
-
+external/LibJuiceConfig.cmake
 external/LibJuiceConfigVersion.cmake
+external/LibJuiceConfigVersion.cmake.tmp
 
 # copied from https://gist.github.com/Yousha/3830712334ac30a90eb6041b932b68d7#file-gitignore-L952
 ##### Windows
