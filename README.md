@@ -32,10 +32,10 @@ NeroShop is a decentralized peer-to-peer marketplace for trading goods and servi
 ![Registration](https://github.com/layters/testshop/blob/main/assets/images/screenshots/Registration.png)
 ![Login](https://github.com/layters/testshop/blob/main/assets/images/screenshots/Login.png)
 ![CatalogGrid](https://github.com/layters/testshop/blob/main/assets/images/screenshots/CatalogGrid.png)
-![CatalogList](https://github.com/layters/testshop/blob/main/assets/images/screenshots/CatalogList.png)
 ![ProductPage](https://github.com/layters/testshop/blob/main/assets/images/screenshots/ProductPage.png)
 ![SettingsDialog_Network](https://github.com/layters/testshop/blob/main/assets/images/screenshots/SettingsDialog_Monero.png)
 ![SettingsDialog_General](https://github.com/layters/testshop/blob/main/assets/images/screenshots/SettingsDialog_General.png)
+![SettingsDialog_Peers](https://github.com/layters/testshop/blob/main/assets/images/screenshots/SettingsDialog_Peers.png)
 ![HomePage](https://github.com/layters/testshop/blob/main/assets/images/screenshots/HomePage.png)
 ![HomePage_Recent_Listings](https://github.com/layters/testshop/blob/main/assets/images/screenshots/HomePage_Recent_Listings.png)
 ![Dashboard](https://github.com/layters/testshop/blob/main/assets/images/screenshots/Dashboard_Overview.png)
@@ -76,6 +76,7 @@ NeroShop is a decentralized peer-to-peer marketplace for trading goods and servi
 | [cxxopts](https://github.com/jarro2783/cxxopts)                    | ?                  | command line option parser                                             | :heavy_check_mark: :package:                       |
 | [libi2pd](https://github.com/PurpleI2P/i2pd)                       | latest             | network proxy                                                          | :heavy_check_mark: :package:                       |
 | [fmt](https://github.com/fmtlib/fmt)                               | ?                  | log formatting                                                         | :heavy_check_mark: :package:                       |
+| [libjuice](https://github.com/paullouisageneau/libjuice)           | ?                  | nat traversal                                                          | :heavy_check_mark: :package:                       |
 
 ### Compiling neroshop from source
 **0. Install prerequisites**
@@ -161,7 +162,7 @@ cd ../
 ```
 
 <!-- git submodule update --init --force --recursive --> <!-- <= call this before building monero -->
-> Tip: Avoid using the `-j$(nproc)` option if you have <= 4 CPU cores and <= 4GB RAM to prevent system crashes.
+> Tip: Avoid using the `-j$(nproc)` option if you have <= 4 CPU cores and <= 4GB RAM to prevent system crashes. Use `-j1` instead.
 
 **4. Build monero-project to create .a libraries**
 ```bash
@@ -242,22 +243,18 @@ WW2pQTQWHpyJf2CHrCmZG7Tn3zBnYRZTH8g4U3pSZf5s6xsTXrZc9odDWmrWzjRc9MMQWrKXxjHsRdzH
 - DHT Specification: [specs](https://github.com/layters/specs)
 - Git Mirrors: 
     - [Codeberg](https://codeberg.org/layter/neroshop)
-    - [Gitea](https://git.wownero.com/layter/neroshop)
     - [Radicle](https://radicle.xyz): `rad:z2Y72SYpHTkiRXrn4hkZaf1VYhc7J`
 - Lemmy: https://monero.town/c/neroshop
-- Mail: neroshop@protonmail.com
 - Matrix: [#neroshop:matrix.org](https://matrix.to/#/#neroshop:matrix.org)
 
 
 ## Thanks
 * [yuriio147](https://github.com/yuriio147)
 * [u/EchoingCat](https://www.reddit.com/user/EchoingCat/)
-* [woodser](https://github.com/woodser)
-* [lza_menace](https://twitter.com/lza_menace)
 
 [//]: # (git checkout -b main)
 [//]: # (git add .gitignore .gitmodules assets/ cmake/ CMakeLists.txt external/ LICENSE meson.build meson.options qml/ qml.qrc README.md src/ tests/)
 [//]: # (git commit -m"..."    or    git commit -a --allow-empty-message -m "")
 [//]: # (sudo git push -u origin backup --force)
-[//]: # (https://git.wownero.com/layter/neroshop/settings => Mirror Settings => Synchronize Now)
-[//]: # (removing an external lib from submodules index: git rm --cached path/to/submodule)
+[//]: # (adding an external lib to submodules index: git submodule add <url> external/<folder>)
+[//]: # (removing an external lib from submodules index: git rm --cached external/<folder> -f -r)

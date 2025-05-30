@@ -47,6 +47,8 @@ Object {
     property string eyeSlash: "\uf070"
     property string check: "\uf00c"
     property string xmark: "\uf00d"
+    property string squareXmark: "\uf2d3"
+    property string rectangleXmark: "\uf410"
     property string circleInfo: "\uf05a"
     property string triangleExclamation: "\uf071"
     property string circleExclamation: "\uf06a"

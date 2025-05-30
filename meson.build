@@ -299,6 +299,16 @@ neroshop_database_srcs = [
     neroshop_core_src_dir + '/database/sqlite3/sqlite3.cpp'
 ]
 
+neroshop_market_srcs = [
+    neroshop_core_src_dir + '/market/cart.cpp',
+    neroshop_core_src_dir + '/market/escrow.cpp',
+    neroshop_core_src_dir + '/market/listing.cpp',
+    neroshop_core_src_dir + '/market/order.cpp',
+    neroshop_core_src_dir + '/market/product.cpp',
+    neroshop_core_src_dir + '/market/seller.cpp',
+    neroshop_core_src_dir + '/market/user.cpp'
+]
+
 neroshop_network_srcs = [
     neroshop_core_src_dir + '/network/i2p.cpp'
 ]
@@ -337,16 +347,6 @@ neroshop_tools_srcs = [
 
 neroshop_wallet_srcs = [
     neroshop_core_src_dir + '/wallet/wallet.cpp'
-]
-
-neroshop_market_srcs = [
-    neroshop_core_src_dir + '/market/cart.cpp',
-    neroshop_core_src_dir + '/market/escrow.cpp',
-    neroshop_core_src_dir + '/market/listing.cpp',
-    neroshop_core_src_dir + '/market/order.cpp',
-    neroshop_core_src_dir + '/market/product.cpp',
-    neroshop_core_src_dir + '/market/seller.cpp',
-    neroshop_core_src_dir + '/market/user.cpp'
 ]
 
 neroshop_client_srcs = [
