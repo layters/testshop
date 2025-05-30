@@ -91,10 +91,5 @@ set(fmt_srcs fmt/src/format.cc fmt/src/os.cc)
 add_library(${fmt_target} STATIC ${fmt_srcs})
 target_include_directories(${fmt_target} PUBLIC fmt/include/)
 
-set(BUILD_SHARED_LIBS OFF CACHE BOOL "Build shared libraries" FORCE)
-set(NO_TESTS ON CACHE BOOL "Disable tests build" FORCE)
-add_subdirectory(libjuice)
-set_target_properties(juice PROPERTIES ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/../build" LIBRARY_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/../build" RUNTIME_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/../build")
-
 # cmake .
 # make -j$(nproc)
