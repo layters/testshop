@@ -3,7 +3,7 @@
 #include "cart.hpp"
 #include "../price_api/currency_converter.hpp" // currency converter, enums.hpp
 #include "../settings.hpp" // neroshop::lua_state
-#include "../database/database.hpp"
+////#include "../database/database.hpp"
 #include "../tools/logger.hpp"
 #include "../tools/string.hpp"
 #include "../tools/uuid.hpp" // neroshop::uuid::generate()
@@ -12,6 +12,8 @@
 #include "../tools/timestamp.hpp"
 
 #include <unordered_set>
+
+#include <nlohmann/json.hpp>
 
 namespace neroshop {
 ////////////////////

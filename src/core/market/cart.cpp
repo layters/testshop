@@ -58,40 +58,44 @@ void Cart::load(const std::string& user_id) {
     this->id = database->get_text_params("SELECT uuid FROM cart WHERE user_id = $1", { user_id });
     // Set the cart's owner id
     this->owner_id = user_id;
-    // Prepare (compile) statement
-    std::string command = "SELECT listing_key, quantity, seller_id FROM cart_item WHERE cart_id = $1";
-    sqlite3_stmt * stmt = nullptr;
-    if(sqlite3_prepare_v2(database->get_handle(), command.c_str(), -1, &stmt, nullptr) != SQLITE_OK) {
-        neroshop::log_error("sqlite3_prepare_v2: " + std::string(sqlite3_errmsg(database->get_handle())));
-        return;
-    }
-    // Check whether the prepared statement returns no data (for example an UPDATE)
-    if(sqlite3_column_count(stmt) == 0) {
-        neroshop::log_debug("Cart::load(): You have no items your cart");
-        return;
-    }
-    // Bind cart_id to first argument
-    if(sqlite3_bind_text(stmt, 1, this->id.c_str(), this->id.length(), SQLITE_STATIC) != SQLITE_OK) {
-        neroshop::log_error("sqlite3_bind_text (arg: 1): " + std::string(sqlite3_errmsg(database->get_handle())));
-        sqlite3_finalize(stmt);
-        return;////database->execute("ROLLBACK;"); return;
-    }
-    // Get all table values row by row
-    while(sqlite3_step(stmt) == SQLITE_ROW) {
-        CartItem cart_item; // Create a CartItem object for each row
-        for(int i = 0; i < sqlite3_column_count(stmt); i++) {
-            std::string column_value = (sqlite3_column_text(stmt, i) == nullptr) ? "NULL" : reinterpret_cast<const char *>(sqlite3_column_text(stmt, i));
-            if(column_value == "NULL") { std::cout << "NULL cart_item column skipped"; continue; }
-            if(i == 0) cart_item.key = column_value; // listing key
-            if(i == 1) cart_item.quantity = std::stoi(column_value); // quantity
-            if(i == 2) cart_item.seller_id = column_value; // seller id
+    // Lock only for raw handle usage
+    {
+        ////if (database->is_mutex_enabled()) std::lock_guard<std::mutex> db_lock(database->get_mutex());
+        // Prepare (compile) statement
+        std::string command = "SELECT listing_key, quantity, seller_id FROM cart_item WHERE cart_id = $1";
+        sqlite3_stmt * stmt = nullptr;
+        if(sqlite3_prepare_v2(database->get_handle(), command.c_str(), -1, &stmt, nullptr) != SQLITE_OK) {
+            neroshop::log_error("sqlite3_prepare_v2: " + std::string(sqlite3_errmsg(database->get_handle())));
+            return;
         }
-        contents.push_back(cart_item);
-        ////neroshop::log_info("loaded cart item (id: " + cart_item.key + ", qty: " + std::to_string(cart_item.quantity) + ")");
-    }
-    // Finalize statement
-    sqlite3_finalize(stmt);
-    /////////////////////////////
+        // Check whether the prepared statement returns no data (for example an UPDATE)
+        if(sqlite3_column_count(stmt) == 0) {
+            neroshop::log_debug("Cart::load(): You have no items your cart");
+            return;
+        }
+        // Bind cart_id to first argument
+        if(sqlite3_bind_text(stmt, 1, this->id.c_str(), this->id.length(), SQLITE_STATIC) != SQLITE_OK) {
+            neroshop::log_error("sqlite3_bind_text (arg: 1): " + std::string(sqlite3_errmsg(database->get_handle())));
+            sqlite3_finalize(stmt);
+            return;////database->execute("ROLLBACK;"); return;
+        }
+        // Get all table values row by row
+        while(sqlite3_step(stmt) == SQLITE_ROW) {
+            CartItem cart_item; // Create a CartItem object for each row
+            for(int i = 0; i < sqlite3_column_count(stmt); i++) {
+                std::string column_value = (sqlite3_column_text(stmt, i) == nullptr) ? "NULL" : reinterpret_cast<const char *>(sqlite3_column_text(stmt, i));
+                if(column_value == "NULL") { std::cout << "NULL cart_item column skipped"; continue; }
+                if(i == 0) cart_item.key = column_value; // listing key
+                if(i == 1) cart_item.quantity = std::stoi(column_value); // quantity
+                if(i == 2) cart_item.seller_id = column_value; // seller id
+            }
+            contents.push_back(cart_item);
+            ////neroshop::log_info("loaded cart item (id: " + cart_item.key + ", qty: " + std::to_string(cart_item.quantity) + ")");
+        }
+        // Finalize statement
+        sqlite3_finalize(stmt);
+    } // Mutex released here
+    //----------------------------------
     // Update item quantities based on stock available
     for (auto& cart_item : contents) {
         std::string listing_key = cart_item.key;

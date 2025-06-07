@@ -28,6 +28,7 @@ set(sqlite_srcs sqlite/sqlite3.c)
 add_library(${sqlite3} STATIC ${sqlite_srcs})
 target_include_directories(${sqlite3} PUBLIC sqlite/)
 target_compile_definitions(${sqlite3} PUBLIC SQLITE_ENABLE_FTS5)
+target_compile_definitions(${sqlite3} PUBLIC SQLITE_THREADSAFE=1) # 1=serialized mode (default), 0=single-thread, 2=multi-thread
 
 set(linenoise_target "linenoise")
 set(linenoise_srcs linenoise/linenoise.c)

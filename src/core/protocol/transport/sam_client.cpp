@@ -360,7 +360,7 @@ void SamClient::session_close() {
         ::close(session_socket);               // Actually release the socket
         session_socket = -1;
         #ifdef NEROSHOP_DEBUG
-        std::cout << "SAM session (" << get_nickname() << ") closed\n";
+        std::cout << "SAM session (" << get_nickname() << ") closed\n";//log_debug("SAM: Session {}{}{} closed", color_yellow, get_nickname(), color_reset);
         #endif
     }
 }
