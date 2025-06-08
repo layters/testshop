@@ -9,9 +9,23 @@
 #include <QStandardPaths>
 #endif
 
-// neroshop (includes both the core headers and the gui headers)
+#include "currency_rate_provider.hpp"
+#include "settings_manager.hpp"
+#include "backend.hpp"
+#include "daemon_manager.hpp"
+#include "proxy_manager.hpp"
+#include "wallet_manager.hpp"
+#include "settings_manager.hpp"
+#include "user_manager.hpp"
+#include "enum_wrapper.hpp"
+#include "wallet_qr_provider.hpp"
+#include "image_provider.hpp"
 #include "../neroshop_config.hpp"
-#include "../neroshop.hpp"
+#include "../core/tools/filesystem.hpp"
+#include "../core/tools/logger.hpp"
+#include "../core/version.hpp"
+#include "../core/settings.hpp"
+
 using namespace neroshop;
 
 static const QString WALLET_QR_PROVIDER {"wallet_qr"};

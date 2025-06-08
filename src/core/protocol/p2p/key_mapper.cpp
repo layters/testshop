@@ -12,44 +12,7 @@ namespace neroshop {
 //-----------------------------------------------------------------------------
 
 KeyMapper::~KeyMapper() noexcept {
-    {
-        std::unique_lock lock(user_mutex);
-        user_ids.clear();
-        display_names.clear();
-    }
-    
-    {
-        std::unique_lock lock(listing_mutex);
-        product_ids.clear();
-        product_names.clear();
-        product_categories.clear();
-        product_tags.clear();
-        product_codes.clear();
-        listing_ids.clear();
-        listing_locations.clear();
-        seller_ids.clear();
-    }
-    
-    {
-        std::unique_lock lock(order_mutex);
-        order_ids.clear();
-        order_recipients.clear();
-    }
-    
-    {
-        std::unique_lock lock(product_rating_mutex);
-        product_ratings.clear();
-    }
-    
-    {
-        std::unique_lock lock(seller_rating_mutex);
-        seller_ratings.clear();
-    }
-    
-    {
-        std::unique_lock lock(message_mutex);
-        messages.clear();
-    }
+    clear_cache();
 }
 
 //-----------------------------------------------------------------------------
@@ -195,338 +158,412 @@ void KeyMapper::sync() {
     db::Sqlite3 * database = neroshop::get_database();
     if(!database) throw std::runtime_error("database is NULL");
     
-    //database->execute("BEGIN TRANSACTION;");
+    ////database->execute("BEGIN IMMEDIATE;");
     //-----------------------------------------------
     // USER-related: user_ids and display_names
+    std::unordered_map<std::string, std::vector<std::string>> user_ids_copy;
+    std::unordered_map<std::string, std::vector<std::string>> display_names_copy;
     {
         std::shared_lock lock(user_mutex);
-        for (const auto& entry : user_ids) {
-            const std::string& search_term = entry.first;
-            const std::vector<std::string>& keys = entry.second;
-            const std::string content = "user";
+        user_ids_copy = user_ids; // Copy while holding lock
+        display_names_copy = display_names;
+    }
+    for (const auto& entry : user_ids_copy) {
+        const std::string& search_term = entry.first;
+        const std::vector<std::string>& keys = entry.second;
+        const std::string content = "user";
 
-            for (const std::string& key : keys) {
-                // Ignore any empty keys
-                if(key.empty() || key.length() != 64) continue;
-                // Check if the record already exists
-                std::string select_query = "SELECT COUNT(*) FROM mappings WHERE search_term = ? AND key = ?;";
-                bool exists = database->get_integer_params(select_query, { search_term, key });
+        for (const std::string& key : keys) {
+            // Ignore any empty keys
+            if(key.empty() || key.length() != 64) continue;
+            // Check if the record already exists
+            std::string select_query = "SELECT COUNT(*) FROM mappings WHERE search_term = ? AND key = ?;";
+            bool exists = database->get_integer_params(select_query, { search_term, key });
             
-                // If no duplicate record found, perform insertion
-                if(!exists) {
-                    std::string insert_query = "INSERT INTO mappings (search_term, key, content) VALUES (?, ?, ?);";
-                    database->execute_params(insert_query, { search_term, key, content });
-                }
+            // If no duplicate record found, perform insertion
+            if(!exists) {
+                std::string insert_query = "INSERT INTO mappings (search_term, key, content) VALUES (?, ?, ?);";
+                database->execute_params(insert_query, { search_term, key, content });
             }
         }
+    }
         
-        for (const auto& entry : display_names) {
-            const std::string& search_term = entry.first;
-            const std::vector<std::string>& keys = entry.second;
-            const std::string content = "user";
+    for (const auto& entry : display_names_copy) {
+        const std::string& search_term = entry.first;
+        const std::vector<std::string>& keys = entry.second;
+        const std::string content = "user";
 
-            for (const std::string& key : keys) {
-                // Ignore any empty keys
-                if(key.empty() || key.length() != 64) continue;
-                // Check if the record already exists
-                std::string select_query = "SELECT COUNT(*) FROM mappings WHERE search_term = ? AND key = ?;";
-                bool exists = database->get_integer_params(select_query, { search_term, key });
+        for (const std::string& key : keys) {
+            // Ignore any empty keys
+            if(key.empty() || key.length() != 64) continue;
+            // Check if the record already exists
+            std::string select_query = "SELECT COUNT(*) FROM mappings WHERE search_term = ? AND key = ?;";
+            bool exists = database->get_integer_params(select_query, { search_term, key });
             
-                // If no duplicate record found, perform insertion
-                if(!exists) {
-                    std::string insert_query = "INSERT INTO mappings (search_term, key, content) VALUES (?, ?, ?);";
-                    database->execute_params(insert_query, { search_term, key, content });
-                }
+            // If no duplicate record found, perform insertion
+            if(!exists) {
+                std::string insert_query = "INSERT INTO mappings (search_term, key, content) VALUES (?, ?, ?);";
+                database->execute_params(insert_query, { search_term, key, content });
             }
         }
     }
     //-----------------------------------------------
     // LISTING-related data
+    std::unordered_map<std::string, std::vector<std::string>> product_ids_copy;
+    std::unordered_map<std::string, std::vector<std::string>> product_names_copy;
+    std::unordered_map<std::string, std::vector<std::string>> product_categories_copy;
+    std::unordered_map<std::string, std::vector<std::string>> product_tags_copy;
+    std::unordered_map<std::string, std::vector<std::string>> product_codes_copy;
+    std::unordered_map<std::string, std::vector<std::string>> listing_ids_copy;
+    std::unordered_map<std::string, std::vector<std::string>> listing_locations_copy;
+    std::unordered_map<std::string, std::vector<std::string>> seller_ids_copy;
     {
         std::shared_lock lock(listing_mutex);
-        // Insert data from 'product_ids'
-        for (const auto& entry : product_ids) {
-            const std::string& search_term = entry.first;
-            const std::vector<std::string>& keys = entry.second;
-            const std::string content = "listing";
+        product_ids_copy = product_ids;
+        product_names_copy = product_names;
+        product_categories_copy = product_categories;
+        product_tags_copy = product_tags;
+        product_codes_copy = product_codes;
+        listing_ids_copy = listing_ids;
+        listing_locations_copy = listing_locations;
+        seller_ids_copy = seller_ids;
+    }
+    // Insert data from 'product_ids'
+    for (const auto& entry : product_ids_copy) {
+        const std::string& search_term = entry.first;
+        const std::vector<std::string>& keys = entry.second;
+        const std::string content = "listing";
 
-            for (const std::string& key : keys) {
-                // Ignore any empty keys
-                if(key.empty() || key.length() != 64) continue;
-                // Check if the record already exists
-                std::string select_query = "SELECT COUNT(*) FROM mappings WHERE search_term = ? AND key = ?;";
-                bool exists = database->get_integer_params(select_query, { search_term, key });
+        for (const std::string& key : keys) {
+            // Ignore any empty keys
+            if(key.empty() || key.length() != 64) continue;
+            // Check if the record already exists
+            std::string select_query = "SELECT COUNT(*) FROM mappings WHERE search_term = ? AND key = ?;";
+            bool exists = database->get_integer_params(select_query, { search_term, key });
             
-                // If no duplicate record found, perform insertion
-                if(!exists) {
-                    std::string insert_query = "INSERT INTO mappings (search_term, key, content) VALUES (?, ?, ?);";
-                    database->execute_params(insert_query, { search_term, key, content });
-                }
+            // If no duplicate record found, perform insertion
+            if(!exists) {
+                std::string insert_query = "INSERT INTO mappings (search_term, key, content) VALUES (?, ?, ?);";
+                database->execute_params(insert_query, { search_term, key, content });
             }
         }
-        // Insert data from 'product_names'
-        for (const auto& entry : product_names) {
-            const std::string& search_term = entry.first;
-            const std::vector<std::string>& keys = entry.second;
-            const std::string content = "listing";
+    }
+    // Insert data from 'product_names'
+    for (const auto& entry : product_names_copy) {
+        const std::string& search_term = entry.first;
+        const std::vector<std::string>& keys = entry.second;
+        const std::string content = "listing";
 
-            for (const std::string& key : keys) {
-                // Ignore any empty keys
-                if(key.empty() || key.length() != 64) continue;
-                // Check if the record already exists
-                std::string select_query = "SELECT COUNT(*) FROM mappings WHERE search_term = ? AND key = ?;";
-                bool exists = database->get_integer_params(select_query, { search_term, key });
+        for (const std::string& key : keys) {
+            // Ignore any empty keys
+            if(key.empty() || key.length() != 64) continue;
+            // Check if the record already exists
+            std::string select_query = "SELECT COUNT(*) FROM mappings WHERE search_term = ? AND key = ?;";
+            bool exists = database->get_integer_params(select_query, { search_term, key });
             
-                // If no duplicate record found, perform insertion
-                if(!exists) {
-                    std::string insert_query = "INSERT INTO mappings (search_term, key, content) VALUES (?, ?, ?);";
-                    database->execute_params(insert_query, { search_term, key, content });
-                }
+            // If no duplicate record found, perform insertion
+            if(!exists) {
+                std::string insert_query = "INSERT INTO mappings (search_term, key, content) VALUES (?, ?, ?);";
+                database->execute_params(insert_query, { search_term, key, content });
             }
         }
-        // Insert data from 'product_categories'
-        for (const auto& entry : product_categories) {
-            const std::string& search_term = entry.first;
-            const std::vector<std::string>& keys = entry.second;
-            const std::string content = "listing";
+    }
+    // Insert data from 'product_categories'
+    for (const auto& entry : product_categories_copy) {
+        const std::string& search_term = entry.first;
+        const std::vector<std::string>& keys = entry.second;
+        const std::string content = "listing";
 
-            for (const std::string& key : keys) {
-                // Ignore any empty keys
-                if(key.empty() || key.length() != 64) continue;
-                // Check if the record already exists
-                std::string select_query = "SELECT COUNT(*) FROM mappings WHERE search_term = ? AND key = ?;";
-                bool exists = database->get_integer_params(select_query, { search_term, key });
+        for (const std::string& key : keys) {
+            // Ignore any empty keys
+            if(key.empty() || key.length() != 64) continue;
+            // Check if the record already exists
+            std::string select_query = "SELECT COUNT(*) FROM mappings WHERE search_term = ? AND key = ?;";
+            bool exists = database->get_integer_params(select_query, { search_term, key });
             
-                // If no duplicate record found, perform insertion
-                if(!exists) {
-                    std::string insert_query = "INSERT INTO mappings (search_term, key, content) VALUES (?, ?, ?);";
-                    database->execute_params(insert_query, { search_term, key, content });
-                }
+            // If no duplicate record found, perform insertion
+            if(!exists) {
+                std::string insert_query = "INSERT INTO mappings (search_term, key, content) VALUES (?, ?, ?);";
+                database->execute_params(insert_query, { search_term, key, content });
             }
         }
-        // Insert data from 'product_tags'
-        for (const auto& entry : product_tags) {
-            const std::string& search_term = entry.first;
-            const std::vector<std::string>& keys = entry.second;
-            const std::string content = "listing";
+    }
+    // Insert data from 'product_tags'
+    for (const auto& entry : product_tags_copy) {
+        const std::string& search_term = entry.first;
+        const std::vector<std::string>& keys = entry.second;
+        const std::string content = "listing";
 
-            for (const std::string& key : keys) {
-                // Ignore any empty keys
-                if(key.empty() || key.length() != 64) continue;
-                // Check if the record already exists
-                std::string select_query = "SELECT COUNT(*) FROM mappings WHERE search_term = ? AND key = ?;";
-                bool exists = database->get_integer_params(select_query, { search_term, key });
+        for (const std::string& key : keys) {
+            // Ignore any empty keys
+            if(key.empty() || key.length() != 64) continue;
+            // Check if the record already exists
+            std::string select_query = "SELECT COUNT(*) FROM mappings WHERE search_term = ? AND key = ?;";
+            bool exists = database->get_integer_params(select_query, { search_term, key });
             
-                // If no duplicate record found, perform insertion
-                if(!exists) {
-                    std::string insert_query = "INSERT INTO mappings (search_term, key, content) VALUES (?, ?, ?);";
-                    database->execute_params(insert_query, { search_term, key, content });
-                }
-            }
-        }        
-        // Insert data from 'product_codes'
-        for (const auto& entry : product_codes) {
-            const std::string& search_term = entry.first;
-            const std::vector<std::string>& keys = entry.second;
-            const std::string content = "listing";
-
-            for (const std::string& key : keys) {
-                // Ignore any empty keys
-                if(key.empty() || key.length() != 64) continue;
-                // Check if the record already exists
-                std::string select_query = "SELECT COUNT(*) FROM mappings WHERE search_term = ? AND key = ?;";
-                bool exists = database->get_integer_params(select_query, { search_term, key });
-            
-                // If no duplicate record found, perform insertion
-                if(!exists) {
-                    std::string insert_query = "INSERT INTO mappings (search_term, key, content) VALUES (?, ?, ?);";
-                    database->execute_params(insert_query, { search_term, key, content });
-                }
+            // If no duplicate record found, perform insertion
+            if(!exists) {
+                std::string insert_query = "INSERT INTO mappings (search_term, key, content) VALUES (?, ?, ?);";
+                database->execute_params(insert_query, { search_term, key, content });
             }
         }
-        // Insert data from 'listing_ids'
-        for (const auto& entry : listing_ids) {
-            const std::string& search_term = entry.first;
-            const std::vector<std::string>& keys = entry.second;
-            const std::string content = "listing";
+    }        
+    // Insert data from 'product_codes'
+    for (const auto& entry : product_codes_copy) {
+        const std::string& search_term = entry.first;
+        const std::vector<std::string>& keys = entry.second;
+        const std::string content = "listing";
 
-            for (const std::string& key : keys) {
-                // Ignore any empty keys
-                if(key.empty() || key.length() != 64) continue;
-                // Check if the record already exists
-                std::string select_query = "SELECT COUNT(*) FROM mappings WHERE search_term = ? AND key = ?;";
-                bool exists = database->get_integer_params(select_query, { search_term, key });
+        for (const std::string& key : keys) {
+            // Ignore any empty keys
+            if(key.empty() || key.length() != 64) continue;
+            // Check if the record already exists
+            std::string select_query = "SELECT COUNT(*) FROM mappings WHERE search_term = ? AND key = ?;";
+            bool exists = database->get_integer_params(select_query, { search_term, key });
             
-                // If no duplicate record found, perform insertion
-                if(!exists) {
-                    std::string insert_query = "INSERT INTO mappings (search_term, key, content) VALUES (?, ?, ?);";
-                    database->execute_params(insert_query, { search_term, key, content });
-                }
+            // If no duplicate record found, perform insertion
+            if(!exists) {
+                std::string insert_query = "INSERT INTO mappings (search_term, key, content) VALUES (?, ?, ?);";
+                database->execute_params(insert_query, { search_term, key, content });
             }
-        }    
-        // Insert data from 'listing_locations'
-        for (const auto& entry : listing_locations) {
-            const std::string& search_term = entry.first;
-            const std::vector<std::string>& keys = entry.second;
-            const std::string content = "listing";
+        }
+    }
+    // Insert data from 'listing_ids'
+    for (const auto& entry : listing_ids_copy) {
+        const std::string& search_term = entry.first;
+        const std::vector<std::string>& keys = entry.second;
+        const std::string content = "listing";
 
-            for (const std::string& key : keys) {
-                // Ignore any empty keys
-                if(key.empty() || key.length() != 64) continue;
-                // Check if the record already exists
-                std::string select_query = "SELECT COUNT(*) FROM mappings WHERE search_term = ? AND key = ?;";
-                bool exists = database->get_integer_params(select_query, { search_term, key });
+        for (const std::string& key : keys) {
+            // Ignore any empty keys
+            if(key.empty() || key.length() != 64) continue;
+            // Check if the record already exists
+            std::string select_query = "SELECT COUNT(*) FROM mappings WHERE search_term = ? AND key = ?;";
+            bool exists = database->get_integer_params(select_query, { search_term, key });
             
-                // If no duplicate record found, perform insertion
-                if(!exists) {
-                    std::string insert_query = "INSERT INTO mappings (search_term, key, content) VALUES (?, ?, ?);";
-                    database->execute_params(insert_query, { search_term, key, content });
-                }
+            // If no duplicate record found, perform insertion
+            if(!exists) {
+                std::string insert_query = "INSERT INTO mappings (search_term, key, content) VALUES (?, ?, ?);";
+                database->execute_params(insert_query, { search_term, key, content });
             }
-        }        
-        // Insert data from 'seller_ids`
-        for (const auto& entry : seller_ids) {
-            const std::string& search_term = entry.first;
-            const std::vector<std::string>& keys = entry.second;
-            const std::string content = "listing";
+        }
+    }    
+    // Insert data from 'listing_locations'
+    for (const auto& entry : listing_locations_copy) {
+        const std::string& search_term = entry.first;
+        const std::vector<std::string>& keys = entry.second;
+        const std::string content = "listing";
 
-            for (const std::string& key : keys) {
-                // Ignore any empty keys
-                if(key.empty() || key.length() != 64) continue;
-                // Check if the record already exists
-                std::string select_query = "SELECT COUNT(*) FROM mappings WHERE search_term = ? AND key = ?;";
-                bool exists = database->get_integer_params(select_query, { search_term, key });
+        for (const std::string& key : keys) {
+            // Ignore any empty keys
+            if(key.empty() || key.length() != 64) continue;
+            // Check if the record already exists
+            std::string select_query = "SELECT COUNT(*) FROM mappings WHERE search_term = ? AND key = ?;";
+            bool exists = database->get_integer_params(select_query, { search_term, key });
             
-                // If no duplicate record found, perform insertion
-                if(!exists) {
-                    std::string insert_query = "INSERT INTO mappings (search_term, key, content) VALUES (?, ?, ?);";
-                    database->execute_params(insert_query, { search_term, key, content });
-                }
+            // If no duplicate record found, perform insertion
+            if(!exists) {
+                std::string insert_query = "INSERT INTO mappings (search_term, key, content) VALUES (?, ?, ?);";
+                database->execute_params(insert_query, { search_term, key, content });
+            }
+        }
+    }        
+    // Insert data from 'seller_ids`
+    for (const auto& entry : seller_ids_copy) {
+        const std::string& search_term = entry.first;
+        const std::vector<std::string>& keys = entry.second;
+        const std::string content = "listing";
+
+        for (const std::string& key : keys) {
+            // Ignore any empty keys
+            if(key.empty() || key.length() != 64) continue;
+            // Check if the record already exists
+            std::string select_query = "SELECT COUNT(*) FROM mappings WHERE search_term = ? AND key = ?;";
+            bool exists = database->get_integer_params(select_query, { search_term, key });
+            
+            // If no duplicate record found, perform insertion
+            if(!exists) {
+                std::string insert_query = "INSERT INTO mappings (search_term, key, content) VALUES (?, ?, ?);";
+                database->execute_params(insert_query, { search_term, key, content });
             }
         }
     }
     //-----------------------------------------------
     // ORDER-related data
+    std::unordered_map<std::string, std::vector<std::string>> order_ids_copy;
+    std::unordered_map<std::string, std::vector<std::string>> order_recipients_copy;
     {
         std::shared_lock lock(order_mutex);
-        // Insert data from 'order_ids'
-        for (const auto& entry : order_ids) {
-            const std::string& search_term = entry.first;
-            const std::vector<std::string>& keys = entry.second;
-            const std::string content = "order";
+        order_ids_copy = order_ids;
+        order_recipients_copy = order_recipients;
+    }
+    // Insert data from 'order_ids'
+    for (const auto& entry : order_ids_copy) {
+        const std::string& search_term = entry.first;
+        const std::vector<std::string>& keys = entry.second;
+        const std::string content = "order";
 
-            for (const std::string& key : keys) {
-                // Ignore any empty keys
-                if(key.empty() || key.length() != 64) continue;
-                // Check if the record already exists
-                std::string select_query = "SELECT COUNT(*) FROM mappings WHERE search_term = ? AND key = ?;";
-                bool exists = database->get_integer_params(select_query, { search_term, key });
+        for (const std::string& key : keys) {
+            // Ignore any empty keys
+            if(key.empty() || key.length() != 64) continue;
+            // Check if the record already exists
+            std::string select_query = "SELECT COUNT(*) FROM mappings WHERE search_term = ? AND key = ?;";
+            bool exists = database->get_integer_params(select_query, { search_term, key });
             
-                // If no duplicate record found, perform insertion
-                if(!exists) {
-                    std::string insert_query = "INSERT INTO mappings (search_term, key, content) VALUES (?, ?, ?);";
-                    database->execute_params(insert_query, { search_term, key, content });
-                }
+            // If no duplicate record found, perform insertion
+            if(!exists) {
+                std::string insert_query = "INSERT INTO mappings (search_term, key, content) VALUES (?, ?, ?);";
+                database->execute_params(insert_query, { search_term, key, content });
             }
         }
-        // Insert data from 'order_recipients'
-        for (const auto& entry : order_recipients) {
-            const std::string& search_term = entry.first;
-            const std::vector<std::string>& keys = entry.second;
-            const std::string content = "order";
+    }
+    // Insert data from 'order_recipients'
+    for (const auto& entry : order_recipients_copy) {
+        const std::string& search_term = entry.first;
+        const std::vector<std::string>& keys = entry.second;
+        const std::string content = "order";
 
-            for (const std::string& key : keys) {
-                // Ignore any empty keys
-                if(key.empty() || key.length() != 64) continue;
-                // Check if the record already exists
-                std::string select_query = "SELECT COUNT(*) FROM mappings WHERE search_term = ? AND key = ?;";
-                bool exists = database->get_integer_params(select_query, { search_term, key });
+        for (const std::string& key : keys) {
+            // Ignore any empty keys
+            if(key.empty() || key.length() != 64) continue;
+            // Check if the record already exists
+            std::string select_query = "SELECT COUNT(*) FROM mappings WHERE search_term = ? AND key = ?;";
+            bool exists = database->get_integer_params(select_query, { search_term, key });
             
-                // If no duplicate record found, perform insertion
-                if(!exists) {
-                    std::string insert_query = "INSERT INTO mappings (search_term, key, content) VALUES (?, ?, ?);";
-                    database->execute_params(insert_query, { search_term, key, content });
-                }
+            // If no duplicate record found, perform insertion
+            if(!exists) {
+                std::string insert_query = "INSERT INTO mappings (search_term, key, content) VALUES (?, ?, ?);";
+                database->execute_params(insert_query, { search_term, key, content });
             }
         }
     }
     //-----------------------------------------------
     // PRODUCT_RATING
+    std::unordered_map<std::string, std::vector<std::string>> product_ratings_copy;
     {
         std::shared_lock lock(product_rating_mutex);
-        // Insert data from 'product_ratings'
-        for (const auto& entry : product_ratings) {
-            const std::string& search_term = entry.first;
-            const std::vector<std::string>& keys = entry.second;
-            const std::string content = "product_rating";
+        product_ratings_copy = product_ratings;
+    }
+    // Insert data from 'product_ratings'
+    for (const auto& entry : product_ratings_copy) {
+        const std::string& search_term = entry.first;
+        const std::vector<std::string>& keys = entry.second;
+        const std::string content = "product_rating";
 
-            for (const std::string& key : keys) {
-                // Ignore any empty keys
-                if(key.empty() || key.length() != 64) continue;
-                // Check if the record already exists
-                std::string select_query = "SELECT COUNT(*) FROM mappings WHERE search_term = ? AND key = ?;";
-                bool exists = database->get_integer_params(select_query, { search_term, key });
+        for (const std::string& key : keys) {
+            // Ignore any empty keys
+            if(key.empty() || key.length() != 64) continue;
+            // Check if the record already exists
+            std::string select_query = "SELECT COUNT(*) FROM mappings WHERE search_term = ? AND key = ?;";
+            bool exists = database->get_integer_params(select_query, { search_term, key });
             
-                // If no duplicate record found, perform insertion
-                if(!exists) {
-                    std::string insert_query = "INSERT INTO mappings (search_term, key, content) VALUES (?, ?, ?);";
-                    database->execute_params(insert_query, { search_term, key, content });
-                }
+            // If no duplicate record found, perform insertion
+            if(!exists) {
+                std::string insert_query = "INSERT INTO mappings (search_term, key, content) VALUES (?, ?, ?);";
+                database->execute_params(insert_query, { search_term, key, content });
             }
         }
     }
     //-----------------------------------------------
     // SELLER_RATING
+    std::unordered_map<std::string, std::vector<std::string>> seller_ratings_copy;
     {
         std::shared_lock lock(seller_rating_mutex);
-        // Insert data from 'seller_ratings'
-        for (const auto& entry : seller_ratings) {
-            const std::string& search_term = entry.first;
-            const std::vector<std::string>& keys = entry.second;
-            const std::string content = "seller_rating";
+        seller_ratings_copy = seller_ratings;
+    }
+    // Insert data from 'seller_ratings'
+    for (const auto& entry : seller_ratings_copy) {
+        const std::string& search_term = entry.first;
+        const std::vector<std::string>& keys = entry.second;
+        const std::string content = "seller_rating";
 
-            for (const std::string& key : keys) {
-                // Ignore any empty keys
-                if(key.empty() || key.length() != 64) continue;
-                // Check if the record already exists
-                std::string select_query = "SELECT COUNT(*) FROM mappings WHERE search_term = ? AND key = ?;";
-                bool exists = database->get_integer_params(select_query, { search_term, key });
+        for (const std::string& key : keys) {
+            // Ignore any empty keys
+            if(key.empty() || key.length() != 64) continue;
+            // Check if the record already exists
+            std::string select_query = "SELECT COUNT(*) FROM mappings WHERE search_term = ? AND key = ?;";
+            bool exists = database->get_integer_params(select_query, { search_term, key });
             
-                // If no duplicate record found, perform insertion
-                if(!exists) {
-                    std::string insert_query = "INSERT INTO mappings (search_term, key, content) VALUES (?, ?, ?);";
-                    database->execute_params(insert_query, { search_term, key, content });
-                }
+            // If no duplicate record found, perform insertion
+            if(!exists) {
+                std::string insert_query = "INSERT INTO mappings (search_term, key, content) VALUES (?, ?, ?);";
+                database->execute_params(insert_query, { search_term, key, content });
             }
         }
     }
     //-----------------------------------------------
     // MESSAGE
+    std::unordered_map<std::string, std::vector<std::string>> messages_copy;
     {
         std::shared_lock lock(message_mutex);
-        // Insert data from 'messages'
-        for (const auto& entry : messages) {
-            const std::string& search_term = entry.first;
-            const std::vector<std::string>& keys = entry.second;
-            const std::string content = "message";
+        messages_copy = messages;
+    }
+    // Insert data from 'messages'
+    for (const auto& entry : messages_copy) {
+        const std::string& search_term = entry.first;
+        const std::vector<std::string>& keys = entry.second;
+        const std::string content = "message";
 
-            for (const std::string& key : keys) {
-                // Ignore any empty keys
-                if(key.empty() || key.length() != 64) continue;
-                // Check if the record already exists
-                std::string select_query = "SELECT COUNT(*) FROM mappings WHERE search_term = ?1 AND key = ?2;";
-                bool exists = database->get_integer_params(select_query, { search_term, key });
+        for (const std::string& key : keys) {
+            // Ignore any empty keys
+            if(key.empty() || key.length() != 64) continue;
+            // Check if the record already exists
+            std::string select_query = "SELECT COUNT(*) FROM mappings WHERE search_term = ?1 AND key = ?2;";
+            bool exists = database->get_integer_params(select_query, { search_term, key });
             
-                // If no duplicate record found, perform insertion
-                if(!exists) {
-                    std::string insert_query = "INSERT INTO mappings (search_term, key, content) VALUES (?1, ?2, ?3);";
-                    database->execute_params(insert_query, { search_term, key, content });
-                }
+            // If no duplicate record found, perform insertion
+            if(!exists) {
+                std::string insert_query = "INSERT INTO mappings (search_term, key, content) VALUES (?1, ?2, ?3);";
+                database->execute_params(insert_query, { search_term, key, content });
             }
         }
     }
     //-----------------------------------------------
-    //database->execute("COMMIT;");
+    ////database->execute("COMMIT;");
+    clear_cache();
+}
+
+//-----------------------------------------------------------------------------
+
+void KeyMapper::clear_cache() {
+    {
+        std::unique_lock lock(user_mutex);
+        user_ids.clear();
+        display_names.clear();
+    }
+    
+    {
+        std::unique_lock lock(listing_mutex);
+        product_ids.clear();
+        product_names.clear();
+        product_categories.clear();
+        product_tags.clear();
+        product_codes.clear();
+        listing_ids.clear();
+        listing_locations.clear();
+        seller_ids.clear();
+    }
+    
+    {
+        std::unique_lock lock(order_mutex);
+        order_ids.clear();
+        order_recipients.clear();
+    }
+    
+    {
+        std::unique_lock lock(product_rating_mutex);
+        product_ratings.clear();
+    }
+    
+    {
+        std::unique_lock lock(seller_rating_mutex);
+        seller_ratings.clear();
+    }
+    
+    {
+        std::unique_lock lock(message_mutex);
+        messages.clear();
+    }
 }
 
 //-----------------------------------------------------------------------------
@@ -684,37 +721,4 @@ std::pair<std::string, std::string> KeyMapper::serialize() { // no longer in use
 
 //-----------------------------------------------------------------------------
 
-/*std::vector<std::string> KeyMapper::search_product_by_name(const std::string& product_name) {
-    std::vector<std::string> matching_keys;
-
-    std::string product_name_lower = neroshop::string_tools::lower(product_name);
-
-    for (const auto& entry : product_names) {
-        std::string entry_lower = neroshop::string_tools::lower(entry.first);
-        if (entry_lower.find(product_name_lower, 0) == 0) { // starts with the search term (ex. for Banana, "b", "ba", "ban", "bana", "banan", or "banana" should work)
-            matching_keys.insert(matching_keys.end(), entry.second.begin(), entry.second.end());
-        } else {
-            if(neroshop::string_tools::contains(entry_lower, product_name_lower)) { // contains a substring that matches in the same order anywhere within the string
-                matching_keys.insert(matching_keys.end(), entry.second.begin(), entry.second.end());
-            }
-        }
-    }
-
-    return matching_keys;
-}*/
-
-//-----------------------------------------------------------------------------
 }
-
-/*int main() {
-    KeyMapper::product_names.insert(std::make_pair("Apple", std::vector<std::string>{"9341dd5ebbe0d457e1306bdb68f2cd13a0d3bac4e582012ae71c2bce47f8bb91"}));
-    KeyMapper::product_names.insert(std::make_pair("Banana", std::vector<std::string>{"8063ed324ad571c0278a1d5d11b5d620a41e605d389e2ad7f268c196f7411035"}));
-    KeyMapper::product_names.emplace(std::make_pair("Cherry", std::vector<std::string>{"f246efebbca8d633d2d9ce15ffd0ffeb6aabeddf19cdc060fe348c282e371b7a"}));
-    KeyMapper::product_names.insert(std::make_pair("Watermelon", std::vector<std::string>{"0fe3907f0c4012aa9967e2dac81ef31c008ebf2b58f36e107c0c9bd61ba9d53e"}));
-    //KeyMapper::product_names.insert(std::make_pair("", std::vector<std::string>{""}));
-    std::cout << "Number of products: " << KeyMapper::product_names.size() << "\n";
-    auto products = KeyMapper::search_product_by_name("er");//("ana");//("app");//"ban");
-    for(const auto& name : products) {
-        std::cout << name << "\n";
-    }
-}*/ // g++ indexer.cpp product.cpp -o index

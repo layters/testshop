@@ -66,12 +66,12 @@ public:
     // DHT Query Types
     bool ping(const std::string& destination); // A simple query to check if a node is online and responsive.
     std::vector<Node*> find_node(const std::string& target_id, int count) const;// override; // A query to find the contact information for a specific node in the DHT. // Finds the node closest to the target_id
-    int put(const std::string& key, const std::string& value); // A query to store a value in the DHT.    // Stores the key-value pair in the DHT
-    int store(const std::string& key, const std::string& value);
+    bool put(const std::string& key, const std::string& value); // A query to store a value in the DHT.    // Stores the key-value pair in the DHT
+    bool store(const std::string& key, const std::string& value);
     std::string get(const std::string& key) const; // A query to get a specific value stored in the DHT.         // Retrieves the value associated with the key from the DHT
     std::string find_value(const std::string& key) const;
-    int remove(const std::string& key); // Remove a key-value pair from the DHT
-    int remove_all(); // Remove all data from in-memory hash table
+    bool remove(const std::string& key); // Remove a key-value pair from the DHT
+    bool remove_all(); // Remove all data from in-memory hash table
     void map(const std::string& key, const std::string& value); // Maps search terms to keys
     void add_provider(const std::string& data_hash, const Peer& peer);
     void remove_providers(const std::string& data_hash);
@@ -133,7 +133,7 @@ private:
     // Determines if node1 is closer to the target_id than node2
     bool is_closer(const std::string& target_id, const std::string& node1_id, const std::string& node2_id);
     //---------------------------------------------------
-    int set(const std::string& key, const std::string& value); // Updates the value without changing the key. set cannot be accessed directly but only through put
+    bool set(const std::string& key, const std::string& value); // Updates the value without changing the key. set cannot be accessed directly but only through put
     bool verify(const std::string& value) const;
     void expire(const std::string& key, const std::string& value); // Removes any expired data from hash table
     bool validate_fields(const std::string& value);

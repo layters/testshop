@@ -152,7 +152,7 @@ std::vector<Node*> Node::find_node(const std::string& target, int count) const {
 
 //-----------------------------------------------------------------------------
 
-int Node::put(const std::string& key, const std::string& value) {
+bool Node::put(const std::string& key, const std::string& value) {
     // If data is a duplicate, skip it and return success (true)
     {
         std::shared_lock<std::shared_mutex> read_lock(data_mutex); // read only (shared)
@@ -175,13 +175,13 @@ int Node::put(const std::string& key, const std::string& value) {
         }
     
         data[key] = value;
-        return (data.count(key) > 0); // boolean
+        return (data.count(key) > 0);
     }
 }
 
 //-----------------------------------------------------------------------------
 
-int Node::store(const std::string& key, const std::string& value) {    
+bool Node::store(const std::string& key, const std::string& value) {    
     return put(key, value);
 }
 
@@ -202,20 +202,20 @@ std::string Node::find_value(const std::string& key) const {
 
 //-----------------------------------------------------------------------------
 
-int Node::remove(const std::string& key) {
+bool Node::remove(const std::string& key) {
     std::unique_lock<std::shared_mutex> lock(data_mutex);
     
     data.erase(key);
-    return (data.count(key) == 0); // boolean
+    return (data.count(key) == 0);
 }
 
 //-----------------------------------------------------------------------------
 
-int Node::remove_all() {
+bool Node::remove_all() {
     std::unique_lock<std::shared_mutex> lock(data_mutex);
     
     data.clear();
-    return data.empty(); // boolean
+    return data.empty();
 }
 
 //-----------------------------------------------------------------------------
@@ -226,7 +226,7 @@ void Node::map(const std::string& key, const std::string& value) {
 
 //-----------------------------------------------------------------------------
 
-int Node::set(const std::string& key, const std::string& value) {
+bool Node::set(const std::string& key, const std::string& value) {
     // set() is only called/used in put() and put() already has unique_lock 
     // so no need to add another unique_lock !!!
     nlohmann::json json = nlohmann::json::parse(value); // Already validated in put() so we just need to parse it without checking for errors
@@ -377,15 +377,13 @@ std::deque<Peer> Node::get_providers(const std::string& data_hash) const {
 //-----------------------------------------------------------------------------
 
 void Node::persist_routing_table(const std::string& i2p_address) {
-    if(!is_hardcoded()) return; // Regular nodes cannot run this function
+    if(!is_hardcoded()) return; // Regular nodes cannot run this function (for now)
     
     db::Sqlite3 * database = neroshop::get_database();
     if(!database) throw std::runtime_error("database is not opened");
     
-    if(!database->table_exists("routing_table")) { 
-        database->execute("CREATE TABLE routing_table("
+    database->execute("CREATE TABLE IF NOT EXISTS routing_table("
         "i2p_address TEXT, UNIQUE(i2p_address));");
-    }
     
     database->execute_params("INSERT INTO routing_table (i2p_address) VALUES (?1);", { i2p_address });
 }
@@ -393,47 +391,56 @@ void Node::persist_routing_table(const std::string& i2p_address) {
 //-----------------------------------------------------------------------------
 
 void Node::rebuild_routing_table() {
-    if(!is_hardcoded()) return; // Regular nodes cannot run this function
+    if(!is_hardcoded()) return; // Regular nodes cannot run this function (for now)
     
     db::Sqlite3 * database = neroshop::get_database();
     if(!database) throw std::runtime_error("database is not opened");
     if(!database->table_exists("routing_table")) {
         return; // Table does not exist, exit function
     }
-    // Prepare statement
-    std::string command = "SELECT i2p_address FROM routing_table;";
-    sqlite3_stmt * stmt = nullptr;
-    if(sqlite3_prepare_v2(database->get_handle(), command.c_str(), -1, &stmt, nullptr) != SQLITE_OK) {
-        log_error("sqlite3_prepare_v2: {}", std::string(sqlite3_errmsg(database->get_handle())));
-        return;
-    }
-    // Check if there is any data returned by the statement
-    if(sqlite3_column_count(stmt) > 0) {
-        log_info("{}Rebuilding routing table from backup ...{}", "\033[35;1m", color_reset);
-    }
-    // Get all table values row by row
-    while(sqlite3_step(stmt) == SQLITE_ROW) {
-        std::string i2p_address;
-        for(int i = 0; i < sqlite3_column_count(stmt); i++) {
-            std::string column_value = (sqlite3_column_text(stmt, i) == nullptr) ? "NULL" : reinterpret_cast<const char *>(sqlite3_column_text(stmt, i));
-            if(column_value == "NULL") continue;
-            if(i == 0) i2p_address = column_value;
-            
-            if(!ping(i2p_address)) {
-                log_error("rebuild_routing_table: failed to ping node"); 
-                // Remove unresponsive nodes from database
-                database->execute_params("DELETE FROM routing_table WHERE i2p_address = ?1", { i2p_address });
-                continue;
-            }
-            
-            auto node = std::make_unique<Node>(false, i2p_address);
-            if(!node->is_hardcoded()) {
-                routing_table->add_node(std::move(node));
+    // Lock only for raw handle usage
+    std::vector<std::string> i2p_addresses;
+    {
+        if (database->is_mutex_enabled()) std::lock_guard<std::mutex> db_lock(database->get_mutex());
+        // Prepare statement
+        std::string command = "SELECT i2p_address FROM routing_table;";
+        sqlite3_stmt * stmt = nullptr;
+        if(sqlite3_prepare_v2(database->get_handle(), command.c_str(), -1, &stmt, nullptr) != SQLITE_OK) {
+            log_error("sqlite3_prepare_v2: {}", std::string(sqlite3_errmsg(database->get_handle())));
+            return;
+        }
+        // Check if there is any data returned by the statement
+        if(sqlite3_column_count(stmt) > 0) {
+            log_info("{}Rebuilding routing table from backup ...{}", "\033[35;1m", color_reset);
+        }
+        // Get all table values row by row
+        while(sqlite3_step(stmt) == SQLITE_ROW) {
+            std::string i2p_address;
+            for(int i = 0; i < sqlite3_column_count(stmt); i++) {
+                const char* column_value = reinterpret_cast<const char *>(sqlite3_column_text(stmt, i));
+                if(column_value == nullptr) continue;
+                if(i == 0) {
+                    i2p_addresses.emplace_back(column_value);
+                }
             }
         }
+        // Finalize statement
+        sqlite3_finalize(stmt);
+    } // Mutex released here
+    
+    // Now safe to call public API methods like execute_params()
+    for(const auto& i2p_address : i2p_addresses) {
+        if(!ping(i2p_address)) {
+            log_error("rebuild_routing_table: failed to ping node"); 
+            database->execute_params("DELETE FROM routing_table WHERE i2p_address = ?1", { i2p_address });
+            continue;
+        }
+            
+        auto node = std::make_unique<Node>(false, i2p_address);
+        if(!node->is_hardcoded()) {
+            routing_table->add_node(std::move(node));
+        }
     }
-    // Finalize statement
-    sqlite3_finalize(stmt);
 }
 
 //-----------------------------------------------------------------------------
@@ -1019,36 +1026,40 @@ void Node::send_map_v2(const std::string& destination) {
     if(!database->table_exists("hash_table")) {
         return; // Table does not exist, exit function
     }
-    // Prepare statement
-    std::string command = "SELECT key, value FROM hash_table;";
-    sqlite3_stmt * stmt = nullptr;
-    if(sqlite3_prepare_v2(database->get_handle(), command.c_str(), -1, &stmt, nullptr) != SQLITE_OK) {
-        log_error("sqlite3_prepare_v2: {}", std::string(sqlite3_errmsg(database->get_handle())));
-        return;
-    }
-    // Check if there is any data returned by the statement
-    if(sqlite3_column_count(stmt) > 0) {
-        log_info("{}Sending MAP of hash table from cache ...{}", "\033[35;1m", color_reset);
-    }
-    // Get all table values row by row
+    // Lock only for raw handle usage
     std::unordered_map<std::string, std::string> hash_table;
-    while(sqlite3_step(stmt) == SQLITE_ROW) {
-        std::string key, value;
-        for(int i = 0; i < sqlite3_column_count(stmt); i++) {
-            if(i == 0) {
-                key = (sqlite3_column_text(stmt, i) == nullptr) ? "" : reinterpret_cast<const char *>(sqlite3_column_text(stmt, i));
-            }
-            if(i == 1) {
-                value = (sqlite3_column_text(stmt, i) == nullptr) ? "" : reinterpret_cast<const char *>(sqlite3_column_text(stmt, i));
-            }
-            
-            if(key.empty() || value.empty()) { continue; }
-            
-            hash_table[key] = value;
+    {
+        if (database->is_mutex_enabled()) std::lock_guard<std::mutex> db_lock(database->get_mutex());
+        // Prepare statement
+        std::string command = "SELECT key, value FROM hash_table;";
+        sqlite3_stmt * stmt = nullptr;
+        if(sqlite3_prepare_v2(database->get_handle(), command.c_str(), -1, &stmt, nullptr) != SQLITE_OK) {
+            log_error("sqlite3_prepare_v2: {}", std::string(sqlite3_errmsg(database->get_handle())));
+            return;
         }
-    }
-    // Finalize statement
-    sqlite3_finalize(stmt);
+        // Check if there is any data returned by the statement
+        if(sqlite3_column_count(stmt) > 0) {
+            log_info("{}Sending MAP of hash table from cache ...{}", "\033[35;1m", color_reset);
+        }
+        // Get all table values row by row
+        while(sqlite3_step(stmt) == SQLITE_ROW) {
+            std::string key, value;
+            for(int i = 0; i < sqlite3_column_count(stmt); i++) {
+                if(i == 0) {
+                    key = (sqlite3_column_text(stmt, i) == nullptr) ? "" : reinterpret_cast<const char *>(sqlite3_column_text(stmt, i));
+                }
+                if(i == 1) {
+                    value = (sqlite3_column_text(stmt, i) == nullptr) ? "" : reinterpret_cast<const char *>(sqlite3_column_text(stmt, i));
+                }
+            
+                if(key.empty() || value.empty()) { continue; }
+            
+                hash_table[key] = value;
+            }
+        }
+        // Finalize statement
+        sqlite3_finalize(stmt);
+    } // Mutex released here
     //------------------------------------------------------
     nlohmann::json query_object;
     query_object["query"] = "map";
@@ -1374,6 +1385,11 @@ bool Node::validate_fields(const std::string& value) {
             const auto& avatar = json["avatar"];
             if(!avatar.contains("name") && !avatar["name"].is_string()) { return false; }
             if(!avatar.contains("size") && !avatar["size"].is_number_integer()) { return false; }
+            int size = avatar["size"].get<int>();
+            if(size > NEROSHOP_MAX_IMAGE_SIZE) {
+                log_warn("validate_fields: Invalid avatar image size (> 2MB)");
+                return false;
+            }
             if(!avatar.contains("pieces") && !avatar["pieces"].is_array()) { return false; }
             if(!avatar.contains("piece_size") && !avatar["piece_size"].is_number_integer()) { return false; }
         }
@@ -1381,10 +1397,12 @@ bool Node::validate_fields(const std::string& value) {
             if(!json["display_name"].is_string()) { return false; }
             std::string display_name = json["display_name"].get<std::string>();
             if(!neroshop::string_tools::is_valid_username(display_name)) {
+                log_warn("validate_fields: Invalid display name ({})", display_name);
                 return false;
             }
             if((display_name.length() < NEROSHOP_MIN_USERNAME_LENGTH) ||
                 (display_name.length() > NEROSHOP_MAX_USERNAME_LENGTH)) {
+                log_warn("validate_fields: Invalid display name length ({})", display_name.length());
                 return false;
             }
         }
@@ -1499,22 +1517,14 @@ int Node::cache(const std::string& key, const std::string& value) {
     db::Sqlite3 * database = neroshop::get_database();
     int rescode = SQLITE_OK;
     
-    if(!database->table_exists("hash_table")) { 
-        rescode = database->execute("CREATE TABLE hash_table("
+    // A UNIQUE INDEX is automatically created for "key" in the database: https://sqlite.org/lang_createtable.html#unique_constraints
+    database->execute("CREATE TABLE IF NOT EXISTS hash_table("
         "key TEXT, value TEXT, UNIQUE(key));");
-        if(rescode != SQLITE_OK) { throw std::runtime_error("Error creating on-disk hash table"); }
-        
-        rescode = database->execute("CREATE INDEX idx_hash_table_keys ON hash_table(key)");
-        if(rescode != SQLITE_OK) { std::cerr << "\033[0;91mError creating index for on-disk hash table\033[0m" << std::endl; }
-    }
     
-    bool key_found = database->get_integer_params("SELECT EXISTS(SELECT key FROM hash_table WHERE key = ?1)", { key });
-    if(key_found) {
-        rescode = database->execute_params("UPDATE hash_table SET value = ?1 WHERE key = ?2", { value, key });
-        return (rescode == SQLITE_OK);
-    }
-    
-    rescode = database->execute_params("INSERT INTO hash_table (key, value) VALUES (?1, ?2);", { key, value });
+    // To prevent SQLite from throwing a UNIQUE constraint failed error
+    // If the key already exists, just update the value to the one we tried to insert (excluded.value): https://sqlite.org/lang_upsert.html#examples
+    rescode = database->execute_params("INSERT INTO hash_table (key, value) VALUES (?1, ?2) "
+        "ON CONFLICT(key) DO UPDATE SET value = excluded.value;", { key, value });
     return (rescode == SQLITE_OK);
 }
 
@@ -1677,7 +1687,7 @@ std::atomic<bool> already_shutting_down;
 void Node::signal_handler(int signum) { 
     if (already_shutting_down.exchange(true)) return; // Prevent multiple triggers
     
-    std::cout << "\nCaught signal " << signum << " — stopping threads...\n";
+    std::cout << "\n";
     if (Node::instance) {
         Node::instance->stop_threads(); // Safe call into instance
     }

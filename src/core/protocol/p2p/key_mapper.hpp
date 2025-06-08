@@ -14,12 +14,11 @@ public:
     KeyMapper() = default;
     ~KeyMapper() noexcept;
 
-    void add(const std::string& key, const std::string& value); // must be JSON value
+    void add(const std::string& key, const std::string& value);
     void sync(); // syncs mapping data to local database
     std::pair<std::string, std::string> serialize(); // Converts mapping data to JSON format
-    
-    ////std::vector<std::string> search_product_by_name(const std::string& product_name);//std::vector<std::string> search_user_by_id(const std::string& );//std::vector<std::string> search_order_by_id(const std::string& );
 private:
+    void clear_cache();
     mutable std::shared_mutex user_mutex;
     mutable std::shared_mutex listing_mutex;
     mutable std::shared_mutex order_mutex;
