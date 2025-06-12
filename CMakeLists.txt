@@ -384,9 +384,8 @@ endif()
 
 ######################################
 # libi2pd (and i2pd_client)
-set(i2pd_include_dirs ${CMAKE_CURRENT_SOURCE_DIR}/external/i2pd/daemon ${CMAKE_CURRENT_SOURCE_DIR}/external/i2pd/i18n ${CMAKE_CURRENT_SOURCE_DIR}/external/i2pd/libi2pd ${CMAKE_CURRENT_SOURCE_DIR}/external/i2pd/libi2pd_client)
+set(i2pd_include_dirs ${CMAKE_CURRENT_SOURCE_DIR}/external/i2pd/i18n ${CMAKE_CURRENT_SOURCE_DIR}/external/i2pd/libi2pd ${CMAKE_CURRENT_SOURCE_DIR}/external/i2pd/libi2pd_client)
 set(i2pd_src ${CMAKE_CURRENT_SOURCE_DIR}/build/libi2pdclient.a ${CMAKE_CURRENT_SOURCE_DIR}/build/libi2pd.a ${CMAKE_CURRENT_SOURCE_DIR}/build/libi2pdlang.a)
-set(i2pd_daemon_src ${CMAKE_CURRENT_SOURCE_DIR}/build/libi2pddaemon.a)
 
 ######################################
 # fmt
@@ -487,7 +486,7 @@ if(NOT CMAKE_BUILD_TYPE STREQUAL "Release" AND NOT CMAKE_BUILD_TYPE STREQUAL "Mi
     target_compile_definitions(${neroshop_daemon} PRIVATE NEROSHOP_DEBUG)
 endif()
 target_include_directories(${neroshop_daemon} PRIVATE #[[${CMAKE_CURRENT_SOURCE_DIR}/src/]] ${monero_include_dirs} ${monero_cpp_include_dir} ${sqlite_include_dir} ${json_include_dir} ${zlib_include_dir} ${i2pd_include_dirs} ${fmt_include_dir} ${cxxopts_include_dir})
-target_link_libraries(${neroshop_daemon} ${i2pd_src} ${i2pd_daemon_src} ${monero_cpp_src} ${sqlite_src} ${monero_src} ${zlib_src} ${fmt_src})#set(CMAKE_CXX_LINK_EXECUTABLE "${CMAKE_CXX_LINK_EXECUTABLE} -ldl") # fixes undefined reference to symbol 'dlsym@@GLIBC_2.2.5' error
+target_link_libraries(${neroshop_daemon} ${i2pd_src} ${monero_cpp_src} ${sqlite_src} ${monero_src} ${zlib_src} ${fmt_src})#set(CMAKE_CXX_LINK_EXECUTABLE "${CMAKE_CXX_LINK_EXECUTABLE} -ldl") # fixes undefined reference to symbol 'dlsym@@GLIBC_2.2.5' error
 
 ######################################
 # neroshop-console
@@ -541,6 +540,7 @@ if(NEROSHOP_USE_GRPC)
         # Build gRPC using FetchContent or add_subdirectory
     endif()
 endif()
+
 ######################################
 # system sockets
 if(NOT NEROSHOP_USE_LIBZMQ AND NOT NEROSHOP_USE_LIBUV)

@@ -19,8 +19,6 @@
 
 #include <cxxopts.hpp>
 
-//#include <Daemon.h>
-
 using namespace neroshop;
 
 //-----------------------------------------------------------------------------
@@ -55,6 +53,7 @@ std::string extract_json_payload(const std::string& request) {
 
 void rpc_server(const std::string& address) {
     Server server(address, NEROSHOP_RPC_DEFAULT_PORT);
+    server.set_nonblocking(true);
     server.listen();
     
     while (running) {
@@ -251,32 +250,8 @@ int main(int argc, char** argv)
         database->execute("CREATE VIRTUAL TABLE mappings USING fts5(search_term, key, content, tokenize='porter unicode61');");
     }
     //-------------------------------------------------------
-    /*std::thread i2pd_thread([&]() { 
-        if (Daemon.init(argc, argv))
-	    {
-		    if (Daemon.start())
-			    Daemon.run ();
-		    else {
-			    if(neroshop::is_i2p_running()) {
-		            std::cout << "\033[90mi2pd was already running in the background\033[0m\n";
-		            return;
-		        } else {
-		            throw std::runtime_error("i2pd failed to start");
-		        }
-		    }
-		    Daemon.stop();
-	    }
-	});*/
-    //-------------------------------------------------------
     neroshop::Node node(true);
     
-    /*if(result.count("bootstrap")) {   
-        std::cout << "Switching to bootstrap mode ...\n";
-        node.set_bootstrap(true);
-        assert(node.get_ip_address() == NEROSHOP_ANY_ADDRESS && "Bootstrap node is not public");
-        // ALWAYS use address "0.0.0.0" for bootstrap nodes so that it is reachable by all nodes in the network, regardless of their location.
-    }*/
-    //-------------------------------------------------------
     std::thread ipc_thread([&node]() { ipc_server(node); }); // For IPC communication between the local GUI client and the local daemon server
     std::thread dht_thread([&node]() { dht_server(node); }); // DHT communication for peer discovery and data storage
     std::thread rpc_thread;  // Declare the thread object // RPC communication for processing requests from outside clients (disabled by default)
@@ -292,7 +267,6 @@ int main(int argc, char** argv)
     }
     ipc_thread.join();
     dht_thread.join();
-    ////i2pd_thread.join();
     
     return 0;
 }
