@@ -31,8 +31,8 @@ inline constexpr const char* NEROSHOP_ANY_ADDRESS      = "0.0.0.0";
 inline constexpr size_t NEROSHOP_RECV_BUFFER_SIZE      = 4096;//8192// no IP packet can be above 64000 (64 KB), not even with fragmentation, thus recv on an UDP socket can at most return 64 KB (and what is not returned is discarded for the current packet!)
 
 // DHT constants - timeouts
-inline constexpr int NEROSHOP_DHT_RECV_TIMEOUT            = 2000; // Measured in milliseconds
-inline constexpr int NEROSHOP_DHT_PING_TIMEOUT            = 800;  // Measured in milliseconds
+inline constexpr int NEROSHOP_DHT_RECV_TIMEOUT            = 5000; // Measured in milliseconds
+inline constexpr int NEROSHOP_DHT_PING_TIMEOUT            = 5000; // Measured in milliseconds
 
 // DHT constants
 inline constexpr int NEROSHOP_DHT_REPLICATION_FACTOR      = 3;    // 10 to 20 (or even higher) // Usually 3 or 5 but a higher number would improve fault tolerant, mitigating the risk of data loss even if multiple nodes go offline simultaneously. It also helps distribute the load across more nodes, potentially improving read performance by allowing concurrent access from multiple replicas.
@@ -137,9 +137,17 @@ inline std::string get_default_wallet_path() {
     #endif
 }
 
-inline const std::initializer_list<const char*> BOOTSTRAP_I2P_NODES = {
-    //{"wq344fz2wgevifcrkf5uiplywlp35ufoomhebxk5qh7obv7ephnqb.32.i2p"},
-    {"pbdcncqgmgnan67ej72o7obbuvpy3wd3vhyyh4xty2luxbgmmyaq.b32.i2p"}
+struct BootstrapNode {
+    std::string address;
+    uint16_t port;
+};
+
+inline const std::initializer_list<BootstrapNode> BOOTSTRAP_I2P_NODES = {
+    { "pbdcncqgmgnan67ej72o7obbuvpy3wd3vhyyh4xty2luxbgmmyaq.b32.i2p", NEROSHOP_P2P_DEFAULT_PORT }
+};
+
+inline const std::initializer_list<BootstrapNode> BOOTSTRAP_TOR_NODES = {
+    { "testkdb44e3v5bh2svemcwnghh4ns372yzyzmqke65kahryoqb565pid.onion", NEROSHOP_P2P_DEFAULT_PORT }
 };
 
 }

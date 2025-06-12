@@ -76,6 +76,7 @@ NeroShop is a decentralized peer-to-peer marketplace for trading goods and servi
 | [cxxopts](https://github.com/jarro2783/cxxopts)                    | ?                  | command line option parser                                             | :heavy_check_mark: :package:                       |
 | [libi2pd](https://github.com/PurpleI2P/i2pd)                       | latest             | network proxy                                                          | :heavy_check_mark: :package:                       |
 | [fmt](https://github.com/fmtlib/fmt)                               | ?                  | log formatting                                                         | :heavy_check_mark: :package:                       |
+| [mkp224o](https://github.com/cathugger/mkp224o)                    | ?                  | onion address generation                                               | :heavy_check_mark: :package:                       |
 
 ### Compiling neroshop from source
 **0. Install prerequisites**
@@ -128,7 +129,7 @@ sudo dnf install boost-static libstdc++-static pkgconf boost-devel openssl-devel
 ```
 
 
-**3. Install expat and unbound (May be required to build monero-project on Debian/Ubuntu otherwise, this step can be skipped):**
+**3. Install expat and unbound:**
 ```bash
 cd external/monero-cpp/external/monero-project
 ```

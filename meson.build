@@ -310,7 +310,9 @@ neroshop_market_srcs = [
 ]
 
 neroshop_network_srcs = [
-    neroshop_core_src_dir + '/network/i2p.cpp'
+    neroshop_core_src_dir + '/network/onion_address.cpp',
+    neroshop_core_src_dir + '/network/sam_client.cpp',
+    neroshop_core_src_dir + '/network/socks5_client.cpp'
 ]
 
 neroshop_price_srcs = [
@@ -334,7 +336,6 @@ neroshop_protocol_srcs = [
     neroshop_core_src_dir + '/protocol/rpc/json_rpc.cpp',
     neroshop_core_src_dir + '/protocol/rpc/msgpack.cpp',
     neroshop_core_src_dir + '/protocol/transport/client.cpp',
-    neroshop_core_src_dir + '/protocol/transport/sam_client.cpp',
     neroshop_core_src_dir + '/protocol/transport/server.cpp'
 ]
 
@@ -353,7 +354,7 @@ neroshop_client_srcs = [
     neroshop_crypto_srcs,
     neroshop_database_srcs,
     neroshop_market_srcs,
-    neroshop_network_srcs,
+    #neroshop_network_srcs,
     neroshop_price_srcs,
     neroshop_core_src_dir + '/protocol/p2p/file_piece_hasher.cpp',
     neroshop_core_src_dir + '/protocol/p2p/serializer.cpp',
@@ -382,7 +383,6 @@ neroshop_daemon_srcs = [
     neroshop_core_src_dir + '/protocol/rpc/json_rpc.cpp',
     neroshop_core_src_dir + '/protocol/rpc/msgpack.cpp',
     neroshop_core_src_dir + '/protocol/transport/client.cpp',
-    neroshop_core_src_dir + '/protocol/transport/sam_client.cpp',
     neroshop_core_src_dir + '/protocol/transport/server.cpp',
     neroshop_core_src_dir + '/tools/base64.cpp',
     neroshop_core_src_dir + '/tools/timestamp.cpp'

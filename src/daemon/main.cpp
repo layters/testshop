@@ -3,11 +3,12 @@
 #include <future>
 #include <thread>
 #include <shared_mutex>
+#include <csignal> // std::signal, SIGINT
 // neroshop
 #include "../core/crypto/sha3.hpp"
 #include "../core/protocol/p2p/node.hpp"
 #include "../core/protocol/p2p/routing_table.hpp"
-#include "../core/protocol/transport/sam_client.hpp"
+#include "../core/network/sam_client.hpp"
 #include "../core/protocol/transport/server.hpp"
 #include "../core/protocol/rpc/json_rpc.hpp"
 #include "../core/protocol/rpc/msgpack.hpp"
@@ -15,11 +16,10 @@
 #include "../core/tools/logger.hpp"
 #include "../core/version.hpp"
 #include "../core/tools/filesystem.hpp"
-#include "../core/network/i2p.hpp"
 
 #include <cxxopts.hpp>
 
-#include <Daemon.h>
+//#include <Daemon.h>
 
 using namespace neroshop;
 
@@ -170,10 +170,12 @@ void ipc_server(Node& node) {
 
 void dht_server(Node& node) {
     std::cout << "******************************************************\n";
-    std::cout << "SAM Session ID: " << node.get_sam_client()->get_nickname() << "\n";
+    if(node.get_network_type() == NetworkType::I2P) {
+        std::cout << "SAM Session ID: " << node.get_sam_client()->get_nickname() << "\n";
+    }
     std::cout << "Node ID: " << node.get_id() << "\n";
-    std::cout << "I2P address: " << node.get_i2p_address() << /*" (" << node.get_public_ip_address() << ")*/"\n";
-    std::cout << "Port number: " << node.get_port() << "\n\n";
+    std::cout << "Address: " << node.get_address() << "\n";
+    std::cout << "Port number: " << node.get_port() << " (default, not actual)\n\n";
     std::cout << "******************************************************\n";
     // Start the DHT node's main loop in a separate thread
     std::thread run_thread([&]() {

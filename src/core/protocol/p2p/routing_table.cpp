@@ -202,7 +202,7 @@ bool RoutingTable::add_node(std::unique_ptr<Node> node) {
     // Check for duplicates
     for (const auto& existing_node : bucket.nodes) {
         if (existing_node->get_id() == node->get_id()) {
-            log_warn("add_node: {} already exists in the routing table", node->get_i2p_address());
+            log_warn("add_node: {} already exists in the routing table", node->get_address());
             return false; // already exists
         }
     }
@@ -215,12 +215,12 @@ bool RoutingTable::add_node(std::unique_ptr<Node> node) {
     }
 
     // Get the i2p address *before* moving the shared_ptr
-    std::string i2p_address = node->get_i2p_address();
+    std::string address = node->get_address();
     bucket.nodes.emplace_back(std::move(node));
     bucket.last_changed = std::chrono::steady_clock::now(); // <- update timestamp
     // Confirm node was added and print bucket size
     log_info("{}{} added to routing table (bucket: {}, size: {}){}", 
-        "\033[1;32m", i2p_address, bucket_index, bucket.nodes.size(), color_reset);
+        "\033[1;32m", address, bucket_index, bucket.nodes.size(), color_reset);
     // After adding, print the use count
     if(!bucket.nodes.empty()) {
         std::shared_ptr<Node>& added_node = bucket.nodes.back();
@@ -241,7 +241,7 @@ bool RoutingTable::remove_node(const std::string& node_addr, uint16_t node_port)
         auto it = std::remove_if(bucket.nodes.begin(), bucket.nodes.end(),
             [&](const std::shared_ptr<Node>& node) {
                 if (!node) return false; // safety check
-                const std::string& node_address = node->get_i2p_address();
+                const std::string& node_address = node->get_address();
                 log_trace("remove_node: Comparing: [{}] vs [{}]", node_address, node_addr);
                 return node_address == node_addr;
             });
@@ -282,12 +282,12 @@ bool RoutingTable::remove_node(const std::string& node_id_hex) { // faster since
             ////log_trace("remove_node: Reference count before deletion: {}", weak_node.use_count());
             it = bucket.nodes.erase(it); // erase returns the next iterator
             bucket.last_changed = std::chrono::steady_clock::now(); // <- update timestamp
-            std::string i2p_address;
+            std::string address;
             if (auto node = weak_node.lock()) {
-                i2p_address = node->get_i2p_address();
+                address = node->get_address();
                 ////log_trace("remove_node: Reference count after lock: {}", weak_node.use_count());
             } // shared_ptr `node` is destroyed here — ref count is decremented
-            log_info("{}{} removed from routing table (bucket: {}, removed: 1, remaining: {}){}", "\033[1;91m", i2p_address, bucket_index, bucket.nodes.size(), color_reset);//log_info("{}Node with ID {} removed from routing table (bucket: {}, size: {}){}", "\033[91m", node_id_hex, bucket_index, bucket.nodes.size(), color_reset);
+            log_info("{}{} removed from routing table (bucket: {}, removed: 1, remaining: {}){}", "\033[1;91m", address, bucket_index, bucket.nodes.size(), color_reset);//log_info("{}Node with ID {} removed from routing table (bucket: {}, size: {}){}", "\033[91m", node_id_hex, bucket_index, bucket.nodes.size(), color_reset);
             log_trace("remove_node: Reference count after removal: {}", weak_node.use_count());
             return true;
         } else {
@@ -436,15 +436,15 @@ bool RoutingTable::are_buckets_full() const {
 
 //-----------------------------------------------------------------------------
 
-bool RoutingTable::has_node(const std::string& i2p_address, uint16_t port) {
+bool RoutingTable::has_node(const std::string& address, uint16_t port) {
     for (int i = 0; i < 256; ++i) {
         const Bucket& bucket = buckets[i];
         std::shared_lock lock(bucket.mutex);
         for (const auto& node : bucket.nodes) {
             if (!node) continue;
-            const std::string& node_address = node->get_i2p_address();
-            if (node_address == i2p_address) {
-                ////log_debug("has_node: {} found in bucket[{}]", i2p_address, i);
+            const std::string& node_address = node->get_address();
+            if (node_address == address) {
+                ////log_debug("has_node: {} found in bucket[{}]", address, i);
                 return true;
             }
         }
@@ -480,7 +480,7 @@ void RoutingTable::print_table() const {
             std::cout << "Bucket " << i << ": ";
             for (const auto& node : bucket.nodes) {
                 if (node) {
-                    std::cout << node->get_i2p_address() << " ";
+                    std::cout << node->get_address() << " ";
                 }
             }
             std::cout << "\n";

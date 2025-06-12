@@ -92,5 +92,26 @@ set(fmt_srcs fmt/src/format.cc fmt/src/os.cc)
 add_library(${fmt_target} STATIC ${fmt_srcs})
 target_include_directories(${fmt_target} PUBLIC fmt/include/)
 
+find_library(SODIUM_LIBRARY sodium REQUIRED)
+# Find libsodium include directory by locating sodium.h
+find_path(SODIUM_INCLUDE_DIR sodium.h REQUIRED)
+if(NOT SODIUM_INCLUDE_DIR)
+  message(FATAL_ERROR "Could not find libsodium include directory")
+endif()
+message(STATUS "Found libsodium include dir: ${SODIUM_INCLUDE_DIR}")
+set(mkp224o_target "mkp224o")
+file(GLOB ed25519_amd64_51_30k_srcs mkp224o/ed25519/amd64-51-30k/*.c)
+file(GLOB ed25519_amd64_64_24k_srcs mkp224o/ed25519/amd64-64-24k/*.c)
+file(GLOB ed25519_donna_srcs mkp224o/ed25519/ed25519-donna/*.c) # current default
+file(GLOB ed25519_ref10_srcs mkp224o/ed25519/ref10/*.c)
+set(mkp224o_srcs mkp224o/main.c mkp224o/worker.c mkp224o/yaml.c mkp224o/vec.c mkp224o/cpucount.c mkp224o/base32_to.c mkp224o/base32_from.c mkp224o/base64_to.c mkp224o/base64_from.c mkp224o/ioutil.c mkp224o/keccak.c)
+#list(APPEND mkp224o_srcs ${ed25519_donna_srcs})
+add_executable(${mkp224o_target} ${mkp224o_srcs})
+set_target_properties(${mkp224o_target} PROPERTIES C_STANDARD 99 C_STANDARD_REQUIRED ON C_EXTENSIONS OFF)
+target_include_directories(${mkp224o_target} PUBLIC mkp224o/ mkp224o/ed25519/ mkp224o/ed25519/ed25519-donna/ ${SODIUM_INCLUDE_DIR})
+target_compile_options(${mkp224o_target} PRIVATE #[[-std=c99]] -Wall -Wextra -Wno-maybe-uninitialized -Wno-unused-function -Wmissing-prototypes -Wstrict-prototypes -O3 -march=native -fomit-frame-pointer -fPIE)
+find_package(Threads REQUIRED)
+target_link_libraries(${mkp224o_target} PRIVATE Threads::Threads sodium) # -lpthread -lsodium
+
 # cmake .
 # make -j$(nproc)

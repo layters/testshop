@@ -1,13 +1,12 @@
 #include "sqlite3.hpp"
 
 #include "../../tools/logger.hpp"
+#include "../../tools/string.hpp"
 
 #include <cstdarg>
 #include <fstream>
 #include <sstream>
 #include <stdexcept> // std::runtime_error
-
-#include <fmt/ranges.h> // fmt::join
 
 namespace neroshop {
 
@@ -49,7 +48,7 @@ static void log_flags(int flags) {
     if (flag_names.empty()) {
         neroshop::log_info("Opening database with no recognized flags (flags=0x{:X})", flags);
     } else {
-        neroshop::log_info("Opening database with flags: {}", fmt::join(flag_names, " | "));
+        neroshop::log_info("Opening database with flags: {}", neroshop::string_tools::join(flag_names, " | "));
     }
 }
 

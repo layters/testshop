@@ -394,6 +394,11 @@ set(fmt_include_dir ${CMAKE_CURRENT_SOURCE_DIR}/external/fmt/include) # v11.1.4
 set(fmt_src ${CMAKE_CURRENT_SOURCE_DIR}/build/libfmt.a)
 
 ######################################
+# mkp224o
+set(mkp224o_include_dir ) # v1.7.0
+set(mkp224o_src )
+
+######################################
 # neroshop link directories
 link_directories(${CMAKE_CURRENT_SOURCE_DIR}/build) # target_link_directories only available in CMake version 3.13 :(
 
@@ -421,7 +426,9 @@ set(neroshop_market_src
 )
 
 set(neroshop_network_src 
-    ${NEROSHOP_CORE_SRC_DIR}/network/i2p.cpp 
+    ${NEROSHOP_CORE_SRC_DIR}/network/onion_address.cpp 
+    ${NEROSHOP_CORE_SRC_DIR}/network/sam_client.cpp 
+    ${NEROSHOP_CORE_SRC_DIR}/network/socks5_client.cpp
 )
 
 set(neroshop_price_src 
@@ -445,7 +452,6 @@ set(neroshop_protocol_src
     ${NEROSHOP_CORE_SRC_DIR}/protocol/rpc/json_rpc.cpp 
     ${NEROSHOP_CORE_SRC_DIR}/protocol/rpc/msgpack.cpp 
     ${NEROSHOP_CORE_SRC_DIR}/protocol/transport/client.cpp 
-    ${NEROSHOP_CORE_SRC_DIR}/protocol/transport/sam_client.cpp 
     ${NEROSHOP_CORE_SRC_DIR}/protocol/transport/server.cpp
 )
 
@@ -461,19 +467,7 @@ set(neroshop_wallet_src
     #[[${NEROSHOP_CORE_SRC_DIR}/wallet/monero/monero.cpp]]
 )
 
-set(neroshop_core_src 
-    ${neroshop_crypto_src} 
-    ${neroshop_database_src} 
-    ${neroshop_market_src} 
-    ${neroshop_network_src}
-    ${neroshop_price_src}
-    ${neroshop_protocol_src}
-    ${neroshop_tools_src}
-    ${neroshop_wallet_src}
-    ${NEROSHOP_CORE_SRC_DIR}/settings.cpp 
-)
-
-set(neroshop_client_src ${neroshop_crypto_src} ${neroshop_database_src} ${neroshop_market_src} ${neroshop_network_src} ${neroshop_price_src} ${NEROSHOP_CORE_SRC_DIR}/protocol/p2p/file_piece_hasher.cpp ${NEROSHOP_CORE_SRC_DIR}/protocol/p2p/serializer.cpp ${NEROSHOP_CORE_SRC_DIR}/protocol/rpc/json_rpc.cpp ${NEROSHOP_CORE_SRC_DIR}/protocol/transport/client.cpp ${neroshop_tools_src} ${neroshop_wallet_src} ${NEROSHOP_CORE_SRC_DIR}/settings.cpp)
+set(neroshop_client_src ${neroshop_crypto_src} ${neroshop_database_src} ${neroshop_market_src} #[[${neroshop_network_src}]] ${neroshop_price_src} ${NEROSHOP_CORE_SRC_DIR}/protocol/p2p/file_piece_hasher.cpp ${NEROSHOP_CORE_SRC_DIR}/protocol/p2p/serializer.cpp ${NEROSHOP_CORE_SRC_DIR}/protocol/rpc/json_rpc.cpp ${NEROSHOP_CORE_SRC_DIR}/protocol/transport/client.cpp ${neroshop_tools_src} ${neroshop_wallet_src} ${NEROSHOP_CORE_SRC_DIR}/settings.cpp)
 
 ######################################
 # neroshop tests
@@ -486,7 +480,7 @@ endif()
 ######################################
 # neroshopd
 set(neroshop_daemon "neroshopd")
-set(neroshop_daemon_src ${neroshop_crypto_src} ${neroshop_database_src} ${neroshop_network_src} ${NEROSHOP_CORE_SRC_DIR}/protocol/p2p/file_piece_hasher.cpp ${NEROSHOP_CORE_SRC_DIR}/protocol/p2p/key_mapper.cpp ${NEROSHOP_CORE_SRC_DIR}/protocol/p2p/node.cpp ${NEROSHOP_CORE_SRC_DIR}/protocol/p2p/routing_table.cpp ${NEROSHOP_CORE_SRC_DIR}/protocol/rpc/json_rpc.cpp ${NEROSHOP_CORE_SRC_DIR}/protocol/rpc/msgpack.cpp ${NEROSHOP_CORE_SRC_DIR}/protocol/transport/client.cpp ${NEROSHOP_CORE_SRC_DIR}/protocol/transport/sam_client.cpp ${NEROSHOP_CORE_SRC_DIR}/protocol/transport/server.cpp ${NEROSHOP_CORE_SRC_DIR}/tools/base64.cpp ${NEROSHOP_CORE_SRC_DIR}/tools/timestamp.cpp)
+set(neroshop_daemon_src ${neroshop_crypto_src} ${neroshop_database_src} ${neroshop_network_src} ${NEROSHOP_CORE_SRC_DIR}/protocol/p2p/file_piece_hasher.cpp ${NEROSHOP_CORE_SRC_DIR}/protocol/p2p/key_mapper.cpp ${NEROSHOP_CORE_SRC_DIR}/protocol/p2p/node.cpp ${NEROSHOP_CORE_SRC_DIR}/protocol/p2p/routing_table.cpp ${NEROSHOP_CORE_SRC_DIR}/protocol/rpc/json_rpc.cpp ${NEROSHOP_CORE_SRC_DIR}/protocol/rpc/msgpack.cpp ${NEROSHOP_CORE_SRC_DIR}/protocol/transport/client.cpp ${NEROSHOP_CORE_SRC_DIR}/protocol/transport/server.cpp ${NEROSHOP_CORE_SRC_DIR}/tools/base64.cpp ${NEROSHOP_CORE_SRC_DIR}/tools/timestamp.cpp)
 add_executable(${neroshop_daemon} src/daemon/main.cpp ${neroshop_daemon_src})
 install(TARGETS ${neroshop_daemon} DESTINATION bin)
 if(NOT CMAKE_BUILD_TYPE STREQUAL "Release" AND NOT CMAKE_BUILD_TYPE STREQUAL "MinSizeRel")
