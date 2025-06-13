@@ -159,7 +159,7 @@ void OnionAddressGenerator::create_torrc(const std::string& torrc_path, const st
     torrc_file << "HiddenServiceDir " << hidden_service_dir << "\n";
     torrc_file << "HiddenServicePort " << TOR_HIDDEN_SERVICE_PORT << " 127.0.0.1:" << TOR_HIDDEN_SERVICE_PORT << "\n";
     torrc_file.close();
-    // Optionally restart Tor daemon here with the args: /tor -f ~/.config/neroshop/tor/torrc
+    // Optionally restart Tor daemon with the following command and args: ./tor -f ~/.config/neroshop/tor/torrc
 }
 
 //-----------------------------------------------------------------------------

@@ -47,33 +47,33 @@ target_include_directories(${zlib_target} PUBLIC zlib/)
 set_target_properties(${zlib_target} PROPERTIES OUTPUT_NAME "z")
 target_compile_options(${zlib_target} PUBLIC -Wno-implicit-function-declaration)
 
-set(i2pd_target "i2pd")
-set(i2pd_srcs )
-file(GLOB_RECURSE I2PD_CPP_FILES "i2pd/libi2pd/*.cpp")
-foreach(CPP_FILE ${I2PD_CPP_FILES})
-  list(APPEND i2pd_srcs ${CPP_FILE})
-endforeach()
-add_library(${i2pd_target} STATIC ${i2pd_srcs})
-target_include_directories(${i2pd_target} PUBLIC i2pd/libi2pd/)
-add_definitions(-DOPENSSL_SUPPRESS_DEPRECATED)
-
-set(i2pd_client_target "i2pdclient")
-set(i2pd_client_srcs )
-file(GLOB_RECURSE I2PD_CLIENT_CPP_FILES "i2pd/libi2pd_client/*.cpp")
-foreach(CPP_FILE ${I2PD_CLIENT_CPP_FILES})
-  list(APPEND i2pd_client_srcs ${CPP_FILE})
-endforeach()
-add_library(${i2pd_client_target} STATIC ${i2pd_client_srcs})
-target_include_directories(${i2pd_client_target} PUBLIC i2pd/i18n/ i2pd/libi2pd/ i2pd/libi2pd_client/)
-
-set(i2pd_lang_target "i2pdlang")
-set(i2pd_lang_srcs )
-file(GLOB_RECURSE I2PD_LANG_CPP_FILES "i2pd/i18n/*.cpp")
-foreach(CPP_FILE ${I2PD_LANG_CPP_FILES})
-  list(APPEND i2pd_lang_srcs ${CPP_FILE})
-endforeach()
-add_library(${i2pd_lang_target} STATIC ${i2pd_lang_srcs})
-target_include_directories(${i2pd_lang_target} PUBLIC i2pd/i18n/ i2pd/libi2pd/ i2pd/libi2pd_client/)
+find_package(ZLIB)
+if(NOT ZLIB_FOUND)
+    set(ZLIB_LIBRARY "${CMAKE_SOURCE_DIR}/../build/libz.a" CACHE FILEPATH "Custom zlib library" FORCE)
+    set(ZLIB_INCLUDE_DIR "${CMAKE_SOURCE_DIR}/zlib/" CACHE PATH "Custom zlib include dir" FORCE)
+endif()
+# both WITH_BINARY and WITH_LIBRARY options should be ON by default
+add_subdirectory(i2pd/build)
+set_target_properties(libi2pd PROPERTIES
+    ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/../build"
+    LIBRARY_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/../build"
+    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/../build"
+)
+set_target_properties(libi2pdclient PROPERTIES
+    ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/../build"
+    LIBRARY_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/../build"
+    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/../build"
+)
+set_target_properties(libi2pdlang PROPERTIES
+    ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/../build"
+    LIBRARY_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/../build"
+    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/../build"
+)
+set_target_properties(i2pd PROPERTIES
+    ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/../build"
+    LIBRARY_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/../build"
+    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/../build"
+)
 
 set(fmt_target "fmt")
 set(fmt_srcs fmt/src/format.cc fmt/src/os.cc)
@@ -88,15 +88,10 @@ if(NOT SODIUM_INCLUDE_DIR)
 endif()
 message(STATUS "Found libsodium include dir: ${SODIUM_INCLUDE_DIR}")
 set(mkp224o_target "mkp224o")
-file(GLOB ed25519_amd64_51_30k_srcs mkp224o/ed25519/amd64-51-30k/*.c)
-file(GLOB ed25519_amd64_64_24k_srcs mkp224o/ed25519/amd64-64-24k/*.c)
-file(GLOB ed25519_donna_srcs mkp224o/ed25519/ed25519-donna/*.c) # current default
-file(GLOB ed25519_ref10_srcs mkp224o/ed25519/ref10/*.c)
 set(mkp224o_srcs mkp224o/main.c mkp224o/worker.c mkp224o/yaml.c mkp224o/vec.c mkp224o/cpucount.c mkp224o/base32_to.c mkp224o/base32_from.c mkp224o/base64_to.c mkp224o/base64_from.c mkp224o/ioutil.c mkp224o/keccak.c)
-#list(APPEND mkp224o_srcs ${ed25519_donna_srcs})
 add_executable(${mkp224o_target} ${mkp224o_srcs})
 set_target_properties(${mkp224o_target} PROPERTIES C_STANDARD 99 C_STANDARD_REQUIRED ON C_EXTENSIONS OFF)
-target_include_directories(${mkp224o_target} PUBLIC mkp224o/ mkp224o/ed25519/ mkp224o/ed25519/ed25519-donna/ ${SODIUM_INCLUDE_DIR})
+target_include_directories(${mkp224o_target} PUBLIC mkp224o/ ${SODIUM_INCLUDE_DIR})
 target_compile_options(${mkp224o_target} PRIVATE #[[-std=c99]] -Wall -Wextra -Wno-maybe-uninitialized -Wno-unused-function -Wmissing-prototypes -Wstrict-prototypes -O3 -march=native -fomit-frame-pointer -fPIE)
 find_package(Threads REQUIRED)
 target_link_libraries(${mkp224o_target} PRIVATE Threads::Threads sodium) # -lpthread -lsodium
