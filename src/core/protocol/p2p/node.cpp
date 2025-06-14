@@ -499,7 +499,7 @@ void Node::send_query(const std::string& destination, uint16_t port, const std::
     auto network_type = get_network_type();
     switch (network_type) {
         case NetworkType::I2P: {
-            if(!sam_client.get()) throw std::runtime_error("SAM client is not connected");
+            if(!sam_client) throw std::runtime_error("SAM client is not connected");
             if(sam_client->get_socket() < 0) throw std::runtime_error("SAM client socket is closed");
     
             // Construct SAM header line for datagram
@@ -2048,7 +2048,7 @@ void Node::run_tor() {
         listen_addr.sin_port = htons(0); // ephemeral port*/
         
         // If bind fails, try port (TOR_HIDDEN_SERVICE_PORT + 8)
-        uint16_t incremental_port = TOR_HIDDEN_SERVICE_PORT + 2;
+        uint16_t incremental_port = TOR_HIDDEN_SERVICE_PORT + 8;
         std::cerr << "Port " << TOR_HIDDEN_SERVICE_PORT << " already in use, trying port " << incremental_port << "..." << std::endl;
         // Try binding to TOR_HIDDEN_SERVICE_PORT + 8
         listen_addr.sin_port = htons(incremental_port);

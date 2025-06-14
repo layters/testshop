@@ -149,42 +149,34 @@ Popup {
                         }
                     }
 
-                    TextField {
-                        id: productPriceField
-                        width: 500/* - parent.children[1].width - parent.spacing*/; height: 50//Layout.preferredWidth: 500 - parent.children[1].width - parent.spacing; Layout.preferredHeight: 50
-                        placeholderText: qsTr("Enter price")
-                        color: productDialog.inputTextColor
-                        selectByMouse: true
-                        validator: RegExpValidator{ regExp: new RegExp("^-?[0-9]+(\\.[0-9]{1," + Backend.getCurrencyDecimals(settingsDialog.currency.currentText) + "})?$") }
-                        background: Rectangle { 
-                            color: "transparent"
-                            border.color: productDialog.inputBorderColor
-                            border.width: parent.activeFocus ? 2 : 1
-                            radius: productDialog.inputRadius
-                        }
-                        rightPadding: 25 + selectedCurrencyText.width
-                        function adjustPriceDecimals() {
-                            productPriceField.text = Number(productPriceField.text).toFixed(Backend.getCurrencyDecimals(settingsDialog.currency.currentText))
-                        }
-                        onEditingFinished: adjustPriceDecimals() // does not update when switching from crypto to fiat :(
-                                    
-                        Text {
-                            id: selectedCurrencyText
-                            text: settingsDialog.currency.currentText
+                    Row {
+                        spacing: 5
+                        TextField {
+                            id: productPriceField
+                            width: 500 - parent.children[1].width - parent.spacing; height: 50//Layout.preferredWidth: 500 - parent.children[1].width - parent.spacing; Layout.preferredHeight: 50
+                            placeholderText: qsTr("Enter price")
                             color: productDialog.inputTextColor
-                            anchors.right: parent.right
-                            anchors.rightMargin: 15
-                            anchors.verticalCenter: parent.verticalCenter
-                            font.bold: true
-                            font.pointSize: 10
-                            MouseArea { 
-                                anchors.fill: parent
-                                onClicked: {
-                                    settingsDialog.currentIndex = 0 // Switch to General Settings tab
-                                    settingsDialog.open()
-                                    settingsDialog.currency.popup.open()
-                                }
+                            selectByMouse: true
+                            validator: RegExpValidator{ regExp: new RegExp("^-?[0-9]+(\\.[0-9]{1," + Backend.getCurrencyDecimals(currencyBox.currentText) + "})?$") }
+                            background: Rectangle { 
+                                color: "transparent"
+                                border.color: productDialog.inputBorderColor
+                                border.width: parent.activeFocus ? 2 : 1
+                                radius: productDialog.inputRadius
                             }
+                            function adjustPriceDecimals() {
+                                productPriceField.text = Number(productPriceField.text).toFixed(Backend.getCurrencyDecimals(currencyBox.currentText))
+                            }
+                            onEditingFinished: adjustPriceDecimals() // does not update when switching from crypto to fiat :(
+                        }
+                        NeroshopComponents.ComboBox {
+                            id: currencyBox
+                            height: parent.children[0].height
+                            model: ["USD", "XMR"]
+                            Component.onCompleted: currentIndex = find("USD")
+                            radius: productDialog.inputRadius
+                            color: productDialog.inputBaseColor
+                            textColor: productDialog.inputTextColor
                         }
                     }
                 }
@@ -1200,7 +1192,7 @@ Popup {
                                     TextField {
                                         Layout.fillWidth: true
                                         placeholderText: qsTr(Number("0.00").toFixed(2))
-                                        validator: RegExpValidator{ regExp: new RegExp("^-?[0-9]+(\\.[0-9]{1," + Backend.getCurrencyDecimals(selectedCurrencyText.text) + "})?$") }
+                                        validator: RegExpValidator{ regExp: new RegExp("^-?[0-9]+(\\.[0-9]{1," + Backend.getCurrencyDecimals(currencyBox.currentText) + "})?$") }
                                         selectByMouse: true
                                         background: Rectangle {
                                             color: "transparent"
@@ -1220,7 +1212,7 @@ Popup {
                 Layout.alignment: Qt.AlignHCenter
                 Layout.preferredWidth: childrenRect.width
                 Layout.preferredHeight: childrenRect.height
-                visible: paymentCoinsRepeater.count > 0 && paymentCoinsItem.isPaymentCoinSelected() && selectedCurrencyText.text != "XMR"
+                visible: paymentCoinsRepeater.count > 0 && paymentCoinsItem.isPaymentCoinSelected() && currencyBox.currentText != "XMR"
                 function getCustomRates() {
                     let customRates = [];
                     for (let i = 0; i < customRatesList.count; i++) {
@@ -1286,8 +1278,8 @@ Popup {
                                     
                                     TextField {
                                         Layout.fillWidth: true
-                                        placeholderText: qsTr("1 XMR = ? %1").arg(selectedCurrencyText.text)
-                                        validator: RegExpValidator{ regExp: new RegExp("^-?[0-9]+(\\.[0-9]{1," + Backend.getCurrencyDecimals(selectedCurrencyText.text) + "})?$") }
+                                        placeholderText: qsTr("1 XMR = ? %1").arg(currencyBox.currentText)
+                                        validator: RegExpValidator{ regExp: new RegExp("^-?[0-9]+(\\.[0-9]{1," + Backend.getCurrencyDecimals(currencyBox.currentText) + "})?$") }
                                         selectByMouse: true
                                         background: Rectangle {
                                             color: "transparent"
@@ -1715,7 +1707,7 @@ Popup {
                                     
                                     productQuantityField.text, 
                                     productPriceField.text, 
-                                    selectedCurrencyText.text, 
+                                    currencyBox.currentText, 
                                     productConditionBox.currentText, 
                                     productLocationBox.currentText,
                                     (quantityPerOrderField.text.length > 0) ? Number(quantityPerOrderField.text) : 0,
