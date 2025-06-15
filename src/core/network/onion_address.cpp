@@ -95,7 +95,7 @@ bool OnionAddressGenerator::load(/*const std::string& in_dir*/) {
 std::string OnionAddressGenerator::generate(const std::string& prefix, const std::string& out_dir) {
     // Can only generate once
     if(generated_) {
-        std::cout << "Onion addresses can only be generated once\n";
+        std::cout << "generate: Onion addresses can only be generated once\n";
         return "";
     }
     
@@ -111,7 +111,7 @@ std::string OnionAddressGenerator::generate(const std::string& prefix, const std
         cmd += " " + prefix;
     }
     
-    std::cout << "[*] Running command: " << cmd << std::endl;
+    std::cout << "[*] generate: Running command: " << cmd << std::endl;
 
     // Run mkp224o as a subprocess
     int ret = std::system(cmd.c_str());
@@ -140,7 +140,7 @@ std::string OnionAddressGenerator::generate(const std::string& prefix, const std
     if (!newest_dir.empty()) {
         onion_dir_ = newest_dir;
         onion_addr_ = newest_dir.filename().string();
-        std::cout << "[*] Found onion address directory: " << onion_dir_
+        std::cout << "[*] generate: Found onion address directory: " << onion_dir_
                   << std::endl;
         generated_ = true;
         return onion_addr_;

@@ -185,7 +185,16 @@ ApplicationWindow {
                 close();
             }
         }
-    }        
+    }
+    
+    NeroshopComponents.Toast {
+        id: toast
+        anchors.left: parent.left
+        anchors.leftMargin: 20
+        anchors.bottom: parent.bottom
+        anchors.bottomMargin: 20
+        // Usage: toast.showNotification("Hello from main.qml")
+    }
     // navigating between different pages: https://stackoverflow.com/a/15655043
     // The footer item is positioned to the bottom, and resized to the width of the window
     // Custom ToolBar
@@ -270,6 +279,7 @@ ApplicationWindow {
                         height: contentHeight + 20; width: (contentWidth > parent.width) ? 500 : parent.width
                         bottomMargin : footer.height + 5
                         text: qsTr("%1\n%2 %3").arg((parent.value == 1.0) ? ((networkMonitor.networkStatus == null) ? "neroshopd" : (networkMonitor.networkStatus.hasOwnProperty("host") ? networkMonitor.networkStatus.host : "neroshopd")) : "neroshopd").arg(DaemonManager.daemonStatusText).arg((parent.value > 0.0 && parent.value < 1.0) ? ("(" + (parent.value * 100).toString() + "%)") : "")
+                        textObject.font.pointSize: 10
                         pointer.visible: false
                     }
                 }      
@@ -314,6 +324,7 @@ ApplicationWindow {
                         height: contentHeight + 20; width: (contentWidth > parent.width) ? 300 : parent.width
                         bottomMargin : footer.height + 5
                         text: qsTr("%1\n%2 %3%4").arg(moneroDaemonSyncBar.title).arg((!Wallet.opened || parent.value <= 0.0) ? ((moneroDaemonSyncBar.title != "monerod") ? "Waiting" : "Disconnected") : ((parent.value > 0.0 && parent.value < 1.0) ? Wallet.getSyncMessage() : "Synchronized")).arg((parent.value > 0.0 && parent.value != 1.0) ? ("(" + (parent.value * 100).toFixed(2) + "%)") : "").arg((!Wallet.opened || parent.value <= 0.0) ? "" : ((parent.value > 0.0 && parent.value != 1.0) ? ("\nBlocks remaining: " + Wallet.getSyncHeight() + " / " + Wallet.getSyncEndHeight()) : ""))
+                        textObject.font.pointSize: 10
                         pointer.visible: false
                     }                
                 }
@@ -388,6 +399,7 @@ ApplicationWindow {
                     height: contentHeight + 20; width: contentWidth + 20
                     bottomMargin : footer.height + 5
                     text: qsTr("Network peers: %1\nActive peers: %2\nIdle peers: %3").arg(peerCounterText.text).arg((networkMonitor.networkStatus == null) ? "0" : (networkMonitor.networkStatus.hasOwnProperty("active_peers") ? networkMonitor.networkStatus.active_peers : "0")).arg((networkMonitor.networkStatus == null) ? "0" : (networkMonitor.networkStatus.hasOwnProperty("idle_peers") ? networkMonitor.networkStatus.idle_peers : "0"))
+                    textObject.font.pointSize: 10
                     pointer.visible: false
                 }
             }         
