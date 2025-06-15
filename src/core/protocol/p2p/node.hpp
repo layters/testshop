@@ -104,6 +104,7 @@ public:
     std::string get_address() const;
     uint16_t get_port() const;
     NetworkType get_network_type() const;
+    std::string get_network_type_as_string() const;
     RoutingTable * get_routing_table() const;
     std::vector<Peer> get_peers() const; // Returns a list of connected peers
     int get_peer_count() const; // Returns the total number of nodes in routing table

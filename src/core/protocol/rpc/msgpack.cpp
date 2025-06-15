@@ -169,6 +169,8 @@ std::vector<uint8_t> process(const std::vector<uint8_t>& request, Node& node, bo
             response_object["response"]["data_count"] = node.get_data_count();
             response_object["response"]["data_ram_usage"] = node.get_data_ram_usage();
             response_object["response"]["host"] = node.get_address();
+            response_object["response"]["port"] = node.get_port();
+            response_object["response"]["network_type"] = node.get_network_type_as_string();
             auto peers_list = node.get_peers();
             if(!peers_list.empty()) {
                 std::vector<nlohmann::json> peers_array;

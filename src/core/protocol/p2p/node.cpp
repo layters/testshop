@@ -557,7 +557,7 @@ void Node::send_query(const std::string& destination, uint16_t port, const std::
             
             // Step 1: Create and connect
             // If not already connected to this .onion, connect now
-            auto client = std::make_unique<Socks5Client>(TOR_SOCKS5_HOST, TOR_SOCKS5_PORT); // "127.0.0.1", 9050 or 9150
+            auto client = std::make_unique<Socks5Client>(TOR_SOCKS5_HOST, TOR_SOCKS5_PORT, false); // "127.0.0.1", 9050 or 9150
             try {
                 client->connect(destination.c_str(), port);
             } catch (const std::exception& e) {
@@ -2119,7 +2119,7 @@ void Node::run_tor() {
             } else {
                 std::string peer_id = "incoming_" + std::to_string(client_fd);
 
-                auto new_client = std::make_unique<Socks5Client>("127.0.0.1", 9050);
+                auto new_client = std::make_unique<Socks5Client>("127.0.0.1", 9050, false);
                 new_client->adopt_socket(client_fd); // <- you'll need to add this method
 
                 {
@@ -2323,6 +2323,21 @@ uint16_t Node::get_port() const {
 
 NetworkType Node::get_network_type() const {
     return network_type_;
+}
+
+//-----------------------------------------------------------------------------
+
+std::string Node::get_network_type_as_string() const {
+    switch(network_type_) {
+        case NetworkType::I2P:
+            return "I2P";
+        case NetworkType::Tor:
+            return "Tor";
+        case NetworkType::Clearnet:
+            return "Clearnet";
+        default:
+            throw std::runtime_error("Unknown network type");
+    }
 }
 
 //-----------------------------------------------------------------------------

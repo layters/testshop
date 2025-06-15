@@ -1497,15 +1497,16 @@ Item {
                     spacing: 5
                     Column {
                         width: parent.width
-                        spacing: 2
+                        spacing: 3
                         Text {
-                            text: qsTr("My I2P address")
+                            text: (networkMonitor.networkStatus == null) ? "My address" : qsTr("My %1 address").arg((networkMonitor.networkStatus.hasOwnProperty("network_type") ? networkMonitor.networkStatus.network_type : ""))
                             color: (NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000"
                             font.bold: true
                         }
                         TextField {
                             width: parent.width
                             text: qsTr((networkMonitor.networkStatus == null) ? "" : (networkMonitor.networkStatus.hasOwnProperty("host") ? networkMonitor.networkStatus.host : ""))
+                            font.pointSize: 10
                             color: (NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000"
                             selectByMouse: true
                             readOnly: true

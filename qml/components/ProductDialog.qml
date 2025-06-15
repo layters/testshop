@@ -1525,7 +1525,7 @@ Popup {
                         anchors.left: parent.left
                         anchors.leftMargin: 15
                         anchors.verticalCenter: parent.verticalCenter                         
-                        text: (parent.messageCode == 1) ? qsTr(FontAwesome.circleExclamation) : qsTr(FontAwesome.circleInfo)
+                        text: (parent.messageCode == 1) ? qsTr(FontAwesome.triangleExclamation) : qsTr(FontAwesome.circleInfo)
                         color: (parent.messageCode == 1) ? "#ffd700" : "#2196f3"
                         font.bold: true
                         font.family: FontAwesome.fontFamily
