@@ -31,7 +31,7 @@ int MoneroWallet::create_random(const std::string& password, const std::string& 
     if(settings.is_discarded()) {
         wallet_config_obj.m_language = "English";
     } else {
-        wallet_config_obj.m_language = settings["language"];
+        wallet_config_obj.m_language = settings["monero"]["wallet"]["seed_language"].get<std::string>();
     }
     
     monero_wallet_obj = std::unique_ptr<monero_wallet_full>(monero_wallet_full::create_wallet (wallet_config_obj, nullptr));

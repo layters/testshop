@@ -234,28 +234,9 @@ bool create_json() {
         wallet_obj.insert(QString("show_currency_sign"), QJsonValue(false));
         wallet_obj.insert(QString("block_explorer"), QJsonValue("xmrchain.net"));
         ////wallet_obj.insert(QString("require_password_on_withdrawal"), QJsonValue(true));
+        wallet_obj.insert(QString("seed_language"), QJsonValue("English"));
         monero_obj.insert(QString("wallet"), QJsonValue(wallet_obj));
         root_obj.insert(QString("monero"), QJsonValue(monero_obj));
-        
-        QJsonObject wownero_obj;
-        //wownero_obj.insert(QString("restore_height"), QJsonValue());
-        QJsonObject daemon2_obj;
-        daemon2_obj.insert(QString("confirm_external_bind"), QJsonValue(false));
-        daemon2_obj.insert(QString("restricted_rpc"), QJsonValue(true));
-        daemon2_obj.insert(QString("data_dir"), QJsonValue(""));
-        daemon2_obj.insert(QString("auto_sync"), QJsonValue(true));
-        daemon2_obj.insert(QString("node_type"), QJsonValue(0));
-        daemon2_obj.insert(QString("executable"), QJsonValue(""));
-        daemon2_obj.insert(QString("last_selected_node"), QJsonValue(""));
-        wownero_obj.insert(QString("daemon"), QJsonValue(daemon2_obj));
-        QJsonObject wallet2_obj;
-        wallet2_obj.insert(QString("balance_display"), QJsonValue("All balances"));
-        wallet2_obj.insert(QString("balance_amount_precision"), QJsonValue(11));
-        wallet2_obj.insert(QString("show_currency_sign"), QJsonValue(false));
-        wallet2_obj.insert(QString("block_explorer"), QJsonValue("explore.wownero.com"));
-        ////wallet2_obj.insert(QString("require_password_on_withdrawal"), QJsonValue(true));
-        wownero_obj.insert(QString("wallet"), QJsonValue(wallet2_obj));
-        root_obj.insert(QString("wownero"), QJsonValue(wownero_obj));
         
         QJsonObject data_expiration_obj;
         ////data_expiration_obj.insert(QString("user"), QJsonValue("Never"));
@@ -333,19 +314,7 @@ bool create_json() {
         settings_json["monero"]["wallet"]["show_currency_sign"] = false;
         settings_json["monero"]["wallet"]["block_explorer"] = "xmrchain.net";
         ////settings_json["monero"]["wallet"]["require_password_on_withdrawal"] = true;
-        
-        settings_json["wownero"]["daemon"]["confirm_external_bind"] = false;
-        settings_json["wownero"]["daemon"]["restricted_rpc"] = true;
-        settings_json["wownero"]["daemon"]["data_dir"] = ""; // leave blank to use default
-        settings_json["wownero"]["daemon"]["auto_sync"] = true;
-        settings_json["wownero"]["daemon"]["node_type"] = 0;
-        settings_json["wownero"]["daemon"]["executable"] = "";
-        settings_json["wownero"]["daemon"]["last_selected_node"] = "";
-        settings_json["wownero"]["wallet"]["balance_display"] = "All balances";
-        settings_json["wownero"]["wallet"]["balance_amount_precision"] = 11;
-        settings_json["wownero"]["wallet"]["show_currency_sign"] = false;
-        settings_json["wownero"]["wallet"]["block_explorer"] = "explore.wownero.com";
-        ////settings_json["wownero"]["wallet"]["require_password_on_withdrawal"] = true;
+        settings_json["monero"]["wallet"]["seed_language"] = "English";
         
         ////settings_json["data_expiration"]["user"] = "Never"; // permanent
         settings_json["data_expiration"]["listing"] = "Never"; // can be modified

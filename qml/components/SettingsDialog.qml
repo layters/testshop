@@ -101,6 +101,7 @@ Popup {
                     show_currency_sign: showCurrencySignSwitch.checked,
                     block_explorer: blockExplorerBox.currentText,//currentIndex,
                     ////require_password_on_withdrawal: requirePasswordOnWithdrawalSwitch.checked,
+                    seed_language: seedLanguageBox.currentText,
                 },
             },
             // proxy / privacy
@@ -572,7 +573,7 @@ Popup {
                     anchors.right: parent.right//Layout.alignment: Qt.AlignRight; Layout.rightMargin: 0
                     width: settingsStack.comboBoxWidth
                     currentIndex: model.indexOf(Settings.getJsonRootObject()["language"])
-                    model: Wallet.getSeedLanguages()
+                    model: ["English"]
                     onCurrentTextChanged: settingsDialog.save()
                     indicatorWidth: settingsStack.comboBoxButtonWidth
                     indicatorDoNotPassBorder: settingsStack.comboBoxNestedButton
@@ -708,6 +709,27 @@ Popup {
                             backgroundCheckedColor: "#605185"
                             onToggled: settingsDialog.save()
                             enabled: false // cannot be turned off unless done manually
+                        }
+                    }
+                    // Seed language
+                    Item {
+                        Layout.fillWidth: true
+                        Layout.preferredHeight: childrenRect.height                        
+                        Text {
+                            anchors.verticalCenter: seedLanguageBox.verticalCenter
+                            text: qsTr("Seed language:")
+                            color: NeroshopComponents.Style.darkTheme ? "#ffffff" : "#000000"
+                        }
+
+                        NeroshopComponents.ComboBox {
+                            id: seedLanguageBox
+                            anchors.right: parent.right
+                            width: settingsStack.comboBoxWidth; indicatorWidth: settingsStack.comboBoxButtonWidth
+                            model: Wallet.getSeedLanguages()
+                            currentIndex: model.indexOf(Settings.getJsonRootObject()["monero"]["wallet"]["seed_language"])
+                            onCurrentTextChanged: settingsDialog.save()
+                            color: "#f2f2f2"
+                            indicatorDoNotPassBorder: settingsStack.comboBoxNestedButton
                         }
                     }
                 }
