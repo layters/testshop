@@ -427,7 +427,8 @@ set(neroshop_market_src
 set(neroshop_network_src 
     ${NEROSHOP_CORE_SRC_DIR}/network/onion_address.cpp 
     ${NEROSHOP_CORE_SRC_DIR}/network/sam_client.cpp 
-    ${NEROSHOP_CORE_SRC_DIR}/network/socks5_client.cpp
+    ${NEROSHOP_CORE_SRC_DIR}/network/socks5_client.cpp 
+    ${NEROSHOP_CORE_SRC_DIR}/network/tor_config.cpp
 )
 
 set(neroshop_price_src 

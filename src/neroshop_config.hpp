@@ -32,7 +32,7 @@ inline constexpr size_t NEROSHOP_RECV_BUFFER_SIZE      = 4096;//8192// no IP pac
 
 // DHT constants - timeouts
 inline constexpr int NEROSHOP_DHT_RECV_TIMEOUT            = 5000; // Measured in milliseconds
-inline constexpr int NEROSHOP_DHT_PING_TIMEOUT            = 5000; // Measured in milliseconds
+inline constexpr int NEROSHOP_DHT_PING_TIMEOUT            = 5000; // Measured in milliseconds (I2P should use 800-1000ms and Tor should use 5000-10000ms)
 
 // DHT constants
 inline constexpr int NEROSHOP_DHT_REPLICATION_FACTOR      = 3;    // 10 to 20 (or even higher) // Usually 3 or 5 but a higher number would improve fault tolerant, mitigating the risk of data loss even if multiple nodes go offline simultaneously. It also helps distribute the load across more nodes, potentially improving read performance by allowing concurrent access from multiple replicas.

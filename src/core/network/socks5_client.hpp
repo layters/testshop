@@ -35,6 +35,7 @@ public:
 private:
     bool socks5_handshake(const char* dest_host, uint16_t dest_port);
     bool socks5_handshake_auth(const char* dest_host, uint16_t dest_port);
+    uint16_t reserve_available_port(uint16_t preferred_port);
     const char* socks_host_;
     uint16_t socks_port_;
     int sockfd_;

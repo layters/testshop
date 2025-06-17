@@ -1,5 +1,6 @@
 #include "onion_address.hpp"
 
+#include "tor_config.hpp"
 #include "../tools/string.hpp"
 
 #include <cstdio>
@@ -27,60 +28,60 @@ bool OnionAddressGenerator::load(/*const std::string& in_dir*/) {
     namespace fs = std::filesystem;
     
     auto base_path = get_default_tor_path(); // ~/.config/neroshop/tor
-    auto onion_keys_path = base_path / TOR_HIDDEN_SERVICE_DIR_FOLDER_NAME; // ~/.config/neroshop/tor/hidden_service
-    auto last_onion_file = onion_keys_path / "last_onion_address.txt"; // ~/.config/neroshop/tor/hidden_service/last_onion_address.txt
+    auto keys_path = base_path / TOR_HIDDEN_SERVICE_DIR_FOLDER_NAME; // ~/.config/neroshop/tor/hidden_service
+    auto last_onion_file = keys_path / "last_onion_address.txt"; // ~/.config/neroshop/tor/hidden_service/last_onion_address.txt
     if (!fs::exists(last_onion_file)) {
-        std::cerr << "[!] load: last_onion_address.txt not found\n";
+        std::cerr << "load: last_onion_address.txt not found\n";
         return false;
     }
     
     // Read onion address from "last_onion_address.txt" file
     std::ifstream infile(last_onion_file);
     if (!infile) {
-        std::cerr << "[!] load: Failed to open last_onion_address.txt\n";
+        std::cerr << "load: Failed to open last_onion_address.txt\n";
         return false;
     }
     std::string last_onion_address;
     std::getline(infile, last_onion_address);
     if (last_onion_address.empty()) {
-        std::cerr << "[!] load: last_onion_address.txt is empty\n";
+        std::cerr << "load: last_onion_address.txt is empty\n";
         return false;
     }
     // Trim trailing whitespace
     last_onion_address.erase(last_onion_address.find_last_not_of(" \n\r\t") + 1);
     
     // ~/.config/neroshop/tor/hidden_service/<last_onion_address>
-    auto onion_folder = onion_keys_path / last_onion_address;
+    auto onion_folder = keys_path / last_onion_address;
     // Check if the .onion folder exists
     if (!fs::exists(onion_folder)) {
-        std::cerr << "[!] load: Onion keys folder does not exist: " << onion_folder << "\n";
+        std::cerr << "load: Onion keys folder does not exist: " << onion_folder << "\n";
         return false;
     }
     
     // Check if the hostname file exists
     auto hostname_path = onion_folder / "hostname";
     if (!fs::exists(hostname_path)) {
-        std::cerr << "[!] load: hostname file missing in onion folder: " << hostname_path << "\n";
+        std::cerr << "load: hostname file missing in onion folder: " << hostname_path << "\n";
         return false;
     }
     
     // Open the hostname file
     std::ifstream hostname_file(hostname_path);
     if (!hostname_file) {
-        std::cerr << "[!] load: Failed to open hostname file\n";
+        std::cerr << "load: Failed to open hostname file\n";
         return false;
     }
     // Store the hostname in onion_addr_
     std::getline(hostname_file, this->onion_addr_);
     if (this->onion_addr_.empty()) {
-        std::cerr << "[!] load: hostname file is empty\n";
+        std::cerr << "load: hostname file is empty\n";
         return false;
     }
     this->onion_addr_.erase(this->onion_addr_.find_last_not_of(" \n\r\t") + 1);
     
     // Store the onion_folder in onion_dir_
     this->onion_dir_ = onion_folder;
-    std::cout << "[*] load: Loaded existing onion address: " << this->onion_addr_ << std::endl;
+    std::cout << "load: Loaded existing onion address: " << this->onion_addr_ << std::endl;
     
     // Set generated_ to true
     this->generated_ = true;
@@ -111,7 +112,7 @@ std::string OnionAddressGenerator::generate(const std::string& prefix, const std
         cmd += " " + prefix;
     }
     
-    std::cout << "[*] generate: Running command: " << cmd << std::endl;
+    std::cout << "generate: Running command: " << cmd << std::endl;
 
     // Run mkp224o as a subprocess
     int ret = std::system(cmd.c_str());
@@ -140,26 +141,13 @@ std::string OnionAddressGenerator::generate(const std::string& prefix, const std
     if (!newest_dir.empty()) {
         onion_dir_ = newest_dir;
         onion_addr_ = newest_dir.filename().string();
-        std::cout << "[*] generate: Found onion address directory: " << onion_dir_
+        std::cout << "generate: Found onion address directory: " << onion_dir_
                   << std::endl;
         generated_ = true;
         return onion_addr_;
     }
 
     throw std::runtime_error("No onion address found in output directory.");
-}
-
-//-----------------------------------------------------------------------------
-
-void OnionAddressGenerator::create_torrc(const std::string& torrc_path, const std::string& hidden_service_dir) {
-    std::ofstream torrc_file(torrc_path);
-    if (!torrc_file) {
-        throw std::runtime_error("Failed to open torrc file for writing");
-    }
-    torrc_file << "HiddenServiceDir " << hidden_service_dir << "\n";
-    torrc_file << "HiddenServicePort " << TOR_HIDDEN_SERVICE_PORT << " 127.0.0.1:" << TOR_HIDDEN_SERVICE_PORT << "\n";
-    torrc_file.close();
-    // Optionally restart Tor daemon with the following command and args: ./tor -f ~/.config/neroshop/tor/torrc
 }
 
 //-----------------------------------------------------------------------------

@@ -1,6 +1,7 @@
 #include "socks5_client.hpp"
 
 #include "onion_address.hpp"
+#include "tor_config.hpp"
 
 #include <arpa/inet.h>
 #include <netinet/in.h>
@@ -16,7 +17,7 @@ namespace neroshop {
 //-----------------------------------------------------------------------------
 
 Socks5Client::Socks5Client(const char* socks_host, uint16_t socks_port, bool tor_hidden_service)
-        : socks_host_(socks_host), socks_port_(socks_port), sockfd_(-1), port_(TOR_HIDDEN_SERVICE_PORT) 
+        : socks_host_(socks_host), socks_port_(socks_port), sockfd_(-1) 
 {
     if (!tor_hidden_service) {
         // Skip all operations if flag is set to false
@@ -24,34 +25,37 @@ Socks5Client::Socks5Client(const char* socks_host, uint16_t socks_port, bool tor
     }
     
     auto base_path = get_default_tor_path(); // ~/.config/neroshop/tor
-    auto onion_keys_path = base_path / TOR_HIDDEN_SERVICE_DIR_FOLDER_NAME; // ~/.config/neroshop/tor/hidden_service
-    auto last_onion_file = onion_keys_path / "last_onion_address.txt"; // ~/.config/neroshop/tor/hidden_service/last_onion_address.txt
+    auto keys_path = base_path / TOR_HIDDEN_SERVICE_DIR_FOLDER_NAME; // ~/.config/neroshop/tor/hidden_service
+    auto last_onion_file = keys_path / "last_onion_address.txt"; // ~/.config/neroshop/tor/hidden_service/last_onion_address.txt
     
     // Generate or load onion address using OnionAddressGenerator
     onion_gen_ = std::make_unique<OnionAddressGenerator>("./mkp224o");
     if(!onion_gen_->load()) {
-        this->onion_address_ = onion_gen_->generate("ns"/*"neroshop"*/, onion_keys_path);
+        this->onion_address_ = onion_gen_->generate("ns"/*"neroshop"*/, keys_path);
         if(this->onion_address_.empty()) {
             throw std::runtime_error("Failed to generate .onion address");
         }
-        std::cout << "[*] Socks5Client: Generated new onion address: " << this->onion_address_ << std::endl;
+        std::cout << "Socks5Client: Generated new onion address: " << this->onion_address_ << "\n";
         // Save onion address string to "~/.config/neroshop/tor/last_onion_address.txt" so we can load it later
         std::ofstream outfile(last_onion_file);
         if (outfile.is_open()) {
             outfile << this->onion_address_ << std::endl;
             outfile.close();
-            std::cout << "[*] Socks5Client: Saved new onion address to " << last_onion_file << std::endl;
+            std::cout << "Socks5Client: Saved new onion address to " << last_onion_file << "\n";
         } else {
-            std::cerr << "[!] Socks5Client: Error opening " << last_onion_file << " for writing\n";
+            std::cerr << "Socks5Client: Error opening " << last_onion_file << " for writing\n";
             // Consider throwing an exception or handling the error appropriately
         }
-        // Also, generate torrc file: "~/.config/neroshop/tor/torrc"
-        // mkp224o creates a .onion folder within hidden_service so the real HiddenServiceDir is ~/.config/neroshop/tor/hidden_service/<56-chars>.onion
+        // mkp224o creates a .onion folder within hidden_service so the actual HiddenServiceDir is ~/.config/neroshop/tor/hidden_service/<56-chars>.onion
         auto torrc_path = get_default_tor_path() / TOR_TORRC_FILENAME;
-        auto hidden_service_dir = onion_keys_path / this->onion_address_;
-        onion_gen_->create_torrc(torrc_path, hidden_service_dir);
+        auto hidden_service_dir = keys_path / this->onion_address_;
+        // Save assigned port
+        this->port_ = reserve_available_port(TOR_HIDDEN_SERVICE_PORT);
+        // Finally, generate torrc file: "~/.config/neroshop/tor/torrc"
+        TorConfig::create_torrc(torrc_path, hidden_service_dir, this->port_);
     } else {
         this->onion_address_ = onion_gen_->get_onion_address();
+        this->port_ = reserve_available_port(TOR_HIDDEN_SERVICE_PORT);
     }
 }
         
@@ -183,6 +187,39 @@ bool Socks5Client::socks5_handshake_auth(const char* dest_host, uint16_t dest_po
 
 //-----------------------------------------------------------------------------
 
+uint16_t Socks5Client::reserve_available_port(uint16_t preferred_port) {
+    if (preferred_port > 65535) {
+        throw std::invalid_argument("Invalid port");
+    }
+    
+    int sockfd = ::socket(AF_INET, SOCK_STREAM, 0);
+    if (sockfd < 0) return 0;
+
+    sockaddr_in addr{};
+    addr.sin_family = AF_INET;
+    addr.sin_port = htons(preferred_port);
+    addr.sin_addr.s_addr = inet_addr("127.0.0.1");
+
+    if (::bind(sockfd, (sockaddr*)&addr, sizeof(addr)) < 0) {
+        // Try fallback
+        addr.sin_port = htons(preferred_port + 2);//htons(0);
+        if (::bind(sockfd, (sockaddr*)&addr, sizeof(addr)) < 0) {
+            close(sockfd);
+            return 0;
+        }
+    }
+
+    socklen_t addrlen = sizeof(addr);
+    getsockname(sockfd, (sockaddr*)&addr, &addrlen);
+    uint16_t assigned_port = ntohs(addr.sin_port);
+
+    close(sockfd); // We just wanted to test port availability
+
+    return assigned_port;
+}
+
+//-----------------------------------------------------------------------------
+
 // Connect to SOCKS5 proxy and then to dest_host:dest_port via Tor
 void Socks5Client::connect(const char* dest_host, uint16_t dest_port) {
     sockfd_ = socket(AF_INET, SOCK_STREAM, 0);
@@ -212,7 +249,7 @@ void Socks5Client::connect(const char* dest_host, uint16_t dest_port) {
 
 // Send data through Tor SOCKS5 connection
 ssize_t Socks5Client::send(const void* buf, size_t len, int flags) {
-    if (sockfd_ == -1) throw std::runtime_error("Socket not connected");
+    if (sockfd_ == -1) throw std::runtime_error("SOCKS5 socket not connected");
     return ::send(sockfd_, buf, len, flags);
 }
 
@@ -220,7 +257,7 @@ ssize_t Socks5Client::send(const void* buf, size_t len, int flags) {
 
 // Receive data through Tor SOCKS5 connection
 ssize_t Socks5Client::recv(void* buf, size_t len, int flags) {
-    if (sockfd_ == -1) throw std::runtime_error("Socket not connected");
+    if (sockfd_ == -1) throw std::runtime_error("SOCKS5 socket not connected");
     return ::recv(sockfd_, buf, len, flags);
 }
 

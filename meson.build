@@ -312,7 +312,8 @@ neroshop_market_srcs = [
 neroshop_network_srcs = [
     neroshop_core_src_dir + '/network/onion_address.cpp',
     neroshop_core_src_dir + '/network/sam_client.cpp',
-    neroshop_core_src_dir + '/network/socks5_client.cpp'
+    neroshop_core_src_dir + '/network/socks5_client.cpp',
+    neroshop_core_src_dir + '/network/tor_config.cpp'
 ]
 
 neroshop_price_srcs = [

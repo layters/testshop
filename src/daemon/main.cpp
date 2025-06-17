@@ -174,7 +174,7 @@ void dht_server(Node& node) {
     }
     std::cout << "Node ID: " << node.get_id() << "\n";
     std::cout << "Address: " << node.get_address() << "\n";
-    std::cout << "Port number: " << node.get_port() << " (default, not actual)\n\n";
+    std::cout << "Port number: " << node.get_port() << "\n\n";
     std::cout << "******************************************************\n";
     // Start the DHT node's main loop in a separate thread
     std::thread run_thread([&]() {

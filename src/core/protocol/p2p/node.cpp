@@ -3,6 +3,7 @@
 #include "../../network/onion_address.hpp"
 #include "../../network/sam_client.hpp"
 #include "../../network/socks5_client.hpp"
+#include "../../network/tor_config.hpp"
 #include "../../version.hpp"
 #include "routing_table.hpp"
 #include "key_mapper.hpp"
@@ -38,13 +39,13 @@ Node::Node(bool local, const std::string& address, uint16_t port) : bootstrap(fa
             case NetworkType::I2P: {
                 this->i2p_address = address;
                 this->id = generate_node_id(address);
-                this->port_ = SAM_DEFAULT_CLIENT_UDP;
+                this->port_ = port;
                 break;
             }
             case NetworkType::Tor: {
                 this->onion_address = address;
                 this->id = generate_node_id(address);
-                this->port_ = TOR_HIDDEN_SERVICE_PORT;
+                this->port_ = port;
                 break;
             }
         }
@@ -78,7 +79,7 @@ Node::Node(bool local, const std::string& address, uint16_t port) : bootstrap(fa
                 // Initialize Tor Socks5 client here
                 socks5_client = std::make_unique<Socks5Client>("127.0.0.1", 9050, true);
                 // Save onion address
-                this->onion_address = socks5_client->get_onion_address(); // field for onion address
+                this->onion_address = socks5_client->get_onion_address();
                 // Set TCP port
                 this->port_ = socks5_client->get_port();
                 // Generate node ID from .onion
@@ -113,9 +114,7 @@ Node::~Node() {
 //-----------------------------------------------------------------------------
 
 std::string Node::generate_node_id(const std::string& address, int port) {
-    if (port < 0 || port > 65535) {
-        // invalid port
-    }
+    // We won't use port for generating a node ID since i2p and onion addresses have sufficient uniqueness
     std::string hash = neroshop::crypto::sha3_256(address);
     const int NUM_BITS = 256;
     return hash.substr(0, NUM_BITS / 4);
@@ -527,7 +526,7 @@ void Node::send_query(const std::string& destination, uint16_t port, const std::
             if (neroshop::string_tools::ends_with(sender_onion, ".onion")) {
                 sender_onion = sender_onion.substr(0, 56); // Strip the ".onion" suffix
             }
-            assert(sender_onion.length() == 56);//if (sender_onion.length() != 56) throw std::runtime_error("Invalid .onion address length");
+            assert(sender_onion.length() == 56);//if (sender_onion.length() != 56) throw std::runtime_error("Invalid onion address length");
             
             // Frame the message: [4-byte length prefix][56-byte .onion address][2-byte port][payload]
             uint32_t total_len = static_cast<uint32_t>(56 + 2 + payload.size()); // onion + port + payload
@@ -536,8 +535,8 @@ void Node::send_query(const std::string& destination, uint16_t port, const std::
             framed_payload.reserve(4 + total_len);
             framed_payload.insert(framed_payload.end(), reinterpret_cast<uint8_t*>(&msg_len), reinterpret_cast<uint8_t*>(&msg_len) + 4);
             framed_payload.insert(framed_payload.end(), sender_onion.begin(), sender_onion.end());
-            uint16_t port_number = htons(port);
-            framed_payload.insert(framed_payload.end(), reinterpret_cast<uint8_t*>(&port_number), reinterpret_cast<uint8_t*>(&port_number) + 2);
+            uint16_t sender_port = htons(get_port());
+            framed_payload.insert(framed_payload.end(), reinterpret_cast<uint8_t*>(&sender_port), reinterpret_cast<uint8_t*>(&sender_port) + 2);
             framed_payload.insert(framed_payload.end(), payload.begin(), payload.end());
 
             // Re-use socket tor_peers[dest_onion] if it's already connected
@@ -550,7 +549,7 @@ void Node::send_query(const std::string& destination, uint16_t port, const std::
                     if (bytes_sent < 0) {
                         throw std::runtime_error("Failed to send framed payload to Tor peer");
                     }
-                    log_info("SENT framed payload to {}", destination);
+                    log_info("SENT framed payload to {}:{}", destination, port);
                     return;
                 }
             } // Mutex released here
@@ -561,7 +560,7 @@ void Node::send_query(const std::string& destination, uint16_t port, const std::
             try {
                 client->connect(destination.c_str(), port);
             } catch (const std::exception& e) {
-                log_error("Failed to connect to Tor peer {}: {}", destination, e.what());
+                log_error("send_query: Failed to connect to Tor peer {}:{}: {}", destination, port, e.what());
                 return;
             }
             
@@ -572,17 +571,17 @@ void Node::send_query(const std::string& destination, uint16_t port, const std::
                 throw std::runtime_error("Failed to send framed payload to Tor peer");
             }
             
-            // Step 3: Move it into tor_peers *after* you're done using it
+            // Step 3: Move it into tor_peers *after* we're done using it
             {
                 std::scoped_lock lock(tor_peers_mutex);
                 tor_peers[destination] = std::move(client);
             } // Mutex released here
             
-            log_info("SENT framed payload to {}", destination);
+            log_info("SENT framed payload to {}:{}", destination, port);
             return;
         }
         default:
-            log_warn("Unsupported network type: {}", static_cast<int>(network_type));
+            log_warn("send_query: Unsupported network type: {}", static_cast<int>(network_type));
             return;
     }
 }
@@ -1723,7 +1722,7 @@ void Node::heartbeat() {
                     total_failures += 1; // Count this failure
                 }
                 
-                log_debug("heartbeat: Checked on {} (failures: {}, status: {})", node_dest, node->check_counter.load(), node->get_status_as_string());
+                log_debug("heartbeat: Checked on {}:{} (failures: {}, status: {})", node_dest, node_port, node->check_counter.load(), node->get_status_as_string());
 
                 if (node->is_dead()) { // scope for unique_lock in remove_node()
                     routing_table->remove_node(node->get_id()); // Safe: no shared lock held
@@ -2025,7 +2024,7 @@ void Node::run_tor() {
     const size_t max_buf_size = 65536;
 
     // --- Step 1: Setup a listening socket on localhost:50881 ---
-    int listen_fd = socket(AF_INET, SOCK_STREAM, 0);
+    int listen_fd = ::socket(AF_INET, SOCK_STREAM, 0);
     if (listen_fd < 0) {
         log_error("Failed to create listening socket");
         return;
@@ -2036,45 +2035,18 @@ void Node::run_tor() {
 
     sockaddr_in listen_addr{};
     listen_addr.sin_family = AF_INET;
-    listen_addr.sin_port = htons(TOR_HIDDEN_SERVICE_PORT); // 50881
+    listen_addr.sin_port = htons(get_port()); // Use already-reserved port
     listen_addr.sin_addr.s_addr = inet_addr("127.0.0.1");//INADDR_ANY;
     
-    uint16_t final_port = TOR_HIDDEN_SERVICE_PORT;
-    // First binding attempt with specified port
-    if (bind(listen_fd, (sockaddr*)&listen_addr, sizeof(listen_addr)) < 0) {
-        // If bind fails, try ephemeral port 0
-        /*std::cerr << "Port " << TOR_HIDDEN_SERVICE_PORT << " already in use, trying ephemeral port..." << std::endl;
-        
-        listen_addr.sin_port = htons(0); // ephemeral port*/
-        
-        // If bind fails, try port (TOR_HIDDEN_SERVICE_PORT + 8)
-        uint16_t incremental_port = TOR_HIDDEN_SERVICE_PORT + 8;
-        std::cerr << "Port " << TOR_HIDDEN_SERVICE_PORT << " already in use, trying port " << incremental_port << "..." << std::endl;
-        // Try binding to TOR_HIDDEN_SERVICE_PORT + 8
-        listen_addr.sin_port = htons(incremental_port);
-    
-        if (bind(listen_fd, (sockaddr*)&listen_addr, sizeof(listen_addr)) < 0) {
-            close(listen_fd);
-            throw std::runtime_error(std::string("Failed to bind to port ") + std::to_string(incremental_port));
-        }
-        // Retrieve the actual port in use (either preferred or ephemeral)
-        sockaddr_in actual_addr{};
-        socklen_t addrlen = sizeof(actual_addr);
-        if (getsockname(listen_fd, (sockaddr*)&actual_addr, &addrlen) == 0) {
-            final_port = ntohs(actual_addr.sin_port);
-            log_info("Listening on 127.0.0.1:{} for incoming Tor connections...", final_port);
-            // Save assigned_port to your class or config for further use
-            this->port_ = final_port;
-        } else {
-            close(listen_fd);
-            throw std::runtime_error("Failed to get socket name");
-        }
+    if (::bind(listen_fd, (sockaddr*)&listen_addr, sizeof(listen_addr)) < 0) {
+        close(listen_fd);
+        throw std::runtime_error(std::string("Failed to bind to port ") + std::to_string(get_port()));
     } else {
         log_info("Listening on 127.0.0.1:{} for incoming Tor connections...", TOR_HIDDEN_SERVICE_PORT);
     }
 
-    if (listen(listen_fd, 10) < 0) {
-        log_error("Failed to listen on 127.0.0.1:{}", final_port);
+    if (::listen(listen_fd, SOMAXCONN) < 0) {
+        log_error("Failed to listen on 127.0.0.1:{}", static_cast<int>(get_port()));
         close(listen_fd);
         return;
     }
@@ -2147,6 +2119,8 @@ void Node::run_tor() {
                 if (received_bytes <= 0) {
                     if (received_bytes == 0) {
                         log_warn("Connection to peer {} closed", peer);
+                        // TODO: Remove node from routing table on connection closed
+                        ////routing_table->remove_node(node->get_id());
                     } else {
                         log_warn("Recv error from peer {}: {}", peer, strerror(errno));
                     }
@@ -2215,13 +2189,12 @@ void Node::handle_tor_message(std::vector<uint8_t> message, const std::string& s
     }
 
     if (json_payload.contains("query")) {
-        log_debug("handle_tor_message [QUERY]: {}:{}\n{}", sender_onion, sender_port, json_payload.dump());
+        log_info("RECEIVED from {}:{}\n{}{}{}", sender_onion, sender_port, "\033[33m", json_payload.dump(), color_reset);
 
         // TODO: Get actual onion address from the message (since Tor doesn't show us the sender's .onion address)
         ////sender_onion = json_payload["args"]["address"].get<std::string>();
         
         // Get sender's port from the message
-        //int sender_port = TOR_HIDDEN_SERVICE_PORT;
         if (json_payload.contains("args") && json_payload["args"].contains("port")) {
             sender_port = json_payload["args"]["port"];
         }
@@ -2232,7 +2205,7 @@ void Node::handle_tor_message(std::vector<uint8_t> message, const std::string& s
         on_ping(message, sender_onion);
         on_map(message, sender_onion);
     } else if (json_payload.contains("response")) {
-        log_debug("handle_tor_message [RESPONSE]: {}\n{}", sender_onion, json_payload.dump());
+        log_info("RECEIVED from {}:{}\n{}{}{}", sender_onion, sender_port, "\033[32m", json_payload.dump(), color_reset);
 
         std::string tid = json_payload.value("tid", "");
         std::scoped_lock lock(pending_mutex);
@@ -2242,7 +2215,7 @@ void Node::handle_tor_message(std::vector<uint8_t> message, const std::string& s
             pending_requests.erase(it);
         }
     } else {
-        log_warn("Unknown Tor message from {}:\n{}", sender_onion, json_payload.dump());
+        log_warn("Unknown Tor message from {}:{}:\n{}", sender_onion, sender_port, json_payload.dump());
     }
 }
 
