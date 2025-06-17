@@ -240,6 +240,9 @@ void neroshop::ProxyManager::startTorDaemon() {
     QString program = QString::fromStdString(torDirPath + "/" + "./tor");
     #endif
     
+    QStringList arguments;
+    arguments << "-f" << QString::fromStdString(torDirPath + "/torrc");
+    
     if(isTorRunning()) {
         std::cout << "\033[90mtor was already running in the background\033[0m\n";
         useTorProxy();
@@ -254,7 +257,7 @@ void neroshop::ProxyManager::startTorDaemon() {
         });
     }
         
-    torProcess->start(program, QStringList());
+    torProcess->start(program, arguments);
     if (torProcess->waitForStarted()) {
         qint64 pid = torProcess->processId();
         std::cout << "\033[90;1mtor started (pid: " << pid << ")\033[0m\n";
