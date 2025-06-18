@@ -202,6 +202,13 @@ inline bool starts_with(const std::string& str, const std::string& what, bool ca
 }
 	
 //-----------------------------------------------------------------------------
+
+inline bool ends_with(const std::string& str, const std::string& suffix) {
+    return str.size() >= suffix.size() &&
+           str.compare(str.size() - suffix.size(), suffix.size(), suffix) == 0;
+}
+
+//-----------------------------------------------------------------------------
 	
 inline std::string trim_left(const std::string& str) {
     const std::string white_spaces(" \f\n\r\t\v");
@@ -235,6 +242,7 @@ inline std::string join(const std::vector<std::string>& string_list, std::string
     ss << string_list.back();
     return ss.str();
 }
+
 //-----------------------------------------------------------------------------    
     
 } // namespace string_tools

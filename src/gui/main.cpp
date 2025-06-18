@@ -20,6 +20,7 @@
 #include "enum_wrapper.hpp"
 #include "wallet_qr_provider.hpp"
 #include "image_provider.hpp"
+#include "notification_manager.hpp"
 #include "../neroshop_config.hpp"
 #include "../core/tools/filesystem.hpp"
 #include "../core/tools/logger.hpp"
@@ -163,6 +164,17 @@ int main(int argc, char *argv[])
     if (engine.rootObjects().isEmpty()) {
         return -1;
     }
+    
+    QObject *rootObject = engine.rootObjects().first();
+    QObject *toastObject = rootObject->findChild<QObject*>("toast");
+    if (!toastObject) {
+        qWarning() << "Toast object not found!";
+        return -1;
+    }
+    // Create NotificationManager with toastObject pointer
+    NotificationManager::instance(toastObject);
+    // Usage: NotificationManager::instance()->showToast("Message");
+    
     return app.exec(); // starts 'event loop'
     #endif
     return 0;

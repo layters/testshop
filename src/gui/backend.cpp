@@ -2405,6 +2405,16 @@ QVariantMap neroshop::Backend::getNetworkStatus() const {
         network_status["host"] = QString::fromStdString(host);
     }
     
+    if (response_obj.contains("port") && response_obj["port"].is_number_integer()) {
+        int port = response_obj["port"].get<int>();
+        network_status["port"] = port;
+    }
+    
+    if (response_obj.contains("network_type") && response_obj["network_type"].is_string()) {
+        std::string network_type = response_obj["network_type"].get<std::string>();
+        network_status["network_type"] = QString::fromStdString(network_type);
+    }
+    
     if (response_obj.contains("peers") && response_obj["peers"].is_array()) {
         const auto& peers_array = response_obj["peers"];
         QVariantList peersList;

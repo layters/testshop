@@ -28,6 +28,7 @@
         <file>qml/components/TabBar.qml</file>
         <file>qml/components/TagField.qml</file>
         <file>qml/components/ThemeSwitch.qml</file>
+        <file>qml/components/Toast.qml</file>
         <file>qml/components/Triangle.qml</file>
         <file>qml/components/ViewToggle.qml</file>
         <file>qml/components/CurrencyExchangeRates.qml</file>

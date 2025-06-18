@@ -3,11 +3,12 @@
 #include <future>
 #include <thread>
 #include <shared_mutex>
+#include <csignal> // std::signal, SIGINT
 // neroshop
 #include "../core/crypto/sha3.hpp"
 #include "../core/protocol/p2p/node.hpp"
 #include "../core/protocol/p2p/routing_table.hpp"
-#include "../core/protocol/transport/sam_client.hpp"
+#include "../core/network/sam_client.hpp"
 #include "../core/protocol/transport/server.hpp"
 #include "../core/protocol/rpc/json_rpc.hpp"
 #include "../core/protocol/rpc/msgpack.hpp"
@@ -15,11 +16,8 @@
 #include "../core/tools/logger.hpp"
 #include "../core/version.hpp"
 #include "../core/tools/filesystem.hpp"
-#include "../core/network/i2p.hpp"
 
 #include <cxxopts.hpp>
-
-#include <Daemon.h>
 
 using namespace neroshop;
 
@@ -55,6 +53,7 @@ std::string extract_json_payload(const std::string& request) {
 
 void rpc_server(const std::string& address) {
     Server server(address, NEROSHOP_RPC_DEFAULT_PORT);
+    server.set_nonblocking(true);
     server.listen();
     
     while (running) {
@@ -170,9 +169,11 @@ void ipc_server(Node& node) {
 
 void dht_server(Node& node) {
     std::cout << "******************************************************\n";
-    std::cout << "SAM Session ID: " << node.get_sam_client()->get_nickname() << "\n";
+    if(node.get_network_type() == NetworkType::I2P) {
+        std::cout << "SAM Session ID: " << node.get_sam_client()->get_nickname() << "\n";
+    }
     std::cout << "Node ID: " << node.get_id() << "\n";
-    std::cout << "I2P address: " << node.get_i2p_address() << /*" (" << node.get_public_ip_address() << ")*/"\n";
+    std::cout << "Address: " << node.get_address() << "\n";
     std::cout << "Port number: " << node.get_port() << "\n\n";
     std::cout << "******************************************************\n";
     // Start the DHT node's main loop in a separate thread
@@ -249,32 +250,8 @@ int main(int argc, char** argv)
         database->execute("CREATE VIRTUAL TABLE mappings USING fts5(search_term, key, content, tokenize='porter unicode61');");
     }
     //-------------------------------------------------------
-    /*std::thread i2pd_thread([&]() { 
-        if (Daemon.init(argc, argv))
-	    {
-		    if (Daemon.start())
-			    Daemon.run ();
-		    else {
-			    if(neroshop::is_i2p_running()) {
-		            std::cout << "\033[90mi2pd was already running in the background\033[0m\n";
-		            return;
-		        } else {
-		            throw std::runtime_error("i2pd failed to start");
-		        }
-		    }
-		    Daemon.stop();
-	    }
-	});*/
-    //-------------------------------------------------------
     neroshop::Node node(true);
     
-    /*if(result.count("bootstrap")) {   
-        std::cout << "Switching to bootstrap mode ...\n";
-        node.set_bootstrap(true);
-        assert(node.get_ip_address() == NEROSHOP_ANY_ADDRESS && "Bootstrap node is not public");
-        // ALWAYS use address "0.0.0.0" for bootstrap nodes so that it is reachable by all nodes in the network, regardless of their location.
-    }*/
-    //-------------------------------------------------------
     std::thread ipc_thread([&node]() { ipc_server(node); }); // For IPC communication between the local GUI client and the local daemon server
     std::thread dht_thread([&node]() { dht_server(node); }); // DHT communication for peer discovery and data storage
     std::thread rpc_thread;  // Declare the thread object // RPC communication for processing requests from outside clients (disabled by default)
@@ -290,7 +267,6 @@ int main(int argc, char** argv)
     }
     ipc_thread.join();
     dht_thread.join();
-    ////i2pd_thread.join();
     
     return 0;
 }

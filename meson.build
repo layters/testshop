@@ -310,7 +310,10 @@ neroshop_market_srcs = [
 ]
 
 neroshop_network_srcs = [
-    neroshop_core_src_dir + '/network/i2p.cpp'
+    neroshop_core_src_dir + '/network/onion_address.cpp',
+    neroshop_core_src_dir + '/network/sam_client.cpp',
+    neroshop_core_src_dir + '/network/socks5_client.cpp',
+    neroshop_core_src_dir + '/network/tor_config.cpp'
 ]
 
 neroshop_price_srcs = [
@@ -334,7 +337,6 @@ neroshop_protocol_srcs = [
     neroshop_core_src_dir + '/protocol/rpc/json_rpc.cpp',
     neroshop_core_src_dir + '/protocol/rpc/msgpack.cpp',
     neroshop_core_src_dir + '/protocol/transport/client.cpp',
-    neroshop_core_src_dir + '/protocol/transport/sam_client.cpp',
     neroshop_core_src_dir + '/protocol/transport/server.cpp'
 ]
 
@@ -353,7 +355,7 @@ neroshop_client_srcs = [
     neroshop_crypto_srcs,
     neroshop_database_srcs,
     neroshop_market_srcs,
-    neroshop_network_srcs,
+    #neroshop_network_srcs,
     neroshop_price_srcs,
     neroshop_core_src_dir + '/protocol/p2p/file_piece_hasher.cpp',
     neroshop_core_src_dir + '/protocol/p2p/serializer.cpp',
@@ -382,7 +384,6 @@ neroshop_daemon_srcs = [
     neroshop_core_src_dir + '/protocol/rpc/json_rpc.cpp',
     neroshop_core_src_dir + '/protocol/rpc/msgpack.cpp',
     neroshop_core_src_dir + '/protocol/transport/client.cpp',
-    neroshop_core_src_dir + '/protocol/transport/sam_client.cpp',
     neroshop_core_src_dir + '/protocol/transport/server.cpp',
     neroshop_core_src_dir + '/tools/base64.cpp',
     neroshop_core_src_dir + '/tools/timestamp.cpp'
@@ -407,7 +408,7 @@ endif
 
 if get_option('NEROSHOP_BUILD_GUI')
     neroshop_gui = 'neroshop'
-    neroshop_gui_srcs = qt5_resources + moc_output + [neroshop_gui_src_dir + '/main.cpp', 'src/gui/settings_manager.cpp', 'src/gui/wallet_manager.cpp', 'src/gui/user_manager.cpp', 'src/gui/image_loader.cpp', 'src/gui/image_provider.cpp', 'src/gui/wallet_qr_provider.cpp', 'src/gui/currency_rate_provider.cpp', 'src/gui/daemon_manager.cpp', 'src/gui/enum_wrapper.cpp', 'src/gui/proxy_manager.cpp', 'src/gui/backend.cpp'] + neroshop_client_srcs
+    neroshop_gui_srcs = qt5_resources + moc_output + [neroshop_gui_src_dir + '/main.cpp', 'src/gui/settings_manager.cpp', 'src/gui/wallet_manager.cpp', 'src/gui/user_manager.cpp', 'src/gui/image_loader.cpp', 'src/gui/image_provider.cpp', 'src/gui/wallet_qr_provider.cpp', 'src/gui/currency_rate_provider.cpp', 'src/gui/daemon_manager.cpp', 'src/gui/enum_wrapper.cpp', 'src/gui/proxy_manager.cpp', 'src/gui/notification_manager.cpp', 'src/gui/backend.cpp'] + neroshop_client_srcs
     executable(neroshop_gui, neroshop_gui_srcs,
         include_directories: [monero_inc, monero_cpp_inc, sqlite3_inc, json_inc, zlib_inc, i2pd_inc, fmt_inc, lua_inc, qrcodegen_inc],
         cpp_args: ['-DNEROSHOP_DEBUG', '-DNEROSHOP_USE_SYSTEM_SOCKETS', '-DNEROSHOP_BUILD_GUI', '-DNEROSHOP_USE_QT'] + qt5_widgets_arg,

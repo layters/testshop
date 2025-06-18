@@ -47,50 +47,54 @@ target_include_directories(${zlib_target} PUBLIC zlib/)
 set_target_properties(${zlib_target} PROPERTIES OUTPUT_NAME "z")
 target_compile_options(${zlib_target} PUBLIC -Wno-implicit-function-declaration)
 
-set(i2pd_target "i2pd")
-set(i2pd_srcs )
-file(GLOB_RECURSE I2PD_CPP_FILES "i2pd/libi2pd/*.cpp")
-foreach(CPP_FILE ${I2PD_CPP_FILES})
-  list(APPEND i2pd_srcs ${CPP_FILE})
-endforeach()
-add_library(${i2pd_target} STATIC ${i2pd_srcs})
-target_include_directories(${i2pd_target} PUBLIC i2pd/libi2pd/)
-add_definitions(-DOPENSSL_SUPPRESS_DEPRECATED)
-
-set(i2pd_client_target "i2pdclient")
-set(i2pd_client_srcs )
-file(GLOB_RECURSE I2PD_CLIENT_CPP_FILES "i2pd/libi2pd_client/*.cpp")
-foreach(CPP_FILE ${I2PD_CLIENT_CPP_FILES})
-  list(APPEND i2pd_client_srcs ${CPP_FILE})
-endforeach()
-add_library(${i2pd_client_target} STATIC ${i2pd_client_srcs})
-target_include_directories(${i2pd_client_target} PUBLIC i2pd/i18n/ i2pd/libi2pd/ i2pd/libi2pd_client/)
-
-set(i2pd_lang_target "i2pdlang")
-set(i2pd_lang_srcs )
-file(GLOB_RECURSE I2PD_LANG_CPP_FILES "i2pd/i18n/*.cpp")
-foreach(CPP_FILE ${I2PD_LANG_CPP_FILES})
-  list(APPEND i2pd_lang_srcs ${CPP_FILE})
-endforeach()
-add_library(${i2pd_lang_target} STATIC ${i2pd_lang_srcs})
-target_include_directories(${i2pd_lang_target} PUBLIC i2pd/i18n/ i2pd/libi2pd/ i2pd/libi2pd_client/)
-
-set(i2pd_daemon_target "i2pddaemon")
-set(i2pd_daemon_srcs i2pd/daemon/Daemon.cpp i2pd/daemon/HTTPServer.cpp i2pd/daemon/I2PControl.cpp i2pd/daemon/I2PControlHandlers.cpp #[[i2pd/daemon/i2pd.cpp]] i2pd/daemon/UPnP.cpp)
-if(UNIX)
-  list(APPEND i2pd_daemon_srcs i2pd/daemon/UnixDaemon.cpp)
+find_package(ZLIB)
+if(NOT ZLIB_FOUND)
+    set(ZLIB_LIBRARY "${CMAKE_SOURCE_DIR}/../build/libz.a" CACHE FILEPATH "Custom zlib library" FORCE)
+    set(ZLIB_INCLUDE_DIR "${CMAKE_SOURCE_DIR}/zlib/" CACHE PATH "Custom zlib include dir" FORCE)
 endif()
-if(WIN32)
-    list(APPEND i2pd_daemon_srcs i2pd/Win32/DaemonWin32.cpp i2pd/Win32/Win32App.cpp i2pd/Win32/Win32Service.cpp i2pd/Win32/Win32NetState.cpp)
-    target_compile_definitions(${i2pd_daemon_target} PUBLIC WIN32_APP WIN32_LEAN_AND_MEAN NOMINMAX)
-endif()
-add_library(${i2pd_daemon_target} STATIC ${i2pd_daemon_srcs})
-target_include_directories(${i2pd_daemon_target} PUBLIC i2pd/daemon/ i2pd/i18n/ i2pd/libi2pd/ i2pd/libi2pd_client/)
+# both WITH_BINARY and WITH_LIBRARY options should be ON by default
+add_subdirectory(i2pd/build)
+set_target_properties(libi2pd PROPERTIES
+    ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/../build"
+    LIBRARY_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/../build"
+    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/../build"
+)
+set_target_properties(libi2pdclient PROPERTIES
+    ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/../build"
+    LIBRARY_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/../build"
+    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/../build"
+)
+set_target_properties(libi2pdlang PROPERTIES
+    ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/../build"
+    LIBRARY_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/../build"
+    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/../build"
+)
+set_target_properties(i2pd PROPERTIES
+    ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/../build"
+    LIBRARY_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/../build"
+    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/../build"
+)
 
 set(fmt_target "fmt")
 set(fmt_srcs fmt/src/format.cc fmt/src/os.cc)
 add_library(${fmt_target} STATIC ${fmt_srcs})
 target_include_directories(${fmt_target} PUBLIC fmt/include/)
+
+find_library(SODIUM_LIBRARY sodium REQUIRED)
+# Find libsodium include directory by locating sodium.h
+find_path(SODIUM_INCLUDE_DIR sodium.h REQUIRED)
+if(NOT SODIUM_INCLUDE_DIR)
+  message(FATAL_ERROR "Could not find libsodium include directory")
+endif()
+message(STATUS "Found libsodium include dir: ${SODIUM_INCLUDE_DIR}")
+set(mkp224o_target "mkp224o")
+set(mkp224o_srcs mkp224o/main.c mkp224o/worker.c mkp224o/yaml.c mkp224o/vec.c mkp224o/cpucount.c mkp224o/base32_to.c mkp224o/base32_from.c mkp224o/base64_to.c mkp224o/base64_from.c mkp224o/ioutil.c mkp224o/keccak.c)
+add_executable(${mkp224o_target} ${mkp224o_srcs})
+set_target_properties(${mkp224o_target} PROPERTIES C_STANDARD 99 C_STANDARD_REQUIRED ON C_EXTENSIONS OFF)
+target_include_directories(${mkp224o_target} PUBLIC mkp224o/ ${SODIUM_INCLUDE_DIR})
+target_compile_options(${mkp224o_target} PRIVATE #[[-std=c99]] -Wall -Wextra -Wno-maybe-uninitialized -Wno-unused-function -Wmissing-prototypes -Wstrict-prototypes -O3 -march=native -fomit-frame-pointer -fPIE)
+find_package(Threads REQUIRED)
+target_link_libraries(${mkp224o_target} PRIVATE Threads::Threads sodium) # -lpthread -lsodium
 
 # cmake .
 # make -j$(nproc)
