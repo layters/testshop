@@ -202,7 +202,7 @@ uint16_t Socks5Client::reserve_available_port(uint16_t preferred_port) {
 
     if (::bind(sockfd, (sockaddr*)&addr, sizeof(addr)) < 0) {
         // Try fallback
-        addr.sin_port = htons(preferred_port + 2);//htons(0);
+        addr.sin_port = htons(preferred_port + 8);//htons(0);
         if (::bind(sockfd, (sockaddr*)&addr, sizeof(addr)) < 0) {
             close(sockfd);
             return 0;

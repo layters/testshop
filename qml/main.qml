@@ -163,6 +163,7 @@ ApplicationWindow {
 
     NeroshopComponents.MessageBox {
         id: messageBox
+        objectName: "messageBox"
         title: "message"
         x: mainWindow.x + (mainWindow.width - this.width) / 2
         y: mainWindow.y + (mainWindow.height - this.height) / 2
@@ -189,6 +190,7 @@ ApplicationWindow {
     
     NeroshopComponents.Toast {
         id: toast
+        objectName: "toast"
         anchors.left: parent.left
         anchors.leftMargin: 20
         anchors.bottom: parent.bottom

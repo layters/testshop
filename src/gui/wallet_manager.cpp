@@ -1,5 +1,6 @@
 #include "wallet_manager.hpp"
 
+#include "notification_manager.hpp"
 #include "../core/tools/string.hpp"
 
 neroshop::WalletManager::WalletManager(QObject *parent) : QObject(parent)
@@ -459,10 +460,42 @@ void neroshop::WalletManager::on_new_block (uint64_t height) {
 }
 
 void neroshop::WalletManager::on_balances_changed(uint64_t new_balance, uint64_t new_unlocked_balance) {
+    if(isSynced()) {
+        double balance = (new_balance * PICONERO);
+        double unlocked_balance = (new_unlocked_balance * PICONERO);
+        
+        if(unlocked_balance == balance) {
+            QString message = "Wallet balance is now fully unlocked";
+            NotificationManager::instance()->showToast(message);
+        }
+    }
+    
     emit balanceChanged();
 }
 
 void neroshop::WalletManager::on_output_received(const monero_output_wallet& output) {
+    if(isSynced()) {
+        uint64_t amount = output.m_amount.get();
+        bool is_confirmed = output.m_tx->m_is_confirmed.get(); // unlocked_balance (can be spent)
+        bool is_locked = std::dynamic_pointer_cast<monero_tx_wallet>(output.m_tx)->m_is_locked.get(); // balance (locked - still processing)
+        double balance = (amount * PICONERO);
+        int account_index = output.m_account_index.get(); // should always be 0 (default)
+        int subaddress_index = output.m_subaddress_index.get();
+        
+        // Convert balance to QString with desired precision (e.g., 12 decimals)
+        QString balanceStr = QString::number(balance, 'f', 12);
+        
+        if(is_locked) {
+            QString message = QString("TX incoming: %1 XMR").arg(balanceStr);
+            NotificationManager::instance()->showToast(message);
+        }
+
+        if(is_confirmed) {
+            QString message = QString("Received +%1 XMR").arg(balanceStr);
+            NotificationManager::instance()->showToast(message);
+        }
+    }
+    
     emit transfersChanged();
 }
 
