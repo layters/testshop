@@ -55,7 +55,7 @@ else()
 endif()
 # both WITH_BINARY and WITH_LIBRARY options should be ON by default
 add_subdirectory(i2pd/build)
-set_target_properties(libi2pd PROPERTIES
+#[[set_target_properties(libi2pd PROPERTIES
     ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/../build"
     LIBRARY_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/../build"
     RUNTIME_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/../build"
@@ -69,7 +69,7 @@ set_target_properties(libi2pdlang PROPERTIES
     ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/../build"
     LIBRARY_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/../build"
     RUNTIME_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/../build"
-)
+)]]
 set_target_properties(i2pd PROPERTIES
     ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/../build"
     LIBRARY_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/../build"

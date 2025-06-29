@@ -63,7 +63,7 @@ bool Sqlite3::open(const std::string& filename, int flags)
     }
     
     // SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE is the behavior that is always used for sqlite3_open() and sqlite3_open16(): https://sqlite.org/c3ref/open.html
-	log_flags(flags);
+	////log_flags(flags);
 	if(sqlite3_open_v2(filename.c_str(), &handle, flags, nullptr) != SQLITE_OK) {
 		close();
 		return false;
