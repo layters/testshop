@@ -47,14 +47,15 @@ target_include_directories(${zlib_target} PUBLIC zlib/)
 set_target_properties(${zlib_target} PROPERTIES OUTPUT_NAME "z")
 target_compile_options(${zlib_target} PUBLIC -Wno-implicit-function-declaration)
 
-find_package(ZLIB)
-if(NOT ZLIB_FOUND)
+if(EXISTS "${CMAKE_SOURCE_DIR}/../build/libz.a")
     set(ZLIB_LIBRARY "${CMAKE_SOURCE_DIR}/../build/libz.a" CACHE FILEPATH "Custom zlib library" FORCE)
     set(ZLIB_INCLUDE_DIR "${CMAKE_SOURCE_DIR}/zlib/" CACHE PATH "Custom zlib include dir" FORCE)
+else()
+    find_package(ZLIB)
 endif()
 # both WITH_BINARY and WITH_LIBRARY options should be ON by default
 add_subdirectory(i2pd/build)
-set_target_properties(libi2pd PROPERTIES
+#[[set_target_properties(libi2pd PROPERTIES
     ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/../build"
     LIBRARY_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/../build"
     RUNTIME_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/../build"
@@ -68,7 +69,7 @@ set_target_properties(libi2pdlang PROPERTIES
     ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/../build"
     LIBRARY_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/../build"
     RUNTIME_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/../build"
-)
+)]]
 set_target_properties(i2pd PROPERTIES
     ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/../build"
     LIBRARY_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/../build"

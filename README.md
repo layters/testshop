@@ -74,7 +74,7 @@ NeroShop is a decentralized peer-to-peer marketplace for trading goods and servi
 | [linenoise](https://github.com/antirez/linenoise)                  | ?                  | command line interface                                                 | :heavy_check_mark: :white_square_button: :package: |
 | [lua](https://www.lua.org/)                                        | 5.1.5              | configuration script                                                   | :heavy_check_mark: :package:                       |
 | [cxxopts](https://github.com/jarro2783/cxxopts)                    | ?                  | command line option parser                                             | :heavy_check_mark: :package:                       |
-| [libi2pd](https://github.com/PurpleI2P/i2pd)                       | latest             | network proxy                                                          | :heavy_check_mark: :package:                       |
+| [i2pd](https://github.com/PurpleI2P/i2pd)                          | latest             | network proxy                                                          | :heavy_check_mark: :package:                       |
 | [fmt](https://github.com/fmtlib/fmt)                               | ?                  | log formatting                                                         | :heavy_check_mark: :package:                       |
 | [mkp224o](https://github.com/cathugger/mkp224o)                    | ?                  | onion address generation                                               | :heavy_check_mark: :package:                       |
 

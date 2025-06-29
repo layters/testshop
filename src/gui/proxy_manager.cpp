@@ -131,7 +131,7 @@ QNetworkAccessManager * neroshop::ProxyManager::getNetwork() const {
 
 namespace {
 const std::string tor_archive_url { "https://archive.torproject.org/tor-package-archive/torbrowser" };
-const std::string tor_browser_version { "13.5.2" }; // tor 0.4.8.12
+const std::string tor_browser_version { "14.5.3" }; // tor 0.4.8.16
 const std::string tor_expert_bundle { "tor-expert-bundle-" + 
     neroshop::device::get_os() + "-" + 
     neroshop::device::get_architecture() + "-" + tor_browser_version + ".tar.gz" };
