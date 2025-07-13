@@ -10,7 +10,7 @@ NeroShop is a decentralized peer-to-peer marketplace for trading goods and servi
 > with the Monero project, Monero team or any organization.__
 
 
-## Table of contents
+## Table of Contents
 <!-- - [The history behind neroshop](#about)-->
 - [Demo](#demo) <!-- - [Documentation](#documentation)-->
 - [Building neroshop](#building-neroshop)
@@ -253,7 +253,7 @@ WW2pQTQWHpyJf2CHrCmZG7Tn3zBnYRZTH8g4U3pSZf5s6xsTXrZc9odDWmrWzjRc9MMQWrKXxjHsRdzH
 * [u/EchoingCat](https://www.reddit.com/user/EchoingCat/)
 
 [//]: # (git checkout -b main)
-[//]: # (git add .gitignore .gitmodules assets/ cmake/ CMakeLists.txt external/ LICENSE meson.build meson.options qml/ qml.qrc README.md src/ tests/)
+[//]: # (git add .gitignore .gitmodules assets/ cmake/ contrib/ CMakeLists.txt external/ LICENSE meson.build meson.options qml/ qml.qrc README.md src/ tests/)
 [//]: # (git commit -m"..."    or    git commit -a --allow-empty-message -m "")
 [//]: # (sudo git push -u origin backup --force)
 [//]: # (adding an external lib to submodules index: git submodule add <url> external/<folder>)

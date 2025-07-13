@@ -1,0 +1,19 @@
+The I2P private key(s) and/or Tor hidden services are stored in this folder for testing purposes only and allows one to run a hardcoded bootstrap node AKA seednode.
+
+
+Instructions:
+
+[I2P]
+
+Place i2p.key in the same directory as the neroshop daemon (neroshopd) before running neroshopd.
+
+
+[TOR]
+
+Place the hidden_service folder in ~/.config/neroshop/tor/ before running neroshopd.
+
+Once the bootstrap node is up and running, delete ~/.config/neroshop/tor/hidden_service/last_onion_address.txt and run a second neroshop daemon which will act as a regular node.
+
+This will create a new last_onion_address.txt file with the regular node's own hidden service address and will be loaded in memory each time the neroshop daemon is started.
+
+You may need to restart the Tor daemon with the following arguments: ./tor -f ~/.config/neroshop/tor/torrc and also restart both the seednode and regular node.
