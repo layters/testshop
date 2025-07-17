@@ -1700,7 +1700,7 @@ Item {
                         Item {
                             Layout.fillWidth: true
                             Layout.preferredHeight: childrenRect.height
-                            visible: (proxyBox.currentText == "Tor")
+                            visible: (proxyBox.currentText == "Tor" && !ProxyManager.externalProcess)
                             ScrollView {
                                 id: processOutputScroller
                                 width: parent.width; height: 125//250

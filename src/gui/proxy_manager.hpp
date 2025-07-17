@@ -13,6 +13,7 @@ namespace neroshop {
     
 class ProxyManager : public QObject, public QQmlNetworkAccessManagerFactory {
     Q_OBJECT
+    Q_PROPERTY(bool externalProcess READ isExternalProcess NOTIFY processChanged)
     Q_PROPERTY(bool torEnabled READ isTorEnabled NOTIFY networkProxyChanged)
     Q_PROPERTY(QString torOutput READ getTorOutput NOTIFY torOutputChanged)
 public:
@@ -29,6 +30,7 @@ public:
     Q_INVOKABLE void startTorDaemon();
     Q_INVOKABLE void stopTorDaemon();
     
+    void setExternalProcess(bool externalProcess);
     void setTorEnabled(bool torEnabled);
     
     QNetworkAccessManager * getNetworkClearnet() const;
@@ -40,12 +42,14 @@ public:
 
     Q_INVOKABLE static bool hasTor();
     Q_INVOKABLE static bool isTorRunning();
+    Q_INVOKABLE bool isExternalProcess() const;
     Q_INVOKABLE bool isTorEnabled() const;
 public slots:    
     QNetworkReply * getUrl(const QString& url);
     void onReplyFinished(QNetworkReply * reply);
 signals:
     void networkProxyChanged();
+    void processChanged();
     void processStarted();
     void processFinished(int exitCode, QProcess::ExitStatus exitStatus);
     void torOutputChanged(const QString &output);
@@ -54,6 +58,7 @@ private:
     QNetworkAccessManager * clearnetManager;
     QNetworkAccessManager * torManager;
     QNetworkAccessManager * i2pManager;
+    bool m_externalProcess;
     bool m_torEnabled; // tor status
     QProcess *torProcess = nullptr;
     QString torOutput;

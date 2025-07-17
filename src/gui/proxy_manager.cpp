@@ -13,7 +13,7 @@
 #include "../core/tools/filesystem.hpp"
 #include "../core/tools/device.hpp"
 
-neroshop::ProxyManager::ProxyManager(QObject* parent) : QObject(parent), m_torEnabled(false) {
+neroshop::ProxyManager::ProxyManager(QObject* parent) : QObject(parent), m_externalProcess(false), m_torEnabled(false) {
     torManager = new QNetworkAccessManager(this);
     i2pManager = new QNetworkAccessManager(this);
     clearnetManager = new QNetworkAccessManager(this);
@@ -246,6 +246,7 @@ void neroshop::ProxyManager::startTorDaemon() {
     if(isTorRunning()) {
         std::cout << "\033[90mtor was already running in the background\033[0m\n";
         useTorProxy();
+        setExternalProcess(true);
         return;
     }
     
@@ -262,6 +263,7 @@ void neroshop::ProxyManager::startTorDaemon() {
         qint64 pid = torProcess->processId();
         std::cout << "\033[90;1mtor started (pid: " << pid << ")\033[0m\n";
         useTorProxy();
+        setExternalProcess(false);
     } else {
         torOutput.append(QString("%1 is missing so Tor could not be started\n").arg(program));
         emit torOutputChanged(torOutput);
@@ -294,6 +296,13 @@ void neroshop::ProxyManager::stopTorDaemon() {
         torProcess->kill(); // Terminate the process
         torProcess->deleteLater(); // Delete the QProcess instance
         torProcess = nullptr;
+    }
+}
+
+void neroshop::ProxyManager::setExternalProcess(bool externalProcess) {
+    if(m_externalProcess != externalProcess) {
+        m_externalProcess = externalProcess;
+        emit processChanged();
     }
 }
 
@@ -342,6 +351,10 @@ bool neroshop::ProxyManager::isTorRunning() {
         socket.close();
         return true;
     }
+}
+
+bool neroshop::ProxyManager::isExternalProcess() const {
+    return m_externalProcess;
 }
 
 bool neroshop::ProxyManager::isTorEnabled() const {
