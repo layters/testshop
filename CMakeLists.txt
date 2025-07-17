@@ -487,7 +487,7 @@ if(NOT CMAKE_BUILD_TYPE STREQUAL "Release" AND NOT CMAKE_BUILD_TYPE STREQUAL "Mi
     target_compile_definitions(${neroshop_daemon} PRIVATE NEROSHOP_DEBUG)
 endif()
 target_include_directories(${neroshop_daemon} PRIVATE #[[${CMAKE_CURRENT_SOURCE_DIR}/src/]] ${monero_include_dirs} ${monero_cpp_include_dir} ${sqlite_include_dir} ${json_include_dir} ${zlib_include_dir} #[[${i2pd_include_dirs}]] ${fmt_include_dir} ${cxxopts_include_dir})
-target_link_libraries(${neroshop_daemon} #[[${i2pd_src}]] ${monero_cpp_src} ${sqlite_src} ${monero_src} ${zlib_src} ${fmt_src})#set(CMAKE_CXX_LINK_EXECUTABLE "${CMAKE_CXX_LINK_EXECUTABLE} -ldl") # fixes undefined reference to symbol 'dlsym@@GLIBC_2.2.5' error
+target_link_libraries(${neroshop_daemon} #[[${i2pd_src}]] ${monero_cpp_src} ${sqlite_src} ${monero_src} #[[${zlib_src}]] ${fmt_src})#set(CMAKE_CXX_LINK_EXECUTABLE "${CMAKE_CXX_LINK_EXECUTABLE} -ldl") # fixes undefined reference to symbol 'dlsym@@GLIBC_2.2.5' error
 
 ######################################
 # neroshop-console
@@ -499,7 +499,7 @@ if(NEROSHOP_BUILD_CLI)
         target_compile_definitions(${neroshop_cli} PRIVATE NEROSHOP_DEBUG)
     endif()
     target_include_directories(${neroshop_cli} PRIVATE #[[${CMAKE_CURRENT_SOURCE_DIR}/src/]] ${monero_include_dirs} ${monero_cpp_include_dir} ${sqlite_include_dir} ${json_include_dir} ${zlib_include_dir} #[[${i2pd_include_dirs}]] ${fmt_include_dir} ${lua_include_dir} ${curl_include_dirs} ${stduuid_include_dirs} ${linenoise_include_dir})
-    target_link_libraries(${neroshop_cli} #[[${i2pd_src}]] ${monero_cpp_src} ${sqlite_src} #[[${qrcodegen_src}]] ${curl_src} ${monero_src} ${zlib_src} ${fmt_src} ${lua_src} ${linenoise_src})
+    target_link_libraries(${neroshop_cli} #[[${i2pd_src}]] ${monero_cpp_src} ${sqlite_src} #[[${qrcodegen_src}]] ${curl_src} ${monero_src} #[[${zlib_src}]] ${fmt_src} ${lua_src} ${linenoise_src})
     message(STATUS "${BoldMagenta}NEROSHOP_BUILD_CLI option set to ON${ColourReset}")
     target_compile_definitions(${neroshop_cli} PRIVATE NEROSHOP_BUILD_CLI)
 endif()
@@ -515,7 +515,7 @@ if(NEROSHOP_BUILD_GUI)
         target_compile_definitions(${neroshop_gui} PRIVATE NEROSHOP_DEBUG)
     endif()
     target_include_directories(${neroshop_gui} PRIVATE #[[${CMAKE_CURRENT_SOURCE_DIR}/src/]] ${monero_include_dirs} ${monero_cpp_include_dir} ${sqlite_include_dir} ${json_include_dir} ${zlib_include_dir} #[[${i2pd_include_dirs}]] ${fmt_include_dir} ${lua_include_dir} ${qrcodegen_include_dir})
-    target_link_libraries(${neroshop_gui} #[[${i2pd_src}]] ${monero_cpp_src} ${sqlite_src} ${qrcodegen_src} ${monero_src} ${zlib_src} ${fmt_src} ${lua_src})
+    target_link_libraries(${neroshop_gui} #[[${i2pd_src}]] ${monero_cpp_src} ${sqlite_src} ${qrcodegen_src} ${monero_src} #[[${zlib_src}]] ${fmt_src} ${lua_src})
     message(STATUS "${BoldMagenta}NEROSHOP_BUILD_GUI option set to ON${ColourReset}")
     target_compile_definitions(${neroshop_gui} PRIVATE NEROSHOP_BUILD_GUI)
 endif()

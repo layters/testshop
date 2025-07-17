@@ -607,6 +607,27 @@ Popup {
                 ColumnLayout {
                     id: walletSetColumn
                     width: parent.width; height: childrenRect.height
+                    // Seed language
+                    Item {
+                        Layout.fillWidth: true
+                        Layout.preferredHeight: childrenRect.height                        
+                        Text {
+                            anchors.verticalCenter: seedLanguageBox.verticalCenter
+                            text: qsTr("Seed language:")
+                            color: NeroshopComponents.Style.darkTheme ? "#ffffff" : "#000000"
+                        }
+
+                        NeroshopComponents.ComboBox {
+                            id: seedLanguageBox
+                            anchors.right: parent.right
+                            width: settingsStack.comboBoxWidth; indicatorWidth: settingsStack.comboBoxButtonWidth
+                            model: Wallet.getSeedLanguages()
+                            currentIndex: model.indexOf(Settings.getJsonRootObject()["monero"]["wallet"]["seed_language"])
+                            onCurrentTextChanged: settingsDialog.save()
+                            color: "#f2f2f2"
+                            indicatorDoNotPassBorder: settingsStack.comboBoxNestedButton
+                        }
+                    }
                     // Balance display
                     Item {
                         Layout.fillWidth: true
@@ -709,27 +730,6 @@ Popup {
                             backgroundCheckedColor: "#605185"
                             onToggled: settingsDialog.save()
                             enabled: false // cannot be turned off unless done manually
-                        }
-                    }
-                    // Seed language
-                    Item {
-                        Layout.fillWidth: true
-                        Layout.preferredHeight: childrenRect.height                        
-                        Text {
-                            anchors.verticalCenter: seedLanguageBox.verticalCenter
-                            text: qsTr("Seed language:")
-                            color: NeroshopComponents.Style.darkTheme ? "#ffffff" : "#000000"
-                        }
-
-                        NeroshopComponents.ComboBox {
-                            id: seedLanguageBox
-                            anchors.right: parent.right
-                            width: settingsStack.comboBoxWidth; indicatorWidth: settingsStack.comboBoxButtonWidth
-                            model: Wallet.getSeedLanguages()
-                            currentIndex: model.indexOf(Settings.getJsonRootObject()["monero"]["wallet"]["seed_language"])
-                            onCurrentTextChanged: settingsDialog.save()
-                            color: "#f2f2f2"
-                            indicatorDoNotPassBorder: settingsStack.comboBoxNestedButton
                         }
                     }
                 }
@@ -1674,6 +1674,10 @@ Item {
                                             ProxyManager.useTorProxy()
                                         }
                                     }
+                                    
+                                    if(ProxyManager.isTorEnabled()) {
+                                        toast.showNotification("Tor enabled")
+                                    }
                                 }
                                 onActivated: {
                                     if(currentText == "None") {
@@ -1696,7 +1700,7 @@ Item {
                         Item {
                             Layout.fillWidth: true
                             Layout.preferredHeight: childrenRect.height
-                            visible: (proxyBox.currentText == "Tor")
+                            visible: (proxyBox.currentText == "Tor" && !ProxyManager.externalProcess)
                             ScrollView {
                                 id: processOutputScroller
                                 width: parent.width; height: 125//250
