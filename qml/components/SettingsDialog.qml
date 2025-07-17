@@ -1674,6 +1674,10 @@ Item {
                                             ProxyManager.useTorProxy()
                                         }
                                     }
+                                    
+                                    if(ProxyManager.isTorEnabled()) {
+                                        toast.showNotification("Tor enabled")
+                                    }
                                 }
                                 onActivated: {
                                     if(currentText == "None") {
