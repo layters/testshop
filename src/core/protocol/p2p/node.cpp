@@ -32,7 +32,7 @@ namespace neroshop {
 
 //-----------------------------------------------------------------------------
 
-Node::Node(bool local, const std::string& address, uint16_t port) : bootstrap(false), check_counter(0), start_time(std::chrono::steady_clock::now()), running(true), network_type_(NetworkType::Tor) { 
+Node::Node(bool local, const std::string& address, uint16_t port) : bootstrap(false), check_counter(0), start_time(std::chrono::steady_clock::now()), running(true), network_type_(NetworkType::I2P) { 
     // External node: just set address, port, and ID
     if(local == false) {
         switch (network_type_) {

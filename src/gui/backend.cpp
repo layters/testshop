@@ -1902,17 +1902,6 @@ QVariantList neroshop::Backend::getNodeListDefault(const QString& coin) const {
     return node_list;
 }
 //----------------------------------------------------------------
-bool containsSubstring(const std::string& str, const std::vector<std::string>& substrings) {
-    // Iterate over the substrings vector
-    for (const auto& substring : substrings) {
-        // Check if the string contains the current substring
-        if (str.find(substring) != std::string::npos) {
-            return true; // Substring found in the string
-        }
-    }
-    return false; // Substring not found in the string
-}
-//----------------------------------------------------------------
 QVariantList neroshop::Backend::getNodeList(const QString& coin) const {
     const QUrl url(QStringLiteral("https://monero.fail/health.json"));
     QVariantList node_list;
@@ -1942,7 +1931,7 @@ QVariantList neroshop::Backend::getNodeList(const QString& coin) const {
     foreach(const QString& key, clearnet_obj.keys()) {//for (const auto monero_nodes : clearnet_obj) {
         QJsonObject monero_node_obj = clearnet_obj.value(key).toObject();//QJsonObject monero_node_obj = monero_nodes.toObject();
         QVariantMap node_object; // Create an object for each row
-        if(containsSubstring(key.toStdString(), network_ports)) {
+        if(string_tools::contains_substring(key.toStdString(), network_ports)) {
             node_object.insert("address", key);
             node_object.insert("available", monero_node_obj.value("available").toBool());//std::cout << "available: " << monero_node_obj.value("available").toBool() << "\n";
             ////node_object.insert("", );//////std::cout << ": " << monero_node_obj.value("checks").toArray() << "\n";

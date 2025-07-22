@@ -160,6 +160,19 @@ inline bool contains_first_of(const std::string& str, const std::string& what) {
 }		
 
 //-----------------------------------------------------------------------------
+
+inline bool contains_substring(const std::string& str, const std::vector<std::string>& substrings) {
+    // Iterate over the substrings vector
+    for (const auto& substring : substrings) {
+        // Check if the string contains the current substring
+        if (str.find(substring) != std::string::npos) {
+            return true; // Substring found in the string
+        }
+    }
+    return false; // Substring not found in the string
+}
+
+//-----------------------------------------------------------------------------
 	
 inline std::string swap_first_of(const std::string& str, const std::string& from, const std::string& to) // replaces first occurance of a word from a String with another
 {
