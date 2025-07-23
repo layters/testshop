@@ -211,37 +211,6 @@ Page {
             //implicitHeight: 200      
             // add spacing from parent (padding - located inside the borders of an element)
             //anchors.margins: 50//anchors.leftPadding: 20        
-            Button {
-                id: loginPageNextButton
-                anchors.verticalCenter: parent.verticalCenter//Layout.alignment: Qt.AlignVCenter | Qt::AlignRight
-                anchors.right: parent.right
-                anchors.rightMargin: 20
-                implicitWidth: 60; height: implicitWidth
-                text: qsTr(FontAwesome.angleRight)
-                hoverEnabled: true
-            
-                background: Rectangle {
-                    color: "#121212"//"#6b5b95"//
-                    radius: 100
-                    border.color: parent.contentItem.color//(NeroshopComponents.Style.darkTheme) ? parent.contentItem.color : "#000000"
-                    border.width: (parent.hovered) ? 1 : 0
-                }
-            
-                contentItem: Text {
-                    text: parent.text
-                    color: "#ffffff"
-                    horizontalAlignment: Text.AlignHCenter
-                    verticalAlignment: Text.AlignVCenter
-                    font.bold: true
-                    font.family: FontAwesome.fontFamily
-                    font.pixelSize: (parent.width / 2)
-                }
-            
-                onClicked: {
-                    mainPageStack.currentIndex = mainPageStack.currentIndex + 1
-                }
-            }            
-                
             ColumnLayout {
                 anchors.centerIn: parent//anchors.fill: parent;anchors.margins: 20
             
