@@ -241,7 +241,10 @@ void neroshop::ProxyManager::startTorDaemon() {
     #endif
     
     QStringList arguments;
-    arguments << "-f" << QString::fromStdString(torDirPath + "/torrc");
+    QString torrcPath = QString::fromStdString(torDirPath + "/torrc");
+    if (QFile::exists(torrcPath)) {
+        arguments << "-f" << torrcPath;
+    }
     
     if(isTorRunning()) {
         std::cout << "\033[90mtor was already running in the background\033[0m\n";

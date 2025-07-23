@@ -1892,6 +1892,38 @@ void neroshop::Backend::createOrder(UserManager * user_manager, const QString& s
 }
 //----------------------------------------------------------------
 //----------------------------------------------------------------
+
+QSet<QString> getBannedNodes() {
+    QSet<QString> banned_nodes;
+
+    QUrl ban_url("https://raw.githubusercontent.com/Boog900/monero-ban-list/refs/heads/main/ban_list.txt");
+    QNetworkAccessManager ban_manager;
+    QEventLoop ban_loop;
+    QObject::connect(&ban_manager, &QNetworkAccessManager::finished, &ban_loop, &QEventLoop::quit);
+    auto ban_reply = ban_manager.get(QNetworkRequest(ban_url));
+    ban_loop.exec();
+    QByteArray ban_data = ban_reply->readAll();
+    // Split by lines and insert each trimmed entry
+    for(const QByteArray &line : ban_data.split('\n')) {
+        QString addr = QString(line).trimmed();
+        // Skip empty or fully commented lines (e.g., lines starting with '#')
+        if(addr.isEmpty() || addr.startsWith('#'))
+            continue;
+            
+        // Removing trailing comment portion if any (e.g., after '#')
+        int commentIndex = addr.indexOf('#');
+        if (commentIndex != -1) {
+            addr = addr.left(commentIndex).trimmed();
+        }
+        
+        banned_nodes.insert(addr);//std::cout << addr.toStdString() << std::endl;
+    }
+    
+    return banned_nodes;
+}
+
+//----------------------------------------------------------------
+
 QVariantList neroshop::Backend::getNodeListDefault(const QString& coin) const {
     QVariantList node_list;
     std::string network_type = Wallet::get_network_type_as_string();
@@ -1901,18 +1933,10 @@ QVariantList neroshop::Backend::getNodeListDefault(const QString& coin) const {
     }
     return node_list;
 }
+
 //----------------------------------------------------------------
-bool containsSubstring(const std::string& str, const std::vector<std::string>& substrings) {
-    // Iterate over the substrings vector
-    for (const auto& substring : substrings) {
-        // Check if the string contains the current substring
-        if (str.find(substring) != std::string::npos) {
-            return true; // Substring found in the string
-        }
-    }
-    return false; // Substring not found in the string
-}
-//----------------------------------------------------------------
+
+// TODO: fetch and update blockchain nodes concurrently
 QVariantList neroshop::Backend::getNodeList(const QString& coin) const {
     const QUrl url(QStringLiteral("https://monero.fail/health.json"));
     QVariantList node_list;
@@ -1920,6 +1944,11 @@ QVariantList neroshop::Backend::getNodeList(const QString& coin) const {
     
     WalletNetworkType network_type = Wallet::get_network_type();
     auto network_ports = WalletNetworkPortMap[network_type];
+    
+    QSet<QString> banned_nodes;
+    if(network_type == WalletNetworkType::Mainnet) { // ban nodes only when on mainnet
+        banned_nodes = getBannedNodes();
+    }
     
     QNetworkAccessManager manager;
     QEventLoop loop;
@@ -1929,7 +1958,7 @@ QVariantList neroshop::Backend::getNodeList(const QString& coin) const {
     loop.exec();
     QJsonParseError error;
     const auto json_doc = QJsonDocument::fromJson(reply->readAll(), &error);
-    // Use fallback monero node list if we fail to get the nodes from the url
+    // Use fallback node list if we fail to get the nodes from the url
     if (error.error != QJsonParseError::NoError) {
         neroshop::log_error("Error reading json from " + url.toString().toStdString() + "\nUsing default nodes as fallback");
         return getNodeListDefault(coin_lower);
@@ -1938,11 +1967,21 @@ QVariantList neroshop::Backend::getNodeList(const QString& coin) const {
     QJsonObject root_obj = json_doc.object(); // {}
     QJsonObject coin_obj = root_obj.value(coin_lower).toObject(); // "monero": {} // "wownero": {}
     QJsonObject clearnet_obj = coin_obj.value("clear").toObject(); // "clear": {} // "onion": {}, "web_compatible": {}
+    QList<QVariantMap> node_objects;  // intermediate list to hold node info maps
     // Loop through monero nodes (clearnet)
     foreach(const QString& key, clearnet_obj.keys()) {//for (const auto monero_nodes : clearnet_obj) {
         QJsonObject monero_node_obj = clearnet_obj.value(key).toObject();//QJsonObject monero_node_obj = monero_nodes.toObject();
         QVariantMap node_object; // Create an object for each row
-        if(containsSubstring(key.toStdString(), network_ports)) {
+        if(string_tools::contains_substring(key.toStdString(), network_ports)) {
+            QUrl url(key); // e.g. "http://123.45.67.89:18081" or "https://[2001:db8::1]:18081"
+            if (url.isValid()) {
+                QString ipAddress = url.host();  // Extracts the IP without scheme or port            
+                if (banned_nodes.contains(ipAddress)) {
+                    std::cout << "Banned: " << ipAddress.toStdString() << std::endl;
+                    continue; // skip banned IPs
+                }
+            }
+        
             node_object.insert("address", key);
             node_object.insert("available", monero_node_obj.value("available").toBool());//std::cout << "available: " << monero_node_obj.value("available").toBool() << "\n";
             ////node_object.insert("", );//////std::cout << ": " << monero_node_obj.value("checks").toArray() << "\n";
@@ -1950,11 +1989,26 @@ QVariantList neroshop::Backend::getNodeList(const QString& coin) const {
             node_object.insert("datetime_entered", monero_node_obj.value("datetime_entered").toString());//std::cout << "datetime_entered: " << monero_node_obj.value("datetime_entered").toString().toStdString() << "\n";
             node_object.insert("datetime_failed", monero_node_obj.value("datetime_failed").toString());//std::cout << "datetime_failed: " << monero_node_obj.value("datetime_failed").toString().toStdString() << "\n";
             node_object.insert("last_height", monero_node_obj.value("last_height").toInt());//std::cout << "last_height: " << monero_node_obj.value("last_height").toInt() << "\n";
-            node_list.append(node_object); // Add node object to the node list
+            node_objects.append(node_object);
         }
     }
+    
+    // Sort node_objects by "available" key descending, after finishing the loop
+    std::sort(node_objects.begin(), node_objects.end(), [](const QVariantMap &a, const QVariantMap &b) {
+        bool a_available = a.value("available").toBool();
+        bool b_available = b.value("available").toBool();
+        // Sort available (true) nodes before unavailable (false) nodes
+        return a_available > b_available;
+    });
+    
+    // Now append sorted maps to the QVariantList to return
+    for (const QVariantMap &node : node_objects) {
+        node_list.append(node);
+    }
+    
     return node_list;
 }
+
 //----------------------------------------------------------------
 // Todo: use QProcess to check if monero daemon is running
 bool neroshop::Backend::isWalletDaemonRunning() const {

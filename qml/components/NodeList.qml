@@ -76,6 +76,7 @@ Item {
                 Rectangle {
                     anchors.fill: parent
                     color: parent.ListView.isCurrentItem ? "#ff8b3d" : "transparent"
+                    radius: 3
                 }
 
                 MouseArea {
@@ -107,7 +108,7 @@ Item {
                         id: nodeAddressLabel
                         Layout.fillWidth: true
                         text: (typeof modelData === "string") ? modelData : modelData.address//"node.neroshop.org:38081"//:18081"
-                        color: delegateRow.parent.ListView.isCurrentItem ? "#471d00" : ((NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000")
+                        color: (NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000"//delegateRow.parent.ListView.isCurrentItem ? "#471d00" : ((NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000")
                         font.bold: delegateRow.parent.ListView.isCurrentItem ? true : false
                         elide: Label.ElideRight
                     }
