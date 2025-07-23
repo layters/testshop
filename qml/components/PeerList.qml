@@ -114,6 +114,7 @@ Item {
                 Rectangle {
                     anchors.fill: parent
                     color: (index === root.selectedIndex) ? "#8071a8" : "transparent"
+                    radius: 3
                 }
 
                 MouseArea {
@@ -151,7 +152,7 @@ Item {
                         id: peerAddressLabel
                         Layout.fillWidth: true
                         text: (typeof modelData !== "object") ? "" : modelData.address//(modelData.address + ":" + modelData.port.toString())
-                        color: (index === root.selectedIndex) ? "#471d00" : ((NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000")
+                        color: (NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000"//(index === root.selectedIndex) ? "#471d00" : ((NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000")
                         font.bold: (index === root.selectedIndex) ? true : false
                         elide: Label.ElideRight
                         

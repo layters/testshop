@@ -343,7 +343,7 @@ void SamClient::session_create() {
     
     std::string style_ = get_session_style_as_string();
     std::string command = "SESSION CREATE STYLE=" + style_ + " ID=" + nickname + " DESTINATION=" + private_key + 
-        (((style == SamSessionStyle::Datagram) || (style == SamSessionStyle::Raw)) ? " PORT=" + std::to_string(client_port) + " i2cp.leaseSetEncType=4,0\n" : " i2cp.leaseSetEncType=4,0\n"); // PORT=$port is required for DATAGRAM* and RAW, invalid for STREAM
+        (((style == SamSessionStyle::Datagram) || (style == SamSessionStyle::Raw)) ? " PORT=" + std::to_string(client_port) + " HOST=127.0.0.1" + " i2cp.leaseSetEncType=4,0\n" : " i2cp.leaseSetEncType=4,0\n"); // PORT=$port is required for DATAGRAM* and RAW, invalid for STREAM
     auto reply = send_sam_command(command, session_socket);
     if(reply.result != SamResultType::Ok) {
         std::cerr << "\033[91m" << reply.raw_reply << "\033[0m\n";
