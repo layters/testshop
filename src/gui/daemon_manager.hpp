@@ -36,6 +36,7 @@ public:
     static bool isDaemonServerBound();
     Q_INVOKABLE bool isDaemonConnected() const; // when GUI client has connected to daemon server
     static bool isDaemonDHTServerBound();
+    static bool isSAMBridgePortBound();
 
 public slots:
     void startDaemonProcess(/*const QString &daemonPath*/);
