@@ -1621,6 +1621,7 @@ Item {
                                     } else {
                                         if(ProxyManager.isTorRunning()) {
                                             ProxyManager.useTorProxy()
+                                            ProxyManager.setExternalProcess(true)
                                         }
                                     }
                                     
