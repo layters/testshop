@@ -129,7 +129,7 @@ Item {
                         hovered = false
                     }
                     onClicked: {
-                        searchField.text = modelData
+                        searchField.text = modelData // TODO: ignore or remove apostrophe from search term since `tokenchars` doesn't support it unless we write a custom tokenizer
                         searchButton.activate() // This does not work either :( ////suggestionsPopup.close() // Does not work :( => "ReferenceError: suggestionsPopup is not defined"
                     }
                 }
