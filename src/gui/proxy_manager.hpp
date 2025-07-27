@@ -30,7 +30,7 @@ public:
     Q_INVOKABLE void startTorDaemon();
     Q_INVOKABLE void stopTorDaemon();
     
-    void setExternalProcess(bool externalProcess);
+    Q_INVOKABLE void setExternalProcess(bool externalProcess);
     void setTorEnabled(bool torEnabled);
     
     QNetworkAccessManager * getNetworkClearnet() const;

@@ -60,14 +60,12 @@ public:
         static Logger logger;
         return logger;
     } 
-    // Usage (static global reference):
-    /*
-        static auto& log = neroshop::Logger::instance();
-        
-        log.info("Hello {}", "world");
-        log.warn("Low disk space");
-    */
-
+    
+    static const std::string& get_default_log_path() {
+        static const std::string path = neroshop::get_default_config_path() + "/" + NEROSHOP_LOG_FILENAME;
+        return path;
+    }
+    
     // Set log level
     void set_level(LogLevel level) { level_.store(level); }
     
@@ -123,8 +121,8 @@ private:
     std::mutex file_mutex_;       // For writing to log file
     std::mutex config_mutex_;     // For shared settings like path + file flag
     
-    std::string log_path_ = neroshop::get_default_config_path() + "/" + NEROSHOP_LOG_FILENAME; // default path
-    bool log_to_file_ = true;               // file logging enabled by default
+    std::string log_path_ = get_default_log_path(); // log path
+    bool log_to_file_ = true;                       // file logging enabled by default
 
     template <typename... Args>
     void log(LogLevel level, fmt::format_string<Args...> fmt_str, Args&&... args) {
@@ -181,8 +179,8 @@ private:
             to_file = log_to_file_;
         }
 
-         // Append to log file (no color)
-        if (to_file) {
+        // Append to log file (no color)
+        if (to_file && level >= LogLevel::Info) { // exclude TRACE and DEBUG from log file
             std::scoped_lock lock(file_mutex_);
             std::ofstream logfile(path_copy.c_str(), std::ios_base::app);
             if (logfile.is_open()) {

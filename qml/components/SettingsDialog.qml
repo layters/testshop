@@ -329,85 +329,6 @@ Popup {
                 //Layout.row: 0
                 Layout.alignment: Qt.AlignHCenter
                 Layout.preferredWidth: settingsStack.contentBoxWidth
-                title: qsTr("Currency")
-                
-                background: Rectangle {
-                    y: parent.topPadding - parent.bottomPadding
-                    width: parent.width
-                    height: parent.height - parent.topPadding + parent.bottomPadding
-                    color: settingsStack.contentBoxColor
-                    border.color: settingsStack.contentBoxBorderColor
-                    radius: 2
-                }
-                label: Label {
-                    x: parent.leftPadding
-                    width: parent.availableWidth
-                    text: parent.title
-                    color: parent.background.border.color//"#030380"
-                    elide: Text.ElideRight
-                }
-                // GroupBox content goes here
-                ColumnLayout {
-                    id: currencyColumn
-                    width: parent.width; height: childrenRect.height
-                    //spacing: 200 // spacing between Row items
-                    Item {
-                        Layout.fillWidth: true
-                        Layout.preferredHeight: childrenRect.height
-                        Text {
-                            anchors.verticalCenter: currencyBox.verticalCenter
-                            text: qsTr("Preferred local currency:")
-                            color: (NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000"
-                            //Layout.alignment: Qt.AlignLeft; Layout.leftMargin: 0
-                        }
-                      
-                        NeroshopComponents.ComboBox {
-                            id: currencyBox
-                            anchors.right: parent.right//Layout.alignment: Qt.AlignRight; Layout.rightMargin: 0
-                            width: settingsStack.comboBoxWidth
-                            currentIndex: model.indexOf(Settings.getJsonRootObject()["preferred_currency"].toUpperCase())
-                            displayText: currentText
-                            //editable: true; selectTextByMouse: true
-                            model: Backend.getCurrencyList()
-                            //implicitContentWidthPolicy: ComboBox.WidestText//ComboBox.ContentItemImplicitWidth
-                            onActivated: {
-                                priceDisplayText.currency = displayText
-                            }
-                            onCurrentTextChanged: settingsDialog.save()
-                            indicatorWidth: settingsStack.comboBoxButtonWidth
-                            indicatorDoNotPassBorder: settingsStack.comboBoxNestedButton
-                            color: "#f2f2f2"//(NeroshopComponents.Style.darkTheme) ? "#101010" : "#f0f0f0"
-                            //textColor: (NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000"
-                        }
-                    }
-                    // Price API - TODO
-                    /*Item {
-                        Layout.fillWidth: true
-                        Layout.preferredHeight: childrenRect.height
-                        Text {
-                            anchors.verticalCenter: priceApiBox.verticalCenter
-                            text: qsTr("Price API:")
-                            color: NeroshopComponents.Style.darkTheme ? "#ffffff" : "#000000"
-                        }
-                        
-                        NeroshopComponents.ComboBox {
-                            id: priceApiBox
-                            anchors.right: parent.right
-                            width: settingsStack.comboBoxWidth; indicatorWidth: settingsStack.comboBoxButtonWidth
-                            //model: ["CoinGecko", "CoinMarketCap"]
-                            currentIndex: model.indexOf(Settings.getJsonRootObject()["price_api"])//Component.onCompleted: currentIndex = find("CoinGecko")
-                            onCurrentTextChanged: settingsDialog.save()
-                            indicatorDoNotPassBorder: settingsStack.comboBoxNestedButton
-                            color: "#f2f2f2"
-                        }
-                    }*/
-                }          
-            }
-
-            GroupBox {
-                //Layout.row: 1
-                Layout.alignment: Qt.AlignHCenter
-                Layout.preferredWidth: settingsStack.contentBoxWidth
                 title: qsTr("Appearance")
                 //width: scrollView.width//contentWidth // does nothing
                 background: Rectangle {
@@ -462,8 +383,6 @@ Popup {
                                 }
                                 NeroshopComponents.Style.themeName = currentText//displayText // update the actual theme (name)
                                 themeSwitcher.checked = !NeroshopComponents.Style.darkTheme // update the theme switch                           
-                                // NOTE:  on app launch, the theme will ALWAYS be reset back to its default unless you change the theme settings in your configuration file
-                                //todo: change theme in configuration file too
                                 console.log("Theme set to", currentText)
                                 settingsDialog.save()
                             }
@@ -471,7 +390,37 @@ Popup {
                             indicatorDoNotPassBorder: settingsStack.comboBoxNestedButton
                             color: "#f2f2f2"
                         } // ComboBox   
-                    }    
+                    }
+                    // Display currency    
+                    Item {
+                        Layout.fillWidth: true
+                        Layout.preferredHeight: childrenRect.height
+                        Text {
+                            anchors.verticalCenter: currencyBox.verticalCenter
+                            text: qsTr("Display currency:")
+                            color: (NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000"
+                            //Layout.alignment: Qt.AlignLeft; Layout.leftMargin: 0
+                        }
+                      
+                        NeroshopComponents.ComboBox {
+                            id: currencyBox
+                            anchors.right: parent.right//Layout.alignment: Qt.AlignRight; Layout.rightMargin: 0
+                            width: settingsStack.comboBoxWidth
+                            currentIndex: model.indexOf(Settings.getJsonRootObject()["preferred_currency"].toUpperCase())
+                            displayText: currentText
+                            //editable: true; selectTextByMouse: true
+                            model: Backend.getCurrencyList()
+                            //implicitContentWidthPolicy: ComboBox.WidestText//ComboBox.ContentItemImplicitWidth
+                            onActivated: {
+                                priceDisplayText.currency = displayText
+                            }
+                            onCurrentTextChanged: settingsDialog.save()
+                            indicatorWidth: settingsStack.comboBoxButtonWidth
+                            indicatorDoNotPassBorder: settingsStack.comboBoxNestedButton
+                            color: "#f2f2f2"//(NeroshopComponents.Style.darkTheme) ? "#101010" : "#f0f0f0"
+                            //textColor: (NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000"
+                        }
+                    }
                     // Hide homepage button
                     Item {
                         Layout.fillWidth: true
@@ -1672,6 +1621,7 @@ Item {
                                     } else {
                                         if(ProxyManager.isTorRunning()) {
                                             ProxyManager.useTorProxy()
+                                            ProxyManager.setExternalProcess(true)
                                         }
                                     }
                                     

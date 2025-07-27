@@ -33,7 +33,12 @@ void neroshop::DaemonManager::startDaemonProcess()
     #ifdef Q_OS_WIN
     QString program = "neroshopd.exe";
     #else
-    QString program = "./neroshopd";
+    QString program;
+    if (QFile::exists("neroshopd.AppImage")) {
+        program = "./neroshopd.AppImage";
+    } else {
+        program = "./neroshopd";
+    }
     #endif
     QStringList arguments;  // Optional command-line arguments for the daemon
 
@@ -54,7 +59,7 @@ void neroshop::DaemonManager::startDaemonProcess()
 }
 
 void neroshop::DaemonManager::startDaemonProcessDetached() {
-    // Check if the daemon is already running
+    // Check if an internally started daemon is already running (and also connected)
     if (m_daemonRunning)
         return;
 
@@ -130,7 +135,7 @@ void neroshop::DaemonManager::terminateDaemonProcess() {
 
 void neroshop::DaemonManager::connect() {    
     // Lock the mutex before accessing the client object
-    std::lock_guard<std::mutex> lock(clientMutex);
+    //std::lock_guard<std::mutex> lock(clientMutex);
     
     neroshop::Client * client = neroshop::Client::get_main_client();
 
@@ -165,17 +170,21 @@ void neroshop::DaemonManager::disconnect() {
     }
 }
 
+// TODO: don't use isSAMBridgePortBound() when network is set to Tor
+
 double neroshop::DaemonManager::getDaemonProgress() const {
-    // Return the progress value (between 0 and 1) based on the daemon state
+    // Return the progress value (between 0.0 and 1.0) based on the daemon state
     if(m_daemonConnected) return 1.0;
-    if(m_daemonRunning) return 0.5; // Waiting or Launching state
+    bool samEnabled = isSAMBridgePortBound();
+    if(m_daemonRunning && samEnabled) return 0.5; // Waiting or Launching state
     return 0.0;
 }
 
 QString neroshop::DaemonManager::getDaemonStatusText() const {
     // Return the appropriate status text based on the daemon state
     if(m_daemonConnected) return "Connected";
-    if(m_daemonRunning) return "Launching";
+    bool samEnabled = isSAMBridgePortBound();
+    if(m_daemonRunning && samEnabled) return "Starting";
     return "Disconnected";
 }
 
@@ -254,6 +263,28 @@ bool neroshop::DaemonManager::isDaemonDHTServerBound() {
     int result = bind(sockfd, (struct sockaddr*) &serverAddress, sizeof(serverAddress));
     close(sockfd);
 
+    return (result == -1);
+}
+
+bool neroshop::DaemonManager::isSAMBridgePortBound() {
+    constexpr int SAM_BRIDGE_PORT = 7656;  // Default SAM bridge port
+
+    int sockfd = socket(AF_INET, SOCK_STREAM, 0);
+    if (sockfd == -1) {
+        std::cerr << "Failed to create socket for SAM bridge port check\n";
+        return false; // Assume not bound if socket can't be created
+    }
+
+    struct sockaddr_in serverAddress{};
+    serverAddress.sin_family = AF_INET;
+    serverAddress.sin_addr.s_addr = INADDR_ANY;  // Listen on all interfaces (localhost included)
+    serverAddress.sin_port = htons(SAM_BRIDGE_PORT);
+
+    // Try to bind the port
+    int result = bind(sockfd, (struct sockaddr*) &serverAddress, sizeof(serverAddress));
+    close(sockfd);
+
+    // If bind fails (returns -1), port is already bound => SAM bridge likely running
     return (result == -1);
 }
 

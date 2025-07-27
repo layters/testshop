@@ -268,7 +268,7 @@ void neroshop::ProxyManager::startTorDaemon() {
         useTorProxy();
         setExternalProcess(false);
     } else {
-        torOutput.append(QString("%1 is missing so Tor could not be started\n").arg(program));
+        torOutput = QString("%1 is missing so Tor could not be started\n").arg(program);
         emit torOutputChanged(torOutput);
         return;
     }
