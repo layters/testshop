@@ -202,7 +202,18 @@ Page {
                         TextField {
                             id: priceFiat
                             anchors.left: parent.left
-                            text: qsTr("%1%2 %3").arg(Backend.getCurrencySign(productPage.model.currency)).arg(Number(productPage.model.price).toFixed(Backend.getCurrencyDecimals(productPage.model.currency))).arg(productPage.model.currency)
+                            text: {
+                                if(productPage.model.currency == "XMR") {
+                                    let fiatCode = "USD"
+                                    let xmrAmount = productPage.model.price // how much XMR this listing is worth
+                                    let rate = CurrencyExchangeRates.getXmrPrice(fiatCode) // 1 XMR = ? target fiat currency
+                                    let fiatPrice = xmrAmount * rate;
+                                    return qsTr("%1%2 %3").arg(Backend.getCurrencySign(fiatCode))
+                                        .arg(fiatPrice.toFixed(Backend.getCurrencyDecimals(fiatCode)))
+                                        .arg(fiatCode)
+                                }
+                                return qsTr("%1%2 %3").arg(Backend.getCurrencySign(productPage.model.currency)).arg(Number(productPage.model.price).toFixed(Backend.getCurrencyDecimals(productPage.model.currency))).arg(productPage.model.currency)
+                            }
                             color: (NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000"
                             font.bold: !priceMonero.visible ? true : false
                             font.pointSize: !priceMonero.visible ? 16 : Qt.application.font.pointSize

@@ -267,7 +267,18 @@ GridView {
                         }                        
                     ]
                     state: (!settingsDialog.gridDetailsAlignCenter) ? "left" : "centered"
-                    text: qsTr("%1%2 %3").arg(Backend.getCurrencySign(modelData.currency)).arg(Number(modelData.price).toFixed(Backend.getCurrencyDecimals(modelData.currency))).arg(modelData.currency)
+                    text: {
+                        if(modelData.currency == "XMR") {
+                            let fiatCode = "USD"
+                            let xmrAmount = modelData.price // how much XMR this listing is worth
+                            let rate = CurrencyExchangeRates.getXmrPrice(fiatCode) // 1 XMR = ? target fiat currency
+                            let fiatPrice = xmrAmount * rate;
+                            return qsTr("%1%2 %3").arg(Backend.getCurrencySign(fiatCode))
+                                .arg(fiatPrice.toFixed(Backend.getCurrencyDecimals(fiatCode)))
+                                .arg(fiatCode)
+                        }
+                        return qsTr("%1%2 %3").arg(Backend.getCurrencySign(modelData.currency)).arg(Number(modelData.price).toFixed(Backend.getCurrencyDecimals(modelData.currency))).arg(modelData.currency)
+                    }
                     color: (NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000"
                     font.bold: !priceMonero.visible ? true : false
                     font.pointSize: !priceMonero.visible ? 16 : Qt.application.font.pointSize
