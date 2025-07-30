@@ -177,6 +177,9 @@ Popup {
                             radius: productDialog.inputRadius
                             color: productDialog.inputBaseColor
                             textColor: productDialog.inputTextColor
+                            onActivated: {
+                                productPriceField.adjustPriceDecimals()
+                            }
                         }
                     }
                 }
