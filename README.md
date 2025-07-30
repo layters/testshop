@@ -5,9 +5,10 @@
 NeroShop is a decentralized peer-to-peer marketplace for trading goods and services with [**Monero**](https://getmonero.org/)
 
 
-> __Disclaimer: The neroshop team operates independently
+> [!Important]
+> The neroshop team operates independently
 > and is not affiliated, associated, authorized, endorsed by, or in any way officially connected
-> with the Monero project, Monero team or any organization.__
+> with the Monero project, Monero team or any organization.
 
 
 ## Table of Contents
@@ -162,7 +163,8 @@ cd ../
 ```
 
 <!-- git submodule update --init --force --recursive --> <!-- <= call this before building monero -->
-> Tip: Avoid using the `-j$(nproc)` option if you have <= 4 CPU cores and <= 4GB RAM to prevent system crashes. Use `-j1` instead.
+> [!Tip]
+> Avoid using the `-j$(nproc)` option if you have <= 4 CPU cores and <= 4GB RAM to prevent system crashes. Use `-j1` instead.
 
 **4. Build monero-project to create .a libraries**
 ```bash
