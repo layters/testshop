@@ -178,7 +178,9 @@ Popup {
                             color: productDialog.inputBaseColor
                             textColor: productDialog.inputTextColor
                             onActivated: {
-                                productPriceField.adjustPriceDecimals()
+                                if(productPriceField.text.length > 0) {
+                                    productPriceField.adjustPriceDecimals()
+                                }
                             }
                         }
                     }
