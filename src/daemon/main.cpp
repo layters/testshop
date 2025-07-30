@@ -247,7 +247,7 @@ int main(int argc, char** argv)
     
     db::Sqlite3 * database = neroshop::get_database();
     if(!database->table_exists("mappings")) { 
-        database->execute("CREATE VIRTUAL TABLE mappings USING fts5(search_term, key, content, tokenize = \"porter unicode61 remove_diacritics 1 tokenchars '-_'\");"); // 0=uses accent characters (diacritics) like é; default is 1
+        database->execute("CREATE VIRTUAL TABLE mappings USING fts5(search_term, key, content, tokenize = \"porter unicode61 remove_diacritics 1 tokenchars '-_:'\");"); // 0=uses accent characters (diacritics) like é; default is 1
     }
     //-------------------------------------------------------
     neroshop::Node node(true);

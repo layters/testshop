@@ -1160,7 +1160,9 @@ QVariantList neroshop::Backend::getListingsBySearchTerm(const QString& searchTer
     //-------------------------------------------------------
     // Bind value to parameter arguments
     QByteArray searchTermByteArray = searchTerm.toUtf8(); // Convert QString to std::string equivalent
-    if(sqlite3_bind_text(stmt, 1, searchTermByteArray.constData(), searchTermByteArray.length(), SQLITE_STATIC) != SQLITE_OK) {
+    // Wrap searchTerm in double quotes for exact matching tokens with colon
+    std::string quotedSearchTerm = std::string("\"") + searchTermByteArray.constData() + "\"";
+    if(sqlite3_bind_text(stmt, 1, quotedSearchTerm.c_str(), quotedSearchTerm.length(), SQLITE_STATIC) != SQLITE_OK) {
         neroshop::log_error("sqlite3_bind_text: " + std::string(sqlite3_errmsg(database->get_handle())));
         sqlite3_finalize(stmt);
         return {};//database->execute("ROLLBACK;"); return {};
