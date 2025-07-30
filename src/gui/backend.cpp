@@ -46,6 +46,7 @@
 #include "enum_wrapper.hpp"
 #include "../core/protocol/p2p/file_piece_hasher.hpp"
 #include "../core/market/location.hpp"
+#include "currency_rate_provider.hpp"
 
 #include <future>
 #include <thread>
@@ -1143,6 +1144,7 @@ QVariantList neroshop::Backend::getInventory(const QString& user_id, bool hide_i
 //----------------------------------------------------------------
 //----------------------------------------------------------------
 QVariantList neroshop::Backend::getListingsBySearchTerm(const QString& searchTerm, bool hide_illicit_items) {
+    CurrencyExchangeRatesProvider *rateProvider = CurrencyExchangeRatesProvider::instance();
     // Transition from Sqlite to DHT:
     Client * client = Client::get_main_client();
     db::Sqlite3 * database = neroshop::get_database();
@@ -1213,8 +1215,21 @@ QVariantList neroshop::Backend::getListingsBySearchTerm(const QString& searchTer
                 listing.insert("listing_uuid", QString::fromStdString(value_obj["id"].get<std::string>()));
                 listing.insert("seller_id", QString::fromStdString(value_obj["seller_id"].get<std::string>()));
                 listing.insert("quantity", value_obj["quantity"].get<int>());
-                listing.insert("price", value_obj["price"].get<double>());
-                listing.insert("currency", QString::fromStdString(value_obj["currency"].get<std::string>()));
+                double price = value_obj["price"].get<double>();
+                listing.insert("price", price);
+                QString currency = QString::fromStdString(value_obj["currency"].get<std::string>());
+                listing.insert("currency", currency);
+                // Convert price to XMR equivalent for sorting
+                double priceXmr = price;
+                if (currency != "XMR") { 
+                    double rate = rateProvider->getPrice("XMR", currency); // 1 XMR = ? currency
+                    if(rate > 0.0) {
+                        priceXmr = price / rate;
+                    } else {
+                        priceXmr = 0.0;
+                    }
+                }
+                listing.insert("price_xmr", priceXmr);
                 listing.insert("condition", QString::fromStdString(value_obj["condition"].get<std::string>()));
                 if(value_obj.contains("location") && value_obj["location"].is_string()) {
                     listing.insert("location", QString::fromStdString(value_obj["location"].get<std::string>()));
@@ -1328,6 +1343,7 @@ QVariantList neroshop::Backend::getListingsBySearchTerm(const QString& searchTer
 }
 //----------------------------------------------------------------
 QVariantList neroshop::Backend::getListings(int sorting, bool hide_illicit_items) {
+    CurrencyExchangeRatesProvider *rateProvider = CurrencyExchangeRatesProvider::instance();
     // Transition from Sqlite to DHT:
     Client * client = Client::get_main_client();
     db::Sqlite3 * database = neroshop::get_database();
@@ -1384,8 +1400,21 @@ QVariantList neroshop::Backend::getListings(int sorting, bool hide_illicit_items
                 listing.insert("listing_uuid", QString::fromStdString(value_obj["id"].get<std::string>()));
                 listing.insert("seller_id", QString::fromStdString(value_obj["seller_id"].get<std::string>()));
                 listing.insert("quantity", value_obj["quantity"].get<int>());
-                listing.insert("price", value_obj["price"].get<double>());
-                listing.insert("currency", QString::fromStdString(value_obj["currency"].get<std::string>()));
+                double price = value_obj["price"].get<double>();
+                listing.insert("price", price);
+                QString currency = QString::fromStdString(value_obj["currency"].get<std::string>());
+                listing.insert("currency", currency);
+                // Convert price to XMR equivalent for sorting
+                double priceXmr = price;
+                if (currency != "XMR") { 
+                    double rate = rateProvider->getPrice("XMR", currency); // 1 XMR = ? currency
+                    if(rate > 0.0) {
+                        priceXmr = price / rate;
+                    } else {
+                        priceXmr = 0.0;
+                    }
+                }
+                listing.insert("price_xmr", priceXmr);
                 listing.insert("condition", QString::fromStdString(value_obj["condition"].get<std::string>()));
                 if(value_obj.contains("location") && value_obj["location"].is_string()) {
                     listing.insert("location", QString::fromStdString(value_obj["location"].get<std::string>()));
@@ -1560,7 +1589,7 @@ QVariantList neroshop::Backend::getListings(int sorting, bool hide_illicit_items
             std::sort(catalog.begin(), catalog.end(), [](const QVariant& a, const QVariant& b) {
                 QVariantMap listingA = a.toMap();
                 QVariantMap listingB = b.toMap();
-                return listingA["price"].toDouble() < listingB["price"].toDouble();
+                return listingA["price_xmr"].toDouble() < listingB["price_xmr"].toDouble();
             });
             break;
         case static_cast<int>(EnumWrapper::Sorting::SortByPriceHighest):
@@ -1568,7 +1597,7 @@ QVariantList neroshop::Backend::getListings(int sorting, bool hide_illicit_items
             std::sort(catalog.begin(), catalog.end(), [](const QVariant& a, const QVariant& b) {
                 QVariantMap listingA = a.toMap();
                 QVariantMap listingB = b.toMap();
-                return listingA["price"].toDouble() > listingB["price"].toDouble();
+                return listingA["price_xmr"].toDouble() > listingB["price_xmr"].toDouble();
             });
             break;
         case static_cast<int>(EnumWrapper::Sorting::SortByMostFavorited):
@@ -1586,6 +1615,7 @@ QVariantList neroshop::Backend::getListings(int sorting, bool hide_illicit_items
 }
 //----------------------------------------------------------------
 QVariantList neroshop::Backend::getListingsByCategory(int category_id, bool hide_illicit_items) {
+    CurrencyExchangeRatesProvider *rateProvider = CurrencyExchangeRatesProvider::instance();
     // Transition from Sqlite to DHT:
     Client * client = Client::get_main_client();
     db::Sqlite3 * database = neroshop::get_database();
@@ -1651,8 +1681,21 @@ QVariantList neroshop::Backend::getListingsByCategory(int category_id, bool hide
                 listing.insert("listing_uuid", QString::fromStdString(value_obj["id"].get<std::string>()));
                 listing.insert("seller_id", QString::fromStdString(value_obj["seller_id"].get<std::string>()));
                 listing.insert("quantity", value_obj["quantity"].get<int>());
-                listing.insert("price", value_obj["price"].get<double>());
-                listing.insert("currency", QString::fromStdString(value_obj["currency"].get<std::string>()));
+                double price = value_obj["price"].get<double>();
+                listing.insert("price", price);
+                QString currency = QString::fromStdString(value_obj["currency"].get<std::string>());
+                listing.insert("currency", currency);
+                // Convert price to XMR equivalent for sorting
+                double priceXmr = price;
+                if (currency != "XMR") { 
+                    double rate = rateProvider->getPrice("XMR", currency); // 1 XMR = ? currency
+                    if(rate > 0.0) {
+                        priceXmr = price / rate;
+                    } else {
+                        priceXmr = 0.0;
+                    }
+                }
+                listing.insert("price_xmr", priceXmr);
                 listing.insert("condition", QString::fromStdString(value_obj["condition"].get<std::string>()));
                 if(value_obj.contains("location") && value_obj["location"].is_string()) {
                     listing.insert("location", QString::fromStdString(value_obj["location"].get<std::string>()));
@@ -1841,7 +1884,7 @@ QVariantList neroshop::Backend::sortBy(const QVariantList& catalog, int sorting)
             std::sort(sortedCatalog.begin(), sortedCatalog.end(), [](const QVariant& a, const QVariant& b) {
                 QVariantMap listingA = a.toMap();
                 QVariantMap listingB = b.toMap();
-                return listingA["price"].toDouble() < listingB["price"].toDouble();
+                return listingA["price_xmr"].toDouble() < listingB["price_xmr"].toDouble();
             });
             break;
         case static_cast<int>(EnumWrapper::Sorting::SortByPriceHighest):
@@ -1849,7 +1892,7 @@ QVariantList neroshop::Backend::sortBy(const QVariantList& catalog, int sorting)
             std::sort(sortedCatalog.begin(), sortedCatalog.end(), [](const QVariant& a, const QVariant& b) {
                 QVariantMap listingA = a.toMap();
                 QVariantMap listingB = b.toMap();
-                return listingA["price"].toDouble() > listingB["price"].toDouble();
+                return listingA["price_xmr"].toDouble() > listingB["price_xmr"].toDouble();
             });
             break;
         case static_cast<int>(EnumWrapper::Sorting::SortByAverageRating):

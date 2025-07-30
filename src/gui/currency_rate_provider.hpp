@@ -14,10 +14,12 @@ class CurrencyExchangeRatesProvider : public QObject
 {
     Q_OBJECT
     Q_PROPERTY(int reevaluate READ reevaluate NOTIFY ratesUpdated)
+    Q_DISABLE_COPY(CurrencyExchangeRatesProvider)
 public:
     explicit CurrencyExchangeRatesProvider();
     ~CurrencyExchangeRatesProvider();
     static QObject *qmlInstance(QQmlEngine *engine, QJSEngine *scriptEngine);
+    static CurrencyExchangeRatesProvider* instance();
 
     int reevaluate() const;
 

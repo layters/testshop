@@ -44,14 +44,29 @@ QHash<QPair<int, int>, double> updateRates(const QList<QPair<int, int>> keys)
 
 CurrencyExchangeRatesProvider::CurrencyExchangeRatesProvider()
 {
+    // Initialize mCurrentRates with desired currency pairs:
+    QMutexLocker locker(&mRatesMutex);
+    mCurrentRates.clear();
+    // Example: fill with some desired pairs, like (XMR, USD), (XMR, EUR), etc:
+
+    mCurrentRates.insert(qMakePair(int(neroshop::Currency::XMR), int(neroshop::Currency::USD)), 0.0);
+    mCurrentRates.insert(qMakePair(int(neroshop::Currency::XMR), int(neroshop::Currency::EUR)), 0.0);
+    // Add other pairs as needed...
+
+    locker.unlock();
+    //-----------------------------
     connect(&mUpdateFutureWatcher,
             &QFutureWatcher<QHash<QPair<int, int>, double>>::finished,
             this,
-            [&]() {
+            [this]() {
+                // Update rates safely
                 this->setRates(mUpdateFutureWatcher.result());
+                
+                // Schedule next update after delay, non-blocking, in main thread event loop
                 QTimer::singleShot(3000, this, &CurrencyExchangeRatesProvider::startUpdate);
             });
-    startUpdate();
+            
+    startUpdate(); // start first update asynchronously
 }
 
 CurrencyExchangeRatesProvider::~CurrencyExchangeRatesProvider()
@@ -62,7 +77,12 @@ CurrencyExchangeRatesProvider::~CurrencyExchangeRatesProvider()
 QObject *CurrencyExchangeRatesProvider::qmlInstance(QQmlEngine * /*engine*/,
                                                     QJSEngine * /*scriptEngine*/)
 {
-    return new CurrencyExchangeRatesProvider();
+    return CurrencyExchangeRatesProvider::instance();
+}
+
+CurrencyExchangeRatesProvider* CurrencyExchangeRatesProvider::instance() {
+    static CurrencyExchangeRatesProvider instance;
+    return &instance;
 }
 
 int CurrencyExchangeRatesProvider::reevaluate() const
@@ -73,6 +93,8 @@ int CurrencyExchangeRatesProvider::reevaluate() const
 
 double CurrencyExchangeRatesProvider::getPrice(const QString &from, const QString &to) const
 {
+    QMutexLocker locker(&mRatesMutex);
+    
     const auto fromIt = neroshop::CurrencyMap.find(from.toUpper().toStdString());
     if (fromIt == neroshop::CurrencyMap.cend()) {
         return 0.0;
@@ -87,7 +109,7 @@ double CurrencyExchangeRatesProvider::getPrice(const QString &from, const QStrin
 
     const auto key = qMakePair(currencyFrom, currencyTo);
     if (!mCurrentRates.contains(key)) {
-        mCurrentRates[key] = 0.0;
+        mCurrentRates.insert(key, 0.0); // returning 0.0 would make price permanently zero
     }
 
     return mCurrentRates.value(key);
@@ -95,12 +117,24 @@ double CurrencyExchangeRatesProvider::getPrice(const QString &from, const QStrin
 
 void CurrencyExchangeRatesProvider::setRates(const QHash<QPair<int, int>, double> &newRates)
 {
-    QMutexLocker locker(&mRatesMutex);
-    mCurrentRates = newRates;
+    {
+        QMutexLocker locker(&mRatesMutex);
+        mCurrentRates = newRates;
+    } // unlock BEFORE signal emitted
     emit ratesUpdated();
 }
 
 void CurrencyExchangeRatesProvider::startUpdate()
 {
-    mUpdateFutureWatcher.setFuture(QtConcurrent::run(updateRates, mCurrentRates.keys()));
+    if (mUpdateFutureWatcher.isRunning())
+        return; // avoid overlapping updates
+        
+    // Very important: copy keys under lock, but pass copies to QtConcurrent
+    QList<QPair<int, int>> keys;
+    {
+        QMutexLocker locker(&mRatesMutex);
+        keys = mCurrentRates.keys();
+    }
+    
+    mUpdateFutureWatcher.setFuture(QtConcurrent::run(updateRates, keys));
 }
