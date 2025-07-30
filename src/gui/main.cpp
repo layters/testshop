@@ -70,15 +70,10 @@ int main(int argc, char *argv[])
     app.setApplicationName("neroshop");
 
     qmlRegisterSingletonType<CurrencyExchangeRatesProvider>(
-        "neroshop",
-        1, 0,
-        "CurrencyExchangeRatesProvider",
+        "neroshop", 1, 0, "CurrencyExchangeRatesProvider",
         &CurrencyExchangeRatesProvider::qmlInstance);
     qmlRegisterSingletonType(QUrl("qrc:/qml/components/CurrencyExchangeRates.qml"),
-                             "neroshop.CurrencyExchangeRates",
-                             1,
-                             0,
-                             "CurrencyExchangeRates");
+        "neroshop.CurrencyExchangeRates", 1, 0, "CurrencyExchangeRates");
 
     QQmlApplicationEngine engine;
     //--------------------------
