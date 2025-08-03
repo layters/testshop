@@ -1217,7 +1217,9 @@ Popup {
                 Layout.alignment: Qt.AlignHCenter
                 Layout.preferredWidth: childrenRect.width
                 Layout.preferredHeight: childrenRect.height
-                visible: paymentCoinsRepeater.count > 0 && paymentCoinsItem.isPaymentCoinSelected() && currencyBox.currentText != "XMR"
+                // hide for now. Uncomment "visible: paymentCoinsRepeater.count > 0 && ..." later when custom rates are supported
+                visible: false
+                //visible: paymentCoinsRepeater.count > 0 && paymentCoinsItem.isPaymentCoinSelected() && currencyBox.currentText != "XMR"
                 function getCustomRates() {
                     let customRates = [];
                     for (let i = 0; i < customRatesList.count; i++) {
