@@ -37,15 +37,12 @@ struct Peer {
 
 class Node {
 public:
-    Node(bool local, const std::string& address = "", uint16_t port = 50881); // Binds a socket to a port and initializes the DHT
+    Node(NetworkType network_type); // Constructor for local node (you run it)
+    Node(const std::string& address, uint16_t port); // Constructor for outside (remote) node
     ~Node();
     
     bool operator==(const Node& other) const {
-        if (network_type_ != other.network_type_) {
-            return false; // Different network types can't be equal
-        }
-
-        switch (network_type_) {
+        switch (Node::network_type_) {
             case NetworkType::I2P:
                 return i2p_address == other.i2p_address;
             case NetworkType::Tor:
@@ -93,7 +90,7 @@ public:
     std::deque<Peer> get_providers(const std::string& data_hash) const; // A query to get a list of peers for a specific torrent or infohash.
     
     // Setters
-    void set_network_type(NetworkType network_type);
+    static void set_network_type(NetworkType network_type);
     
     // Getters
     std::string get_id() const; // get ID of this node
@@ -103,8 +100,8 @@ public:
     //std::string get_private_key() const; // destination
     std::string get_address() const;
     uint16_t get_port() const;
-    NetworkType get_network_type() const;
-    std::string get_network_type_as_string() const;
+    static NetworkType get_network_type();
+    static std::string get_network_type_as_string();
     RoutingTable * get_routing_table() const;
     std::vector<Peer> get_peers() const; // Returns a list of connected peers
     int get_peer_count() const; // Returns the total number of nodes in routing table
@@ -129,7 +126,7 @@ public:
     
     bool has_key(const std::string& key) const;
     bool is_hardcoded() const;
-    static bool is_hardcoded(const std::string& address, uint16_t port, NetworkType network_type);
+    static bool is_hardcoded(const std::string& address, uint16_t port);
     
     bool has_key_cached(const std::string& key) const;
     bool has_value(const std::string& value) const;
@@ -169,7 +166,7 @@ private:
     std::string i2p_address; // immutable and set only once in constructor so a mutex wouldn't make sense
     std::string onion_address;
     std::atomic<uint16_t> port_;
-    NetworkType network_type_;
+    static NetworkType network_type_;
     std::unordered_map<std::string, std::string> data; // internal hash table that stores key-value pairs 
     mutable std::shared_mutex data_mutex;
     std::unordered_map<std::string, std::deque<Peer>> providers; // maps a data's hash (key) to a vector of Peers who have the data
