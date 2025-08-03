@@ -210,10 +210,13 @@ int main(int argc, char** argv)
     options.add_options()
         ("h,help", "Print usage")
         ("v,version", "Show version")
-        ("b,bootstrap", "Run this node as a bootstrap node")//("bl,bootstrap-lazy", "Run this node as a bootstrap node without specifying multiaddress")//("c,config", "Path to configuration file", cxxopts::value<std::string>())
         ("rpc,enable-rpc", "Enables the RPC daemon server")
-        ("public,public-node", "Make your daemon into a public node")
+        ////("conf,config", "Set path to configuration file", cxxopts::value<std::string>()->default_value("/some_path"))
+        ("public,public-node", "Make this node publicly accessible")
+        ("network,network-type", "Set anonymous overlay network [i2p, tor]", cxxopts::value<std::string>())
     ;
+    
+    options.parse_positional({"seed-node"}); // allows for multiple args
     
     auto result = options.parse(argc, argv);
     
@@ -236,6 +239,26 @@ int main(int argc, char** argv)
     if(result.count("public")) {
         ip_address = NEROSHOP_ANY_ADDRESS;
     }
+    
+    neroshop::NetworkType network_type;
+    if(result.count("network")) {
+        // If anonymous overlay network is invalid, throw error
+        std::string network = result["network"].as<std::string>();
+        std::string network_lower = string_tools::lower(network);
+        if(network_lower != "i2p" && network_lower != "tor") {
+             throw std::invalid_argument("invalid overlay network");
+        }
+        
+        // Set the network_type based on the command line args
+        if(network_lower == "i2p") {
+            network_type = neroshop::NetworkType::I2P;
+        } else if(network_lower == "tor") {
+            network_type = neroshop::NetworkType::Tor;
+        }
+        
+        std::cout << "\033[1;90mSelected overlay network: " << network_lower << "\033[0m\n";
+    }
+    
     //-------------------------------------------------------
     // create "datastore" folder within "~/.config/neroshop/" path (to prevent sqlite3_open: out of memory error)
     std::string data_dir = neroshop::get_default_database_path();
@@ -250,7 +273,7 @@ int main(int argc, char** argv)
         database->execute("CREATE VIRTUAL TABLE mappings USING fts5(search_term, key, content, tokenize = \"porter unicode61 remove_diacritics 1 tokenchars '-_:'\");"); // 0=uses accent characters (diacritics) like é; default is 1
     }
     //-------------------------------------------------------
-    neroshop::Node node(true);
+    neroshop::Node node(network_type);
     
     std::thread ipc_thread([&node]() { ipc_server(node); }); // For IPC communication between the local GUI client and the local daemon server
     std::thread dht_thread([&node]() { dht_server(node); }); // DHT communication for peer discovery and data storage

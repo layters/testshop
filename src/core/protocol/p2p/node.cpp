@@ -32,77 +32,86 @@ namespace neroshop {
 
 //-----------------------------------------------------------------------------
 
-Node::Node(bool local, const std::string& address, uint16_t port) : bootstrap(false), check_counter(0), start_time(std::chrono::steady_clock::now()), running(true), network_type_(NetworkType::I2P) { 
-    // External node: just set address, port, and ID
-    if(local == false) {
-        switch (network_type_) {
-            case NetworkType::I2P: {
-                this->i2p_address = address;
-                this->id = generate_node_id(address);
-                this->port_ = port;
-                break;
-            }
-            case NetworkType::Tor: {
-                this->onion_address = address;
-                this->id = generate_node_id(address);
-                this->port_ = port;
-                break;
-            }
-        }
-    } else {
-        switch (network_type_) {
-            case NetworkType::I2P: {
-                // Initialiize SAM client, connecting to the SAM Bridge via TCP port (7656)
-                sam_client = std::make_unique<SamClient>(SamSessionStyle::Datagram);
-    
-                // Operate a handshake with the SAM Bridge
-                sam_client->hello(sam_client->get_session_socket());
-    
-                // Restore or generate public and private keys then convert base64 pubkey to b32.i2p
-                sam_client->session_prepare();
-    
-                auto start = std::chrono::high_resolution_clock::now();
-                sam_client->session_create(); // takes a while...
-                auto end = std::chrono::high_resolution_clock::now();
-                auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
-    
-                // Save i2p address
-                this->i2p_address = sam_client->get_i2p_address();
-                // Generate node ID from b32.i2p
-                this->id = generate_node_id(this->get_i2p_address());
-                // Set UDP port
-                this->port_ = sam_client->get_port();
-        
-                break;
-            }
-            case NetworkType::Tor: {
-                // Initialize Tor Socks5 client here
-                socks5_client = std::make_unique<Socks5Client>("127.0.0.1", 9050, true);
-                // Save onion address
-                this->onion_address = socks5_client->get_onion_address();
-                // Set TCP port
-                this->port_ = socks5_client->get_port();
-                // Generate node ID from .onion
-                this->id = generate_node_id(this->get_onion_address(), this->get_port());
-                
-                break;
-            }
 
-            default:
-                throw std::runtime_error("Unsupported network type");
-        }
+Node::Node(NetworkType network_type) : check_counter(0), start_time(std::chrono::steady_clock::now()), running(true) {
+    // Set the overlay network for all nodes
+    Node::network_type_ = network_type;
+    
+    switch (Node::network_type_) {
+        case NetworkType::I2P: {
+            // Initialiize SAM client, connecting to the SAM Bridge via TCP port (7656)
+            sam_client = std::make_unique<SamClient>(SamSessionStyle::Datagram);
+    
+            // Operate a handshake with the SAM Bridge
+            sam_client->hello(sam_client->get_session_socket());
+    
+            // Restore or generate public and private keys then convert base64 pubkey to b32.i2p
+            sam_client->session_prepare();
+    
+            auto start = std::chrono::high_resolution_clock::now();
+            sam_client->session_create(); // takes a while...
+            auto end = std::chrono::high_resolution_clock::now();
+            auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
+    
+            // Save i2p address
+            this->i2p_address = sam_client->get_i2p_address();
+            // Generate node ID from b32.i2p
+            this->id = generate_node_id(this->get_i2p_address());
+            // Set UDP port
+            this->port_ = sam_client->get_port();
         
-        // Create the routing table with an empty vector of nodes
-        if(!routing_table.get()) {
-            routing_table = std::make_unique<RoutingTable>(this->get_id());
-        } 
-       
-        // Initialize key mapper
-        if(!key_mapper.get()) {
-            key_mapper = std::make_unique<KeyMapper>();
+            break;
+        }
+        case NetworkType::Tor: {
+            // Initialize Tor Socks5 client here
+            socks5_client = std::make_unique<Socks5Client>("127.0.0.1", 9050, true);
+            // Save onion address
+            this->onion_address = socks5_client->get_onion_address();
+            // Set TCP port
+            this->port_ = socks5_client->get_port();
+            // Generate node ID from .onion
+            this->id = generate_node_id(this->get_onion_address(), this->get_port());
+                
+            break;
+        }
+
+        default:
+            throw std::runtime_error("Unsupported network type");
+    }
+        
+    // Initialize the routing table using node ID
+    if(!routing_table.get()) {
+        routing_table = std::make_unique<RoutingTable>(this->get_id());
+    }
+
+    // Initialize key mapper
+    if(!key_mapper.get()) {
+        key_mapper = std::make_unique<KeyMapper>();
+    }
+    
+    log_debug("Node: {} with ID {} created", get_address(), get_id());
+}
+
+//-----------------------------------------------------------------------------
+
+Node::Node(const std::string& address, uint16_t port) : check_counter(0), start_time(std::chrono::steady_clock::now()), running(true) { 
+    // External node: just set address, port, and ID
+    switch (Node::network_type_) {
+        case NetworkType::I2P: {
+            this->i2p_address = address;
+            this->id = generate_node_id(address);
+            this->port_ = port;
+            break;
+        }
+        case NetworkType::Tor: {
+            this->onion_address = address;
+            this->id = generate_node_id(address);
+            this->port_ = port;
+            break;
         }
     }
-    log_debug("Node: {} with ID {} created", get_address(), get_id());
+    
+    log_debug("Node (remote): {} with ID {} created", get_address(), get_id());
 }
 
 //-----------------------------------------------------------------------------
@@ -110,6 +119,10 @@ Node::Node(bool local, const std::string& address, uint16_t port) : bootstrap(fa
 Node::~Node() {
     log_debug("~Node: {} destroyed", get_address());
 }
+
+//-----------------------------------------------------------------------------
+
+NetworkType Node::network_type_ (NetworkType::I2P);
 
 //-----------------------------------------------------------------------------
 
@@ -125,18 +138,7 @@ std::string Node::generate_node_id(const std::string& address, int port) {
 void Node::join() {
     log_info("{}Joining neroshop network ...{}", color_magenta, color_reset);
     
-    std::vector<BootstrapNode> bootstrap_nodes;
-
-    switch (network_type_) {
-        case NetworkType::I2P:
-            bootstrap_nodes = std::vector<BootstrapNode>(std::begin(BOOTSTRAP_I2P_NODES), std::end(BOOTSTRAP_I2P_NODES));
-            break;
-        case NetworkType::Tor:
-            bootstrap_nodes = std::vector<BootstrapNode>(std::begin(BOOTSTRAP_TOR_NODES), std::end(BOOTSTRAP_TOR_NODES));
-            break;
-        default:
-            throw std::runtime_error("Unsupported network type");
-    }
+    std::vector<BootstrapNode> bootstrap_nodes = get_bootstrap_nodes(get_network_type());
     
     for (const auto& bootstrap_node : bootstrap_nodes) {
         // Ping each known node to confirm that it is online - the main bootstrapping primitive. If a node replies, and if there is space in the routing table, it will be inserted.
@@ -485,7 +487,7 @@ void Node::rebuild_routing_table() {
             continue;
         }
             
-        auto node = std::make_unique<Node>(false, address, port);
+        auto node = std::make_unique<Node>(address, port);
         if(!node->is_hardcoded()) {
             routing_table->add_node(std::move(node));
         }
@@ -690,7 +692,7 @@ std::vector<std::unique_ptr<Node>> Node::send_find_node(const std::string& targe
             if (node_json.contains("address")) {
                 std::string node_addr = node_json["address"];
                 uint16_t node_port = node_json["port"];
-                auto node = std::make_unique<Node>(false, node_addr, node_port);
+                auto node = std::make_unique<Node>(node_addr, node_port);
                 if (!routing_table->has_node(node->get_id())) { // add node to vector only if it's not in our routing table yet
                     nodes.push_back(std::move(node));
                 }
@@ -1773,8 +1775,8 @@ void Node::on_ping(const std::vector<uint8_t>& buffer, const std::string& sender
             if(sender_id == calculated_node_id) {
                 bool has_node = routing_table->has_node(sender_id);
                 auto network_type = get_network_type();
-                if (!has_node && !is_hardcoded(sender_addr, sender_port, network_type)) { // To prevent the seed node from being stored in the routing table
-                    auto node_that_pinged = std::make_unique<Node>(false, sender_addr, sender_port);
+                if (!has_node && !is_hardcoded(sender_addr, sender_port)) { // To prevent the seed node from being stored in the routing table
+                    auto node_that_pinged = std::make_unique<Node>(sender_addr, sender_port);
                     routing_table->add_node(std::move(node_that_pinged)); // Already has internal write_lock
                     persist_routing_table(sender_addr, sender_port);
                     ////routing_table->print_table();
@@ -1844,7 +1846,7 @@ void Node::run() {
     std::thread heartbeat_thread(&Node::heartbeat, this);
     std::thread refresh_thread(&Node::refresh, this);
     
-    switch (network_type_) {
+    switch (Node::network_type_) {
         case NetworkType::I2P:
             run_i2p();
             break;
@@ -2223,7 +2225,7 @@ void Node::handle_tor_message(std::vector<uint8_t> message, const std::string& s
 //-----------------------------------------------------------------------------
 
 void Node::set_network_type(NetworkType network_type) {
-    this->network_type_ = network_type;
+    Node::network_type_ = network_type;
 }
 
 //-----------------------------------------------------------------------------
@@ -2235,7 +2237,7 @@ std::string Node::get_id() const {
 //-----------------------------------------------------------------------------
 
 std::string Node::get_sam_version() const {
-    assert(network_type_ == NetworkType::I2P && "I2P is not the current network");
+    assert(Node::network_type_ == NetworkType::I2P && "I2P is not the current network");
     if(!sam_client.get()) throw std::runtime_error("SAM client is not connected");
     
     return sam_client->get_sam_version();
@@ -2250,7 +2252,7 @@ SamClient * Node::get_sam_client() const {
 //-----------------------------------------------------------------------------
 
 std::string Node::get_i2p_address() const {
-    assert(network_type_ == NetworkType::I2P && "I2P is not the current network");
+    assert(Node::network_type_ == NetworkType::I2P && "I2P is not the current network");
     if(sam_client) {
         return sam_client->get_i2p_address();
     }
@@ -2266,7 +2268,7 @@ std::string Node::get_tor_address() const {
 //-----------------------------------------------------------------------------
 
 std::string Node::get_onion_address() const {
-    assert(network_type_ == NetworkType::Tor && "Tor is not the current network");
+    assert(Node::network_type_ == NetworkType::Tor && "Tor is not the current network");
     if(socks5_client) {
         return socks5_client->get_onion_address();
     }
@@ -2276,7 +2278,7 @@ std::string Node::get_onion_address() const {
 //-----------------------------------------------------------------------------
 
 std::string Node::get_address() const {
-    switch(network_type_) {
+    switch(Node::network_type_) {
         case NetworkType::I2P:
             return get_i2p_address();
         case NetworkType::Tor:
@@ -2294,14 +2296,14 @@ uint16_t Node::get_port() const {
 
 //-----------------------------------------------------------------------------
 
-NetworkType Node::get_network_type() const {
-    return network_type_;
+NetworkType Node::get_network_type() {
+    return Node::network_type_;
 }
 
 //-----------------------------------------------------------------------------
 
-std::string Node::get_network_type_as_string() const {
-    switch(network_type_) {
+std::string Node::get_network_type_as_string() {
+    switch(Node::network_type_) {
         case NetworkType::I2P:
             return "I2P";
         case NetworkType::Tor:
@@ -2553,8 +2555,8 @@ bool Node::is_hardcoded() const {
 
 //-----------------------------------------------------------------------------
 
-bool Node::is_hardcoded(const std::string& address, uint16_t port, NetworkType network_type) {
-    const std::vector<BootstrapNode>& bootstrap_nodes = get_bootstrap_nodes(network_type);
+bool Node::is_hardcoded(const std::string& address, uint16_t port) {
+    const std::vector<BootstrapNode>& bootstrap_nodes = get_bootstrap_nodes(Node::network_type_);
     
     return std::find_if(bootstrap_nodes.begin(), bootstrap_nodes.end(),
         [&address, port](const BootstrapNode& node) {

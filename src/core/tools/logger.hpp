@@ -25,7 +25,7 @@ namespace neroshop {
 // ANSI color codes
 constexpr const char* color_reset = "\033[0m";
 
-constexpr const char* color_black = "\033[1;30m";
+constexpr const char* color_black = "\033[1;90m";
 constexpr const char* color_red = "\033[1;91m";
 constexpr const char* color_green = "\033[1;32m";
 constexpr const char* color_yellow = "\033[1;33m";
