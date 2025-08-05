@@ -240,7 +240,7 @@ int main(int argc, char** argv)
         ip_address = NEROSHOP_ANY_ADDRESS;
     }
     
-    neroshop::NetworkType network_type;
+    neroshop::NetworkType network_type = neroshop::NetworkType::I2P; // default
     if(result.count("network")) {
         // If anonymous overlay network is invalid, throw error
         std::string network = result["network"].as<std::string>();
