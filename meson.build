@@ -153,13 +153,17 @@ sqlite3_dep = declare_dependency(
 qrcodegen_inc = include_directories('external/QR-Code-generator/cpp')#meson.current_source_dir() + '/external/QR-Code-generator/cpp'
 qrcodegen_dep = declare_dependency(
     include_directories: qrcodegen_inc,
-    link_args: ['-lqrcodegen']
+    link_args: ['-lqrcodegen'],
+    version: '1.8.0'
 )
 
 ######################################
 # json
 json_inc = include_directories('external/json/single_include')#meson.current_source_dir() + '/external/json/single_include'
-json_dep = declare_dependency(include_directories: json_inc)
+json_dep = declare_dependency(
+    include_directories: json_inc,
+    version: '3.12.0'
+)
 
 ######################################
 # curl
@@ -171,14 +175,10 @@ endif
 ######################################
 # stduuid
 stduuid_inc = include_directories('external/stduuid', 'external/stduuid/catch', 'external/stduuid/include')
-'''
-[
-    meson.current_source_dir() + '/external/stduuid',
-    meson.current_source_dir() + '/external/stduuid/catch',
-    meson.current_source_dir() + '/external/stduuid/include'
-]
-'''
-stduuid_dep = declare_dependency(include_directories: stduuid_inc)
+stduuid_dep = declare_dependency(
+    include_directories: stduuid_inc,
+    version: '1.2.3'
+)
 
 ######################################
 # linenoise
@@ -200,7 +200,10 @@ lua_dep = declare_dependency(
 ######################################
 # cxxopts
 cxxopts_inc = include_directories('external/cxxopts/include')#meson.current_source_dir() + '/external/cxxopts/include'
-cxxopts_dep = declare_dependency(include_directories: cxxopts_inc)    
+cxxopts_dep = declare_dependency(
+    include_directories: cxxopts_inc,
+    version: '3.2.0'
+)
 
 ######################################
 # zlib
@@ -214,14 +217,6 @@ zlib_dep = declare_dependency(
 ######################################
 # i2pd
 i2pd_inc = include_directories('external/i2pd/daemon', 'external/i2pd/i18n', 'external/i2pd/libi2pd', 'external/i2pd/libi2pd_client')
-'''
-[
-    meson.current_source_dir() + '/external/i2pd/daemon',
-    meson.current_source_dir() + '/external/i2pd/i18n',
-    meson.current_source_dir() + '/external/i2pd/libi2pd',
-    meson.current_source_dir() + '/external/i2pd/libi2pd_client'
-]
-'''
 i2pd_link_args = ['-li2pdclient', '-li2pd', '-li2pdlang']
 i2pd_dep = declare_dependency(
     include_directories: i2pd_inc,
@@ -238,7 +233,8 @@ i2pd_daemon_dep = declare_dependency(
 fmt_inc = include_directories('external/fmt/include')#meson.current_source_dir() + '/external/fmt/include'
 fmt_dep = declare_dependency(
     include_directories: fmt_inc,
-    link_args: ['-lfmt']
+    link_args: ['-lfmt'],
+    version: '11.1.4'
 )
 
 ######################################

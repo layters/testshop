@@ -332,7 +332,7 @@ set(qrcodegen_src ${CMAKE_CURRENT_SOURCE_DIR}/build/libqrcodegen.a)
 
 ######################################
 # json
-set(json_include_dir ${CMAKE_CURRENT_SOURCE_DIR}/external/json/single_include)
+set(json_include_dir ${CMAKE_CURRENT_SOURCE_DIR}/external/json/single_include) # v3.12.0
 
 ######################################
 # curl
