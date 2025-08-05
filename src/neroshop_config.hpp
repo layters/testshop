@@ -70,13 +70,13 @@ inline constexpr const char* NEROSHOP_DATABASE_FILENAME      = "data.sqlite3";
 inline constexpr const char* NEROSHOP_SETTINGS_FILENAME      = "settings.json";
 inline constexpr const char* NEROSHOP_NODES_FILENAME         = "nodes.lua";
 inline constexpr const char* NEROSHOP_LOG_FILENAME           = "neroshop.log";
-inline constexpr const char* NEROSHOP_USERDATA_FILENAME      = "user.sqlite3";
+inline constexpr const char* NEROSHOP_USERDATA_FILENAME      = "client.sqlite3";
 
 // Folder names
 inline constexpr const char* NEROSHOP_KEYS_FOLDER_NAME    = "keys";
 inline constexpr const char* NEROSHOP_DATA_FOLDER_NAME    = "datastore";
 inline constexpr const char* NEROSHOP_CATALOG_FOLDER_NAME = "listings";
-inline constexpr const char* NEROSHOP_AVATAR_FOLDER_NAME  = "avatars";
+inline constexpr const char* NEROSHOP_AVATAR_FOLDER_NAME  = "users";
 
 // Image upload
 inline constexpr size_t NEROSHOP_MAX_IMAGE_SIZE = 2 * 1024 * 1024; // 2 MB
