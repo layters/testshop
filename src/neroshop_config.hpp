@@ -70,7 +70,7 @@ inline constexpr const char* NEROSHOP_DATABASE_FILENAME      = "data.sqlite3";
 inline constexpr const char* NEROSHOP_SETTINGS_FILENAME      = "settings.json";
 inline constexpr const char* NEROSHOP_NODES_FILENAME         = "nodes.lua";
 inline constexpr const char* NEROSHOP_LOG_FILENAME           = "neroshop.log";
-inline constexpr const char* NEROSHOP_USERDATA_FILENAME      = "user.sqlite3";
+inline constexpr const char* NEROSHOP_USERDATA_FILENAME      = "client.sqlite3";
 
 // Folder names
 inline constexpr const char* NEROSHOP_KEYS_FOLDER_NAME    = "keys";
