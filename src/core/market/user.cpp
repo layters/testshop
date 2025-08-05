@@ -287,7 +287,7 @@ void User::load_orders() {
 // favorite-or-wishlist-related stuff
 ////////////////////
 void User::add_to_favorites(const std::string& listing_key) {
-    db::Sqlite3 * database = neroshop::get_user_database();
+    db::Sqlite3 * database = neroshop::get_client_database();
 
     // check if item is already in favorites so that we do not add the same item more than once
     bool favorited = database->get_integer_params("SELECT EXISTS(SELECT listing_key FROM favorites WHERE listing_key = ?1 AND user_id = ?2)", { listing_key, this->id });
@@ -306,7 +306,7 @@ void User::add_to_favorites(const std::string& listing_key) {
 }
 ////////////////////
 void User::remove_from_favorites(const std::string& listing_key) {
-    db::Sqlite3 * database = neroshop::get_user_database();
+    db::Sqlite3 * database = neroshop::get_client_database();
     
     // check if item has already been removed from favorites so that we don't have to remove it more than once
     bool favorited = database->get_integer_params("SELECT EXISTS(SELECT listing_key FROM favorites WHERE listing_key = ?1 AND user_id = ?2)", { listing_key, this->id });
@@ -331,7 +331,7 @@ void User::remove_from_favorites(const std::string& listing_key) {
 }
 ////////////////////
 void User::clear_favorites() {
-    db::Sqlite3 * database = neroshop::get_user_database();
+    db::Sqlite3 * database = neroshop::get_client_database();
     
     // first check if favorites (database table) is empty
     int favorites_count = database->get_integer_params("SELECT COUNT(*) FROM favorites WHERE user_id = ?1", { this->id });
@@ -349,7 +349,7 @@ void User::clear_favorites() {
 ////////////////////
 void User::load_favorites() {
     favorites.clear();    
-    db::Sqlite3 * database = neroshop::get_user_database();
+    db::Sqlite3 * database = neroshop::get_client_database();
     std::string command = "SELECT DISTINCT listing_key FROM favorites WHERE user_id = ?1;";
     sqlite3_stmt * stmt = nullptr;
     // Prepare (compile) statement

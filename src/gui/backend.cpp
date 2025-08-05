@@ -192,7 +192,7 @@ QString neroshop::Backend::getDurationFromNow(const QString& timestamp) const {
 //----------------------------------------------------------------
 //----------------------------------------------------------------
 void neroshop::Backend::initializeDatabase() {
-    db::Sqlite3 * database = neroshop::get_user_database();
+    db::Sqlite3 * database = neroshop::get_client_database();
     database->execute("BEGIN;");
     
     // favorites (wishlists)
@@ -2125,7 +2125,7 @@ QVariantList neroshop::Backend::registerUser(WalletManager* wallet_manager, cons
         return { false, "Please wait for the local daemon IPC server to connect first" };
     }
     //---------------------------------------------
-    db::Sqlite3 * database = neroshop::get_user_database();
+    db::Sqlite3 * database = neroshop::get_client_database();
     if(!database) throw std::runtime_error("database is NULL");
     //---------------------------------------------
     // Validate display name
