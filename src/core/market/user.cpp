@@ -84,13 +84,13 @@ void User::rate_seller(const std::string& seller_id, int score, const std::strin
             // Get the value of the corresponding key from the DHT
             std::string response;
             client->get(key, response); // TODO: error handling
-            std::cout << "Received response (get): " << response << "\n";
+            log_trace("Received response (get): {}", response);
             // Parse the response
             nlohmann::json json = nlohmann::json::parse(response);
             if(json.contains("error")) {
                 std::string response2;
                 client->remove(key, response2);
-                std::cout << "Received response (remove): " << response2 << "\n";
+                log_trace("Received response (remove): {}", response2);
                 continue; // Key is lost or missing from DHT, skip to next iteration
             }
             
@@ -121,7 +121,7 @@ void User::rate_seller(const std::string& seller_id, int score, const std::strin
                     std::string modified_value = value_obj.dump();
                     std::string response;
                     client->set(key, modified_value, response); // key MUST remain unchanged!!
-                    std::cout << "Received response (set): " << response << "\n";
+                    log_trace("Received response (set): {}", response);
                     return;
                 }
             }
@@ -139,7 +139,7 @@ void User::rate_seller(const std::string& seller_id, int score, const std::strin
     // Send put request to neighboring nodes (and your node too JIC)
     std::string response;
     client->put(key, value, response);
-    std::cout << "Received response: " << response << "\n";
+    log_trace("Received response (put): {}", response);
 } 
 ////////////////////
 ////////////////////
@@ -179,13 +179,13 @@ void User::rate_item(const std::string& product_id, int stars, const std::string
             // Get the value of the corresponding key from the DHT
             std::string response;
             client->get(key, response); // TODO: error handling
-            std::cout << "Received response (get): " << response << "\n";
+            log_trace("Received response (get): {}", response);
             // Parse the response
             nlohmann::json json = nlohmann::json::parse(response);
             if(json.contains("error")) {
                 std::string response2;
                 client->remove(key, response2);
-                std::cout << "Received response (remove): " << response2 << "\n";
+                log_trace("Received response (remove): {}", response2);
                 continue; // Key is lost or missing from DHT, skip to next iteration
             }
             
@@ -216,7 +216,7 @@ void User::rate_item(const std::string& product_id, int stars, const std::string
                     std::string modified_value = value_obj.dump();
                     std::string response;
                     client->set(key, modified_value, response); // key MUST remain unchanged!!
-                    std::cout << "Received response (set): " << response << "\n";
+                    log_trace("Received response (set): {}", response);
                     return;
                 }
             }
@@ -234,7 +234,7 @@ void User::rate_item(const std::string& product_id, int stars, const std::string
     // Send put request to neighboring nodes (and your node too JIC)
     std::string response;
     client->put(key, value, response);
-    std::cout << "Received response: " << response << "\n";
+    log_trace("Received response (put): {}", response);
 } 
 ////////////////////
 ////////////////////
@@ -463,7 +463,7 @@ void User::send_message(const std::string& recipient_id, const std::string& cont
     std::string response;
     client->put(key, value, response);
     #ifdef NEROSHOP_DEBUG
-    std::cout << "Received response: " << response << "\n";
+    log_trace("Received response (put): {}", response);
     #endif
 }
 ////////////////////
@@ -631,7 +631,7 @@ int User::get_account_age(const std::string& user_id) {
     if(json.contains("error")) {
         std::string response2;
         client->remove(key, response2);
-        std::cout << "Received response (remove): " << response2 << "\n";
+        log_trace("Received response (remove): {}", response2);
         return -1;
     }
     
