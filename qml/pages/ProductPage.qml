@@ -394,6 +394,8 @@ Page {
                                         messageBox.open()
                                         return;
                                     }
+                                    // Reset quantityBox value on success
+                                    quantityBox.value = 1
                                 }
                                 MouseArea {
                                     anchors.fill: parent
