@@ -3,6 +3,7 @@
 #include "../database/database.hpp"
 #include "../tools/logger.hpp"
 #include "../protocol/transport/client.hpp"
+#include "../tools/uuid.hpp"
 
 namespace neroshop {
 ////////////////////
@@ -152,6 +153,12 @@ neroshop::CartError Cart::add(const std::string& user_id, const std::string& lis
     }
     // Get cart uuid
     std::string cart_id = database->get_text_params("SELECT uuid FROM cart WHERE user_id = $1", { user_id });//std::cout << "cart_uuid: " << cart_id << std::endl;
+    // Create a cart if cart does not exist in database
+    if (cart_id.empty()) {
+        cart_id = uuid::generate(); // make a new UUID for this user's cart
+        database->execute_params("INSERT INTO cart (uuid, user_id) VALUES (?1, ?2)", { cart_id, user_id });
+        log_debug("Cart {} created", cart_id);
+    }
     // Cart is full - exit function
     if(is_full()) { 
         neroshop::log_error("Cart is full"); 

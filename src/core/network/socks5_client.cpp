@@ -2,6 +2,7 @@
 
 #include "onion_address.hpp"
 #include "tor_config.hpp"
+#include "../tools/logger.hpp"
 
 #include <arpa/inet.h>
 #include <netinet/in.h>
@@ -35,15 +36,15 @@ Socks5Client::Socks5Client(const char* socks_host, uint16_t socks_port, bool tor
         if(this->onion_address_.empty()) {
             throw std::runtime_error("Failed to generate .onion address");
         }
-        std::cout << "Socks5Client: Generated new onion address: " << this->onion_address_ << "\n";
+        neroshop::log_debug("Socks5Client: Generated new onion address: {}", this->onion_address_);
         // Save onion address string to "~/.config/neroshop/tor/last_onion_address.txt" so we can load it later
         std::ofstream outfile(last_onion_file);
         if (outfile.is_open()) {
             outfile << this->onion_address_ << std::endl;
             outfile.close();
-            std::cout << "Socks5Client: Saved new onion address to " << last_onion_file << "\n";
+            neroshop::log_debug("Socks5Client: Saved new onion address to {}", last_onion_file.string());
         } else {
-            std::cerr << "Socks5Client: Error opening " << last_onion_file << " for writing\n";
+            neroshop::log_error("Socks5Client: Error opening {} for writing", last_onion_file.string());
             // Consider throwing an exception or handling the error appropriately
         }
         // mkp224o creates a .onion folder within hidden_service so the actual HiddenServiceDir is ~/.config/neroshop/tor/hidden_service/<56-chars>.onion
@@ -106,7 +107,7 @@ bool Socks5Client::socks5_handshake(const char* dest_host, uint16_t dest_port) {
     unsigned char resp[10];
     ssize_t n = ::recv(sockfd_, resp, sizeof(resp), 0);
     if (n < 7 || resp[1] != 0x00) { // 0x00 = succeeded
-        std::cerr << "SOCKS5 proxy connection failed, REP=" << (int)resp[1] << "\n";
+        neroshop::log_error("SOCKS5 proxy connection failed, REP={}", (int)resp[1]);
         return false;
     }
 
@@ -177,7 +178,7 @@ bool Socks5Client::socks5_handshake_auth(const char* dest_host, uint16_t dest_po
     unsigned char resp[10];
     ssize_t n = ::recv(sockfd_, resp, sizeof(resp), 0);
     if (n < 7 || resp[1] != 0x00) { // 0x00 = succeeded
-        std::cerr << "SOCKS5 proxy connection failed, REP=" << (int)resp[1] << "\n";
+        neroshop::log_error("SOCKS5 proxy connection failed, REP={}", (int)resp[1]);
         return false;
     }
 

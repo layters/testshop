@@ -2,6 +2,7 @@
 
 #include "tor_config.hpp"
 #include "../tools/string.hpp"
+#include "../tools/logger.hpp"
 
 #include <cstdio>
 #include <cstdlib>
@@ -31,20 +32,20 @@ bool OnionAddressGenerator::load(/*const std::string& in_dir*/) {
     auto keys_path = base_path / TOR_HIDDEN_SERVICE_DIR_FOLDER_NAME; // ~/.config/neroshop/tor/hidden_service
     auto last_onion_file = keys_path / "last_onion_address.txt"; // ~/.config/neroshop/tor/hidden_service/last_onion_address.txt
     if (!fs::exists(last_onion_file)) {
-        std::cerr << "load: last_onion_address.txt not found\n";
+        neroshop::log_error("load: last_onion_address.txt not found");;
         return false;
     }
     
     // Read onion address from "last_onion_address.txt" file
     std::ifstream infile(last_onion_file);
     if (!infile) {
-        std::cerr << "load: Failed to open last_onion_address.txt\n";
+        neroshop::log_error("load: Failed to open last_onion_address.txt");;
         return false;
     }
     std::string last_onion_address;
     std::getline(infile, last_onion_address);
     if (last_onion_address.empty()) {
-        std::cerr << "load: last_onion_address.txt is empty\n";
+        neroshop::log_error("load: last_onion_address.txt is empty");;
         return false;
     }
     // Trim trailing whitespace
@@ -54,34 +55,34 @@ bool OnionAddressGenerator::load(/*const std::string& in_dir*/) {
     auto onion_folder = keys_path / last_onion_address;
     // Check if the .onion folder exists
     if (!fs::exists(onion_folder)) {
-        std::cerr << "load: Onion keys folder does not exist: " << onion_folder << "\n";
+        neroshop::log_error("load: Onion keys folder does not exist: {}", onion_folder.string());
         return false;
     }
     
     // Check if the hostname file exists
     auto hostname_path = onion_folder / "hostname";
     if (!fs::exists(hostname_path)) {
-        std::cerr << "load: hostname file missing in onion folder: " << hostname_path << "\n";
+        neroshop::log_error("load: hostname file missing in onion folder: {}", hostname_path.string());
         return false;
     }
     
     // Open the hostname file
     std::ifstream hostname_file(hostname_path);
     if (!hostname_file) {
-        std::cerr << "load: Failed to open hostname file\n";
+        neroshop::log_error("load: Failed to open hostname file");;
         return false;
     }
     // Store the hostname in onion_addr_
     std::getline(hostname_file, this->onion_addr_);
     if (this->onion_addr_.empty()) {
-        std::cerr << "load: hostname file is empty\n";
+        neroshop::log_error("load: hostname file is empty");;
         return false;
     }
     this->onion_addr_.erase(this->onion_addr_.find_last_not_of(" \n\r\t") + 1);
     
     // Store the onion_folder in onion_dir_
     this->onion_dir_ = onion_folder;
-    std::cout << "load: Loaded existing onion address: " << this->onion_addr_ << std::endl;
+    neroshop::log_debug("load: Loaded existing onion address: {}", this->onion_addr_);
     
     // Set generated_ to true
     this->generated_ = true;
@@ -96,7 +97,7 @@ bool OnionAddressGenerator::load(/*const std::string& in_dir*/) {
 std::string OnionAddressGenerator::generate(const std::string& prefix, const std::string& out_dir) {
     // Can only generate once
     if(generated_) {
-        std::cout << "generate: Onion addresses can only be generated once\n";
+        neroshop::log_warn("generate: Onion addresses can only be generated once");
         return "";
     }
     
@@ -112,7 +113,7 @@ std::string OnionAddressGenerator::generate(const std::string& prefix, const std
         cmd += " " + prefix;
     }
     
-    std::cout << "generate: Running command: " << cmd << std::endl;
+    neroshop::log_debug("generate: Running command: {}", cmd);
 
     // Run mkp224o as a subprocess
     int ret = std::system(cmd.c_str());
@@ -141,8 +142,7 @@ std::string OnionAddressGenerator::generate(const std::string& prefix, const std
     if (!newest_dir.empty()) {
         onion_dir_ = newest_dir;
         onion_addr_ = newest_dir.filename().string();
-        std::cout << "generate: Found onion address directory: " << onion_dir_
-                  << std::endl;
+        neroshop::log_debug("generate: Found onion address directory: {}", onion_dir_.string());
         generated_ = true;
         return onion_addr_;
     }

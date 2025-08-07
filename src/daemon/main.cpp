@@ -213,7 +213,7 @@ int main(int argc, char** argv)
         ("rpc,enable-rpc", "Enables the RPC daemon server")
         ////("conf,config", "Set path to configuration file", cxxopts::value<std::string>()->default_value("/some_path"))
         ("public,public-node", "Make this node publicly accessible")
-        ("network,network-type", "Set anonymous overlay network [i2p, tor]", cxxopts::value<std::string>())
+        ("network,network-type", "Set anonymous overlay network [i2p | tor]", cxxopts::value<std::string>())
     ;
     
     options.parse_positional({"seed-node"}); // allows for multiple args
