@@ -416,7 +416,7 @@ Popup {
                             }                            
                         }
                         NeroshopComponents.ComboBox {
-                            id: productCodeType
+                            id: productCodeTypeBox
                             height: parent.children[0].height//Layout.preferredWidth: 100; Layout.preferredHeight: parent.children[0].height
                             model: ["EAN", "ISBN", "JAN", "SKU", "UPC"] // default is UPC (each code will be validated before product is listed)
                             Component.onCompleted: currentIndex = find("UPC")
@@ -595,7 +595,7 @@ Popup {
                             placeholderText: qsTr("Enter weight")
                             color: productDialog.inputTextColor
                             selectByMouse: true
-                            validator: RegExpValidator{ regExp: new RegExp("^-?[0-9]+(\\.[0-9]{1," + 8 + "})?$") }
+                            validator: RegExpValidator{ regExp: new RegExp("^-?[0-9]+(\\.[0-9]{1," + 3 + "})?$") }
                             background: Rectangle { 
                                 color: "transparent"
                                 border.color: productDialog.inputBorderColor
@@ -604,7 +604,7 @@ Popup {
                             }
                         }
                         NeroshopComponents.ComboBox {
-                            id: weightMeasurementUnit
+                            id: weightUnitBox
                             height: parent.children[0].height
                             model: ["kg", "lb"] // default is kg (every unit of measurement will be converted to kg)
                             Component.onCompleted: currentIndex = find("kg")
@@ -659,7 +659,77 @@ Popup {
                      }
                  }
              }*/                    
-            // Variations/Attributes (i.e. Color, Size, Type, Model, etc. options to choose from - optional)
+            // Variations (i.e. Color, Size, Material, etc. options to choose from - optional)
+            Item {
+                id: variationsItem
+                Layout.alignment: Qt.AlignHCenter
+                Layout.preferredWidth: childrenRect.width
+                Layout.preferredHeight: childrenRect.height
+                  
+                property var variantsList: []
+                  
+                Column {
+                    spacing: productDialog.titleSpacing
+                    Row {
+                        spacing: 10
+                        Text {
+                            text: "Variants"
+                            color: productDialog.palette.text
+                            font.bold: true
+                        }
+                    }
+                            
+                    Row {
+                        spacing: 5
+                        Button {
+                            width: 500 - parent.children[1].width - parent.spacing; height: 50
+                            text: "Add Variations"
+                            background: Rectangle {
+                                color: parent.hovered ? "#698b22" : "#506a1a"
+                                radius: productDialog.inputRadius
+                            }
+                            contentItem: Text {
+                                text: parent.text
+                                color: "#ffffff"
+                                horizontalAlignment: Text.AlignHCenter
+                                verticalAlignment: Text.AlignVCenter
+                            }
+                            onClicked: variationsPopup.open()
+                        }
+                    
+                        Button {
+                            width: 200; height: parent.children[0].height // sibling height
+                            text: "Debug"
+                            background: Rectangle {
+                                color: parent.hovered ? "#605185" : "#4d426c"//productDialog.inputBaseColor
+                                radius: productDialog.inputRadius
+                            }
+                            contentItem: Text {
+                                text: parent.text
+                                color: "#ffffff"//productDialog.inputTextColor
+                                horizontalAlignment: Text.AlignHCenter
+                                verticalAlignment: Text.AlignVCenter
+                            }
+                            onClicked: {
+                                variationsItem.variantsList = variationsPopup.buildVariantsForCpp()
+                                console.log("variantsData:\n", JSON.stringify(variationsItem.variantsList/*, null, 4*/))
+                            }
+                        }
+                    }
+                }
+            }
+            // Variations Popup
+            NeroshopComponents.VariationWizard {
+                id: variationsPopup
+                anchors.centerIn: Overlay.overlay
+                visible: false
+                baseProductPrice: Number(productPriceField.text)
+                baseProductQuantity: Number(productQuantityField.text)
+                baseProductWeight: Number(productWeightField.text)
+                baseProductCondition: productConditionBox.currentText
+                productCodeType: productCodeTypeBox.currentText
+                weightUnit: weightUnitBox.currentText
+            }
             // Product location (ship to and ship from)
             Item {
                 Layout.alignment: Qt.AlignHCenter
@@ -1606,20 +1676,15 @@ Popup {
                                     }
                                 }
                                 //---------------------------------------
-                                // Product attributes (each attribute object represents a variant of the product)
-                                let attributes = [];
-                                let attribute_object = {};
+                                // Product weight
+                                let weightValue = 0;
                                 if(productWeightField.text.length > 0 && Number(productWeightField.text) > 0.00) {
-                                    if(weightMeasurementUnit.currentText !== "kg") {
-                                        console.log("weight is in " + weightMeasurementUnit.currentText + ". Converting to kg ...")
-                                        attribute_object.weight = Backend.weightToKg(Number(productWeightField.text), weightMeasurementUnit.currentText)
+                                    if(weightUnitBox.currentText !== "kg") {
+                                        console.log("weight is in " + weightUnitBox.currentText + ". Converting to kg ...")
+                                        weightValue = Backend.weightToKg(Number(productWeightField.text), weightUnitBox.currentText).toFixed(3)
                                     } else {
-                                        attribute_object.weight = Number(productWeightField.text)
+                                        weightValue = Number(productWeightField.text)
                                     }
-                                }
-                                // Add attribute obj to list as long as its filled with properties
-                                if (Object.keys(attribute_object).length > 0) {
-                                    attributes.push(attribute_object)
                                 }
                                 //---------------------------------------
                                 // Ship from location must be valid
@@ -1705,8 +1770,9 @@ Popup {
                                 let listing_key = User.listProduct(
                                     productNameField.text, 
                                     productDescriptionEdit.text,
-                                    attributes, 
-                                    (productCodeField.text.length >= 6) ? productCodeType.currentText.toLowerCase() + ":" + productCodeField.text : "",
+                                    weightValue,
+                                    variationsPopup.buildVariantsForCpp(), 
+                                    (productCodeField.text.length >= 6) ? productCodeTypeBox.currentText.toLowerCase() + ":" + productCodeField.text : "",
                                     Backend.getCategoryIdByName(productCategoryBox.currentText),
                                     (subCategoryRepeater.count > 0) ? subcategory_ids : [], // subcategoryIds
                                     productTagsField.tags(),

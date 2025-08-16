@@ -7,6 +7,7 @@
 #include "../../settings.hpp"
 
 #include <regex>
+#include <cmath> // std::abs
 
 #include <nlohmann/json.hpp>
 
@@ -58,8 +59,8 @@ std::pair<std::string, std::string/*std::vector<uint8_t>*/> Serializer::serializ
         const Listing& listing = std::get<Listing>(obj);
         json_object["id"] = listing.get_id();
         json_object["seller_id"] = listing.get_seller_id();
-        json_object["quantity"] = listing.get_quantity();
-        json_object["price"] = listing.get_price();
+        json_object["quantity"] = std::abs(listing.get_quantity());
+        json_object["price"] = std::abs(listing.get_price());
         json_object["currency"] = listing.get_currency();
         json_object["condition"] = listing.get_condition();
         std::string location = listing.get_location();
@@ -138,58 +139,54 @@ std::pair<std::string, std::string/*std::vector<uint8_t>*/> Serializer::serializ
         ////product_obj["id"] = product.get_id(); // use listing_id instead
         product_obj["name"] = product.get_name();
         product_obj["description"] = product.get_description();
-        for (const auto& attr : product.get_attributes()) {
-            nlohmann::json attribute_obj = {};
-            if (!attr.color.empty()) attribute_obj["color"] = attr.color;
-            if (!attr.size.empty()) attribute_obj["size"] = attr.size;
-            if (attr.weight != 0.0) attribute_obj["weight"] = attr.weight;
-            if (!attr.material.empty()) attribute_obj["material"] = attr.material;
-            bool dimensions_empty = (std::get<0>(attr.dimensions) == 0.0 && std::get<1>(attr.dimensions) == 0.0 && std::get<2>(attr.dimensions) == 0.0) || (std::get<3>(attr.dimensions).empty()); // make sure either all values in the dimensions tuple contains non-zero values or a non-empty string
-            if (!dimensions_empty) {
-                std::string format = neroshop::string_tools::lower(std::get<3>(attr.dimensions));
-                format.erase(std::remove_if(format.begin(), format.end(), [](char c) { return c == 'x' || c == '-' || c == ' '; }), format.end());
-                nlohmann::json dimensions_obj = {};
-                if(format == "dh") {
-                    dimensions_obj["diameter"] = std::get<0>(attr.dimensions);
-                    dimensions_obj["height"] = std::get<1>(attr.dimensions);
-                }                
-                if(format == "wdh") {
-                    dimensions_obj["width"] = std::get<0>(attr.dimensions);
-                    dimensions_obj["depth"] = std::get<1>(attr.dimensions);
-                    dimensions_obj["height"] = std::get<2>(attr.dimensions);
-                }
-                if(format == "lwh") {
-                    if(std::get<0>(attr.dimensions) != 0.0) dimensions_obj["length"] = std::get<0>(attr.dimensions);
-                    dimensions_obj["width"] = std::get<1>(attr.dimensions);
-                    if(std::get<2>(attr.dimensions) != 0.0) dimensions_obj["height"] = std::get<2>(attr.dimensions);
-                }
-                attribute_obj["dimensions"] = dimensions_obj;
+        double weight = product.get_weight();
+        if(weight > 0.0) {
+            product_obj["weight"] = weight;
+        }
+        // Collect the ordered list of option keys
+        auto variant_options = product.get_options();
+        if (!variant_options.empty()) {
+            std::vector<std::string> option_keys;
+            option_keys.reserve(variant_options.size());
+            for (const auto& [option_name, _] : variant_options) {
+                option_keys.push_back(option_name);
             }
-            if (!attr.brand.empty()) attribute_obj["brand"] = attr.brand;
-            if (!attr.model.empty()) attribute_obj["model"] = attr.model;
-            if (!attr.manufacturer.empty()) attribute_obj["manufacturer"] = attr.manufacturer;
-            if (!attr.country_of_origin.empty()) attribute_obj["country_of_origin"] = attr.country_of_origin;
-            if (!attr.warranty_information.empty()) attribute_obj["warranty_information"] = attr.warranty_information;
-            if (!attr.product_code.empty()) attribute_obj["product_code"] = attr.product_code;
-            if (!attr.style.empty()) attribute_obj["style"] = attr.style;
-            if (!attr.gender.empty()) attribute_obj["gender"] = attr.gender;
-            if (attr.age_range.second > 0) {
-                nlohmann::json age_range_obj = {};
-                age_range_obj["min"] = attr.age_range.first;
-                age_range_obj["max"] = attr.age_range.second;
-                attribute_obj["age_range"] = age_range_obj;
-            }
-            if (!attr.energy_efficiency_rating.empty()) attribute_obj["energy_efficiency_rating"] = attr.energy_efficiency_rating;
-            if (!attr.safety_features.empty()) {
-                nlohmann::json safety_features_array = nlohmann::json::array();
-                for (const auto& feature : attr.safety_features) {
-                    safety_features_array.push_back(feature);
+            product_obj["options"] = option_keys;
+            // Serialize variants array
+            const auto& variants = product.get_variants();
+            if (!variants.empty()) {
+                nlohmann::json variants_array = nlohmann::json::array();
+                variants_array.get_ref<nlohmann::json::array_t&>().reserve(variants.size());
+                for (const auto& variant : variants) {
+                    nlohmann::json variant_obj = {};
+                    variant_obj["options"] = nlohmann::json::object();
+                    for (const auto& [key, value] : variant.options) {
+                        variant_obj["options"][key] = value;
+                    }
+                    // Optional fields — only serialize if present
+                    if (!variant.info.condition.empty()) {
+                        variant_obj["condition"] = variant.info.condition;
+                    }
+                    if (variant.info.weight.has_value() && variant.info.weight.value() > 0.0) {
+                        variant_obj["weight"] = variant.info.weight.value();
+                    }
+                    if (variant.info.price.has_value()) { // can be zero, so no zero checks
+                        variant_obj["price"] = std::abs(variant.info.price.value());
+                    }
+                    if (variant.info.quantity.has_value()) { // can be zero, so no zero checks
+                        variant_obj["quantity"] = std::abs(variant.info.quantity.value());
+                    }
+                    if (!variant.info.product_code.empty()) {
+                        variant_obj["product_code"] = variant.info.product_code;
+                    }
+                    if (variant.info.image_index.has_value() && variant.info.image_index.value() > -1) {
+                        variant_obj["image_index"] = variant.info.image_index.value();
+                    }
+
+                    variants_array.push_back(variant_obj);
                 }
-                attribute_obj["safety_features"] = safety_features_array;
+                product_obj["variants"] = variants_array;
             }
-            if (attr.quantity_per_package != 0) attribute_obj["quantity_per_package"] = attr.quantity_per_package;
-            if (!attr.release_date.empty()) attribute_obj["release_date"] = attr.release_date;
-            product_obj["attributes"].push_back(attribute_obj); // rename to "variants" or "variant_options"?
         }
         std::string product_code = product.get_code();
         if(!product_code.empty()) product_obj["code"] = product_code; // can be left empty esp. if variants have their own product codes
@@ -378,58 +375,45 @@ std::shared_ptr<neroshop::Object> Serializer::deserialize(const std::pair<std::s
         product.set_id(/*product_*/value["id"].get<std::string>()); // use listing_id instead
         product.set_name(product_value["name"].get<std::string>());
         product.set_description(product_value["description"].get<std::string>());
-        if(product_value.contains("attributes")) assert(product_value["attributes"].is_array());
-        for (const auto& attribute : product_value["attributes"]) {
-            ProductAttribute attr {};
-            if (attribute.contains("color")) attr.color = attribute["color"].get<std::string>();
-            if (attribute.contains("size")) attr.size = attribute["size"].get<std::string>();
-            if (attribute.contains("weight")) attr.weight = attribute["weight"].get<double>();
-            if (attribute.contains("material")) attr.material = attribute["material"].get<std::string>();
-            if (attribute.contains("brand")) attr.brand = attribute["brand"].get<std::string>();
-            if (attribute.contains("model")) attr.model = attribute["model"].get<std::string>();
-            if (attribute.contains("manufacturer")) attr.manufacturer = attribute["manufacturer"].get<std::string>();
-            if (attribute.contains("country_of_origin")) attr.country_of_origin = attribute["country_of_origin"].get<std::string>();
-            if (attribute.contains("warranty_information")) attr.warranty_information = attribute["warranty_information"].get<std::string>();
-            if (attribute.contains("product_code")) attr.product_code = attribute["product_code"].get<std::string>();
-            if (attribute.contains("style")) attr.style = attribute["style"].get<std::string>();
-            if (attribute.contains("gender")) attr.gender = attribute["gender"].get<std::string>();
-            if (attribute.contains("energy_efficiency_rating")) attr.energy_efficiency_rating = attribute["energy_efficiency_rating"];
-            if (attribute.contains("release_date")) attr.release_date = attribute["release_date"];
-        
-            if (attribute.contains("dimensions")) {
-                nlohmann::json dimensions_obj = attribute["dimensions"];
-                if (dimensions_obj.contains("diameter")) {
-                    attr.dimensions = std::make_tuple(dimensions_obj["diameter"], dimensions_obj["height"], 0.0, "DH");
-                } else if (dimensions_obj.contains("width") && dimensions_obj.contains("depth") && dimensions_obj.contains("height")) {
-                    attr.dimensions = std::make_tuple(dimensions_obj["width"], dimensions_obj["depth"], dimensions_obj["height"], "WDH");
-                } else if (dimensions_obj.contains("length") && dimensions_obj.contains("width") && dimensions_obj.contains("height")) {
-                    attr.dimensions = std::make_tuple(dimensions_obj["length"], dimensions_obj["width"], dimensions_obj["height"], "LWH");
-                }
+        if(product_value.contains("options") && product_value["options"].is_array()) {
+            for (const auto& option_key : product_value["options"]) {
+                std::string option = option_key.get<std::string>();
+                // Just note the option keys if needed, but no storage needed here
             }
-        
-            if (attribute.contains("age_range")) {
-                nlohmann::json age_range_obj = attribute["age_range"];
-                if (age_range_obj.contains("min") && age_range_obj.contains("max")) {
-                    attr.age_range = std::make_pair(age_range_obj["min"], age_range_obj["max"]);
-                }
-            }
-        
-            if (attribute.contains("safety_features")) {
-                nlohmann::json safety_features_array = attribute["safety_features"];
-                if (safety_features_array.is_array()) {
-                    for (const auto& feature : safety_features_array) {
-                        if (!feature.empty()) {
-                            attr.safety_features.push_back(feature);
-                        }
+        }
+        if(product_value.contains("variants") && product_value["variants"].is_array()) {
+            for (const auto& variant_json : product_value["variants"]) {
+                ProductVariant variant;
+
+                // Deserialize the options map
+                if (variant_json.contains("options") && variant_json["options"].is_object()) {
+                    for (auto& [key, val] : variant_json["options"].items()) {
+                        variant.options[key] = val.get<std::string>();
                     }
                 }
+
+                // Deserialize optional fields
+                if(variant_json.contains("condition")) {
+                    variant.info.condition = variant_json["condition"].get<std::string>();
+                }
+                if(variant_json.contains("weight")) {
+                    variant.info.weight = variant_json["weight"].get<double>();
+                }
+                if(variant_json.contains("price")) {
+                    variant.info.price = variant_json["price"].get<double>();
+                }
+                if(variant_json.contains("quantity")) {
+                    variant.info.quantity = variant_json["quantity"].get<int>();
+                }
+                if(variant_json.contains("product_code")) {
+                    variant.info.product_code = variant_json["product_code"].get<std::string>();
+                }
+                if(variant_json.contains("image_index")) {
+                    variant.info.image_index = variant_json["image_index"].get<int>();
+                }
+
+                product.add_variant(variant);
             }
-        
-            if (attribute.contains("quantity_per_package")) {
-                attr.quantity_per_package = attribute["quantity_per_package"];
-            }
-        
-            product.add_attribute(attr);
         }
         if (product_value.contains("code")) product.set_code(product_value["code"].get<std::string>());
         product.set_category(product_value["category"].get<std::string>());

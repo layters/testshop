@@ -45,7 +45,6 @@
 #include "core/protocol/rpc/json_rpc.hpp"
 #include "core/protocol/rpc/msgpack.hpp"
 #include "core/protocol/transport/client.hpp"
-#include "core/protocol/transport/sam_client.hpp"
 #include "core/protocol/transport/server.hpp"
 // tools (utilities)
 #include "core/tools/base64.hpp"

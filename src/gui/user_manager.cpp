@@ -24,7 +24,8 @@ neroshop::UserManager::~UserManager() {
 QString neroshop::UserManager::listProduct(
     const QString& name, 
     const QString& description,
-    const QList<QVariantMap>& attributes, 
+    double weight,
+    const QList<QVariantMap>& variants, 
     const QString& productCode, 
     int categoryId, 
     const QList<int>& subcategoryIds, 
@@ -49,51 +50,59 @@ QString neroshop::UserManager::listProduct(
         throw std::runtime_error("neroshop::User is not initialized");
     auto seller = dynamic_cast<neroshop::Seller *>(_user.get());
     
-    std::vector<ProductAttribute> attributesVector;
-    for (const QVariantMap& attributeMap : attributes) {
-        ProductAttribute attribute;
-
-        // Extract values from QVariantMap and assign them to the corresponding members of the ProductAttribute struct
-        if (attributeMap.contains("color")) attribute.color = attributeMap.value("color").toString().toStdString();
-        if (attributeMap.contains("size")) attribute.size = attributeMap.value("size").toString().toStdString();
-        if (attributeMap.contains("weight")) attribute.weight = attributeMap.value("weight").toDouble();
-        if (attributeMap.contains("material")) attribute.material = attributeMap.value("material").toString().toStdString();
-
-        /*// Extract and parse the dimensions value
-        QVariant dimensionsVariant = attributeMap.value("dimensions");
-        if (dimensionsVariant.canConvert<QString>()) {
-            QString dimensionsString = dimensionsVariant.toString();
-            // Parse the dimensions string and assign the values to the dimensions member
-            // You need to implement the parsing logic based on the possible string formats
-            attribute.dimensions = parseDimensions(dimensionsString.toStdString());
-        }
-
-        attribute.brand = attributeMap.value("brand").toString().toStdString();
-        attribute.model = attributeMap.value("model").toString().toStdString();
-        attribute.manufacturer = attributeMap.value("manufacturer").toString().toStdString();
-        attribute.country_of_origin = attributeMap.value("country_of_origin").toString().toStdString();
-        attribute.warranty_information = attributeMap.value("warranty_information").toString().toStdString();
-        attribute.product_code = attributeMap.value("product_code").toString().toStdString();
-        attribute.style = attributeMap.value("style").toString().toStdString();
-        attribute.gender = attributeMap.value("gender").toString().toStdString();
-
-        // Extract and parse the age_range value
-        QVariant ageRangeVariant = attributeMap.value("age_range");
-        if (ageRangeVariant.canConvert<QVariantList>()) {
-            QVariantList ageRangeList = ageRangeVariant.toList();
-            if (ageRangeList.size() >= 2) {
-                attribute.age_range.first = ageRangeList.at(0).toInt();
-                attribute.age_range.second = ageRangeList.at(1).toInt();
+    std::vector<ProductVariant> variantsList;
+    for (const QVariantMap& variantMap : variants) {
+        ProductVariant variant;
+        ProductVariantInfo info;
+        
+        for (auto it = variantMap.begin(); it != variantMap.end(); ++it) {
+            std::string key = it.key().toStdString();
+            
+            if (key == "options" && it.value().canConvert<QVariantMap>()) {
+                QVariantMap optionsMap = it.value().toMap();
+                for (auto optIt = optionsMap.begin(); optIt != optionsMap.end(); ++optIt) {
+                    variant.options[optIt.key().toStdString()] = optIt.value().toString().toStdString();
+                }
+            }
+            else if (key == "condition") {
+                info.condition = it.value().toString().toStdString();
+            }
+            else if (key == "weight") {
+                bool ok = false;
+                double w = it.value().toDouble(&ok); // .toInt(&ok) or .toDouble(&ok) attempts the conversion and sets ok to true or false based on success
+                if (ok) info.weight = w;
+            } 
+            else if (key == "price") {
+                bool ok = false;
+                double p = it.value().toDouble(&ok);
+                if (ok) info.price = p;
+            }
+            else if (key == "quantity") {
+                bool ok = false;
+                int q = it.value().toInt(&ok);
+                if (ok) info.quantity = q;
+            }
+            else if (key == "product_code") {
+                info.product_code = it.value().toString().toStdString();
+            }
+            else if (key == "images") {
+                // TODO:
+            }
+            else if (key == "image_index") {
+                bool ok = false;
+                int idx = it.value().toInt(&ok);
+                if (ok) info.image_index = idx;
+            }
+            else {
+                // Assume it's an option key with a string value (works with non-nested flat options e.g. {"option": "Color", "value": "Red"})
+                QString optionValue = it.value().toString();
+                if (!optionValue.isEmpty()) {
+                    variant.options[key] = optionValue.toStdString();
+                }
             }
         }
-
-        attribute.energy_efficiency_rating = attributeMap.value("energy_efficiency_rating").toString().toStdString();
-        attribute.safety_features = attributeMap.value("safety_features").toStringList().toVector();//.toStdVector();
-        attribute.quantity_per_package = attributeMap.value("quantity_per_package").toUInt();
-        attribute.release_date = attributeMap.value("release_date").toString().toStdString();*/
-
-        // Add the attribute to the vector
-        attributesVector.push_back(attribute);
+        variant.info = std::move(info);
+        variantsList.push_back(std::move(variant));
     }
     
     std::set<int> subcategoryIdsSet;
@@ -189,7 +198,8 @@ QString neroshop::UserManager::listProduct(
     auto listing_key = seller->list_item(
         name.toStdString(), 
         description.toStdString(),
-        attributesVector, 
+        weight,
+        variantsList, 
         productCode.toStdString(),
         categoryId, 
         subcategoryIdsSet,
@@ -494,15 +504,76 @@ QVariantList neroshop::UserManager::getInventory(int sorting) const {
                 }
                 inventory_object.insert("product_categories", product_categories);
                 //inventory_object.insert("", QString::fromStdString(product_obj[""].get<std::string>()));
-                // product attributes
-                if (product_obj.contains("attributes") && product_obj["attributes"].is_array()) {
-                    const auto& attributes_array = product_obj["attributes"];
-                    for (const auto& attribute : attributes_array) {
-                        if (attribute.is_object() && attribute.contains("weight")) { // attributes is an array of objects
-                            double weight = attribute["weight"].get<double>();
-                            inventory_object.insert("product_weight", weight);
+                // product variant_options
+                if (product_obj.contains("variants") && product_obj["variants"].is_array()) {
+                    QVariantList variantList;
+                    const auto& variants_array = product_obj["variants"];
+    
+                    for (const auto& variant_obj : variants_array) {
+                        if (!variant_obj.is_object()) continue;
+
+                        QVariantMap variantMap;
+
+                        // Parse "options" map
+                        if (variant_obj.contains("options") && variant_obj["options"].is_object()) {
+                            QVariantMap optionsMap;
+                            for (auto it = variant_obj["options"].begin(); it != variant_obj["options"].end(); ++it) {
+                                if (it.value().is_string()) {
+                                    optionsMap.insert(QString::fromStdString(it.key()), QString::fromStdString(it.value().get<std::string>()));
+                                } else {
+                                    // Just in case, convert other types to string too
+                                    optionsMap.insert(QString::fromStdString(it.key()), QString::fromStdString(it.value().dump()));
+                                }
+                            }
+                            variantMap.insert("options", optionsMap);
                         }
+        
+                        // Parse variant info fields
+                        if (variant_obj.contains("weight")) {
+                            if (variant_obj["weight"].is_number()) {
+                                variantMap.insert("weight", variant_obj["weight"].get<double>());
+                            } else if (variant_obj["weight"].is_string()) {
+                                bool ok = false;
+                                double w = QString::fromStdString(variant_obj["weight"].get<std::string>()).toDouble(&ok);
+                                if (ok) variantMap.insert("weight", w);
+                            }
+                        }
+                        
+                        if (variant_obj.contains("price")) {
+                            if (variant_obj["price"].is_number()) {
+                                variantMap.insert("price", variant_obj["price"].get<double>());
+                            }
+                        }
+
+                        if (variant_obj.contains("quantity")) {
+                            if (variant_obj["quantity"].is_number_integer()) {
+                                variantMap.insert("quantity", variant_obj["quantity"].get<int>());
+                            }
+                        }
+
+                        if (variant_obj.contains("product_code") && variant_obj["product_code"].is_string()) {
+                            variantMap.insert("product_code", QString::fromStdString(variant_obj["product_code"].get<std::string>()));
+                        }
+
+                        if (variant_obj.contains("image_index")) {
+                            if (variant_obj["image_index"].is_number_integer()) {
+                                variantMap.insert("image_index", variant_obj["image_index"].get<int>());
+                            }
+                        }
+
+                        if (variant_obj.contains("images") && variant_obj["images"].is_array()) {
+                            /*QStringList imagesList;
+                            for (const auto& img : variant_obj["images"]) {
+                                if (img.is_string()) {
+                                    imagesList.append(QString::fromStdString(img.get<std::string>()));
+                                }
+                            }
+                            variantMap.insert("images", imagesList);*/ // <-- will deal with this another time...
+                        }
+
+                        variantList.append(variantMap);
                     }
+                    inventory_object.insert("product_variants", variantList);
                 }
                 // product images
                 if (product_obj.contains("images") && product_obj["images"].is_array()) {
