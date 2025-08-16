@@ -26,7 +26,8 @@ public:
 	std::string list_item(
 	    const std::string& name,
         const std::string& description,
-        const std::vector<ProductAttribute>& attributes,
+        double weight,
+        const std::vector<ProductVariant>& variants,
         const std::string& product_code,
         int category_id, 
         const std::set<int>& subcategory_ids,

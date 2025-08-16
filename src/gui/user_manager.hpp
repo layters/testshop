@@ -34,7 +34,8 @@ public:
     Q_INVOKABLE QString listProduct(
         const QString& name, 
         const QString& description,
-        const QList<QVariantMap>& attributes, 
+        double weight,
+        const QList<QVariantMap>& variants, 
         const QString& product_code,
         int category_id, 
         const QList<int>& subcategory_ids, 

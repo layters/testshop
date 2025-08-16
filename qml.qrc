@@ -9,6 +9,7 @@
         <file>qml/components/CatalogList.qml</file>
         <file>qml/components/CheckBox.qml</file>
         <file>qml/components/ComboBox.qml</file>
+        <file>qml/components/CurrencyExchangeRates.qml</file>
         <file>qml/components/FilterBox.qml</file>
         <file>qml/components/Hint.qml</file>
         <file>qml/components/InventoryTable.qml</file>
@@ -30,8 +31,8 @@
         <file>qml/components/ThemeSwitch.qml</file>
         <file>qml/components/Toast.qml</file>
         <file>qml/components/Triangle.qml</file>
+        <file>qml/components/VariationWizard.qml</file>
         <file>qml/components/ViewToggle.qml</file>
-        <file>qml/components/CurrencyExchangeRates.qml</file>
         <!-- qml sources: pages -->
         <file>qml/pages/CartPage.qml</file>
         <file>qml/pages/CatalogPage.qml</file>

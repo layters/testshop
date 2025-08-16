@@ -10,6 +10,7 @@ Item {
     id: searchBar
     width: childrenRect.width; height: childrenRect.height
     property var model: Backend.getListingsBySearchTerm(searchField.text, settingsDialog.hideIllicitProducts)
+    property alias searchButton: searchButton
     TextField {
         id: searchField
         color: (NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000"// textColor
@@ -79,6 +80,9 @@ Item {
             color: suggestionsList.interactive ? "transparent" : "red"
         }
         property int maxSuggestions: 10 // This is the max suggestions shown on the scrollview at a time rather
+        property var baseModel: searchBar.model
+        property var rootItem: searchBar
+        property alias searchField: searchField
 
         ListView {
             id: suggestionsList
@@ -91,9 +95,9 @@ Item {
             property real delegateHeight: 32
             model: {
                 let uniqueProductNames = [];
-
-                for (let i = 0; i < searchBar.model.length; i++) {
-                    let item = searchBar.model[i];
+                let items = suggestionsPopup.baseModel || [];
+                for (let i = 0; i < items.length/*searchBar.model.length*/; i++) {
+                    let item = items[i];//searchBar.model[i];
                     let lowercaseName = item.product_name.toLowerCase(); // Convert to lowercase
                     if (uniqueProductNames.indexOf(lowercaseName) === -1) {
                         uniqueProductNames.push(lowercaseName);
@@ -107,6 +111,7 @@ Item {
                 height: suggestionsList.delegateHeight
                 color: hovered ? NeroshopComponents.Style.getColorsFromTheme()[1] : NeroshopComponents.Style.getColorsFromTheme()[0]
                 property bool hovered: false
+                property var popup: suggestionsPopup
                 
                 Text {
                     text: modelData
@@ -120,6 +125,7 @@ Item {
                 
                 MouseArea {
                     anchors.fill: parent
+                    property var popup: parent.popup // propagate popup from delegate into MouseArea scope
                     hoverEnabled: true
                     cursorShape: Qt.PointingHandCursor
                     onEntered: {
@@ -129,8 +135,8 @@ Item {
                         hovered = false
                     }
                     onClicked: {
-                        searchField.text = modelData // TODO: ignore or remove apostrophe from search term since `tokenchars` doesn't support it unless we write a custom tokenizer
-                        searchButton.activate() // This does not work either :( ////suggestionsPopup.close() // Does not work :( => "ReferenceError: suggestionsPopup is not defined"
+                        popup.searchField.text = modelData
+                        popup.rootItem.searchButton.activate() // suggestionsPopup.close() called here
                     }
                 }
             }

@@ -84,7 +84,7 @@ private:
     std::string owner_id;
     std::vector<CartItem> contents;
     static unsigned int max_items; // cart can only hold up to 10 unique items
-    static unsigned int max_quantity; // the max quantity each item can add up to is 100, so 10 items can each have a quantity of 10, making the total number of items 100
+    static unsigned int max_quantity; // the max quantity each item can add up to is 100, so 10 unique items can each have a quantity of 10, making the total quantity 100
     void load(const std::string& user_id); // loads cart data from database to memory (called on user login)
     void set_id(const std::string& id);
     void set_owner_id(const std::string& owner_id);

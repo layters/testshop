@@ -44,7 +44,8 @@ Seller::~Seller() {
 std::string Seller::list_item(
     const std::string& name,
     const std::string& description,
-    const std::vector<ProductAttribute>& attributes,
+    double weight,
+    const std::vector<ProductVariant>& variants,
     const std::string& product_code,
     int category_id,
     const std::set<int>& subcategory_ids,
@@ -72,7 +73,7 @@ std::string Seller::list_item(
     const std::string listing_id = neroshop::uuid::generate();//std::cout << "listing id: " << listing_id << "\n";
     const std::string product_id = listing_id;
     Product product {
-        product_id, name, description, attributes, 
+        product_id, name, description, weight, variants, 
         product_code, static_cast<unsigned int>(category_id), subcategory_ids, tags,
         images
     };

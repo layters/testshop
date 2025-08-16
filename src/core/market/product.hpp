@@ -5,56 +5,50 @@
 #include <vector>
 #include <tuple>
 #include <set>
+#include <map>
+#include <unordered_map>
+#include <optional>
 
 #include "image.hpp"
 
 namespace neroshop {
 
-struct ProductAttribute {
-    std::string color;
-    std::string size; // ex. small, medium, large, etc.
-    double weight = 0.00;
-    std::string material;
-    std::tuple<double, double, double, std::string> dimensions; // the string can be in any of the following formats: "lxwxh" / "lwh", or "wxdxh" / "wdh", or "diameter x height" / "dh"
-    std::string brand;
-    std::string model; // can be a model type or a model number
-    std::string manufacturer;
-    std::string country_of_origin;
-    std::string warranty_information;
-    std::string product_code; // UPC, SKU, etc. // Product codes can be used to differentiate between variations of a product, such as different colors or bundle packages. So even if two Nintendo Switch Lite consoles are exactly the same, they may have different product codes if they are being sold as different variations (e.g. one is the gray version and the other is the yellow version).
-    std::string style;
-    std::string gender;
-    std::pair<int, int> age_range;
-    std::string energy_efficiency_rating; // A++, A+, A, B, C, ... G etc.
-    std::vector<std::string> safety_features;
-    unsigned int quantity_per_package = 0;
-    std::string release_date;
+struct ProductVariantInfo {
+    std::string condition;             // overrides product condition if set
+    std::optional<double> weight;      // overrides product weight if set
+    std::optional<double> price;       // overrides base price if set
+    std::optional<int> quantity;       // stock for this variant
+    std::string product_code;          // variant-specific product code (e.g. SKU)
+    std::vector<Image> images;         // variant-specific images
+    std::optional<int> image_index;    // if using parent product images
+};
+
+struct ProductVariant {
+    std::unordered_map<std::string, std::string> options; // e.g. {"color":"red","size":"L"}
+    ProductVariantInfo info;
 };
 
 class Product { // can also be used for Services
 public:
     Product();
-    Product(const std::string& id, const std::string& name, const std::string& description, const std::vector<ProductAttribute>& attributes, const std::string& code, unsigned int category_id, const std::set<int>& subcategory_ids, const std::set<std::string>& tags, const std::vector<Image>& images);
+    Product(const std::string& id, const std::string& name, const std::string& description, double weight, const std::vector<ProductVariant>& variants, const std::string& code, unsigned int category_id, const std::set<int>& subcategory_ids, const std::set<std::string>& tags, const std::vector<Image>& images);
     Product(const Product& other);// copy constructor
     Product(Product&& other) noexcept; // move constructor
     
     Product& operator=(const Product&); // copy assignment operator
     Product& operator=(Product&&) noexcept; // move assignment operator
     
-    void add_attribute(const ProductAttribute& attribute);
-    void add_variant(const ProductAttribute& variant);
+    void add_variant(const ProductVariant& variant);
     void add_tag(const std::string& tag);
     void add_image(const Image& image);
     void print_product();
+    std::vector<ProductVariant> cartesian_product() const; // Generates the Cartesian product of all variant option values, i.e., all possible variant combinations
     
     void set_id(const std::string& id);
     void set_name(const std::string& name);
     void set_description(const std::string& description);
-    void set_color(const std::string& color, int index = 0);
-    void set_size(const std::string& size, int index = 0);
-    void set_weight(double weight, int index = 0);
-    void set_attributes(const std::vector<ProductAttribute>& attributes);
-    void set_variants(const std::vector<ProductAttribute>& variants);
+    void set_weight(double weight);
+    void set_variants(const std::vector<ProductVariant>& variants);
     void set_code(const std::string& code);
     void set_category(const std::string& category);
     void set_category_id(int category_id);
@@ -65,11 +59,9 @@ public:
     std::string get_id() const;
     std::string get_name() const;
     std::string get_description() const;
-    std::string get_color(int index = 0) const;
-    std::string get_size(int index = 0) const;
-    double get_weight(int index = 0) const;
-    std::vector<ProductAttribute> get_attributes() const;
-    std::vector<ProductAttribute> get_variants() const;
+    double get_weight() const;
+    const std::vector<ProductVariant>& get_variants() const;
+    std::map<std::string, std::set<std::string>> get_options() const; // Returns all the distinct option values per option name (e.g. { {"color", {"red", "green", "blue"}}, {"size", {"S", "M", "L"}} } => {"color": ["red", "green", "blue"], "size": ["S", "M", "L"]})
     std::string get_code() const;
     int get_category_id() const;
     std::string get_category_as_string() const;
@@ -79,15 +71,20 @@ public:
     Image get_image(int index) const;
     std::vector<Image> get_images() const;
 private:
+    void validate_variants() const;
     std::string id;
     std::string name;
-    std::string description;
-    std::vector<ProductAttribute> attributes;
+    std::string description; // optional
+    double weight; // optional - parent weight
+    std::vector<ProductVariant> variants;
     std::string code; // optional - main product code
     unsigned int category_id;
     std::set<int> subcategory_ids; // optional
     std::set<std::string> tags; // optional
     std::vector<Image> images;
+    static unsigned int max_options_per_variant; // options per variant - each product variant can have up to 2 options (e.g color, size, material, etc.)
+    static unsigned int max_option_values; // option values per option - each option can have up to 10 values
+    static unsigned int max_total_variants; // total variants = 10^2 = 100
 };
 
 }
