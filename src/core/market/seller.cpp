@@ -688,7 +688,7 @@ neroshop::User * Seller::on_login(const neroshop::Wallet& wallet) { // assumes u
     // set user properties retrieved from database
     dynamic_cast<Seller *>(user)->set_logged(true); // protected, so can only be accessed by child class obj    
     dynamic_cast<Seller *>(user)->set_id(monero_primary_address);
-    dynamic_cast<Seller *>(user)->set_wallet(wallet);
+    dynamic_cast<Seller *>(user)->set_wallet(&wallet);
     dynamic_cast<Seller *>(user)->set_account_type(UserAccountType::Seller);
     //-------------------------------
     /*// load orders
@@ -703,7 +703,7 @@ neroshop::User * Seller::on_login(const neroshop::Wallet& wallet) { // assumes u
 }
 ////////////////////
 void Seller::on_order_received(std::string& subaddress) {
-    if(!wallet.get()) throw std::runtime_error("wallet has not been initialized");
+    if(!wallet) throw std::runtime_error("wallet has not been initialized");
     if(!wallet->get_monero_wallet()) throw std::runtime_error("monero_wallet_full is not opened");
     // TODO: check if order type is a direct pay/no escrow before generating a new subaddress
     // if wallet is not properly synced with the daemon, you can only generate used addresses

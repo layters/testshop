@@ -49,7 +49,7 @@ public:
     void set_public_key(const std::string& public_key);
     void set_private_key(const std::string& private_key);
 	// setters - wallet-related stuff
-	void set_wallet(const neroshop::Wallet& wallet);
+	void set_wallet(const neroshop::Wallet* wallet);
     // getters
     std::string get_public_key() const;
 	// getters - wallet-related stuff
@@ -105,7 +105,8 @@ protected: // can only be accessed by classes that inherit from class User (even
     void load_cart();
     void load_orders(); // on login, load all orders this user has made so far (this function is called only once per login)
     void load_favorites(); // on login, load favorites (this function is called only once per login)
-	std::unique_ptr<neroshop::Wallet> wallet;
+	// Make wallet a non-owning raw pointer or maybe use std::weak_ptr if shared ownership is needed
+	neroshop::Wallet* wallet;
 private:
     std::string id;
     std::string name;

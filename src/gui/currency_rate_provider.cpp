@@ -74,10 +74,15 @@ CurrencyExchangeRatesProvider::~CurrencyExchangeRatesProvider()
     mUpdateFutureWatcher.waitForFinished();
 }
 
-QObject *CurrencyExchangeRatesProvider::qmlInstance(QQmlEngine * /*engine*/,
-                                                    QJSEngine * /*scriptEngine*/)
+QObject *CurrencyExchangeRatesProvider::qmlInstance(QQmlEngine * engine,
+                                                    QJSEngine * scriptEngine)
 {
-    return CurrencyExchangeRatesProvider::instance();
+    Q_UNUSED(engine)
+    Q_UNUSED(scriptEngine)
+    CurrencyExchangeRatesProvider *inst = CurrencyExchangeRatesProvider::instance();
+    // Tell QML engine not to delete this instance. Qt assumes ownership by default otherwise.
+    QQmlEngine::setObjectOwnership(inst, QQmlEngine::CppOwnership);
+    return inst;
 }
 
 CurrencyExchangeRatesProvider* CurrencyExchangeRatesProvider::instance() {
