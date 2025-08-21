@@ -30,12 +30,12 @@ User::~User()
     private_key.clear();
     // destroy cart
     if(cart.get()) cart.reset();
-    // destroy wallet
-    if(wallet.get()) wallet.reset();
+    // don't reset wallet since we do not own it - WalletManager owns it, so just nullify it
+    wallet = nullptr;
     // clear orders
-    order_list.clear(); // this should reset (delete) all orders
+    order_list.clear();
     // clear favorites
-    favorites.clear(); // this should reset (delete) all favorites
+    favorites.clear();
 #ifdef NEROSHOP_DEBUG
     std::cout << "user deleted\n";
 #endif    
@@ -503,9 +503,8 @@ void User::set_private_key(const std::string& private_key) {
     this->private_key = private_key;
 }
 ////////////////////
-void User::set_wallet(const neroshop::Wallet& wallet) {
-    std::unique_ptr<neroshop::Wallet> user_wallet(&const_cast<neroshop::Wallet&>(wallet));
-    this->wallet = std::move(user_wallet);
+void User::set_wallet(const neroshop::Wallet* wallet) {
+    this->wallet = const_cast<neroshop::Wallet*>(wallet);  // just store pointer, do NOT wrap in unique_ptr
 }
 ////////////////////
 ////////////////////
@@ -574,7 +573,7 @@ std::string User::get_private_key() const {
 }
 ////////////////////
 neroshop::Wallet * User::get_wallet() const {
-    return wallet.get();
+    return wallet;
 }
 ////////////////////
 ////////////////////
@@ -750,7 +749,7 @@ bool User::has_favorited(const std::string& listing_key) {
 }
 ////////////////////
 bool User::has_wallet() const {
-    if(!wallet.get()) return false; // wallet is nullptr
+    if(!wallet) return false; // wallet is nullptr
     if(!wallet->get_monero_wallet()) return false; // wallet not opened
     return true;
 }
