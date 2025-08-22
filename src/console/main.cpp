@@ -208,7 +208,7 @@ int main(int argc, char** argv) {
                 auto spend_keys = wallet.get_spend_keys();
                 std::cout << "Spend keys: \n" << spend_keys.first << " (private)\n" << spend_keys.second << " (public)" << std::endl;
                 //std::cout << ": " << wallet.get_() << std::endl;
-                user.set_wallet(wallet);
+                user.set_wallet(&wallet);
             }
         }
         else if(command == "generate_rsa_keys") {
