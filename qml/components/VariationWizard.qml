@@ -79,6 +79,9 @@ Popup {
             if (v.option && v.value) {
                 options[v.option.toLowerCase()] = v.value
             }
+            if (v.option2 && v.value2) {
+                options[v.option2.toLowerCase()] = v.value2;
+            }
 
             variantsList.push({
                 options: options,
@@ -122,6 +125,11 @@ Popup {
                     // Not needed if default style already greys out disabled items
                     // color: enabled ? "black" : "gray"
                 }
+                onActivated: {
+                    if(optionCombo.currentText == optionCombo2.currentText) {
+                        valuesField2.text = ""
+                    }
+                }
             }
 
             TextField {
@@ -130,29 +138,87 @@ Popup {
                 Layout.fillWidth: true
                 selectByMouse: true
             }
+            
+            // opt2
+            ComboBox {
+                id: optionCombo2
+                width: 120
+                enabled: optionCombo.currentText !== this.currentText // disables the whole combobox (greyed out and non-interactive)
+                property string fixedOption: ""
+                model: ["", "Size"]
+                currentIndex: 0 // default to blank (no option)
+                delegate: ItemDelegate {
+                    text: modelData.length === 0 ? "(No Option)" : modelData
+                    enabled: ((optionCombo2.fixedOption === "") || (modelData === optionCombo2.fixedOption)) && (modelData !== optionCombo.currentText) // disable if same as optionCombo selection
+                }
+                onActivated: {
+                    if(this.currentText == "" && this.currentIndex == 0) {
+                        valuesField2.text = ""
+                    }
+                }
+            }
+
+            TextField {
+                id: valuesField2
+                placeholderText: "Enter values, separated by commas"
+                Layout.fillWidth: true
+                selectByMouse: true
+                readOnly: (optionCombo.currentText === optionCombo2.currentText) || (optionCombo2.currentText === "" && optionCombo2.currentIndex === 0)
+            }
 
             Button {
                 text: "Add Variants"
                 onClicked: {
+                    let initialLength = variantModel.length;
+                    
                     let option = optionCombo.currentText;
                     let values = valuesField.text.split(",").map(function(v) { return v.trim(); }).filter(function(v) { return v.length > 0 });
+                    
+                    let option2 = optionCombo2.currentText;
+                    let values2 = valuesField2.text.split(",").map(v => v.trim()).filter(v => v.length > 0);
 
-                    for (let i = 0; i < values.length; i++) {
-                        variantModel.push({
-                            option: option,
-                            value: values[i],
-                            condition: "",
-                            weight: "",
-                            price: "",
-                            quantity: "",
-                            productCode: "",
-                            imageIndex: ""
-                        })
+                    if (values2.length > 0 && option2 && option2.trim() !== "") {
+                        // Add variants with both option1 and option2
+                        for (let i = 0; i < values.length; i++) {
+                            for (let j = 0; j < values2.length; j++) {
+                                variantModel.push({
+                                    option: option,
+                                    value: values[i],
+                                    option2: option2,
+                                    value2: values2[j],
+                                    condition: "",
+                                    weight: "",
+                                    price: "",
+                                    quantity: "",
+                                    productCode: "",
+                                    imageIndex: ""
+                                })
+                            }
+                        }
+                    } else {
+                        // Add variants with only option1, since option2 is empty or no values
+                        for (let i = 0; i < values.length; i++) {
+                            variantModel.push({
+                                option: option,
+                                value: values[i],
+                                option2: "",
+                                value2: "",
+                                condition: "",
+                                weight: "",
+                                price: "",
+                                quantity: "",
+                                productCode: "",
+                                imageIndex: ""
+                            })
+                        }
                     }
                     valuesField.text = ""
+                    valuesField2.text = ""
                     variantListView.model = variantModel//.slice()
                     
-                    if(variantModel.length == 1 && values.length != 0) {
+                    let newVariantsAdded = variantModel.length - initialLength;
+                    
+                    if (initialLength === 0 && newVariantsAdded > 0) {////if(variantModel.length == 1 && values.length != 0) {
                         optionCombo.fixedOption = option
                         console.log("Fixed option set:",optionCombo.fixedOption)
                     }
@@ -199,7 +265,14 @@ Popup {
 
                 // Option Display (fixed, no combobox here)
                 Label {
-                    text: modelData.option
+                    text: {
+                        let opts = [];
+                        if (modelData.option && modelData.option.length > 0)
+                            opts.push(modelData.option);
+                        if (modelData.option2 && modelData.option2.length > 0)
+                            opts.push(modelData.option2);
+                        return opts.join(", ");
+                    }////modelData.option
                     x: optionHeader.x
                     width: optionHeader.width//100
                     verticalAlignment: Text.AlignVCenter
@@ -207,14 +280,21 @@ Popup {
 
                 // Value (editable TextField)
                 TextField {
-                    text: modelData.value
+                    text: {
+                        let vals = [];
+                        if (modelData.value && modelData.value.length > 0)
+                            vals.push(modelData.value);
+                        if (modelData.value2 && modelData.value2.length > 0)
+                            vals.push(modelData.value2);
+                        return vals.join(", ");
+                    }////modelData.value
                     x: valueHeader.x
                     width: valueHeader.width//120
                     verticalAlignment: Text.AlignVCenter
                     onTextChanged: {
-                        delegateRoot.popup.variantModel[index].value = text
+                        //delegateRoot.popup.variantModel[index].value = text
                     }
-                    ////readOnly:true
+                    readOnly:true
                 }
                 
                 // Condition
