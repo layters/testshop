@@ -11,7 +11,7 @@ namespace neroshop {
 
 //-----------------------------------------------------------------------------
 
-Product::Product() : id(""), name(""), description(""), code(""), category_id(0)/*, subcategory_ids({})*/ {}
+Product::Product() : id(""), name(""), description(""), weight(0.0), code(""), category_id(0), subcategory_ids({}) {}
 
 //-----------------------------------------------------------------------------
 
@@ -53,7 +53,7 @@ unsigned int Product::max_option_values (10);
 
 //-----------------------------------------------------------------------------
 
-unsigned int Product::max_total_variants (static_cast<int>(std::pow(max_option_values, max_options_per_variant)));
+unsigned int Product::max_total_variants = [] { return static_cast<unsigned int>(std::pow(max_option_values, max_options_per_variant)); }();
 
 //-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
@@ -63,6 +63,7 @@ neroshop::Product& Product::operator=(const neroshop::Product& other) {
         id = other.id;
         name = other.name;
         description = other.description;
+        weight = other.weight;
         variants = other.variants;
         code = other.code;
         category_id = other.category_id;
@@ -73,11 +74,14 @@ neroshop::Product& Product::operator=(const neroshop::Product& other) {
     return *this;
 }
 
+//-----------------------------------------------------------------------------
+
 neroshop::Product& Product::operator=(neroshop::Product&& other) noexcept {
     if (this != &other) {
         id = std::move(other.id);
         name = std::move(other.name);
         description = std::move(other.description);
+        weight = std::move(other.weight);
         variants = std::move(other.variants);
         code = std::move(other.code);
         category_id = std::move(other.category_id);
@@ -89,6 +93,7 @@ neroshop::Product& Product::operator=(neroshop::Product&& other) noexcept {
         other.id = "";
         other.name = "";
         other.description = "";
+        other.weight = 0.0;
         other.variants = {};
         other.code = "";
         other.category_id = 0;
@@ -110,7 +115,7 @@ void Product::add_variant(const ProductVariant& variant) {
     validate_variants();
 }
 
-// Supports both single-option products (just “color”) and multi-option combinations
+// Supports both single-option products (e.g. just “color”) and multi-option combinations
 
 //-----------------------------------------------------------------------------
 
