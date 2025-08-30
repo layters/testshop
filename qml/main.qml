@@ -18,10 +18,10 @@ import "pages/subpages"
 ApplicationWindow {
     id: mainWindow
     visible: true
-    //visibility: (Script.getJsonRootObject()["window_mode"] == 1) ? "FullScreen" : "Windowed"
+    //visibility: (Script.getInt("window_mode") == 1) ? "FullScreen" : "Windowed"
     title: qsTr("neroshop" + " v" + neroshopVersion)
-    width: 1024//Script.getJsonRootObject()["window_width"]
-    height: 720//Script.getJsonRootObject()["window_height"]
+    width: 1024//Script.getInt("window_width")
+    height: 720//Script.getInt("window_height")
     minimumWidth: 1024
     minimumHeight: 600
     color: NeroshopComponents.Style.getColorsFromTheme()[0]
@@ -170,24 +170,6 @@ ApplicationWindow {
         buttonRow.state: "centered"; buttonRow.width: 300
     }
 
-    NeroshopComponents.MessageBox {
-        id: monerodMessageBox
-        title: "prompt"
-        x: mainWindow.x + (mainWindow.width - this.width) / 2
-        y: mainWindow.y + (mainWindow.height - this.height) / 2
-        buttonModel: ["Cancel", "OK"]
-        buttonRow.state: "centered"; buttonRow.width: 300
-        Component.onCompleted: {
-            buttonAt(0).onClickedCallback = function() { close() }
-            buttonAt(1).color = "#4169e1"//"#4682b4"
-            buttonAt(1).onClickedCallback = function() { 
-                console.log("Now connecting to a local node ...")
-                Wallet.daemonConnect();//(moneroDaemonRpcLoginUser.text, moneroDaemonRpcLoginPwd.text)
-                close();
-            }
-        }
-    }
-    
     NeroshopComponents.Toast {
         id: toast
         objectName: "toast"

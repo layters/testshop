@@ -105,7 +105,7 @@ std::string Seller::list_item(
     // Send put request to neighboring nodes (and your node too JIC)
     std::string response;
     client->put(key, value, response);
-    std::cout << "Received response (put): " << response << "\n";
+    log_trace("Received response (put): {}", response);
     
     // Return listing key
     return key;
@@ -118,7 +118,7 @@ void Seller::delist_item(const std::string& listing_key) {
     // Get the value of the corresponding key from the DHT
     std::string response;
     client->get(listing_key, response); // TODO: error handling
-    std::cout << "Received response (get): " << response << "\n";
+    log_trace("Received response (get): {}", response);
     // Parse the response
     nlohmann::json json = nlohmann::json::parse(response);
     if(json.contains("error")) {
@@ -147,7 +147,7 @@ void Seller::delist_item(const std::string& listing_key) {
         if(!self_verified) { neroshop::log_error("Data verification failed."); return; }
         // Remove listing from database
         client->remove(listing_key, response);
-        std::cout << "Received response (remove): " << response << "\n";
+        log_trace("Received response (remove): {}", response);
     }
 }
 ////////////////////
@@ -322,7 +322,7 @@ void Seller::set_stock_quantity(const std::string& listing_key, int quantity) {
     // Get the value of the corresponding key from the DHT
     std::string response;
     client->get(listing_key, response); // TODO: error handling
-    std::cout << "Received response (get): " << response << "\n";
+    log_trace("Received response (get): {}", response);
     // Parse the response
     nlohmann::json json = nlohmann::json::parse(response);
     if(json.contains("error")) {
@@ -360,7 +360,7 @@ void Seller::set_stock_quantity(const std::string& listing_key, int quantity) {
         std::string modified_value = value_obj.dump();
         std::string response;
         client->set(listing_key, modified_value, response);
-        std::cout << "Received response (set): " << response << "\n";
+        log_trace("Received response (set): {}", response);
     }
 }
 ////////////////////

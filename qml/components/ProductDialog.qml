@@ -562,6 +562,39 @@ Popup {
                     }
                 }
             }
+            // Mark as NSFW
+            Item {
+                Layout.alignment: Qt.AlignHCenter
+                Layout.preferredWidth: childrenRect.width
+                Layout.preferredHeight: childrenRect.height
+                
+                Column {
+                    spacing: productDialog.titleSpacing
+                    Item {
+                        width: 500; height: childrenRect.height
+                        Text {
+                            anchors.verticalCenter: nsfwBox.verticalCenter
+                            text: qsTr("Mark as NSFW")
+                            color: productDialog.palette.text
+                            font.bold: true;//font.pointSize: 10
+                        }
+                        NeroshopComponents.Switch {
+                            id: nsfwBox
+                            anchors.right: parent.right
+                            checked: productTagsField.containsTag("nsfw")//false
+                            foregroundColor: "#ffffff"
+                            backgroundCheckedColor: "#605185"
+                            onCheckedChanged: {
+                                if(checked) {
+                                    productTagsField.addTag("nsfw")
+                                } else {
+                                    productTagsField.removeTag("nsfw")
+                                }
+                            }
+                        }
+                    }
+                }
+            }
             // Weight
             Item {
                 //Layout.row: 
@@ -1814,6 +1847,7 @@ Popup {
                                 ////paymentCoinsItem.uncheckAllPaymentCoins()
                                 deliveryOptionsItem.uncheckAllDeliveryOptions()
                                 shippingOptionsItem.uncheckAllShippingOptions()
+                                nsfwBox.checked = false
                                 // Clear upload images as well
                                 for(let i = 0; i < productImageRepeater.count; i++) {
                                     let productImage = productImageRepeater.itemAt(i).children[0].children[0]
