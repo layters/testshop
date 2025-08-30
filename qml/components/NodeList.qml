@@ -15,6 +15,13 @@ Item {
     property alias count: listView.count
     property alias list: listView
     
+    BusyIndicator {
+        id: busyIndicator
+        running: WalletNodeProvider.loadingNodes
+        visible: WalletNodeProvider.loadingNodes
+        anchors.centerIn: parent
+    }
+    
     ColumnLayout {
         anchors.fill: parent
         spacing: 2
@@ -57,17 +64,48 @@ Item {
                 }
             }
         }
-
+        
         ListView {
             id: listView
             clip: true
             Layout.fillWidth: true
             Layout.fillHeight: true
             ScrollBar.vertical: ScrollBar { }
-            model: {
+            model: WalletNodeProvider.nodes//{
                 // Get all monero nodes from https://monero.fail/health.json
-                const monero_node_list = (Wallet.getWalletType() == 1) ? Backend.getNodeList("wownero") : Backend.getNodeList("monero")
-                return monero_node_list
+                /*const monero_node_list = (Wallet.getWalletType() == 1) ? Backend.getNodeList("wownero") : Backend.getNodeList("monero")
+                return monero_node_list*/
+                /*if (Wallet.getWalletType() == 1) {
+                    WalletNodeProvider.setCoinName("wownero")
+                    WalletNodeProvider.startUpdates()
+                } else {
+                    WalletNodeProvider.setCoinName("monero")
+                    WalletNodeProvider.startUpdates()
+                }*/
+                ////return WalletNodeProvider.nodes
+            //}
+            enabled: !WalletNodeProvider.loadingNodes
+            Connections {
+                target: WalletNodeProvider
+                function onNodesUpdated() { 
+                    console.log("Nodes updated, count:", WalletNodeProvider.nodes.length)
+                    // Save last selected node since it gets reset on startup for some reason
+                    // Note: last_selected_node gets reset to "" when user closes app before nodes are even updated
+                    let savedNode = WalletNodeProvider.lastSelectedNode; // or settingsDialog.lastSelectedNode
+                    if(savedNode && savedNode.length > 0) {
+                        for(let i = 0; i < WalletNodeProvider.nodes.length; ++i) {
+                            let node = WalletNodeProvider.nodes[i];
+                            let nodeAddress = (typeof node === "string") ? node : node.address;
+                            if(nodeAddress === savedNode) {
+                                listView.currentIndex = i;
+                                listView.positionViewAtIndex(i, ListView.Contain);
+                                // Do the actual saving to QSettings here
+                                listView.currentItem.saveSelectedNode()
+                                break;
+                            }
+                        }
+                    }
+                }
             }
             delegate: Item {
                 width: listView.width
@@ -78,13 +116,19 @@ Item {
                     color: parent.ListView.isCurrentItem ? "#ff8b3d" : "transparent"
                     radius: 3
                 }
+                
+                function saveSelectedNode() {
+                    listView.currentIndex = index
+                    listView.positionViewAtIndex(index, ListView.Contain)
+                    settingsDialog.save()
+                    console.log("Saved selected node:", nodeAddressLabel.text)
+                }
 
                 MouseArea {
+                    id: mouseArea
                     anchors.fill: parent
                     onClicked: {
-                        listView.currentIndex = index
-                        listView.positionViewAtIndex(index, ListView.Contain)
-                        settingsDialog.save()
+                        saveSelectedNode()
                     }
                 }
 

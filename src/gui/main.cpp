@@ -10,7 +10,6 @@
 #endif
 
 #include "currency_rate_provider.hpp"
-#include "settings_manager.hpp"
 #include "backend.hpp"
 #include "daemon_manager.hpp"
 #include "proxy_manager.hpp"
@@ -18,6 +17,7 @@
 #include "settings_manager.hpp"
 #include "user_manager.hpp"
 #include "enum_wrapper.hpp"
+#include "wallet_node_provider.hpp"
 #include "wallet_qr_provider.hpp"
 #include "image_provider.hpp"
 #include "notification_manager.hpp"
@@ -67,6 +67,7 @@ int main(int argc, char *argv[])
     #else
     QGuiApplication app(argc, argv);
     #endif
+    // Set application name
     app.setApplicationName("neroshop");
 
     qmlRegisterSingletonType<CurrencyExchangeRatesProvider>(
@@ -131,14 +132,32 @@ int main(int argc, char *argv[])
     ProxyManager * proxyManager = new ProxyManager(&engine);
     engine.rootContext()->setContextProperty("ProxyManager", proxyManager);
     engine.setNetworkAccessManagerFactory(proxyManager);
-    // we can also register an instance of a class instead of the class itself
+    // Register WalletManager (wallet)
     WalletManager *wallet = new WalletManager(&engine);
-    engine.rootContext()->setContextProperty("Wallet", wallet);//new WalletManager());//qmlRegisterUncreatableType<WalletProxy>("neroshop.Wallet", 1, 0, "Wallet", "Wallet cannot be instantiated directly.");//qmlRegisterType<WalletProxy>("neroshop.Wallet", 1, 0, "Wallet"); // Usage: import neroshop.Wallet  ...  Wallet { id: wallet }
+    auto walletType = static_cast<neroshop::WalletType>(wallet->getWalletType());
+    engine.rootContext()->setContextProperty("Wallet", wallet);//qmlRegisterUncreatableType<WalletProxy>("neroshop.WalletManager", 1, 0, "Wallet", "Wallet cannot be instantiated directly.");//qmlRegisterType<WalletManager>("neroshop.Wallet", 1, 0, "Wallet"); // Usage: import neroshop.Wallet  ...  Wallet { id: wallet }
     qRegisterMetaType<WalletManager*>(); // Wallet can now be used as an argument in function parameters
-    // register settings
-    SettingsManager * settings_manager = new SettingsManager(&engine);
-    engine.rootContext()->setContextProperty("Settings", settings_manager);
-    // register backend
+    // Register WalletNodeProvider
+    WalletNodeProvider* walletNodeProvider = WalletNodeProvider::instance();//QQmlEngine::setObjectOwnership(walletNodeProvider, QQmlEngine::CppOwnership);
+    QString coinName;
+    switch(walletType) {
+        case neroshop::WalletType::Monero:
+            coinName = "monero";
+            break;
+        case neroshop::WalletType::Wownero:
+            coinName = "wownero";
+            break;
+        default:
+            throw std::runtime_error("Invalid wallet type");
+    }
+    walletNodeProvider->setCoinName(coinName);
+    walletNodeProvider->startUpdates();
+    engine.rootContext()->setContextProperty("WalletNodeProvider", walletNodeProvider);//qmlRegisterSingletonInstance("neroshop", 1, 0, "WalletNodeProvider", WalletNodeProvider::instance());
+    // Register settings - used in both QML and C++, so had to make it a singleton
+    SettingsManager& settingsManager = SettingsManager::instance();//qDebug() << "QSettings file path:" << settingsManager.fileName();
+    settingsManager.initializeDefaults();
+    engine.rootContext()->setContextProperty("Settings", &settingsManager);
+    // Register backend
     engine.rootContext()->setContextProperty("Backend", new Backend(&engine));
     // Register user
     engine.rootContext()->setContextProperty("User", new UserManager(&engine));

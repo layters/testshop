@@ -9,26 +9,17 @@
 #include <QObject>
 #include <QString>
 #include <QVariant>
+#include <QSettings>
 #endif
 
 namespace neroshop {
 
 class SettingsManager : public QObject {
-    Q_OBJECT 
-    // properties (for use in QML)
-    //Q_PROPERTY(<type> <variable_name> READ ...)
+    Q_OBJECT
 public:
-    SettingsManager(QObject *parent = nullptr);
+    static SettingsManager& instance();
 
-    // functions (for use in QML)
-    //Q_INVOKABLE <type> getTable(const QString& key) const {}
-    Q_INVOKABLE QString getString(const QString& key) const;// {}
-    //Q_INVOKABLE <type> getUserdata(const QString& key) const {}
-    Q_INVOKABLE double getNumber(const QString& key) const;// {}
-    Q_INVOKABLE bool getBoolean(const QString& key) const;// {}
-    //Q_INVOKABLE <type> get_(const QString& key) const {}
-    Q_INVOKABLE QVariantList getTableStrings(const QString& key) const;
-    
+    // JSON
     Q_INVOKABLE void saveJson(const QString& settings);
     Q_INVOKABLE QString getJsonString(const QString& key);
     Q_INVOKABLE int getJsonInt(const QString& key);
@@ -38,10 +29,27 @@ public:
     Q_INVOKABLE QVariantMap getJsonRootObject() const; // root object
     Q_INVOKABLE QVariantMap getJsonObject(const QString& key);
     Q_INVOKABLE QString getJsonLiteral();
-    //Q_INVOKABLE ? getJson(const QString& key);
     QJsonObject getJsonRootObjectCpp() const;
+    
+    // QSettings
+    void initializeDefaults();
+    QString fileName() const;
+    
+    Q_INVOKABLE void setString(const QString &key, const QString &value);
+    Q_INVOKABLE void setInt(const QString &key, int value);
+    Q_INVOKABLE void setBool(const QString &key, bool value);
+
+    Q_INVOKABLE QString getString(const QString &key, const QString &defaultValue = QString()) const;
+    Q_INVOKABLE int getInt(const QString &key, int defaultValue = 0) const;
+    Q_INVOKABLE bool getBool(const QString &key, bool defaultValue = false) const;
+    
 private:
-    QJsonObject json_object;
+    explicit SettingsManager(QObject *parent = nullptr);
+    QJsonObject m_jsonObject;
+    QSettings m_settings;
+    // Disable copy and assignment to enforce singleton
+    SettingsManager(SettingsManager const&) = delete;
+    void operator=(SettingsManager const&) = delete;
 };
 
 }

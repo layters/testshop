@@ -75,6 +75,7 @@
 #include "gui/settings_manager.hpp"
 #include "gui/user_manager.hpp"
 #include "gui/wallet_manager.hpp"
+#include "gui/wallet_node_provider.hpp"
 #include "gui/wallet_qr_provider.hpp"
 
 #endif

@@ -340,17 +340,16 @@ bool neroshop::ProxyManager::hasTor() {
 bool neroshop::ProxyManager::isTorRunning() {
     QTcpSocket socket;
     socket.connectToHost("127.0.0.1", 9050); // Connect to Tor's SOCKS proxy port
-
-    if (!socket.waitForConnected()) {
+    if (!socket.waitForConnected(500)) {
         QString errorMessage = socket.errorString();
         if (errorMessage.contains("Address already in use")) {
             return true;
         } else {
-            //qDebug() << "Failed to connect to Tor's SOCKS proxy port:" << errorMessage;
+            // Tor not running or unreachable
             return false;
         }
     } else {
-        // Close the socket
+        // Tor is running and reachable
         socket.close();
         return true;
     }

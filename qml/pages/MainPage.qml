@@ -1,4 +1,3 @@
-// todo: rename this file to LoginPage.qml
 // requires Qt version 5.12 (latest is 5.15 as of this writing). See https://doc.qt.io/qt-5/qt5-intro.html
 import QtQuick 2.12//2.7 //(QtQuick 2.7 is lowest version for Qt 5.7)
 import QtQuick.Controls 2.12//2.0 // (requires at least Qt 5.12 where QtQuick.Controls 1 is deprecated. See https://doc.qt.io/qt-5/qtquickcontrols-index.html#versions) // needed for built-in styles // Page, TextField, TextArea (multi-lined TextField), TextFieldStyle//import QtQuick.Controls.Material 2.12 // Other styles: 
@@ -22,6 +21,18 @@ Page {
         color: "transparent"
     }
     property int walletGenerationCount: 0
+    Timer {
+        id: syncDelayTimer
+        interval: 5000  // 5 seconds
+        repeat: false
+        running: false
+        onTriggered: {
+            if(settingsDialog.moneroDaemonAutoSync) {
+                console.log("Starting wallet sync after 5s delay");
+            }
+            mainPage.onAutoSync();
+        }
+    }
     ///////////////////////////
     function onAutoSync() {
         console.log("Auto-sync is turned " + ((settingsDialog.moneroDaemonAutoSync) ? "on" : "off"))
@@ -70,12 +81,12 @@ Page {
         // connect to a remote monero node (default)
         if(settingsDialog.moneroNodeType == 0) {
             // settingsDialog.moneroNodeAddress removes http:// from url
-            let remote_node = settingsDialog.moneroNodeAddress//console.log("remote_node", remote_node)
-            let remote_node_ip = remote_node.split(":")[0]
-            let remote_node_port = remote_node.split(":")[1]
-            console.log("connecting to remote node " + remote_node_ip + ":" + remote_node_port)
-            // TODO: add option to use custom remote node
-            Wallet.nodeConnect(remote_node_ip, remote_node_port)//, moneroDaemonRpcLoginUser.text, moneroDaemonRpcLoginPwd.text);//Wallet.nodeConnect(Script.getString("neroshop.monero.daemon.ip"), Script.getString("neroshop.monero.daemon.port"), moneroDaemonRpcLoginUser.text, moneroDaemonRpcLoginPwd.text);
+            let remoteNode = settingsDialog.moneroNodeAddress//console.log("remoteNode", remoteNode)
+            let remoteNodeIp = remoteNode.split(":")[0]
+            let remoteNodePort = remoteNode.split(":")[1]
+            console.log("Connecting to remote node " + remoteNodeIp + ":" + remoteNodePort)
+            // TODO: 
+            Wallet.nodeConnect(remoteNodeIp, remoteNodePort)//, moneroDaemonRpcLoginUser.text, moneroDaemonRpcLoginPwd.text);//Wallet.nodeConnect(Script.getString("neroshop.monero.daemon.ip"), Script.getString("neroshop.monero.daemon.port"), moneroDaemonRpcLoginUser.text, moneroDaemonRpcLoginPwd.text);
             if(Wallet.isConnectedToDaemon()) {
                 moneroDaemonSyncBar.title = settingsDialog.moneroNodeAddress
             }
@@ -159,7 +170,7 @@ Page {
         if(avatarImage.status === Image.Ready) {
             Backend.saveAvatarImage(Backend.urlToLocalFile(avatarImage.source), account_key)
         }
-        /*// Save lastOpenedWallet
+        /*// Save lastOpenedWallet - no need for this during registration
         let folder = Backend.urlToLocalFile(walletFolderDialog.folder);
         settingsDialog.lastOpenedWallet = (walletNameField.text) ? qsTr(folder + "/%1.keys").arg(walletNameField.text) : qsTr(folder + "/%1.keys").arg(walletNameField.placeholderText)
         settingsDialog.save()*/
@@ -169,8 +180,7 @@ Page {
         //console.log("Balance: ", Wallet.getBalanceLocked().toFixed(12))
         //console.log("Unlocked balance: ", Wallet.getBalanceUnlocked().toFixed(12))
         // start synching the monero node as soon we hit the register button (this confirms that we are satified with the wallet key that we've generated and won't turn back to re-generate a new one)
-        // Todo: Add an auto-connect on login/registration button and only sync automatically if that option is turned on (will be turned on by default)
-        onAutoSync()
+        syncDelayTimer.start()
     }
     ///////////////////////////
     // for login page
@@ -618,7 +628,7 @@ Page {
                 	        settingsDialog.lastOpenedWallet = walletFileField.text
                 	        settingsDialog.save()
                             // Start synching the monero node as soon we hit the login button only sync automatically if auto-sync option is turned on (will be turned on by default)
-                            onAutoSync();
+                            syncDelayTimer.start();
                             // Switch to HomePage
                             pageStack.pushPage("qrc:/qml/pages/HomePage.qml", StackView.Immediate)
                             //console.log("Seed:", Wallet.getSeed())
@@ -656,7 +666,7 @@ Page {
                 	            }
                 	            return;
                 	        }
-                	        onAutoSync();
+                	        syncDelayTimer.start();
                             // Switch to HomePage
                             pageStack.pushPage("qrc:/qml/pages/HomePage.qml", StackView.Immediate)//stack.push(home_page)                	        
                 	    }                	
