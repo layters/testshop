@@ -38,6 +38,7 @@ Popup {
     property alias gridDetailsAlignCenter: gridDetailsAlignCenterSwitch.checked
     property alias catalogViewBox: viewBox
     property alias hideIllicitProducts: hideIllicitProductsSwitch.checked
+    property alias hideNsfwProducts: hideNsfwProductsSwitch.checked
     // Monero tab properties
     property alias moneroNodeType: nodeTypeStackLayout.currentIndex//nodeTypeGroup.checkedButton.stackLayoutIndex
     property string moneroNodeAddress: (nodeTypeStackLayout.currentIndex == remoteNodeButton.stackLayoutIndex) ? moneroRemoteNodeList.selectedNode.replace(/^(https?:|)\/\//, '') : (moneroDaemonIPField.placeholderText + ":" + moneroDaemonPortField.placeholderText)
@@ -145,6 +146,7 @@ Popup {
         Settings.setString("catalog/catalog_view", viewBox.currentText);
         Settings.setBool("catalog/grid_details_align_center", gridDetailsAlignCenterSwitch.checked);
         Settings.setBool("catalog/hide_illegal_products", hideIllicitProductsSwitch.checked);
+        Settings.setBool("catalog/hide_nsfw_products", hideNsfwProductsSwitch.checked);
 
         // Monero daemon group
         Settings.setBool("monero/daemon/confirm_external_bind", confirmExternalBindSwitch.checked);
@@ -848,11 +850,31 @@ Popup {
                             onToggled: settingsDialog.save()
                         }
                     }
+                    // Show/Hide NSFW products
+                    Item {
+                        Layout.fillWidth: true
+                        Layout.preferredHeight: childrenRect.height
+                        visible: true
+                        Text {
+                            anchors.verticalCenter: hideNsfwProductsSwitch.verticalCenter
+                            text: qsTr("Hide NSFW products:")
+                            color: NeroshopComponents.Style.darkTheme ? "#ffffff" : "#000000"
+                        }
+                        
+                        NeroshopComponents.Switch {
+                            id: hideNsfwProductsSwitch
+                            anchors.right: parent.right; anchors.rightMargin: 5
+                            checked: Settings.getBool("catalog/hide_nsfw_products")
+                            radius: 13
+                            backgroundCheckedColor: "#605185"
+                            onToggled: settingsDialog.save()
+                        }
+                    }
                     // Show/Hide illicit products
                     Item {
                         Layout.fillWidth: true
                         Layout.preferredHeight: childrenRect.height
-                        visible: true // hide this option for now
+                        visible: true
                         Text {
                             anchors.verticalCenter: hideIllicitProductsSwitch.verticalCenter
                             text: qsTr("Hide illicit products:")

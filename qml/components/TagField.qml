@@ -16,7 +16,7 @@ Item {
     
     function tags() {
         var stringList = []
-        for (var i = 0; i < repeater.count; i++) {
+        for (let i = 0; i < repeater.count; i++) {
             let item = repeater.itemAt(i)
             let text = item.children[0].children[0].text
             stringList.push(text)
@@ -24,8 +24,44 @@ Item {
         return stringList
     }
     
+    function addTag(tagName) {
+        if (isTagDuplicate(tagName)) {
+            ////console.log("addTag: Duplicate tag name:", tagName)
+            return;
+        }
+        if (tagList.count >= maxTagCount) {
+            console.log("addTag: Maximum tags exceeded:", tagList.count)
+            return;
+        }
+        // Append tag to tagList model
+        tagList.append({ text: tagName });
+    }
+    
+    function removeTag(tagName) {
+        // Remove tag from tagList model
+        for (let i = tagList.count - 1; i >= 0; i--) {
+            if (tagList.get(i).text === tagName) {
+                tagList.remove(i)
+                break; // assuming tags are unique, stop after removing
+            }
+        }
+    }
+    
     function clearTags() {
         tagList.clear()
+    }
+    
+    function isTagDuplicate(tag) {
+        for (let i = 0; i < tagList.count; i++) {
+            if (tagList.get(i).text === tag) {
+                return true; // Found a duplicate tag
+            }
+        }
+        return false; // No duplicate tag found
+    }
+    
+    function containsTag(tag) {
+        return isTagDuplicate(tag)
     }
 
     ColumnLayout {
@@ -113,21 +149,12 @@ Item {
                     let tagsToAdd = Math.min(tags.length, maxTagCount - tagList.count)
                     
                     for (let i = 0; i < tagsToAdd; i++) {
-                        if (tags[i] !== "" && !isTagDuplicate(tags[i])) { // Skip duplicate tags and empty tags after comma
+                        if (tags[i] !== "" && !root.isTagDuplicate(tags[i])) { // Skip duplicate tags and empty tags after comma
                             tagList.append({ text: tags[i] })
                         }
                     }
                     tagInput.text = ""
                 }
-            }
-            
-            function isTagDuplicate(tag) {
-                for (let i = 0; i < tagList.count; i++) {
-                    if (tagList.get(i).text === tag) {
-                        return true; // Found a duplicate tag
-                    }
-                }
-                return false; // No duplicate tag found
             }
         }
     } // ColumnLayout
