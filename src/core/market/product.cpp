@@ -11,7 +11,7 @@ namespace neroshop {
 
 //-----------------------------------------------------------------------------
 
-Product::Product() : id(""), name(""), description(""), weight(0.0), code(""), category_id(0), subcategory_ids({}) {}
+Product::Product() : weight(0.0), category_id(0) {}
 
 //-----------------------------------------------------------------------------
 
@@ -111,8 +111,11 @@ void Product::add_variant(const ProductVariant& variant) {
     if (variant.options.size() > max_options_per_variant) {
         throw std::runtime_error("Too many options in variant, max allowed is " + std::to_string(max_options_per_variant));
     }
-    variants.push_back(variant);
-    validate_variants();
+    
+    if (!variant_exists(variant)) {
+        variants.push_back(variant);
+        validate_variants();
+    }
 }
 
 // Supports both single-option products (e.g. just “color”) and multi-option combinations
@@ -422,6 +425,19 @@ neroshop::Image Product::get_image(int index) const {
 
 std::vector<neroshop::Image> Product::get_images() const {
     return images;
+}
+
+//-----------------------------------------------------------------------------
+
+bool Product::variant_exists(const ProductVariant& variant) const {
+    for (const auto& v : variants) {
+        // Compare the options maps — assumes order doesn't matter
+        if (v.options == variant.options) {
+            // Optionally compare other fields, e.g. condition, price, etc.
+            return true;
+        }
+    }
+    return false;
 }
 
 //-----------------------------------------------------------------------------

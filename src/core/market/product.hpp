@@ -70,6 +70,8 @@ public:
     std::set<std::string> get_tags() const;
     Image get_image(int index) const;
     std::vector<Image> get_images() const;
+    
+    bool variant_exists(const ProductVariant& variant) const;
 private:
     void validate_variants() const;
     std::string id;

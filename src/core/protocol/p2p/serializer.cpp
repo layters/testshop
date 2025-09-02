@@ -1,6 +1,7 @@
 #include "serializer.hpp"
 
 #include "../../crypto/sha3.hpp"
+#include "../../tools/logger.hpp"
 #include "../../tools/string.hpp"
 #include "../../tools/timestamp.hpp"
 #include "../../wallet/wallet.hpp"
@@ -153,40 +154,45 @@ std::pair<std::string, std::string/*std::vector<uint8_t>*/> Serializer::serializ
             }
             product_obj["options"] = option_keys;
             // Serialize variants array
-            const auto& variants = product.get_variants();
-            if (!variants.empty()) {
-                nlohmann::json variants_array = nlohmann::json::array();
-                variants_array.get_ref<nlohmann::json::array_t&>().reserve(variants.size());
-                for (const auto& variant : variants) {
-                    nlohmann::json variant_obj = {};
-                    variant_obj["options"] = nlohmann::json::object();
-                    for (const auto& [key, value] : variant.options) {
-                        variant_obj["options"][key] = value;
-                    }
-                    // Optional fields — only serialize if present
-                    if (!variant.info.condition.empty()) {
-                        variant_obj["condition"] = variant.info.condition;
-                    }
-                    if (variant.info.weight.has_value() && variant.info.weight.value() > 0.0) {
-                        variant_obj["weight"] = variant.info.weight.value();
-                    }
-                    if (variant.info.price.has_value()) { // can be zero, so no zero checks
-                        variant_obj["price"] = std::abs(variant.info.price.value());
-                    }
-                    if (variant.info.quantity.has_value()) { // can be zero, so no zero checks
-                        variant_obj["quantity"] = std::abs(variant.info.quantity.value());
-                    }
-                    if (!variant.info.product_code.empty()) {
-                        variant_obj["product_code"] = variant.info.product_code;
-                    }
-                    if (variant.info.image_index.has_value() && variant.info.image_index.value() > -1) {
-                        variant_obj["image_index"] = variant.info.image_index.value();
-                    }
-
-                    variants_array.push_back(variant_obj);
+            const auto& variants = product.get_variants(); // Cannot be empty since product.get_options() is not empty
+            nlohmann::json variants_array = nlohmann::json::array();
+            variants_array.get_ref<nlohmann::json::array_t&>().reserve(variants.size());
+            std::set<std::string> seen_variants;
+            for (const auto& variant : variants) {
+                nlohmann::json variant_obj = {};
+                variant_obj["options"] = nlohmann::json::object();
+                for (const auto& [key, value] : variant.options) {
+                    variant_obj["options"][key] = value;
                 }
-                product_obj["variants"] = variants_array;
+                std::string opts = variant_obj["options"].dump();
+                if (seen_variants.count(opts) > 0) {
+                    log_warn("serialize: Skipped duplicate variant: {}", opts);
+                    continue; // Duplicate variant options, skip serialization
+                }
+                seen_variants.insert(opts);
+                // Optional fields — only serialize if present
+                if (!variant.info.condition.empty()) {
+                    variant_obj["condition"] = variant.info.condition;
+                }
+                if (variant.info.weight.has_value() && variant.info.weight.value() > 0.0) {
+                    variant_obj["weight"] = variant.info.weight.value();
+                }
+                if (variant.info.price.has_value()) { // can be zero, so no zero checks
+                    variant_obj["price"] = std::abs(variant.info.price.value());
+                }
+                if (variant.info.quantity.has_value()) { // can be zero, so no zero checks
+                    variant_obj["quantity"] = std::abs(variant.info.quantity.value());
+                }
+                if (!variant.info.product_code.empty()) {
+                    variant_obj["product_code"] = variant.info.product_code;
+                }
+                if (variant.info.image_index.has_value() && variant.info.image_index.value() > -1) {
+                    variant_obj["image_index"] = variant.info.image_index.value();
+                }
+
+                variants_array.push_back(variant_obj);
             }
+            product_obj["variants"] = variants_array;
         }
         std::string product_code = product.get_code();
         if(!product_code.empty()) product_obj["code"] = product_code; // can be left empty esp. if variants have their own product codes
