@@ -18,7 +18,7 @@
 namespace neroshop {
 ////////////////////
 Order::Order() : status(OrderStatus::New), subtotal(0.00), discount(0.00), shipping_cost(0.00), total(0.00), 
-    payment_option(PaymentOption::Escrow), payment_coin(PaymentCoin::Monero), delivery_option(DeliveryOption::Shipping)
+    payment_option(PaymentOption::Escrow), payment_coin(PaymentCoin::XMR), delivery_option(DeliveryOption::Shipping)
 {}
 
 Order::Order(const std::string& id, const std::string& date, OrderStatus status, const std::string& customer_id,
@@ -162,7 +162,7 @@ void Order::create_order(const neroshop::Cart& cart, const std::string& shipping
     auto order_status = OrderStatus::New;
     std::string customer_id = cart.owner_id;
     auto payment_option = PaymentOption::Escrow;
-    auto payment_coin = PaymentCoin::Monero;
+    auto payment_coin = PaymentCoin::XMR;
     auto delivery_option = DeliveryOption::Shipping;
     std::string notes = shipping_address;
     
@@ -307,7 +307,7 @@ void Order::create_order_batch(const neroshop::Cart& cart, const std::string& sh
         auto order_status = OrderStatus::New;
         std::string customer_id = cart.owner_id;
         auto payment_option = PaymentOption::Escrow;
-        auto payment_coin = PaymentCoin::Monero;
+        auto payment_coin = PaymentCoin::XMR;
         auto delivery_option = DeliveryOption::Shipping;
         std::string notes = shipping_address;
     
@@ -455,8 +455,8 @@ void Order::set_payment_coin(PaymentCoin payment_coin) {
 
 void Order::set_payment_coin_by_string(const std::string& payment_coin) {
     if(payment_coin == "None") set_payment_coin(PaymentCoin::None);
-    if(payment_coin == "Monero") set_payment_coin(PaymentCoin::Monero);
-    if(payment_coin == "Wownero") set_payment_coin(PaymentCoin::Wownero);
+    if(payment_coin == "Monero") set_payment_coin(PaymentCoin::XMR);
+    if(payment_coin == "Wownero") set_payment_coin(PaymentCoin::WOW);
     //if(payment_coin == "") set_payment_coin(PaymentCoin::);
 }
 

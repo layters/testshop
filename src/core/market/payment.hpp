@@ -37,8 +37,8 @@ enum class PaymentOption {
 // payment coins (cryptocurrencies used for payments)
 enum class PaymentCoin { 
     None = -1, // Intended for non-crypto payment methods
-    Monero,
-    Wownero,
+    XMR,
+    WOW,
 };
 
 //-----------------------------------------------------------------------------
@@ -58,8 +58,8 @@ inline std::string get_payment_method_as_string(PaymentMethod payment_method) {
 inline std::string get_payment_coin_as_string(PaymentCoin payment_coin) {
     switch(payment_coin) {
         case PaymentCoin::None: return "None";
-        case PaymentCoin::Monero: return "XMR";
-        case PaymentCoin::Wownero: return "WOW";
+        case PaymentCoin::XMR: return "XMR";
+        case PaymentCoin::WOW: return "WOW";
         default: return "";
     }
 }
