@@ -1847,7 +1847,6 @@ Popup {
                                 ////paymentCoinsItem.uncheckAllPaymentCoins()
                                 deliveryOptionsItem.uncheckAllDeliveryOptions()
                                 shippingOptionsItem.uncheckAllShippingOptions()
-                                nsfwBox.checked = false
                                 // Clear upload images as well
                                 for(let i = 0; i < productImageRepeater.count; i++) {
                                     let productImage = productImageRepeater.itemAt(i).children[0].children[0]
