@@ -209,7 +209,7 @@ std::pair<std::string, std::string/*std::vector<uint8_t>*/> Serializer::serializ
         if (!tags.empty()) {
             nlohmann::json tags_array = {};
             for (const auto& tag : tags) {
-                tags_array.push_back(tag);
+                tags_array.push_back(string_tools::lower(tag));
             }
             product_obj["tags"] = tags_array;
         }
