@@ -57,8 +57,6 @@ public:
     Q_INVOKABLE int getCategoryProductCount(int category_id) const; // returns number of products that fall under a specific category
     Q_INVOKABLE bool hasSubCategory(int category_id) const;
     
-    Q_INVOKABLE QVariantList getNodeList(const QString& coin) const;
-    Q_INVOKABLE QVariantList getNodeListDefault(const QString& coin) const;
     Q_INVOKABLE bool isWalletDaemonRunning() const;
 
     QVariantList validateDisplayName(const QString& display_name) const; // Validates display name based on regex requirements
@@ -69,10 +67,10 @@ public:
     Q_INVOKABLE int loginWithKeys(WalletManager* wallet_manager, UserManager * user_manager);
     Q_INVOKABLE int loginWithHW(WalletManager* wallet_manager, UserManager * user_manager);
     
-    Q_INVOKABLE QVariantList getListings(int sorting = 0, bool hide_illicit_items = true); // Products listed by sellers
-    Q_INVOKABLE QVariantList getListingsByCategory(int category_id, bool hide_illicit_items = true);
-    Q_INVOKABLE QVariantList getListingsByMostRecent(int limit, bool hide_illicit_items = true);
-    Q_INVOKABLE QVariantList getListingsBySearchTerm(const QString& search_term, bool hide_illicit_items = true); // count is the maximum number of search results (total). The search results (per page) can be between 10-100 or 50-100
+    Q_INVOKABLE QVariantList getListings(int sorting = 0, bool hideNsfw = false, bool hideIllicit = true); // Products listed by sellers
+    Q_INVOKABLE QVariantList getListingsByCategory(int categoryId, bool hideNsfw = false, bool hideIllicit = true);
+    Q_INVOKABLE QVariantList getListingsByMostRecent(int limit, bool hideNsfw = false, bool hideIllicit = true);
+    Q_INVOKABLE QVariantList getListingsBySearchTerm(const QString& searchTerm, bool hideNsfw = false, bool hideIllicit = true); // count is the maximum number of search results (total). The search results (per page) can be between 10-100 or 50-100
 
     Q_INVOKABLE QVariantList sortBy(const QVariantList& catalog, int sorting = 0);
 
@@ -113,11 +111,12 @@ public:
     
     Q_INVOKABLE int getStockAvailable(const QString& product_id);
     // Inventory model
-    Q_INVOKABLE QVariantList getInventory(const QString& user_id, bool hide_illicit_items = true);
+    Q_INVOKABLE QVariantList getInventory(const QString& userId, bool hideNsfw = false, bool hideIllicit = true);
     
     Q_INVOKABLE void createOrder(UserManager * user_manager, const QString& shipping_address);
 
-    bool isIllicitItem(const QVariantMap& listing_obj);
+    bool hasNsfwTag(const QVariantMap& listing);
+    bool isIllicitItem(const QVariantMap& listing);
     
     Q_INVOKABLE QString getPaymentCoinAsString(int paymentCoin);
     Q_INVOKABLE QString getShippingOptionAsString(int shippingOption);

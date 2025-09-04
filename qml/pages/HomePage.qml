@@ -139,7 +139,7 @@ Page {
                             onClicked: {
                                 if(Backend.getCategoryProductCount(modelData.id) <= 0) return;
                                 navBar.uncheckAllButtons()
-                                pageStack.pushPageWithProperties("qrc:/qml/pages/CatalogPage.qml", { "model": Backend.getListingsByCategory(modelData.id, settingsDialog.hideIllicitProducts) }, StackView.Immediate)
+                                pageStack.pushPageWithProperties("qrc:/qml/pages/CatalogPage.qml", { "model": Backend.getListingsByCategory(modelData.id, settingsDialog.hideNsfwProducts, settingsDialog.hideIllicitProducts) }, StackView.Immediate)
                             }
                             cursorShape: Qt.PointingHandCursor
                         }
@@ -170,7 +170,7 @@ Page {
                         spacing: 5
                         Repeater {
                             id: itemsRepeater
-                            model: Backend.getListingsByMostRecent(6, settingsDialog.hideIllicitProducts)
+                            model: Backend.getListingsByMostRecent(6, settingsDialog.hideNsfwProducts, settingsDialog.hideIllicitProducts)
                             delegate: Rectangle {
                                 implicitWidth: 200
                                 implicitHeight: implicitWidth
