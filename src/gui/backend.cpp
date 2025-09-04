@@ -965,7 +965,7 @@ int neroshop::Backend::getStockAvailable(const QString& product_id) {
 }
 //----------------------------------------------------------------
 //----------------------------------------------------------------
-QVariantList neroshop::Backend::getInventory(const QString& user_id, bool hide_illicit_items) {
+QVariantList neroshop::Backend::getInventory(const QString& userId, bool hideNsfw, bool hideIllicit) {
     Client * client = Client::get_main_client();
     
     neroshop::db::Sqlite3 * database = neroshop::get_database();
@@ -977,8 +977,8 @@ QVariantList neroshop::Backend::getInventory(const QString& user_id, bool hide_i
         neroshop::log_error("sqlite3_prepare_v2: " + std::string(sqlite3_errmsg(database->get_handle())));
         return {};
     }
-    // Bind user_id to TEXT
-    QByteArray userIdByteArray = user_id.toUtf8();
+    // Bind userId to TEXT
+    QByteArray userIdByteArray = userId.toUtf8();
     if(sqlite3_bind_text(stmt, 1, userIdByteArray.constData(), userIdByteArray.length(), SQLITE_STATIC) != SQLITE_OK) {
         neroshop::log_error("sqlite3_bind_text (arg: 1): " + std::string(sqlite3_errmsg(database->get_handle())));
         sqlite3_finalize(stmt);
@@ -1097,15 +1097,16 @@ QVariantList neroshop::Backend::getInventory(const QString& user_id, bool hide_i
                 }
                 inventory_object.insert("product_categories", product_categories);
                 //inventory_object.insert("", QString::fromStdString(product_obj[""].get<std::string>()));
-                // product attributes
-                if (product_obj.contains("attributes") && product_obj["attributes"].is_array()) {
-                    const auto& attributes_array = product_obj["attributes"];
-                    for (const auto& attribute : attributes_array) {
-                        if (attribute.is_object() && attribute.contains("weight")) { // attributes is an array of objects
-                            double weight = attribute["weight"].get<double>();
-                            inventory_object.insert("product_weight", weight);
+                // product tags
+                if (product_obj.contains("tags") && product_obj["tags"].is_array()) {
+                    const auto& tagsArray = product_obj["tags"];
+                    QStringList tagsList;
+                    for (const auto& tag : tagsArray) {
+                        if(tag.is_string()) {
+                            tagsList << QString::fromStdString(tag.get<std::string>());
                         }
                     }
+                    inventory_object.insert("product_tags", tagsList);
                 }
                 // product images
                 if (product_obj.contains("images") && product_obj["images"].is_array()) {
@@ -1126,11 +1127,14 @@ QVariantList neroshop::Backend::getInventory(const QString& user_id, bool hide_i
                 if (product_obj.contains("thumbnail") && product_obj["thumbnail"].is_string()) {
                     inventory_object.insert("product_thumbnail", QString::fromStdString(product_obj["thumbnail"].get<std::string>()));
                 }
+                
+                // Skip products with NSFW tags
+                if(hideNsfw) {
+                    if(hasNsfwTag(inventory_object)) continue;
+                }
                 // Skip products with illicit categories/subcategories
-                if (hide_illicit_items) {
-                    if(isIllicitItem(inventory_object)) {
-                        continue;
-                    }
+                if (hideIllicit) {
+                    if(isIllicitItem(inventory_object)) continue;
                 }
             }
             inventory_array.append(inventory_object);
@@ -1143,7 +1147,7 @@ QVariantList neroshop::Backend::getInventory(const QString& user_id, bool hide_i
 }
 //----------------------------------------------------------------
 //----------------------------------------------------------------
-QVariantList neroshop::Backend::getListingsBySearchTerm(const QString& searchTerm, bool hide_illicit_items) {
+QVariantList neroshop::Backend::getListingsBySearchTerm(const QString& searchTerm, bool hideNsfw, bool hideIllicit) {
     CurrencyExchangeRatesProvider *rateProvider = CurrencyExchangeRatesProvider::instance();
     // Transition from Sqlite to DHT:
     Client * client = Client::get_main_client();
@@ -1301,15 +1305,16 @@ QVariantList neroshop::Backend::getListingsBySearchTerm(const QString& searchTer
                 }
                 listing.insert("product_categories", product_categories);
                 //listing.insert("", QString::fromStdString(product_obj[""].get<std::string>()));
-                // product attributes
-                if (product_obj.contains("attributes") && product_obj["attributes"].is_array()) {
-                    const auto& attributes_array = product_obj["attributes"];
-                    for (const auto& attribute : attributes_array) {
-                        if (attribute.is_object() && attribute.contains("weight")) { // attributes is an array of objects
-                            double weight = attribute["weight"].get<double>();
-                            listing.insert("product_weight", weight);
+                // product tags
+                if (product_obj.contains("tags") && product_obj["tags"].is_array()) {
+                    const auto& tagsArray = product_obj["tags"];
+                    QStringList tagsList;
+                    for (const auto& tag : tagsArray) {
+                        if(tag.is_string()) {
+                            tagsList << QString::fromStdString(tag.get<std::string>());
                         }
                     }
+                    listing.insert("product_tags", tagsList);
                 }
                 // product images
                 if (product_obj.contains("images") && product_obj["images"].is_array()) {
@@ -1327,11 +1332,14 @@ QVariantList neroshop::Backend::getListingsBySearchTerm(const QString& searchTer
                     }
                     listing.insert("product_images", product_images);
                 }
+                
+                // Skip products with NSFW tags
+                if(hideNsfw) {
+                    if(hasNsfwTag(listing)) continue;
+                }
                 // Skip products with illicit categories/subcategories
-                if (hide_illicit_items) {
-                    if(isIllicitItem(listing)) {
-                        continue;
-                    }
+                if (hideIllicit) {
+                    if(isIllicitItem(listing)) continue;
                 }
             }
             // Append to catalog only if the key was found successfully
@@ -1344,7 +1352,7 @@ QVariantList neroshop::Backend::getListingsBySearchTerm(const QString& searchTer
     return catalog;
 }
 //----------------------------------------------------------------
-QVariantList neroshop::Backend::getListings(int sorting, bool hide_illicit_items) {
+QVariantList neroshop::Backend::getListings(int sorting, bool hideNsfw, bool hideIllicit) {
     CurrencyExchangeRatesProvider *rateProvider = CurrencyExchangeRatesProvider::instance();
     // Transition from Sqlite to DHT:
     Client * client = Client::get_main_client();
@@ -1486,15 +1494,16 @@ QVariantList neroshop::Backend::getListings(int sorting, bool hide_illicit_items
                 }
                 listing.insert("product_categories", product_categories);
                 //listing.insert("", QString::fromStdString(product_obj[""].get<std::string>()));
-                // product attributes
-                if (product_obj.contains("attributes") && product_obj["attributes"].is_array()) {
-                    const auto& attributes_array = product_obj["attributes"];
-                    for (const auto& attribute : attributes_array) {
-                        if (attribute.is_object() && attribute.contains("weight")) { // attributes is an array of objects
-                            double weight = attribute["weight"].get<double>();
-                            listing.insert("product_weight", weight);
+                // product tags
+                if (product_obj.contains("tags") && product_obj["tags"].is_array()) {
+                    const auto& tagsArray = product_obj["tags"];
+                    QStringList tagsList;
+                    for (const auto& tag : tagsArray) {
+                        if(tag.is_string()) {
+                            tagsList << QString::fromStdString(tag.get<std::string>());
                         }
                     }
+                    listing.insert("product_tags", tagsList);
                 }
                 // product images
                 if (product_obj.contains("images") && product_obj["images"].is_array()) {
@@ -1515,11 +1524,14 @@ QVariantList neroshop::Backend::getListings(int sorting, bool hide_illicit_items
                 if (product_obj.contains("thumbnail") && product_obj["thumbnail"].is_string()) {
                     listing.insert("product_thumbnail", QString::fromStdString(product_obj["thumbnail"].get<std::string>()));
                 }
+                
+                // Skip products with NSFW tags
+                if(hideNsfw) {
+                    if(hasNsfwTag(listing)) continue;
+                }
                 // Skip products with illicit categories/subcategories
-                if (hide_illicit_items) {
-                    if(isIllicitItem(listing)) {
-                        continue;
-                    }
+                if (hideIllicit) {
+                    if(isIllicitItem(listing)) continue;
                 }
             }
             catalog.append(listing);
@@ -1616,7 +1628,7 @@ QVariantList neroshop::Backend::getListings(int sorting, bool hide_illicit_items
     return catalog;    
 }
 //----------------------------------------------------------------
-QVariantList neroshop::Backend::getListingsByCategory(int category_id, bool hide_illicit_items) {
+QVariantList neroshop::Backend::getListingsByCategory(int categoryId, bool hideNsfw, bool hideIllicit) {
     CurrencyExchangeRatesProvider *rateProvider = CurrencyExchangeRatesProvider::instance();
     // Transition from Sqlite to DHT:
     Client * client = Client::get_main_client();
@@ -1631,7 +1643,7 @@ QVariantList neroshop::Backend::getListingsByCategory(int category_id, bool hide
         return {};
     }
     //-------------------------------------------------------
-    std::string category = get_category_name_by_id(category_id);
+    std::string category = get_category_name_by_id(categoryId);
     // Bind value to parameter arguments
     if(sqlite3_bind_text(stmt, 1, category.c_str(), category.length(), SQLITE_STATIC) != SQLITE_OK) {
         neroshop::log_error("sqlite3_bind_text: " + std::string(sqlite3_errmsg(database->get_handle())));
@@ -1666,7 +1678,7 @@ QVariantList neroshop::Backend::getListingsByCategory(int category_id, bool hide
                 std::string response2;
                 client->remove(key.toStdString(), response2);
                 log_trace("Received response (remove): {}", response2);
-                //emit categoryProductCountChanged();//(category_id);
+                //emit categoryProductCountChanged();//(categoryId);
                 //emit searchResultsChanged();
                 continue; // Key is lost or missing from DHT, skip to next iteration
             }
@@ -1767,18 +1779,18 @@ QVariantList neroshop::Backend::getListingsByCategory(int category_id, bool hide
                 }
                 listing.insert("product_categories", product_categories);
                 //listing.insert("", QString::fromStdString(product_obj[""].get<std::string>()));
-                // product attributes
-                if (product_obj.contains("attributes") && product_obj["attributes"].is_array()) {
-                    const auto& attributes_array = product_obj["attributes"];
-                    for (const auto& attribute : attributes_array) {
-                        if (attribute.is_object() && attribute.contains("weight")) { // attributes is an array of objects
-                            double weight = attribute["weight"].get<double>();
-                            listing.insert("product_weight", weight);
+                //listing.insert("code", QString::fromStdString(product_obj[""].get<std::string>()));
+                // product tags
+                if (product_obj.contains("tags") && product_obj["tags"].is_array()) {
+                    const auto& tagsArray = product_obj["tags"];
+                    QStringList tagsList;
+                    for (const auto& tag : tagsArray) {
+                        if(tag.is_string()) {
+                            tagsList << QString::fromStdString(tag.get<std::string>());
                         }
                     }
+                    listing.insert("product_tags", tagsList);
                 }
-                //listing.insert("code", QString::fromStdString(product_obj[""].get<std::string>()));
-                //listing.insert("tags", QString::fromStdString(product_obj[""].get<std::string>()));
                 // product images
                 if (product_obj.contains("images") && product_obj["images"].is_array()) {
                     const auto& images_array = product_obj["images"];
@@ -1795,11 +1807,14 @@ QVariantList neroshop::Backend::getListingsByCategory(int category_id, bool hide
                     }
                     listing.insert("product_images", product_images);
                 }
+                
+                // Skip products with NSFW tags
+                if(hideNsfw) {
+                    if(hasNsfwTag(listing)) continue;
+                }
                 // Skip products with illicit categories/subcategories
-                if (hide_illicit_items) {
-                    if(isIllicitItem(listing)) {
-                        continue;
-                    }
+                if (hideIllicit) {
+                    if(isIllicitItem(listing)) continue;
                 }
             }
             catalog.append(listing);
@@ -1811,8 +1826,8 @@ QVariantList neroshop::Backend::getListingsByCategory(int category_id, bool hide
     return catalog;
 }
 //----------------------------------------------------------------
-QVariantList neroshop::Backend::getListingsByMostRecent(int limit, bool hide_illicit_items) {
-    auto catalog = getListings(static_cast<int>(EnumWrapper::Sorting::SortByMostRecent), hide_illicit_items);
+QVariantList neroshop::Backend::getListingsByMostRecent(int limit, bool hideNsfw, bool hideIllicit) {
+    auto catalog = getListings(static_cast<int>(EnumWrapper::Sorting::SortByMostRecent), hideNsfw, hideIllicit);
     if (catalog.size() > limit) {
         catalog = catalog.mid(0, limit);
     }
@@ -1913,8 +1928,26 @@ QVariantList neroshop::Backend::sortBy(const QVariantList& catalog, int sorting)
     
     return sortedCatalog;
 }
+
 //----------------------------------------------------------------
 //----------------------------------------------------------------
+
+bool neroshop::Backend::hasNsfwTag(const QVariantMap& listing) {
+    if (!listing.contains("product_tags")) {
+        // no tags for this listing, return false
+        return false;
+    }
+    
+    QStringList tagsList = listing["product_tags"].toStringList();
+    if (tagsList.contains("nsfw", Qt::CaseInsensitive)) { // using Qt::CaseInsensitive means it matches "nsfw", "NSFW", "Nsfw", etc.
+        return true;
+    }
+    
+    return false;
+}
+
+//----------------------------------------------------------------
+
 bool neroshop::Backend::isIllicitItem(const QVariantMap& listing_obj) {
     std::string category_name = predefined_categories[25].name;
     
@@ -1935,126 +1968,10 @@ bool neroshop::Backend::isIllicitItem(const QVariantMap& listing_obj) {
 void neroshop::Backend::createOrder(UserManager * user_manager, const QString& shipping_address) {
     user_manager->createOrder(shipping_address);
 }
-//----------------------------------------------------------------
-//----------------------------------------------------------------
-
-QSet<QString> getBannedNodes() {
-    QSet<QString> banned_nodes;
-
-    QUrl ban_url("https://raw.githubusercontent.com/Boog900/monero-ban-list/refs/heads/main/ban_list.txt");
-    QNetworkAccessManager ban_manager;
-    QEventLoop ban_loop;
-    QObject::connect(&ban_manager, &QNetworkAccessManager::finished, &ban_loop, &QEventLoop::quit);
-    auto ban_reply = ban_manager.get(QNetworkRequest(ban_url));
-    ban_loop.exec();
-    QByteArray ban_data = ban_reply->readAll();
-    // Split by lines and insert each trimmed entry
-    for(const QByteArray &line : ban_data.split('\n')) {
-        QString addr = QString(line).trimmed();
-        // Skip empty or fully commented lines (e.g., lines starting with '#')
-        if(addr.isEmpty() || addr.startsWith('#'))
-            continue;
-            
-        // Removing trailing comment portion if any (e.g., after '#')
-        int commentIndex = addr.indexOf('#');
-        if (commentIndex != -1) {
-            addr = addr.left(commentIndex).trimmed();
-        }
-        
-        banned_nodes.insert(addr);//std::cout << addr.toStdString() << std::endl;
-    }
-    
-    return banned_nodes;
-}
 
 //----------------------------------------------------------------
-
-QVariantList neroshop::Backend::getNodeListDefault(const QString& coin) const {
-    QVariantList node_list;
-    std::string network_type = Wallet::get_network_type_as_string();
-    std::vector<std::string> node_table = neroshop::Script::get_table_string(neroshop::lua_state, coin.toStdString() + ".nodes." + network_type); // Get monero nodes from settings.lua////std::cout << "lua_query: " << coin.toStdString() + ".nodes." + network_type << std::endl;
-    for(auto strings : node_table) {
-        node_list << QString::fromStdString(strings);
-    }
-    return node_list;
-}
-
 //----------------------------------------------------------------
 
-// TODO: fetch and update blockchain nodes concurrently
-QVariantList neroshop::Backend::getNodeList(const QString& coin) const {
-    const QUrl url(QStringLiteral("https://monero.fail/health.json"));
-    QVariantList node_list;
-    QString coin_lower = coin.toLower(); // make coin name lowercase
-    
-    WalletNetworkType network_type = Wallet::get_network_type();
-    auto network_ports = WalletNetworkPortMap[network_type];
-    
-    QSet<QString> banned_nodes;
-    if(network_type == WalletNetworkType::Mainnet) { // ban nodes only when on mainnet
-        banned_nodes = getBannedNodes();
-    }
-    
-    QNetworkAccessManager manager;
-    QEventLoop loop;
-    QObject::connect(&manager, &QNetworkAccessManager::finished, &loop, &QEventLoop::quit);
-
-    auto reply = manager.get(QNetworkRequest(url));
-    loop.exec();
-    QJsonParseError error;
-    const auto json_doc = QJsonDocument::fromJson(reply->readAll(), &error);
-    // Use fallback node list if we fail to get the nodes from the url
-    if (error.error != QJsonParseError::NoError) {
-        neroshop::log_error("Error reading json from " + url.toString().toStdString() + "\nUsing default nodes as fallback");
-        return getNodeListDefault(coin_lower);
-    }
-    // Get monero nodes from the JSON
-    QJsonObject root_obj = json_doc.object(); // {}
-    QJsonObject coin_obj = root_obj.value(coin_lower).toObject(); // "monero": {} // "wownero": {}
-    QJsonObject clearnet_obj = coin_obj.value("clear").toObject(); // "clear": {} // "onion": {}, "web_compatible": {}
-    QList<QVariantMap> node_objects;  // intermediate list to hold node info maps
-    // Loop through monero nodes (clearnet)
-    foreach(const QString& key, clearnet_obj.keys()) {//for (const auto monero_nodes : clearnet_obj) {
-        QJsonObject monero_node_obj = clearnet_obj.value(key).toObject();//QJsonObject monero_node_obj = monero_nodes.toObject();
-        QVariantMap node_object; // Create an object for each row
-        if(string_tools::contains_substring(key.toStdString(), network_ports)) {
-            QUrl url(key); // e.g. "http://123.45.67.89:18081" or "https://[2001:db8::1]:18081"
-            if (url.isValid()) {
-                QString ipAddress = url.host();  // Extracts the IP without scheme or port            
-                if (banned_nodes.contains(ipAddress)) {
-                    std::cout << "Banned: " << ipAddress.toStdString() << std::endl;
-                    continue; // skip banned IPs
-                }
-            }
-        
-            node_object.insert("address", key);
-            node_object.insert("available", monero_node_obj.value("available").toBool());//std::cout << "available: " << monero_node_obj.value("available").toBool() << "\n";
-            ////node_object.insert("", );//////std::cout << ": " << monero_node_obj.value("checks").toArray() << "\n";
-            node_object.insert("datetime_checked", monero_node_obj.value("datetime_checked").toString());//std::cout << "datetime_checked: " << monero_node_obj.value("datetime_checked").toString().toStdString() << "\n";
-            node_object.insert("datetime_entered", monero_node_obj.value("datetime_entered").toString());//std::cout << "datetime_entered: " << monero_node_obj.value("datetime_entered").toString().toStdString() << "\n";
-            node_object.insert("datetime_failed", monero_node_obj.value("datetime_failed").toString());//std::cout << "datetime_failed: " << monero_node_obj.value("datetime_failed").toString().toStdString() << "\n";
-            node_object.insert("last_height", monero_node_obj.value("last_height").toInt());//std::cout << "last_height: " << monero_node_obj.value("last_height").toInt() << "\n";
-            node_objects.append(node_object);
-        }
-    }
-    
-    // Sort node_objects by "available" key descending, after finishing the loop
-    std::sort(node_objects.begin(), node_objects.end(), [](const QVariantMap &a, const QVariantMap &b) {
-        bool a_available = a.value("available").toBool();
-        bool b_available = b.value("available").toBool();
-        // Sort available (true) nodes before unavailable (false) nodes
-        return a_available > b_available;
-    });
-    
-    // Now append sorted maps to the QVariantList to return
-    for (const QVariantMap &node : node_objects) {
-        node_list.append(node);
-    }
-    
-    return node_list;
-}
-
-//----------------------------------------------------------------
 // Todo: use QProcess to check if monero daemon is running
 bool neroshop::Backend::isWalletDaemonRunning() const {
     /*int monerod = Process::get_process_by_name("monerod");

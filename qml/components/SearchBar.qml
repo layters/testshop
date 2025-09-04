@@ -9,7 +9,7 @@ import "." as NeroshopComponents
 Item {
     id: searchBar
     width: childrenRect.width; height: childrenRect.height
-    property var model: Backend.getListingsBySearchTerm(searchField.text, settingsDialog.hideIllicitProducts)
+    property var model: Backend.getListingsBySearchTerm(searchField.text, settingsDialog.hideNsfwProducts, settingsDialog.hideIllicitProducts)
     property alias searchButton: searchButton
     TextField {
         id: searchField
@@ -51,7 +51,7 @@ Item {
             console.log("Searching for " + searchField.text)
             navBar.uncheckAllButtons()
             suggestionsPopup.close()
-            pageStack.pushPageWithProperties("qrc:/qml/pages/CatalogPage.qml", {"model": (searchField.text.length < 1) ? Backend.getListings(Enum.Sorting.SortNone, settingsDialog.hideIllicitProducts) : searchBar.model }, StackView.Immediate)//, {"model": [""]})
+            pageStack.pushPageWithProperties("qrc:/qml/pages/CatalogPage.qml", {"model": (searchField.text.length < 1) ? Backend.getListings(Enum.Sorting.SortNone, settingsDialog.hideNsfwProducts, settingsDialog.hideIllicitProducts) : searchBar.model }, StackView.Immediate)//, {"model": [""]})
             //console.log("page Loader Item (CatalogPage):", pageLoader.item)
             //console.log("page Loader Item (CatalogPage.catalog):", pageLoader.catalog)//.item)
         
