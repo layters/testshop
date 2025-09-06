@@ -67,7 +67,7 @@ public:
     Q_INVOKABLE int loginWithKeys(WalletManager* wallet_manager, UserManager * user_manager);
     Q_INVOKABLE int loginWithHW(WalletManager* wallet_manager, UserManager * user_manager);
     
-    Q_INVOKABLE QVariantList getListings(int sorting = 0, bool hideNsfw = false, bool hideIllicit = true); // Products listed by sellers
+    Q_INVOKABLE QVariantList getListings(bool hideNsfw = false, bool hideIllicit = true); // Products listed by sellers
     Q_INVOKABLE QVariantList getListingsByCategory(int categoryId, bool hideNsfw = false, bool hideIllicit = true);
     Q_INVOKABLE QVariantList getListingsByMostRecent(int limit, bool hideNsfw = false, bool hideIllicit = true);
     Q_INVOKABLE QVariantList getListingsBySearchTerm(const QString& searchTerm, bool hideNsfw = false, bool hideIllicit = true); // count is the maximum number of search results (total). The search results (per page) can be between 10-100 or 50-100

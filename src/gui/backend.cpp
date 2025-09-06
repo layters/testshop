@@ -1352,7 +1352,7 @@ QVariantList neroshop::Backend::getListingsBySearchTerm(const QString& searchTer
     return catalog;
 }
 //----------------------------------------------------------------
-QVariantList neroshop::Backend::getListings(int sorting, bool hideNsfw, bool hideIllicit) {
+QVariantList neroshop::Backend::getListings(bool hideNsfw, bool hideIllicit) {
     CurrencyExchangeRatesProvider *rateProvider = CurrencyExchangeRatesProvider::instance();
     // Transition from Sqlite to DHT:
     Client * client = Client::get_main_client();
@@ -1540,92 +1540,7 @@ QVariantList neroshop::Backend::getListings(int sorting, bool hideNsfw, bool hid
     
     sqlite3_finalize(stmt);
     
-    switch(sorting) {
-        case static_cast<int>(EnumWrapper::Sorting::SortNone):
-            // Code for sorting by none - do nothing
-            break;
-        case static_cast<int>(EnumWrapper::Sorting::SortByCategory):
-            // Code for sorting by category - unavailable. Use getListingsByCategory() instead
-            break;
-        case static_cast<int>(EnumWrapper::Sorting::SortByMostRecent):
-            // Perform the sorting operation on the catalog based on the "most recent" criteria
-            std::sort(catalog.begin(), catalog.end(), [](const QVariant& a, const QVariant& b) {
-                QVariantMap listingA = a.toMap();
-                QVariantMap listingB = b.toMap();
-                QString dateA = listingA["date"].toString();
-                QString dateB = listingB["date"].toString();
-                
-                // Convert 'Z' to UTC+0 offset
-                if (dateA.endsWith("Z")) {
-                    dateA.replace(dateA.length() - 1, 1, "+00:00");
-                }
-                if (dateB.endsWith("Z")) {
-                    dateB.replace(dateB.length() - 1, 1, "+00:00");
-                }
-                
-                QDateTime dateTimeA = QDateTime::fromString(dateA, Qt::ISODateWithMs);
-                QDateTime dateTimeB = QDateTime::fromString(dateB, Qt::ISODateWithMs);
-
-                return dateTimeA > dateTimeB;
-            });
-            break;
-        case static_cast<int>(EnumWrapper::Sorting::SortByOldest):
-            std::sort(catalog.begin(), catalog.end(), [](const QVariant& a, const QVariant& b) {
-                QVariantMap listingA = a.toMap();
-                QVariantMap listingB = b.toMap();
-                QString dateA = listingA["date"].toString();
-                QString dateB = listingB["date"].toString();
-                
-                // Convert 'Z' to UTC+0 offset
-                if (dateA.endsWith("Z")) {
-                    dateA.replace(dateA.length() - 1, 1, "+00:00");
-                }
-                if (dateB.endsWith("Z")) {
-                    dateB.replace(dateB.length() - 1, 1, "+00:00");
-                }
-                
-                QDateTime dateTimeA = QDateTime::fromString(dateA, Qt::ISODateWithMs);
-                QDateTime dateTimeB = QDateTime::fromString(dateB, Qt::ISODateWithMs);
-
-                return dateTimeA < dateTimeB;
-            });
-            break;
-        case static_cast<int>(EnumWrapper::Sorting::SortByAlphabeticalOrder):
-            // Sort the catalog list by product name (alphabetically)
-            std::sort(catalog.begin(), catalog.end(), [](const QVariant& listing1, const QVariant& listing2) {
-                QString productName1 = listing1.toMap()["product_name"].toString();
-                QString productName2 = listing2.toMap()["product_name"].toString();
-                return QString::compare(productName1, productName2, Qt::CaseInsensitive) < 0;
-            });
-            break;
-        case static_cast<int>(EnumWrapper::Sorting::SortByPriceLowest):
-            // Perform the sorting operation on the catalog based on the "price lowest" criteria
-            std::sort(catalog.begin(), catalog.end(), [](const QVariant& a, const QVariant& b) {
-                QVariantMap listingA = a.toMap();
-                QVariantMap listingB = b.toMap();
-                return listingA["price_xmr"].toDouble() < listingB["price_xmr"].toDouble();
-            });
-            break;
-        case static_cast<int>(EnumWrapper::Sorting::SortByPriceHighest):
-            // Perform the sorting operation on the catalog based on the "price highest" criteria
-            std::sort(catalog.begin(), catalog.end(), [](const QVariant& a, const QVariant& b) {
-                QVariantMap listingA = a.toMap();
-                QVariantMap listingB = b.toMap();
-                return listingA["price_xmr"].toDouble() > listingB["price_xmr"].toDouble();
-            });
-            break;
-        case static_cast<int>(EnumWrapper::Sorting::SortByMostFavorited):
-            // Code for sorting by most favorited
-            break;
-        case static_cast<int>(EnumWrapper::Sorting::SortByMostSales):
-            // Code for sorting by most sales
-            break;
-        default:
-            // Code for handling unknown sorting value - do nothing
-            break;
-    }
-
-    return catalog;    
+    return catalog;
 }
 //----------------------------------------------------------------
 QVariantList neroshop::Backend::getListingsByCategory(int categoryId, bool hideNsfw, bool hideIllicit) {
@@ -1827,11 +1742,12 @@ QVariantList neroshop::Backend::getListingsByCategory(int categoryId, bool hideN
 }
 //----------------------------------------------------------------
 QVariantList neroshop::Backend::getListingsByMostRecent(int limit, bool hideNsfw, bool hideIllicit) {
-    auto catalog = getListings(static_cast<int>(EnumWrapper::Sorting::SortByMostRecent), hideNsfw, hideIllicit);
-    if (catalog.size() > limit) {
-        catalog = catalog.mid(0, limit);
+    auto catalog = getListings(hideNsfw, hideIllicit);
+    auto catalogSorted = sortBy(catalog, static_cast<int>(EnumWrapper::Sorting::SortByMostRecent));
+    if (catalogSorted.size() > limit) {
+        catalogSorted = catalogSorted.mid(0, limit);
     }
-    return catalog;
+    return catalogSorted;
 }
 //----------------------------------------------------------------
 QVariantList neroshop::Backend::sortBy(const QVariantList& catalog, int sorting) {
