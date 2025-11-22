@@ -13,6 +13,7 @@
 #include "../tools/base64.hpp"
 #include "../crypto/rsa.hpp"
 #include "../tools/timestamp.hpp"
+#include "../protocol/rpc/protobuf.hpp"
 
 #include <cmath> // floor
 #include <random>
@@ -103,9 +104,20 @@ std::string Seller::list_item(
     std::string value = data.second;//std::cout << "key: " << data.first << "\nvalue: " << data.second << "\n";
     
     // Send put request to neighboring nodes (and your node too JIC)
-    std::string response;
+    std::vector<uint8_t> response;
     client->put(key, value, response);
-    log_trace("Received response (put): {}", response);
+    #if defined(NEROSHOP_USE_PROTOBUF)
+    neroshop::DhtMessage resp_msg;
+    if (!resp_msg.ParseFromArray(response.data(), static_cast<int>(response.size()))) {
+        return "";
+    }
+
+    if (resp_msg.has_error()) {
+        log_trace("Received error (put): {}", resp_msg.error().DebugString());
+    } else if(resp_msg.has_response()) {
+        log_trace("Received response (put): {}", resp_msg.response().DebugString());
+    }
+    #endif
     
     // Return listing key
     return key;
@@ -116,20 +128,34 @@ void Seller::delist_item(const std::string& listing_key) {
     Client * client = Client::get_main_client();
     // TODO: remove product from table cart_item, table images, table products, and table product_ratings as well
     // Get the value of the corresponding key from the DHT
-    std::string response;
-    client->get(listing_key, response); // TODO: error handling
-    log_trace("Received response (get): {}", response);
-    // Parse the response
-    nlohmann::json json = nlohmann::json::parse(response);
-    if(json.contains("error")) {
-        neroshop::log_error("delist_item: key is lost or missing from DHT");
+    std::vector<uint8_t> response;
+    client->get(listing_key, response);
+    // Skip empty and invalid responses
+    if(response.empty()) return;
+    #if defined(NEROSHOP_USE_PROTOBUF)
+    neroshop::DhtMessage resp_msg;
+    if (!resp_msg.ParseFromArray(response.data(), static_cast<int>(response.size()))) {
+        return; // Parsing error, return
+    }
+    if (resp_msg.has_error()) {
+        log_trace("Received error (get): {}", resp_msg.error().DebugString());
+        // Remove obsolete key from local storage
+        std::vector<uint8_t> response2;
+        client->remove(listing_key, response2);
+        neroshop::DhtMessage resp_msg2;
+        if (resp_msg2.ParseFromArray(response2.data(), static_cast<int>(response2.size()))) {
+            if(resp_msg2.has_response()) log_info("Removed key {}", listing_key);//log_trace("Received response (remove): {}", resp_msg2.response().DebugString());
+        }
         return; // Key is lost or missing from DHT, return
-    }    
+    } else if(resp_msg.has_response()) {
+        log_trace("Received response (get): {}", resp_msg.response().DebugString());
+    }
     
-    const auto& response_obj = json["response"];
-    assert(response_obj.is_object());
-    if (response_obj.contains("value") && response_obj["value"].is_string()) {
-        const auto& value = response_obj["value"].get<std::string>();
+    const auto& payload = resp_msg.response().response();
+    const auto& data_map = payload.data();
+    if (data_map.find("value") != data_map.end()) {
+        std::string value = data_map.at("value");
+    #endif
         nlohmann::json value_obj = nlohmann::json::parse(value);
         assert(value_obj.is_object());//std::cout << value_obj.dump(4) << "\n";
         std::string metadata = value_obj["metadata"].get<std::string>();
@@ -147,7 +173,18 @@ void Seller::delist_item(const std::string& listing_key) {
         if(!self_verified) { neroshop::log_error("Data verification failed."); return; }
         // Remove listing from database
         client->remove(listing_key, response);
-        log_trace("Received response (remove): {}", response);
+        #if defined(NEROSHOP_USE_PROTOBUF)
+        neroshop::DhtMessage resp_msg;
+        if (!resp_msg.ParseFromArray(response.data(), static_cast<int>(response.size()))) {
+            return;
+        }
+
+        if (resp_msg.has_error()) {
+            log_trace("Received error (remove): {}", resp_msg.error().DebugString());
+        } else if(resp_msg.has_response()) {
+            log_trace("Received response (remove): {}", resp_msg.response().DebugString());
+        }
+        #endif
     }
 }
 ////////////////////
@@ -320,20 +357,34 @@ void Seller::set_stock_quantity(const std::string& listing_key, int quantity) {
     Client * client = Client::get_main_client();
 
     // Get the value of the corresponding key from the DHT
-    std::string response;
-    client->get(listing_key, response); // TODO: error handling
-    log_trace("Received response (get): {}", response);
-    // Parse the response
-    nlohmann::json json = nlohmann::json::parse(response);
-    if(json.contains("error")) {
-        neroshop::log_error("set_stock_quantity: key is lost or missing from DHT");
-        return; // Key is lost or missing from DHT, return 
-    }    
+    std::vector<uint8_t> response;
+    client->get(listing_key, response);
+    // Skip empty and invalid responses
+    if(response.empty()) return;
+    #if defined(NEROSHOP_USE_PROTOBUF)
+    neroshop::DhtMessage resp_msg;
+    if (!resp_msg.ParseFromArray(response.data(), static_cast<int>(response.size()))) {
+        return; // Parsing error, return empty object
+    }
+    if (resp_msg.has_error()) {
+        log_trace("Received error (get): {}", resp_msg.error().DebugString());
+        // Remove obsolete key from local storage
+        std::vector<uint8_t> response2;
+        client->remove(listing_key, response2);
+        neroshop::DhtMessage resp_msg2;
+        if (resp_msg2.ParseFromArray(response2.data(), static_cast<int>(response2.size()))) {
+            if(resp_msg2.has_response()) log_info("Removed key {}", listing_key);//log_trace("Received response (remove): {}", resp_msg2.response().DebugString());
+        }
+        return; // Key is lost or missing from DHT, return empty object
+    } else if(resp_msg.has_response()) {
+        log_trace("Received response (get): {}", resp_msg.response().DebugString());
+    }
     
-    const auto& response_obj = json["response"];
-    assert(response_obj.is_object());
-    if (response_obj.contains("value") && response_obj["value"].is_string()) {
-        const auto& value = response_obj["value"].get<std::string>();
+    const auto& payload = resp_msg.response().response();
+    const auto& data_map = payload.data();
+    if (data_map.find("value") != data_map.end()) {
+        std::string value = data_map.at("value");
+    #endif
         nlohmann::json value_obj = nlohmann::json::parse(value);
         assert(value_obj.is_object());//std::cout << value_obj.dump(4) << "\n";
         std::string metadata = value_obj["metadata"].get<std::string>();
@@ -358,9 +409,20 @@ void Seller::set_stock_quantity(const std::string& listing_key, int quantity) {
         value_obj["last_updated"] = neroshop::timestamp::get_current_utc_timestamp();
         // Send set request containing the updated value with the same key as before
         std::string modified_value = value_obj.dump();
-        std::string response;
+        std::vector<uint8_t> response;
         client->set(listing_key, modified_value, response);
-        log_trace("Received response (set): {}", response);
+        #if defined(NEROSHOP_USE_PROTOBUF)
+        neroshop::DhtMessage resp_msg;
+        if (!resp_msg.ParseFromArray(response.data(), static_cast<int>(response.size()))) {
+            return;
+        }
+
+        if (resp_msg.has_error()) {
+            log_trace("Received error (set): {}", resp_msg.error().DebugString());
+        } else if(resp_msg.has_response()) {
+            log_trace("Received response (set): {}", resp_msg.response().DebugString());
+        }
+        #endif
     }
 }
 ////////////////////

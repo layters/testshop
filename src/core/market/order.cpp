@@ -10,6 +10,7 @@
 #include "../protocol/p2p/serializer.hpp"
 #include "../protocol/transport/client.hpp"
 #include "../tools/timestamp.hpp"
+#include "../protocol/rpc/protobuf.hpp"
 
 #include <unordered_set>
 
@@ -41,23 +42,34 @@ static nlohmann::json get_listing_object(const std::string& listing_key) {
     neroshop::Client * client = neroshop::Client::get_main_client();
     
     // Get the value of the corresponding key from the DHT
-    std::string response;
+    std::vector<uint8_t> response;
     client->get(listing_key, response);
-    std::cout << "Received response (get): " << response << "\n";
-    // Parse the response
-    nlohmann::json json = nlohmann::json::parse(response);
-    if(json.contains("error")) {
-        std::cout << "get_listing_object: listing key is lost or missing from DHT\n";
-        std::string response2;
+    // Skip empty and invalid responses
+    if(response.empty()) return nlohmann::json();
+    #if defined(NEROSHOP_USE_PROTOBUF)
+    neroshop::DhtMessage resp_msg;
+    if (!resp_msg.ParseFromArray(response.data(), static_cast<int>(response.size()))) {
+        return nlohmann::json(); // Parsing error, return empty object
+    }
+    if (resp_msg.has_error()) {
+        log_trace("Received error (get): {}", resp_msg.error().DebugString());
+        // Remove obsolete key from local storage
+        std::vector<uint8_t> response2;
         client->remove(listing_key, response2);
-        std::cout << "Received response (remove): " << response2 << "\n";
-        return nlohmann::json(); // Key is lost or missing from DHT
+        neroshop::DhtMessage resp_msg2;
+        if (resp_msg2.ParseFromArray(response2.data(), static_cast<int>(response2.size()))) {
+            if(resp_msg2.has_response()) log_info("Removed key {}", listing_key);//log_trace("Received response (remove): {}", resp_msg2.response().DebugString());
+        }
+        return nlohmann::json(); // Key is lost or missing from DHT, return empty object
+    } else if(resp_msg.has_response()) {
+        log_trace("Received response (get): {}", resp_msg.response().DebugString());
     }
     
-    const auto& response_obj = json["response"];
-    assert(response_obj.is_object());
-    if (response_obj.contains("value") && response_obj["value"].is_string()) {
-        const auto& value = response_obj["value"].get<std::string>();
+    const auto& payload = resp_msg.response().response();
+    const auto& data_map = payload.data();
+    if (data_map.find("value") != data_map.end()) {
+        std::string value = data_map.at("value");
+    #endif
         nlohmann::json value_obj = nlohmann::json::parse(value);
         assert(value_obj.is_object());//std::cout << value_obj.dump(4) << "\n";
         std::string metadata = value_obj["metadata"].get<std::string>();
@@ -188,9 +200,20 @@ void Order::create_order(const neroshop::Cart& cart, const std::string& shipping
     
     // Send put request to neighboring nodes (and your node too JIC)
     Client * client = Client::get_main_client();
-    std::string response;
-    client->put(key, value, response); // TODO: Error handling
-    std::cout << "Received response: " << response << "\n";
+    std::vector<uint8_t> response;
+    client->put(key, value, response);
+    #if defined(NEROSHOP_USE_PROTOBUF)
+    neroshop::DhtMessage resp_msg;
+    if (!resp_msg.ParseFromArray(response.data(), static_cast<int>(response.size()))) {
+        return;
+    }
+
+    if (resp_msg.has_error()) {
+        log_trace("Received error (put): {}", resp_msg.error().DebugString());
+    } else if(resp_msg.has_response()) {
+        log_trace("Received response (put): {}", resp_msg.response().DebugString());
+    }
+    #endif
     //----------------------------------------------------------------------------
     // Print order message
     neroshop::log_info("Thank you for using neroshop.");
@@ -337,9 +360,20 @@ void Order::create_order_batch(const neroshop::Cart& cart, const std::string& sh
         std::cout << "key: " << data.first << "\nvalue: " << data.second << "\n";
     
         // Send put request to neighboring nodes (and your node too JIC)
-        std::string response;
-        client->put(key, value, response); // TODO: Error handling
-        std::cout << "Received response: " << response << "\n";
+        std::vector<uint8_t> response;
+        client->put(key, value, response);
+        #if defined(NEROSHOP_USE_PROTOBUF)
+        neroshop::DhtMessage resp_msg;
+        if (!resp_msg.ParseFromArray(response.data(), static_cast<int>(response.size()))) {
+            return;
+        }
+
+        if (resp_msg.has_error()) {
+            log_trace("Received error (put): {}", resp_msg.error().DebugString());
+        } else if(resp_msg.has_response()) {
+            log_trace("Received response (put): {}", resp_msg.response().DebugString());
+        }
+        #endif
         //----------------------------------------------------------------------------
         // Print order message
         neroshop::log_info("Thank you for using neroshop.");
@@ -455,8 +489,8 @@ void Order::set_payment_coin(PaymentCoin payment_coin) {
 
 void Order::set_payment_coin_by_string(const std::string& payment_coin) {
     if(payment_coin == "None") set_payment_coin(PaymentCoin::None);
-    if(payment_coin == "Monero") set_payment_coin(PaymentCoin::XMR);
-    if(payment_coin == "Wownero") set_payment_coin(PaymentCoin::WOW);
+    if(payment_coin == "XMR") set_payment_coin(PaymentCoin::XMR);
+    if(payment_coin == "WOW") set_payment_coin(PaymentCoin::WOW);
     //if(payment_coin == "") set_payment_coin(PaymentCoin::);
 }
 

@@ -8,6 +8,7 @@
 #include "../core/protocol/transport/client.hpp"
 #include "../core/tools/logger.hpp"
 #include "enum_wrapper.hpp"
+#include "../core/protocol/rpc/protobuf.hpp"
 
 neroshop::UserManager::UserManager(QObject *parent) : QObject(parent)
 {
@@ -406,25 +407,38 @@ QVariantList neroshop::UserManager::getInventory(int sorting) const {
             std::string column_value = (sqlite3_column_text(stmt, i) == nullptr) ? "NULL" : reinterpret_cast<const char *>(sqlite3_column_text(stmt, i));//std::cout << column_value  << " (" << i << ")" << std::endl;
             if(column_value == "NULL") continue; // Skip invalid columns
             QString key = QString::fromStdString(column_value);
+            
             // Get the value of the corresponding key from the DHT
-            std::string response;
-            client->get(key.toStdString(), response); // TODO: error handling
-            log_trace("Received response (get): {}", response);
-            // Parse the response
-            nlohmann::json json = nlohmann::json::parse(response);
-            if(json.contains("error")) {
-                std::string response2;
+            std::vector<uint8_t> response;
+            client->get(key.toStdString(), response);
+            // Skip empty and invalid responses
+            if(response.empty()) continue;
+            #if defined(NEROSHOP_USE_PROTOBUF)
+            neroshop::DhtMessage resp_msg;
+            if (!resp_msg.ParseFromArray(response.data(), static_cast<int>(response.size()))) {
+                continue; // Parsing error, skip to next iteration
+            }
+            if (resp_msg.has_error()) {
+                log_trace("Received error (get): {}", resp_msg.error().DebugString());
+                // Remove obsolete keys from our datastore
+                std::vector<uint8_t> response2;
                 client->remove(key.toStdString(), response2);
-                log_trace("Received response (remove): {}", response2);
+                neroshop::DhtMessage resp_msg2;
+                if (resp_msg2.ParseFromArray(response2.data(), static_cast<int>(response2.size()))) {
+                    if(resp_msg2.has_response()) log_info("Removed key {}", key.toStdString());//log_trace("Received response (remove): {}", resp_msg2.response().DebugString());
+                }
                 //emit productsCountChanged();
                 //emit inventoryChanged();
                 continue; // Key is lost or missing from DHT, skip to next iteration
+            } else if(resp_msg.has_response()) {
+                log_trace("Received response (get): {}", resp_msg.response().DebugString());
             }
             
-            const auto& response_obj = json["response"];
-            assert(response_obj.is_object());
-            if (response_obj.contains("value") && response_obj["value"].is_string()) {
-                const auto& value = response_obj["value"].get<std::string>();
+            const auto& payload = resp_msg.response().response();
+            const auto& data_map = payload.data();
+            if (data_map.find("value") != data_map.end()) {
+                std::string value = data_map.at("value");
+            #endif
                 nlohmann::json value_obj = nlohmann::json::parse(value);
                 assert(value_obj.is_object());//std::cout << value_obj.dump(4) << "\n";
                 std::string metadata = value_obj["metadata"].get<std::string>();
@@ -727,23 +741,36 @@ QVariantList neroshop::UserManager::getMessages() const {
             std::string column_value = (sqlite3_column_text(stmt, i) == nullptr) ? "NULL" : reinterpret_cast<const char *>(sqlite3_column_text(stmt, i));//std::cout << column_value  << " (" << i << ")" << std::endl;
             if(column_value == "NULL") continue; // Skip invalid columns
             QString key = QString::fromStdString(column_value);
+            
             // Get the value of the corresponding key from the DHT
-            std::string response;
-            client->get(key.toStdString(), response); // TODO: error handling
-            log_trace("Received response (get): {}", response);
-            // Parse the response
-            nlohmann::json json = nlohmann::json::parse(response);
-            if(json.contains("error")) {
-                std::string response2;
+            std::vector<uint8_t> response;
+            client->get(key.toStdString(), response);
+            // Skip empty and invalid responses
+            if(response.empty()) continue;
+            #if defined(NEROSHOP_USE_PROTOBUF)
+            neroshop::DhtMessage resp_msg;
+            if (!resp_msg.ParseFromArray(response.data(), static_cast<int>(response.size()))) {
+                continue; // Parsing error, skip to next iteration
+            }
+            if (resp_msg.has_error()) {
+                log_trace("Received error (get): {}", resp_msg.error().DebugString());
+                // Remove obsolete keys from our datastore
+                std::vector<uint8_t> response2;
                 client->remove(key.toStdString(), response2);
-                log_trace("Received response (remove): {}", response2);
+                neroshop::DhtMessage resp_msg2;
+                if (resp_msg2.ParseFromArray(response2.data(), static_cast<int>(response2.size()))) {
+                    if(resp_msg2.has_response()) log_info("Removed key {}", key.toStdString());//log_trace("Received response (remove): {}", resp_msg2.response().DebugString());
+                }
                 continue; // Key is lost or missing from DHT, skip to next iteration
+            } else if(resp_msg.has_response()) {
+                log_trace("Received response (get): {}", resp_msg.response().DebugString());
             }
             
-            const auto& response_obj = json["response"];
-            assert(response_obj.is_object());
-            if (response_obj.contains("value") && response_obj["value"].is_string()) {
-                const auto& value = response_obj["value"].get<std::string>();
+            const auto& payload = resp_msg.response().response();
+            const auto& data_map = payload.data();
+            if (data_map.find("value") != data_map.end()) {
+                std::string value = data_map.at("value");
+            #endif
                 nlohmann::json value_obj = nlohmann::json::parse(value);
                 assert(value_obj.is_object());//std::cout << value_obj.dump(4) << "\n";
                 std::string metadata = value_obj["metadata"].get<std::string>();

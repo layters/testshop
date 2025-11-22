@@ -56,11 +56,11 @@ public:
     ssize_t receive(std::vector<uint8_t>& message); // tcp
     ssize_t receive_from(std::vector<uint8_t>& message, const struct sockaddr_in& addr); // udp
 	// Interactions with the DHT node, which only exists on the client side via IPC server
-	void put(const std::string& key, const std::string& value, std::string& response);
-	void get(const std::string& key, std::string& response);
-	void set(const std::string& key, const std::string& value, std::string& response);
-	void remove(const std::string& key, std::string& response);
-	void clear(std::string& response);
+	void put(const std::string& key, const std::string& value, std::vector<uint8_t>& response);
+	void get(const std::string& key, std::vector<uint8_t>& response);
+	void set(const std::string& key, const std::string& value, std::vector<uint8_t>& response);
+	void remove(const std::string& key, std::vector<uint8_t>& response);
+	void clear(std::vector<uint8_t>& response);
 	void close(); // kills socket
 	void shutdown(); // shuts down connection (disconnects from server)
     void disconnect(); // breaks connection to server then closes the client socket // combination of shutdown() and close()

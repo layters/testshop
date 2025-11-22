@@ -14,6 +14,7 @@
 #include "../tools/timestamp.hpp"
 #include "../tools/string.hpp"
 #include "../wallet/wallet.hpp"
+#include "../protocol/rpc/protobuf.hpp"
 
 #include <fstream>
 #include <regex>
@@ -82,22 +83,34 @@ void User::rate_seller(const std::string& seller_id, int score, const std::strin
             if(key.empty()) { continue; } // Skip invalid columns//std::cout << key << "\n";
             
             // Get the value of the corresponding key from the DHT
-            std::string response;
-            client->get(key, response); // TODO: error handling
-            log_trace("Received response (get): {}", response);
-            // Parse the response
-            nlohmann::json json = nlohmann::json::parse(response);
-            if(json.contains("error")) {
-                std::string response2;
+            std::vector<uint8_t> response;
+            client->get(key, response);
+            // Skip empty and invalid responses
+            if(response.empty()) continue;
+            #if defined(NEROSHOP_USE_PROTOBUF)
+            neroshop::DhtMessage resp_msg;
+            if (!resp_msg.ParseFromArray(response.data(), static_cast<int>(response.size()))) {
+                continue; // Parsing error, skip to next iteration
+            }
+            if (resp_msg.has_error()) {
+                log_trace("Received error (get): {}", resp_msg.error().DebugString());
+                // Remove obsolete keys from database
+                std::vector<uint8_t> response2;
                 client->remove(key, response2);
-                log_trace("Received response (remove): {}", response2);
+                neroshop::DhtMessage resp_msg2;
+                if (resp_msg2.ParseFromArray(response2.data(), static_cast<int>(response2.size()))) {
+                    if(resp_msg2.has_response()) log_info("Removed key {}", key);//log_trace("Received response (remove): {}", resp_msg2.response().DebugString());
+                }
                 continue; // Key is lost or missing from DHT, skip to next iteration
+            } else if(resp_msg.has_response()) {
+                log_trace("Received response (get): {}", resp_msg.response().DebugString());
             }
             
-            const auto& response_obj = json["response"];
-            assert(response_obj.is_object());
-            if (response_obj.contains("value") && response_obj["value"].is_string()) {
-                const auto& value = response_obj["value"].get<std::string>();
+            const auto& payload = resp_msg.response().response();
+            const auto& data_map = payload.data();
+            if (data_map.find("value") != data_map.end()) {
+                std::string value = data_map.at("value");
+            #endif
                 nlohmann::json value_obj = nlohmann::json::parse(value);
                 assert(value_obj.is_object());//std::cout << value_obj.dump(4) << "\n";
                 std::string metadata = value_obj["metadata"].get<std::string>();
@@ -119,9 +132,20 @@ void User::rate_seller(const std::string& seller_id, int score, const std::strin
                     value_obj["last_updated"] = neroshop::timestamp::get_current_utc_timestamp();
                     // Send set request containing the updated value with the same key as before
                     std::string modified_value = value_obj.dump();
-                    std::string response;
+                    std::vector<uint8_t> response;
                     client->set(key, modified_value, response); // key MUST remain unchanged!!
-                    log_trace("Received response (set): {}", response);
+                    #if defined(NEROSHOP_USE_PROTOBUF)
+                    neroshop::DhtMessage resp_msg;
+                    if (!resp_msg.ParseFromArray(response.data(), static_cast<int>(response.size()))) {
+                        return;
+                    }
+
+                    if (resp_msg.has_error()) {
+                        log_trace("Received error (set): {}", resp_msg.error().DebugString());
+                    } else if(resp_msg.has_response()) {
+                        log_trace("Received response (set): {}", resp_msg.response().DebugString());
+                    }
+                    #endif
                     return;
                 }
             }
@@ -137,9 +161,20 @@ void User::rate_seller(const std::string& seller_id, int score, const std::strin
     std::string value = data.second;//std::cout << "key: " << data.first << "\nvalue: " << data.second << "\n";
     
     // Send put request to neighboring nodes (and your node too JIC)
-    std::string response;
+    std::vector<uint8_t> response;
     client->put(key, value, response);
-    log_trace("Received response (put): {}", response);
+    #if defined(NEROSHOP_USE_PROTOBUF)
+    neroshop::DhtMessage resp_msg;
+    if (!resp_msg.ParseFromArray(response.data(), static_cast<int>(response.size()))) {
+        return;
+    }
+
+    if (resp_msg.has_error()) {
+        log_trace("Received error (put): {}", resp_msg.error().DebugString());
+    } else if(resp_msg.has_response()) {
+        log_trace("Received response (put): {}", resp_msg.response().DebugString());
+    }
+    #endif
 } 
 ////////////////////
 ////////////////////
@@ -177,22 +212,34 @@ void User::rate_item(const std::string& product_id, int stars, const std::string
             if(key.empty()) { continue; } // Skip invalid columns//std::cout << key << "\n";
             
             // Get the value of the corresponding key from the DHT
-            std::string response;
-            client->get(key, response); // TODO: error handling
-            log_trace("Received response (get): {}", response);
-            // Parse the response
-            nlohmann::json json = nlohmann::json::parse(response);
-            if(json.contains("error")) {
-                std::string response2;
+            std::vector<uint8_t> response;
+            client->get(key, response);
+            // Skip empty and invalid responses
+            if(response.empty()) continue;
+            #if defined(NEROSHOP_USE_PROTOBUF)
+            neroshop::DhtMessage resp_msg;
+            if (!resp_msg.ParseFromArray(response.data(), static_cast<int>(response.size()))) {
+                continue; // Parsing error, skip to next iteration
+            }
+            if (resp_msg.has_error()) {
+                log_trace("Received error (get): {}", resp_msg.error().DebugString());
+                // Remove obsolete keys from database
+                std::vector<uint8_t> response2;
                 client->remove(key, response2);
-                log_trace("Received response (remove): {}", response2);
+                neroshop::DhtMessage resp_msg2;
+                if (resp_msg2.ParseFromArray(response2.data(), static_cast<int>(response2.size()))) {
+                    if(resp_msg2.has_response()) log_info("Removed key {}", key);//log_trace("Received response (remove): {}", resp_msg2.response().DebugString());
+                }
                 continue; // Key is lost or missing from DHT, skip to next iteration
+            } else if(resp_msg.has_response()) {
+                log_trace("Received response (get): {}", resp_msg.response().DebugString());
             }
             
-            const auto& response_obj = json["response"];
-            assert(response_obj.is_object());
-            if (response_obj.contains("value") && response_obj["value"].is_string()) {
-                const auto& value = response_obj["value"].get<std::string>();
+            const auto& payload = resp_msg.response().response();
+            const auto& data_map = payload.data();
+            if (data_map.find("value") != data_map.end()) {
+                std::string value = data_map.at("value");
+            #endif
                 nlohmann::json value_obj = nlohmann::json::parse(value);
                 assert(value_obj.is_object());//std::cout << value_obj.dump(4) << "\n";
                 std::string metadata = value_obj["metadata"].get<std::string>();
@@ -214,9 +261,20 @@ void User::rate_item(const std::string& product_id, int stars, const std::string
                     value_obj["last_updated"] = neroshop::timestamp::get_current_utc_timestamp();
                     // Send set request containing the updated value with the same key as before
                     std::string modified_value = value_obj.dump();
-                    std::string response;
+                    std::vector<uint8_t> response;
                     client->set(key, modified_value, response); // key MUST remain unchanged!!
-                    log_trace("Received response (set): {}", response);
+                    #if defined(NEROSHOP_USE_PROTOBUF)
+                    neroshop::DhtMessage resp_msg;
+                    if (!resp_msg.ParseFromArray(response.data(), static_cast<int>(response.size()))) {
+                        return;
+                    }
+
+                    if (resp_msg.has_error()) {
+                        log_trace("Received error (set): {}", resp_msg.error().DebugString());
+                    } else if(resp_msg.has_response()) {
+                        log_trace("Received response (set): {}", resp_msg.response().DebugString());
+                    }
+                    #endif
                     return;
                 }
             }
@@ -232,9 +290,20 @@ void User::rate_item(const std::string& product_id, int stars, const std::string
     std::string value = data.second;//std::cout << "key: " << data.first << "\nvalue: " << data.second << "\n";
     
     // Send put request to neighboring nodes (and your node too JIC)
-    std::string response;
+    std::vector<uint8_t> response;
     client->put(key, value, response);
-    log_trace("Received response (put): {}", response);
+    #if defined(NEROSHOP_USE_PROTOBUF)
+    neroshop::DhtMessage resp_msg;
+    if (!resp_msg.ParseFromArray(response.data(), static_cast<int>(response.size()))) {
+        return;
+    }
+
+    if (resp_msg.has_error()) {
+        log_trace("Received error (put): {}", resp_msg.error().DebugString());
+    } else if(resp_msg.has_response()) {
+        log_trace("Received response (put): {}", resp_msg.response().DebugString());
+    }
+    #endif
 } 
 ////////////////////
 ////////////////////
@@ -460,10 +529,19 @@ void User::send_message(const std::string& recipient_id, const std::string& cont
     
     // Send put request to neighboring nodes (and your node too JIC)
     Client * client = Client::get_main_client();
-    std::string response;
+    std::vector<uint8_t> response;
     client->put(key, value, response);
-    #ifdef NEROSHOP_DEBUG
-    log_trace("Received response (put): {}", response);
+    #if defined(NEROSHOP_USE_PROTOBUF)
+    neroshop::DhtMessage resp_msg;
+    if (!resp_msg.ParseFromArray(response.data(), static_cast<int>(response.size()))) {
+        return;
+    }
+
+    if (resp_msg.has_error()) {
+        log_trace("Received error (put): {}", resp_msg.error().DebugString());
+    } else if(resp_msg.has_response()) {
+        log_trace("Received response (put): {}", resp_msg.response().DebugString());
+    }
     #endif
 }
 ////////////////////
@@ -614,32 +692,45 @@ std::vector<std::string> User::get_favorites() const {
 }
 ////////////////////
 ////////////////////
+// This function returns incorrect results...
 int User::get_account_age(const std::string& user_id) {
     db::Sqlite3 * database = neroshop::get_database();
     std::string key = database->get_text_params("SELECT DISTINCT key FROM mappings WHERE search_term = ?1 AND content = 'user' LIMIT 1", { user_id });
     if(key.empty()) { return -1; }
+    std::string value;
     
     Client * client = Client::get_main_client();
-    std::string response;
-    client->get(key, response);
-    
-    nlohmann::json json = nlohmann::json::parse(response, nullptr, false);
-    if(json.is_discarded()) { return -1; }
-    if(!json.is_object()) { return -1; }
-    if(!json.contains("response")) { return -1; }
-    if(json.contains("error")) {
-        std::string response2;
+    std::vector<uint8_t> response;
+    client->get(key, response);    
+    // Skip empty and invalid responses
+    if(response.empty()) return -1;
+    #if defined(NEROSHOP_USE_PROTOBUF)
+    neroshop::DhtMessage resp_msg;
+    if (!resp_msg.ParseFromArray(response.data(), static_cast<int>(response.size()))) {
+        return -1; // Parsing error, return
+    }
+    if (resp_msg.has_error()) {
+        log_trace("Received error (get): {}", resp_msg.error().DebugString());
+        // Remove obsolete key from local storage
+        std::vector<uint8_t> response2;
         client->remove(key, response2);
-        log_trace("Received response (remove): {}", response2);
-        return -1;
+        neroshop::DhtMessage resp_msg2;
+        if (resp_msg2.ParseFromArray(response2.data(), static_cast<int>(response2.size()))) {
+            if(resp_msg2.has_response()) log_info("Removed key {}", key);//log_trace("Received response (remove): {}", resp_msg2.response().DebugString());
+        }
+        return -1; // Key is lost or missing from DHT, return
+    } else if(resp_msg.has_response()) {
+        log_trace("Received response (get): {}", resp_msg.response().DebugString());
     }
     
+    const auto& payload = resp_msg.response().response();
+    const auto& data_map = payload.data();
+    if (data_map.find("value") != data_map.end()) {
+        value = data_map.at("value");
+    }
+    #endif
+    
     std::string iso8601;
-    const auto& response_obj = json["response"];
-    if(!response_obj.is_object()) { return -1; }
-    if(!response_obj.contains("value")) { return -1; }
-    if(!response_obj["value"].is_string()) { return -1; }
-    const auto& value = response_obj["value"].get<std::string>();
     nlohmann::json value_obj = nlohmann::json::parse(value, nullptr, false);
     if(value_obj.is_discarded()) { return -1; }
     if(!value_obj.is_object()) { return -1; }

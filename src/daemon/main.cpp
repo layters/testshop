@@ -12,6 +12,7 @@
 #include "../core/protocol/transport/server.hpp"
 #include "../core/protocol/rpc/json_rpc.hpp"
 #include "../core/protocol/rpc/msgpack.hpp"
+#include "../core/protocol/rpc/protobuf.hpp"
 #include "../core/database/database.hpp"
 #include "../core/tools/logger.hpp"
 #include "../core/version.hpp"
@@ -74,7 +75,7 @@ void rpc_server(const std::string& address) {
                 // Process JSON-RPC request
                 std::string response_object = "";
                 if(neroshop::rpc::is_json_rpc(json_payload)) {
-                    response_object = neroshop::rpc::json::process(json_payload);
+                    response_object = neroshop::rpc::json_process(json_payload);
                     http_response << "HTTP/1.1 200 OK\r\n";
                 } else {
                     std::stringstream error_msg;
@@ -148,14 +149,16 @@ void ipc_server(Node& node) {
                 }
                 std::vector<uint8_t> response;
                 {
-                    
-                    //std::shared_lock<std::shared_mutex> read_lock(node_mutex); // Locking the node_mutex may cause the IPC server to not respond to the client requests for some reason
-                    // Perform both read and write operations on the node object
-                    // process JSON request and generate response
-                    response = neroshop::msgpack::process(request, node, true);
-                }
-                // The shared_lock is destroyed and the lock is released here          
-                // send response to client
+                    // Perform both read and write operations on the node object (Node should be thread-safe internally)
+                    #if defined(NEROSHOP_USE_MSGPACK)
+                    response = neroshop::rpc::msgpack_process(request, node, true);
+                    #elif defined(NEROSHOP_USE_PROTOBUF)
+                    response = neroshop::rpc::protobuf_process(request, node, true);
+                    #else
+                    #error "Serialization backend not defined"
+                    #endif
+                }      
+                // Send response to client
                 server.send(response);
             }
         }
@@ -178,13 +181,11 @@ void dht_server(Node& node) {
     std::cout << "******************************************************\n";
     // Start the DHT node's main loop in a separate thread
     std::thread run_thread([&]() {
-        //std::shared_lock<std::shared_mutex> read_lock(node_mutex);
         node.run();
     });
 
     // Join the DHT network
     if (!node.is_hardcoded()) {
-        //std::shared_lock<std::shared_mutex> read_lock(node_mutex);
         node.join(); // A seed node cannot join the network
     }
     

@@ -2,6 +2,8 @@ cmake_minimum_required(VERSION 3.5 FATAL_ERROR)
 
 project(neroshop_external)
 
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/msgpack-c/cmake")
+
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ../build)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ../build)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ../build)
@@ -53,6 +55,7 @@ if(EXISTS "${CMAKE_SOURCE_DIR}/../build/libz.a")
 else()
     find_package(ZLIB)
 endif()
+set(BUILD_SHARED_LIBS OFF CACHE BOOL "Build static libraries" FORCE) # used by both i2pd and msgpack
 # both WITH_BINARY and WITH_LIBRARY options should be ON by default
 add_subdirectory(i2pd/build)
 #[[set_target_properties(libi2pd PROPERTIES
@@ -80,6 +83,33 @@ set(fmt_target "fmt")
 set(fmt_srcs fmt/src/format.cc fmt/src/os.cc)
 add_library(${fmt_target} STATIC ${fmt_srcs})
 target_include_directories(${fmt_target} PUBLIC fmt/include/)
+
+set(MSGPACK_BUILD_EXAMPLES OFF CACHE BOOL "Build msgpack examples." FORCE)
+add_subdirectory(msgpack-c)
+set_target_properties(msgpack-c PROPERTIES
+    ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/../build"
+    LIBRARY_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/../build"
+    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/../build"
+)
+
+include(FindProtobuf)
+find_package(Protobuf)
+find_program(PROTOC_EXECUTABLE protoc)
+if(Protobuf_FOUND AND PROTOC_EXECUTABLE)
+    set(proto_path "${CMAKE_SOURCE_DIR}/../proto")
+    set(proto_files "${proto_path}/message.proto")
+    set(protoc_out_dir "${CMAKE_SOURCE_DIR}/../build/proto")
+    file(MAKE_DIRECTORY ${protoc_out_dir})
+    add_custom_command(
+        OUTPUT "${proto_out_dir}/message.pb.cc" "${protoc_out_dir}/message.pb.h"
+        COMMAND ${PROTOC_EXECUTABLE} --proto_path=${proto_path} --cpp_out=${protoc_out_dir} ${proto_files}
+        DEPENDS ${proto_files}
+        COMMENT "Running 'protoc' command..."
+    )
+    add_custom_target(pb ALL
+        DEPENDS "${protoc_out_dir}/message.pb.cc" "${protoc_out_dir}/message.pb.h"
+    )
+endif()
 
 find_library(SODIUM_LIBRARY sodium REQUIRED)
 # Find libsodium include directory by locating sodium.h

@@ -22,9 +22,9 @@ namespace neroshop {
 
 namespace rpc {
 
-std::string json::translate(const std::string& sql) {
+std::string json_translate(const std::string& sql) {
     std::string request = "";
-    std::string random_id = generate_random_id();
+    std::string random_id = json_generate_random_id();
     #if defined(NEROSHOP_USE_QT)
     QJsonObject request_object; // JSON-RPC Request object
     request_object.insert(QString("jsonrpc"), QJsonValue("2.0"));
@@ -52,10 +52,10 @@ std::string json::translate(const std::string& sql) {
     return request;
 }
 //----------------------------------------------------------------
-std::string json::translate(const std::string& sql, const std::vector<std::string>& args) {
+std::string json_translate(const std::string& sql, const std::vector<std::string>& args) {
     std::string request = "";
-    assert(get_query_method(sql) != "SELECT" && "SELECT statements with arguments are not supported. Please use the non-query functions (e.g. get_*() functions)"); // This is due to a lack of a callback in execute_params which uses sqlite3_prepare, sqlite3_step functions. On the other hand, execute uses sqlite_exec which does have a callback that returns the result from a SELECT statement
-    std::string random_id = generate_random_id();
+    assert(json_get_query_method(sql) != "SELECT" && "SELECT statements with arguments are not supported. Please use the non-query functions (e.g. get_*() functions)"); // This is due to a lack of a callback in execute_params which uses sqlite3_prepare, sqlite3_step functions. On the other hand, execute uses sqlite_exec which does have a callback that returns the result from a SELECT statement
+    std::string random_id = json_generate_random_id();
     #if defined(NEROSHOP_USE_QT)
     QJsonObject request_object; // JSON-RPC Request object
     request_object.insert(QString("jsonrpc"), QJsonValue("2.0"));
@@ -97,7 +97,7 @@ std::string json::translate(const std::string& sql, const std::vector<std::strin
 }
 //----------------------------------------------------------------
 //----------------------------------------------------------------
-std::string json::process(const std::string& request) {
+std::string json_process(const std::string& request) {
     neroshop::db::Sqlite3 * database = neroshop::get_database();
     if(!database) throw std::runtime_error("database is NULL");
     std::string response = "";
@@ -197,7 +197,7 @@ std::string json::process(const std::string& request) {
         QJsonValue arg_count = param_object.value("count");
         bool has_args = !arg_count.isUndefined();
         if(has_args) { 
-            assert((get_query_method(sql.toString().toStdString()) != "SELECT") && "SELECT statements with arguments are not allowed. Please use a non-query method (i.e. get_*() functions)");
+            assert((json_get_query_method(sql.toString().toStdString()) != "SELECT") && "SELECT statements with arguments are not allowed. Please use a non-query method (i.e. get_*() functions)");
             std::vector<std::string> args;
             for(int index = 0; index < arg_count.toInt(); index++) {
                 QJsonValue argument = param_object.value(QString::fromStdString(std::to_string(index + 1)));
@@ -224,7 +224,7 @@ std::string json::process(const std::string& request) {
     if(code == 0) {
         if(method.toString() == "query") {
             std::string query = params.toObject().value("sql").toString().toStdString();
-            std::string query_method = get_query_method(query);
+            std::string query_method = json_get_query_method(query);
             if(query_method == "SELECT") { // if method is a SELECT query
                 std::string result = database->get_select();
                 // Create a JSON document from the result string and check for any errors
@@ -313,7 +313,7 @@ std::string json::process(const std::string& request) {
         std::string sql = param_object["sql"];
         bool has_args = param_object.contains("count");
         if(has_args) { 
-            assert((get_query_method(sql) != "SELECT") && "SELECT statements with arguments are not allowed. Please use a non-query method (i.e. get_*() functions)");
+            assert((json_get_query_method(sql) != "SELECT") && "SELECT statements with arguments are not allowed. Please use a non-query method (i.e. get_*() functions)");
             std::vector<std::string> args;
             for(int index = 0; index < param_object.count("count"); index++) {
                 auto argument = param_object[std::to_string(index + 1)];
@@ -339,7 +339,7 @@ std::string json::process(const std::string& request) {
         if(method == "query") {
             auto param_object = request_object["params"];
             std::string query = param_object["sql"];
-            std::string query_method = get_query_method(query);
+            std::string query_method = json_get_query_method(query);
             if(query_method == "SELECT") { // if method is a SELECT query
                 std::string result = database->get_select();
                 // Create a JSON document from the result string and check for any errors
@@ -387,40 +387,40 @@ std::string json::process(const std::string& request) {
 }
 //----------------------------------------------------------------
 //----------------------------------------------------------------
-void json::request(const std::string& json) { // TODO: this function should return a json_rpc response (string) from the server
+void json_request(const std::string& json) { // TODO: this function should return a json_rpc response (string) from the server
     // Get the json which is basically a translated sqlite query or a translated c++ function name (string) + args
     // Send the request_object to the server
     ////zmq_send (requester, request.c_str(), request.size(), 0);
     // Lastly, the server will then execute the data and return any results
-} // Usage: json::request(json::translate("SELECT * FROM users;"));
+} // Usage: json_request(json_translate("SELECT * FROM users;"));
 //----------------------------------------------------------------
-void json::request_batch(const std::vector<std::string>& json_batch) {
+void json_request_batch(const std::vector<std::string>& json_batch) {
 }
 //----------------------------------------------------------------
 //----------------------------------------------------------------
-void json::respond(const std::string& json) {
-    std::string response = process(json);
+void json_respond(const std::string& json) {
+    std::string response = json_process(json);
     if(response.empty()) return;
     // Reply to client with the response object
     ////zmq_send (responder, response.c_str(), response.size(), 0);    
 }
 //----------------------------------------------------------------
-void json::respond_batch(const std::vector<std::string>& json_batch) {
+void json_respond_batch(const std::vector<std::string>& json_batch) {
 }
 //----------------------------------------------------------------
 //----------------------------------------------------------------
-std::string json::get_query_method(const std::string& sql) {
+std::string json_get_query_method(const std::string& sql) {
 	std::string first_word = sql.substr(0, sql.find_first_of(" "));
 	std::transform(first_word.begin(), first_word.end(), first_word.begin(), [](unsigned char c){ return std::toupper(c); }); // query_methods are stored in UPPER case strings so the same must be applied to the first_word
-    if(is_query_method(first_word)) return first_word;
+    if(json_is_query_method(first_word)) return first_word;
     return "";
 }
 //----------------------------------------------------------------
-bool json::is_query_method(const std::string& query_method) {
+bool json_is_query_method(const std::string& query_method) {
     return (std::find(query_methods.begin(), query_methods.end(), query_method) != query_methods.end());
 }
 //----------------------------------------------------------------
-bool json::is_method(const std::string& method) {
+bool json_is_method(const std::string& method) {
     return (methods.count(method) > 0);
 }
 //----------------------------------------------------------------
@@ -456,7 +456,7 @@ bool is_json_rpc(const std::string& str) {
     return false;
 }
 //----------------------------------------------------------------
-std::string json::generate_random_id() {
+std::string json_generate_random_id() {
     // Generate random number for id (id can be either a string or an integer or null which is not recommended)
     std::random_device rd; // obtain a random number from hardware
     std::mt19937 gen(rd()); // seed the generator
@@ -469,6 +469,6 @@ std::string json::generate_random_id() {
     return random_id;
 }
 
-}
+} // namespace rpc
 
-}
+} // namespace neroshop

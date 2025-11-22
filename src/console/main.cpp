@@ -79,9 +79,9 @@ int main(int argc, char** argv) {
                 std::size_t arg_pos = command.find_first_of(" ");
                 std::string sql = neroshop::string_tools::trim_left(command.substr(arg_pos + 1));////trim_left(command.substr(std::string("query").length() + 1)); // <- this works too
                 assert(neroshop::string_tools::starts_with(sql, "SELECT", false) && "Only SELECT queries are allowed"); // since the ability to run sql commands gives too much power to the user to alter the database anyhow, limit queries to select statements only
-                std::string json = neroshop::rpc::json::translate(sql);
+                std::string json = neroshop::rpc::json_translate(sql);
                 // No need to call RPC server to access RPC functions when it can be done directly.
-                std::cout << neroshop::rpc::json::process(json) << "\n";
+                std::cout << neroshop::rpc::json_process(json) << "\n";
                 // Usage: query SELECT * FROM mappings;
             }
         }

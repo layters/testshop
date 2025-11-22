@@ -2,6 +2,7 @@
 
 #include "../../tools/logger.hpp"
 #include "../../version.hpp" // NEROSHOP_DHT_VERSION
+#include "../rpc/protobuf.hpp"
 
 #include <cstring> // memset
 #include <cassert>
@@ -13,12 +14,16 @@ namespace neroshop {
 Client::Client() : sockfd(-1), socket_type(SocketType::Socket_TCP) {
     create();
 }
-////////////////////
+
+//-----------------------------------------------------------------------------
+
 Client::Client(int sockfd, struct sockaddr_in client_addr) {
     this->sockfd = sockfd;
     this->addr = client_addr;
 }
-////////////////////
+
+//-----------------------------------------------------------------------------
+
 Client::~Client() {
     if(sockfd > 0) {
         shutdown();
@@ -26,7 +31,9 @@ Client::~Client() {
         sockfd = -1;
     }
 }
-////////////////////
+
+//-----------------------------------------------------------------------------
+
 void Client::create() {
     #if defined(__gnu_linux__) && defined(NEROSHOP_USE_SYSTEM_SOCKETS)
     if(sockfd > 0) return; // socket must be -1 before a new one can be created (if socket is not null then it means it was never closed)
@@ -49,7 +56,9 @@ void Client::create() {
     }
     #endif
 }
-////////////////////
+
+//-----------------------------------------------------------------------------
+
 bool Client::connect(uint16_t port, std::string address) {
     // Clear the address structure
     memset(&this->addr, 0, sizeof(this->addr));
@@ -105,7 +114,9 @@ bool Client::connect(uint16_t port, std::string address) {
     #endif
     return false;*/
 }
-////////////////////
+
+//-----------------------------------------------------------------------------
+
 void Client::write(const std::string& text) {
     #if defined(__gnu_linux__) && defined(NEROSHOP_USE_SYSTEM_SOCKETS)
 	ssize_t write_result = ::write(sockfd, text.c_str(), text.length());
@@ -114,7 +125,9 @@ void Client::write(const std::string& text) {
 	}    
     #endif
 }
-////////////////////
+
+//-----------------------------------------------------------------------------
+
 std::string Client::read()
 {
     #if defined(__gnu_linux__) && defined(NEROSHOP_USE_SYSTEM_SOCKETS)
@@ -128,7 +141,9 @@ std::string Client::read()
     #endif
     return "";
 }
-////////////////////
+
+//-----------------------------------------------------------------------------
+
 void Client::send(const std::vector<uint8_t>& message) {
     assert(socket_type == SocketType::Socket_TCP && "Socket is not TCP");
     // ::send - instead of sending to a specific destination like sendto, send on SOCK_STREAM (TCP) socket sends the data to the connected socket, and returns the number of bytes sent.
@@ -137,7 +152,9 @@ void Client::send(const std::vector<uint8_t>& message) {
         perror("send");
     }
 }
-////////////////////
+
+//-----------------------------------------------------------------------------
+
 void Client::send_to(const std::vector<uint8_t>& message, const struct sockaddr_in& dest_addr) {
     assert(socket_type == SocketType::Socket_UDP && "Socket is not UDP");
     // ::sendto()
@@ -146,7 +163,9 @@ void Client::send_to(const std::vector<uint8_t>& message, const struct sockaddr_
         perror("sendto");
     }    
 }
-////////////////////
+
+//-----------------------------------------------------------------------------
+
 ssize_t Client::receive(std::vector<uint8_t>& message) {
     assert(socket_type == SocketType::Socket_TCP && "Socket is not TCP");
 
@@ -179,7 +198,9 @@ ssize_t Client::receive(std::vector<uint8_t>& message) {
     }
     return total_recv;
 }
-////////////////////
+
+//-----------------------------------------------------------------------------
+
 ssize_t Client::receive_from(std::vector<uint8_t>& message, const struct sockaddr_in& addr) {
     assert(socket_type == SocketType::Socket_UDP && "Socket is not UDP");
     
@@ -198,139 +219,224 @@ ssize_t Client::receive_from(std::vector<uint8_t>& message, const struct sockadd
     }
     return recv_bytes;
 }
-////////////////////
-void Client::put(const std::string& key, const std::string& value, std::string& reply) {
-    // Send put - no id or tid required for IPC client requests. The DHT server will deal with that
-    nlohmann::json args_obj = { {"key", key}, {"value", value} };
-    nlohmann::json query_object = { {"version", std::string(NEROSHOP_DHT_VERSION)}, {"query", "put"}, {"args", args_obj}, {"tid", nullptr} };
-    std::vector<uint8_t> packed_data = nlohmann::json::to_msgpack(query_object);
+
+//-----------------------------------------------------------------------------
+
+void Client::put(const std::string& key, const std::string& value, std::vector<uint8_t>& reply) {
+    #if defined(NEROSHOP_USE_PROTOBUF)
+    neroshop::Query query;
+    query.set_version(NEROSHOP_DHT_VERSION);
+    query.set_query("put");
+    auto* args_map = query.mutable_args();
+    (*args_map)["key"] = key;
+    (*args_map)["value"] = value;
+
+    neroshop::DhtMessage msg;
+    *msg.mutable_query() = query;
+
+    // Serialize to bytes
+    std::vector<uint8_t> packed_data(msg.ByteSizeLong());
+    msg.SerializeToArray(packed_data.data(), packed_data.size());
+
+    // Send the message
     send(packed_data);
+
     // Receive response
-    try {
-        std::vector<uint8_t> response;
-        receive(response);
-        try {
-            nlohmann::json response_object = nlohmann::json::from_msgpack(response);
-            reply = response_object.dump();//return response_object.dump();
-        } catch (const nlohmann::detail::parse_error& e) {
-            std::cerr << "Failed to parse server response: " << e.what() << std::endl;
-        }
-    } catch (const nlohmann::detail::parse_error& e) {
-        std::cerr << "An error occurred: " << "Node was disconnected" << std::endl;
+    std::vector<uint8_t> response;
+    receive(response);
+
+    // Parse the response
+    neroshop::DhtMessage resp_msg;
+    if (resp_msg.ParseFromArray(response.data(), static_cast<int>(response.size()))) {
+        reply.resize(resp_msg.ByteSizeLong());
+        resp_msg.SerializeToArray(reply.data(), reply.size());
+    } else {
+        reply.clear();
     }
+    #endif
 }
 
-void Client::get(const std::string& key, std::string& reply) {
-    // Send get - no id or tid required for IPC client requests. The DHT server will deal with that
-    nlohmann::json args_obj = { {"key", key} };
-    nlohmann::json query_object = { {"version", std::string(NEROSHOP_DHT_VERSION)}, {"query", "get"}, {"args", args_obj}, {"tid", nullptr} };
-    std::vector<uint8_t> packed_data = nlohmann::json::to_msgpack(query_object);
+//-----------------------------------------------------------------------------
+
+void Client::get(const std::string& key, std::vector<uint8_t>& reply) {
+    #if defined(NEROSHOP_USE_PROTOBUF)
+    neroshop::Query query;
+    query.set_version(NEROSHOP_DHT_VERSION);
+    query.set_query("get");
+    auto* args_map = query.mutable_args();
+    (*args_map)["key"] = key;
+
+    neroshop::DhtMessage msg;
+    *msg.mutable_query() = query;
+
+    // Serialize to bytes
+    std::vector<uint8_t> packed_data(msg.ByteSizeLong());
+    msg.SerializeToArray(packed_data.data(), packed_data.size());
+
+    // Send the message
     send(packed_data);
+
     // Receive response
-    try {
-        std::vector<uint8_t> response;
-        receive(response);
-        try {
-            nlohmann::json response_object = nlohmann::json::from_msgpack(response);
-            reply = response_object.dump();//return response_object.dump();
-        } catch (const nlohmann::detail::parse_error& e) {
-            std::cerr << "Failed to parse server response: " << e.what() << std::endl;
-        }
-    } catch (const nlohmann::detail::parse_error& e) {
-        std::cerr << "An error occurred: " << "Node was disconnected" << std::endl;
-    }    
+    std::vector<uint8_t> response;
+    receive(response);
+
+    // Parse the response
+    neroshop::DhtMessage resp_msg;
+    if (resp_msg.ParseFromArray(response.data(), static_cast<int>(response.size()))) {
+        reply.resize(resp_msg.ByteSizeLong());
+        resp_msg.SerializeToArray(reply.data(), reply.size());
+    } else {
+        reply.clear();
+    }
+    #endif
 }
 
-void Client::set(const std::string& key, const std::string& value, std::string& reply) {
-    // Send set - no id or tid required for IPC client requests. The DHT server will deal with that
-    nlohmann::json args_obj = { {"key", key}, {"value", value} };
-    nlohmann::json query_object = { {"version", std::string(NEROSHOP_DHT_VERSION)}, {"query", "set"}, {"args", args_obj}, {"tid", nullptr} };
-    std::vector<uint8_t> packed_data = nlohmann::json::to_msgpack(query_object);
+//-----------------------------------------------------------------------------
+
+void Client::set(const std::string& key, const std::string& value, std::vector<uint8_t>& reply) {
+    #if defined(NEROSHOP_USE_PROTOBUF)
+    neroshop::Query query;
+    query.set_version(NEROSHOP_DHT_VERSION);
+    query.set_query("set");
+    auto* args_map = query.mutable_args();
+    (*args_map)["key"] = key;
+    (*args_map)["value"] = value;
+
+    neroshop::DhtMessage msg;
+    *msg.mutable_query() = query;
+
+    // Serialize to bytes
+    std::vector<uint8_t> packed_data(msg.ByteSizeLong());
+    msg.SerializeToArray(packed_data.data(), packed_data.size());
+
+    // Send the message
     send(packed_data);
+
     // Receive response
-    try {
-        std::vector<uint8_t> response;
-        receive(response);
-        try {
-            nlohmann::json response_object = nlohmann::json::from_msgpack(response);
-            reply = response_object.dump();//return response_object.dump();
-        } catch (const nlohmann::detail::parse_error& e) {
-            std::cerr << "Failed to parse server response: " << e.what() << std::endl;
-        }
-    } catch (const nlohmann::detail::parse_error& e) {
-        std::cerr << "An error occurred: " << "Node was disconnected" << std::endl;
+    std::vector<uint8_t> response;
+    receive(response);
+
+    // Parse the response
+    neroshop::DhtMessage resp_msg;
+    if (resp_msg.ParseFromArray(response.data(), static_cast<int>(response.size()))) {
+        reply.resize(resp_msg.ByteSizeLong());
+        resp_msg.SerializeToArray(reply.data(), reply.size());
+    } else {
+        reply.clear();
     }
+    #endif
 }
 
-void Client::remove(const std::string& key, std::string& reply) {
-    // Send remove - no id or tid required for IPC client requests. The DHT server will deal with that
-    nlohmann::json args_obj = { {"key", key} };
-    nlohmann::json query_object = { {"version", std::string(NEROSHOP_DHT_VERSION)}, {"query", "remove"}, {"args", args_obj}, {"tid", nullptr} };
-    std::vector<uint8_t> packed_data = nlohmann::json::to_msgpack(query_object);
+//-----------------------------------------------------------------------------
+
+void Client::remove(const std::string& key, std::vector<uint8_t>& reply) {
+    #if defined(NEROSHOP_USE_PROTOBUF)
+    neroshop::Query query;
+    query.set_version(NEROSHOP_DHT_VERSION);
+    query.set_query("remove");
+    auto* args_map = query.mutable_args();
+    (*args_map)["key"] = key;
+
+    neroshop::DhtMessage msg;
+    *msg.mutable_query() = query;
+
+    // Serialize to bytes
+    std::vector<uint8_t> packed_data(msg.ByteSizeLong());
+    msg.SerializeToArray(packed_data.data(), packed_data.size());
+
+    // Send the message
     send(packed_data);
+
     // Receive response
-    try {
-        std::vector<uint8_t> response;
-        receive(response);
-        try {
-            nlohmann::json response_object = nlohmann::json::from_msgpack(response);
-            reply = response_object.dump();//return response_object.dump();
-        } catch (const nlohmann::detail::parse_error& e) {
-            std::cerr << "Failed to parse server response: " << e.what() << std::endl;
-        }
-    } catch (const nlohmann::detail::parse_error& e) {
-        std::cerr << "An error occurred: " << "Node was disconnected" << std::endl;
+    std::vector<uint8_t> response;
+    receive(response);
+
+    // Parse the response
+    neroshop::DhtMessage resp_msg;
+    if (resp_msg.ParseFromArray(response.data(), static_cast<int>(response.size()))) {
+        reply.resize(resp_msg.ByteSizeLong());
+        resp_msg.SerializeToArray(reply.data(), reply.size());
+    } else {
+        reply.clear();
     }
+    #endif
 }
 
-void Client::clear(std::string& reply) {
-    nlohmann::json args_obj = nlohmann::json::object();
-    nlohmann::json query_object = { {"version", std::string(NEROSHOP_DHT_VERSION)}, {"query", "clear"}, {"args", args_obj}, {"tid", nullptr} };
-    std::vector<uint8_t> packed_data = nlohmann::json::to_msgpack(query_object);
+//-----------------------------------------------------------------------------
+
+void Client::clear(std::vector<uint8_t>& reply) {
+    #if defined(NEROSHOP_USE_PROTOBUF)
+    neroshop::Query query;
+    query.set_version(NEROSHOP_DHT_VERSION);
+    query.set_query("clear");
+    // No args needed
+
+    neroshop::DhtMessage msg;
+    *msg.mutable_query() = query;
+
+    // Serialize to bytes
+    std::vector<uint8_t> packed_data(msg.ByteSizeLong());
+    msg.SerializeToArray(packed_data.data(), packed_data.size());
+
+    // Send the message
     send(packed_data);
+
     // Receive response
-    try {
-        std::vector<uint8_t> response;
-        receive(response);
-        try {
-            nlohmann::json response_object = nlohmann::json::from_msgpack(response);
-            reply = response_object.dump();//return response_object.dump();
-        } catch (const nlohmann::detail::parse_error& e) {
-            std::cerr << "Failed to parse server response: " << e.what() << std::endl;
-        }
-    } catch (const nlohmann::detail::parse_error& e) {
-        std::cerr << "An error occurred: " << "Node was disconnected" << std::endl;
+    std::vector<uint8_t> response;
+    receive(response);
+
+    // Parse the response
+    neroshop::DhtMessage resp_msg;
+    if (resp_msg.ParseFromArray(response.data(), static_cast<int>(response.size()))) {
+        reply.resize(resp_msg.ByteSizeLong());
+        resp_msg.SerializeToArray(reply.data(), reply.size());
+    } else {
+        reply.clear();
     }
+    #endif
 }
-////////////////////	
+
+//-----------------------------------------------------------------------------
+
 void Client::close() {
 	::close(sockfd);
 }
-////////////////////
+
+//-----------------------------------------------------------------------------
+
 void Client::shutdown() {
     ::shutdown(sockfd, SHUT_RDWR); // SHUT_RD, SHUT_WR, SHUT_RDWR
 }
-////////////////////
-////////////////////
+
+//-----------------------------------------------------------------------------
+
 void Client::disconnect() { // if only shutdown() is called, the client socket will still be alive which is why we must call close() as well
 	shutdown();
 	close();
 }
-////////////////////
+
+//-----------------------------------------------------------------------------
+
 bool Client::reconnect(uint16_t port, std::string address) { // kill socket first before attempting to re-connect
     close();
     return connect(port, address);
 }
-////////////////////
+
+//-----------------------------------------------------------------------------
+
 neroshop::Client * Client::get_main_client() {
     static neroshop::Client client_obj {};
     return &client_obj;
 }
-////////////////////
+
+//-----------------------------------------------------------------------------
+
 int Client::get_socket() const {
     return sockfd;
 }
-////////////////////
+
+//-----------------------------------------------------------------------------
+
 int Client::get_max_buffer_recv_size() const {
     int max_buffer_size;
     socklen_t bufferSizeLen = sizeof(max_buffer_size);
@@ -343,12 +449,14 @@ int Client::get_max_buffer_recv_size() const {
     }
     return max_buffer_size;
 }
-////////////////////
-////////////////////
+
+//-----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
+
 bool Client::is_connected() const { // https://stackoverflow.com/a/4142038 // can only work when close() is called
     return (sockfd != -1);
 }
-////////////////////
-////////////////////
-////////////////////
+
+//-----------------------------------------------------------------------------
+
 }

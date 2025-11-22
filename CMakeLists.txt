@@ -16,10 +16,10 @@ include(CMakeDependentOption)
 cmake_dependent_option(NEROSHOP_USE_QT "Build neroshop with Qt" ON "NEROSHOP_BUILD_GUI" OFF)
 option(UUID_SYSTEM_GENERATOR "Enable operating system uuid generator" OFF)
 option(UUID_TIME_GENERATOR "Enable experimental time-based uuid generator" OFF)
-cmake_dependent_option(NEROSHOP_USE_SYSTEM_SOCKETS "Build neroshop with system sockets" ON "NOT NEROSHOP_USE_LIBZMQ;NOT NEROSHOP_USE_LIBUV" OFF)
-cmake_dependent_option(NEROSHOP_USE_LIBZMQ "Build neroshop with LibZMQ" ON "NOT NEROSHOP_USE_LIBUV;NOT NEROSHOP_USE_SYSTEM_SOCKETS" OFF)
-option(NEROSHOP_USE_GRPC "Build neroshop with gRPC" OFF)
-cmake_dependent_option(NEROSHOP_USE_SYSTEM_GRPC "Use system installed gRPC" ON "NEROSHOP_USE_GRPC;USE_SYSTEM_GRPC" OFF)
+cmake_dependent_option(NEROSHOP_USE_SYSTEM_SOCKETS "Build neroshop with system sockets" ON "NOT NEROSHOP_USE_LIBZMQ" OFF)
+cmake_dependent_option(NEROSHOP_USE_LIBZMQ "Build neroshop with LibZMQ" ON "NOT NEROSHOP_USE_SYSTEM_SOCKETS" OFF)
+cmake_dependent_option(NEROSHOP_USE_PROTOBUF "Enable Protocol Buffers" ON "NOT NEROSHOP_USE_MSGPACK" OFF)
+cmake_dependent_option(NEROSHOP_USE_MSGPACK "Enable MessagePack" ON "NOT NEROSHOP_USE_PROTOBUF" OFF)
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake" "${CMAKE_CURRENT_SOURCE_DIR}/external/monero-cpp/external/monero-project/cmake")
 ######################################
@@ -28,6 +28,8 @@ set(NEROSHOP_CONSOLE_SRC_DIR ${NEROSHOP_SRC_DIR}/console)
 set(NEROSHOP_CORE_SRC_DIR ${NEROSHOP_SRC_DIR}/core)
 set(NEROSHOP_DAEMON_SRC_DIR ${NEROSHOP_SRC_DIR}/daemon)
 set(NEROSHOP_GUI_SRC_DIR ${NEROSHOP_SRC_DIR}/gui)
+
+set(NEROSHOP_PROTO_SRC_DIR ${CMAKE_CURRENT_SOURCE_DIR}/build/proto)
 
 ######################################
 if(NEROSHOP_BUILD_GUI AND NEROSHOP_USE_QT)
@@ -331,7 +333,7 @@ set(qrcodegen_include_dir ${CMAKE_CURRENT_SOURCE_DIR}/external/QR-Code-generator
 set(qrcodegen_src ${CMAKE_CURRENT_SOURCE_DIR}/build/libqrcodegen.a)
 
 ######################################
-# json
+# json (will soon be deprecated in favor of Monero-native rapidjson)
 set(json_include_dir ${CMAKE_CURRENT_SOURCE_DIR}/external/json/single_include) # v3.12.0
 
 ######################################
@@ -398,6 +400,22 @@ set(mkp224o_include_dir ) # v1.7.0
 set(mkp224o_src )
 
 ######################################
+# msgpack-c
+set(msgpack_include_dir ${CMAKE_CURRENT_SOURCE_DIR}/external/msgpack-c/include) # v6.1.0
+set(msgpack_src ${CMAKE_CURRENT_SOURCE_DIR}/build/libmsgpack-c.a)
+
+######################################
+# protoc-generated .pb.cc files
+if(EXISTS "${NEROSHOP_PROTO_SRC_DIR}/message.pb.cc" AND NOT NEROSHOP_USE_MSGPACK)
+    set(neroshop_proto_src ${NEROSHOP_PROTO_SRC_DIR}/message.pb.cc)
+    set(NEROSHOP_USE_PROTOBUF ON CACHE BOOL "Enable Protocol Buffers" FORCE)
+    message(STATUS "Found .pb file(s): ${neroshop_proto_src}")
+endif()
+
+message(STATUS "${BoldYellow}NEROSHOP_USE_PROTOBUF: ${NEROSHOP_USE_PROTOBUF}${ColourReset}")
+message(STATUS "${BoldYellow}NEROSHOP_USE_MSGPACK: ${NEROSHOP_USE_MSGPACK}${ColourReset}")
+
+######################################
 # neroshop link directories
 link_directories(${CMAKE_CURRENT_SOURCE_DIR}/build) # target_link_directories only available in CMake version 3.13 :(
 
@@ -451,6 +469,7 @@ set(neroshop_protocol_src
     ${NEROSHOP_CORE_SRC_DIR}/protocol/p2p/serializer.cpp 
     ${NEROSHOP_CORE_SRC_DIR}/protocol/rpc/json_rpc.cpp 
     ${NEROSHOP_CORE_SRC_DIR}/protocol/rpc/msgpack.cpp 
+    ${NEROSHOP_CORE_SRC_DIR}/protocol/rpc/protobuf.cpp 
     ${NEROSHOP_CORE_SRC_DIR}/protocol/transport/client.cpp 
     ${NEROSHOP_CORE_SRC_DIR}/protocol/transport/server.cpp
 )
@@ -480,28 +499,34 @@ endif()
 ######################################
 # neroshopd
 set(neroshop_daemon "neroshopd")
-set(neroshop_daemon_src ${neroshop_crypto_src} ${neroshop_database_src} ${neroshop_network_src} ${NEROSHOP_CORE_SRC_DIR}/protocol/p2p/file_piece_hasher.cpp ${NEROSHOP_CORE_SRC_DIR}/protocol/p2p/key_mapper.cpp ${NEROSHOP_CORE_SRC_DIR}/protocol/p2p/node.cpp ${NEROSHOP_CORE_SRC_DIR}/protocol/p2p/routing_table.cpp ${NEROSHOP_CORE_SRC_DIR}/protocol/rpc/json_rpc.cpp ${NEROSHOP_CORE_SRC_DIR}/protocol/rpc/msgpack.cpp ${NEROSHOP_CORE_SRC_DIR}/protocol/transport/client.cpp ${NEROSHOP_CORE_SRC_DIR}/protocol/transport/server.cpp ${NEROSHOP_CORE_SRC_DIR}/tools/base64.cpp ${NEROSHOP_CORE_SRC_DIR}/tools/timestamp.cpp)
+set(neroshop_daemon_src ${neroshop_proto_src} ${neroshop_crypto_src} ${neroshop_database_src} ${neroshop_network_src} ${NEROSHOP_CORE_SRC_DIR}/protocol/p2p/file_piece_hasher.cpp ${NEROSHOP_CORE_SRC_DIR}/protocol/p2p/key_mapper.cpp ${NEROSHOP_CORE_SRC_DIR}/protocol/p2p/node.cpp ${NEROSHOP_CORE_SRC_DIR}/protocol/p2p/routing_table.cpp ${NEROSHOP_CORE_SRC_DIR}/protocol/rpc/json_rpc.cpp ${NEROSHOP_CORE_SRC_DIR}/protocol/rpc/msgpack.cpp ${NEROSHOP_CORE_SRC_DIR}/protocol/rpc/protobuf.cpp ${NEROSHOP_CORE_SRC_DIR}/protocol/transport/client.cpp ${NEROSHOP_CORE_SRC_DIR}/protocol/transport/server.cpp ${NEROSHOP_CORE_SRC_DIR}/tools/base64.cpp ${NEROSHOP_CORE_SRC_DIR}/tools/timestamp.cpp)
 add_executable(${neroshop_daemon} src/daemon/main.cpp ${neroshop_daemon_src})
 install(TARGETS ${neroshop_daemon} DESTINATION bin)
 if(NOT CMAKE_BUILD_TYPE STREQUAL "Release" AND NOT CMAKE_BUILD_TYPE STREQUAL "MinSizeRel")
     target_compile_definitions(${neroshop_daemon} PRIVATE NEROSHOP_DEBUG)
 endif()
-target_include_directories(${neroshop_daemon} PRIVATE #[[${CMAKE_CURRENT_SOURCE_DIR}/src/]] ${monero_include_dirs} ${monero_cpp_include_dir} ${sqlite_include_dir} ${json_include_dir} ${zlib_include_dir} #[[${i2pd_include_dirs}]] ${fmt_include_dir} ${cxxopts_include_dir})
-target_link_libraries(${neroshop_daemon} #[[${i2pd_src}]] ${monero_cpp_src} ${sqlite_src} ${monero_src} #[[${zlib_src}]] ${fmt_src})#set(CMAKE_CXX_LINK_EXECUTABLE "${CMAKE_CXX_LINK_EXECUTABLE} -ldl") # fixes undefined reference to symbol 'dlsym@@GLIBC_2.2.5' error
+target_include_directories(${neroshop_daemon} PRIVATE #[[${CMAKE_CURRENT_SOURCE_DIR}/src/]] ${monero_include_dirs} ${monero_cpp_include_dir} ${sqlite_include_dir} ${json_include_dir} ${msgpack_include_dir} ${zlib_include_dir} #[[${i2pd_include_dirs}]] ${fmt_include_dir} ${cxxopts_include_dir})
+target_link_libraries(${neroshop_daemon} #[[${i2pd_src}]] ${monero_cpp_src} ${sqlite_src} ${msgpack_src} ${monero_src} #[[${zlib_src}]] ${fmt_src})#set(CMAKE_CXX_LINK_EXECUTABLE "${CMAKE_CXX_LINK_EXECUTABLE} -ldl") # fixes undefined reference to symbol 'dlsym@@GLIBC_2.2.5' error
+if(NEROSHOP_USE_PROTOBUF)
+    target_compile_definitions(${neroshop_daemon} PRIVATE NEROSHOP_USE_PROTOBUF)
+endif()
 
 ######################################
 # neroshop-console
 if(NEROSHOP_BUILD_CLI)
     set(neroshop_cli "neroshop-console")
-    add_executable(${neroshop_cli} src/console/main.cpp ${neroshop_client_src})
+    add_executable(${neroshop_cli} ${neroshop_proto_src} src/console/main.cpp ${neroshop_client_src})
     install(TARGETS ${neroshop_cli} DESTINATION bin)
     if(NOT CMAKE_BUILD_TYPE STREQUAL "Release" AND NOT CMAKE_BUILD_TYPE STREQUAL "MinSizeRel")
         target_compile_definitions(${neroshop_cli} PRIVATE NEROSHOP_DEBUG)
     endif()
-    target_include_directories(${neroshop_cli} PRIVATE #[[${CMAKE_CURRENT_SOURCE_DIR}/src/]] ${monero_include_dirs} ${monero_cpp_include_dir} ${sqlite_include_dir} ${json_include_dir} ${zlib_include_dir} #[[${i2pd_include_dirs}]] ${fmt_include_dir} ${lua_include_dir} ${curl_include_dirs} ${stduuid_include_dirs} ${linenoise_include_dir})
-    target_link_libraries(${neroshop_cli} #[[${i2pd_src}]] ${monero_cpp_src} ${sqlite_src} #[[${qrcodegen_src}]] ${curl_src} ${monero_src} #[[${zlib_src}]] ${fmt_src} ${lua_src} ${linenoise_src})
+    target_include_directories(${neroshop_cli} PRIVATE #[[${CMAKE_CURRENT_SOURCE_DIR}/src/]] ${monero_include_dirs} ${monero_cpp_include_dir} ${sqlite_include_dir} ${json_include_dir} ${msgpack_include_dir} ${zlib_include_dir} #[[${i2pd_include_dirs}]] ${fmt_include_dir} ${lua_include_dir} ${curl_include_dirs} ${stduuid_include_dirs} ${linenoise_include_dir})
+    target_link_libraries(${neroshop_cli} #[[${i2pd_src}]] ${monero_cpp_src} ${sqlite_src} ${msgpack_src} #[[${qrcodegen_src}]] ${curl_src} ${monero_src} #[[${zlib_src}]] ${fmt_src} ${lua_src} ${linenoise_src})
     message(STATUS "${BoldMagenta}NEROSHOP_BUILD_CLI option set to ON${ColourReset}")
     target_compile_definitions(${neroshop_cli} PRIVATE NEROSHOP_BUILD_CLI)
+    if(NEROSHOP_USE_PROTOBUF)
+        target_compile_definitions(${neroshop_cli} PRIVATE NEROSHOP_USE_PROTOBUF)
+    endif()
 endif()
 
 ######################################
@@ -510,42 +535,26 @@ if(NEROSHOP_BUILD_GUI)
     set(neroshop_gui "neroshop")
     add_executable(${neroshop_gui})
     install(TARGETS ${neroshop_gui} DESTINATION bin)
-    target_sources(${neroshop_gui} PRIVATE ${neroshop_res} src/gui/main.cpp src/gui/settings_manager.cpp src/gui/wallet_manager.cpp src/gui/user_manager.cpp src/gui/image_loader.cpp src/gui/image_provider.cpp src/gui/wallet_qr_provider.cpp src/gui/currency_rate_provider.cpp src/gui/daemon_manager.cpp src/gui/enum_wrapper.cpp src/gui/proxy_manager.cpp src/gui/notification_manager.cpp src/gui/wallet_node_provider.cpp src/gui/backend.cpp ${neroshop_client_src})
+    target_sources(${neroshop_gui} PRIVATE ${neroshop_res} ${neroshop_proto_src} src/gui/main.cpp src/gui/settings_manager.cpp src/gui/wallet_manager.cpp src/gui/user_manager.cpp src/gui/image_loader.cpp src/gui/image_provider.cpp src/gui/wallet_qr_provider.cpp src/gui/currency_rate_provider.cpp src/gui/daemon_manager.cpp src/gui/enum_wrapper.cpp src/gui/proxy_manager.cpp src/gui/notification_manager.cpp src/gui/wallet_node_provider.cpp src/gui/backend.cpp ${neroshop_client_src})
     if(NOT CMAKE_BUILD_TYPE STREQUAL "Release" AND NOT CMAKE_BUILD_TYPE STREQUAL "MinSizeRel")
         target_compile_definitions(${neroshop_gui} PRIVATE NEROSHOP_DEBUG)
     endif()
-    target_include_directories(${neroshop_gui} PRIVATE #[[${CMAKE_CURRENT_SOURCE_DIR}/src/]] ${monero_include_dirs} ${monero_cpp_include_dir} ${sqlite_include_dir} ${json_include_dir} ${zlib_include_dir} #[[${i2pd_include_dirs}]] ${fmt_include_dir} ${lua_include_dir} ${qrcodegen_include_dir})
-    target_link_libraries(${neroshop_gui} #[[${i2pd_src}]] ${monero_cpp_src} ${sqlite_src} ${qrcodegen_src} ${monero_src} #[[${zlib_src}]] ${fmt_src} ${lua_src})
+    target_include_directories(${neroshop_gui} PRIVATE #[[${CMAKE_CURRENT_SOURCE_DIR}/src/]] ${monero_include_dirs} ${monero_cpp_include_dir} ${sqlite_include_dir} ${json_include_dir} ${msgpack_include_dir} ${zlib_include_dir} #[[${i2pd_include_dirs}]] ${fmt_include_dir} ${lua_include_dir} ${qrcodegen_include_dir})
+    target_link_libraries(${neroshop_gui} #[[${i2pd_src}]] ${monero_cpp_src} ${sqlite_src} ${msgpack_src} ${qrcodegen_src} ${monero_src} #[[${zlib_src}]] ${fmt_src} ${lua_src})
     message(STATUS "${BoldMagenta}NEROSHOP_BUILD_GUI option set to ON${ColourReset}")
     target_compile_definitions(${neroshop_gui} PRIVATE NEROSHOP_BUILD_GUI)
+    if(NEROSHOP_USE_PROTOBUF)
+        target_compile_definitions(${neroshop_gui} PRIVATE NEROSHOP_USE_PROTOBUF)
+    endif()
 endif()
 
 ######################################
 add_subdirectory(assets)
 
 ######################################
-# gRPC
-if(NEROSHOP_USE_GRPC)
-    message(STATUS "Using gRPC")
-    target_compile_definitions(${neroshop_gui} PRIVATE NEROSHOP_USE_GRPC)
-    target_compile_definitions(${neroshop_cli} PRIVATE NEROSHOP_USE_GRPC)
-    target_compile_definitions(${neroshop_daemon} PRIVATE NEROSHOP_USE_GRPC)
-    if(NEROSHOP_USE_SYSTEM_GRPC)
-        # Find system-installed gRPC
-        find_package(gRPC CONFIG REQUIRED)
-        message(STATUS "USE_SYSTEM_GRPC option set to ON")
-        target_link_libraries(${neroshop_gui} gRPC::grpc++)
-        target_link_libraries(${neroshop_cli} gRPC::grpc++)
-        target_link_libraries(${neroshop_daemon} gRPC::grpc++)
-    else()
-        # Build gRPC using FetchContent or add_subdirectory
-    endif()
-endif()
-
-######################################
 # system sockets
-if(NOT NEROSHOP_USE_LIBZMQ AND NOT NEROSHOP_USE_LIBUV)
-    message(STATUS "${BoldWhite}Using SYSTEM SOCKETS${ColourReset}")
+if(NOT NEROSHOP_USE_LIBZMQ)
+    message(STATUS "${BoldWhite}Using System Sockets${ColourReset}")
     if(NEROSHOP_BUILD_GUI)
         target_compile_definitions(${neroshop_gui} PRIVATE NEROSHOP_USE_SYSTEM_SOCKETS)
     endif()
@@ -560,7 +569,7 @@ endif()
 find_package(ZeroMQ)
 if(ZeroMQ_FOUND)
     if(NEROSHOP_USE_LIBZMQ)
-        message(STATUS "${BoldRed}Using LIBZMQ: ${ZeroMQ_LIBRARY} (v${ZeroMQ_VERSION})${ColourReset}")
+        message(STATUS "${BoldRed}Using ZeroMQ: ${ZeroMQ_LIBRARY} (v${ZeroMQ_VERSION})${ColourReset}")
         if(NEROSHOP_BUILD_GUI)
             target_compile_definitions(${neroshop_gui} PRIVATE NEROSHOP_USE_LIBZMQ)
             target_link_libraries(${neroshop_gui} ${ZeroMQ_LIBRARIES})
