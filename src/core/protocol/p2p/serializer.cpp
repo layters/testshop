@@ -13,6 +13,7 @@
 #include <nlohmann/json.hpp>
 
 namespace neroshop {
+
 //-----------------------------------------------------------------------------
 
 void set_expiration(nlohmann::json& json_object, const std::string& metadata) {
@@ -568,4 +569,5 @@ std::shared_ptr<neroshop::User> Serializer::deserialize_user(const std::pair<std
 }
 
 //-----------------------------------------------------------------------------
+
 }

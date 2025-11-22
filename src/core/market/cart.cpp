@@ -4,6 +4,7 @@
 #include "../tools/logger.hpp"
 #include "../protocol/transport/client.hpp"
 #include "../tools/uuid.hpp"
+#include "../protocol/rpc/protobuf.hpp"
 
 namespace neroshop {
 ////////////////////
@@ -13,7 +14,7 @@ unsigned int Cart::max_items(10);
 unsigned int Cart::max_quantity(100);
 ////////////////////
 Cart::~Cart() {
-    contents.clear(); // this should reset/delete all cart items (if they happen to be dynamic objects)
+    contents.clear();
 #ifdef NEROSHOP_DEBUG
     std::cout << "cart deleted\n";
 #endif
@@ -24,23 +25,34 @@ static nlohmann::json get_listing_object(const std::string& listing_key) {
     neroshop::Client * client = neroshop::Client::get_main_client();
     
     // Get the value of the corresponding key from the DHT
-    std::string response;
+    std::vector<uint8_t> response;
     client->get(listing_key, response);
-    std::cout << "Received response (get): " << response << "\n";
-    // Parse the response
-    nlohmann::json json = nlohmann::json::parse(response);
-    if(json.contains("error")) {
-        std::cout << "get_available_stock: listing key is lost or missing from DHT\n";
-        std::string response2;
+    // Skip empty and invalid responses
+    if(response.empty()) return nlohmann::json();
+    #if defined(NEROSHOP_USE_PROTOBUF)
+    neroshop::DhtMessage resp_msg;
+    if (!resp_msg.ParseFromArray(response.data(), static_cast<int>(response.size()))) {
+        return nlohmann::json(); // Parsing error, return empty object
+    }
+    if (resp_msg.has_error()) {
+        log_trace("Received error (get): {}", resp_msg.error().DebugString());
+        // Remove obsolete key from local storage
+        std::vector<uint8_t> response2;
         client->remove(listing_key, response2);
-        std::cout << "Received response (remove): " << response2 << "\n";
-        return nlohmann::json(); // Key is lost or missing from DHT
+        neroshop::DhtMessage resp_msg2;
+        if (resp_msg2.ParseFromArray(response2.data(), static_cast<int>(response2.size()))) {
+            if(resp_msg2.has_response()) log_info("Removed key {}", listing_key);//log_trace("Received response (remove): {}", resp_msg2.response().DebugString());
+        }
+        return nlohmann::json(); // Key is lost or missing from DHT, return empty object
+    } else if(resp_msg.has_response()) {
+        log_trace("Received response (get): {}", resp_msg.response().DebugString());
     }
     
-    const auto& response_obj = json["response"];
-    assert(response_obj.is_object());
-    if (response_obj.contains("value") && response_obj["value"].is_string()) {
-        const auto& value = response_obj["value"].get<std::string>();
+    const auto& payload = resp_msg.response().response();
+    const auto& data_map = payload.data();
+    if (data_map.find("value") != data_map.end()) {
+        std::string value = data_map.at("value");
+    #endif
         nlohmann::json value_obj = nlohmann::json::parse(value);
         assert(value_obj.is_object());//std::cout << value_obj.dump(4) << "\n";
         std::string metadata = value_obj["metadata"].get<std::string>();

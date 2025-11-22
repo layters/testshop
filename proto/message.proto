@@ -1,0 +1,53 @@
+// [START declaration]
+syntax = "proto3";
+
+package neroshop;
+// [END declaration]
+
+// [START messages]
+// Common message envelope to hold one of: query, response, or error
+message DhtMessage {
+  oneof msg {
+    Query query = 1;
+    Response response = 2;
+    Error error = 3;
+  }
+}
+
+// Query message carries a request
+message Query {
+  string version = 1;
+  string query = 2; // method name
+  map<string, string> args = 3; // args represent parameters to queries
+  string tid = 4;   // transaction id for matching responses (optional)
+}
+
+// Response message carries results
+message Response {
+  string version = 1;
+  ResponsePayload response = 2;
+  string tid = 3;   // transaction id matching the query that prompted this response
+}
+
+// Error message for errors
+message Error {
+  int32 code = 1;
+  string message = 2;
+  string data = 3; // optional additional error data
+}
+
+message NodeInfo {
+  string address = 1;
+  uint32 port = 2;
+  string id = 3;        // Unique identifier for the node
+  int32 status = 4;     // Status of the node (e.g., 0=Dead, 1=Inactive, 2=Active)
+  int32 distance = 5;   // Distance metric for the node
+}
+
+// ResponsePayload represents results of queries - can be extended with specific fields
+message ResponsePayload {
+  map<string, string> data = 1; // existing generic data
+  repeated NodeInfo nodes = 2; // repeated nodes only present on find_node responses
+}
+// protoc --cpp_out=../build/proto message.proto # proto folder must exist for this to work
+// [END messages]

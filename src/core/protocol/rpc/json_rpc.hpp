@@ -11,7 +11,6 @@ namespace neroshop {
 
 namespace rpc {
     bool is_json_rpc(const std::string& str);
-namespace json {
     // TODO: map names (strings) to functions
     static const std::unordered_map<std::string, std::function<void(const std::string&)>> methods = {//static std::unordered_map<std::string, std::function<void(int)>> methods_cmd
         { "query", nullptr },
@@ -26,12 +25,12 @@ namespace json {
         "ALTER",  // "ALTER DATABASE" - modifies a database // "ALTER TABLE" - modifies a table
         "DROP",   // "DROP TABLE" - deletes a table // "DROP INDEX" - deletes an index
     };
-    extern std::string generate_random_id();
-    extern std::string get_query_method(const std::string& sql);
-    extern bool is_query_method(const std::string& query_method);
-    extern bool is_method(const std::string& method);
-    extern std::string translate(const std::string& sql); // converts an sqlite query to a json_rpc request message
-    extern std::string translate(const std::string& sql, const std::vector<std::string>& args);
+    extern std::string json_generate_random_id();
+    extern std::string json_get_query_method(const std::string& sql);
+    extern bool json_is_query_method(const std::string& query_method);
+    extern bool json_is_method(const std::string& method);
+    extern std::string json_translate(const std::string& sql); // converts an sqlite query to a json_rpc request message
+    extern std::string json_translate(const std::string& sql, const std::vector<std::string>& args);
     template <typename... Args>
     static decltype (auto) translate_cmd(const std::string& method_name, Args&&... args) { // converts a method (string) and its argument(s) into a json_rpc response message via the command line
         // accessing the number of args: static const size_t arg_count = sizeof...(Args);
@@ -40,13 +39,11 @@ namespace json {
         ////methods["eat"](std::forward<Args>(args)...);
         return nullptr; // TEMPORARY
     }
-    extern std::string process(const std::string& request); // (server) processes a request from the client
-    extern void request(const std::string& json); // for client - to send requests
-    extern void request_batch(const std::vector<std::string>& json_batch); // sends a batch of json_rpc requests to the server and expects a batch of json_rpc responses
-    extern void respond(const std::string& json); // for server - to respond to requests
-    extern void respond_batch(const std::vector<std::string>& json_batch);
-} // namespace json
-
+    extern std::string json_process(const std::string& request); // (server) processes a request from the client
+    extern void json_request(const std::string& json); // for client - to send requests
+    extern void json_request_batch(const std::vector<std::string>& json_batch); // sends a batch of json_rpc requests to the server and expects a batch of json_rpc responses
+    extern void json_respond(const std::string& json); // for server - to respond to requests
+    extern void json_respond_batch(const std::vector<std::string>& json_batch);
 } // namespace rpc
 
 }

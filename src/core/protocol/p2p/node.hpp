@@ -13,8 +13,6 @@
 #include <atomic>
 #include <chrono>
 
-#include <nlohmann/json.hpp>
-
 namespace neroshop {
 
 class SamClient;
@@ -177,7 +175,7 @@ private:
     std::unique_ptr<KeyMapper> key_mapper;
     std::atomic<bool> bootstrap;
     std::atomic<int> check_counter; // Counter to track the number of consecutive failed checks
-    std::unordered_map<std::string, std::promise<nlohmann::json>> pending_requests; // Shared between sender and listener
+    std::unordered_map<std::string, std::promise<std::vector<uint8_t>>> pending_requests; // Shared between sender and listener
     std::mutex pending_mutex;
     // Connection pool
     std::unordered_map<std::string, std::unique_ptr<Socks5Client>> tor_peers;

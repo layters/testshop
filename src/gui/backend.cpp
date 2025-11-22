@@ -47,6 +47,7 @@
 #include "../core/protocol/p2p/file_piece_hasher.hpp"
 #include "../core/market/location.hpp"
 #include "currency_rate_provider.hpp"
+#include "../core/protocol/rpc/protobuf.hpp"
 
 #include <future>
 #include <thread>
@@ -611,34 +612,51 @@ QVariantList neroshop::Backend::getProductRatings(const QString& product_id) {
             QString key = QString::fromStdString(column_value);//std::cout << key.toStdString() << "\n";
             
             // Get the value of the corresponding key from the DHT
-            std::string response;
-            client->get(key.toStdString(), response); // TODO: error handling
-            log_trace("Received response (get): {}", response);
-            // Parse the response
-            nlohmann::json json = nlohmann::json::parse(response);
-            if(json.contains("error")) {
-                std::string response2;
+            std::vector<uint8_t> response;
+            client->get(key.toStdString(), response);
+            // Skip empty and invalid responses
+            if(response.empty()) continue;
+            #if defined(NEROSHOP_USE_PROTOBUF)
+            neroshop::DhtMessage resp_msg;
+            if (!resp_msg.ParseFromArray(response.data(), static_cast<int>(response.size()))) {
+                continue; // Parsing error, skip to next iteration
+            }
+            if (resp_msg.has_error()) {
+                log_trace("Received error (get): {}", resp_msg.error().DebugString());
+                // Remove obsolete keys from our datastore
+                std::vector<uint8_t> response2;
                 client->remove(key.toStdString(), response2);
-                log_trace("Received response (remove): {}", response2);
+                neroshop::DhtMessage resp_msg2;
+                if (resp_msg2.ParseFromArray(response2.data(), static_cast<int>(response2.size()))) {
+                    if(resp_msg2.has_response()) log_info("Removed key {}", key.toStdString());//log_trace("Received response (remove): {}", resp_msg2.response().DebugString());
+                }
                 //emit productRatingsChanged();
                 continue; // Key is lost or missing from DHT, skip to next iteration
+            } else if(resp_msg.has_response()) {
+                log_trace("Received response (get): {}", resp_msg.response().DebugString());
             }
             
-            const auto& response_obj = json["response"];
-            assert(response_obj.is_object());
-            if (response_obj.contains("value") && response_obj["value"].is_string()) {
-                const auto& value = response_obj["value"].get<std::string>();
-                nlohmann::json value_obj = nlohmann::json::parse(value);
-                assert(value_obj.is_object());//std::cout << value_obj.dump(4) << "\n";
-                std::string metadata = value_obj["metadata"].get<std::string>();
-                if (metadata != "product_rating") { std::cerr << "Invalid metadata. \"product_rating\" expected, got \"" << metadata << "\" instead\n"; continue; }
-                product_rating_obj.insert("key", key);
-                product_rating_obj.insert("rater_id", QString::fromStdString(value_obj["rater_id"].get<std::string>()));
-                product_rating_obj.insert("comments", QString::fromStdString(value_obj["comments"].get<std::string>()));
-                product_rating_obj.insert("signature", QString::fromStdString(value_obj["signature"].get<std::string>()));
-                product_rating_obj.insert("stars", value_obj["stars"].get<int>());
-                if(value_obj.contains("expiration_date") && value_obj["expiration_date"].is_string()) {
-                    product_rating_obj.insert("expiration_date", QString::fromStdString(value_obj["expiration_date"].get<std::string>()));
+            const auto& payload = resp_msg.response().response();
+            const auto& data_map = payload.data();
+            if (data_map.find("value") != data_map.end()) {
+                std::string value = data_map.at("value");
+            #endif    
+                try {
+                    nlohmann::json value_obj = nlohmann::json::parse(value);
+                    assert(value_obj.is_object());//std::cout << value_obj.dump(4) << "\n";
+                    std::string metadata = value_obj["metadata"].get<std::string>();
+                    if (metadata != "product_rating") { std::cerr << "Invalid metadata. \"product_rating\" expected, got \"" << metadata << "\" instead\n"; continue; }
+                    product_rating_obj.insert("key", key);
+                    product_rating_obj.insert("rater_id", QString::fromStdString(value_obj["rater_id"].get<std::string>()));
+                    product_rating_obj.insert("comments", QString::fromStdString(value_obj["comments"].get<std::string>()));
+                    product_rating_obj.insert("signature", QString::fromStdString(value_obj["signature"].get<std::string>()));
+                    product_rating_obj.insert("stars", value_obj["stars"].get<int>());
+                    if(value_obj.contains("expiration_date") && value_obj["expiration_date"].is_string()) {
+                        product_rating_obj.insert("expiration_date", QString::fromStdString(value_obj["expiration_date"].get<std::string>()));
+                    }
+                } catch (const nlohmann::json::parse_error& e) {
+                    std::cerr << "Failed to parse JSON value: " << e.what() << std::endl;
+                    continue;
                 }
             }
             
@@ -750,23 +768,35 @@ QVariantList neroshop::Backend::getSellerRatings(const QString& user_id) {
             QString key = QString::fromStdString(column_value);//std::cout << key.toStdString() << "\n";
             
             // Get the value of the corresponding key from the DHT
-            std::string response;
-            client->get(key.toStdString(), response); // TODO: error handling
-            log_trace("Received response (get): {}", response);
-            // Parse the response
-            nlohmann::json json = nlohmann::json::parse(response);
-            if(json.contains("error")) {
-                std::string response2;
+            std::vector<uint8_t> response;
+            client->get(key.toStdString(), response);
+            // Skip empty and invalid responses
+            if(response.empty()) continue;
+            #if defined(NEROSHOP_USE_PROTOBUF)
+            neroshop::DhtMessage resp_msg;
+            if (!resp_msg.ParseFromArray(response.data(), static_cast<int>(response.size()))) {
+                continue; // Parsing error, skip to next iteration
+            }
+            if (resp_msg.has_error()) {
+                log_trace("Received error (get): {}", resp_msg.error().DebugString());
+                // Remove obsolete keys from our datastore
+                std::vector<uint8_t> response2;
                 client->remove(key.toStdString(), response2);
-                log_trace("Received response (remove): {}", response2);
+                neroshop::DhtMessage resp_msg2;
+                if (resp_msg2.ParseFromArray(response2.data(), static_cast<int>(response2.size()))) {
+                    if(resp_msg2.has_response()) log_info("Removed key {}", key.toStdString());//log_trace("Received response (remove): {}", resp_msg2.response().DebugString());
+                }
                 //emit sellerRatingsChanged();
                 continue; // Key is lost or missing from DHT, skip to next iteration
+            } else if(resp_msg.has_response()) {
+                log_trace("Received response (get): {}", resp_msg.response().DebugString());
             }
             
-            const auto& response_obj = json["response"];
-            assert(response_obj.is_object());
-            if (response_obj.contains("value") && response_obj["value"].is_string()) {
-                const auto& value = response_obj["value"].get<std::string>();
+            const auto& payload = resp_msg.response().response();
+            const auto& data_map = payload.data();
+            if (data_map.find("value") != data_map.end()) {
+                std::string value = data_map.at("value");
+            #endif
                 nlohmann::json value_obj = nlohmann::json::parse(value);
                 assert(value_obj.is_object());//std::cout << value_obj.dump(4) << "\n";
                 std::string metadata = value_obj["metadata"].get<std::string>();
@@ -821,25 +851,40 @@ QVariantMap neroshop::Backend::getUser(const QString& user_id) {
     if(!database) throw std::runtime_error("database is NULL");
     std::string key = database->get_text_params("SELECT key FROM mappings WHERE search_term = $1 AND content = 'user' LIMIT 1;", { user_id.toStdString() });
     if(key.empty()) return {};
+    
     // Get the value of the corresponding key from the DHT
-    std::string response;
-    client->get(key, response); // TODO: error handling
-    log_trace("Received response (get): {}", response);
-    // Parse the response
-    nlohmann::json json = nlohmann::json::parse(response);
-    if(json.contains("error")) {
-        std::string response2;
-        client->remove(key, response2);
-        log_trace("Received response (remove): {}", response2);
-        return {}; // Key is lost or missing from DHT, skip to next iteration
+    std::vector<uint8_t> response;
+    client->get(key, response);
+    // Skip empty and invalid responses
+    if(response.empty()) return {};
+    #if defined(NEROSHOP_USE_PROTOBUF)
+    neroshop::DhtMessage resp_msg;
+    if (!resp_msg.ParseFromArray(response.data(), static_cast<int>(response.size()))) {
+        return {}; // Parsing error, return empty object
     }
+    if (resp_msg.has_error()) {
+        log_trace("Received error (get): {}", resp_msg.error().DebugString());
+        // Remove obsolete keys from our datastore
+        std::vector<uint8_t> response2;
+        client->remove(key, response2);
+        neroshop::DhtMessage resp_msg2;
+        if (resp_msg2.ParseFromArray(response2.data(), static_cast<int>(response2.size()))) {
+            if(resp_msg2.has_response()) log_info("Removed key {}", key);//log_trace("Received response (remove): {}", resp_msg2.response().DebugString());
+        }
+        return {}; // Key is lost or missing from DHT, return empty object
+    } else if(resp_msg.has_response()) {
+        log_trace("Received response (get): {}", resp_msg.response().DebugString());
+    }
+    #endif
     
     QVariantMap user_object;
-            
-    const auto& response_obj = json["response"];
-    assert(response_obj.is_object());
-    if (response_obj.contains("value") && response_obj["value"].is_string()) {
-        const auto& value = response_obj["value"].get<std::string>();
+    
+    #if defined(NEROSHOP_USE_PROTOBUF)
+    const auto& payload = resp_msg.response().response();
+    const auto& data_map = payload.data();
+    if (data_map.find("value") != data_map.end()) {
+        std::string value = data_map.at("value");
+    #endif
         nlohmann::json value_obj = nlohmann::json::parse(value);
         assert(value_obj.is_object());//std::cout << value_obj.dump(4) << "\n";
         std::string metadata = value_obj["metadata"].get<std::string>();
@@ -936,23 +981,36 @@ int neroshop::Backend::getStockAvailable(const QString& product_id) {
     if(!database) throw std::runtime_error("database is NULL");
     std::string key = database->get_text_params("SELECT key FROM mappings WHERE search_term = $1 AND content = 'listing'", { product_id.toStdString() });
     if(key.empty()) return 0;
-    // Get the value of the corresponding key from the DHT
-    std::string response;
-    client->get(key, response); // TODO: error handling
-    log_trace("Received response (get): {}", response);
-    // Parse the response
-    nlohmann::json json = nlohmann::json::parse(response);
-    if(json.contains("error")) {
-        std::string response2;
-        client->remove(key, response2);
-        log_trace("Received response (remove): {}", response2);
-        return 0; // Key is lost or missing from DHT, return 
-    }    
     
-    const auto& response_obj = json["response"];
-    assert(response_obj.is_object());
-    if (response_obj.contains("value") && response_obj["value"].is_string()) {
-        const auto& value = response_obj["value"].get<std::string>();
+    // Get the value of the corresponding key from the DHT
+    std::vector<uint8_t> response;
+    client->get(key, response);
+    // Skip empty and invalid responses
+    if(response.empty()) return 0;
+    #if defined(NEROSHOP_USE_PROTOBUF)
+    neroshop::DhtMessage resp_msg;
+    if (!resp_msg.ParseFromArray(response.data(), static_cast<int>(response.size()))) {
+        return 0; // Parsing error, return zero
+    }
+    if (resp_msg.has_error()) {
+        log_trace("Received error (get): {}", resp_msg.error().DebugString());
+        // Remove obsolete keys from our datastore
+        std::vector<uint8_t> response2;
+        client->remove(key, response2);
+        neroshop::DhtMessage resp_msg2;
+        if (resp_msg2.ParseFromArray(response2.data(), static_cast<int>(response2.size()))) {
+            if(resp_msg2.has_response()) log_info("Removed key {}", key);//log_trace("Received response (remove): {}", resp_msg2.response().DebugString());
+        }
+        return 0; // Key is lost or missing from DHT, return zero
+    } else if(resp_msg.has_response()) {
+        log_trace("Received response (get): {}", resp_msg.response().DebugString());
+    }
+    
+    const auto& payload = resp_msg.response().response();
+    const auto& data_map = payload.data();
+    if (data_map.find("value") != data_map.end()) {
+        std::string value = data_map.at("value");
+    #endif
         nlohmann::json value_obj = nlohmann::json::parse(value);
         assert(value_obj.is_object());//std::cout << value_obj.dump(4) << "\n";
         std::string metadata = value_obj["metadata"].get<std::string>();
@@ -1001,23 +1059,36 @@ QVariantList neroshop::Backend::getInventory(const QString& userId, bool hideNsf
             std::string column_value = (sqlite3_column_text(stmt, i) == nullptr) ? "NULL" : reinterpret_cast<const char *>(sqlite3_column_text(stmt, i));//std::cout << column_value  << " (" << i << ")" << std::endl;
             if(column_value == "NULL") continue; // Skip invalid columns
             QString key = QString::fromStdString(column_value);
+            
             // Get the value of the corresponding key from the DHT
-            std::string response;
-            client->get(key.toStdString(), response); // TODO: error handling
-            log_trace("Received response (get): {}", response);
-            // Parse the response
-            nlohmann::json json = nlohmann::json::parse(response);
-            if(json.contains("error")) {
-                std::string response2;
+            std::vector<uint8_t> response;
+            client->get(key.toStdString(), response);
+            // Skip empty and invalid responses
+            if(response.empty()) continue;
+            #if defined(NEROSHOP_USE_PROTOBUF)
+            neroshop::DhtMessage resp_msg;
+            if (!resp_msg.ParseFromArray(response.data(), static_cast<int>(response.size()))) {
+                continue; // Parsing error, skip to next iteration
+            }
+            if (resp_msg.has_error()) {
+                log_trace("Received error (get): {}", resp_msg.error().DebugString());
+                // Remove obsolete keys from our datastore
+                std::vector<uint8_t> response2;
                 client->remove(key.toStdString(), response2);
-                log_trace("Received response (remove): {}", response2);
+                neroshop::DhtMessage resp_msg2;
+                if (resp_msg2.ParseFromArray(response2.data(), static_cast<int>(response2.size()))) {
+                    if(resp_msg2.has_response()) log_info("Removed key {}", key.toStdString());//log_trace("Received response (remove): {}", resp_msg2.response().DebugString());
+                }
                 continue; // Key is lost or missing from DHT, skip to next iteration
+            } else if(resp_msg.has_response()) {
+                log_trace("Received response (get): {}", resp_msg.response().DebugString());
             }
             
-            const auto& response_obj = json["response"];
-            assert(response_obj.is_object());
-            if (response_obj.contains("value") && response_obj["value"].is_string()) {
-                const auto& value = response_obj["value"].get<std::string>();
+            const auto& payload = resp_msg.response().response();
+            const auto& data_map = payload.data();
+            if (data_map.find("value") != data_map.end()) {
+                std::string value = data_map.at("value");
+            #endif
                 nlohmann::json value_obj = nlohmann::json::parse(value);
                 assert(value_obj.is_object());//std::cout << value_obj.dump(4) << "\n";
                 std::string metadata = value_obj["metadata"].get<std::string>();
@@ -1195,25 +1266,38 @@ QVariantList neroshop::Backend::getListingsBySearchTerm(const QString& searchTer
             std::string column_value = (sqlite3_column_text(stmt, i) == nullptr) ? "NULL" : reinterpret_cast<const char *>(sqlite3_column_text(stmt, i));//std::cout << column_value  << " (" << i << ")" << std::endl;
             if(column_value == "NULL") continue; // Skip invalid columns
             QString key = QString::fromStdString(column_value);
+            
             // Get the value of the corresponding key from the DHT
-            std::string response;
-            client->get(key.toStdString(), response); // TODO: error handling
-            log_trace("Received response (get): {}", response);
-            // Parse the response
-            nlohmann::json json = nlohmann::json::parse(response);
-            if(json.contains("error")) { 
-                std::string response2;
+            std::vector<uint8_t> response;
+            client->get(key.toStdString(), response);
+            // Skip empty and invalid responses
+            if(response.empty()) continue;
+            #if defined(NEROSHOP_USE_PROTOBUF)
+            neroshop::DhtMessage resp_msg;
+            if (!resp_msg.ParseFromArray(response.data(), static_cast<int>(response.size()))) {
+                continue; // Parsing error, skip to next iteration
+            }
+            if (resp_msg.has_error()) {
+                log_trace("Received error (get): {}", resp_msg.error().DebugString());
+                // Remove obsolete keys from our datastore
+                std::vector<uint8_t> response2;
                 client->remove(key.toStdString(), response2);
-                log_trace("Received response (remove): {}", response2);
-                //emit categoryProductCountChanged();//(category_id);
+                neroshop::DhtMessage resp_msg2;
+                if (resp_msg2.ParseFromArray(response2.data(), static_cast<int>(response2.size()))) {
+                    if(resp_msg2.has_response()) log_info("Removed key {}", key.toStdString());//log_trace("Received response (remove): {}", resp_msg2.response().DebugString());
+                }
+                //emit categoryProductCountChanged();
                 //emit searchResultsChanged();
                 continue; // Key is lost or missing from DHT, skip to next iteration
+            } else if(resp_msg.has_response()) {
+                log_trace("Received response (get): {}", resp_msg.response().DebugString());
             }
             
-            const auto& response_obj = json["response"];
-            assert(response_obj.is_object());
-            if (response_obj.contains("value") && response_obj["value"].is_string()) {
-                const auto& value = response_obj["value"].get<std::string>();
+            const auto& payload = resp_msg.response().response();
+            const auto& data_map = payload.data();
+            if (data_map.find("value") != data_map.end()) {
+                std::string value = data_map.at("value");
+            #endif
                 nlohmann::json value_obj = nlohmann::json::parse(value);
                 assert(value_obj.is_object());//std::cout << value_obj.dump(4) << "\n";
                 std::string metadata = value_obj["metadata"].get<std::string>();
@@ -1352,7 +1436,7 @@ QVariantList neroshop::Backend::getListingsBySearchTerm(const QString& searchTer
     return catalog;
 }
 //----------------------------------------------------------------
-QVariantList neroshop::Backend::getListings(int sorting, bool hideNsfw, bool hideIllicit) {
+QVariantList neroshop::Backend::getListings(bool hideNsfw, bool hideIllicit) {
     CurrencyExchangeRatesProvider *rateProvider = CurrencyExchangeRatesProvider::instance();
     // Transition from Sqlite to DHT:
     Client * client = Client::get_main_client();
@@ -1383,25 +1467,38 @@ QVariantList neroshop::Backend::getListings(int sorting, bool hideNsfw, bool hid
             std::string column_value = (sqlite3_column_text(stmt, i) == nullptr) ? "NULL" : reinterpret_cast<const char *>(sqlite3_column_text(stmt, i));//std::cout << column_value  << " (" << i << ")" << std::endl;
             if(column_value == "NULL") continue; // Skip invalid columns
             QString key = QString::fromStdString(column_value);
+            
             // Get the value of the corresponding key from the DHT
-            std::string response;
-            client->get(key.toStdString(), response); // TODO: error handling
-            log_trace("Received response (get): {}", response);
-            // Parse the response
-            nlohmann::json json = nlohmann::json::parse(response);
-            if(json.contains("error")) {
-                std::string response2;
+            std::vector<uint8_t> response;
+            client->get(key.toStdString(), response);
+            // Skip empty and invalid responses
+            if(response.empty()) continue;
+            #if defined(NEROSHOP_USE_PROTOBUF)
+            neroshop::DhtMessage resp_msg;
+            if (!resp_msg.ParseFromArray(response.data(), static_cast<int>(response.size()))) {
+                continue; // Parsing error, skip to next iteration
+            }
+            if (resp_msg.has_error()) {
+                log_trace("Received error (get): {}", resp_msg.error().DebugString());
+                // Remove obsolete keys from our datastore
+                std::vector<uint8_t> response2;
                 client->remove(key.toStdString(), response2);
-                log_trace("Received response (remove): {}", response2);
-                //emit categoryProductCountChanged();//(category_id);
+                neroshop::DhtMessage resp_msg2;
+                if (resp_msg2.ParseFromArray(response2.data(), static_cast<int>(response2.size()))) {
+                    if(resp_msg2.has_response()) log_info("Removed key {}", key.toStdString());//log_trace("Received response (remove): {}", resp_msg2.response().DebugString());
+                }
+                //emit categoryProductCountChanged();
                 //emit searchResultsChanged();
                 continue; // Key is lost or missing from DHT, skip to next iteration
+            } else if(resp_msg.has_response()) {
+                log_trace("Received response (get): {}", resp_msg.response().DebugString());
             }
             
-            const auto& response_obj = json["response"];
-            assert(response_obj.is_object());
-            if (response_obj.contains("value") && response_obj["value"].is_string()) {
-                const auto& value = response_obj["value"].get<std::string>();
+            const auto& payload = resp_msg.response().response();
+            const auto& data_map = payload.data();
+            if (data_map.find("value") != data_map.end()) {
+                std::string value = data_map.at("value");
+            #endif
                 nlohmann::json value_obj = nlohmann::json::parse(value);
                 assert(value_obj.is_object());//std::cout << value_obj.dump(4) << "\n";
                 std::string metadata = value_obj["metadata"].get<std::string>();
@@ -1540,92 +1637,7 @@ QVariantList neroshop::Backend::getListings(int sorting, bool hideNsfw, bool hid
     
     sqlite3_finalize(stmt);
     
-    switch(sorting) {
-        case static_cast<int>(EnumWrapper::Sorting::SortNone):
-            // Code for sorting by none - do nothing
-            break;
-        case static_cast<int>(EnumWrapper::Sorting::SortByCategory):
-            // Code for sorting by category - unavailable. Use getListingsByCategory() instead
-            break;
-        case static_cast<int>(EnumWrapper::Sorting::SortByMostRecent):
-            // Perform the sorting operation on the catalog based on the "most recent" criteria
-            std::sort(catalog.begin(), catalog.end(), [](const QVariant& a, const QVariant& b) {
-                QVariantMap listingA = a.toMap();
-                QVariantMap listingB = b.toMap();
-                QString dateA = listingA["date"].toString();
-                QString dateB = listingB["date"].toString();
-                
-                // Convert 'Z' to UTC+0 offset
-                if (dateA.endsWith("Z")) {
-                    dateA.replace(dateA.length() - 1, 1, "+00:00");
-                }
-                if (dateB.endsWith("Z")) {
-                    dateB.replace(dateB.length() - 1, 1, "+00:00");
-                }
-                
-                QDateTime dateTimeA = QDateTime::fromString(dateA, Qt::ISODateWithMs);
-                QDateTime dateTimeB = QDateTime::fromString(dateB, Qt::ISODateWithMs);
-
-                return dateTimeA > dateTimeB;
-            });
-            break;
-        case static_cast<int>(EnumWrapper::Sorting::SortByOldest):
-            std::sort(catalog.begin(), catalog.end(), [](const QVariant& a, const QVariant& b) {
-                QVariantMap listingA = a.toMap();
-                QVariantMap listingB = b.toMap();
-                QString dateA = listingA["date"].toString();
-                QString dateB = listingB["date"].toString();
-                
-                // Convert 'Z' to UTC+0 offset
-                if (dateA.endsWith("Z")) {
-                    dateA.replace(dateA.length() - 1, 1, "+00:00");
-                }
-                if (dateB.endsWith("Z")) {
-                    dateB.replace(dateB.length() - 1, 1, "+00:00");
-                }
-                
-                QDateTime dateTimeA = QDateTime::fromString(dateA, Qt::ISODateWithMs);
-                QDateTime dateTimeB = QDateTime::fromString(dateB, Qt::ISODateWithMs);
-
-                return dateTimeA < dateTimeB;
-            });
-            break;
-        case static_cast<int>(EnumWrapper::Sorting::SortByAlphabeticalOrder):
-            // Sort the catalog list by product name (alphabetically)
-            std::sort(catalog.begin(), catalog.end(), [](const QVariant& listing1, const QVariant& listing2) {
-                QString productName1 = listing1.toMap()["product_name"].toString();
-                QString productName2 = listing2.toMap()["product_name"].toString();
-                return QString::compare(productName1, productName2, Qt::CaseInsensitive) < 0;
-            });
-            break;
-        case static_cast<int>(EnumWrapper::Sorting::SortByPriceLowest):
-            // Perform the sorting operation on the catalog based on the "price lowest" criteria
-            std::sort(catalog.begin(), catalog.end(), [](const QVariant& a, const QVariant& b) {
-                QVariantMap listingA = a.toMap();
-                QVariantMap listingB = b.toMap();
-                return listingA["price_xmr"].toDouble() < listingB["price_xmr"].toDouble();
-            });
-            break;
-        case static_cast<int>(EnumWrapper::Sorting::SortByPriceHighest):
-            // Perform the sorting operation on the catalog based on the "price highest" criteria
-            std::sort(catalog.begin(), catalog.end(), [](const QVariant& a, const QVariant& b) {
-                QVariantMap listingA = a.toMap();
-                QVariantMap listingB = b.toMap();
-                return listingA["price_xmr"].toDouble() > listingB["price_xmr"].toDouble();
-            });
-            break;
-        case static_cast<int>(EnumWrapper::Sorting::SortByMostFavorited):
-            // Code for sorting by most favorited
-            break;
-        case static_cast<int>(EnumWrapper::Sorting::SortByMostSales):
-            // Code for sorting by most sales
-            break;
-        default:
-            // Code for handling unknown sorting value - do nothing
-            break;
-    }
-
-    return catalog;    
+    return catalog;
 }
 //----------------------------------------------------------------
 QVariantList neroshop::Backend::getListingsByCategory(int categoryId, bool hideNsfw, bool hideIllicit) {
@@ -1668,25 +1680,36 @@ QVariantList neroshop::Backend::getListingsByCategory(int categoryId, bool hideN
             std::string column_value = (sqlite3_column_text(stmt, i) == nullptr) ? "NULL" : reinterpret_cast<const char *>(sqlite3_column_text(stmt, i));//std::cout << column_value  << " (" << i << ")" << std::endl;
             if(column_value == "NULL") continue; // Skip invalid columns
             QString key = QString::fromStdString(column_value);
+            
             // Get the value of the corresponding key from the DHT
-            std::string response;
-            client->get(key.toStdString(), response); // TODO: error handling
-            log_trace("Received response (get): {}", response);
-            // Parse the response
-            nlohmann::json json = nlohmann::json::parse(response);
-            if(json.contains("error")) {
-                std::string response2;
+            std::vector<uint8_t> response;
+            client->get(key.toStdString(), response);
+            // Skip empty and invalid responses
+            if(response.empty()) continue;
+            #if defined(NEROSHOP_USE_PROTOBUF)
+            neroshop::DhtMessage resp_msg;
+            if (!resp_msg.ParseFromArray(response.data(), static_cast<int>(response.size()))) {
+                continue; // Parsing error, skip to next iteration
+            }
+            if (resp_msg.has_error()) {
+                log_trace("Received error (get): {}", resp_msg.error().DebugString());
+                // Remove obsolete keys from our datastore
+                std::vector<uint8_t> response2;
                 client->remove(key.toStdString(), response2);
-                log_trace("Received response (remove): {}", response2);
-                //emit categoryProductCountChanged();//(categoryId);
-                //emit searchResultsChanged();
+                neroshop::DhtMessage resp_msg2;
+                if (resp_msg2.ParseFromArray(response2.data(), static_cast<int>(response2.size()))) {
+                    if(resp_msg2.has_response()) log_info("Removed key {}", key.toStdString());//log_trace("Received response (remove): {}", resp_msg2.response().DebugString());
+                }
                 continue; // Key is lost or missing from DHT, skip to next iteration
+            } else if(resp_msg.has_response()) {
+                log_trace("Received response (get): {}", resp_msg.response().DebugString());
             }
             
-            const auto& response_obj = json["response"];
-            assert(response_obj.is_object());
-            if (response_obj.contains("value") && response_obj["value"].is_string()) {
-                const auto& value = response_obj["value"].get<std::string>();
+            const auto& payload = resp_msg.response().response();
+            const auto& data_map = payload.data();
+            if (data_map.find("value") != data_map.end()) {
+                std::string value = data_map.at("value");
+            #endif
                 nlohmann::json value_obj = nlohmann::json::parse(value);
                 assert(value_obj.is_object());//std::cout << value_obj.dump(4) << "\n";
                 std::string metadata = value_obj["metadata"].get<std::string>();
@@ -1827,11 +1850,12 @@ QVariantList neroshop::Backend::getListingsByCategory(int categoryId, bool hideN
 }
 //----------------------------------------------------------------
 QVariantList neroshop::Backend::getListingsByMostRecent(int limit, bool hideNsfw, bool hideIllicit) {
-    auto catalog = getListings(static_cast<int>(EnumWrapper::Sorting::SortByMostRecent), hideNsfw, hideIllicit);
-    if (catalog.size() > limit) {
-        catalog = catalog.mid(0, limit);
+    auto catalog = getListings(hideNsfw, hideIllicit);
+    auto catalogSorted = sortBy(catalog, static_cast<int>(EnumWrapper::Sorting::SortByMostRecent));
+    if (catalogSorted.size() > limit) {
+        catalogSorted = catalogSorted.mid(0, limit);
     }
-    return catalog;
+    return catalogSorted;
 }
 //----------------------------------------------------------------
 QVariantList neroshop::Backend::sortBy(const QVariantList& catalog, int sorting) {
@@ -2126,9 +2150,20 @@ QVariantList neroshop::Backend::registerUser(WalletManager* wallet_manager, cons
     std::string value = data.second;
     
     // Send put and receive response
-    std::string response;
+    std::vector<uint8_t> response;
     client->put(key, value, response);
-    log_trace("Received response (put): {}", response);
+    #if defined(NEROSHOP_USE_PROTOBUF)
+    neroshop::DhtMessage resp_msg;
+    if (!resp_msg.ParseFromArray(response.data(), static_cast<int>(response.size()))) {
+        return { false, "Failed to parse response" };
+    }
+
+    if (resp_msg.has_error()) {
+        log_trace("Received error (put): {}", resp_msg.error().DebugString());
+    } else if(resp_msg.has_response()) {
+        log_trace("Received response (put): {}", resp_msg.response().DebugString());
+    }
+    #endif
     //---------------------------------------------
     // Create cart for user
     QString cart_uuid = QUuid::createUuid().toString();
@@ -2378,97 +2413,95 @@ QVariantMap neroshop::Backend::getNetworkStatus() const {
     if(!DaemonManager::isDaemonServerBound()) { return {}; }
     
     Client * client = Client::get_main_client();
-    std::string response;
-    client->get("status", response);//log_trace("Received response (get): {}", response);
+    std::vector<uint8_t> response;
+    client->get("status", response);
     
-    // Parse the response
-    nlohmann::json json = nlohmann::json::parse(response);
-    if(json.contains("error")) {
+    #if defined(NEROSHOP_USE_PROTOBUF)
+    neroshop::DhtMessage resp_msg;
+    if (!resp_msg.ParseFromArray(response.data(), static_cast<int>(response.size()))) {
         return {};
     }
+
+    if (resp_msg.has_error()) {
+        //log_trace("Received error (get): {}", resp_msg.error().DebugString());
+        return {};
+    } else if(resp_msg.has_response()) {
+        //log_trace("Received response (get): {}", resp_msg.response().DebugString());
+    }
+    #endif
     
     QVariantMap network_status;
-            
-    const auto& response_obj = json["response"];
-    assert(response_obj.is_object());
-    if (response_obj.contains("connected_peers") && response_obj["connected_peers"].is_number_integer()) {
-        int connected_peers = response_obj["connected_peers"].get<int>();
-        network_status["connected_peers"] = connected_peers;
-    }
     
-    if (response_obj.contains("active_peers") && response_obj["active_peers"].is_number_integer()) {
-        int active_peers = response_obj["active_peers"].get<int>();
-        network_status["active_peers"] = active_peers;
-    }
-    
-    if (response_obj.contains("idle_peers") && response_obj["idle_peers"].is_number_integer()) {
-        int idle_peers = response_obj["idle_peers"].get<int>();
-        network_status["idle_peers"] = idle_peers;
-    }
-    
-    if (response_obj.contains("data_count") && response_obj["data_count"].is_number_integer()) {
-        int data_count = response_obj["data_count"].get<int>();
-        network_status["data_count"] = data_count;
-    }
-    
-    if (response_obj.contains("data_ram_usage") && response_obj["data_ram_usage"].is_number_integer()) {
-        int data_ram_usage = response_obj["data_ram_usage"].get<int>();
-        network_status["data_ram_usage"] = data_ram_usage;
-    }
-    
-    if (response_obj.contains("host") && response_obj["host"].is_string()) {
-        std::string host = response_obj["host"].get<std::string>();
-        network_status["host"] = QString::fromStdString(host);
-    }
-    
-    if (response_obj.contains("port") && response_obj["port"].is_number_integer()) {
-        int port = response_obj["port"].get<int>();
-        network_status["port"] = port;
-    }
-    
-    if (response_obj.contains("network_type") && response_obj["network_type"].is_string()) {
-        std::string network_type = response_obj["network_type"].get<std::string>();
-        network_status["network_type"] = QString::fromStdString(network_type);
-    }
-    
-    if (response_obj.contains("peers") && response_obj["peers"].is_array()) {
-        const auto& peers_array = response_obj["peers"];
-        QVariantList peersList;
-        
-        for(const auto& peer : peers_array) {
-            if(peer.is_object()) {
-                QVariantMap peerObject;
-                if(peer.contains("id") && peer["id"].is_string()) {
-                    peerObject.insert("id", QString::fromStdString(peer["id"].get<std::string>()));
-                }
-                if(peer.contains("address") && peer["address"].is_string()) {
-                    peerObject.insert("address", QString::fromStdString(peer["address"].get<std::string>()));
-                }
-                if(peer.contains("port") && peer["port"].is_number_integer()) {
-                    peerObject.insert("port", peer["port"].get<int>());
-                }
-                if(peer.contains("status") && peer["status"].is_number_integer()) {
-                    int status = peer["status"].get<int>();
-                    peerObject.insert("status", status);
-                    if(status == 0) {
-                        peerObject.insert("status_str", "Dead");
-                    }
-                    if(status == 1) {
-                        peerObject.insert("status_str", "Inactive");
-                    }
-                    if(status == 2) {
-                        peerObject.insert("status_str", "Active");
-                    }
-                }
-                if(peer.contains("distance") && peer["distance"].is_number_integer()) {
-                    peerObject.insert("distance", peer["distance"].get<int>());
-                }
-                peersList.append(peerObject);
+    #if defined(NEROSHOP_USE_PROTOBUF)
+    const auto& payload = resp_msg.response().response();
+    const auto& data_map = payload.data();
+
+    auto get_int = [&](const std::string& key) -> std::optional<int> {
+        auto it = data_map.find(key);
+        if (it != data_map.end()) {
+            try {
+                return std::stoi(it->second);
+            } catch (...) {
+                return std::nullopt;
             }
         }
-        
-        network_status["peers"] = peersList;
+        return std::nullopt;
+    };
+
+    auto get_string = [&](const std::string& key) -> std::optional<std::string> {
+        auto it = data_map.find(key);
+        if (it != data_map.end()) {
+            return it->second;
+        }
+        return std::nullopt;
+    };
+    
+    if (auto connected_peers = get_int("connected_peers")) {
+        network_status["connected_peers"] = *connected_peers;
     }
+    if (auto active_peers = get_int("active_peers")) {
+        network_status["active_peers"] = *active_peers;
+    }
+    if (auto idle_peers = get_int("idle_peers")) {
+        network_status["idle_peers"] = *idle_peers;
+    }
+    if (auto data_count = get_int("data_count")) {
+        network_status["data_count"] = *data_count;
+    }
+    if (auto data_ram_usage = get_int("data_ram_usage")) {
+        network_status["data_ram_usage"] = *data_ram_usage;
+    }
+    if (auto host = get_string("host")) {
+        network_status["host"] = QString::fromStdString(*host);
+    }
+    if (auto port = get_int("port")) {
+        network_status["port"] = *port;
+    }
+    if (auto network_type = get_string("network_type")) {
+        network_status["network_type"] = QString::fromStdString(*network_type);
+    }
+    #endif
+
+    QVariantList peersList;
+    #if defined(NEROSHOP_USE_PROTOBUF)
+    for (const auto& node_info : payload.nodes()) {
+        QVariantMap peerObject;
+        peerObject.insert("id", QString::fromStdString(node_info.id()));
+        peerObject.insert("address", QString::fromStdString(node_info.address()));
+        peerObject.insert("port", node_info.port());
+        peerObject.insert("status", node_info.status());
+        if (node_info.status() == 0) {
+            peerObject.insert("status_str", "Dead");
+        } else if (node_info.status() == 1) {
+            peerObject.insert("status_str", "Inactive");
+        } else if (node_info.status() == 2) {
+            peerObject.insert("status_str", "Active");
+        }
+        peerObject.insert("distance", node_info.distance());
+        peersList.append(peerObject);
+    }
+    #endif
+    network_status["peers"] = peersList;
     
     return network_status;
 }
@@ -2477,8 +2510,21 @@ void neroshop::Backend::clearHashTable() {
     if(!DaemonManager::isDaemonServerBound()) { return; }
     
     Client * client = Client::get_main_client();
-    std::string response;
-    client->clear(response);//log_trace("Received response (clear): {}", response);
+    std::vector<uint8_t> response;
+    client->clear(response);
+    
+    #if defined(NEROSHOP_USE_PROTOBUF)
+    neroshop::DhtMessage resp_msg;
+    if (!resp_msg.ParseFromArray(response.data(), static_cast<int>(response.size()))) {
+        return;
+    }
+
+    if (resp_msg.has_error()) {
+        //log_trace("Received error (clear): {}", resp_msg.error().DebugString());
+    } else if(resp_msg.has_response()) {
+        //log_trace("Received response (clear): {}", resp_msg.response().DebugString());
+    }
+    #endif
 }
 //----------------------------------------------------------------
 

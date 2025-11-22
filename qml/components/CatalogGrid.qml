@@ -189,11 +189,11 @@ GridView {
                 Layout.alignment: (!settingsDialog.gridDetailsAlignCenter) ? 0 : Qt.AlignHCenter
                 width: parent.width
                 property int maximumHeight: 100
-                text: qsTr(modelData.product_name)//qsTr("Product name")
+                text: trimElide(modelData.product_name, 128)
                 color: (NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000"
                 visible: !settingsDialog.hideProductDetails
                 readOnly: true
-                wrapMode: Text.Wrap //Text.Wrap moves text to the newline when it reaches the width
+                wrapMode: Text.Wrap // Text.Wrap moves text to the newline when it reaches the width
                 selectByMouse: true
                 //font.bold: true
                 font.pointSize: 13
@@ -204,11 +204,22 @@ GridView {
                         console.log("contentHeight has exceeded maximumHeight", contentHeight)
                         font.pointSize = (contentHeight >= 140) ? 9 : Qt.application.font.pointSize
                     }
-                    //console.log("productNameText.height",productNameText.height)
+                    //console.log("productNameText.height:",productNameText.height)
+                    //console.log("productNameText.lineCount:",lineCount)
                 }
-                //onClicked://onFocusChanged: {
-                    //if(activeFocus) pageLoader.setSource("qrc:/qml/pages/ProductPage.qml")
-                //}
+                function trimElide(text, maxLength) {
+                    if (text.length <= maxLength) {
+                        return text;
+                    }
+                    // Cut the text first to maxLength
+                    var trimmed = text.substring(0, maxLength);
+                    // Find the last space before maxLength to avoid cutting words
+                    var lastSpace = trimmed.lastIndexOf(' ');
+                    if (lastSpace > 0) {
+                        trimmed = trimmed.substring(0, lastSpace);
+                    }
+                    return trimmed + "...";
+                }
             }
                                 
             Column {

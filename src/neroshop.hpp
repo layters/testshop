@@ -44,6 +44,7 @@
 #include "core/protocol/p2p/serializer.hpp"
 #include "core/protocol/rpc/json_rpc.hpp"
 #include "core/protocol/rpc/msgpack.hpp"
+#include "core/protocol/rpc/protobuf.hpp"
 #include "core/protocol/transport/client.hpp"
 #include "core/protocol/transport/server.hpp"
 // tools (utilities)

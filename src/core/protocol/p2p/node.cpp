@@ -9,6 +9,7 @@
 #include "key_mapper.hpp"
 #include "../../crypto/sha3.hpp"
 #include "../rpc/msgpack.hpp"
+#include "../rpc/protobuf.hpp"
 #include "../../database/database.hpp"
 #include "../../tools/logger.hpp"
 #include "../../tools/timestamp.hpp"
@@ -29,6 +30,26 @@
 #include <set>
 
 namespace neroshop {
+
+//-----------------------------------------------------------------------------
+
+static std::string generate_transaction_id() {
+    std::random_device rd;
+    std::mt19937 gen(rd());
+    std::uniform_int_distribution<std::uint32_t> dis(0, std::numeric_limits<std::uint32_t>::max());
+    std::uint32_t tid = dis(gen);
+    std::array<std::uint8_t, 4> tid_bytes;
+    tid_bytes[0] = static_cast<std::uint8_t>((tid >> 24) & 0xFF);
+    tid_bytes[1] = static_cast<std::uint8_t>((tid >> 16) & 0xFF);
+    tid_bytes[2] = static_cast<std::uint8_t>((tid >> 8) & 0xFF);
+    tid_bytes[3] = static_cast<std::uint8_t>(tid & 0xFF);
+    
+    std::stringstream ss;
+    for (const auto& b : tid_bytes) {
+        ss << std::hex << std::setw(2) << std::setfill('0') << static_cast<int>(b);
+    }
+    return ss.str().substr(0, 4); // take the first 4 characters only
+}
 
 //-----------------------------------------------------------------------------
 
@@ -591,22 +612,127 @@ void Node::send_query(const std::string& destination, uint16_t port, const std::
 //-----------------------------------------------------------------------------
 
 bool Node::send_ping(const std::string& destination, uint16_t port) {
+    // Generate transaction ID
+    std::string transaction_id = generate_transaction_id();
+    
     // Create the ping message
-    nlohmann::json query_object;
-    std::string transaction_id = msgpack::generate_transaction_id();
+    //-----------------------------------------------------------
+    // Old nlohmann-json version
+    //-----------------------------------------------------------
+    /*nlohmann::json query_object;
     query_object["tid"] = transaction_id;
     query_object["query"] = "ping";
     query_object["args"]["id"] = this->get_id();
     query_object["args"]["port"] = get_port();
     query_object["version"] = std::string(NEROSHOP_DHT_VERSION);
-    auto ping_message = nlohmann::json::to_msgpack(query_object);//std::string my_query = query_object.dump();
+    auto ping_message = nlohmann::json::to_msgpack(query_object);*/
+    
+    //-----------------------------------------------------------
+    // Transition from nlohmann-json to msgpack-cxx
+    //-----------------------------------------------------------
+    /*// Build the args map (using std::map with std::string key and msgpack::object as value)
+    std::map<std::string, msgpack::object> args_map;
+    args_map["id"] = msgpack::object(this->get_id());
+    args_map["port"] = msgpack::object(get_port());
+
+    // Build the query map
+    std::map<std::string, msgpack::object> query_object;
+    query_object["tid"] = msgpack::object(transaction_id);
+    query_object["query"] = msgpack::object("ping");
+    query_object["args"] = msgpack::object(args_map);
+    query_object["version"] = msgpack::object(std::string(NEROSHOP_DHT_VERSION));
+
+    // Serialize with msgpack-c
+    msgpack::sbuffer sbuf;
+    msgpack::pack(sbuf, query_object);
+
+    // Create message byte vector
+    std::vector<uint8_t> ping_message(sbuf.data(), sbuf.data() + sbuf.size());*/
+    
+    //-----------------------------------------------------------
+    // msgpack-c packing replacement for msgpack-cxx portion
+    //-----------------------------------------------------------
+    #if defined(NEROSHOP_USE_MSGPACK)
+    msgpack_sbuffer sbuf;
+    msgpack_sbuffer_init(&sbuf);
+
+    msgpack_packer pk;
+    msgpack_packer_init(&pk, &sbuf, msgpack_sbuffer_write);
+
+    // Pack a map with 4 key-value pairs: tid, query, args, version
+    msgpack_pack_map(&pk, 4);
+
+    // "tid": transaction_id
+    msgpack_pack_str(&pk, 3);
+    msgpack_pack_str_body(&pk, "tid", 3);
+    msgpack_pack_str(&pk, transaction_id.size());
+    msgpack_pack_str_body(&pk, transaction_id.data(), transaction_id.size());
+
+    // "query": "ping"
+    msgpack_pack_str(&pk, 5);
+    msgpack_pack_str_body(&pk, "query", 5);
+    msgpack_pack_str(&pk, 4);
+    msgpack_pack_str_body(&pk, "ping", 4);
+
+    // "args": map { "id": this->get_id(), "port": get_port() }
+    msgpack_pack_str(&pk, 4);
+    msgpack_pack_str_body(&pk, "args", 4);
+    msgpack_pack_map(&pk, 2);
+
+    // "id": this->get_id()
+    std::string node_id = this->get_id();
+    msgpack_pack_str(&pk, 2);
+    msgpack_pack_str_body(&pk, "id", 2);
+    msgpack_pack_str(&pk, node_id.size());
+    msgpack_pack_str_body(&pk, node_id.data(), node_id.size());
+
+    // "port": get_port()
+    msgpack_pack_str(&pk, 4);
+    msgpack_pack_str_body(&pk, "port", 4);
+    msgpack_pack_uint16(&pk, get_port());
+
+    // "version": NEROSHOP_DHT_VERSION
+    std::string version = std::string(NEROSHOP_DHT_VERSION);
+    msgpack_pack_str(&pk, 7);
+    msgpack_pack_str_body(&pk, "version", 7);
+    msgpack_pack_str(&pk, version.size());
+    msgpack_pack_str_body(&pk, version.data(), version.size());
+
+    // Create std::vector<uint8_t> from sbuf data for sending
+    std::vector<uint8_t> ping_message(sbuf.data, sbuf.data + sbuf.size);
+
+    // Clean up msgpack buffer
+    msgpack_sbuffer_destroy(&sbuf);
+    #endif
+
+    //-----------------------------------------------------------
+    #if defined(NEROSHOP_USE_PROTOBUF)
+    // Build Query sub-message
+    neroshop::Query query;
+    query.set_tid(transaction_id);
+    query.set_query("ping");
+    query.set_version(NEROSHOP_DHT_VERSION);
+    auto* args_map = query.mutable_args();
+    (*args_map)["id"] = this->get_id();
+    (*args_map)["port"] = std::to_string(port);
+
+    // Wrap into main message
+    neroshop::DhtMessage msg;
+    *msg.mutable_query() = query;
+
+    // Serialize to bytes
+    std::vector<uint8_t> ping_message(msg.ByteSizeLong());
+    msg.SerializeToArray(ping_message.data(), ping_message.size());
+    #endif
+    
+    //-----------------------------------------------------------
     
     // ALL send_query functions should ONLY send and NEVER read - that job is for the run() function 
     // which runs the main loop for listening and replying to query requests
     
     // Setup promise/future
-    std::promise<nlohmann::json> promise;
-    std::future<nlohmann::json> future = promise.get_future();
+    std::promise<std::vector<uint8_t>> promise;
+    std::future<std::vector<uint8_t>> future = promise.get_future();
 
     {
         std::scoped_lock lock(pending_mutex); // equivalent to std::lock_guard<std::mutex> lock(pending_mutex); but is the more modern and recommended approach in C++17
@@ -637,7 +763,7 @@ bool Node::send_ping(const std::string& destination, uint16_t port) {
     log_debug("Ping RTT to {}: {} ms", destination, rtt);
 
     // Get the result
-    nlohmann::json pong_message = future.get();
+    std::vector<uint8_t> pong_message = future.get();
     
     return true;
 }
@@ -645,18 +771,102 @@ bool Node::send_ping(const std::string& destination, uint16_t port) {
 //-----------------------------------------------------------------------------
 
 std::vector<std::unique_ptr<Node>> Node::send_find_node(const std::string& target, const std::string& destination, uint16_t port) {
-    nlohmann::json query_object;
-    std::string transaction_id = msgpack::generate_transaction_id();
+    // Generate transaction ID
+    std::string transaction_id = generate_transaction_id();
+    
+    //-----------------------------------------------------------
+    // Old nlohmann-json version
+    //-----------------------------------------------------------
+    /*nlohmann::json query_object;
     query_object["tid"] = transaction_id;
     query_object["query"] = "find_node";
     query_object["args"]["id"] = this->get_id();
     query_object["args"]["target"] = target;
     query_object["version"] = std::string(NEROSHOP_DHT_VERSION);
-    auto find_node_message = nlohmann::json::to_msgpack(query_object);
+    auto find_node_message = nlohmann::json::to_msgpack(query_object);*/
+    
+    //-----------------------------------------------------------
+    // Transition from nlohmann-json to msgpack-c
+    //-----------------------------------------------------------
+    #if defined(NEROSHOP_USE_MSGPACK)
+    msgpack_sbuffer sbuf;
+    msgpack_sbuffer_init(&sbuf);
+
+    msgpack_packer pk;
+    msgpack_packer_init(&pk, &sbuf, msgpack_sbuffer_write);
+
+    // Pack map with 4 key-value pairs: tid, query, args, version
+    msgpack_pack_map(&pk, 4);
+
+    // "tid": transaction_id
+    msgpack_pack_str(&pk, 3);
+    msgpack_pack_str_body(&pk, "tid", 3);
+    msgpack_pack_str(&pk, transaction_id.size());
+    msgpack_pack_str_body(&pk, transaction_id.data(), transaction_id.size());
+
+    // "query": "find_node"
+    msgpack_pack_str(&pk, 5);
+    msgpack_pack_str_body(&pk, "query", 5);
+    msgpack_pack_str(&pk, 9);
+    msgpack_pack_str_body(&pk, "find_node", 9);
+
+    // "args": map{ "id": this->get_id(), "target": target }
+    msgpack_pack_str(&pk, 4);
+    msgpack_pack_str_body(&pk, "args", 4);
+    msgpack_pack_map(&pk, 2);
+
+    // "id": this->get_id()
+    std::string node_id = this->get_id();
+    msgpack_pack_str(&pk, 2);
+    msgpack_pack_str_body(&pk, "id", 2);
+    msgpack_pack_str(&pk, node_id.size());
+    msgpack_pack_str_body(&pk, node_id.data(), node_id.size());
+
+    // "target": target
+    msgpack_pack_str(&pk, 6);
+    msgpack_pack_str_body(&pk, "target", 6);
+    msgpack_pack_str(&pk, target.size());
+    msgpack_pack_str_body(&pk, target.data(), target.size());
+
+    // "version": NEROSHOP_DHT_VERSION string
+    std::string version = std::string(NEROSHOP_DHT_VERSION);
+    msgpack_pack_str(&pk, 7);
+    msgpack_pack_str_body(&pk, "version", 7);
+    msgpack_pack_str(&pk, version.size());
+    msgpack_pack_str_body(&pk, version.data(), version.size());
+
+    // Create vector from sbuf data
+    std::vector<uint8_t> find_node_message(sbuf.data, sbuf.data + sbuf.size);
+
+    // Clean up msgpack buffer
+    msgpack_sbuffer_destroy(&sbuf);
+    #endif
+
+    //-----------------------------------------------------------
+    #if defined(NEROSHOP_USE_PROTOBUF)
+    // Build Query protobuf message
+    neroshop::Query query;
+    query.set_tid(transaction_id);
+    query.set_query("find_node");
+    query.set_version(NEROSHOP_DHT_VERSION);
+    auto* args_map = query.mutable_args();
+    (*args_map)["id"] = this->get_id();
+    (*args_map)["target"] = target;
+
+    // Wrap Query in top-level DhtMessage
+    neroshop::DhtMessage msg;
+    *msg.mutable_query() = query;
+
+    // Serialize to vector<uint8_t>
+    std::vector<uint8_t> find_node_message(msg.ByteSizeLong());
+    msg.SerializeToArray(find_node_message.data(), find_node_message.size());
+    #endif
+    
+    //-----------------------------------------------------------
     
     // Create a promise/future to handle the result of the query
-    std::promise<nlohmann::json> promise;
-    std::future<nlohmann::json> future = promise.get_future();
+    std::promise<std::vector<uint8_t>> promise;
+    std::future<std::vector<uint8_t>> future = promise.get_future();
 
     // Store the promise in the pending requests map
     {
@@ -683,11 +893,18 @@ std::vector<std::unique_ptr<Node>> Node::send_find_node(const std::string& targe
     }
     
     // Get the result (the response message)
-    nlohmann::json nodes_message = future.get();
+    std::vector<uint8_t> nodes_message = future.get();
     
-    // Process the nodes from the response
+    const char* buffer = reinterpret_cast<const char*>(nodes_message.data());
+    size_t buffer_size = nodes_message.size();
+    
     std::vector<std::unique_ptr<Node>> nodes;
-    if (nodes_message.contains("response") && nodes_message["response"].contains("nodes")) {
+    
+    //-----------------------------------------------------------
+    // Old nlohmann-json version
+    //-----------------------------------------------------------
+    // Process the nodes from the response
+    /*if (nodes_message.contains("response") && nodes_message["response"].contains("nodes")) {
         for (auto& node_json : nodes_message["response"]["nodes"]) {
             if (node_json.contains("address")) {
                 std::string node_addr = node_json["address"];
@@ -698,8 +915,97 @@ std::vector<std::unique_ptr<Node>> Node::send_find_node(const std::string& targe
                 }
             }
         }
+    }*/
+    
+    //-----------------------------------------------------------
+    // Transition from nlohmann-json to msgpack-c
+    //-----------------------------------------------------------
+    #if defined(NEROSHOP_USE_MSGPACK)
+    // Unpack response MessagePack bytes
+    msgpack_unpacked msg;
+    msgpack_unpacked_init(&msg);
+
+    bool unpack_success = msgpack_unpack_next(&msg, buffer, buffer_size, NULL);
+    if (!unpack_success) {
+        printf("Failed to unpack data\n");
+        msgpack_unpacked_destroy(&msg);
+        return {};
+    }
+
+    const msgpack_object* root = &msg.data;
+    if (root->type != MSGPACK_OBJECT_MAP) {
+        printf("Root object is not a map\n");
+        msgpack_unpacked_destroy(&msg);
+        return {};
     }
     
+    // Extract "response" map
+    const msgpack_object* resp_obj = rpc::msgpack_find(root, "response");
+    if (!resp_obj || resp_obj->type != MSGPACK_OBJECT_MAP)
+        return {};
+
+    // Extract "nodes" array inside response
+    const msgpack_object* nodes_obj = rpc::msgpack_find(resp_obj, "nodes");
+    if (!nodes_obj || nodes_obj->type != MSGPACK_OBJECT_ARRAY) {
+        msgpack_unpacked_destroy(&msg);
+        return {};
+    }
+
+    for (uint32_t i = 0; i < nodes_obj->via.array.size; i++) {
+        const msgpack_object& node_obj = nodes_obj->via.array.ptr[i];
+        if (node_obj.type != MSGPACK_OBJECT_MAP) continue;
+
+        const msgpack_object* addr_obj = rpc::msgpack_find(&node_obj, "address");
+        const msgpack_object* port_obj = rpc::msgpack_find(&node_obj, "port");
+
+        if (!addr_obj || addr_obj->type != MSGPACK_OBJECT_STR) continue;
+        if (!port_obj || (port_obj->type != MSGPACK_OBJECT_POSITIVE_INTEGER && port_obj->type != MSGPACK_OBJECT_NEGATIVE_INTEGER))
+            continue;
+
+        std::string node_addr(addr_obj->via.str.ptr, addr_obj->via.str.size);
+        uint16_t node_port = static_cast<uint16_t>(port_obj->via.i64);
+
+        auto node = std::make_unique<Node>(node_addr, node_port);
+        if (!routing_table->has_node(node->get_id())) {
+            nodes.push_back(std::move(node));
+        }
+    }
+
+    msgpack_unpacked_destroy(&msg);
+    #endif
+    
+    //-----------------------------------------------------------
+    // Transition from nlohmann-json to Protobuf
+    //-----------------------------------------------------------
+    #if defined(NEROSHOP_USE_PROTOBUF)
+    neroshop::DhtMessage nodes_msg;
+    if (!nodes_msg.ParseFromArray(nodes_message.data(), static_cast<int>(nodes_message.size()))) {
+        log_error("Failed to parse DhtMessage in find_node response");
+        return {};
+    }
+
+    if (!nodes_msg.has_response()) {
+        log_error("No response in find_node message");
+        return {};
+    }
+
+    const neroshop::Response& response = nodes_msg.response();
+    const neroshop::ResponsePayload& payload = response.response();
+
+    // Extract nodes from repeated NodeInfo
+    for (const auto& node_info : payload.nodes()) {
+        std::string node_addr = node_info.address();
+        uint16_t node_port = static_cast<uint16_t>(node_info.port());
+
+        auto node = std::make_unique<Node>(node_addr, node_port);
+
+        if (!routing_table->has_node(node->get_id())) {
+            nodes.push_back(std::move(node));
+        }
+    }
+    #endif
+
+    //-----------------------------------------------------------
     return nodes; // Return the vector of nodes
 }
 
@@ -708,13 +1014,24 @@ std::vector<std::unique_ptr<Node>> Node::send_find_node(const std::string& targe
 int Node::send_put(const std::string& key, const std::string& value) {
     if(!is_value_publishable(value)) { return 0; } // Prevent listings from being published
     
-    nlohmann::json query_object;
-    query_object["query"] = "put";
-    query_object["args"]["id"] = this->get_id();
-    query_object["args"]["key"] = key;
-    query_object["args"]["value"] = value;
-    query_object["version"] = std::string(NEROSHOP_DHT_VERSION);
-    //-----------------------------------------------
+    //-----------------------------------------------------------
+    // Transition from nlohmann-json to msgpack-c
+    //-----------------------------------------------------------
+    
+    //-----------------------------------------------------------
+    // Transition from nlohmann-json to Protobuf
+    //-----------------------------------------------------------
+    #if defined(NEROSHOP_USE_PROTOBUF)
+    neroshop::Query query;
+    query.set_query("put");
+    query.set_version(NEROSHOP_DHT_VERSION);
+    auto* args_map = query.mutable_args();
+    (*args_map)["id"] = this->get_id();
+    (*args_map)["key"] = key;
+    (*args_map)["value"] = value;
+    #endif
+    
+    
     // Determine which nodes get to put the key-value data in their hash table
     std::vector<Node *> closest_nodes = find_node(key, NEROSHOP_DHT_REPLICATION_FACTOR); // 5=replication factor
     
@@ -730,13 +1047,18 @@ int Node::send_put(const std::string& key, const std::string& value) {
     for(auto const& node : closest_nodes) {
         if (node == nullptr) continue;
         
-        std::string transaction_id = msgpack::generate_transaction_id();
-        query_object["tid"] = transaction_id; // tid should be unique for each put message
-        std::vector<uint8_t> query_put = nlohmann::json::to_msgpack(query_object);
+        std::string transaction_id = generate_transaction_id();
+        query.set_tid(transaction_id); // Unique tid for each "put" request
+        // Wrap Query in top-level DhtMessage
+        neroshop::DhtMessage req_msg;
+        *req_msg.mutable_query() = query;
+        // Serialize to std::vector<uint8_t>
+        std::vector<uint8_t> put_request(req_msg.ByteSizeLong());
+        req_msg.SerializeToArray(put_request.data(), put_request.size());
     
         // Promise/Future Setup
-        std::promise<nlohmann::json> promise;
-        std::future<nlohmann::json> future = promise.get_future();
+        std::promise<std::vector<uint8_t>> promise;
+        std::future<std::vector<uint8_t>> future = promise.get_future();
         {
             std::scoped_lock lock(pending_mutex);
             pending_requests[transaction_id] = std::move(promise);
@@ -747,7 +1069,7 @@ int Node::send_put(const std::string& key, const std::string& value) {
         log_debug("send_put: Sending PUT request to {}{}{}", "\033[36m", node_dest, color_reset);
         
         try {
-            send_query(node_dest, node_port, query_put);
+            send_query(node_dest, node_port, put_request);
         } catch (const std::exception& e) {
             log_error("send_query: {}", e.what());
             std::scoped_lock lock(pending_mutex);
@@ -765,9 +1087,17 @@ int Node::send_put(const std::string& key, const std::string& value) {
         }
         
         // Process the result
-        nlohmann::json response_put = future.get();
+        std::vector<uint8_t> put_response = future.get();
 
-        if (response_put.contains("response")) {
+        // Deserialize and check if valid response
+        neroshop::DhtMessage res_msg;
+        if (!res_msg.ParseFromArray(put_response.data(), put_response.size())) {
+            log_error("Failed to parse protobuf message");
+            continue;
+        }
+        if (res_msg.has_response()) {
+            ////const auto& resp = res_msg.response();
+            ////const auto& payload = resp.response();
             // TODO: upload file to new provider's hardware then only add them as provider once they receive the file
             //send_upload();
             add_provider(key, { node->get_address(), node_port });
@@ -807,13 +1137,18 @@ int Node::send_put(const std::string& key, const std::string& value) {
 
             // Send put messages to the replacement nodes
             for (const auto& replacement_node : replacement_nodes) {
-                std::string transaction_id = msgpack::generate_transaction_id();
-                query_object["tid"] = transaction_id;
-                std::vector<uint8_t> query_put = nlohmann::json::to_msgpack(query_object);
+                std::string transaction_id = generate_transaction_id();
+                query.set_tid(transaction_id); // Unique tid for each "put" request
+                // Wrap Query in top-level DhtMessage
+                neroshop::DhtMessage req_msg;
+                *req_msg.mutable_query() = query;
+                // Serialize to std::vector<uint8_t>
+                std::vector<uint8_t> put_request(req_msg.ByteSizeLong());
+                req_msg.SerializeToArray(put_request.data(), put_request.size());
 
                 // Promise/Future Setup
-                std::promise<nlohmann::json> promise;
-                std::future<nlohmann::json> future = promise.get_future();
+                std::promise<std::vector<uint8_t>> promise;
+                std::future<std::vector<uint8_t>> future = promise.get_future();
                 {
                     std::scoped_lock lock(pending_mutex);
                     pending_requests[transaction_id] = std::move(promise);
@@ -824,7 +1159,7 @@ int Node::send_put(const std::string& key, const std::string& value) {
                 log_debug("send_put: Sending PUT request to {}{}{}", "\033[36m", node_dest, color_reset);
                 
                 try {
-                    send_query(node_dest, node_port, query_put);
+                    send_query(node_dest, node_port, put_request);
                 } catch (const std::exception& e) {
                     log_error("send_query: {}", e.what());
                     std::scoped_lock lock(pending_mutex);
@@ -842,10 +1177,15 @@ int Node::send_put(const std::string& key, const std::string& value) {
                 }
                 
                 // Process the response and update the nodes_sent_count and sent_nodes accordingly
-                nlohmann::json response_put = future.get();
+                std::vector<uint8_t> put_response = future.get();
 
-                // Show response and increase count
-                if(response_put.contains("response")) {
+                // Deserialize and check if valid response
+                neroshop::DhtMessage res_msg;
+                if (!res_msg.ParseFromArray(put_response.data(), put_response.size())) {
+                    log_error("Failed to parse protobuf message");
+                    continue;
+                }
+                if (res_msg.has_response()) {
                     // TODO: upload file to new provider's hardware then only add them as provider once they receive the file
                     //send_upload();
                     add_provider(key, { replacement_node->get_address(), node_port });
@@ -868,13 +1208,22 @@ int Node::send_store(const std::string& key, const std::string& value) {
 //-----------------------------------------------------------------------------
 
 std::string Node::send_get(const std::string& key) {
-    nlohmann::json query_object;
-    query_object["query"] = "get";
-    query_object["args"]["id"] = this->get_id();
-    query_object["args"]["key"] = key;
-    query_object["version"] = std::string(NEROSHOP_DHT_VERSION);
+    //-----------------------------------------------------------
+    // Transition from nlohmann-json to msgpack-c
+    //-----------------------------------------------------------
     
-    //-----------------------------------------------
+    //-----------------------------------------------------------
+    // Transition from nlohmann-json to Protobuf
+    //-----------------------------------------------------------
+    #if defined(NEROSHOP_USE_PROTOBUF)
+    neroshop::Query query;
+    query.set_query("get");
+    query.set_version(NEROSHOP_DHT_VERSION);
+    auto* args_map = query.mutable_args();
+    (*args_map)["id"] = this->get_id();
+    (*args_map)["key"] = key;
+    #endif
+    
     // First, check to see if we have the key before performing any other operations
     if((data.count(key) > 0)) { return get(key); }
     
@@ -889,13 +1238,18 @@ std::string Node::send_get(const std::string& key) {
         // Now contact each provider for the value to the key
         for(auto const& peer : our_providers) {
             // Construct the get query (request)
-            std::string transaction_id = msgpack::generate_transaction_id();
-            query_object["tid"] = transaction_id;
-            std::vector<uint8_t> query_get = nlohmann::json::to_msgpack(query_object);
+            std::string transaction_id = generate_transaction_id();
+            query.set_tid(transaction_id);
+            // Wrap Query in top-level DhtMessage
+            neroshop::DhtMessage req_msg;
+            *req_msg.mutable_query() = query;
+            // Serialize to std::vector<uint8_t>
+            std::vector<uint8_t> get_request(req_msg.ByteSizeLong());
+            req_msg.SerializeToArray(get_request.data(), get_request.size());
             
             // Promise/Future Setup
-            std::promise<nlohmann::json> promise;
-            std::future<nlohmann::json> future = promise.get_future();
+            std::promise<std::vector<uint8_t>> promise;
+            std::future<std::vector<uint8_t>> future = promise.get_future();
             {
                 std::scoped_lock lock(pending_mutex);
                 pending_requests[transaction_id] = std::move(promise);
@@ -904,7 +1258,7 @@ std::string Node::send_get(const std::string& key) {
             // Send a get request to provider
             log_debug("send_get: Sending GET request to {}{}{}", "\033[36m", peer.address, color_reset);
             try {
-                send_query(peer.address, peer.port, query_get);
+                send_query(peer.address, peer.port, get_request);
             } catch (const std::exception& e) {
                 log_error("send_query: {}", e.what());
                 std::scoped_lock lock(pending_mutex);
@@ -912,7 +1266,7 @@ std::string Node::send_get(const std::string& key) {
                 continue;
             }
             
-            if (future.wait_for(std::chrono::milliseconds(2/*NEROSHOP_DHT_RECV_TIMEOUT*/)) != std::future_status::ready) {
+            if (future.wait_for(std::chrono::milliseconds(NEROSHOP_DHT_RECV_TIMEOUT)) != std::future_status::ready) {
                 log_warn("send_get: Timeout occurred. No response received for transaction ID: {}", transaction_id);
                 std::scoped_lock lock(pending_mutex);
                 pending_requests.erase(transaction_id);
@@ -922,24 +1276,37 @@ std::string Node::send_get(const std::string& key) {
             }
             
             // Process the response
-            nlohmann::json response_get;
+            std::vector<uint8_t> get_response;
             try {
-                response_get = future.get();
+                get_response = future.get();
             } catch (const std::exception& e) {
                 std::cerr << "[ERROR] Failed to parse future result for node: " << peer.address << "\n";
                 continue;
             }
             
-            // Handle the response
-            if(response_get.contains("error")) { // "Key not found"
+            // Deserialize and check if valid response
+            neroshop::DhtMessage res_msg;
+            if (!res_msg.ParseFromArray(get_response.data(), get_response.size())) {
+                log_error("Failed to parse protobuf message");
+                continue;
+            }
+            // Handle error or response
+            if(res_msg.has_error()) { // "Key not found"
                 remove_provider(key, peer.address, peer.port); // Data is lost, remove peer from providers
                 continue; 
             }
-            if(response_get.contains("response") && response_get["response"].contains("value")) {
-                auto value = response_get["response"]["value"].get<std::string>();
-                if (validate(key, value)) { 
-                    // TODO: download file from provider's hardware then only return the value afterwards
-                    return value;
+            else if (res_msg.has_response()) {
+                const auto& payload = res_msg.response().response();
+                const auto& data_map = payload.data();
+                auto it = data_map.find("value");
+                if (it != data_map.end()) {
+                    const std::string& value = it->second;
+                    if (validate(key, value)) { 
+                        // TODO: download file from provider's hardware then only return the value afterwards
+                        return value;
+                    }
+                } else {
+                    // key "value" not found
                 }
             }
         }
@@ -952,13 +1319,18 @@ std::string Node::send_get(const std::string& key) {
         log_info("Found {} providers for key ({})", providers.size(), key);
         for(auto const& peer : providers) {
             // Construct the get query (request)
-            std::string transaction_id = msgpack::generate_transaction_id();
-            query_object["tid"] = transaction_id;
-            std::vector<uint8_t> query_get = nlohmann::json::to_msgpack(query_object);
+            std::string transaction_id = generate_transaction_id();
+            query.set_tid(transaction_id);
+            // Wrap Query in top-level DhtMessage
+            neroshop::DhtMessage req_msg;
+            *req_msg.mutable_query() = query;
+            // Serialize to std::vector<uint8_t>
+            std::vector<uint8_t> get_request(req_msg.ByteSizeLong());
+            req_msg.SerializeToArray(get_request.data(), get_request.size());
             
             // Promise/Future Setup
-            std::promise<nlohmann::json> promise;
-            std::future<nlohmann::json> future = promise.get_future();
+            std::promise<std::vector<uint8_t>> promise;
+            std::future<std::vector<uint8_t>> future = promise.get_future();
             {
                 std::scoped_lock lock(pending_mutex);
                 pending_requests[transaction_id] = std::move(promise);
@@ -967,7 +1339,7 @@ std::string Node::send_get(const std::string& key) {
             // Send a get request to provider
             log_debug("send_get: Sending GET request to {}{}{}", "\033[36m", peer.address, color_reset);
             try {
-                send_query(peer.address, peer.port, query_get);
+                send_query(peer.address, peer.port, get_request);
             } catch (const std::exception& e) {
                 log_error("send_query: {}", e.what());
                 std::scoped_lock lock(pending_mutex);
@@ -975,7 +1347,7 @@ std::string Node::send_get(const std::string& key) {
                 continue;
             }
             
-            if (future.wait_for(std::chrono::milliseconds(2/*NEROSHOP_DHT_RECV_TIMEOUT*/)) != std::future_status::ready) {
+            if (future.wait_for(std::chrono::milliseconds(NEROSHOP_DHT_RECV_TIMEOUT)) != std::future_status::ready) {
                 log_warn("send_get: Timeout occurred. No response received for transaction ID: {}", transaction_id);
                 std::scoped_lock lock(pending_mutex);
                 pending_requests.erase(transaction_id);
@@ -985,24 +1357,35 @@ std::string Node::send_get(const std::string& key) {
             }
             
             // Process the response
-            nlohmann::json response_get;
+            std::vector<uint8_t> get_response;
             try {
-                response_get = future.get();
+                get_response = future.get();
             } catch (const std::exception& e) {
                 std::cerr << "[ERROR] Failed to parse future result for node: " << peer.address << "\n";
                 continue;
             }
             
-            // Handle the response
-            if(response_get.contains("error")) { // "Key not found"
+            // Deserialize and check if valid response
+            neroshop::DhtMessage res_msg;
+            if (!res_msg.ParseFromArray(get_response.data(), get_response.size())) {
+                log_error("Failed to parse protobuf message");
+                continue;
+            }
+            // Handle error or response
+            if(res_msg.has_error()) { // "Key not found"
                 remove_provider(key, peer.address, peer.port); // Data is lost, remove peer from providers
                 continue; 
             }
-            if(response_get.contains("response") && response_get["response"].contains("value")) {
-                auto value = response_get["response"]["value"].get<std::string>();
-                if (validate(key, value)) { 
-                    // TODO: download file from provider's hardware then only return the value afterwards
-                    return value;
+            else if (res_msg.has_response()) {
+                const auto& payload = res_msg.response().response();
+                if (auto it = payload.data().find("value"); it != payload.data().end()) {
+                    const std::string& value = it->second;
+                    if (validate(key, value)) { 
+                        // TODO: download file from provider's hardware then only return the value afterwards
+                        return value;
+                    }
+                } else {
+                    // key "value" not found
                 }
             }
         }
@@ -1020,11 +1403,22 @@ std::string Node::send_find_value(const std::string& key) {
 //-----------------------------------------------------------------------------
 
 void Node::send_remove(const std::string& key) {
-    nlohmann::json query_object;
-    query_object["query"] = "remove";
-    query_object["args"]["key"] = key;
-    query_object["version"] = std::string(NEROSHOP_DHT_VERSION);
-    //-----------------------------------------------
+    //-----------------------------------------------------------
+    // Transition from nlohmann-json to msgpack-c
+    //-----------------------------------------------------------
+    
+    //-----------------------------------------------------------
+    // Transition from nlohmann-json to Protobuf
+    //-----------------------------------------------------------
+    #if defined(NEROSHOP_USE_PROTOBUF)
+    neroshop::Query query;
+    query.set_query("remove");
+    query.set_version(NEROSHOP_DHT_VERSION);
+    auto* args_map = query.mutable_args();
+    (*args_map)["key"] = key;
+    #endif
+    
+    
     std::vector<Node *> closest_nodes = find_node(key, NEROSHOP_DHT_MAX_CLOSEST_NODES);
     
     std::random_device rd;
@@ -1035,13 +1429,18 @@ void Node::send_remove(const std::string& key) {
     for(auto const& node : closest_nodes) {
         if (node == nullptr) continue;
         
-        std::string transaction_id = msgpack::generate_transaction_id();
-        query_object["tid"] = transaction_id; // tid should be unique for each query
-        std::vector<uint8_t> remove_query = nlohmann::json::to_msgpack(query_object);
+        std::string transaction_id = generate_transaction_id();
+        query.set_tid(transaction_id); // Unique tid for each "remove" query
+        // Wrap Query in top-level DhtMessage
+        neroshop::DhtMessage msg;
+        *msg.mutable_query() = query;
+        // Serialize to std::vector<uint8_t>
+        std::vector<uint8_t> remove_request(msg.ByteSizeLong());
+        msg.SerializeToArray(remove_request.data(), remove_request.size());
         
         // Setup promise/future
-        std::promise<nlohmann::json> promise;
-        std::future<nlohmann::json> future = promise.get_future();
+        std::promise<std::vector<uint8_t>> promise;
+        std::future<std::vector<uint8_t>> future = promise.get_future();
 
         {
             std::scoped_lock lock(pending_mutex);
@@ -1053,7 +1452,7 @@ void Node::send_remove(const std::string& key) {
         int node_port = node->get_port();
         log_debug("send_remove: Sending REMOVE request to {}{}{}", "\033[36m", node_dest, color_reset);
         try {
-            send_query(node_dest, node_port, remove_query);
+            send_query(node_dest, node_port, remove_request);
         } catch (const std::exception& e) {
             log_error("send_query: {}", e.what());
             std::scoped_lock lock(pending_mutex);
@@ -1071,7 +1470,7 @@ void Node::send_remove(const std::string& key) {
         }
             
         // Process the response here
-        nlohmann::json remove_response;
+        std::vector<uint8_t> remove_response;
         try {
             remove_response = future.get();
         } catch (const std::exception& e) {
@@ -1084,11 +1483,23 @@ void Node::send_remove(const std::string& key) {
 //-----------------------------------------------------------------------------
 
 void Node::send_map(const std::string& destination, uint16_t port) {
+    //-----------------------------------------------------------
+    // Old nlohmann-json version
+    //-----------------------------------------------------------
     nlohmann::json query_object;
     query_object["query"] = "map";
     query_object["args"]["id"] = this->get_id();
     query_object["args"]["port"] = get_port(); // the port of the peer that is announcing itself (map will also be used to "announce" the peer or provider)
     query_object["version"] = std::string(NEROSHOP_DHT_VERSION);
+    
+    //-----------------------------------------------------------
+    // Transition from nlohmann-json to msgpack-c
+    //-----------------------------------------------------------
+    
+    //-----------------------------------------------------------
+    // Transition from nlohmann-json to Protobuf
+    //-----------------------------------------------------------
+    
     
     bool map_sent = false;
     for (const auto& pair : data) {
@@ -1097,13 +1508,13 @@ void Node::send_map(const std::string& destination, uint16_t port) {
         
         query_object["args"]["key"] = key;
         query_object["args"]["value"] = value;
-        std::string transaction_id = msgpack::generate_transaction_id();
+        std::string transaction_id = generate_transaction_id();
         query_object["tid"] = transaction_id; // tid should be unique for each map message
         std::vector<uint8_t> map_message = nlohmann::json::to_msgpack(query_object);
 
         // Setup promise/future
-        std::promise<nlohmann::json> promise;
-        std::future<nlohmann::json> future = promise.get_future();
+        std::promise<std::vector<uint8_t>> promise;
+        std::future<std::vector<uint8_t>> future = promise.get_future();
 
         {
             std::scoped_lock lock(pending_mutex);
@@ -1127,7 +1538,7 @@ void Node::send_map(const std::string& destination, uint16_t port) {
         }
         
         // Process the response here
-        nlohmann::json map_response_message;
+        std::vector<uint8_t> map_response_message;
         try {
             map_response_message = future.get();
             map_sent = true;
@@ -1183,23 +1594,38 @@ void Node::send_map_v2(const std::string& destination, uint16_t port) {
         // Finalize statement
         sqlite3_finalize(stmt);
     } // Mutex released here
-    //------------------------------------------------------
-    nlohmann::json query_object;
-    query_object["query"] = "map";
-    query_object["args"]["id"] = this->get_id();
-    query_object["args"]["port"] = get_port();
-    query_object["version"] = std::string(NEROSHOP_DHT_VERSION);
     
+    //-----------------------------------------------------------
+    // Transition from nlohmann-json to Protobuf
+    //-----------------------------------------------------------
+    #if defined(NEROSHOP_USE_PROTOBUF)
+    neroshop::Query query;
+    query.set_query("map");
+    query.set_version(NEROSHOP_DHT_VERSION);
+    auto* args_map = query.mutable_args();
+    (*args_map)["id"] = this->get_id();
+    (*args_map)["port"] = std::to_string(port);
+    #endif
+    
+    //-----------------------------------------------------------
+    // Transition from nlohmann-json to Protobuf
+    //-----------------------------------------------------------
+    #if defined(NEROSHOP_USE_PROTOBUF)
     for (const auto& [key, value] : hash_table) {
-        query_object["args"]["key"] = key;
-        query_object["args"]["value"] = value;
-        std::string transaction_id = msgpack::generate_transaction_id();
-        query_object["tid"] = transaction_id;
-        std::vector<uint8_t> map_request = nlohmann::json::to_msgpack(query_object);
-
+        (*args_map)["key"] = key;
+        (*args_map)["value"] = value;
+        std::string transaction_id = generate_transaction_id();
+        query.set_tid(transaction_id); // Unique tid for each "map" request
+        // Wrap Query in top-level DhtMessage
+        neroshop::DhtMessage msg;
+        *msg.mutable_query() = query;
+        // Serialize to std::vector<uint8_t>
+        std::vector<uint8_t> map_request(msg.ByteSizeLong());
+        msg.SerializeToArray(map_request.data(), map_request.size());
+        
         // Setup promise/future
-        std::promise<nlohmann::json> promise;
-        std::future<nlohmann::json> future = promise.get_future();
+        std::promise<std::vector<uint8_t>> promise;
+        std::future<std::vector<uint8_t>> future = promise.get_future();
 
         {
             std::scoped_lock lock(pending_mutex);
@@ -1222,13 +1648,14 @@ void Node::send_map_v2(const std::string& destination, uint16_t port) {
             continue;
         }
         
-        nlohmann::json map_response;
+        std::vector<uint8_t> map_response;
         try {
             map_response = future.get();
         } catch (const std::exception& e) {
-            std::cerr << "[ERROR] Failed to parse future result for node: " << destination << "\n";
+            log_error("send_map_v2: Failed to parse future result for node: {}", destination);
         }
     }
+    #endif
 }
 
 //-----------------------------------------------------------------------------
@@ -1236,30 +1663,46 @@ void Node::send_map_v2(const std::string& destination, uint16_t port) {
 std::deque<Peer> Node::send_get_providers(const std::string& key) {
     std::deque<Peer> peers = {};
     std::set<std::pair<std::string, uint16_t>> unique_peers; // Set to store unique IP-port pairs
-    //-----------------------------------------------
-    nlohmann::json query_object;
-    query_object["query"] = "get_providers";
-    query_object["args"]["id"] = this->get_id();
-    query_object["args"]["key"] = key;
-    query_object["version"] = std::string(NEROSHOP_DHT_VERSION);
-    //-----------------------------------------------
+    
+    //-----------------------------------------------------------
+    // Transition from nlohmann-json to msgpack-c
+    //-----------------------------------------------------------
+    
+    //-----------------------------------------------------------
+    // Transition from nlohmann-json to Protobuf
+    //-----------------------------------------------------------
+    #if defined(NEROSHOP_USE_PROTOBUF)
+    neroshop::Query query;
+    query.set_query("get_providers");
+    query.set_version(NEROSHOP_DHT_VERSION);
+    auto* args_map = query.mutable_args();
+    (*args_map)["id"] = this->get_id();
+    (*args_map)["key"] = key;
+    #endif
+    
     std::vector<Node *> closest_nodes = find_node(key, NEROSHOP_DHT_MAX_CLOSEST_NODES);
     
     std::random_device rd;
     std::mt19937 rng(rd());
     std::shuffle(closest_nodes.begin(), closest_nodes.end(), rng);
     
+    #if defined(NEROSHOP_USE_PROTOBUF)
     for (auto const& node : closest_nodes) {
         if (node == nullptr) continue;
         if (node->get_status() != NodeStatus::Active) continue;
         // Construct message with a unique tid
-        std::string transaction_id = msgpack::generate_transaction_id();
-        query_object["tid"] = transaction_id;
-        auto get_providers_query = nlohmann::json::to_msgpack(query_object);
+        std::string transaction_id = generate_transaction_id();
+        query.set_tid(transaction_id);
+        // Wrap Query in top-level DhtMessage
+        neroshop::DhtMessage msg;
+        *msg.mutable_query() = query;
+        // Serialize to std::vector<uint8_t>
+        std::vector<uint8_t> providers_request(msg.ByteSizeLong());
+        msg.SerializeToArray(providers_request.data(), providers_request.size());
         
         // Setup promise/future
-        std::promise<nlohmann::json> promise;
-        std::future<nlohmann::json> future = promise.get_future();
+        std::promise<std::vector<uint8_t>> promise;
+        std::future<std::vector<uint8_t>> future = promise.get_future();
 
         {
             std::scoped_lock lock(pending_mutex);
@@ -1271,7 +1714,7 @@ std::deque<Peer> Node::send_get_providers(const std::string& key) {
         int node_port = node->get_port();
         log_debug("send_get_providers: Sending GET_PROVIDERS request to {}{}{}", "\033[36m", node_dest, color_reset);
         try {
-            send_query(node_dest, node_port, get_providers_query);
+            send_query(node_dest, node_port, providers_request);
          } catch (const std::exception& e) {
             log_error("send_query: {}", e.what());
             std::scoped_lock lock(pending_mutex);
@@ -1289,30 +1732,37 @@ std::deque<Peer> Node::send_get_providers(const std::string& key) {
         }
         
         // Process the response here
-        nlohmann::json get_providers_response;
+        std::vector<uint8_t> providers_response;
         try {
-            get_providers_response = future.get();
+            providers_response = future.get();
         } catch (const std::exception& e) {
-            std::cerr << "[ERROR] Failed to parse future result for node: " << node_dest << "\n";
+            log_error("send_get_providers: Failed to parse future result for node: {}", node_dest);
         }
         
-        if(get_providers_response.contains("error")) {
-            continue; // Skip if error
+        DhtMessage resp_msg;
+        if (!resp_msg.ParseFromArray(providers_response.data(), static_cast<int>(providers_response.size()))) {
+            log_error("send_get_providers: Failed to parse DhtMessage from response");
+            continue;
         }
-        if (get_providers_response.contains("response") && get_providers_response["response"].contains("values")) {
-            for (auto& values_json : get_providers_response["response"]["values"]) {
-                if (values_json.contains("address") && values_json.contains("port")) {
-                    std::string peer_addr = values_json["address"];
-                    uint16_t peer_port = values_json["port"];
-                    // Check if the IP-port pair is already added
-                    if (unique_peers.insert({peer_addr, peer_port}).second) {
-                        Peer provider = Peer{peer_addr, peer_port};
-                        peers.push_back(provider);
-                    }
+        
+        if (resp_msg.has_response()) {
+            const auto& payload = resp_msg.response().response();
+            // If using nodes
+            for (const auto& n : payload.nodes()) {
+                std::string peer_addr = n.address();
+                uint16_t peer_port = static_cast<uint16_t>(n.port());
+                // Check if the IP-port pair is already added
+                if (unique_peers.insert({peer_addr, peer_port}).second) {
+                    Peer provider = Peer{peer_addr, peer_port};
+                    peers.push_back(provider);
                 }
             }
+        } else if (resp_msg.has_error()) {
+            // Handle error...
+            continue;
         }
     }
+    #endif
     //-----------------------------------------------
     return peers;
 }
@@ -1752,74 +2202,143 @@ void Node::heartbeat() {
 //-----------------------------------------------------------------------------
 
 void Node::on_ping(const std::vector<uint8_t>& buffer, const std::string& sender_dest) {
-    if (buffer.size() > 0) {
-        nlohmann::json message = nlohmann::json::from_msgpack(buffer);
-        if (message.contains("query") && message["query"] == "ping") {
-            std::string sender_addr;
-            auto network_type = get_network_type();
-            
-            switch(network_type) {
-                case NetworkType::I2P:
-                    assert(!sender_dest.empty() && "sender destination is empty!");
-                    sender_addr = SamClient::to_i2p_address(sender_dest); // TODO: Fetch sender_dest from ping query rather than from function arg
-                    break;
-                case NetworkType::Tor:
-                    sender_addr = sender_dest; // TODO: Fetch from ping query
-                    break;
-            }
-            std::string sender_id = message["args"]["id"].get<std::string>();
-            uint16_t sender_port = (message["args"].contains("port")) ? static_cast<uint16_t>(message["args"]["port"]) : NEROSHOP_P2P_DEFAULT_PORT;
-            
-            // Validate node id
-            std::string calculated_node_id = generate_node_id(sender_addr);
-            if(sender_id == calculated_node_id) {
-                bool has_node = routing_table->has_node(sender_id);
-                auto network_type = get_network_type();
-                if (!has_node && !is_hardcoded(sender_addr, sender_port)) { // To prevent the seed node from being stored in the routing table
-                    auto node_that_pinged = std::make_unique<Node>(sender_addr, sender_port);
-                    routing_table->add_node(std::move(node_that_pinged)); // Already has internal write_lock
-                    persist_routing_table(sender_addr, sender_port);
-                    ////routing_table->print_table();
-                    
-                    // Announce your node as a data provider to the new node that recently joined the network to make product/service listings more easily discoverable by the new node
-                    send_map_v2(sender_addr, sender_port);
-                }
-            }
+    if (buffer.empty()) return;
+    #if defined(NEROSHOP_USE_PROTOBUF)
+    neroshop::DhtMessage msg;
+    if (!msg.ParseFromArray(buffer.data(), static_cast<int>(buffer.size()))) {
+        log_warn("on_ping: invalid Protobuf payload");
+        return;
+    }
+
+    if (!msg.has_query()) {
+        // Not a query message
+        return;
+    }
+
+    const neroshop::Query& query = msg.query();
+    if (query.query() != "ping") {
+        // Not a ping query
+        return;
+    }
+
+    std::string sender_addr;
+    auto network_type = get_network_type();
+
+    switch(network_type) {
+        case NetworkType::I2P:
+            assert(!sender_dest.empty() && "sender destination is empty!");
+            sender_addr = SamClient::to_i2p_address(sender_dest); // TODO: Fetch sender_dest from ping query rather than from function arg if possible
+            break;
+        case NetworkType::Tor:
+            sender_addr = sender_dest; // TODO: Fetch from ping query if possible
+            break;
+    }
+
+    const auto& args_map = query.args();
+
+    auto id_it = args_map.find("id");
+    if (id_it == args_map.end()) {
+        log_warn("on_ping: missing sender id in ping args");
+        return;
+    }
+    std::string sender_id = id_it->second;
+
+    uint16_t sender_port = NEROSHOP_P2P_DEFAULT_PORT;
+    auto port_it = args_map.find("port");
+    if (port_it != args_map.end()) {
+        try {
+            sender_port = static_cast<uint16_t>(std::stoi(port_it->second));
+        } catch (const std::exception& e) {
+            log_warn("on_ping: invalid port value in args: {}", port_it->second);
+            return;
         }
     }
+
+    // Validate node id
+    std::string calculated_node_id = generate_node_id(sender_addr);
+    if (sender_id == calculated_node_id) {
+        bool has_node = routing_table->has_node(sender_id);
+        if (!has_node && !is_hardcoded(sender_addr, sender_port)) { // Exclude seed nodes from routing table
+            auto node_that_pinged = std::make_unique<Node>(sender_addr, sender_port);
+            routing_table->add_node(std::move(node_that_pinged)); // Already has internal write_lock
+            persist_routing_table(sender_addr, sender_port);
+
+            // Announce your node as a data provider to the new node
+            send_map_v2(sender_addr, sender_port);
+        }
+    }
+    #endif
 }
 
 //-----------------------------------------------------------------------------
 
 void Node::on_map(const std::vector<uint8_t>& buffer, const std::string& sender_dest) {
-    if (buffer.size() > 0) {
-        nlohmann::json message = nlohmann::json::from_msgpack(buffer);
-        if (message.contains("query") && message["query"] == "map") {
-            std::string sender_addr;
-            auto network_type = get_network_type();
-            
-            switch(network_type) {
-                case NetworkType::I2P:
-                    assert(!sender_dest.empty() && "sender destination is empty!");
-                    sender_addr = SamClient::to_i2p_address(sender_dest); // TODO: Fetch sender_dest from map query rather than from function arg
-                    break;
-                case NetworkType::Tor:
-                    sender_addr = sender_dest; // TODO: Fetch from map query
-                    break;
-            }
-            std::string sender_id = message["args"]["id"].get<std::string>();
-            uint16_t sender_port = (message["args"].contains("port")) ? static_cast<uint16_t>(message["args"]["port"]) : NEROSHOP_P2P_DEFAULT_PORT;
-            
-            std::string key = message["args"]["key"].get<std::string>();
-            
-            // Validate node id
-            std::string calculated_node_id = generate_node_id(sender_addr);
-            if(sender_id == calculated_node_id) {
-                // Save this peer as the provider of this key
-                add_provider(key, Peer{ sender_addr, sender_port });
-            }
+    if (buffer.empty()) return;
+    #if defined(NEROSHOP_USE_PROTOBUF)
+    neroshop::DhtMessage msg;
+    if (!msg.ParseFromArray(buffer.data(), static_cast<int>(buffer.size()))) {
+        log_warn("on_map: invalid protobuf payload");
+        return;
+    }
+
+    if (!msg.has_query()) {
+        // Not a query message
+        return;
+    }
+
+    const neroshop::Query& query = msg.query();
+    if (query.query() != "map") {
+        // Not a map query, ignore
+        return;
+    }
+
+    std::string sender_addr;
+    auto network_type = get_network_type();
+
+    switch(network_type) {
+        case NetworkType::I2P:
+            assert(!sender_dest.empty() && "sender destination is empty!");
+            sender_addr = SamClient::to_i2p_address(sender_dest); // TODO: Fetch sender_dest from map query rather than from function arg
+            break;
+        case NetworkType::Tor:
+            sender_addr = sender_dest; // TODO: Fetch sender_dest from map query
+            break;
+    }
+
+    const auto& args_map = query.args();
+
+    auto id_it = args_map.find("id");
+    if (id_it == args_map.end()) {
+        log_warn("on_map: missing sender id in map args");
+        return;
+    }
+    std::string sender_id = id_it->second;
+
+    uint16_t sender_port = NEROSHOP_P2P_DEFAULT_PORT;
+    auto port_it = args_map.find("port");
+    if (port_it != args_map.end()) {
+        try {
+            sender_port = static_cast<uint16_t>(std::stoi(port_it->second));
+        } catch (const std::exception& e) {
+            log_warn("on_map: invalid port value in args: {}", port_it->second);
+            return;
         }
     }
+
+    auto key_it = args_map.find("key");
+    if (key_it == args_map.end()) {
+        log_warn("on_map: missing key in map args");
+        return;
+    }
+    std::string key = key_it->second;
+
+    // Validate node id
+    std::string calculated_node_id = generate_node_id(sender_addr);
+    if (sender_id == calculated_node_id) {
+        // Save this peer as provider for the key
+        add_provider(key, Peer{sender_addr, sender_port});
+    }
+    #endif
 }
 
 //-----------------------------------------------------------------------------
@@ -1944,7 +2463,170 @@ void Node::run_i2p() {
                 }
             
                 std::vector<uint8_t> payload_bytes(payload.begin(), payload.end());
-                // Test to see if payload is valid JSON
+                
+                //-----------------------------------------------------------
+                // Transition from nlohmann-json to Protobuf
+                //-----------------------------------------------------------
+                #if defined(NEROSHOP_USE_PROTOBUF)
+                neroshop::DhtMessage msg;
+                if (!msg.ParseFromArray(payload_bytes.data(), static_cast<int>(payload_bytes.size()))) {
+                    log_warn("run: invalid Protobuf payload");
+                    return;
+                }
+
+                if (msg.has_query()) {
+                    const neroshop::Query& query = msg.query();
+
+                    // Process query and obtain response bytes
+                    std::vector<uint8_t> response = neroshop::rpc::protobuf_process(payload_bytes, *this, false);
+
+                    // Compose SAM header and datagram
+                    std::string header = "3.0 " + sam_client->get_nickname() + " " + dest_b64 + "\n";
+
+                    std::vector<uint8_t> datagram;
+                    datagram.reserve(header.size() + response.size());
+                    datagram.insert(datagram.end(), header.begin(), header.end());
+                    datagram.insert(datagram.end(), response.begin(), response.end());
+
+                    // Send response
+                    int bytes_sent = ::sendto(sam_client->get_socket(), datagram.data(), (int)datagram.size(), 0,
+                                             (sockaddr*)&from_addr, addr_len);
+                    if (bytes_sent < 0) {
+                        perror("sendto");
+                    }
+                    
+                    // Run callbacks
+                    on_ping(payload_bytes, dest_b64);
+                    on_map(payload_bytes, dest_b64);
+                }
+                else if (msg.has_response()) {
+                    const neroshop::Response& response = msg.response();
+                    // Print/debug the response message
+                    #ifdef NEROSHOP_DEBUG
+                    std::cout << "\033[32m" << response.DebugString() << "\033[0m\n";
+                    #endif
+                    
+                    // Handle promise fulfillment by tid
+                    std::string tid = response.tid();
+                    if (!tid.empty()) {
+                        std::scoped_lock lock(pending_mutex);
+                        auto it = pending_requests.find(tid);
+                        if (it != pending_requests.end()) {
+                            // Pass raw protobuf bytes directly
+                            it->second.set_value(payload_bytes);
+                            pending_requests.erase(it);
+                        }
+                    }
+                }
+                else if (msg.has_error()) {
+                    // Print/debug the error message
+                    std::cout << "\033[91m" << msg.error().DebugString() << "\033[0m\n";
+                }
+                else {
+                    log_warn("run: Unknown Protobuf message type received");
+                }
+                #endif
+                
+                //-----------------------------------------------------------
+                // Transition from nlohmann-json to msgpack-cxx
+                //-----------------------------------------------------------
+                #if defined(NEROSHOP_USE_MSGPACK)
+                try {
+                    // Unpack the payload bytes
+                    msgpack_unpacked msg;
+                    msgpack_unpacked_init(&msg);
+                    bool valid = msgpack_unpack_next(&msg, reinterpret_cast<const char*>(payload_bytes.data()), payload_bytes.size(), nullptr) == MSGPACK_UNPACK_SUCCESS;
+                    if (!valid) {
+                        log_warn("run: invalid MessagePack payload");
+                        msgpack_unpacked_destroy(&msg);
+                        return;
+                    }
+                    const msgpack_object& root = msg.data;
+                    // Bug: Deformed "id" field on receiving ping reply (pong)
+                    const msgpack_object* response_obj = rpc::msgpack_find(&root, "response");
+                    if (response_obj && response_obj->type == MSGPACK_OBJECT_MAP) {
+                        const msgpack_object* obj_id = rpc::msgpack_find(response_obj, "id");
+                        if (obj_id && obj_id->type == MSGPACK_OBJECT_STR) {
+                            // Deep copy string immediately here inside lambda scope
+                            std::string id_str(obj_id->via.str.ptr, obj_id->via.str.size);
+                            std::cout << "ID: " << id_str << "\n";
+                        } else {
+                            log_error("Invalid or missing id field in response");
+                        }
+                    } else {
+                        log_error("Missing or invalid response field in root");
+                    }
+                    // Determine if this is a query or response by checking keys
+                    const msgpack_object* query_obj = rpc::msgpack_find(&root, "query");
+                    if (query_obj != nullptr && query_obj->type == MSGPACK_OBJECT_STR) {
+                        // It's a request (query)
+                        ////std::string query_str(query_obj->via.str.ptr, query_obj->via.str.size);
+                        
+                        // Convert root to byte vector for msgpack_process
+                        const char* buff = reinterpret_cast<const char*>(payload_bytes.data());
+                        std::vector<uint8_t> request_bytes(buff, buff + payload_bytes.size());
+
+                        // Process the request & get response as MessagePack bytes
+                        std::vector<uint8_t> response = neroshop::rpc::msgpack_process(request_bytes, *this, false);
+
+                        // Compose and send UDP datagram response as before
+                        // ...
+                        // Now we need to construct a new SAM message for the SAM UDP bridge (port 7655)
+                        // Construct SAM header
+                        std::string header = "3.0 " + sam_client->get_nickname() + " " + dest_b64 + "\n";
+
+                        // Compose datagram: header + response
+                        std::vector<uint8_t> datagram;
+                        datagram.reserve(header.size() + response.size()); // optional: improves performance
+                        datagram.insert(datagram.end(), header.begin(), header.end());
+                        datagram.insert(datagram.end(), response.begin(), response.end());
+                    
+                        // Send back a response to the same from_addr we recvfrom (SAM UDP bridge at port 7655)
+                        int bytes_sent = ::sendto(sam_client->get_socket(), datagram.data(), datagram.size(), 0,
+                                        (sockaddr*)&from_addr, addr_len);
+                        if (bytes_sent < 0) {
+                            perror("sendto");
+                        }
+                
+                        // Run callbacks here
+                        // ...
+                    }
+                    else {
+                        // Check for response or error keys to handle accordingly
+                        if (rpc::msgpack_find(&root, "response") != nullptr) {
+                            // Print response
+                            rpc::msgpack_print_object(&root, 1);
+                            // Get tid key to fulfill promises and complete futures as before
+                            const msgpack_object* tid_obj = rpc::msgpack_find(&root, "tid");
+                            if (tid_obj && tid_obj->type == MSGPACK_OBJECT_STR) {
+                                std::string tid(tid_obj->via.str.ptr, tid_obj->via.str.size);
+                                std::scoped_lock lock(pending_mutex);
+                                auto it = pending_requests.find(tid);
+                                if (it != pending_requests.end()) {
+                                    // Pass the original MessagePack bytes (payload_bytes) directly
+                                    it->second.set_value(payload_bytes);  // Directly set the MessagePack object or wrapped buffer
+                                    pending_requests.erase(it);
+                                }
+                            }
+                        }
+                        else if (rpc::msgpack_find(&root, "error") != nullptr) {
+                            // Print error
+                            rpc::msgpack_print_object(&root, 2);
+                        }
+                        else {
+                            log_warn("run: Unknown MessagePack message type");
+                        }
+                    }
+
+                    msgpack_unpacked_destroy(&msg);
+                } catch (const std::exception& e) {
+                    log_error("run: exception during message processing: {}", e.what());
+                }
+                #endif
+                //-----------------------------------------------------------
+                // Old nlohmann-json version
+                //-----------------------------------------------------------
+                /*// Test to see if payload is valid JSON
                 nlohmann::json json_payload;
                 try {
                     json_payload = nlohmann::json::from_msgpack(payload_bytes);
@@ -1957,7 +2639,7 @@ void Node::run_i2p() {
                     log_debug("run: \n{}\n{}{}{}", sender_i2p, "\033[33m", json_payload.dump(), color_reset);
                 
                     // Process the payload (which should be in msgpack form)
-                    std::vector<uint8_t> response = neroshop::msgpack::process(payload_bytes, *this, false);
+                    std::vector<uint8_t> response = neroshop::rpc::msgpack_process(payload_bytes, *this, false);
             
                     // Now we need to construct a new SAM message for the SAM UDP bridge (port 7655)
                     // Construct SAM header
@@ -2003,10 +2685,10 @@ void Node::run_i2p() {
                     log_debug("run: \n{}{}{}", "\033[91m", json_payload.dump(), color_reset);
                 } else {
                     log_warn("Unknown message type — skipping");
-                }
+                }*/
             });
         } // FD
-    }
+    } // while(running)
     
     log_info("[run] Stopped listening for datagrams.");
 }
@@ -2182,7 +2864,107 @@ void Node::run_tor() {
 //-----------------------------------------------------------------------------
 
 void Node::handle_tor_message(std::vector<uint8_t> message, const std::string& sender_onion, uint16_t sender_port) {
-    nlohmann::json json_payload;
+    //-----------------------------------------------------------
+    // Transition from nlohmann-json to Protobuf
+    //-----------------------------------------------------------
+    #if defined(NEROSHOP_USE_PROTOBUF)
+    neroshop::DhtMessage msg;
+    if (!msg.ParseFromArray(message.data(), static_cast<int>(message.size()))) {
+        log_warn("handle_tor_message: invalid protobuf payload");
+        return;
+    }
+
+    if (msg.has_query()) {
+        const auto& query = msg.query();
+        log_info("RECEIVED from {}:{}\n{}{}{}", sender_onion, sender_port, "\033[33m", query.DebugString(), color_reset);
+
+        // Process the query
+        std::vector<uint8_t> response = neroshop::rpc::protobuf_process(message, *this, false);
+
+        // Send back the response
+        send_query(sender_onion, sender_port, response);
+            
+        // Run callbacks here
+        on_ping(message, sender_onion);
+        on_map(message, sender_onion);
+    }
+    else if (msg.has_response()) {
+        const auto& response = msg.response();
+        log_info("RECEIVED from {}:{}\n{}{}{}", sender_onion, sender_port, "\033[33m", response.DebugString(), color_reset);
+
+        std::string tid = response.tid();
+        if (!tid.empty()) {
+            std::scoped_lock lock(pending_mutex);
+            auto it = pending_requests.find(tid);
+            if (it != pending_requests.end()) {
+                it->second.set_value(message);  // fulfill promise with raw response bytes
+                pending_requests.erase(it);
+            }
+        }
+    }
+    else if (msg.has_error()) {
+        std::cout << "\033[91m" << msg.error().DebugString() << "\033[0m\n";
+    }
+    else {
+        log_warn("handle_tor_message: Unknown protobuf message type received");
+    }
+    #endif
+    
+    //-----------------------------------------------------------
+    // Transition from nlohmann-json to msgpack-c
+    //-----------------------------------------------------------
+    #if defined(NEROSHOP_USE_MSGPACK)
+    try {
+        // Unpack MessagePack bytes into msgpack_object
+        msgpack_unpacked msg;
+        msgpack_unpacked_init(&msg);
+        bool valid = msgpack_unpack_next(&msg, reinterpret_cast<const char*>(message.data()), message.size(), nullptr) == MSGPACK_UNPACK_SUCCESS;
+        if (!valid) {
+            log_warn("run: invalid MessagePack payload");
+            msgpack_unpacked_destroy(&msg);
+            return;
+        }
+        const msgpack_object& root = msg.data;
+        
+        // Find key inside of the root map
+        const msgpack_object* query_obj = rpc::msgpack_find(&root, "query");
+        
+        if (query_obj && query_obj->type == MSGPACK_OBJECT_STR) {
+            // Handle query (request) message
+            std::string query_str(query_obj->via.str.ptr, query_obj->via.str.size);
+            
+            // msgpack to JSON string representation
+            std::string msgpack_str = rpc::msgpack_object_to_json(&root);
+            log_info("RECEIVED from {}:{}\n{}{}{}", sender_onion, sender_port, "\033[33m", msgpack_str, color_reset);
+            
+            // Get sender's port from the MessagePack "args" map if present
+            const msgpack_object* args_obj = rpc::msgpack_find(&root, "args");
+            if (args_obj && args_obj->type == MSGPACK_OBJECT_MAP) {
+                const msgpack_object* port_obj = rpc::msgpack_find(args_obj, "port");
+                if (port_obj && port_obj->type == MSGPACK_OBJECT_POSITIVE_INTEGER) {
+                    sender_port = static_cast<uint16_t>(port_obj->via.u64);
+                }
+            }
+    
+            // Process the query (request) and get the MessagePack response bytes
+            std::vector<uint8_t> response = neroshop::rpc::msgpack_process(message, *this, false);
+            
+            // Send back the response
+            send_query(sender_onion, sender_port, response);
+            
+            // TODO: Callbacks here
+            // ...
+            
+            msgpack_unpacked_destroy(&msg);
+        }
+    } catch (const std::exception& ex) {
+        log_error("Exception in handle_tor_message: {}", ex.what());
+    }
+    #endif
+    //-----------------------------------------------------------
+    // Old nlohmann-json version
+    //-----------------------------------------------------------
+    /*nlohmann::json json_payload;
     try {
         json_payload = nlohmann::json::from_msgpack(message);
     } catch (const std::exception& e) {
@@ -2201,7 +2983,7 @@ void Node::handle_tor_message(std::vector<uint8_t> message, const std::string& s
             sender_port = json_payload["args"]["port"];
         }
     
-        std::vector<uint8_t> response = neroshop::msgpack::process(message, *this, false);
+        std::vector<uint8_t> response = neroshop::rpc::msgpack_process(message, *this, false);
         send_query(sender_onion, sender_port, response);
 
         on_ping(message, sender_onion);
@@ -2218,7 +3000,7 @@ void Node::handle_tor_message(std::vector<uint8_t> message, const std::string& s
         }
     } else {
         log_warn("Unknown Tor message from {}:{}:\n{}", sender_onion, sender_port, json_payload.dump());
-    }
+    }*/
 }
 
 //-----------------------------------------------------------------------------

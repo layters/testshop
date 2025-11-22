@@ -1,0 +1,10 @@
+prefix=/usr/local
+exec_prefix=/usr/local
+libdir=${prefix}/lib
+includedir=${prefix}/include
+
+Name: MessagePack
+Description: Binary-based efficient object serialization library
+Version: 6.1.0
+Libs: -L${libdir} -lmsgpack-c
+Cflags: -I${includedir}

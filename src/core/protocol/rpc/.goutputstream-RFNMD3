@@ -1,0 +1,583 @@
+#include "msgpack.hpp"
+
+#include "../../version.hpp"
+#include "../../tools/logger.hpp"
+#include "../p2p/dht_rescode.hpp"
+#include "../p2p/node.hpp"
+#include "../p2p/routing_table.hpp"
+#include "../../database/database.hpp"
+
+#define JSON_USE_MSGPACK
+#include <nlohmann/json.hpp>
+
+#include <openssl/evp.h>
+#include <openssl/rand.h>
+
+#include <random> // std::random_device
+
+#if defined(_WIN32)
+#include <winsock2.h>
+#endif
+
+#if defined(__gnu_linux__)
+#include <sys/socket.h> // ::send, ::recv
+#endif
+
+namespace neroshop {
+
+namespace rpc {
+
+//-----------------------------------------------------------------------------
+
+std::vector<uint8_t> msgpack_process(const std::vector<uint8_t>& request, Node& node, bool ipc_mode) {
+    std::cout << "MSGPACK_VERSION: " << MSGPACK_VERSION << std::endl;
+    std::cout << "Using msgpack default namespace: ";
+#if defined(MSGPACK_DEFAULT_API_NS)
+    std::cout << #MSGPACK_DEFAULT_API_NS << std::endl;
+#else
+    std::cout << "unknown" << std::endl;
+#endif
+
+    std::vector<uint8_t> response; // bytes
+    msgpack::object_handle oh;////nlohmann::json request_object;
+    std::map<std::string, msgpack::object> response_map;////nlohmann::json response_object;
+    
+    try {
+        oh = msgpack::unpack(reinterpret_cast<const char*>(request.data()), request.size());
+        msgpack::object request_object = oh.get();
+        std::cout << "\033[33m" << request_object << "\033[0m" << std::endl;
+    } catch (const msgpack::unpack_error& exception) {
+        // Build inner error map
+        neroshop::log_error("Error parsing client request");
+        std::map<std::string, msgpack::object> error_map;
+        {
+            msgpack::zone zone; // zone to manage all allocations
+
+            error_map["code"] = msgpack::object(static_cast<int>(DhtResultCode::ParseError), zone);
+            error_map["message"] = msgpack::object(std::string("Parse error"), zone);
+            error_map["data"] = msgpack::object(std::string(exception.what()), zone);
+            // Insert error map into response map, allocating memory with same zone
+            response_map["error"] = msgpack::object(error_map, zone);
+            // Add the other fields
+            response_map["version"] = msgpack::object(std::string(NEROSHOP_DHT_VERSION), zone);
+            ////response_map["tid"] = msgpack::object(nullptr, zone); // <- omit "tid"
+            
+            // Now pack
+            msgpack::sbuffer sbuf;
+            msgpack::pack(sbuf, response_map);
+            #ifdef NEROSHOP_DEBUG
+            msgpack_print(sbuf.data(), sbuf.size());
+            msgpack_print(response_map);
+            #endif
+            
+            std::vector<uint8_t> response(sbuf.data(), sbuf.data() + sbuf.size());
+            return response;
+        }
+    }
+    
+    // TODO: Get data fields from unpacked request (oh)
+    msgpack::object request_object = oh.get();
+    
+    //-----------------------------------------------------------
+    // Old nlohmann-json version
+    //-----------------------------------------------------------
+    /*assert(request_object.is_object());
+    assert(request_object["version"].is_string());
+    std::string neroshop_version = request_object["version"];
+    assert(neroshop_version == std::string(NEROSHOP_DHT_VERSION));
+    assert(request_object["query"].is_string());
+    std::string method = request_object["query"];
+    // "args" must contain the querying node's ID 
+    assert(request_object["args"].is_object());
+    auto params_object = request_object["args"];
+    if(!ipc_mode) assert(params_object["id"].is_string());
+    std::string requester_node_id = (ipc_mode) ? node.get_id() : params_object["id"].get<std::string>();
+    
+    if(!request_object.contains("tid") && !ipc_mode) {
+        std::cout << "No tid found, hence a notification that will not receive a response from the server\n";
+        return {};
+    }
+    auto tid = (ipc_mode) ? nullptr : request_object["tid"];
+    int code = static_cast<int>(DhtResultCode::Success);*/
+    
+    //-----------------------------------------------------------
+    // Transition from nlohmann-json to msgpack-cxx
+    //-----------------------------------------------------------
+    // Check top-level object is a map (like JSON object)
+    assert(request_object.type == msgpack::type::MAP);
+
+    // Helper lambda to find a key in a msgpack map object
+    auto find_key = [](const msgpack::object& map_obj, const std::string& key) -> msgpack::object* {
+        if (map_obj.type != msgpack::type::MAP) return nullptr;
+        for (uint32_t i = 0; i < map_obj.via.map.size; ++i) {
+            const auto& kv = map_obj.via.map.ptr[i];
+            if (kv.key.type == msgpack::type::STR) {
+                std::string k(kv.key.via.str.ptr, kv.key.via.str.size);
+                if (k == key) {
+                    return const_cast<msgpack::object*>(&kv.val);
+                }
+            }
+        }
+        return nullptr; // key not found
+    };
+    
+    // Validate and extract "version"
+    msgpack::object* version_obj = find_key(request_object, "version");
+    assert(version_obj && version_obj->type == msgpack::type::STR);
+    std::string neroshop_version(version_obj->via.str.ptr, version_obj->via.str.size);
+    assert(neroshop_version == std::string(NEROSHOP_DHT_VERSION));
+
+    // Validate and extract "query"
+    msgpack::object* query_obj = find_key(request_object, "query");
+    assert(query_obj && query_obj->type == msgpack::type::STR);
+    std::string method(query_obj->via.str.ptr, query_obj->via.str.size);
+
+    // Validate and extract "args" as a sub-map
+    msgpack::object* args_obj = find_key(request_object, "args");
+    assert(args_obj && args_obj->type == msgpack::type::MAP);
+
+    // Extract requester_node_id from args or node, depending on ipc_mode
+    std::string requester_node_id;
+    if (!ipc_mode) {
+        msgpack::object* id_obj = find_key(*args_obj, "id");
+        assert(id_obj && id_obj->type == msgpack::type::STR);
+        requester_node_id = std::string(id_obj->via.str.ptr, id_obj->via.str.size);
+    } else {
+        requester_node_id = node.get_id();
+    }
+
+    // Check if "tid" exists if not ipc_mode
+    msgpack::object* tid_obj = find_key(request_object, "tid");
+    if (!ipc_mode && !tid_obj) {
+        std::cout << "No tid found, hence a notification that will not receive a response from the server\n";
+        return {};
+    }
+    
+    // Prepare zone for allocations in response building
+    msgpack::zone zone;
+
+    int code = static_cast<int>(DhtResultCode::Success);
+    
+    //-----------------------------------------------------------
+    // Old nlohmann-json version
+    //-----------------------------------------------------------
+    /*if(method == "ping") {
+        response_object["version"] = std::string(NEROSHOP_DHT_VERSION);
+        response_object["response"]["id"] = node.get_id();
+    }*/
+    
+    //-----------------------------------------------------------
+    // Transition from nlohmann-json to msgpack-cxx
+    //-----------------------------------------------------------
+    // Build response depending on method
+    if (method == "ping") {
+        // Build response map
+        response_map["version"] = msgpack::object(std::string(NEROSHOP_DHT_VERSION), zone);
+        std::map<std::string, msgpack::object> response_inner;
+        response_inner["id"] = msgpack::object(node.get_id(), zone);
+        response_map["response"] = msgpack::object(response_inner, zone);
+    }
+    //-----------------------------------------------------
+    /*if(method == "find_node") {
+        assert(request_object["args"].is_object());
+        auto params_object = request_object["args"];
+        assert(params_object["target"].is_string());
+        std::string target = params_object["target"].get<std::string>();
+        
+        response_object["version"] = std::string(NEROSHOP_DHT_VERSION);
+        response_object["response"]["id"] = node.get_id();
+        auto nodes = node.find_node(target, NEROSHOP_DHT_MAX_CLOSEST_NODES);
+        if(nodes.empty()) {
+            response_object["response"]["nodes"] = nlohmann::json::array();
+        } else {
+            std::vector<nlohmann::json> nodes_array;
+            for (const auto& n : nodes) {
+                nlohmann::json node_object = {
+                    {"address", n->get_address()},
+                    {"port", n->get_port()}
+                };
+                nodes_array.push_back(node_object);
+            }
+            response_object["response"]["nodes"] = nodes_array;
+        }
+    }*/
+    else if (method == "find_node") {
+        msgpack::object* target_obj = find_key(*args_obj, "target");
+        assert(target_obj && target_obj->type == msgpack::type::STR);
+        std::string target(target_obj->via.str.ptr, target_obj->via.str.size);
+
+        response_map["version"] = msgpack::object(std::string(NEROSHOP_DHT_VERSION), zone);
+
+        std::map<std::string, msgpack::object> response_inner;
+        response_inner["id"] = msgpack::object(node.get_id(), zone);
+
+        auto nodes = node.find_node(target, NEROSHOP_DHT_MAX_CLOSEST_NODES);
+        std::vector<msgpack::object> nodes_array;
+
+        for (auto& n : nodes) {
+            std::map<std::string, msgpack::object> node_obj;
+            node_obj["address"] = msgpack::object(n->get_address(), zone);
+            node_obj["port"] = msgpack::object(n->get_port(), zone);
+            nodes_array.push_back(msgpack::object(node_obj, zone));
+        }
+
+        response_inner["nodes"] = msgpack::object(nodes_array, zone);
+        response_map["response"] = msgpack::object(response_inner, zone);
+    }    
+    //-----------------------------------------------------
+    /*if(method == "get_providers") {
+        assert(request_object["args"].is_object());
+        auto params_object = request_object["args"];
+        assert(params_object["key"].is_string());
+        std::string key = params_object["key"].get<std::string>();
+        
+        response_object["version"] = std::string(NEROSHOP_DHT_VERSION);
+        response_object["response"]["id"] = node.get_id();
+        auto peers = node.get_providers(key);
+        if(node.has_key(key) || node.has_key_cached(key)) { peers.push_front(Peer{ node.get_address(), node.get_port() }); }
+        if(peers.empty()) {
+            response_object["response"]["values"] = nlohmann::json::array();
+        } else {
+            std::vector<nlohmann::json> peers_array;
+            for (const auto& p : peers) {
+                nlohmann::json peer_object = {
+                    {"address", p.address},
+                    {"port", p.port}
+                };
+                peers_array.push_back(peer_object);
+            }
+            response_object["response"]["values"] = peers_array;
+        }
+    }*/
+    //-----------------------------------------------------
+    /*if(method == "get" && ipc_mode == false) { // For Processing Get Requests From Other Nodes
+        assert(request_object["args"].is_object());
+        auto params_object = request_object["args"];
+        assert(params_object["key"].is_string());
+        std::string key = params_object["key"].get<std::string>();
+        
+        std::string value;
+        if(!node.has_key(key)) {
+            if(node.has_key_cached(key)) {
+                value = node.get_cached(key);
+            }
+        } else {
+            value = node.get(key);
+        }
+        
+        if (value.empty()) {
+            code = static_cast<int>(DhtResultCode::RetrieveFailed);
+            response_object["version"] = std::string(NEROSHOP_DHT_VERSION);
+            response_object["error"]["id"] = node.get_id();
+            response_object["error"]["code"] = code;
+            response_object["error"]["message"] = "Key not found";
+        } else {
+            response_object["version"] = std::string(NEROSHOP_DHT_VERSION);
+            response_object["response"]["id"] = node.get_id();
+            response_object["response"]["value"] = value;
+        }
+    }*/
+    //-----------------------------------------------------
+    /*if(method == "get" && ipc_mode == true) { // For Sending Get Requests to Other Nodes
+        assert(request_object["args"].is_object());
+        auto params_object = request_object["args"];
+        assert(params_object["key"].is_string());
+        std::string key = params_object["key"].get<std::string>();
+        
+        // To get network status
+        if(key == "status") {
+            response_object["version"] = std::string(NEROSHOP_DHT_VERSION);
+            response_object["response"]["id"] = node.get_id();
+            response_object["response"]["connected_peers"] = node.get_peer_count();
+            response_object["response"]["active_peers"] = node.get_active_peer_count();
+            response_object["response"]["idle_peers"] = node.get_idle_peer_count();
+            response_object["response"]["data_count"] = node.get_data_count();
+            response_object["response"]["data_ram_usage"] = node.get_data_ram_usage();
+            response_object["response"]["host"] = node.get_address();
+            response_object["response"]["port"] = node.get_port();
+            response_object["response"]["network_type"] = node.get_network_type_as_string();
+            auto peers_list = node.get_peers();
+            if(!peers_list.empty()) {
+                std::vector<nlohmann::json> peers_array;
+                for (const auto& peer : peers_list) {
+                    nlohmann::json peer_object = {
+                        {"address", peer.address},
+                        {"port", peer.port},
+                        {"id", peer.id},
+                        {"status", static_cast<int>(peer.status)},
+                        {"distance", peer.distance},
+                    };
+                    peers_array.push_back(peer_object);
+                }
+                response_object["response"]["peers"] = peers_array;
+            }
+            response_object["tid"] = tid;
+            response = nlohmann::json::to_msgpack(response_object);
+            return response;
+        }
+                        
+        std::string value = node.send_get(key);
+            
+        if (value.empty()) {
+            code = static_cast<int>(DhtResultCode::RetrieveFailed);
+            response_object["version"] = std::string(NEROSHOP_DHT_VERSION);
+            response_object["error"]["id"] = node.get_id();
+            response_object["error"]["code"] = code;
+            response_object["error"]["message"] = "Key not found";
+        } else {
+            response_object["version"] = std::string(NEROSHOP_DHT_VERSION);
+            response_object["response"]["id"] = node.get_id();
+            response_object["response"]["value"] = value;
+        }
+    }*/
+    //-----------------------------------------------------
+    /*if(method == "put" && ipc_mode == false) { // For Processing Put Requests from Other Nodes
+        assert(request_object["args"].is_object());
+        auto params_object = request_object["args"];
+        assert(params_object["key"].is_string());
+        std::string key = params_object["key"].get<std::string>();
+        assert(params_object["value"].is_string());
+        std::string value = params_object["value"].get<std::string>();
+        
+        code = (node.store(key, value) == false) 
+               ? static_cast<int>(DhtResultCode::StoreFailed) 
+               : static_cast<int>(DhtResultCode::Success);
+            
+        if(code != static_cast<int>(DhtResultCode::Success)) {
+            response_object["version"] = std::string(NEROSHOP_DHT_VERSION);
+            response_object["error"]["id"] = node.get_id();
+            response_object["error"]["code"] = code;
+            response_object["error"]["message"] = get_dht_result_code_as_string(static_cast<DhtResultCode>(code));
+        } else {
+            response_object["version"] = std::string(NEROSHOP_DHT_VERSION);
+            response_object["response"]["id"] = node.get_id();
+        }
+    }*/
+    //-----------------------------------------------------
+    /*if(method == "map") {
+        assert(request_object["args"].is_object());
+        auto params_object = request_object["args"];
+        assert(params_object["key"].is_string());
+        std::string key = params_object["key"].get<std::string>();
+        assert(params_object["value"].is_string());
+        std::string value = params_object["value"].get<std::string>();
+        
+        if(node.validate(key, value)) {
+            node.map(key, value);
+        }
+    
+        response_object["version"] = std::string(NEROSHOP_DHT_VERSION);
+        response_object["response"]["id"] = node.get_id();
+    }*/
+    //-----------------------------------------------------
+    /*if((method == "set" || method == "put") && ipc_mode == true) { // For Sending Put Requests to Other Nodes
+        assert(request_object["args"].is_object());
+        auto params_object = request_object["args"];
+        assert(params_object["key"].is_string());
+        std::string key = params_object["key"].get<std::string>();
+        assert(params_object["value"].is_string());
+        std::string value = params_object["value"].get<std::string>();
+        
+        int put_messages_sent = node.send_put(key, value);
+        code = (put_messages_sent <= 0) 
+               ? static_cast<int>(DhtResultCode::StoreFailed) 
+               : static_cast<int>(DhtResultCode::Success);
+        log_info("Number of nodes you've sent a PUT message to: {}", put_messages_sent);
+        
+        if((put_messages_sent < NEROSHOP_DHT_REPLICATION_FACTOR) && (put_messages_sent > 0)) {
+            code = static_cast<int>(DhtResultCode::StorePartial);
+        }
+        
+        if(node.store(key, value)) {
+            if(node.cache(key, value)) {
+                if(put_messages_sent == 0) { 
+                    code = static_cast<int>(DhtResultCode::StoreToSelf);
+                }
+                if(!Node::is_value_publishable(value)) {
+                    code = static_cast<int>(DhtResultCode::Success);
+                }
+                
+                node.map(key, value);
+            }
+        }
+        
+        if((code == static_cast<int>(DhtResultCode::Success)) || (code == static_cast<int>(DhtResultCode::StorePartial))) {
+            response_object["version"] = std::string(NEROSHOP_DHT_VERSION);
+            response_object["response"]["id"] = node.get_id();
+        } else {
+            response_object["version"] = std::string(NEROSHOP_DHT_VERSION);
+            response_object["error"]["id"] = node.get_id();
+            response_object["error"]["code"] = code;
+            response_object["error"]["message"] = get_dht_result_code_as_string(static_cast<DhtResultCode>(code));
+        }
+    }*/
+    //-----------------------------------------------------
+    /*if(method == "remove" && ipc_mode == true) {
+        assert(request_object["args"].is_object());
+        auto params_object = request_object["args"];
+        assert(params_object["key"].is_string());
+        std::string key = params_object["key"].get<std::string>();
+        
+        if(node.has_key(key)) {
+            code = (node.remove(key) == false) 
+                ? static_cast<int>(DhtResultCode::RemoveFailed) 
+                : static_cast<int>(DhtResultCode::Success);
+        }
+        
+        db::Sqlite3 * database = neroshop::get_database();
+        if(!database) throw std::runtime_error("database is not opened");
+        if(database->get_integer_params("SELECT EXISTS(SELECT key FROM hash_table WHERE key = ?1)", { key }) == 1) {
+            code = (database->execute_params("DELETE FROM hash_table WHERE key = ?1", { key }) != SQLITE_OK)
+                ? static_cast<int>(DhtResultCode::RemoveFailed) 
+                : static_cast<int>(DhtResultCode::Success);
+        }
+        
+        if(database->get_integer_params("SELECT EXISTS(SELECT key FROM mappings WHERE key = ?1)", { key }) == 1) {
+            code = (database->execute_params("DELETE FROM mappings WHERE key = ?1", { key }) != SQLITE_OK)
+                ? static_cast<int>(DhtResultCode::RemoveFailed) 
+                : static_cast<int>(DhtResultCode::Success);
+        }
+        
+        if(code != static_cast<int>(DhtResultCode::Success)) {
+            response_object["version"] = std::string(NEROSHOP_DHT_VERSION);
+            response_object["error"]["id"] = node.get_id();
+            response_object["error"]["code"] = code;
+            response_object["error"]["message"] = get_dht_result_code_as_string(static_cast<DhtResultCode>(code));
+        } else {
+            response_object["version"] = std::string(NEROSHOP_DHT_VERSION);
+            response_object["response"]["id"] = node.get_id();
+        }
+    }*/
+    //-----------------------------------------------------
+    /*if(method == "clear" && ipc_mode == true) {
+        code = (node.remove_all() == false) 
+            ? static_cast<int>(DhtResultCode::RemoveFailed) 
+            : static_cast<int>(DhtResultCode::Success);
+            
+        if(code != static_cast<int>(DhtResultCode::Success)) {
+            response_object["version"] = std::string(NEROSHOP_DHT_VERSION);
+            response_object["error"]["id"] = node.get_id();
+            response_object["error"]["code"] = code;
+            response_object["error"]["message"] = get_dht_result_code_as_string(static_cast<DhtResultCode>(code));
+        } else {
+            response_object["version"] = std::string(NEROSHOP_DHT_VERSION);
+            response_object["response"]["id"] = node.get_id();
+        }
+    }*/
+    //-----------------------------------------------------
+    
+    //-----------------------------------------------------------
+    // Old nlohmann-json version
+    //-----------------------------------------------------------
+    /*response_object["tid"] = tid;
+    response = nlohmann::json::to_msgpack(response_object);
+    return response;*/
+    
+    //-----------------------------------------------------------
+    // Transition from nlohmann-json to msgpack-cxx
+    //-----------------------------------------------------------
+    msgpack::sbuffer sbuf;
+    msgpack::pack(sbuf, response_map);
+    /*#ifdef NEROSHOP_DEBUG
+    msgpack_print(sbuf.data(), sbuf.size());
+    msgpack_print(response_map);
+    #endif*/
+            
+    response = std::vector<uint8_t>(sbuf.data(), sbuf.data() + sbuf.size());
+    return response;
+}
+
+//-----------------------------------------------------------------------------
+
+void msgpack_print(const msgpack::object_handle& oh) {
+    msgpack::object obj = oh.get();
+    std::cout << obj << std::endl;//"\n";
+}
+
+//-----------------------------------------------------------------------------
+
+void msgpack_print(const msgpack::object& obj) {
+    std::cout << obj << std::endl;//"\n";
+}
+
+//-----------------------------------------------------------------------------
+
+static void msgpack_print_object(const msgpack::object& obj, int indent = 0) {
+    std::string indent_str(indent, ' ');
+    switch (obj.type) {
+        case msgpack::type::NIL:
+            std::cout << "null";
+            break;
+        case msgpack::type::BOOLEAN:
+            std::cout << (obj.via.boolean ? "true" : "false");
+            break;
+        case msgpack::type::POSITIVE_INTEGER:
+            std::cout << obj.via.u64;
+            break;
+        case msgpack::type::NEGATIVE_INTEGER:
+            std::cout << obj.via.i64;
+            break;
+        case msgpack::type::FLOAT32:
+        case msgpack::type::FLOAT64:
+            std::cout << obj.via.f64;
+            break;
+        case msgpack::type::STR:
+            std::cout << "\"" << std::string(obj.via.str.ptr, obj.via.str.size) << "\"";
+            break;
+        case msgpack::type::ARRAY:
+            std::cout << "[\n";
+            for (uint32_t i = 0; i < obj.via.array.size; ++i) {
+                std::cout << indent_str << "  ";
+                msgpack_print_object(obj.via.array.ptr[i], indent + 2);
+                if (i + 1 < obj.via.array.size) std::cout << ",";
+                std::cout << "\n";
+            }
+            std::cout << indent_str << "]";
+            break;
+        case msgpack::type::MAP:
+            std::cout << "{\n";
+            for (uint32_t i = 0; i < obj.via.map.size; ++i) {
+                const auto& kv = obj.via.map.ptr[i];
+                std::cout << indent_str << "  \""
+                          << std::string(kv.key.via.str.ptr, kv.key.via.str.size)
+                          << "\" : ";
+                msgpack_print_object(kv.val, indent + 2);
+                if (i + 1 < obj.via.map.size) std::cout << ",";
+                std::cout << "\n";
+            }
+            std::cout << indent_str << "}";
+            break;
+        default:
+            std::cout << "<unknown>";
+    }
+}
+
+//-----------------------------------------------------------------------------
+
+void msgpack_print(const std::map<std::string, msgpack::object>& map) {
+    std::cout << "{\n";
+    for (auto it = map.begin(); it != map.end(); ++it) {
+        std::cout << "  \"" << it->first << "\": ";
+        msgpack_print_object(it->second, 2);
+        if (std::next(it) != map.end()) std::cout << ",";
+        std::cout << "\n";
+    }
+    std::cout << "}\n";
+}
+
+//-----------------------------------------------------------------------------
+
+void msgpack_print(const char* data, size_t len) {
+    for (size_t i = 0; i < len; ++i) {
+        std::cout << "0x" << std::setw(2) << std::setfill('0')
+                  << (static_cast<int>(static_cast<unsigned char>(data[i])) & 0xff)
+                  << ' ';
+    }
+    std::cout << std::endl;
+}
+
+//-----------------------------------------------------------------------------
+
+} // namespace rpc
+
+} // namespace neroshop
