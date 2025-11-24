@@ -3,8 +3,6 @@
 #include "../../tools/string.hpp"
 #include "../../settings.hpp" // language
 
-#include <nlohmann/json.hpp>
-
 namespace neroshop {
 
 MoneroWallet::MoneroWallet() : Wallet(WalletType::Monero) {}
@@ -27,11 +25,29 @@ int MoneroWallet::create_random(const std::string& password, const std::string& 
     wallet_config_obj.m_path = path;
     wallet_config_obj.m_password = password;
     wallet_config_obj.m_network_type = static_cast<monero::monero_network_type>(Wallet::network_type);
-    nlohmann::json settings = nlohmann::json::parse(neroshop::load_json(), nullptr, false);
-    if(settings.is_discarded()) {
+    std::string json_str = neroshop::load_json();
+    rapidjson::Document settings;
+    settings.Parse(json_str.c_str());
+    if (settings.HasParseError() || !settings.IsObject()) {
         wallet_config_obj.m_language = "English";
     } else {
-        wallet_config_obj.m_language = settings["monero"]["wallet"]["seed_language"].get<std::string>();
+        if (settings.HasMember("monero") && settings["monero"].IsObject()) {
+            const rapidjson::Value& monero_obj = settings["monero"];
+
+            if (monero_obj.HasMember("wallet") && monero_obj["wallet"].IsObject()) {
+                const rapidjson::Value& wallet_obj = monero_obj["wallet"];
+
+                if (wallet_obj.HasMember("seed_language") && wallet_obj["seed_language"].IsString()) {
+                    wallet_config_obj.m_language = wallet_obj["seed_language"].GetString();
+                } else {
+                    wallet_config_obj.m_language = "English";
+                }
+            } else {
+                wallet_config_obj.m_language = "English";
+            }
+        } else {
+            wallet_config_obj.m_language = "English";
+        }
     }
     
     monero_wallet_obj = std::unique_ptr<monero_wallet_full>(monero_wallet_full::create_wallet (wallet_config_obj, nullptr));

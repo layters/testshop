@@ -50,14 +50,14 @@ unset(_cmake_expected_targets)
 add_library(msgpack-c STATIC IMPORTED)
 
 set_target_properties(msgpack-c PROPERTIES
-  INTERFACE_INCLUDE_DIRECTORIES "/media/sid/easystore/sid/media/.apps/source_code/custom/neroshop/backup/external/msgpack-c/include;/media/sid/easystore/sid/media/.apps/source_code/custom/neroshop/backup/external/msgpack-c/include;/media/sid/easystore/sid/media/.apps/source_code/custom/neroshop/backup/external/msgpack-c/include/msgpack"
+  INTERFACE_INCLUDE_DIRECTORIES "/media/sid/easystore/sid/media/.apps/source_code/custom/neroshop/main/external/msgpack-c/include;/media/sid/easystore/sid/media/.apps/source_code/custom/neroshop/main/external/msgpack-c/include;/media/sid/easystore/sid/media/.apps/source_code/custom/neroshop/main/external/msgpack-c/include/msgpack"
 )
 
 # Import target "msgpack-c" for configuration ""
 set_property(TARGET msgpack-c APPEND PROPERTY IMPORTED_CONFIGURATIONS NOCONFIG)
 set_target_properties(msgpack-c PROPERTIES
   IMPORTED_LINK_INTERFACE_LANGUAGES_NOCONFIG "C"
-  IMPORTED_LOCATION_NOCONFIG "/media/sid/easystore/sid/media/.apps/source_code/custom/neroshop/backup/build/libmsgpack-c.a"
+  IMPORTED_LOCATION_NOCONFIG "/media/sid/easystore/sid/media/.apps/source_code/custom/neroshop/main/build/libmsgpack-c.a"
   )
 
 # This file does not depend on other imported targets which have

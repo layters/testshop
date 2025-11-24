@@ -8,7 +8,7 @@ NeroShop is a decentralized peer-to-peer marketplace for trading goods and servi
 > [!Important]
 > The neroshop team operates independently
 > and is not affiliated, associated, authorized, endorsed by, or in any way officially connected
-> with the Monero project, Monero team or any organization.
+> with the Monero project, Monero Core team or any corporation.
 
 
 ## Table of Contents
@@ -67,7 +67,7 @@ NeroShop is a decentralized peer-to-peer marketplace for trading goods and servi
 | [monero-cpp](https://github.com/woodser/monero-cpp)                | latest             | monero wallet and payment system                                       | :heavy_check_mark: :package:                       |
 | [sqlite3](https://sqlite.org/)                                     | 3.38.0             | database management                                                    | :heavy_check_mark: :package:                       |
 | [QR Code generator](https://github.com/nayuki/QR-Code-generator)   | ?                  | qr code generation                                                     | :heavy_check_mark: :package:                       |
-| [json](https://github.com/nlohmann/json/)                          | ?                  | json parsing and msgpack                                               | :x: :package:                                      |
+| [json](https://github.com/nlohmann/json/)                          | ?                  | json parsing                                                           | :x: :package:                                      |
 | [curl](https://github.com/curl/curl)                               | ?                  | currency conversion                                                    | :heavy_check_mark: :white_square_button:           |
 | [openssl](https://github.com/openssl/openssl)                      | 1.1.1              | for curl, sha256 sum and message encryption                            | :heavy_check_mark:                                 |
 | [Qt](https://www.qt.io/)                                           | 5.15.0             | graphical user interface                                               | :heavy_check_mark:                                 |
@@ -75,10 +75,10 @@ NeroShop is a decentralized peer-to-peer marketplace for trading goods and servi
 | [linenoise](https://github.com/antirez/linenoise)                  | ?                  | command line interface                                                 | :heavy_check_mark: :white_square_button: :package: |
 | [lua](https://www.lua.org/)                                        | 5.1.5              | custom plugins                                                         | :heavy_check_mark: :package:                       |
 | [cxxopts](https://github.com/jarro2783/cxxopts)                    | ?                  | command line option parser                                             | :heavy_check_mark: :package:                       |
-| [i2pd](https://github.com/PurpleI2P/i2pd)                          | latest             | network proxy                                                          | :o: :package:                                      |
+| [i2pd](https://github.com/PurpleI2P/i2pd)                          | latest             | anonymous network communication                                        | :o: :package:                                      |
 | [fmt](https://github.com/fmtlib/fmt)                               | ?                  | log formatting                                                         | :heavy_check_mark: :package:                       |
 | [mkp224o](https://github.com/cathugger/mkp224o)                    | ?                  | onion address generation                                               | :o: :package:                                      |
-| [protobuf](https://github.com/protocolbuffers/protobuf)            | ?                  | serialization for data transmission                                    | :heavy_check_mark:                                 |
+| [protobuf](https://github.com/protocolbuffers/protobuf)            | ?                  | network data serialization                                             | :heavy_check_mark:                                 |
 
 ### Compiling neroshop from source
 **0. Install prerequisites**
@@ -199,7 +199,7 @@ make -j$(nproc)
 # Run neroshop
 ./neroshop
 ```
-> Other supported build systems: [`Meson`](https://mesonbuild.com/)
+> Other supported build systems: [`Meson`](https://mesonbuild.com/) (broken - for now)
 
 ### Setting up i2p
 1. Download the Java I2P from the [official website](https://geti2p.net/en/download)
@@ -246,8 +246,8 @@ WW2pQTQWHpyJf2CHrCmZG7Tn3zBnYRZTH8g4U3pSZf5s6xsTXrZc9odDWmrWzjRc9MMQWrKXxjHsRdzH
 - DHT Specification: [specs](https://github.com/layters/specs)
 - Git Mirrors: 
     - [Codeberg](https://codeberg.org/layter/neroshop)
+    - [GitHub](https://github.com/layters/testshop)
     - [Radicle](https://radicle.xyz): `rad:z2Y72SYpHTkiRXrn4hkZaf1VYhc7J`
-- Lemmy: https://monero.town/c/neroshop
 - Matrix: [#neroshop:matrix.org](https://matrix.to/#/#neroshop:matrix.org)
 
 
