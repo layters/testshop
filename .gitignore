@@ -17,8 +17,11 @@ external/mkp224o/GNUmakefile
 external/mkp224o/mkp224o
 
 external/msgpack-c/CMakeFiles
+external/msgpack-c/CMakeCache.txt
 external/msgpack-c/cmake_install.cmake
 external/msgpack-c/Makefile
+external/msgpack-c/include/msgpack/pack_template.h
+external/msgpack-c/include/msgpack/sysdep.h
 external/msgpack-c/msgpack-c.pc
 external/msgpack-c/msgpack-c-config.cmake
 external/msgpack-c/msgpack-c-config-version.cmake
