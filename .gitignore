@@ -16,6 +16,14 @@ external/mkp224o/configure~
 external/mkp224o/GNUmakefile
 external/mkp224o/mkp224o
 
+external/msgpack-c/CMakeFiles
+external/msgpack-c/cmake_install.cmake
+external/msgpack-c/Makefile
+external/msgpack-c/msgpack-c.pc
+external/msgpack-c/msgpack-c-config.cmake
+external/msgpack-c/msgpack-c-config-version.cmake
+external/msgpack-c/msgpack-c-targets.cmake
+
 external/arch.c
 
 # copied from https://gist.github.com/Yousha/3830712334ac30a90eb6041b932b68d7#file-gitignore-L952
