@@ -8,7 +8,14 @@
 
 namespace neroshop {
 
-inline const std::map<std::string, std::map<std::string, std::vector<std::string>>> locations = {
+struct City {
+    std::string name;
+    double latitude = 0.0;
+    double longitude = 0.0;
+};
+
+// country -> region/state -> vector of City structs
+inline const std::map<std::string, std::map<std::string, std::vector<City>>> locations = {
     {"Afghanistan", {}},
     {"Albania", {}},
     {"Algeria", {}},
@@ -43,14 +50,14 @@ inline const std::map<std::string, std::map<std::string, std::vector<std::string
     }},
     {"Armenia", {}},
     {"Australia", {
-        {"New South Wales", {"Sydney"}},
-        {"Queensland", {"Brisbane"}},
-        {"South Australia", {"Adelaide"}},
-        {"Tasmania", {"Hobart"}},
-        {"Victoria", {"Melbourne"}},
-        {"Western Australia", {"Perth"}},
-        {"Australian Capital Territory", {"Canberra"}},
-        {"Northern Territory", {"Darwin"}}
+        {"New South Wales", { City{"Sydney", -33.8688, 151.2093} }},
+        {"Queensland", { City{"Brisbane", -27.4698, 153.0251} }},
+        {"South Australia", { City{"Adelaide", -34.9285, 138.6007} }},
+        {"Tasmania", { City{"Hobart"} }},
+        {"Victoria", { City{"Melbourne"} }},
+        {"Western Australia", { City{"Perth"} }},
+        {"Australian Capital Territory", { City{"Canberra"} }},
+        {"Northern Territory", { City{"Darwin"} }}
     }},
     {"Austria", {}},
     {"Azerbaijan", {}},
@@ -104,21 +111,21 @@ inline const std::map<std::string, std::map<std::string, std::vector<std::string
     {"Cameroon", {}},
     {"Canada", {
         // Provinces
-        {"Alberta", {"Calgary", "Edmonton"}},
-        {"British Columbia", {"Vancouver", "Victoria"}},
-        {"Manitoba", {"Winnipeg"}},
-        {"New Brunswick", {"Fredericton", "Moncton"}},
-        {"Newfoundland and Labrador", {"St. John's"}},
-        {"Nova Scotia", {"Halifax"}},
-        {"Ontario", {"Ottawa", "Toronto"}},
-        {"Prince Edward Island", {"Charlottetown"}},
-        {"Quebec", {"Montreal", "Quebec City"}},
-        {"Saskatchewan", {"Regina", "Saskatoon"}},
+        {"Alberta", { City{"Calgary", 51.0447, -114.0719}, City{"Edmonton", 53.5461, -113.4938} }},
+        {"British Columbia", { City{"Vancouver", 49.2827, -123.1207}, City{"Victoria", 48.4284, -123.3656} }},
+        {"Manitoba", { City{"Winnipeg"} }},
+        {"New Brunswick", { City{"Fredericton"}, City{"Moncton"} }},
+        {"Newfoundland and Labrador", { City{"St. John's"} }},
+        {"Nova Scotia", { City{"Halifax"} }},
+        {"Ontario", { City{"Ottawa"}, City{"Toronto"} }},
+        {"Prince Edward Island", { City{"Charlottetown"} }},
+        {"Quebec", { City{"Montreal"}, City{"Quebec City"} }},
+        {"Saskatchewan", { City{"Regina"}, City{"Saskatoon"} }},
         
         // Territories
-        {"Northwest Territories", {"Yellowknife"}},
-        {"Nunavut", {"Iqaluit"}},
-        {"Yukon", {"Whitehorse"}}
+        {"Northwest Territories", { City{"Yellowknife"} }},
+        {"Nunavut", { City{"Iqaluit"} }},
+        {"Yukon", { City{"Whitehorse"} }}
     }},
     {"Cape Verde", {}},
     {"Central African Rep", {}},
@@ -196,25 +203,25 @@ inline const std::map<std::string, std::map<std::string, std::vector<std::string
     {"Gambia", {}},
     {"Georgia", {}},
     {"Germany", {
-        {"Baden-Württemberg", {"Stuttgart"}},
-        {"Bavaria (Bayern)", {"Munich (München)"}},
-        {"Berlin", {"Berlin"}}, // Both a city and a state
-        {"Brandenburg", {"Potsdam"}},
-        {"Bremen", {"Bremen"}}, // Both a city and a state
-        {"Hamburg", {"Hamburg"}}, // Both a city and a state
-        {"Hesse (Hessen)", {"Wiesbaden"}},
-        {"Lower Saxony (Niedersachsen)", {"Hanover (Hannover)"}},
-        {"Mecklenburg-Western Pomerania (Mecklenburg-Vorpommern)", {"Schwerin"}},
-        {"North Rhine-Westphalia (Nordrhein-Westfalen)", {"Düsseldorf"}},
-        {"Rhineland-Palatinate (Rheinland-Pfalz)", {"Mainz"}},
-        {"Saarland", {"Saarbrücken"}},
-        {"Saxony (Sachsen)", {"Dresden"}},
-        {"Saxony-Anhalt (Sachsen-Anhalt)", {"Magdeburg"}},
-        {"Schleswig-Holstein", {"Kiel"}},
-        {"Thuringia (Thüringen)", {"Erfurt"}}
+        {"Baden-Württemberg", { City{"Stuttgart"} }},
+        {"Bavaria (Bayern)", { City{"Munich (München)"} }},
+        {"Berlin", { City{"Berlin"} }}, // Both a city and a state
+        {"Brandenburg", { City{"Potsdam"} }},
+        {"Bremen", { City{"Bremen"} }}, // Both a city and a state
+        {"Hamburg", { City{"Hamburg"} }}, // Both a city and a state
+        {"Hesse (Hessen)", { City{"Wiesbaden"} }},
+        {"Lower Saxony (Niedersachsen)", { City{"Hanover (Hannover)"} }},
+        {"Mecklenburg-Western Pomerania (Mecklenburg-Vorpommern)", { City{"Schwerin"} }},
+        {"North Rhine-Westphalia (Nordrhein-Westfalen)", { City{"Düsseldorf"} }},
+        {"Rhineland-Palatinate (Rheinland-Pfalz)", { City{"Mainz"} }},
+        {"Saarland", { City{"Saarbrücken"} }},
+        {"Saxony (Sachsen)", { City{"Dresden"} }},
+        {"Saxony-Anhalt (Sachsen-Anhalt)", { City{"Magdeburg"} }},
+        {"Schleswig-Holstein", { City{"Kiel"} }},
+        {"Thuringia (Thüringen)", { City{"Erfurt"} }}
     }},
     {"Ghana", {
-        {"Ahafo", {"Goaso"}},
+        /*{"Ahafo", {"Goaso"}},
         {"Ashanti", {"Kumasi"}},
         {"Bono", {"Sunyani"}},
         {"Bono East", {"Techiman"}},
@@ -229,7 +236,7 @@ inline const std::map<std::string, std::map<std::string, std::vector<std::string
         {"Upper West", {"Wa"}},
         {"Volta", {"Ho"}},
         {"Western", {"Sekondi-Takoradi"}},
-        {"Western North", {"Sefwi Wiawso"}}
+        {"Western North", {"Sefwi Wiawso"}}*/
     }},
     {"Greece", {}},
     {"Grenada", {}},
@@ -545,59 +552,59 @@ inline const std::map<std::string, std::map<std::string, std::vector<std::string
     {"Ukraine", {}},
     {"United Arab Emirates", {}},
     {"United Kingdom", {
-        {"England", {"London"}},
-        {"Northern Ireland", {"Belfast"}},
-        {"Scotland", {"Edinburgh", "Glasgow"}},
-        {"Wales", {"Cardiff"}},
+        {"England", { City{"London", 51.5074, -0.1278} }},
+        {"Northern Ireland", { City{"Belfast", 54.5973, -5.9301} }},
+        {"Scotland", { City{"Edinburgh", 55.9533, -3.1883}, City{"Glasgow", 55.8642, -4.2518} }},
+        {"Wales", { City{"Cardiff", 51.4816, -3.1791} }},
     }},
     {"United States", {
-        {"Alabama", {"Montgomery"}},
-        {"Alaska", {"Juneau"}},
-        {"American Samoa", {"Pago Pago"}}, // Outlying area
-        {"Arizona", {"Phoenix"}},
-        {"Arkansas", {"Little Rock"}},
-        {"California", {"Los Angeles", "Sacramento", "San Diego", "San Francisco"}},
-        {"Colorado", {"Denver"}},
-        {"Connecticut", {"Hartford"}},
-        {"Delaware", {"Dover"}},
-        {"Florida", {"Miami", "Tallahassee"}},
-        {"Georgia", {"Atlanta"}},
-        {"Guam", {"Hagåtña"}}, // Outlying area
-        {"Hawaii", {"Honolulu"}},
-        {"Idaho", {"Boise"}},
-        {"Illinois", {"Chicago", "Springfield"}},
-        {"Indiana", {"Indianapolis"}},
-        {"Iowa", {"Des Moines"}},
-        {"Kansas", {"Topeka"}},
-        {"Kentucky", {"Frankfort"}},
-        {"Louisiana", {"Baton Rouge"}},
-        {"Maine", {"Augusta"}},
-        {"Maryland", {"Annapolis"}},
-        {"Massachusetts", {"Boston", "Springfield", "Worcester"}},
-        {"Michigan", {"Lansing"}},
-        {"Minnesota", {"Saint Paul"}},
-        {"Mississippi", {"Jackson"}},
-        {"Missouri", {"Jefferson City"}},
-        {"Montana", {"Helena"}},
-        {"Nebraska", {"Lincoln"}},
-        {"Nevada", {"Carson City", "Las Vegas"}},
-        {"New Hampshire", {"Concord"}},
-        {"New Jersey", {"Trenton"}},
-        {"New Mexico", {"Santa Fe"}},
-        {"New York", {"Albany", "Buffalo", "New York City", "Rochester"}},
-        {"North Carolina", {"Raleigh"}},
-        {"North Dakota", {"Bismarck"}},
-        {"Northern Mariana Islands", {"Saipan"}}, // Outlying area
-        {"Ohio", {"Columbus"}},
-        {"Oklahoma", {"Oklahoma City"}},
-        {"Oregon", {"Salem"}},
-        {"Pennsylvania", {"Harrisburg", "Philadelphia"}},
-        {"Puerto Rico", {"San Juan"}}, // Outlying area
-        {"Rhode Island", {"Providence"}},
-        {"South Carolina", {"Columbia"}},
-        {"South Dakota", {"Pierre"}},
-        {"Tennessee", {"Nashville"}},
-        {"Texas", {"Austin", "Dallas", "Houston", "San Antonio"}},
+        {"Alabama", { City{"Montgomery"} }},
+        {"Alaska", { City{"Juneau"} }},
+        {"American Samoa", { City{"Pago Pago"} }}, // Outlying area
+        {"Arizona", { City{"Phoenix"} }},
+        {"Arkansas", { City{"Little Rock"} }},
+        {"California", { City{"Los Angeles"}, City{"Sacramento"}, City{"San Diego"}, City{"San Francisco"} }},
+        {"Colorado", { City{"Denver"} }},
+        {"Connecticut", { City{"Hartford"} }},
+        {"Delaware", { City{"Dover"} }},
+        {"Florida", { City{"Miami"}, City{"Tallahassee"} }},
+        {"Georgia", { City{"Atlanta"} }},
+        {"Guam", { City{"Hagåtña"} }}, // Outlying area
+        {"Hawaii", { City{"Honolulu"} }},
+        {"Idaho", { City{"Boise"} }},
+        {"Illinois", { City{"Chicago"}, City{"Springfield"} }},
+        {"Indiana", { City{"Indianapolis"} }},
+        {"Iowa", { City{"Des Moines"} }},
+        {"Kansas", { City{"Topeka"} }},
+        {"Kentucky", { City{"Frankfort"} }},
+        {"Louisiana", { City{"Baton Rouge"} }},
+        {"Maine", { City{"Augusta"} }},
+        {"Maryland", { City{"Annapolis"} }},
+        {"Massachusetts", { City{"Boston"}, City{"Springfield"}, City{"Worcester"} }},
+        {"Michigan", { City{"Lansing"} }},
+        {"Minnesota", { City{"Saint Paul"} }},
+        {"Mississippi", { City{"Jackson"} }},
+        {"Missouri", { City{"Jefferson City"} }},
+        {"Montana", { City{"Helena"} }},
+        {"Nebraska", { City{"Lincoln"} }},
+        {"Nevada", { City{"Carson City"}, City{"Las Vegas"} }},
+        {"New Hampshire", { City{"Concord"} }},
+        {"New Jersey", { City{"Trenton"} }},
+        {"New Mexico", { City{"Santa Fe"} }},
+        {"New York", { City{"Albany"}, City{"Buffalo"}, City{"New York City"}, City{"Rochester"} }},
+        {"North Carolina", { City{"Raleigh"} }},
+        {"North Dakota", { City{"Bismarck"} }},
+        {"Northern Mariana Islands", { City{"Saipan"} }}, // Outlying area
+        {"Ohio", { City{"Columbus"} }},
+        {"Oklahoma", { City{"Oklahoma City"} }},
+        {"Oregon", { City{"Salem"} }},
+        {"Pennsylvania", { City{"Harrisburg"}, City{"Philadelphia"} }},
+        {"Puerto Rico", { City{"San Juan"} }}, // Outlying area
+        {"Rhode Island", { City{"Providence"} }},
+        {"South Carolina", { City{"Columbia"} }},
+        {"South Dakota", { City{"Pierre"} }},
+        {"Tennessee", { City{"Nashville"} }},
+        {"Texas", { City{"Austin"}, City{"Dallas"}, City{"Houston"}, City{"San Antonio"} }},
         {"United States Minor Outlying Islands", {
             {"Baker Island", {}},
             {"Howland Island", {}},
@@ -609,14 +616,14 @@ inline const std::map<std::string, std::map<std::string, std::vector<std::string
             {"Palmyra Atoll", {}},
             {"Wake Island", {}}
         }}, // Outlying area
-        {"United States Virgin Islands", {"Charlotte Amalie"}}, // Outlying area
-        {"Utah", {"Salt Lake City"}},
-        {"Vermont", {"Montpelier"}},
-        {"Virginia", {"Richmond"}},
-        {"Washington", {"Olympia", "Seattle"}},
-        {"West Virginia", {"Charleston"}},
-        {"Wisconsin", {"Madison"}},
-        {"Wyoming", {"Cheyenne"}}
+        {"United States Virgin Islands", { City{"Charlotte Amalie"} }}, // Outlying area
+        {"Utah", { City{"Salt Lake City"} }},
+        {"Vermont", { City{"Montpelier"} }},
+        {"Virginia", { City{"Richmond"} }},
+        {"Washington", { City{"Olympia"}, City{"Seattle"} }},
+        {"West Virginia", { City{"Charleston"} }},
+        {"Wisconsin", { City{"Madison"} }},
+        {"Wyoming", { City{"Cheyenne"} }}
     }},
     {"Unspecified", {}},
     {"Uruguay", {}},
@@ -658,8 +665,9 @@ inline std::vector<std::string> get_cities(const std::string& country, const std
     if (country_it != locations.end()) {
         auto region_it = country_it->second.find(region);
         if (region_it != country_it->second.end()) {
-            // Add cities in the specified region to the vector
-            cities = region_it->second;
+            for (const auto& city : region_it->second) {
+                cities.push_back(city.name);
+            }
         }
     }
     return cities;
@@ -673,7 +681,7 @@ inline std::vector<std::string> get_cities_from_country(const std::string& count
     if (country_it != locations.end()) {
         for (const auto& region : country_it->second) {
             for (const auto& city : region.second) {
-                city_map[city].push_back(region.first);  // Map city to its region (state)
+                city_map[city.name].push_back(region.first);  // Map city to its region (state)
             }
         }
 

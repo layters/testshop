@@ -178,7 +178,7 @@ QStringList neroshop::Backend::getCitiesList(const QString& country, const QStri
         if (region_it != country_it->second.end()) {
             // Add cities in the specified region to the QStringList
             for (const auto& city : region_it->second) {
-                cities.append(QString::fromStdString(city));
+                cities.append(QString::fromStdString(city.name));
             }
         }
     }

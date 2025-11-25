@@ -4,7 +4,7 @@
 #define PROTOBUF_HPP_NEROSHOP
 
 #if defined(NEROSHOP_USE_PROTOBUF)
-#include "../../../../build/proto/message.pb.h"
+#include "../../../../build/pb/message.pb.h"
 
 #include <iostream>
 #include <string>

@@ -12,7 +12,7 @@ inline constexpr std::uint16_t SAM_DEFAULT_PORT_TCP   = 7656;
 inline constexpr std::uint16_t SAM_DEFAULT_PORT_UDP   = 7655;
 inline constexpr std::uint16_t SAM_DEFAULT_CLIENT_TCP = 50881;//7666;
 inline constexpr std::uint16_t SAM_DEFAULT_CLIENT_UDP = 50881;//7667;
-inline constexpr const char* SAM_DEFAULT_PRIVKEY_PATH = "i2p3.key";//const std::string SAM_DEFAULT_PRIVKEY_PATH = []() { static std::mt19937_64 rng(std::chrono::steady_clock::now().time_since_epoch().count()); uint64_t n = rng(); std::stringstream s; s << "i2p_" << std::hex << n << ".key"; return s.str(); }();
+inline constexpr const char* SAM_DEFAULT_PRIVKEY_PATH = "i2p.key";//const std::string SAM_DEFAULT_PRIVKEY_PATH = []() { static std::mt19937_64 rng(std::chrono::steady_clock::now().time_since_epoch().count()); uint64_t n = rng(); std::stringstream s; s << "i2p_" << std::hex << n << ".key"; return s.str(); }();
 
 inline constexpr const char* SAM_NAME_INBOUND_QUANTITY          = "inbound.quantity";
 inline constexpr int SAM_DEFAULT_INBOUND_QUANTITY               = 3; // Three tunnels is default now

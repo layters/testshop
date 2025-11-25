@@ -98,7 +98,7 @@ find_program(PROTOC_EXECUTABLE protoc)
 if(Protobuf_FOUND AND PROTOC_EXECUTABLE)
     set(proto_path "${CMAKE_SOURCE_DIR}/../proto")
     set(proto_files "${proto_path}/message.proto")
-    set(protoc_out_dir "${CMAKE_SOURCE_DIR}/../build/proto")
+    set(protoc_out_dir "${CMAKE_SOURCE_DIR}/../build/pb")
     file(MAKE_DIRECTORY ${protoc_out_dir})
     add_custom_command(
         OUTPUT "${proto_out_dir}/message.pb.cc" "${protoc_out_dir}/message.pb.h"
