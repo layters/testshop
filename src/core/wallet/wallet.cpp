@@ -51,10 +51,9 @@ int Wallet::create_random(const std::string& password, const std::string& confir
     wallet_config_obj.m_network_type = static_cast<monero::monero_network_type>(Wallet::network_type);
     std::string json_str = neroshop::load_json();
     rapidjson::Document settings;
+    wallet_config_obj.m_language = "English";  // default language
     settings.Parse(json_str.c_str());
-    if (settings.HasParseError() || !settings.IsObject()) {
-        wallet_config_obj.m_language = "English";
-    } else {
+    if (!settings.HasParseError() && settings.IsObject()) {
         if (settings.HasMember("monero") && settings["monero"].IsObject()) {
             const rapidjson::Value& monero_obj = settings["monero"];
 
@@ -63,14 +62,8 @@ int Wallet::create_random(const std::string& password, const std::string& confir
 
                 if (wallet_obj.HasMember("seed_language") && wallet_obj["seed_language"].IsString()) {
                     wallet_config_obj.m_language = wallet_obj["seed_language"].GetString();
-                } else {
-                    wallet_config_obj.m_language = "English";
                 }
-            } else {
-                wallet_config_obj.m_language = "English";
             }
-        } else {
-            wallet_config_obj.m_language = "English";
         }
     }
     
