@@ -21,7 +21,7 @@ target_include_directories(${monero_cpp} PUBLIC monero-cpp/src/ ${monero_include
 target_compile_definitions(${monero_cpp} PUBLIC BOOST_DISABLE_PRAGMA_MESSAGE)
 
 set(qrcodegen "qrcodegen")
-set(QR_Code_generator_srcs QR-Code-generator/cpp/qrcodegen.cpp) # or QR-Code-generator/c/qrcodegen.c
+set(QR_Code_generator_srcs QR-Code-generator/cpp/qrcodegen.cpp)
 add_library(${qrcodegen} STATIC ${QR_Code_generator_srcs})
 target_include_directories(${qrcodegen} PUBLIC QR-Code-generator/cpp/)
 
@@ -42,7 +42,7 @@ set(lua_srcs lua/src/lapi.c lua/src/lcode.c lua/src/lctype.c lua/src/ldebug.c lu
 add_library(${lua_target} STATIC ${lua_srcs})
 target_include_directories(${lua_target} PUBLIC lua/src/)
 
-set(zlib_target "zlib") # required by libi2pd
+#[[set(zlib_target "zlib") # required by libi2pd
 set(zlib_srcs zlib/adler32.c zlib/compress.c zlib/crc32.c zlib/deflate.c zlib/gzclose.c zlib/gzlib.c zlib/gzread.c zlib/gzwrite.c zlib/infback.c zlib/inffast.c zlib/inflate.c zlib/inftrees.c zlib/trees.c zlib/uncompr.c zlib/zutil.c)
 add_library(${zlib_target} STATIC ${zlib_srcs})
 target_include_directories(${zlib_target} PUBLIC zlib/)
@@ -58,7 +58,7 @@ endif()
 set(BUILD_SHARED_LIBS OFF CACHE BOOL "Build static libraries" FORCE) # used by both i2pd and msgpack
 # both WITH_BINARY and WITH_LIBRARY options should be ON by default
 add_subdirectory(i2pd/build)
-#[[set_target_properties(libi2pd PROPERTIES
+set_target_properties(libi2pd PROPERTIES
     ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/../build"
     LIBRARY_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/../build"
     RUNTIME_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/../build"
@@ -72,12 +72,12 @@ set_target_properties(libi2pdlang PROPERTIES
     ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/../build"
     LIBRARY_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/../build"
     RUNTIME_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/../build"
-)]]
+)
 set_target_properties(i2pd PROPERTIES
     ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/../build"
     LIBRARY_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/../build"
     RUNTIME_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/../build"
-)
+)]]
 
 set(fmt_target "fmt")
 set(fmt_srcs fmt/src/format.cc fmt/src/os.cc)

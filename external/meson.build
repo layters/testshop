@@ -11,7 +11,7 @@ monero_cpp_lib = static_library(monero_cpp, monero_cpp_srcs,
 )
 
 qrcodegen = 'qrcodegen'
-qr_code_generator_srcs = 'QR-Code-generator/cpp/qrcodegen.cpp' # or 'QR-Code-generator/c/qrcodegen.c'
+qr_code_generator_srcs = 'QR-Code-generator/cpp/qrcodegen.cpp'
 qrcodegen_lib = static_library(qrcodegen, qr_code_generator_srcs,
     include_directories: 'QR-Code-generator/cpp/'
 )
@@ -35,6 +35,7 @@ lua_lib = static_library(lua, lua_srcs,
     include_directories: 'lua/src/'
 )
 
+'''
 zlib = 'z' # required by libi2pd
 zlib_srcs = ['zlib/adler32.c', 'zlib/compress.c', 'zlib/crc32.c', 'zlib/deflate.c', 'zlib/gzclose.c', 'zlib/gzlib.c', 'zlib/gzread.c', 'zlib/gzwrite.c', 'zlib/infback.c', 'zlib/inffast.c', 'zlib/inflate.c', 'zlib/inftrees.c', 'zlib/trees.c', 'zlib/uncompr.c', 'zlib/zutil.c']
 zlib_lib = static_library(zlib, zlib_srcs,
@@ -77,6 +78,7 @@ i2pd_daemon_lib = static_library(i2pd_daemon, i2pd_daemon_srcs,
     include_directories: ['i2pd/daemon/', 'i2pd/i18n/', 'i2pd/libi2pd/', 'i2pd/libi2pd_client/'],
     cpp_args: i2pd_daemon_cpp_args + ['-DOPENSSL_SUPPRESS_DEPRECATED']
 )
+'''
 
 fmt = 'fmt'
 fmt_srcs = ['fmt/src/format.cc', 'fmt/src/os.cc']
