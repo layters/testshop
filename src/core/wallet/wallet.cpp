@@ -2,7 +2,7 @@
 
 #include "../tools/logger.hpp"
 #include "../tools/string.hpp"
-#include "../tools/process.hpp" // for monerod daemon process
+////#include "../tools/process.hpp" // for monerod daemon process
 #include "../settings.hpp" // language
 
 #include <cmath>
@@ -11,7 +11,7 @@
 namespace neroshop {
 
 Wallet::Wallet(WalletType wallet_type) : wallet_type(wallet_type), monero_wallet_obj(nullptr),
-    process(nullptr), percentage(0.0)
+    /*process(nullptr),*/ percentage(0.0)
 {}
 //-------------------------------------------------------
 neroshop::WalletNetworkType Wallet::network_type(WalletNetworkType::Stagenet);
@@ -756,7 +756,8 @@ void Wallet::on_balances_changed(uint64_t new_balance, uint64_t new_unlocked_bal
 // open the daemon before opening the wallet
 void Wallet::daemon_open(const std::string& daemon_dir, bool confirm_external_bind, bool restricted_rpc, std::string data_dir, unsigned int restore_height) 
 {
-    auto wallet_network_type = get_wallet_network_type();
+    // TODO: Rewrite this function
+    /*auto wallet_network_type = get_wallet_network_type();
     const std::string port = WalletNetworkPortMap[wallet_network_type][0];
     // Todo: use QProcess to launch monerod
     // Check if there is another monerod process running in the background first
@@ -782,7 +783,7 @@ void Wallet::daemon_open(const std::string& daemon_dir, bool confirm_external_bi
     // start the daemon (monerod) as a new process on launch
 	process = std::unique_ptr<Process>(new Process(daemon_dir, args));
     monerod = process->get_handle();
-    std::cout << "\033[1;90;49m" << "started monerod (ID:" << monerod << ")\033[0m" << std::endl;
+    std::cout << "\033[1;90;49m" << "started monerod (ID:" << monerod << ")\033[0m" << std::endl;*/
 }
 //-------------------------------------------------------
 bool Wallet::daemon_connect_local(const std::string& username, const std::string& password) { // connect to a running daemon (node)
@@ -860,12 +861,12 @@ void Wallet::daemon_connect_remote(const std::string& ip, const std::string& por
 }
 //-------------------------------------------------------
 void Wallet::daemon_close() {
-    if(!process) throw std::runtime_error("process is not initialized");
+    // TODO: Rewrite this function
+    /*if(!process) throw std::runtime_error("process is not initialized");
 #ifdef __gnu_linux__
     int monerod = process->get_handle();
     if(monerod != -1) kill(static_cast<pid_t>(monerod), SIGTERM);
-#endif    
-    //delete process;
+#endif*/
 }
 //-------------------------------------------------------
 //-------------------------------------------------------

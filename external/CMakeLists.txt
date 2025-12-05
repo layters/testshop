@@ -1,8 +1,10 @@
 cmake_minimum_required(VERSION 3.5 FATAL_ERROR)
+# Suppress CMake dev warning
+if(POLICY CMP0135)
+    cmake_policy(SET CMP0135 NEW)
+endif()
 
 project(neroshop_external)
-
-list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/msgpack-c/cmake")
 
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ../build)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ../build)
@@ -84,14 +86,6 @@ set(fmt_srcs fmt/src/format.cc fmt/src/os.cc)
 add_library(${fmt_target} STATIC ${fmt_srcs})
 target_include_directories(${fmt_target} PUBLIC fmt/include/)
 
-set(MSGPACK_BUILD_EXAMPLES OFF CACHE BOOL "Build msgpack examples." FORCE)
-add_subdirectory(msgpack-c)
-set_target_properties(msgpack-c PROPERTIES
-    ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/../build"
-    LIBRARY_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/../build"
-    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/../build"
-)
-
 include(FindProtobuf)
 find_package(Protobuf)
 find_program(PROTOC_EXECUTABLE protoc)
@@ -111,21 +105,46 @@ if(Protobuf_FOUND AND PROTOC_EXECUTABLE)
     )
 endif()
 
-find_library(SODIUM_LIBRARY sodium REQUIRED)
-# Find libsodium include directory by locating sodium.h
-find_path(SODIUM_INCLUDE_DIR sodium.h REQUIRED)
-if(NOT SODIUM_INCLUDE_DIR)
-  message(FATAL_ERROR "Could not find libsodium include directory")
+# Detect OS
+set(TOR_BROWSER_VERSION "15.0.2")
+if(WIN32)
+    set(TOR_OS "windows")
+elseif(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
+    set(TOR_OS "linux")
+elseif(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+     set(TOR_OS "macos")
+else()
+    message(FATAL_ERROR "Unsupported OS: ${CMAKE_SYSTEM_NAME}")
 endif()
-message(STATUS "Found libsodium include dir: ${SODIUM_INCLUDE_DIR}")
-set(mkp224o_target "mkp224o")
-set(mkp224o_srcs mkp224o/main.c mkp224o/worker.c mkp224o/yaml.c mkp224o/vec.c mkp224o/cpucount.c mkp224o/base32_to.c mkp224o/base32_from.c mkp224o/base64_to.c mkp224o/base64_from.c mkp224o/ioutil.c mkp224o/keccak.c)
-add_executable(${mkp224o_target} ${mkp224o_srcs})
-set_target_properties(${mkp224o_target} PROPERTIES C_STANDARD 99 C_STANDARD_REQUIRED ON C_EXTENSIONS OFF)
-target_include_directories(${mkp224o_target} PUBLIC mkp224o/ ${SODIUM_INCLUDE_DIR})
-target_compile_options(${mkp224o_target} PRIVATE #[[-std=c99]] -Wall -Wextra -Wno-maybe-uninitialized -Wno-unused-function -Wmissing-prototypes -Wstrict-prototypes -O3 -march=native -fomit-frame-pointer -fPIE)
-find_package(Threads REQUIRED)
-target_link_libraries(${mkp224o_target} PRIVATE Threads::Threads sodium) # -lpthread -lsodium
+# Detect Architecture
+if(CMAKE_SYSTEM_PROCESSOR MATCHES "x86_64|amd64")
+    set(TOR_ARCH "x86_64")
+elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "i[3-6]86|x86")
+    set(TOR_ARCH "i686")
+elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "arm64|aarch64")
+    set(TOR_ARCH "aarch64")
+else()
+    message(FATAL_ERROR "Unsupported architecture: ${CMAKE_SYSTEM_PROCESSOR}")
+endif()
+# Construct URL and filename
+set(TOR_URL "https://archive.torproject.org/tor-package-archive/torbrowser/${TOR_BROWSER_VERSION}/tor-expert-bundle-${TOR_OS}-${TOR_ARCH}-${TOR_BROWSER_VERSION}.tar.gz")
+set(TOR_FILE_NAME "tor-expert-bundle-${TOR_OS}-${TOR_ARCH}-${TOR_BROWSER_VERSION}.tar.gz")
+#message(STATUS "Tor URL: ${TOR_URL}")
+set(TOR_INSTALL_DIR "$ENV{HOME}/.config/neroshop")
+# Fetch binaries
+include(ExternalProject)
+ExternalProject_Add(
+    tor
+    URL "${TOR_URL}"
+    PREFIX "${CMAKE_SOURCE_DIR}/../build/_deps"
+    CONFIGURE_COMMAND ""
+    BUILD_COMMAND ""
+    INSTALL_COMMAND 
+        COMMAND ${CMAKE_COMMAND} -E make_directory "${TOR_INSTALL_DIR}"
+        COMMAND ${CMAKE_COMMAND} -E copy_directory 
+                "${CMAKE_SOURCE_DIR}/../build/tor_extract" "${TOR_INSTALL_DIR}"
+    SOURCE_DIR "${CMAKE_SOURCE_DIR}/../build/tor_extract"
+)
 
 # cmake .
 # make -j$(nproc)

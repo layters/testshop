@@ -9,6 +9,7 @@
 #include "../core/protocol/p2p/node.hpp"
 #include "../core/protocol/p2p/routing_table.hpp"
 #include "../core/network/sam_client.hpp"
+#include "../core/network/tor_manager.hpp"
 #include "../core/protocol/transport/server.hpp"
 #include "../core/protocol/rpc/json_rpc.hpp"
 #include "../core/protocol/rpc/msgpack.hpp"
@@ -171,6 +172,14 @@ void ipc_server(Node& node) {
 //-----------------------------------------------------------------------------
 
 void dht_server(Node& node) {
+    // If using Tor, wait until Tor is ready before joining
+    if (node.get_network_type() == NetworkType::Tor) {
+        auto tor_manager = node.get_tor_manager();
+        while (tor_manager && !tor_manager->is_tor_ready()) {
+            std::this_thread::sleep_for(std::chrono::milliseconds(500));
+        }
+    }
+
     std::cout << "******************************************************\n";
     if(node.get_network_type() == NetworkType::I2P) {
         std::cout << "SAM Session ID: " << node.get_sam_client()->get_nickname() << "\n";
@@ -215,6 +224,7 @@ int main(int argc, char** argv)
         ////("conf,config", "Set path to configuration file", cxxopts::value<std::string>()->default_value("/some_path"))
         ("public,public-node", "Make this node publicly accessible")
         ("network,network-type", "Set anonymous overlay network [i2p | tor]", cxxopts::value<std::string>())
+        ("socks-port", "Set SocksPort in torrc file", cxxopts::value<unsigned int>())
     ;
     
     options.parse_positional({"seed-node"}); // allows for multiple args
@@ -241,7 +251,7 @@ int main(int argc, char** argv)
         ip_address = NEROSHOP_ANY_ADDRESS;
     }
     
-    neroshop::NetworkType network_type = neroshop::NetworkType::I2P; // default
+    neroshop::NetworkType network_type = neroshop::NetworkType::Tor; // default
     if(result.count("network")) {
         // If anonymous overlay network is invalid, throw error
         std::string network = result["network"].as<std::string>();
@@ -260,6 +270,17 @@ int main(int argc, char** argv)
         std::cout << "\033[1;90mSelected overlay network: " << network_lower << "\033[0m\n";
     }
     
+    uint16_t socks_port = 9052;//9050; // <- 9050 may likely be already in use by another app
+    if(result.count("socks-port")) {
+        if(network_type != neroshop::NetworkType::Tor) {
+            std::cerr << "Error: --socks-port option is only valid with --network tor\n";
+            std::cout << "Usage: " << argv[0] << " --network tor --socks-port 9052\n";
+            exit(0);
+        }
+        
+        socks_port = result["socks-port"].as<unsigned int>();
+    }
+    
     //-------------------------------------------------------
     // create "datastore" folder within "~/.config/neroshop/" path (to prevent sqlite3_open: out of memory error)
     std::string data_dir = neroshop::get_default_database_path();
@@ -274,7 +295,28 @@ int main(int argc, char** argv)
         database->execute("CREATE VIRTUAL TABLE mappings USING fts5(search_term, key, content, tokenize = \"porter unicode61 remove_diacritics 1 tokenchars '-_:'\");"); // 0=uses accent characters (diacritics) like é; default is 1
     }
     //-------------------------------------------------------
-    neroshop::Node node(network_type);
+    // Start TorManager on a separate thread
+    auto tor_manager = std::make_shared<neroshop::TorManager>(socks_port);
+    try {
+        std::thread tor_thread([&tor_manager]() {
+            tor_manager->start_tor();
+
+            while (!tor_manager->is_tor_ready()) {
+                std::this_thread::sleep_for(std::chrono::milliseconds(500));
+                printf("Tor bootstrap progress: %d%%\n", tor_manager->get_bootstrap_progress());
+            }
+            printf("Tor is ready. Onion address: %s\n", tor_manager->get_onion_address().c_str());
+        });
+
+        // Make sure to join or manage tor_thread lifecycle properly
+        tor_thread.detach(); // or join as appropriate
+
+    } catch (const std::exception& e) {
+        std::cerr << "Failed to start TorManager: " << e.what() << std::endl;
+        return 1;
+    }
+    //-------------------------------------------------------
+    neroshop::Node node(network_type, tor_manager);
     
     std::thread ipc_thread([&node]() { ipc_server(node); }); // For IPC communication between the local GUI client and the local daemon server
     std::thread dht_thread([&node]() { dht_server(node); }); // DHT communication for peer discovery and data storage

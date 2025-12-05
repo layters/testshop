@@ -20,6 +20,7 @@ class Socks5Client;
 class RoutingTable;
 class KeyMapper;
 struct BootstrapNode;
+class TorManager;
 
 enum class NetworkType { I2P, Tor, Clearnet };
 
@@ -35,8 +36,8 @@ struct Peer {
 
 class Node {
 public:
-    Node(NetworkType network_type); // Constructor for local node (you run it)
-    Node(const std::string& address, uint16_t port); // Constructor for outside (remote) node
+    explicit Node(NetworkType network_type, std::shared_ptr<neroshop::TorManager> tor_manager = nullptr); // Constructor for local node (you run it)
+    explicit Node(const std::string& address, uint16_t port); // Constructor for outside (remote) node
     ~Node();
     
     bool operator==(const Node& other) const {
@@ -44,7 +45,7 @@ public:
             case NetworkType::I2P:
                 return i2p_address == other.i2p_address;
             case NetworkType::Tor:
-                return onion_address == other.onion_address;
+                return tor_address == other.tor_address;
             default:
                 throw std::runtime_error("Unsupported network type in equality comparison");
         }
@@ -92,6 +93,8 @@ public:
     
     // Getters
     std::string get_id() const; // get ID of this node
+    Socks5Client * get_socks5_client() const;
+    std::shared_ptr<TorManager> get_tor_manager() const;
     SamClient * get_sam_client() const;
     std::string get_sam_version() const;
     //std::string get_public_key() const; // base64 public key
@@ -137,7 +140,6 @@ public:
 private:
     std::string get_i2p_address() const; // base32 public key
     std::string get_tor_address() const;
-    std::string get_onion_address() const;
     ////std::string get_clearnet_address() const;
     // Callbacks
     void on_ping(const std::vector<uint8_t>& buffer, const std::string& destination);
@@ -162,7 +164,7 @@ private:
     
     std::string id; // immutable and set only once in constructor so a mutex wouldn't make sense
     std::string i2p_address; // immutable and set only once in constructor so a mutex wouldn't make sense
-    std::string onion_address;
+    std::string tor_address;
     std::atomic<uint16_t> port_;
     static NetworkType network_type_;
     std::unordered_map<std::string, std::string> data; // internal hash table that stores key-value pairs 

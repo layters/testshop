@@ -1,9 +1,8 @@
 #include "node.hpp"
 
-#include "../../network/onion_address.hpp"
 #include "../../network/sam_client.hpp"
 #include "../../network/socks5_client.hpp"
-#include "../../network/tor_config.hpp"
+#include "../../network/tor_manager.hpp"
 #include "../../version.hpp"
 #include "routing_table.hpp"
 #include "key_mapper.hpp"
@@ -54,7 +53,7 @@ static std::string generate_transaction_id() {
 //-----------------------------------------------------------------------------
 
 
-Node::Node(NetworkType network_type) : check_counter(0), start_time(std::chrono::steady_clock::now()), running(true) {
+Node::Node(NetworkType network_type, std::shared_ptr<neroshop::TorManager> tor_manager) : check_counter(0), start_time(std::chrono::steady_clock::now()), running(true) {
     // Set the overlay network for all nodes
     Node::network_type_ = network_type;
     
@@ -85,13 +84,13 @@ Node::Node(NetworkType network_type) : check_counter(0), start_time(std::chrono:
         }
         case NetworkType::Tor: {
             // Initialize Tor Socks5 client here
-            socks5_client = std::make_unique<Socks5Client>("127.0.0.1", 9050, true);
+            socks5_client = std::make_unique<Socks5Client>("127.0.0.1", 9050, tor_manager);
             // Save onion address
-            this->onion_address = socks5_client->get_onion_address();
+            this->tor_address = socks5_client->get_tor_address();
             // Set TCP port
             this->port_ = socks5_client->get_port();
             // Generate node ID from .onion
-            this->id = generate_node_id(this->get_onion_address(), this->get_port());
+            this->id = generate_node_id(this->get_tor_address(), this->get_port());
                 
             break;
         }
@@ -125,7 +124,7 @@ Node::Node(const std::string& address, uint16_t port) : check_counter(0), start_
             break;
         }
         case NetworkType::Tor: {
-            this->onion_address = address;
+            this->tor_address = address;
             this->id = generate_node_id(address);
             this->port_ = port;
             break;
@@ -579,7 +578,7 @@ void Node::send_query(const std::string& destination, uint16_t port, const std::
             
             // Step 1: Create and connect
             // If not already connected to this .onion, connect now
-            auto client = std::make_unique<Socks5Client>(TOR_SOCKS5_HOST, TOR_SOCKS5_PORT, false); // "127.0.0.1", 9050 or 9150
+            auto client = std::make_unique<Socks5Client>("127.0.0.1", 9050); // "127.0.0.1", 9050 or 9150
             try {
                 client->connect(destination.c_str(), port);
             } catch (const std::exception& e) {
@@ -2726,7 +2725,7 @@ void Node::run_tor() {
         close(listen_fd);
         throw std::runtime_error(std::string("Failed to bind to port ") + std::to_string(get_port()));
     } else {
-        log_info("Listening on 127.0.0.1:{} for incoming Tor connections...", TOR_HIDDEN_SERVICE_PORT);
+        log_info("Listening on 127.0.0.1:{} for incoming Tor connections...", get_port());
     }
 
     if (::listen(listen_fd, SOMAXCONN) < 0) {
@@ -2775,7 +2774,7 @@ void Node::run_tor() {
             } else {
                 std::string peer_id = "incoming_" + std::to_string(client_fd);
 
-                auto new_client = std::make_unique<Socks5Client>("127.0.0.1", 9050, false);
+                auto new_client = std::make_unique<Socks5Client>("127.0.0.1", 9050);
                 new_client->adopt_socket(client_fd); // <- you'll need to add this method
 
                 {
@@ -2873,10 +2872,13 @@ void Node::handle_tor_message(std::vector<uint8_t> message, const std::string& s
         log_warn("handle_tor_message: invalid protobuf payload");
         return;
     }
+    
+    std::string raw(reinterpret_cast<const char*>(message.data()),
+                message.size());
+    log_info("RECEIVED from {}:{} ({} bytes):\n{}", sender_onion, sender_port, message.size(), raw);
 
-    if (msg.has_query()) {
+    if (msg.has_query()) { 
         const auto& query = msg.query();
-        log_info("RECEIVED from {}:{}\n{}{}{}", sender_onion, sender_port, "\033[33m", query.DebugString(), color_reset);
 
         // Process the query
         std::vector<uint8_t> response = neroshop::rpc::protobuf_process(message, *this, false);
@@ -2890,7 +2892,9 @@ void Node::handle_tor_message(std::vector<uint8_t> message, const std::string& s
     }
     else if (msg.has_response()) {
         const auto& response = msg.response();
-        log_info("RECEIVED from {}:{}\n{}{}{}", sender_onion, sender_port, "\033[33m", response.DebugString(), color_reset);
+        #ifdef NEROSHOP_DEBUG
+        std::cout << "\033[32m" << response.DebugString() << "\033[0m\n";
+        #endif
 
         std::string tid = response.tid();
         if (!tid.empty()) {
@@ -3011,9 +3015,23 @@ void Node::set_network_type(NetworkType network_type) {
 }
 
 //-----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 
 std::string Node::get_id() const {
     return id;
+}
+
+//-----------------------------------------------------------------------------
+
+Socks5Client * Node::get_socks5_client() const {
+    return socks5_client.get();
+}
+
+//-----------------------------------------------------------------------------
+
+std::shared_ptr<TorManager> Node::get_tor_manager() const {
+    if (!socks5_client) return nullptr;
+    return socks5_client->get_tor_manager();
 }
 
 //-----------------------------------------------------------------------------
@@ -3044,17 +3062,11 @@ std::string Node::get_i2p_address() const {
 //-----------------------------------------------------------------------------
 
 std::string Node::get_tor_address() const {
-    return get_onion_address();
-}
-
-//-----------------------------------------------------------------------------
-
-std::string Node::get_onion_address() const {
     assert(Node::network_type_ == NetworkType::Tor && "Tor is not the current network");
     if(socks5_client) {
-        return socks5_client->get_onion_address();
+        return socks5_client->get_tor_address();
     }
-    return onion_address;
+    return tor_address;
 }
 
 //-----------------------------------------------------------------------------

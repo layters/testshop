@@ -19,3 +19,6 @@
 [submodule "external/fmt"]
 	path = external/fmt
 	url = https://github.com/fmtlib/fmt.git
+[submodule "external/subprocess.h"]
+	path = external/subprocess.h
+	url = https://github.com/sheredom/subprocess.h.git

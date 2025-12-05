@@ -29,10 +29,9 @@
 #include "core/market/user.hpp"
 // network
 ////#include "core/network/i2pd.hpp" // <-- not necessary since we use SAMv3
-#include "core/network/onion_address.hpp"
 #include "core/network/sam_client.hpp"
 #include "core/network/socks5_client.hpp"
-#include "core/network/tor_config.hpp"
+#include "core/network/tor_manager.hpp"
 // price_api
 #include "core/price_api/currency_converter.hpp"
 // protocol
@@ -52,7 +51,6 @@
 #include "core/tools/device.hpp"
 #include "core/tools/filesystem.hpp"
 #include "core/tools/logger.hpp"
-#include "core/tools/process.hpp"
 #include "core/tools/script.hpp"
 #include "core/tools/string.hpp"
 #include "core/tools/thread_pool.hpp"

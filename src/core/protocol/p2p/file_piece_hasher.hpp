@@ -16,7 +16,7 @@ struct FilePiece {
 
 class FilePieceHasher {
 public:
-    FilePieceHasher(size_t piece_size);
+    explicit FilePieceHasher(size_t piece_size);
     std::vector<FilePiece> hash_file(const std::string& filename);
 private:
     size_t piece_size;

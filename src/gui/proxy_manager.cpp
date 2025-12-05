@@ -260,6 +260,13 @@ void neroshop::ProxyManager::startTorDaemon() {
             emit processStarted();
         });
     }
+    
+    QString commandString = program;
+    if (!arguments.isEmpty()) {
+        commandString += " " + arguments.join(" ");
+    }
+    // Printing the start message
+    std::cout << "\033[90;1m" << "Starting command: " << commandString.toStdString() << "\033[0m\n";
         
     torProcess->start(program, arguments);
     if (torProcess->waitForStarted()) {

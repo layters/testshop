@@ -26,7 +26,7 @@ constexpr double WOWOSHI  = 0.00000000001;   // https://codeberg.org/wownero/wow
 
 namespace neroshop {
 
-class Process; // forward declaration
+////class Process; // forward declaration
 
 enum class WalletType {
     Monero = 0,
@@ -203,7 +203,7 @@ protected:
     static WalletNetworkType network_type;
     std::unique_ptr<monero::monero_wallet_full> monero_wallet_obj;
     //std::unique_ptr<wownero::wownero_wallet_full> wownero_wallet_obj;
-    std::unique_ptr<Process> process; // monerod process - every wallet will have its own process
+    ////std::unique_ptr<Process> process; // monerod process - every wallet will have its own process
     volatile double percentage; // sync progress
     mutable std::mutex wallet_data_mutex;
     volatile unsigned int height, start_height, end_height;

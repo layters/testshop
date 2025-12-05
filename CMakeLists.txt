@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.5)
+cmake_minimum_required(VERSION 3.11)
 project(neroshop) # tested on Ubuntu 20.04 LTS (focal) with gcc (Ubuntu 9.3.0-17ubuntu1~20.04) 9.3.0
 
 set(CMAKE_CXX_STANDARD 17)
@@ -18,8 +18,7 @@ option(UUID_SYSTEM_GENERATOR "Enable operating system uuid generator" OFF)
 option(UUID_TIME_GENERATOR "Enable experimental time-based uuid generator" OFF)
 cmake_dependent_option(NEROSHOP_USE_SYSTEM_SOCKETS "Build neroshop with system sockets" ON "NOT NEROSHOP_USE_LIBZMQ" OFF)
 cmake_dependent_option(NEROSHOP_USE_LIBZMQ "Build neroshop with LibZMQ" ON "NOT NEROSHOP_USE_SYSTEM_SOCKETS" OFF)
-cmake_dependent_option(NEROSHOP_USE_PROTOBUF "Enable Protocol Buffers" ON "NOT NEROSHOP_USE_MSGPACK" OFF)
-cmake_dependent_option(NEROSHOP_USE_MSGPACK "Enable MessagePack" ON "NOT NEROSHOP_USE_PROTOBUF" OFF)
+option(NEROSHOP_USE_PROTOBUF "Enable Protocol Buffers" ON)
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake" "${CMAKE_CURRENT_SOURCE_DIR}/external/monero-cpp/external/monero-project/cmake")
 ######################################
@@ -395,25 +394,15 @@ set(fmt_include_dir ${CMAKE_CURRENT_SOURCE_DIR}/external/fmt/include) # v11.1.4
 set(fmt_src ${CMAKE_CURRENT_SOURCE_DIR}/build/libfmt.a)
 
 ######################################
-# mkp224o
-set(mkp224o_include_dir ) # v1.7.0
-set(mkp224o_src )
-
-######################################
-# msgpack-c
-set(msgpack_include_dir ${CMAKE_CURRENT_SOURCE_DIR}/external/msgpack-c/include) # v6.1.0
-set(msgpack_src ${CMAKE_CURRENT_SOURCE_DIR}/build/libmsgpack-c.a)
+# subprocess.h
+set(subprocess_include_dir ${CMAKE_CURRENT_SOURCE_DIR}/external/subprocess.h)
 
 ######################################
 # protoc-generated .pb.cc files
-if(EXISTS "${NEROSHOP_PROTO_SRC_DIR}/message.pb.cc" AND NOT NEROSHOP_USE_MSGPACK)
+if(EXISTS "${NEROSHOP_PROTO_SRC_DIR}/message.pb.cc" AND NEROSHOP_USE_PROTOBUF)
     set(neroshop_proto_src ${NEROSHOP_PROTO_SRC_DIR}/message.pb.cc)
-    set(NEROSHOP_USE_PROTOBUF ON CACHE BOOL "Enable Protocol Buffers" FORCE)
-    message(STATUS "Found .pb file(s): ${neroshop_proto_src}")
+    message(STATUS "Found PB files: ${neroshop_proto_src}")
 endif()
-
-message(STATUS "${BoldYellow}NEROSHOP_USE_PROTOBUF: ${NEROSHOP_USE_PROTOBUF}${ColourReset}")
-message(STATUS "${BoldYellow}NEROSHOP_USE_MSGPACK: ${NEROSHOP_USE_MSGPACK}${ColourReset}")
 
 ######################################
 # neroshop link directories
@@ -443,10 +432,9 @@ set(neroshop_market_src
 )
 
 set(neroshop_network_src 
-    ${NEROSHOP_CORE_SRC_DIR}/network/onion_address.cpp 
     ${NEROSHOP_CORE_SRC_DIR}/network/sam_client.cpp 
     ${NEROSHOP_CORE_SRC_DIR}/network/socks5_client.cpp 
-    ${NEROSHOP_CORE_SRC_DIR}/network/tor_config.cpp
+    ${NEROSHOP_CORE_SRC_DIR}/network/tor_manager.cpp
 )
 
 set(neroshop_price_src 
@@ -476,7 +464,6 @@ set(neroshop_protocol_src
 
 set(neroshop_tools_src 
     ${NEROSHOP_CORE_SRC_DIR}/tools/base64.cpp 
-    ${NEROSHOP_CORE_SRC_DIR}/tools/process.cpp 
     ${NEROSHOP_CORE_SRC_DIR}/tools/script.cpp 
     ${NEROSHOP_CORE_SRC_DIR}/tools/timestamp.cpp 
 )
@@ -492,7 +479,7 @@ set(neroshop_client_src ${neroshop_crypto_src} ${neroshop_database_src} ${nerosh
 # neroshop tests
 if(NEROSHOP_BUILD_TESTS) # -DNEROSHOP_BUILD_TESTS=1
     enable_testing()
-    message(STATUS "${BoldMagenta}NEROSHOP_BUILD_TESTS option set to ON${ColourReset}")
+    message(STATUS "${BoldMagenta}NEROSHOP_BUILD_TESTS: ON${ColourReset}")
     add_subdirectory(tests)
 endif()
 
@@ -505,8 +492,8 @@ install(TARGETS ${neroshop_daemon} DESTINATION bin)
 if(NOT CMAKE_BUILD_TYPE STREQUAL "Release" AND NOT CMAKE_BUILD_TYPE STREQUAL "MinSizeRel")
     target_compile_definitions(${neroshop_daemon} PRIVATE NEROSHOP_DEBUG)
 endif()
-target_include_directories(${neroshop_daemon} PRIVATE #[[${CMAKE_CURRENT_SOURCE_DIR}/src/]] ${monero_include_dirs} ${monero_cpp_include_dir} ${sqlite_include_dir} ${json_include_dir} ${msgpack_include_dir} ${zlib_include_dir} #[[${i2pd_include_dirs}]] ${fmt_include_dir} ${cxxopts_include_dir})
-target_link_libraries(${neroshop_daemon} #[[${i2pd_src}]] ${monero_cpp_src} ${sqlite_src} ${msgpack_src} ${monero_src} #[[${zlib_src}]] ${fmt_src})#set(CMAKE_CXX_LINK_EXECUTABLE "${CMAKE_CXX_LINK_EXECUTABLE} -ldl") # fixes undefined reference to symbol 'dlsym@@GLIBC_2.2.5' error
+target_include_directories(${neroshop_daemon} PRIVATE #[[${CMAKE_CURRENT_SOURCE_DIR}/src/]] ${monero_include_dirs} ${monero_cpp_include_dir} ${sqlite_include_dir} ${json_include_dir} ${zlib_include_dir} #[[${i2pd_include_dirs}]] ${fmt_include_dir} ${subprocess_include_dir} ${cxxopts_include_dir})
+target_link_libraries(${neroshop_daemon} #[[${i2pd_src}]] ${monero_cpp_src} ${sqlite_src} ${monero_src} #[[${zlib_src}]] ${fmt_src})#set(CMAKE_CXX_LINK_EXECUTABLE "${CMAKE_CXX_LINK_EXECUTABLE} -ldl") # fixes undefined reference to symbol 'dlsym@@GLIBC_2.2.5' error
 if(NEROSHOP_USE_PROTOBUF)
     target_compile_definitions(${neroshop_daemon} PRIVATE NEROSHOP_USE_PROTOBUF)
 endif()
@@ -520,9 +507,9 @@ if(NEROSHOP_BUILD_CLI)
     if(NOT CMAKE_BUILD_TYPE STREQUAL "Release" AND NOT CMAKE_BUILD_TYPE STREQUAL "MinSizeRel")
         target_compile_definitions(${neroshop_cli} PRIVATE NEROSHOP_DEBUG)
     endif()
-    target_include_directories(${neroshop_cli} PRIVATE #[[${CMAKE_CURRENT_SOURCE_DIR}/src/]] ${monero_include_dirs} ${monero_cpp_include_dir} ${sqlite_include_dir} ${json_include_dir} ${msgpack_include_dir} ${zlib_include_dir} #[[${i2pd_include_dirs}]] ${fmt_include_dir} ${lua_include_dir} ${curl_include_dirs} ${stduuid_include_dirs} ${linenoise_include_dir})
-    target_link_libraries(${neroshop_cli} #[[${i2pd_src}]] ${monero_cpp_src} ${sqlite_src} ${msgpack_src} #[[${qrcodegen_src}]] ${curl_src} ${monero_src} #[[${zlib_src}]] ${fmt_src} ${lua_src} ${linenoise_src})
-    message(STATUS "${BoldMagenta}NEROSHOP_BUILD_CLI option set to ON${ColourReset}")
+    target_include_directories(${neroshop_cli} PRIVATE #[[${CMAKE_CURRENT_SOURCE_DIR}/src/]] ${monero_include_dirs} ${monero_cpp_include_dir} ${sqlite_include_dir} ${json_include_dir} ${zlib_include_dir} #[[${i2pd_include_dirs}]] ${fmt_include_dir} ${lua_include_dir} ${subprocess_include_dir} ${curl_include_dirs} ${stduuid_include_dirs} ${linenoise_include_dir})
+    target_link_libraries(${neroshop_cli} #[[${i2pd_src}]] ${monero_cpp_src} ${sqlite_src} #[[${qrcodegen_src}]] ${curl_src} ${monero_src} #[[${zlib_src}]] ${fmt_src} ${lua_src} ${linenoise_src})
+    message(STATUS "${BoldMagenta}NEROSHOP_BUILD_CLI: ON${ColourReset}")
     target_compile_definitions(${neroshop_cli} PRIVATE NEROSHOP_BUILD_CLI)
     if(NEROSHOP_USE_PROTOBUF)
         target_compile_definitions(${neroshop_cli} PRIVATE NEROSHOP_USE_PROTOBUF)
@@ -539,9 +526,9 @@ if(NEROSHOP_BUILD_GUI)
     if(NOT CMAKE_BUILD_TYPE STREQUAL "Release" AND NOT CMAKE_BUILD_TYPE STREQUAL "MinSizeRel")
         target_compile_definitions(${neroshop_gui} PRIVATE NEROSHOP_DEBUG)
     endif()
-    target_include_directories(${neroshop_gui} PRIVATE #[[${CMAKE_CURRENT_SOURCE_DIR}/src/]] ${monero_include_dirs} ${monero_cpp_include_dir} ${sqlite_include_dir} ${json_include_dir} ${msgpack_include_dir} ${zlib_include_dir} #[[${i2pd_include_dirs}]] ${fmt_include_dir} ${lua_include_dir} ${qrcodegen_include_dir})
-    target_link_libraries(${neroshop_gui} #[[${i2pd_src}]] ${monero_cpp_src} ${sqlite_src} ${msgpack_src} ${qrcodegen_src} ${monero_src} #[[${zlib_src}]] ${fmt_src} ${lua_src})
-    message(STATUS "${BoldMagenta}NEROSHOP_BUILD_GUI option set to ON${ColourReset}")
+    target_include_directories(${neroshop_gui} PRIVATE #[[${CMAKE_CURRENT_SOURCE_DIR}/src/]] ${monero_include_dirs} ${monero_cpp_include_dir} ${sqlite_include_dir} ${json_include_dir} ${zlib_include_dir} #[[${i2pd_include_dirs}]] ${fmt_include_dir} ${lua_include_dir} ${qrcodegen_include_dir})
+    target_link_libraries(${neroshop_gui} #[[${i2pd_src}]] ${monero_cpp_src} ${sqlite_src} ${qrcodegen_src} ${monero_src} #[[${zlib_src}]] ${fmt_src} ${lua_src})
+    message(STATUS "${BoldMagenta}NEROSHOP_BUILD_GUI: ON${ColourReset}")
     target_compile_definitions(${neroshop_gui} PRIVATE NEROSHOP_BUILD_GUI)
     if(NEROSHOP_USE_PROTOBUF)
         target_compile_definitions(${neroshop_gui} PRIVATE NEROSHOP_USE_PROTOBUF)
@@ -606,7 +593,7 @@ endif()
 if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
     find_package(LibUUID) # optional
     if(UUID_SYSTEM_GENERATOR) # -DUUID_SYSTEM_GENERATOR=1
-        message(STATUS "UUID_SYSTEM_GENERATOR option set to ON")
+        message(STATUS "UUID_SYSTEM_GENERATOR: ON")
         if (LIBUUID_FOUND)
             message(STATUS "Using LibUUID: ${LibUUID_LIBRARY}")
             if(NEROSHOP_BUILD_CLI)
@@ -630,7 +617,7 @@ endif()
 if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     find_library(CFLIB CoreFoundation) # optional
     if(UUID_SYSTEM_GENERATOR) # -DUUID_SYSTEM_GENERATOR=1
-        message(STATUS "UUID_SYSTEM_GENERATOR option set to ON")
+        message(STATUS "UUID_SYSTEM_GENERATOR: ON")
         message(STATUS "Using CFLIB: ${CFLIB}")
         if(NEROSHOP_BUILD_CLI)
             target_compile_definitions(${neroshop_cli} PRIVATE UUID_SYSTEM_GENERATOR) # uuids::uuid_system_generator

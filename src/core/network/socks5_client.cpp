@@ -1,7 +1,6 @@
 #include "socks5_client.hpp"
 
-#include "onion_address.hpp"
-#include "tor_config.hpp"
+#include "tor_manager.hpp"
 #include "../tools/logger.hpp"
 
 #include <arpa/inet.h>
@@ -17,47 +16,33 @@ namespace neroshop {
 
 //-----------------------------------------------------------------------------
 
-Socks5Client::Socks5Client(const char* socks_host, uint16_t socks_port, bool tor_hidden_service)
-        : socks_host_(socks_host), socks_port_(socks_port), sockfd_(-1) 
+Socks5Client::Socks5Client(const char* host, uint16_t port, std::shared_ptr<neroshop::TorManager> tm)
+        : socks_host_(host), socks_port_(port), sockfd_(-1) 
 {
-    if (!tor_hidden_service) {
-        // Skip all operations if flag is set to false
-        return;
-    }
+    tor_manager = std::move(tm);
     
-    auto base_path = get_default_tor_path(); // ~/.config/neroshop/tor
+    /*auto base_path = get_default_tor_path(); // ~/.config/neroshop/tor
     auto keys_path = base_path / TOR_HIDDEN_SERVICE_DIR_FOLDER_NAME; // ~/.config/neroshop/tor/hidden_service
     auto last_onion_file = keys_path / "last_onion_address.txt"; // ~/.config/neroshop/tor/hidden_service/last_onion_address.txt
     
-    // Generate or load onion address using OnionAddressGenerator
-    onion_gen_ = std::make_unique<OnionAddressGenerator>("./mkp224o");
-    if(!onion_gen_->load()) {
-        this->onion_address_ = onion_gen_->generate("ns"/*"neroshop"*/, keys_path);
-        if(this->onion_address_.empty()) {
-            throw std::runtime_error("Failed to generate .onion address");
-        }
-        neroshop::log_debug("Socks5Client: Generated new onion address: {}", this->onion_address_);
+    if(tor_manager && tor_manager->is_tor_ready()) {
+        neroshop::log_debug("Socks5Client: Got new onion address: {}", tor_manager->get_onion_address());
         // Save onion address string to "~/.config/neroshop/tor/last_onion_address.txt" so we can load it later
         std::ofstream outfile(last_onion_file);
         if (outfile.is_open()) {
-            outfile << this->onion_address_ << std::endl;
+            outfile << tor_manager->get_onion_address() << std::endl;
             outfile.close();
             neroshop::log_debug("Socks5Client: Saved new onion address to {}", last_onion_file.string());
         } else {
             neroshop::log_error("Socks5Client: Error opening {} for writing", last_onion_file.string());
             // Consider throwing an exception or handling the error appropriately
         }
-        // mkp224o creates a .onion folder within hidden_service so the actual HiddenServiceDir is ~/.config/neroshop/tor/hidden_service/<56-chars>.onion
-        auto torrc_path = get_default_tor_path() / TOR_TORRC_FILENAME;
-        auto hidden_service_dir = keys_path / this->onion_address_;
+
         // Save assigned port
         this->port_ = reserve_available_port(TOR_HIDDEN_SERVICE_PORT);
-        // Finally, generate torrc file: "~/.config/neroshop/tor/torrc"
-        TorConfig::create_torrc(torrc_path, hidden_service_dir, this->port_);
-    } else {
-        this->onion_address_ = onion_gen_->get_onion_address();
-        this->port_ = reserve_available_port(TOR_HIDDEN_SERVICE_PORT);
-    }
+    }*/
+    // Save assigned port
+    this->port_ = reserve_available_port(TOR_HIDDEN_SERVICE_PORT);
 }
         
 //-----------------------------------------------------------------------------
@@ -228,7 +213,8 @@ void Socks5Client::connect(const char* dest_host, uint16_t dest_port) {
 
     sockaddr_in proxy_addr{};
     proxy_addr.sin_family = AF_INET;
-    proxy_addr.sin_port = htons(socks_port_);
+    uint16_t socks_port = get_socks_port(); // The actual socks port
+    proxy_addr.sin_port = htons(socks_port);
     if (inet_pton(AF_INET, socks_host_, &proxy_addr.sin_addr) <= 0)
         throw std::runtime_error("Invalid SOCKS proxy IP");
 
@@ -270,23 +256,45 @@ void Socks5Client::adopt_socket(int fd) {
 }
 
 //-----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 
-int Socks5Client::get_socket() const { return sockfd_; }
+void Socks5Client::set_tor_manager(std::shared_ptr<neroshop::TorManager> tm) {
+    tor_manager = std::move(tm);
+}
+
+//-----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
+
+int Socks5Client::get_socket() const noexcept { return sockfd_; }
 
 //-----------------------------------------------------------------------------
 
-std::string Socks5Client::get_onion_address() const {
-    if(onion_address_.empty()) onion_gen_->get_onion_address();
-    return onion_address_;
+uint16_t Socks5Client::get_socks_port() const noexcept { 
+    return tor_manager ? tor_manager->get_socks_port() : socks_port_;
 }
 
 //-----------------------------------------------------------------------------
 
-uint16_t Socks5Client::get_port() const {
-    return port_;
+int Socks5Client::get_tor_progress() const noexcept {
+    return tor_manager ? tor_manager->get_bootstrap_progress() : -1;
 }
 
 //-----------------------------------------------------------------------------
+
+std::string Socks5Client::get_tor_address() const noexcept {
+    return tor_manager ? tor_manager->get_onion_address() : "";
+}
+
+//-----------------------------------------------------------------------------
+
+std::shared_ptr<TorManager> Socks5Client::get_tor_manager() const noexcept {
+    return tor_manager;
+}
+
+//-----------------------------------------------------------------------------
+
+uint16_t Socks5Client::get_port() const noexcept { return port_; }
+
 //-----------------------------------------------------------------------------
 
 } // namespace neroshop

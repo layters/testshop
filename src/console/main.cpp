@@ -87,14 +87,16 @@ int main(int argc, char** argv) {
         }
         else if(command == "status") {
             if (client->is_connected()) {
-                std::string response;
+                std::vector<uint8_t> response;
                 client->get("status", response);
             
-                try {
-                    nlohmann::json json = nlohmann::json::parse(response);
-                    std::cout << json.dump(4) << "\033[0m\n";
-                } catch (const nlohmann::detail::parse_error& e) {
-                    std::cerr << "Parse error\n";
+                if (!response.empty()) {
+                    neroshop::DhtMessage resp_msg;
+                    if (resp_msg.ParseFromArray(response.data(), static_cast<int>(response.size()))) {
+                    std::cout << resp_msg.DebugString() << "\033[0m\n";
+                    } else {
+                        std::cerr << "Parse error\n";
+                    }
                 }
             }
         }
@@ -113,14 +115,17 @@ int main(int argc, char** argv) {
                 std::string key = neroshop::string_tools::trim(command.substr(arg_pos + 1));
                 
                 if (client->is_connected()) {
-                    std::string response;
+                    std::vector<uint8_t> response;
                     client->get(key, response);
                     
-                    try {
-                        nlohmann::json json = nlohmann::json::parse(response);
-                        std::cout << (json.contains("error") ? "\033[91m" : "\033[32m") << json.dump(4) << "\033[0m\n";
-                    } catch (const nlohmann::detail::parse_error& e) {
-                        std::cerr << "Parse error\n";
+                    if (!response.empty()) {
+                        neroshop::DhtMessage resp_msg;
+                        if (resp_msg.ParseFromArray(response.data(), static_cast<int>(response.size()))) {
+                            std::cout << (resp_msg.has_error() ? "\033[91m" : "\033[32m") 
+                                      << resp_msg.DebugString() << "\033[0m\n";
+                        } else {
+                            std::cerr << "Parse error\n";
+                        }
                     }
                 }
             }
@@ -160,9 +165,17 @@ int main(int argc, char** argv) {
             std::string value = data.second;
     
             // Send put and receive response
-            std::string response;
+            std::vector<uint8_t> response;
             client->put(key, value, response);
-            std::cout << "Received response: " << response << "\n";
+            if (!response.empty()) {
+                neroshop::DhtMessage resp_msg;
+                if (resp_msg.ParseFromArray(response.data(), static_cast<int>(response.size()))) {
+                    std::cout << (resp_msg.has_error() ? "\033[91m" : "\033[32m") 
+                              << resp_msg.DebugString() << "\033[0m\n";
+                } else {
+                    std::cerr << "Parse error\n";
+                }
+            }
         }
         else if(command == "login") {
         }

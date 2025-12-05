@@ -27,8 +27,8 @@ struct Bucket {
 class RoutingTable {
 public:
     // Initialize the routing table with a node ID
-    RoutingTable(const std::string& node_id); // hexadecimal string (SHA-3-256) is converted to byte array (XOR ID)
-    RoutingTable(const xor_id&      node_id); // XOR ID
+    explicit RoutingTable(const std::string& node_id); // hexadecimal string (SHA-3-256) is converted to byte array (XOR ID)
+    explicit RoutingTable(const xor_id&      node_id); // XOR ID
 
     // Add a new node to the routing table
     bool add_node(std::unique_ptr<Node> node);

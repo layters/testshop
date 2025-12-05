@@ -147,7 +147,8 @@ inline const std::initializer_list<BootstrapNode> BOOTSTRAP_I2P_NODES = {
 };
 
 inline const std::initializer_list<BootstrapNode> BOOTSTRAP_TOR_NODES = {
-    { "testkdb44e3v5bh2svemcwnghh4ns372yzyzmqke65kahryoqb565pid.onion", NEROSHOP_P2P_DEFAULT_PORT }
+    { "testkdb44e3v5bh2svemcwnghh4ns372yzyzmqke65kahryoqb565pid.onion", NEROSHOP_P2P_DEFAULT_PORT },
+    { "k33yv63yezwur5n2mbuqrb64iwdovnpw7lsuuursu35hvvj24myx2ryd.onion", NEROSHOP_P2P_DEFAULT_PORT }
 };
 
 }

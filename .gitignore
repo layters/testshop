@@ -1,20 +1,12 @@
 build/
 
-external/curl/
-external/libuv/
 external/build/
 external/CMakeFiles/
+external/curl/
+external/arch.c
 external/CMakeCache.txt
 external/cmake_install.cmake
 external/Makefile
-
-external/mkp224o-prefix/
-external/mkp224o/autom4te.cache/
-external/mkp224o/config.log
-external/mkp224o/config.status
-external/mkp224o/configure~
-external/mkp224o/GNUmakefile
-external/mkp224o/mkp224o
 
 external/msgpack-c/CMakeFiles
 external/msgpack-c/CMakeCache.txt
@@ -26,8 +18,6 @@ external/msgpack-c/msgpack-c.pc
 external/msgpack-c/msgpack-c-config.cmake
 external/msgpack-c/msgpack-c-config-version.cmake
 external/msgpack-c/msgpack-c-targets.cmake
-
-external/arch.c
 
 # copied from https://gist.github.com/Yousha/3830712334ac30a90eb6041b932b68d7#file-gitignore-L952
 ##### Windows

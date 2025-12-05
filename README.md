@@ -75,10 +75,11 @@ NeroShop is a decentralized peer-to-peer marketplace for trading goods and servi
 | [linenoise](https://github.com/antirez/linenoise)                  | ?                  | command line interface                                                 | :heavy_check_mark: :white_square_button: :package: |
 | [lua](https://www.lua.org/)                                        | 5.1.5              | custom plugins                                                         | :heavy_check_mark: :package:                       |
 | [cxxopts](https://github.com/jarro2783/cxxopts)                    | ?                  | command line option parser                                             | :heavy_check_mark: :package:                       |
-| [i2pd](https://github.com/PurpleI2P/i2pd)                          | latest             | anonymous network communication                                        | :o: :package:                                      |
+| [i2pd](https://github.com/PurpleI2P/i2pd)                          | ?                  | anonymous network                                                      | :o: :package:                                      |
 | [fmt](https://github.com/fmtlib/fmt)                               | ?                  | log formatting                                                         | :heavy_check_mark: :package:                       |
-| [mkp224o](https://github.com/cathugger/mkp224o)                    | ?                  | onion address generation                                               | :o: :package:                                      |
 | [protobuf](https://github.com/protocolbuffers/protobuf)            | ?                  | network data serialization                                             | :heavy_check_mark:                                 |
+| [tor](https://www.torproject.org/)                                 | ?                  | anonymous network                                                      | :heavy_check_mark: :package:                       |
+| [subprocess.h](https://github.com/sheredom/subprocess.h)           | ?                  | process management                                                     | :heavy_check_mark: :package:                       |
 
 ### Compiling neroshop from source
 **0. Install prerequisites**
