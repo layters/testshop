@@ -84,7 +84,7 @@ Node::Node(NetworkType network_type, std::shared_ptr<neroshop::TorManager> tor_m
         }
         case NetworkType::Tor: {
             // Initialize Tor Socks5 client here
-            socks5_client = std::make_unique<Socks5Client>("127.0.0.1", 9050, tor_manager);
+            socks5_client = std::make_unique<Socks5Client>("127.0.0.1", tor_manager ? tor_manager->get_socks_port() : 9050, tor_manager);
             // Save onion address
             this->tor_address = socks5_client->get_tor_address();
             // Set TCP port

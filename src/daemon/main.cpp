@@ -300,8 +300,15 @@ int main(int argc, char** argv)
     try {
         std::thread tor_thread([&tor_manager]() {
             tor_manager->start_tor();
-
+            
+            // TIMEOUT after 10 seconds
+            auto start = std::chrono::steady_clock::now();
             while (!tor_manager->is_tor_ready()) {
+                if (std::chrono::steady_clock::now() - start > std::chrono::seconds(10)) {
+                    printf("Tor timeout after 10s, using external Tor if available\n");
+                    break;
+                }
+            
                 std::this_thread::sleep_for(std::chrono::milliseconds(500));
                 printf("Tor bootstrap progress: %d%%\n", tor_manager->get_bootstrap_progress());
             }

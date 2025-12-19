@@ -43,10 +43,12 @@ public:
     
     bool is_tor_running() const;
     bool is_tor_ready() const; // Bootstrap at 100%
+    bool is_tor_external() const;
 private:
     void create_torrc(const std::string& torrc_path, const std::string& hidden_service_dir, uint16_t hidden_service_port);
-    void poll_hostname();
+    void read_hostname();
     bool is_socks_port_same_as_torrc(uint16_t socks_port);
+    bool is_external_tor_running() const; // Checks if external tor is running in background
     std::atomic<int> bootstrap_progress{0};  // 0-100%
     std::string onion_address;
     std::string tor_binary;
@@ -57,6 +59,7 @@ private:
     uint16_t control_port;
     std::string torrc_path;
     bool is_running = false;
+    bool external_tor = false;
     struct subprocess_s tor_proc;  // Store process handle
 };
 

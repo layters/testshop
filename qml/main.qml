@@ -262,7 +262,7 @@ ApplicationWindow {
                         x: parent.x + (parent.width - this.width) / 2 // Popups don't have anchors :(
                         height: contentHeight + 20; width: (contentWidth > parent.width) ? 500 : parent.width
                         bottomMargin : footer.height + 5
-                        text: qsTr("%1\n%2 %3").arg((parent.value == 1.0) ? ((networkMonitor.networkStatus == null) ? "neroshopd" : (networkMonitor.networkStatus.hasOwnProperty("host") ? networkMonitor.networkStatus.host : "neroshopd")) : "neroshopd").arg(DaemonManager.daemonStatusText).arg((parent.value > 0.0 && parent.value < 1.0) ? ("(" + (parent.value * 100).toString() + "%)") : "")
+                        text: qsTr("%1\n%2 %3").arg((parent.value == 1.0) ? networkMonitor.fullAddress : "neroshopd").arg(DaemonManager.daemonStatusText).arg((parent.value > 0.0 && parent.value < 1.0) ? ("(" + (parent.value * 100).toString() + "%)") : "")
                         textObject.font.pointSize: 10
                         pointer.visible: false
                     }
@@ -322,6 +322,22 @@ ApplicationWindow {
                 color: "transparent"
                 //border.color: "plum"
                 property var networkStatus: null
+                property string fullAddress: {
+                    if (!networkMonitor.networkStatus || networkMonitor.networkStatus === null) {
+                        return "neroshopd"
+                    }
+    
+                    const status = networkMonitor.networkStatus
+                    const host = status.hasOwnProperty("host") ? status.host : "neroshopd"
+                    const networkType = status.hasOwnProperty("network_type") ? status.network_type : "tor"
+    
+                    // Tor needs port, I2P doesn't
+                    if (networkType.toLowerCase() === "tor" && status.hasOwnProperty("port") && !isNaN(status.port) && status.port > 0) {
+                        return host + ":" + status.port
+                    }
+    
+                    return host  // I2P or no port = just host
+                 }
                 
                 Row {
                     id: networkMonitorRow

@@ -1551,7 +1551,7 @@ Item {
                         }
                         TextField {
                             width: parent.width
-                            text: qsTr((networkMonitor.networkStatus == null) ? "" : (networkMonitor.networkStatus.hasOwnProperty("host") ? networkMonitor.networkStatus.host : ""))
+                            text: qsTr((networkMonitor.networkStatus == null) ? "" : (networkMonitor.networkStatus.hasOwnProperty("host") ? networkMonitor.fullAddress : ""))
                             font.pointSize: 10
                             color: (NeroshopComponents.Style.darkTheme) ? "#ffffff" : "#000000"
                             selectByMouse: true

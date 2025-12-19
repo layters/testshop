@@ -94,7 +94,7 @@ void Sqlite3::close() {
 	    handle = nullptr;
         opened = false;
         #ifdef NEROSHOP_DEBUG
-        std::cout << "[SQLite3] " << (filename.empty() ? "database" : filename) << " closed";
+        std::cout << "[SQLite3] " << (filename.empty() ? "database" : filename) << " closed\n";
         #endif
     }
 }
