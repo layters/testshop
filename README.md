@@ -251,5 +251,6 @@ WW2pQTQWHpyJf2CHrCmZG7Tn3zBnYRZTH8g4U3pSZf5s6xsTXrZc9odDWmrWzjRc9MMQWrKXxjHsRdzH
 [//]: # (git add .gitignore .gitmodules assets/ cmake/ CMakeLists.txt external/ LICENSE meson.build meson.options proto/ qml/ qml.qrc README.md src/ tests/)
 [//]: # (git commit -m"..."    or    git commit -a --allow-empty-message -m "")
 [//]: # (sudo git push -u origin main --force)
+[//]: # (git push codeberg main)
 [//]: # (adding an external lib to submodules index: git submodule add <url> external/<folder>)
 [//]: # (removing an external lib from submodules index: git rm -rf --cached external/<folder>)

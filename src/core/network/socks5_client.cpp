@@ -173,35 +173,30 @@ bool Socks5Client::socks5_handshake_auth(const char* dest_host, uint16_t dest_po
 
 //-----------------------------------------------------------------------------
 
-uint16_t Socks5Client::reserve_available_port(uint16_t preferred_port) {
-    if (preferred_port > 65535) {
-        throw std::invalid_argument("Invalid port");
+uint16_t Socks5Client::reserve_available_port(uint16_t start_port) {
+    if (start_port > 65535) throw std::invalid_argument("Invalid port");
+    
+    // Test range: 50882-50889
+    for (uint16_t port = start_port; port <= start_port + 7; ++port) {
+        int sockfd = ::socket(AF_INET, SOCK_STREAM, 0);
+        if (sockfd < 0) continue;
+        
+        sockaddr_in addr{};
+        addr.sin_family = AF_INET;
+        addr.sin_port = htons(port);
+        addr.sin_addr.s_addr = inet_addr("127.0.0.1");
+        
+        if (::bind(sockfd, (sockaddr*)&addr, sizeof(addr)) == 0) {
+            socklen_t addrlen = sizeof(addr);
+            getsockname(sockfd, (sockaddr*)&addr, &addrlen);
+            uint16_t assigned_port = ntohs(addr.sin_port);
+            close(sockfd);
+            return assigned_port;  // Found available port
+        }
+        close(sockfd);
     }
     
-    int sockfd = ::socket(AF_INET, SOCK_STREAM, 0);
-    if (sockfd < 0) return 0;
-
-    sockaddr_in addr{};
-    addr.sin_family = AF_INET;
-    addr.sin_port = htons(preferred_port);
-    addr.sin_addr.s_addr = inet_addr("127.0.0.1");
-
-    if (::bind(sockfd, (sockaddr*)&addr, sizeof(addr)) < 0) {
-        // Try fallback
-        addr.sin_port = htons(preferred_port + 8);//htons(0);
-        if (::bind(sockfd, (sockaddr*)&addr, sizeof(addr)) < 0) {
-            close(sockfd);
-            return 0;
-        }
-    }
-
-    socklen_t addrlen = sizeof(addr);
-    getsockname(sockfd, (sockaddr*)&addr, &addrlen);
-    uint16_t assigned_port = ntohs(addr.sin_port);
-
-    close(sockfd); // We just wanted to test port availability
-
-    return assigned_port;
+    return 0;  // No ports available
 }
 
 //-----------------------------------------------------------------------------

@@ -80,7 +80,14 @@ void TorManager::create_torrc(const std::string& torrc_path, const std::string& 
     torrc_file << "HiddenServiceDir " << hidden_service_dir << "\n";
     torrc_file << "HiddenServicePort " << hidden_service_port 
         << " 127.0.0.1:" << hidden_service_port << "\n";
-        
+    // For second neroshopd instance
+    auto hidden_service_dir1 = neroshop::get_hidden_service_dir_path(1);
+    uint16_t hidden_service_port1  = (TOR_HIDDEN_SERVICE_PORT + 1);
+    torrc_file << "\n";
+    torrc_file << "HiddenServiceDir " << hidden_service_dir1 << "\n";
+    torrc_file << "HiddenServicePort " << hidden_service_port1 
+        << " 127.0.0.1:" << hidden_service_port1 << "\n";
+
     torrc_file.close();
     
     // Start Tor daemon with the following command and args: ./tor -f ~/.config/neroshop/tor/torrc
@@ -95,6 +102,8 @@ void TorManager::start_tor() {
         // Cannot set 'is_running' to true since we don't own this process
         external_tor = true;
         // Get hostname ('.onion' address)
+        hs_dir = neroshop::get_hidden_service_dir_path(1); // Switch to hidden_service_1
+        std::cout << hs_dir.string() << "\n";
         auto hostname_path = hs_dir / "hostname";
         if (std::filesystem::exists(hostname_path) && 
             std::filesystem::is_regular_file(hostname_path)) {
@@ -188,6 +197,38 @@ void TorManager::stop_tor() {
     onion_address.clear();
     bootstrap_progress.store(0);  // Reset progress
     std::cout << "[TorManager]: Tor stopped. Progress reset to " << bootstrap_progress.load() << "\n";
+}
+
+//-----------------------------------------------------------------------------
+
+void TorManager::add_hidden_service(const std::string& hidden_service_dir, uint16_t hidden_service_port) {
+    // Check if file is empty to determine whether to open it in truncate mode or append mode (in case we want to add more hidden services)
+    bool file_empty = is_file_empty(torrc_path);
+    std::ofstream torrc_file(torrc_path, file_empty ? std::ios::out : std::ios::app);
+    if (!torrc_file) {
+        throw std::runtime_error("Failed to open torrc file for writing");
+    }
+    
+    // If file is not empty, add a newline before appending new hidden service
+    if (!file_empty) {
+        torrc_file << "\n";
+    } else {
+        torrc_file << "DataDirectory " << data_dir.string() << "\n"; // ~/.config/neroshop/tor/data
+        torrc_file << "SocksPort 127.0.0.1:" << socks_port << "\n"; // For outgoing connections
+        torrc_file << "ControlPort 127.0.0.1:" << control_port << "\n"; // Optional: for control (GETINFO queries, etc.)
+        torrc_file << "CookieAuthentication 1\n"; // ~/.config/neroshop/tor/control_auth_cookie ("locks" the control port)
+        torrc_file << "Log notice stdout\n";////torrc_file << "Log notice file " << (data_dir / "tor.log").string() << "\n";
+        torrc_file << "\n"; // For readability and separating each local peer's hidden service
+    }
+    torrc_file << "HiddenServiceDir " << hidden_service_dir << "\n";
+    torrc_file << "HiddenServicePort " << hidden_service_port 
+        << " 127.0.0.1:" << hidden_service_port << "\n";
+        
+    torrc_file.close();
+    
+    std::cout << "[TorManager]: Hidden service added: " << hidden_service_dir << " (127.0.0.1:" << hidden_service_port << ")\n";
+    
+    // Tor daemon must be restarted if previously running with the following command and args: ./tor -f ~/.config/neroshop/tor/torrc
 }
 
 //-----------------------------------------------------------------------------

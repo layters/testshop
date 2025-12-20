@@ -23,8 +23,13 @@ inline std::filesystem::path get_default_tor_path() {
     return std::filesystem::path(get_default_config_path()) / "tor";
 }
 
-inline std::filesystem::path get_hidden_service_dir_path() {
-    return get_default_tor_path() / TOR_HIDDEN_SERVICE_DIR_FOLDER_NAME;
+inline std::filesystem::path get_hidden_service_dir_path(unsigned int id = 0) {
+    auto base = get_default_tor_path();
+    if(id > 0) {
+        return base / (TOR_HIDDEN_SERVICE_DIR_FOLDER_NAME.string() + "_" + std::to_string(id));
+        // "hidden_service_1", "hidden_service_2", "hidden_service_3", etc.
+    }
+    return base / TOR_HIDDEN_SERVICE_DIR_FOLDER_NAME;
 }
 
 class TorManager {
@@ -34,6 +39,7 @@ public:
     
     void start_tor();
     void stop_tor();
+    void add_hidden_service(const std::string& hidden_service_dir, uint16_t hidden_service_port);
     
     void set_socks_port(uint16_t socks_port); // Call BEFORE start_tor()
     
