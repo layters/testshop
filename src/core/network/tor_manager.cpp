@@ -314,8 +314,7 @@ bool TorManager::is_tor_running() const {
 
 bool TorManager::is_tor_ready() const {
     if(external_tor) {
-        assert(!onion_address.empty());
-        return true;
+        return !onion_address.empty();
     }
     
     return bootstrap_progress.load() >= 100;

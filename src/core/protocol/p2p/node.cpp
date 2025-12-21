@@ -148,9 +148,7 @@ NetworkType Node::network_type_ (NetworkType::I2P);
 
 std::string Node::generate_node_id(const std::string& address, int port) {
     // We won't use port for generating a node ID since i2p and onion addresses have sufficient uniqueness
-    std::string hash = neroshop::crypto::sha3_256(address);
-    const int NUM_BITS = 256;
-    return hash.substr(0, NUM_BITS / 4);
+    return neroshop::crypto::sha3_256(address);
 }
 
 //-----------------------------------------------------------------------------

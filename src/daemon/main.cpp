@@ -172,14 +172,6 @@ void ipc_server(Node& node) {
 //-----------------------------------------------------------------------------
 
 void dht_server(Node& node) {
-    // If using Tor, wait until Tor is ready before joining
-    if (node.get_network_type() == NetworkType::Tor) {
-        auto tor_manager = node.get_tor_manager();
-        while (tor_manager && !tor_manager->is_tor_ready()) {
-            std::this_thread::sleep_for(std::chrono::milliseconds(500));
-        }
-    }
-
     std::cout << "******************************************************\n";
     if(node.get_network_type() == NetworkType::I2P) {
         std::cout << "SAM Session ID: " << node.get_sam_client()->get_nickname() << "\n";
@@ -295,32 +287,15 @@ int main(int argc, char** argv)
         database->execute("CREATE VIRTUAL TABLE mappings USING fts5(search_term, key, content, tokenize = \"porter unicode61 remove_diacritics 1 tokenchars '-_:'\");"); // 0=uses accent characters (diacritics) like é; default is 1
     }
     //-------------------------------------------------------
-    // Start TorManager on a separate thread
+    // Start TorManager on same thread (blocking)
     auto tor_manager = std::make_shared<neroshop::TorManager>(socks_port);
-    try {
-        std::thread tor_thread([&tor_manager]() {
-            tor_manager->start_tor();
-            
-            // TIMEOUT after 10 seconds
-            auto start = std::chrono::steady_clock::now();
-            while (!tor_manager->is_tor_ready()) {
-                if (std::chrono::steady_clock::now() - start > std::chrono::seconds(10)) {
-                    printf("Tor timeout after 10s, using external Tor if available\n");
-                    break;
-                }
-            
-                std::this_thread::sleep_for(std::chrono::milliseconds(500));
-                printf("Tor bootstrap progress: %d%%\n", tor_manager->get_bootstrap_progress());
-            }
-            printf("Tor is ready. Onion address: %s\n", tor_manager->get_onion_address().c_str());
-        });
+    tor_manager->start_tor();
 
-        // Make sure to join or manage tor_thread lifecycle properly
-        tor_thread.detach(); // or join as appropriate
-
-    } catch (const std::exception& e) {
-        std::cerr << "Failed to start TorManager: " << e.what() << std::endl;
-        return 1;
+    auto start = std::chrono::steady_clock::now();
+    while (!tor_manager->is_tor_ready() && 
+           std::chrono::steady_clock::now() - start < std::chrono::seconds(30)) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(500));
+        printf("Tor bootstrap progress: %d%%\n", tor_manager->get_bootstrap_progress());
     }
     //-------------------------------------------------------
     neroshop::Node node(network_type, tor_manager);
