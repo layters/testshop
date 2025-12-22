@@ -565,12 +565,18 @@ void Node::send_query(const std::string& destination, uint16_t port, const std::
                 auto it = tor_peers.find(destination);
                 if (it != tor_peers.end()) {
                     auto& client = it->second;//tor_peers[destination];
-                    ssize_t bytes_sent = client->send(framed_payload.data(), framed_payload.size(), 0);
-                    if (bytes_sent < 0) {
-                        throw std::runtime_error("Failed to send framed payload to Tor peer");
+                    try {
+                        ssize_t bytes_sent = client->send(framed_payload.data(), framed_payload.size(), 0);
+                        if (bytes_sent < 0) {
+                            throw std::runtime_error("Failed to send framed payload to Tor peer");
+                        }
+                        log_info("SENT framed payload to {}:{}", destination, port);
+                        return;
+                    } catch (const std::exception& e) {
+                        // Connection dead, remove it
+                        log_warn("Dead Tor peer {}: {}", destination, e.what());
                     }
-                    log_info("SENT framed payload to {}:{}", destination, port);
-                    return;
+                    tor_peers.erase(it);  // Remove dead connection
                 }
             } // Mutex released here
             
@@ -710,8 +716,8 @@ bool Node::send_ping(const std::string& destination, uint16_t port) {
     query.set_query("ping");
     query.set_version(NEROSHOP_DHT_VERSION);
     auto* args_map = query.mutable_args();
-    (*args_map)["id"] = this->get_id();
-    (*args_map)["port"] = std::to_string(port);
+    (*args_map)["id"] = get_id();
+    (*args_map)["port"] = std::to_string(get_port());
 
     // Wrap into main message
     neroshop::DhtMessage msg;
@@ -1600,8 +1606,8 @@ void Node::send_map_v2(const std::string& destination, uint16_t port) {
     query.set_query("map");
     query.set_version(NEROSHOP_DHT_VERSION);
     auto* args_map = query.mutable_args();
-    (*args_map)["id"] = this->get_id();
-    (*args_map)["port"] = std::to_string(port);
+    (*args_map)["id"] = get_id();
+    (*args_map)["port"] = std::to_string(get_port());
     #endif
     
     //-----------------------------------------------------------
@@ -2901,6 +2907,7 @@ void Node::handle_tor_message(std::vector<uint8_t> message, const std::string& s
             if (it != pending_requests.end()) {
                 it->second.set_value(message);  // fulfill promise with raw response bytes
                 pending_requests.erase(it);
+                return;
             }
         }
     }

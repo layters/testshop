@@ -293,7 +293,7 @@ int main(int argc, char** argv)
 
     auto start = std::chrono::steady_clock::now();
     while (!tor_manager->is_tor_ready() && 
-           std::chrono::steady_clock::now() - start < std::chrono::seconds(30)) {
+           std::chrono::steady_clock::now() - start < std::chrono::seconds(15)) {
         std::this_thread::sleep_for(std::chrono::milliseconds(500));
         printf("Tor bootstrap progress: %d%%\n", tor_manager->get_bootstrap_progress());
     }
