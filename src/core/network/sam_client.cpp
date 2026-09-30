@@ -158,7 +158,7 @@ static std::vector<uint8_t> base64_i2p_decode(const std::string& input) {
     bio = BIO_push(b64, bio);
     BIO_set_flags(bio, BIO_FLAGS_BASE64_NO_NL);
 
-    std::vector<uint8_t> output(1024); // 1024 is enough
+    std::vector<uint8_t> output(input.size()); // Decoded data cannot exceed encoded size.
     int len = BIO_read(bio, output.data(), output.size());
     if (len <= 0) {
         BIO_free_all(bio);
@@ -167,6 +167,30 @@ static std::vector<uint8_t> base64_i2p_decode(const std::string& input) {
     output.resize(len);
     BIO_free_all(bio);
     return output;
+}
+
+// A SAM private destination starts with the public Destination: 256 bytes of
+// encryption key, 128 bytes of signing key, then a certificate (type, uint16
+// big-endian length, payload). Re-encode the bytes, not a base64 substring:
+// the certificate may end in the middle of a base64 quantum.
+static std::string public_destination_from_private(const std::string& private_key) {
+    const auto decoded = base64_i2p_decode(private_key);
+    constexpr size_t certificate_header_end = 387;
+    if (decoded.size() < certificate_header_end) {
+        throw std::runtime_error("Private destination is too short");
+    }
+    const size_t certificate_length = (static_cast<size_t>(decoded[385]) << 8) | decoded[386];
+    const size_t destination_length = certificate_header_end + certificate_length;
+    if (decoded.size() <= destination_length) {
+        throw std::runtime_error("Private destination is truncated");
+    }
+    std::string encoded(4 * ((destination_length + 2) / 3) + 1, '\0');
+    const int length = EVP_EncodeBlock(reinterpret_cast<unsigned char*>(&encoded[0]),
+                                       decoded.data(), static_cast<int>(destination_length));
+    encoded.resize(length);
+    std::replace(encoded.begin(), encoded.end(), '+', '-');
+    std::replace(encoded.begin(), encoded.end(), '/', '~');
+    return encoded;
 }
 
 // Helper: base32 encode SHA256 of decoded destination
@@ -315,20 +339,10 @@ void SamClient::session_prepare() {
         }
         std::cout << "\033[0;92m[+] Saved $privkey to file\033[0m\n";
     } else {
+        // NAMING LOOKUP resolves names, not private destinations. Restore the
+        // public part locally so it remains available before SESSION CREATE.
+        public_key = public_destination_from_private(private_key);
         std::cout << "\033[0;92m[+] Restored $privkey from file\033[0m\n";
-    }
-    
-    // Extract public key from private key
-    if(public_key.empty()) {
-        std::string command = "NAMING LOOKUP NAME=" + private_key + "\n";
-        auto reply = send_sam_command(command, session_socket);
-        if(reply.result != SamResultType::Ok) {
-            std::cerr << "\033[91m" << reply.raw_reply << "\033[0m\n"; 
-            session_close();
-            exit(1);
-        }
-        public_key = get_value(reply.raw_reply, "VALUE");
-        ////std::cout << "Public key (extracted from private key): " << public_key << "\n";
     }
     
     // Convert public key to b32.i2p address
@@ -462,6 +476,9 @@ std::vector<uint8_t> SamClient::datagram_receive() {
     ssize_t received_bytes = ::recvfrom(client_socket, buffer, SAM_BUFSIZE - 1, 0, (sockaddr*)&sender_addr, &addr_len);
 
     if (received_bytes < 0) {
+        if (errno == EAGAIN || errno == EWOULDBLOCK) {
+            return {}; // No datagram is currently queued on the non-blocking socket.
+        }
         throw std::runtime_error("Failed to receive datagram");
     }
 

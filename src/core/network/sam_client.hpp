@@ -112,7 +112,7 @@ public:
     // Datagram
     void datagram_send(const std::string& destination, const std::string& payload);
     void datagram_send(const std::string& destination, const std::vector<uint8_t>& payload);
-    std::vector<uint8_t> datagram_receive(); // runs in a loop (blocking)
+    std::vector<uint8_t> datagram_receive(); // non-blocking; empty if no datagram is queued
     static SamDatagram datagram_parse(const std::string& message);
     static SamDatagram datagram_parse(const std::vector<uint8_t>& buffer);
     
